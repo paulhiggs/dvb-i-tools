@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassificationScheme uri="urn:mpeg:mpeg7:cs:AudioPresentationCS:2001" domain="//MediaInformation/MediaProfile/MediaFormat/AudioCoding/Presentation">
+	<Term termID="1">
+		<Name xml:lang="en">no sound</Name>
+		<Definition xml:lang="en">No sound</Definition>
+	</Term>
+	<Term termID="2">
+		<Name xml:lang="en">mono</Name>
+		<Definition xml:lang="en">Monographic sound</Definition>
+	</Term>
+	<Term termID="3">
+		<Name xml:lang="en">stereo</Name>
+		<Definition xml:lang="en">Stereographic sound</Definition>
+	</Term>
+	<Term termID="4">
+		<Name xml:lang="en">surround</Name>
+		<Definition xml:lang="en">Surround sound</Definition>
+	</Term>
+	<Term termID="5">
+		<Name xml:lang="en">Home theater 5.1</Name>
+		<Definition xml:lang="en">3/2/1 (L,C,R,Lside,Rside)</Definition>
+	</Term>
+	<Term termID="6">
+		<Name xml:lang="en">Movie theater</Name>
+		<Definition xml:lang="en">3/2/2 (L,C,R,Lside,Rside,Lrear,Rrear)</Definition>
+	</Term>
+</ClassificationScheme>

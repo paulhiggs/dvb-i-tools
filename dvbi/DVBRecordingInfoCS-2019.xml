@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassificationScheme uri="urn:dvb:metadata:cs:RecordingInfoCS:2019" xmlns="urn:tva:mpeg7:2008" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:tva:mpeg7:2008 tva_mpeg7.xsd" xsi:type="ClassificationSchemeType">
+	<!-- ##################################################################### -->
+	<!-- RECORDINGINFO                                                         -->
+	<!-- Definition: A series of definitions providing information about       -->
+	<!--           recording permission                                        -->
+	<!-- ##################################################################### -->
+	<Term termID="1">
+		<Name xml:lang="en">Broadcast simulcast</Name>
+		<Definition xml:lang="en">A simulcast of a service or event delivered using DVB-C/S/T</Definition>
+	</Term>
+	<Term termID="2">
+		<Name xml:lang="en">Provider-scheduled service</Name>
+		<Definition xml:lang="en"> A scheduled service other than a broadcast simulcast with scheduled times determined by the service provider</Definition>
+	</Term>
+	<Term termID="3">
+		<Name xml:lang="en">Concurrent live</Name>
+		<Definition xml:lang="en">A service other than a broadcast simulcast or provider-scheduled service carrying a concurrent transmission of a live event</Definition>
+	</Term>
+	<Term termID="4">
+		<Name xml:lang="en">Other, recording permitted</Name>
+		<Definition xml:lang="en">A service other than a broadcast simulcast, provider-scheduled service or concurrent live transmission for which the provider wishes to allow recording</Definition>
+	</Term>
+	<Term termID="5">
+		<Name xml:lang="en">Other, recording not permitted</Name>
+		<Definition xml:lang="en">A service other than a broadcast simulcast, provider-scheduled service or concurrent live transmission for which the provider does not grant permission for recording</Definition>
+	</Term>
+</ClassificationScheme>

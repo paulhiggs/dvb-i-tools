@@ -1,0 +1,3 @@
+[submodule "phlib"]
+	path = phlib
+	url = https://github.com/paulhiggs/phlib

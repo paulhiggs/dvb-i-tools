@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassificationScheme xsi:type="ClassificationSchemeType" uri="urn:dvb:metadata:cs:ContentSubject:2019" xmlns="urn:tva:mpeg7:2008" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:tva:mpeg7:2008 tva_mpeg7.xsd">
+<!-- ********************************************************************************
+	DVB Content Subject Classification Scheme.
+	Defined in EN 300 468 for the content descriptor.
+	Version EN 300 468 V1.16.1.
+************************************************************************************* -->
+<Term termID="0">
+	<Name xml:lang="en">Undefined content</Name>
+	<Definition xml:lang="en"></Definition>
+</Term>
+<Term termID="1">
+	<Name xml:lang="en">Movie/Drama</Name>
+	<Definition xml:lang="en"></Definition>
+	<Term termID="1.0">
+		<Name xml:lang="en">Movie/Drama (general)</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="1.1">
+		<Name xml:lang="en">Detective/Thriller</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="1.2">
+		<Name xml:lang="en">Adventure/Western/War</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="1.3">
+		<Name xml:lang="en">Science fiction/Fantasy/Horror</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="1.4">
+		<Name xml:lang="en">Comedy</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="1.5">
+		<Name xml:lang="en">Soap/Melodrama/Folkloric</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="1.6">
+		<Name xml:lang="en">Romance</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="1.7">
+		<Name xml:lang="en">Serious/Classical/Religious/Historical movie/Drama</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="1.8">
+		<Name xml:lang="en">Adult movie/Drama</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+</Term>
+<Term termID="2">
+	<Name xml:lang="en">News/Current affairs</Name>
+	<Definition xml:lang="en"></Definition>
+	<Term termID="2.0">
+		<Name xml:lang="en">News/Current affairs (general)</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="2.1">
+		<Name xml:lang="en">News/Weather report</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="2.2">
+		<Name xml:lang="en">News magazine</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="2.3">
+		<Name xml:lang="en">Documentary</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="2.4">
+		<Name xml:lang="en">Discussion/Interview/Debate</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+</Term>
+<Term termID="3">
+	<Name xml:lang="en">Show/Game show</Name>
+	<Definition xml:lang="en"></Definition>
+	<Term termID="3.0">
+		<Name xml:lang="en">Show/Game show (general)</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="3.1">
+		<Name xml:lang="en">Game show/Quiz/Contest</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="3.2">
+		<Name xml:lang="en">Variety show</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="3.3">
+		<Name xml:lang="en">Talk show</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+</Term>
+<Term termID="4">
+	<Name xml:lang="en">Sports</Name>
+	<Definition xml:lang="en"></Definition>
+	<Term termID="4.0">
+		<Name xml:lang="en">Sports (general)</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="4.1">
+		<Name xml:lang="en">Special events (Olympic Games, World Cup, etc.)</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="4.2">
+		<Name xml:lang="en">Sports magazines</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="4.3">
+		<Name xml:lang="en">Football/Soccer</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="4.4">
+		<Name xml:lang="en">Tennis/Squash</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="4.5">
+		<Name xml:lang="en">Team sports (excluding football)</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="4.6">
+		<Name xml:lang="en">Athletics</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="4.7">
+		<Name xml:lang="en">Motor sport</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="4.8">
+		<Name xml:lang="en">Water sport</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="4.9">
+		<Name xml:lang="en">Winter sports</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="4.10">
+		<Name xml:lang="en">Equestrian</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="4.11">
+		<Name xml:lang="en">Martial sports</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+</Term>
+<Term termID="5">
+	<Name xml:lang="en">Children's/Youth programmes</Name>
+	<Definition xml:lang="en"></Definition>
+	<Term termID="5.0">
+		<Name xml:lang="en">Children's/Youth programmes (general)</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="5.1">
+		<Name xml:lang="en">Pre-school children's programmes</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="5.2">
+		<Name xml:lang="en">Entertainment programmes for 6 to 14</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="5.3">
+		<Name xml:lang="en">Entertainment programmes for 10 to 16</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="5.4">
+		<Name xml:lang="en">Informational/Educational/School programmes</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="5.5">
+		<Name xml:lang="en">Cartoons/Puppets</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+</Term>
+<Term termID="6">
+	<Name xml:lang="en">Music/Ballet/Dance</Name>
+	<Definition xml:lang="en"></Definition>
+	<Term termID="6.0">
+		<Name xml:lang="en">Music/Ballet/Dance (general)</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="6.1">
+		<Name xml:lang="en">Rock/Pop</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="6.2">
+		<Name xml:lang="en">Serious music/Classical music</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="6.3">
+		<Name xml:lang="en">Folk/Traditional music</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="6.4">
+		<Name xml:lang="en">Jazz</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="6.5">
+		<Name xml:lang="en">Musical/Opera</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="6.6">
+		<Name xml:lang="en">Ballet</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+</Term>
+<Term termID="7">
+	<Name xml:lang="en">Arts/Culture (without music)</Name>
+	<Definition xml:lang="en"></Definition>
+	<Term termID="7.0">
+		<Name xml:lang="en">Arts/Culture (without music, general)</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="7.1">
+		<Name xml:lang="en">Performing arts</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="7.2">
+		<Name xml:lang="en">Fine arts</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="7.3">
+		<Name xml:lang="en">Religion</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="7.4">
+		<Name xml:lang="en">Popular culture/Traditional arts</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="7.5">
+		<Name xml:lang="en">Literature</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="7.6">
+		<Name xml:lang="en">Film/Cinema</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="7.7">
+		<Name xml:lang="en">Experimental film/Video</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="7.8">
+		<Name xml:lang="en">Broadcasting/Press</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="7.9">
+		<Name xml:lang="en">New media</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="7.10">
+		<Name xml:lang="en">Arts/Culture magazines</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="7.11">
+		<Name xml:lang="en">Fashion</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+</Term>
+<Term termID="8">
+	<Name xml:lang="en">Social/Political issues/Economics</Name>
+	<Definition xml:lang="en"></Definition>
+	<Term termID="8.0">
+		<Name xml:lang="en">Social/Political issues/Economics (general)</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="8.1">
+		<Name xml:lang="en">Magazines/Reports/Documentary</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="8.2">
+		<Name xml:lang="en">Economics/Social advisory</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="8.3">
+		<Name xml:lang="en">Remarkable people</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+</Term>
+<Term termID="9">
+	<Name xml:lang="en">Education/Science/Factual topics</Name>
+	<Definition xml:lang="en"></Definition>
+	<Term termID="9.0">
+		<Name xml:lang="en">Education/Science/Factual topics (general)</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="9.1">
+		<Name xml:lang="en">Nature/Animals/Environment</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="9.2">
+		<Name xml:lang="en">Technology/Natural sciences</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="9.3">
+		<Name xml:lang="en">Medicine/Physiology/Psychology</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="9.4">
+		<Name xml:lang="en">Foreign countries/Expeditions</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="9.5">
+		<Name xml:lang="en">Social/Spiritual sciences</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="9.6">
+		<Name xml:lang="en">Further education</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="9.7">
+		<Name xml:lang="en">Languages</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+</Term>
+<Term termID="10">
+	<Name xml:lang="en">Leisure hobbies</Name>
+	<Definition xml:lang="en"></Definition>
+	<Term termID="10.0">
+		<Name xml:lang="en">Leisure hobbies (general)</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="10.1">
+		<Name xml:lang="en">Tourism/Travel</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="10.2">
+		<Name xml:lang="en">Handicraft</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="10.3">
+		<Name xml:lang="en">Motoring</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="10.4">
+		<Name xml:lang="en">Fitness and health</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="10.5">
+		<Name xml:lang="en">Cooking</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="10.6">
+		<Name xml:lang="en">Advertisement/Shopping</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="10.7">
+		<Name xml:lang="en">Gardening</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+</Term>
+<Term termID="11">
+	<Name xml:lang="en">Special characteristics</Name>
+	<Definition xml:lang="en"></Definition>
+	<Term termID="11.0">
+		<Name xml:lang="en">Original language</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="11.1">
+		<Name xml:lang="en">Black and white</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="11.2">
+		<Name xml:lang="en">Unpublished</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="11.3">
+		<Name xml:lang="en">Live broadcast</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="11.4">
+		<Name xml:lang="en">Plano-stereoscopic</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+	<Term termID="11.5">
+		<Name xml:lang="en">Local or regional</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+</Term>
+<Term termID="12">
+	<Name xml:lang="en">Adult</Name>
+	<Definition xml:lang="en"></Definition>
+	<Term termID="12.0">
+		<Name xml:lang="en">Adult (general)</Name>
+		<Definition xml:lang="en"></Definition>
+	</Term>
+</Term>
+</ClassificationScheme>

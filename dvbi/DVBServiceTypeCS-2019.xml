@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassificationScheme uri="urn:dvb:metadata:cs:ServiceTypeCS:2019" xmlns="urn:tva:mpeg7:2008" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:tva:mpeg7:2008 tva_mpeg7.xsd" xsi:type="ClassificationSchemeType">
+<!-- ##################################################################### -->
+<!-- DVBServiceType                                                        -->
+<!-- Definition: Definitions for the different types of service            -->
+<!-- ##################################################################### -->
+  <Term termID="linear">
+    <Name xml:lang="en">The service contains linear programming</Name>
+  </Term>
+  <Term termID="ondemand">
+    <Name xml:lang="en">The service contains on demand programming</Name>
+  </Term>
+  <Term termID="data">
+    <Name xml:lang="en">The service contains only data signalling</Name>
+  </Term>
+  <Term termID="other">
+    <Name xml:lang="en">The service cannot be described by one of the categories
+      in this scheme</Name>
+  </Term>
+</ClassificationScheme>

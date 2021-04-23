@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassificationScheme uri="urn:mpeg:mpeg7:cs:AudioCodingFormatCS:2001" domain="//MediaInformation/MediaProfile/MediaFormat/AudioCoding/Format">
+    <Term termID="1">
+        <Name xml:lang="en">AC3</Name>
+        <Definition xml:lang="en">Dolby AC3</Definition>
+    </Term>
+    <Term termID="2">
+        <Name xml:lang="en">DTS</Name>
+        <Definition xml:lang="en">Digital theatrical sound</Definition>
+    </Term>
+    <Term termID="3">
+        <Name xml:lang="en">MPEG-1 Audio</Name>
+        <Definition xml:lang="en">MPEG-1 Audio Coding Format</Definition>
+        <Term termID="3.1">
+            <Name xml:lang="en">MPEG-1 Audio Layer I</Name>
+        </Term>
+        <Term termID="3.2">
+            <Name xml:lang="en">MPEG-1 Audio Layer II</Name>
+        </Term>
+        <Term termID="3.3">
+            <Name xml:lang="en">MPEG-1 Audio Layer III</Name>
+        </Term>
+    </Term>
+    <Term termID="4">
+        <Name xml:lang="en">MPEG-2 Audio</Name>
+        <Definition xml:lang="en">MPEG-2 Audio Coding Format</Definition>
+        <Term termID="4.1">
+            <Name xml:lang="en">MPEG-2 Audio Low Sampling Rate</Name>
+            <Term termID="4.1.1">
+                <Name xml:lang="en">MPEG-2 Audio Low Sampling Rate Layer I</Name>
+            </Term>
+            <Term termID="4.1.2">
+                <Name xml:lang="en">MPEG-2 Audio Low Sampling Rate Layer II</Name>
+            </Term>
+            <Term termID="4.1.3">
+                <Name xml:lang="en">MPEG-2 Audio Low Sampling Rate Layer III</Name>
+            </Term>
+        </Term>
+        <Term termID="4.2">
+            <Name xml:lang="en">MPEG-2 Backward Compatible Multi-Channel</Name>
+            <Definition xml:lang="en">MPEG-2 Backward Compatible</Definition>
+            <Term termID="4.2.1">
+                <Name xml:lang="en">MPEG-2 Backward Compatible Multi-Channel Layer I</Name>
+            </Term>
+            <Term termID="4.2.2">
+                <Name xml:lang="en">MPEG-2 Backward Compatible multi-channel Layer II</Name>
+            </Term>
+            <Term termID="4.2.3">
+                <Name xml:lang="en">MPEG-2 Backward Compatible multi-channel Layer III</Name>
+            </Term>
+        </Term>
+        <Term termID="4.3">
+            <Name xml:lang="en">MPEG-2 Audio AAC</Name>
+            <Definition xml:lang="en">MPEG-2 Advanced Audio Coding</Definition>
+            <Term termID="4.3.1">
+                <Name xml:lang="en">MPEG-2 Audio AAC Low Complexity Profile</Name>
+            </Term>
+            <Term termID="4.3.2">
+                <Name xml:lang="en">MPEG-2 Audio AAC Main Profile</Name>
+            </Term>
+            <Term termID="4.3.3">
+                <Name xml:lang="en">MPEG-2 Audio AAC Sampling Rate Scaleable Profile</Name>
+            </Term>
+        </Term>
+        <Term termID="4.4">
+            <Name xml:lang="en">MP3</Name>
+            <Name xml:lang="en">MPEG-1 Layer III + MPEG-2 Low Sampling Rate Layer III III</Name>
+            <Definition xml:lang="en">MP3 Audio Coding</Definition>
+        </Term>
+    </Term>
+    <Term termID="5">
+        <Name xml:lang="en">MPEG-4 Audio</Name>
+        <Definition xml:lang="en">MPEG-4 Audio Coding Format</Definition>
+        <Term termID="5.1">
+            <Name xml:lang="en">MPEG-4 Audio Synthetic Profile</Name>
+            <Term termID="5.1.1">
+                <Name xml:lang="en">MPEG-4 Audio Synthetic Profile @ Level 1</Name>
+            </Term>
+            <Term termID="5.1.2">
+                <Name xml:lang="en">MPEG-4 Audio Synthetic Profile @ Level 2</Name>
+            </Term>
+            <Term termID="5.1.3">
+                <Name xml:lang="en">MPEG-4 Audio Synthetic Profile @ Level 3</Name>
+            </Term>
+        </Term>
+        <Term termID="5.2">
+            <Name xml:lang="en">MPEG-4 Audio Speech Profile</Name>
+            <Term termID="5.2.1">
+                <Name xml:lang="en">MPEG-4 Audio Speech Profile @ Level 1</Name>
+            </Term>
+            <Term termID="5.2.2">
+                <Name xml:lang="en">MPEG-4 Audio Speech Profile @ Level 2</Name>
+            </Term>
+        </Term>
+        <Term termID="5.3">
+            <Name xml:lang="en">MPEG-4 Audio Scalable Profile</Name>
+            <Term termID="5.3.1">
+                <Name xml:lang="en">MPEG-4 Audio Scalable Profile @ Level 1</Name>
+            </Term>
+            <Term termID="5.3.2">
+                <Name xml:lang="en">MPEG-4 Audio Scalable Profile @ Level 2</Name>
+            </Term>
+            <Term termID="5.3.3">
+                <Name xml:lang="en">MPEG-4 Audio Scalable Profile @ Level 3</Name>
+            </Term>
+            <Term termID="5.3.4">
+                <Name xml:lang="en">MPEG-4 Audio Scalable Profile @ Level 4</Name>
+            </Term>
+        </Term>
+        <Term termID="5.4">
+            <Name xml:lang="en">MPEG-4 Main Audio Profile</Name>
+            <Term termID="5.4.1">
+                <Name xml:lang="en">MPEG-4 Main Audio Profile @ Level 1</Name>
+            </Term>
+            <Term termID="5.4.2">
+                <Name xml:lang="en">MPEG-4 Main Audio Profile @ Level 2</Name>
+            </Term>
+            <Term termID="5.4.3">
+                <Name xml:lang="en">MPEG-4 Main Audio Profile @ Level 3</Name>
+            </Term>
+            <Term termID="5.4.4">
+                <Name xml:lang="en">MPEG-4 Main Audio Profile @ Level 4</Name>
+            </Term>
+        </Term>
+        <Term termID="5.5">
+            <Name xml:lang="en">MPEG-4 High Quality Audio Profile</Name>
+            <Term termID="5.5.1">
+                <Name xml:lang="en">MPEG-4 High Quality Audio Profile @ Level 1</Name>
+            </Term>
+            <Term termID="5.5.2">
+                <Name xml:lang="en">MPEG-4 High Quality Audio Profile @ Level 2</Name>
+            </Term>
+            <Term termID="5.5.3">
+                <Name xml:lang="en">MPEG-4 High Quality Audio Profile @ Level 3</Name>
+            </Term>
+            <Term termID="5.5.4">
+                <Name xml:lang="en">MPEG-4 High Quality Audio Profile @ Level 4</Name>
+            </Term>
+            <Term termID="5.5.5">
+                <Name xml:lang="en">MPEG-4 High Quality Audio Profile @ Level 5</Name>
+            </Term>
+            <Term termID="5.5.6">
+                <Name xml:lang="en">MPEG-4 High Quality Audio Profile @ Level 6</Name>
+            </Term>
+            <Term termID="5.5.7">
+                <Name xml:lang="en">MPEG-4 High Quality Audio Profile @ Level 7</Name>
+            </Term>
+            <Term termID="5.5.8">
+                <Name xml:lang="en">MPEG-4 High Quality Audio Profile @ Level 8</Name>
+            </Term>
+        </Term>
+        <Term termID="5.6">
+            <Name xml:lang="en">MPEG-4 Low Delay Audio Profile</Name>
+            <Term termID="5.6.1">
+                <Name xml:lang="en">MPEG-4 Low Delay Audio Profile @ Level 1</Name>
+            </Term>
+            <Term termID="5.6.2">
+                <Name xml:lang="en">MPEG-4 Low Delay Audio Profile @ Level 2</Name>
+            </Term>
+            <Term termID="5.6.3">
+                <Name xml:lang="en">MPEG-4 Low Delay Audio Profile @ Level 3</Name>
+            </Term>
+            <Term termID="5.6.4">
+                <Name xml:lang="en">MPEG-4 Low Delay Audio Profile @ Level 4</Name>
+            </Term>
+            <Term termID="5.6.5">
+                <Name xml:lang="en">MPEG-4 Low Delay Audio Profile @ Level 5</Name>
+            </Term>
+            <Term termID="5.6.6">
+                <Name xml:lang="en">MPEG-4 Low Delay Audio Profile @ Level 6</Name>
+            </Term>
+            <Term termID="5.6.7">
+                <Name xml:lang="en">MPEG-4 Low Delay Audio Profile @ Level 7</Name>
+            </Term>
+            <Term termID="5.6.8">
+                <Name xml:lang="en">MPEG-4 Low Delay Audio Profile @ Level 8</Name>
+            </Term>
+        </Term>
+        <Term termID="5.7">
+            <Name xml:lang="en">MPEG-4 Natural Audio Profile</Name>
+            <Term termID="5.7.1">
+                <Name xml:lang="en">MPEG-4 Natural Audio Profile @ Level 1</Name>
+            </Term>
+            <Term termID="5.7.2">
+                <Name xml:lang="en">MPEG-4 Natural Audio Profile @ Level 2</Name>
+            </Term>
+            <Term termID="5.7.3">
+                <Name xml:lang="en">MPEG-4 Natural Audio Profile @ Level 3</Name>
+            </Term>
+            <Term termID="5.7.4">
+                <Name xml:lang="en">MPEG-4 Natural Audio Profile @ Level 4</Name>
+            </Term>
+        </Term>
+        <Term termID="5.8">
+            <Name xml:lang="en">MPEG-4 Mobile Audio Internetworking Profile</Name>
+            <Term termID="5.8.1">
+                <Name xml:lang="en">MPEG-4 Mobile Audio Internetworking Profile @ Level 1</Name>
+            </Term>
+            <Term termID="5.8.2">
+                <Name xml:lang="en">MPEG-4 Mobile Audio Internetworking Profile @ Level 2</Name>
+            </Term>
+            <Term termID="5.8.3">
+                <Name xml:lang="en">MPEG-4 Mobile Audio Internetworking Profile @ Level 3</Name>
+            </Term>
+            <Term termID="5.8.4">
+                <Name xml:lang="en">MPEG-4 Mobile Audio Internetworking Profile @ Level 4</Name>
+            </Term>
+            <Term termID="5.8.5">
+                <Name xml:lang="en">MPEG-4 Mobile Audio Internetworking Profile @ Level 5</Name>
+            </Term>
+            <Term termID="5.8.6">
+                <Name xml:lang="en">MPEG-4 Mobile Audio Internetworking Profile @ Level 6</Name>
+            </Term>
+        </Term>
+    </Term>
+    <Term termID="6">
+        <Name xml:lang="en">AMR</Name>
+        <Definition xml:lang="en">Advanced Multi Rate</Definition>
+    </Term>
+    <Term termID="7">
+        <Name xml:lang="en">ITU-T G.72x</Name>
+        <Definition xml:lang="en">ITU-T G.72x Speech Coding</Definition>
+        <Term termID="7.1">
+            <Name xml:lang="en">ITU-T G.723</Name>
+            <Name xml:lang="en">ITU-T G.723.1</Name>
+            <Definition xml:lang="en">ITU-T G.723 Speech Coding</Definition>
+        </Term>
+        <Term termID="7.2">
+            <Name xml:lang="en">ITU-T G.726</Name>
+            <Definition xml:lang="en">ITU-T G.726 Speech Coding</Definition>
+        </Term>
+        <Term termID="7.3">
+            <Name xml:lang="en">G.728</Name>
+            <Definition xml:lang="en">ITU-T G.728 Speech Coding</Definition>
+        </Term>
+        <Term termID="7.4">
+            <Name xml:lang="en">G.729</Name>
+            <Definition xml:lang="en">ITU-T G.729 Speech Coding</Definition>
+        </Term>
+    </Term>
+    <Term termID="8">
+        <Name xml:lang="en">Linear PCM</Name>
+        <Definition xml:lang="en">Linear Pulse Code Modulation</Definition>
+    </Term>
+    <Term termID="10">
+        <Name xml:lang="en">ATRAC</Name>
+        <Definition xml:lang="en">Adaptive Transform Acoustic Coding</Definition>
+    </Term>
+    <Term termID="11">
+        <Name xml:lang="en">ATRAC2</Name>
+        <Definition xml:lang="en">Adaptive Transform Acoustic Coding 2</Definition>
+    </Term>
+    <Term termID="12">
+        <Name xml:lang="en">ATRAC3</Name>
+        <Definition xml:lang="en">Adaptive Transform Acoustic Coding 3</Definition>
+    </Term>
+</ClassificationScheme>
