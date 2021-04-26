@@ -63,30 +63,23 @@ function isEmpty(obj) {
 }
 
 
-/**
- * constructs HTML output of the errors found in the service list analysis
- *
- * @param {boolean} URLmode    If true ask for a URL to a service list, if false ask for a file
- * @param {Object}  res        The Express result 
- * @param {string}  lastInput  The url of the service list - used to keep the form intact
- * @param {string}  error      a single error message to display on the form, genrrally related to loading the content to validate
- * @param {Object}  errors     the errors and warnings found during the content guide validation
- * @returns {Promise} the output stream (res) for further async processing
- */
-function drawSLForm(URLmode, res, lastInput=null, error=null, errs=null) {
-	
+function PAGE_TOP(label) {
 	const TABLE_STYLE="<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px; }	tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
 	const XML_STYLE="<style>.xmlfont {font-family: Arial, Helvetica, sans-serif; font-size:90%;}</style>";
 
-	const PAGE_TOP=`<html><head>${TABLE_STYLE}${XML_STYLE}<title>DVB-I Service List Validator</title></head><body>`;
-	const PAGE_HEADING="<h1>DVB-I Service List Validator</h1>";
-	const PAGE_BOTTOM="</body></html>";
+	const PG=`<html><head>${TABLE_STYLE}${XML_STYLE}<title>${label}</title></head><body>`;
+	const PH=`<h1>${label}</h1>`;
 
-	const ENTRY_FORM_URL=`<form method=\"post\"><p><i>URL:</i></p><input type=\"url\" name=\"SLurl\" value=\"${lastInput?lastInput:""}\"><input type=\"submit\" value=\"submit\"></form>`;
-	const ENTRY_FORM_FILE=`<form method=\"post\" encType=\"multipart/form-data\"><p><i>FILE:</i></p><input type=\"file\" name=\"SLfile\" value=\"${lastInput?lastInput:""}\"><input type=\"submit\" value=\"submit\"></form>`;
+	return `${PG}${PH}`;
+}
+const PAGE_BOTTOM="</body></html>";
+
+function tabulateResults(res, error, errs) {
+
 	const RESULT_WITH_INSTRUCTION="<br><p><i>Results:</i></p>";
 	const SUMMARY_FORM_HEADER="<table><tr><th>item</th><th>count</th></tr>";
 
+	
 	DETAIL_FORM_HEADER = (mode) => `<table><tr><th>code</th><th>${mode}</th></tr>`;
 
 	function tabluateMessage(value) {
@@ -94,25 +87,16 @@ function drawSLForm(URLmode, res, lastInput=null, error=null, errs=null) {
 		res.write(`<td>${value.message?phlib.HTMLize(value.message):""}${value.element?`<br/><span class=\"xmlfont\">${phlib.HTMLize(value.element)}</span>`:""}</td></tr>`);
 	}	
 
-    res.write(PAGE_TOP);    
-	res.write(PAGE_HEADING);   
-	res.write(URLmode?ENTRY_FORM_URL:ENTRY_FORM_FILE);
     res.write(RESULT_WITH_INSTRUCTION);
-
-	if (!URLmode && lastInput)
-		res.write(`${lastInput}: `);
-
 	if (error) 
 		res.write(`<p>${error}</p>`);
 	let resultsShown=false;
 	if (errs) {
 
-		if (errs.numCountsErr() > 0 || errs.numCountsWarn() > 0 ) {
+		if (errs.numCountsErr()>0 || errs.numCountsWarn()>0 ) {		
 			res.write(SUMMARY_FORM_HEADER);
-
-			Object.keys(errs.countsErr).forEach( i => {res.write(`<tr><td>${phlib.HTMLize(i)}</td><td>${errs.countsErr[i]}</td></tr>`); });
-			Object.keys(errs.countsWarn).forEach( i => {res.write(`<tr><td><i>${phlib.HTMLize(i)}</i></td><td>${errs.countsWarn[i]}</td></tr>`); });
-
+			Object.keys(errs.countsErr).forEach( function (i) {return res.write(`<tr><td>${phlib.HTMLize(i)}</td><td>${errs.countsErr[i]}</td></tr>`); });
+			Object.keys(errs.countsWarn).forEach( function (i) {return res.write(`<tr><td><i>${phlib.HTMLize(i)}</i></td><td>${errs.countsWarn[i]}</td></tr>`); });
 			resultsShown=true;
 			res.write("</table><br/>");
 		}
@@ -129,10 +113,32 @@ function drawSLForm(URLmode, res, lastInput=null, error=null, errs=null) {
 			errs.warnings.forEach(tabluateMessage);
 			resultsShown=true;
 			res.write("</table><br/>");
-		}       
+		}     
 	}
 	if (!error && !resultsShown) 
 		res.write("no errors or warnings");
+}
+
+/**
+ * constructs HTML output of the errors found in the service list analysis
+ *
+ * @param {boolean} URLmode    If true ask for a URL to a service list, if false ask for a file
+ * @param {Object}  res        The Express result 
+ * @param {string}  lastInput  The url of the service list - used to keep the form intact
+ * @param {string}  error      a single error message to display on the form, genrrally related to loading the content to validate
+ * @param {Object}  errors     the errors and warnings found during the content guide validation
+ * @returns {Promise} the output stream (res) for further async processing
+ */
+function drawSLForm(URLmode, res, lastInput=null, error=null, errs=null) {
+	
+	const ENTRY_FORM_URL=`<form method=\"post\"><p><i>URL:</i></p><input type=\"url\" name=\"SLurl\" value=\"${lastInput?lastInput:""}\"><input type=\"submit\" value=\"submit\"></form>`;
+	const ENTRY_FORM_FILE=`<form method=\"post\" encType=\"multipart/form-data\"><p><i>FILE:</i></p><input type=\"file\" name=\"SLfile\" value=\"${lastInput?lastInput:""}\"><input type=\"submit\" value=\"submit\"></form>`;
+
+    res.write(PAGE_TOP('DVB-I Service List Validator'));    
+
+	res.write(URLmode?ENTRY_FORM_URL:ENTRY_FORM_FILE);
+
+	tabulateResults(res, error, errs);
 
 	res.write(PAGE_BOTTOM);
 	
@@ -227,15 +233,6 @@ function processSLFile(req, res) {
  * @param {ErrorList}  errors    the errors and warnings found during the content guide validation
  */
  function drawCGForm(URLmode, res, lastInput=null, lastType=null, error=null, errs=null) {
-
-	const TABLE_STYLE="<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px; }	tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
-	const XML_STYLE="<style>.xmlfont {font-family: Arial, Helvetica, sans-serif; font-size:90%;}</style>";
-
-	const PAGE_TOP=`<html><head>${TABLE_STYLE}${XML_STYLE}<title>DVB-I Content Guide Validator</title></head><body>`;
-	const PAGE_BOTTOM="</body></html>";
-
-	const PAGE_HEADING="<h1>DVB-I Content Guide Validator</h1>";
-
 	const ENTRY_FORM_URL=`<form method=\"post\"><p><i>URL:</i></p><input type=\"url\" name=\"CGurl\" value=\"${lastInput?lastInput:""}\"/><input type=\"submit\" value=\"submit\"/>`;
 	const ENTRY_FORM_FILE=`<form method=\"post\" encType=\"multipart/form-data\"><p><i>FILE:</i></p><input type=\"file\" name=\"CGfile\" value=\"${lastInput ? lastInput : ""}\"/><input type=\"submit\" value=\"submit\"/>`;
 	const ENTRY_FORM_END="</form>";
@@ -244,18 +241,7 @@ function processSLFile(req, res) {
 
 	const ENTRY_FORM_REQUEST_TYPE_ID="requestType";
 
-	const RESULT_WITH_INSTRUCTION="<br><p><i>Results:</i></p>";
-	const SUMMARY_FORM_HEADER="<table><tr><th>item</th><th>count</th></tr>";
-	
-	function DETAIL_FORM_HEADER(mode) {
-		return `<table><tr><th>code</th><th>${mode}</th></tr>`;
-	}
-	function tabluateMessage(value) {
-		res.write(`<tr><td>${value.code?phlib.HTMLize(value.code):""}</td>`);
-		res.write(`<td>${value.message?phlib.HTMLize(value.message):""}${value.element?`<br/><span class=\"xmlfont\">${phlib.HTMLize(value.element)}</span>`:""}</td></tr>`);
-	}	
-    res.write(PAGE_TOP);    
-    res.write(PAGE_HEADING);
+    res.write(PAGE_TOP('DVB-I Content Guide Validator'));
     res.write(URLmode?ENTRY_FORM_URL:ENTRY_FORM_FILE);
 
 	res.write(ENTRY_FORM_REQUEST_TYPE_HEADER);
@@ -270,35 +256,7 @@ function processSLFile(req, res) {
 	});
 	res.write(ENTRY_FORM_END);
 
-    res.write(RESULT_WITH_INSTRUCTION);
-	if (error) 
-		res.write(`<p>${error}</p>`);
-	let resultsShown=false;
-	if (errs) {
-
-		if (errs.numCountsErr()>0 || errs.numCountsWarn()>0 ) {		
-			res.write(SUMMARY_FORM_HEADER);
-			Object.keys(errs.countsErr).forEach( function (i) {return res.write(`<tr><td>${phlib.HTMLize(i)}</td><td>${errs.countsErr[i]}</td></tr>`); });
-			Object.keys(errs.countsWarn).forEach( function (i) {return res.write(`<tr><td><i>${phlib.HTMLize(i)}</i></td><td>${errs.countsWarn[i]}</td></tr>`); });
-			resultsShown=true;
-			res.write("</table><br/>");
-		}
-
-		if (errs.numErrors() > 0) {
-			res.write(DETAIL_FORM_HEADER("errors"));
-			errs.errors.forEach(tabluateMessage);
-			resultsShown=true;
-			res.write("</table><br/>");
-		} 
-
-		if (errs.numWarnings()>0) {
-			res.write(DETAIL_FORM_HEADER("warnings"));
-			errs.warnings.forEach(tabluateMessage);
-			resultsShown=true;
-			res.write("</table><br/>");
-		}     
-	}
-	if (!error && !resultsShown) res.write("no errors or warnings");
+	tabulateResults(res, error, errs);
 
 	res.write(PAGE_BOTTOM);
 
