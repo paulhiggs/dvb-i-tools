@@ -1,5 +1,7 @@
-/*jshint esversion: 6 */
+/* jshint esversion: 8 */
 /**
+ * ErrorList.js
+ * 
  * Manages errors and warnings for the application
  * 
  */

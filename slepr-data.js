@@ -1,6 +1,6 @@
 /* jshint esversion: 8 */
 
-const fs=require("fs"), path=require("path");
+const path=require("path");
 
 // SLEPR == Service List Entry Point Registry
 module.exports.MASTER_SLEPR_FILE = path.join('registries','slepr-master.xml');

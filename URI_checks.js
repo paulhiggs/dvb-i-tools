@@ -1,4 +1,4 @@
-/*jshint esversion: 6 */
+/*jshint esversion: 8 */
 
 /**
  * determine if the passed value conforms to am IETF RFC4151 TAG URI

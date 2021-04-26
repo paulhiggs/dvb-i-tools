@@ -1,4 +1,4 @@
-/*jshint esversion: 6 */
+/* jshint esversion: 8 */
 /**
  * Manages Classification Scheme checking
  * 

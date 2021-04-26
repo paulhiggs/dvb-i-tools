@@ -1,4 +1,4 @@
-/*jshint esversion: 6 */
+/* jshint esversion: 8 */
 
 const JPEG_MIME = "image/jpeg", 
       PNG_MIME =  "image/png";

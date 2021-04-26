@@ -1,9 +1,10 @@
-/*jshint esversion: 6 */
+/* jshint esversion: 8 */
 /**
+ * ClassificationScheme.js
+ * 
  * Manages Classification Scheme loading and checking
  * 
  */
-const {throws}=require("assert");
 const fs=require('fs');
 const libxml=require('libxmljs2');
 const fetch=require('node-fetch');

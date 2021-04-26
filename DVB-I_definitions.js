@@ -1,4 +1,4 @@
-/*jshint esversion: 6 */
+/* jshint esversion: 8 */
 
 const PAGINATION_PREFIX = "urn:fvc:metadata:cs:HowRelatedCS:2015-12:pagination:";
 const CRID_NOW_NEXT_PREFIX = "crid://dvb.org/metadata/schedules/now-next/";

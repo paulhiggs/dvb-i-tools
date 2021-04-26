@@ -48,7 +48,6 @@ const https=require("https");
 const DEFAULT_HTTP_SERVICE_PORT=3010;
 const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","selfsigned.crt");
 
-
 /**
  * checks of the object provided is empty, either contains no values or properties
  *
@@ -382,7 +381,7 @@ function processCGFile(req, res) {
 
 
 
-
+// initialize Express
 let app=express();
 
 app.use(express.static(__dirname));
@@ -390,15 +389,16 @@ app.set('view engine', 'ejs');
 app.use(fileupload());
 app.use(favicon(path.join('phlib','ph-icon.ico')));
 
+
 morgan.token("protocol", function getProtocol(req) {
     return req.protocol;
+});
+morgan.token("agent", function getAgent(req) {
+    return `(${req.headers["user-agent"]})`;
 });
 morgan.token("parseErr", function getParseErr(req) {
     if (req.parseErr) return `(${req.parseErr})`;
     return "";
-});
-morgan.token("agent", function getAgent(req) {
-    return `(${req.headers["user-agent"]})`;
 });
 morgan.token("location", function getCheckedLocation(req) {
 	if (req.files && req.files.SLfile) return `[${req.files.SLfile.name}]`;
@@ -410,7 +410,6 @@ morgan.token("location", function getCheckedLocation(req) {
 
 app.use(morgan(":remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr :location"));
 
-// initialize Express
 app.use(express.urlencoded({ extended: true }));
 
 
@@ -536,10 +535,9 @@ if (!options.nocsr) {
 	});
 
 	app.get('/reload', function(req, res) {
-		
-		res.status(404).end();
+		csr.loadServiceListRegistry(options.CSRfile);
+		res.status(200).end();
 	});
-	
 	
 	app.get('/stats', function(req, res) {
 		

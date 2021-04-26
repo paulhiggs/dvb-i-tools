@@ -1,10 +1,8 @@
-/* jshint esversion: 6 */
+/* jshint esversion: 8 */
 
 const phlib=require('./phlib/phlib');
 
-const fs=require("fs"), path=require("path");
-
-const fetch=require("node-fetch");
+const fs=require("fs");
 
 const ErrorList=require("./ErrorList.js");
 const ClassificationScheme=require("./ClassificationScheme.js");
@@ -50,27 +48,6 @@ const supportedRequests=[
 	{value:CG_REQUEST_BS_CONTENTS, label:"Box Set Contents"}];
 
 const OTHER_ELEMENTS_OK="!!!";
-
-/*
-const REPO_RAW="https://raw.githubusercontent.com/paulhiggs/dvb-i-tools/master/";
-
-const TVA_ContentCSFilename=path.join("tva", "ContentCS.xml"),
-	  TVA_ContentCSURL=REPO_RAW + "tva/" + "ContentCS.xml",
-
-	  TVA_FormatCSFilename=path.join("tva", "FormatCS.xml"),
-      TVA_FormatCSURL=REPO_RAW + "tva/" + "FormatCS.xml",
-
-	  DVBI_ContentSubjectFilename=path.join("dvbi", "DVBContentSubjectCS-2019.xml"),
-      DVBI_ContentSubjectURL=REPO_RAW + "dvbi/" + "DVBContentSubjectCS-2019.xml",
-
-	  DVBI_CreditsItemRolesFilename=path.join("dvbi", "CreditsItem@role-values.txt"),
-	  DVBI_CreditsItemRolesURL=`${REPO_RAW}dvbi/CreditsItem@role-values.txt`,
-
-	  DVBIv2_CreditsItemRolesFilename=path.join("dvbi", "CreditsItem@role-values-v2.txt"),
-	  DVBIv2_CreditsItemRolesURL=`${REPO_RAW}dvbi/CreditsItem@role-values-v2.txt`;
-  
-const TVAschemaFileName=path.join(".", "tva_metadata_3-1.xsd");
-*/
 
 
 /**
@@ -294,35 +271,9 @@ module.exports = class ContentGuideCheck {
 		this.supportedRequests=supportedRequests;
 
 		this.extendArray();
-//		this.loadDataFiles(useURLs);
+
 	}
 
-
-	/* private */
-	/**
-	 * Load classification schemes and other configuration files
-	 *
-	 * @param {boolean} useURLs when true, load configuration files from network locations
-	 */ 
-	/* private */ /*loadDataFiles(useURLs) {
-		console.log("loading classification schemes...");
-		this.allowedGenres.loadCS(useURLs, locs.TVA_ContentCSFilename, locs.TVA_ContentCSURL, false);
-		this.allowedGenres.loadCS(useURLs, locs.TVA_FormatCSFilename, locs.TVA_FormatCSURL, false);
-		this.allowedGenres.loadCS(useURLs, locs.DVBI_ContentSubjectFilename, locs.DVBI_ContentSubjectURL, false);
-
-		console.log("loading languages...");
-		if (useURLs) 
-			this.knownLanguages.loadLanguagesFromURL(this.IANA_Subtag_Registry_URL, true);
-		else this.knownLanguages.loadLanguagesFromFile(this.IANA_Subtag_Registry_Filename, true);
-
-
-		console.log("loading CreditItem roles...");
-		this.allowedCreditItemRoles.loadRoles(useURLs, locs.DVBI_CreditsItemRolesFilename, locs.DVBI_CreditsItemRolesURL);
-		this.allowedCreditItemRoles.loadRoles(useURLs, locs.DVBIv2_CreditsItemRolesFilename, locs.DVBIv2_CreditsItemRolesURL);
-
-		console.log("loading Schemas...");
-		this.TVAschema=libxml.parseXmlString(fs.readFileSync(locs.TVAschemaFileName));
-	} */
 
 	/*private*/ extendArray() {
 	// based on the polyfill at https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach 

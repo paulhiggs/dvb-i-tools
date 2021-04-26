@@ -1,5 +1,4 @@
-/*jshint esversion: 6 */
-
+/* jshint esversion: 8 */
 // pattern_checks.js
   
 

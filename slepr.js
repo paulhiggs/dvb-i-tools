@@ -1,15 +1,11 @@
-/*jshint esversion: 6 */
+/* jshint esversion: 8 */
 // SLEPR - Service List End Point Resolver
 
-//const cluster = require('cluster');
-//const totalCPUs = require('os').cpus().length;
-
-const fs=require("fs"), path=require("path");
+const fs=require("fs");
 
 // libxmljs - https://www.npmjs.com/package/libxmljs2
 const libxml=require('libxmljs2');
 
-const SLEPR_data=require('./slepr-data.js');
 const {xPath, xPathM, isIn}=require("./utils.js");
 
 const ISOcountries=require("./ISOcountries.js");
@@ -27,7 +23,7 @@ const allowed_arguments=[dvbi.e_ProviderName, dvbi.a_regulatorListFlag, dvbi.e_L
 const patterns=require("./pattern_checks.js");
 const IANAlanguages=require('./IANAlanguages.js');
 
-module.exports = class SLEPR {
+class SLEPR {
 
     constructor(useURLs, preloadedLanguageValidator=null, preloadedCountries=null) {
 
@@ -218,7 +214,7 @@ module.exports = class SLEPR {
 				let prov, p=0, providerCleanup=[];
 				while ((prov=slepr.get('//'+xPath(SCHEMA_PREFIX, dvbi.e_ProviderOffering, ++p), SLEPR_SCHEMA))!=null) {
 					let provName, n=0, matchedProvider=false;
-					while ((provName=prov.get(xPath(SCHEMA_PREFIX, dvbi.e_Provider)+'/'+xPath(SCHEMA_PREFIX, dvbi.e_Name, ++n), SLEPR_SCHEMA)) && !matchedProvider) {
+					while (!matchedProvider && (provName=prov.get(xPath(SCHEMA_PREFIX, dvbi.e_Provider)+'/'+xPath(SCHEMA_PREFIX, dvbi.e_Name, ++n), SLEPR_SCHEMA))) {
 						if (isIn(req.query.ProviderName, provName.text())) 
 							matchedProvider=true;					
 					}
@@ -298,4 +294,7 @@ module.exports = class SLEPR {
 		}
 		res.end();
     }
-};
+}
+
+module.exports = SLEPR;
+

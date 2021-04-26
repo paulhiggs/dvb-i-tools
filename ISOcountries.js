@@ -1,4 +1,4 @@
-/*jshint esversion: 6 */
+/* jshint esversion: 8 */
 
 const fetch=require('node-fetch');
 const fs=require("fs");

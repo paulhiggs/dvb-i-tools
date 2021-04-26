@@ -1,11 +1,9 @@
-/*jshint esversion: 6 */
+/* jshint esversion: 8 */
 
 const fetch=require('node-fetch');
-const fs=require('fs'), path=require("path");
+const fs=require('fs');
 
 const {isIn, isIni}=require('./utils.js');
-
-const locs=require("./data-locations.js");
 
 module.exports = class IANAlanguages {
 

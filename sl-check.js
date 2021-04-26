@@ -1,12 +1,10 @@
-/* jshint esversion: 6 */
+/* jshint esversion: 8 */
 
 // libxmljs2 - github.com/marudor/libxmljs2
 const libxml=require("libxmljs2");
 
-const fs=require("fs"), path=require("path");
-
-// pauls useful tools
-const phlib=require('./phlib/phlib.js');
+const fs=require("fs");
+//const path=require("path");
 
 const ErrorList=require("./ErrorList.js");
 const ClassificationScheme=require("./ClassificationScheme.js");
@@ -33,78 +31,7 @@ const IANAlanguages=require("./IANAlanguages.js");
 */
 
 const ANY_NAMESPACE="$%$!!";
-/*
-const COMMON_REPO_RAW="https://raw.githubusercontent.com/paulhiggs/dvb-i-tools/master/";
-const DVB_METADATA="https://dvb.org/metadata/";
 
-const TVA_ContentCS="ContentCS.xml";
-const TVA_ContentCSFilename=path.join("tva", TVA_ContentCS);
-const TVA_ContentCSURL=`${COMMON_REPO_RAW}tva/${TVA_ContentCS}`;
-
-const TVA_FormatCS="FormatCS.xml";
-const TVA_FormatCSFilename=path.join("tva", TVA_FormatCS);
-const TVA_FormatCSURL=`${COMMON_REPO_RAW}tva/${TVA_FormatCS}`;
-
-const TVA_PictureCS="PictureFormatCS.xml";
-const TVA_PictureFormatCSFilename=path.join("tva", TVA_PictureCS);
-const TVA_PictureFormatCSURL=`${COMMON_REPO_RAW}tva/${TVA_PictureCS}`;
-
-const DVB_ContentSubjectCS="DVBContentSubjectCS-2019.xml";
-const DVBI_ContentSubjectFilename=path.join("dvbi", DVB_ContentSubjectCS);
-const DVBI_ContentSubjectURL=`${COMMON_REPO_RAW}dvbi/${DVB_ContentSubjectCS}`;
-
-const DVB_ServiceTypeCS="DVBServiceTypeCS-2019.xml";
-const DVBI_ServiceTypeCSFilename=path.join("dvbi", DVB_ServiceTypeCS);
-const DVBI_ServiceTypeCSURL=`${COMMON_REPO_RAW}dvbi/${DVB_ServiceTypeCS}`;
-
-const DVB_AudioCodecCS2007="2007/AudioCodecCS.xml";
-const DVB_AudioCodecCSFilename=path.join("dvb/cs/", DVB_AudioCodecCS2007);
-const DVB_AudioCodecCSURL=`${DVB_METADATA}cs/${DVB_AudioCodecCS2007}`;
-
-const DVB_AudioCodecCS2020="2020/AudioCodecCS.xml";
-const DVB_AudioCodecCS2020Filename=path.join("dvb/cs/", DVB_AudioCodecCS2020);
-const DVB_AudioCodecCS2020URL=`${DVB_METADATA}cs/${DVB_AudioCodecCS2020}`;
-
-const DVB_VideoCodecCS2007="2007/VideoCodecCS.xml";
-const DVB_VideoCodecCSFilename=path.join("dvb/cs/", DVB_VideoCodecCS2007);
-const DVB_VideoCodecCSURL=`${DVB_METADATA}cs/${DVB_VideoCodecCS2007}`;
-
-const DVB_VideoCodecCS2020="2020/VideoCodecCS.xml";
-const DVB_VideoCodecCS2020Filename=path.join("dvb/cs", DVB_VideoCodecCS2020);
-const DVB_VideoCodecCS2020URL=`${DVB_METADATA}cs/${DVB_VideoCodecCS2020}`;
-
-const MPEG_AudioCodingFormatCS="AudioCodingFormatCS.xml";
-const MPEG7_AudioCodingFormatCSFilename=path.join("mpeg7", MPEG_AudioCodingFormatCS);
-const MPEG7_AudioCodingFormatCSURL=`${COMMON_REPO_RAW}mpeg7/${MPEG_AudioCodingFormatCS}`;
-
-const MPEG7_VisualCodingFormatCS="VisualCodingFormatCS.xml";
-const MPEG7_VisualCodingFormatCSFilename=path.join("mpeg7", MPEG7_VisualCodingFormatCS);
-const MPEG7_VisualCodingFormatCSURL=`${COMMON_REPO_RAW}mpeg7/${MPEG7_VisualCodingFormatCS}`;
-
-const MPEG7_AudioPresentationCS="AudioPresentationCS.xml";
-const MPEG7_AudioPresentationCSFilename=path.join("mpeg7", MPEG7_AudioPresentationCS);
-const MPEG7_AudioPresentationCSURL=`${COMMON_REPO_RAW}mpeg7/${MPEG7_AudioPresentationCS}`;
-
-const DVB_AudioConformanceCS="AudioConformancePointsCS.xml";
-const DVB_AudioConformanceCSFilename=path.join("dvb/cs/2017", DVB_AudioConformanceCS);
-const DVB_AudioConformanceCSURL=`${DVB_METADATA}cs/2017/${DVB_AudioConformanceCS}`;
-
-const DVB_VideoConformanceCS="VideoConformancePointsCS.xml";
-const DVB_VideoConformanceCSFilename=path.join("dvb/cs/2017", DVB_VideoConformanceCS);
-const DVB_VideoConformanceCSURL=`${DVB_METADATA}cs/2017/${DVB_VideoConformanceCS}`;
-
-const ISO3166="iso3166-countries.json";
-const ISO3166_Filename=path.join("iso", ISO3166);
-const ISO3166_URL=`${COMMON_REPO_RAW}iso/${ISO3166}`;
-
-const DVBI_RecordingInfoCS="DVBRecordingInfoCS-2019.xml";
-const DVBI_RecordingInfoCSFilename=path.join("dvbi", DVBI_RecordingInfoCS);
-const DVBI_RecordingInfoCSURL=`${COMMON_REPO_RAW}dvbi/${DVBI_RecordingInfoCS}`;
-
-const DVBI_ServiceListSchemaFilename_v1=path.join(".", "dvbi_v1.0.xsd");
-const DVBI_ServiceListSchemaFilename_v2=path.join(".", "dvbi_v2.0.xsd");
-const DVBI_ServiceListSchemaFilename_v3=path.join(".", "dvbi_v3.0.xsd");
-*/
 const SERVICE_LIST_RM="service list";
 const SERVICE_RM="service";
 const SERVICE_INSTANCE_RM="service instance";
@@ -225,12 +152,6 @@ class ServiceListCheck {
 		this.allowedPictureFormats=new ClassificationScheme();
 		this.AudioPresentationCSvalues=new ClassificationScheme();
 
-//		this.knownCountries=new ISOcountries(false, true);
-//		this.knownLanguages=new IANAlanguages();
-
-//		this.IANA_Subtag_Registry_Filename=locs.IANA_Subtag_Registry_Filename;
-//		this.IANA_Subtag_Registry_URL=locs.IANA_Subtag_Registry_URL;
-
 		console.log("loading service list schemas...");
 		this.SLschema_v1=libxml.parseXmlString(fs.readFileSync(locs.DVBI_ServiceListSchemaFilename_v1));
 		this.SLschema_v2=libxml.parseXmlString(fs.readFileSync(locs.DVBI_ServiceListSchemaFilename_v2));
@@ -247,11 +168,7 @@ class ServiceListCheck {
 	 * @param {boolean} useURLs if true then configuration data should be loaded from network locations otherwise, load from local files 
 	 */
 	/*private*/ loadDataFiles(useURLs) {
-//		console.log("loading classification schemes...");
-//		this.allowedGenres.loadCS(useURLs, locs.TVA_ContentCSFilename, locs.TVA_ContentCSURL, false);
-//		this.allowedGenres.loadCS(useURLs, locs.TVA_FormatCSFilename, locs.TVA_FormatCSURL, false);
-//		this.allowedGenres.loadCS(useURLs, locs.DVBI_ContentSubjectFilename, locs.DVBI_ContentSubjectURL, false);
-
+		console.log("loading classification schemes...");
 		this.allowedPictureFormats.loadCS(useURLs, locs.TVA_PictureFormatCSFilename, locs.TVA_PictureFormatCSURL, false);
 	
 		this.allowedServiceTypes.loadCS(useURLs, locs.DVBI_ServiceTypeCSFilename, locs.DVBI_ServiceTypeCSURL, false);
@@ -271,19 +188,6 @@ class ServiceListCheck {
 		this.AudioPresentationCSvalues.loadCS(useURLs, locs.MPEG7_AudioPresentationCSFilename, locs.MPEG7_AudioPresentationCSURL);
 
 		this.RecordingInfoCSvalues.loadCS(useURLs, locs.DVBI_RecordingInfoCSFilename, locs.DVBI_RecordingInfoCSURL);
-		
-//		if (useURLs) 
-//			this.knownCountries.loadCountriesFromURL(locs.ISO3166_URL, true);
-//		else this.knownCountries.loadCountriesFromFile(locs.ISO3166_Filename, true);
-		
-//		if (useURLs) 
-//			this.knownLanguages.loadLanguagesFromURL(this.IANA_Subtag_Registry_URL, true);
-//		else this.knownLanguages.loadLanguagesFromFile(this.IANA_Subtag_Registry_Filename, true);
-
-//		console.log("loading schemas...");
-//		this.SLschema_v1=libxml.parseXmlString(fs.readFileSync(DVBI_ServiceListSchemaFilename_v1));
-//		this.SLschema_v2=libxml.parseXmlString(fs.readFileSync(DVBI_ServiceListSchemaFilename_v2));
-//		this.SLschema_v3=libxml.parseXmlString(fs.readFileSync(DVBI_ServiceListSchemaFilename_v3));
 	}
 
 /**

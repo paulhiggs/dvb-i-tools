@@ -1,4 +1,4 @@
-/* jshint esversion: 6 */
+/* jshint esversion: 8 */
 
 /**
  * constructs an XPath based on the provided arguments
@@ -30,11 +30,11 @@ module.exports.xPathM = function (SCHEMA_PREFIX, elementNames) {
 
 /* local */ function findInSet(values, value, caseSensitive) {
 	let vlc=value.toLowerCase();
-    if (typeof(values)=="string")
+    if (typeof(values)=="string" || values instanceof String)
         return caseSensitive? values==value : values.toLowerCase()==vlc;
 
-    if (typeof(values)=="object")
-		return caseSensitive? values.includes(value) : (values.find(element => element.toLowerCase()==vlc) != undefined);
+    if (Array.isArray(values))
+		return caseSensitive ? values.includes(value) : (values.find(element => element.toLowerCase()==vlc) != undefined);
 
     return false;
 }
@@ -46,7 +46,7 @@ module.exports.xPathM = function (SCHEMA_PREFIX, elementNames) {
  * @param {String} value The value to check for existance
  * @return {boolean} if value is in the set of values
  */
-module.exports.isIn = (values, value, caseSensitive=true) =>  findInSet(values, value, caseSensitive);
+module.exports.isIn = (values, value, caseSensitive=true) => findInSet(values, value, caseSensitive);
 
 
 /**
