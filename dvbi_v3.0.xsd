@@ -14,7 +14,7 @@
 	<!ENTITY Hex16 "&HexDigit;{1,4}">
 	<!ENTITY Hex8 "&HexDigit;{1,2}">
 ]>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:202x" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2019" targetNamespace="urn:dvb:metadata:servicediscovery:202x" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2021" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2019" targetNamespace="urn:dvb:metadata:servicediscovery:2021" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<import namespace="urn:tva:metadata:2019" schemaLocation="tva_metadata_3-1.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
 	<element name="ServiceList" type="dvbisd:ServiceListType"/>
@@ -71,13 +71,13 @@
 			<element name="ServiceGenre" type="tva:GenreType" minOccurs="0"/>
 			<element name="ServiceType" type="tva:ControlledTermType" minOccurs="0"/>
 			<element name="ServiceDescription" type="tva:SynopsisType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="AdditionalServiceParameters" type="dvbisd:ExtensionBaseType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="RecordingInfo" type="tva:ControlledTermType" minOccurs="0"/>
 			<choice minOccurs="0">
 				<element name="ContentGuideSource" type="dvbisd:ContentGuideSourceType"/>
 				<element name="ContentGuideSourceRef" type="dvbisd:ContentGuideProviderRefIdType"/>
 			</choice>
 			<element name="ContentGuideServiceRef" type="dvbisd:ServiceIdentifierType" minOccurs="0"/>
+			<element name="AdditionalServiceParameters" type="dvbisd:ExtensionBaseType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 		<attribute name="dynamic" type="boolean" default="false"/>
 		<attribute name="version" type="positiveInteger" use="required"/>
@@ -120,23 +120,20 @@
 		</sequence>
 	</complexType>
 	<complexType name="ProtectionSystemType" abstract="true">
-		<attribute name="cpsIndex" type="string"/>
+		<simpleContent>
+			<extension base="string">
+				<attribute name="cpsIndex" type="string"/>
+			</extension>
+		</simpleContent>
 	</complexType>
 	<complexType name="CASystemType">
 		<complexContent>
-			<extension base="dvbisd:ProtectionSystemType">
-				<sequence>
-					<element name="CASystemId" type="string"/>
-				</sequence>
-			</extension>
+			<extension base="dvbisd:ProtectionSystemType"/>
 		</complexContent>
 	</complexType>
 	<complexType name="DRMSystemType">
 		<complexContent>
 			<extension base="dvbisd:ProtectionSystemType">
-				<sequence>
-					<element name="DRMSystemId" type="string"/>
-				</sequence>
 				<attribute name="encryptionScheme" type="dvbisd:EncryptionSchemeType" use="required"/>
 			</extension>
 		</complexContent>
@@ -433,7 +430,7 @@
 		</complexContent>
 	</complexType>
 	<!-- -->
-	<!--  data types adapted from ETSI TS 102 034 (v1.4) -->
+	<!--  data types adapted from SDNS v1.4 -->
 	<!-- -->
 	<complexType name="DVBTripletType">
 		<attribute name="origNetId" type="dvbisd:OrigNetId" use="optional"/>
@@ -448,13 +445,13 @@
 			<element name="AudioAttributes" type="tva:AudioAttributesType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="AudioConformancePoint" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="VideoAttributes" type="dvbisd:VideoAttributesType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="VideoConformancePoint" type="tva:ControlledTermType" minOccurs="0" />
+			<element name="VideoConformancePoint" type="tva:ControlledTermType" minOccurs="0"/>
 			<element name="CaptionLanguage" type="tva:CaptionLanguageType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="SignLanguage" type="tva:SignLanguageType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 	</complexType>
 	<!-- -->
-	<!-- items copied from ETSI TS 102 034 (v1.4) -->
+	<!-- items copied from SDNS v1.4 -->
 	<!-- -->
 	<simpleType name="DomainType">
 		<restriction base="string">
@@ -592,24 +589,24 @@
 	</simpleType>
 	<simpleType name="OrigNetId">
 		<annotation>
-			<documentation xml:lang="en">A unique identifier of a network. This is managed by DVB through ETSI, and listed in ETSI TR 101 162</documentation>
+			<documentation xml:lang="en">A unique identifier of a network. This is managed by DVB through ETSI</documentation>
 		</annotation>
 		<restriction base="unsignedShort"/>
 	</simpleType>
 	<simpleType name="TSId">
 		<annotation>
-			<documentation xml:lang="en">A number used to identify Transport Stream within an original_network. See ETSI EN 300 468</documentation>
+			<documentation xml:lang="en">A number used to identify Transport Stream within an original_network.</documentation>
 		</annotation>
 		<restriction base="unsignedShort"/>
 	</simpleType>
 	<simpleType name="ServiceId">
 		<annotation>
-			<documentation xml:lang="en">A number used to identify a service within a Transport Stream. See ETSI EN 300 468</documentation>
+			<documentation xml:lang="en">A number used to identify a service within a Transport Stream.</documentation>
 		</annotation>
 		<restriction base="unsignedShort"/>
 	</simpleType>
 	<!-- -->
-	<!-- items copied from ETSI TS 102 034 (v2.1) -->
+	<!-- items copied from SDnS v2.1 -->
 	<!-- -->
 	<simpleType name="IPType">
 		<annotation>

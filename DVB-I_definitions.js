@@ -14,7 +14,7 @@ const DVB_RELATED_CS_v2 = "urn:dvb:metadata:cs:HowRelatedCS:2020";
 module.exports = Object.freeze({
 	A177v1_Namespace: "urn:dvb:metadata:servicediscovery:2019",
     A177v2_Namespace: "urn:dvb:metadata:servicediscovery:2020",
-    A177v3_Namespace: "urn:dvb:metadata:servicediscovery:202x",
+    A177v3_Namespace: "urn:dvb:metadata:servicediscovery:2021",
 	
     MAX_TITLE_LENGTH: 80,
     MAX_KEYWORD_LENGTH: 32,
