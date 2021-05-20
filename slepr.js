@@ -14,14 +14,21 @@ const dvbi=require("./DVB-I_definitions.js");
 const locs=require("./data-locations.js");
 
 var masterSLEPR="";
-const EMPTY_SLEPR="<ServiceListEntryPoints xmlns=\"urn:dvb:metadata:servicelistdiscovery:2019\"></ServiceListEntryPoints>";
+const EMPTY_SLEPR="<ServiceListEntryPoints xmlns=\"urn:dvb:metadata:servicelistdiscovery:2021\"></ServiceListEntryPoints>";
 
 
 // permitted query parameters
-const allowed_arguments=[dvbi.e_ProviderName, dvbi.a_regulatorListFlag, dvbi.e_Language, dvbi.e_TargetCountry, dvbi.e_Genre];
+const allowed_arguments=[dvbi.e_ProviderName, dvbi.a_regulatorListFlag, dvbi.e_Language, dvbi.e_TargetCountry, dvbi.e_Genre, dvbi.e_Delivery];
 
 const patterns=require("./pattern_checks.js");
 const IANAlanguages=require('./IANAlanguages.js');
+
+const DVB_DASH_DELIVERY="dvb-dash",
+      DVB_T_DELIVERY="dvb-t",
+      DVB_S_DELIVERY="dvb-s", 
+      DVB_C_DELIVERY="dvb-c",
+      DVB_IPTV_DELIVERY="dvb-iptv",
+      DVB_APPLICATION_DELIVERY="application";
 
 class SLEPR {
 
@@ -78,8 +85,32 @@ class SLEPR {
         });	
     }
 
+    /**
+     * check if the element contains the named child element
+     *
+     * @param {Object} elem the element to check
+     * @param {string} childElementName the name of the child element to look for
+     * @returns {boolean} true of the element contains the named child element(s) otherwise false
+     */
+    hasChild(elem, childElementName) { 
+        if (elem)
+            return elem.childNodes().find(el => el.type()=='element' && el.name()==childElementName) != undefined;
+        return false;
+    }
+    
     /* private */ checkQuery(req) {
-	
+
+            /**
+             * checks the possible values used in the &Delivery query parameter
+             * @param {string} DeliverySystem the query value provided
+             * @returns {Boolean} true if DeliverySystem is valid, otherwise false
+             */
+            function isValidDelivery(DeliverySystem) {
+
+                return [DVB_DASH_DELIVERY, DVB_T_DELIVERY, DVB_S_DELIVERY, DVB_C_DELIVERY, 
+                    DVB_IPTV_DELIVERY, DVB_APPLICATION_DELIVERY].includes(DeliverySystem);
+            }
+
         /*	function isGenre(genre) {
                 // DVB-I Genre is defined through classification schemes
                 // permitted values through TVA:ContentCS, TVA:FormatCS, DVB-I:ContentSubject 
@@ -89,7 +120,7 @@ class SLEPR {
             function isProvider(provider) {
                 return true;
             } */
-            
+
             if (req.query) {
                 
                 // check for any erronous arguments
@@ -155,6 +186,28 @@ class SLEPR {
                         return false;
                     }
                 }
+
+                //DeliverySystems(s)
+                if (req.query.Delivery) {
+                    if (typeof req.query.Delivery=="string" || req.query.Delivery instanceof String) {
+                        if (!!isValidDelivery(req.query.Delivery)) {
+                            req.parseErr=`incorrect delivery system [${req.query.Delivery}]`;
+                            return false;
+                        }					
+                    }	
+                    else if (Array.isArray(req.query.Delivery)) {
+                        for (let i=0; i<req.query.Delivery.length; i++ ) {
+                            if (!isValidDelivery(req.query.Delivery[i])) {
+                                req.parseErr=`incorrect delivery system [${req.query.Delivery[i]}]`;
+                                return false;
+                            }
+                        }
+                    }
+                    else {
+                        req.parseErr=`invalid type [${typeof(req.query.Delivery)}] for language`;
+                        return false;
+                    }
+                }	
         /* value space of these arguments is not checked
                 // Genre(s)
                 if (req.query.Genre) {
@@ -274,7 +327,31 @@ class SLEPR {
 							}
 							if (hasGenre && !keepService) removeService=true;
 						}
-					
+
+                        // remove remaining services that do not have the requested delivery modes
+						if (!removeService && req.query.Delivery) {
+							let delivery=serv.get(xPath(SCHEMA_PREFIX, dvbi.e_Delivery), SLEPR_SCHEMA);
+
+							if (!delivery)
+								removeService=true;
+							else {
+								// check that there is a 'delivery system' for at least one of those requested
+								let keepService=false;
+
+								if ((isIn(req.query.Delivery, DVB_DASH_DELIVERY) && hasChild(delivery, dvbi.e_DASHDelivery)) ||
+  								    (isIn(req.query.Delivery, DVB_T_DELIVERY) && hasChild(delivery, dvbi.e_DVBTDelivery)) ||
+								    (isIn(req.query.Delivery, DVB_C_DELIVERY) && hasChild(delivery, dvbi.e_DVBCDelivery)) ||
+								    (isIn(req.query.Delivery, DVB_S_DELIVERY) && hasChild(delivery, dvbi.e_DVBSDelivery)) ||
+									(isIn(req.query.Delivery, DVB_IPTV_DELIVERY) && (hasChild(delivery, dvbi.e_RTSPDelivery) || hasChild(delivery, dvbi.e_MulticastTSDelivery))) ||
+									(isIn(req.query.Delivery, DVB_APPLICATION_DELIVERY) && hasChild(delivery, dvbi.e_ApplicationDelivery))
+								) {
+									keepService=true;
+								}
+
+								if (!keepSerice) removeService=true;
+							}
+                        }
+
 						if (removeService) servicesToRemove.push(serv);						
 					}
 				}

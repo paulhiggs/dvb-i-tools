@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<sld:ServiceListEntryPoints xmlns:sld="urn:dvb:metadata:servicelistdiscovery:2019" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2019" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:dvb:metadata:servicelistdiscovery:2019 dvbi_service_list_discovery_v1.0.xsd">
+<sld:ServiceListEntryPoints xmlns:sld="urn:dvb:metadata:servicelistdiscovery:2021" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2021" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:dvb:metadata:servicelistdiscovery:2021 dvbi_service_list_discovery_v1.1.xsd">
 	<sld:ServiceListRegistryEntity regulatorFlag="false">
 		<mpeg7:Icon>
 			<mpeg7:MediaUri>http://dvb.org/img/f/dvb-logo.png</mpeg7:MediaUri>
@@ -40,6 +40,10 @@
 			<sld:ServiceListURI contentType="application/xml">
 				<dvbisd:URI>http://dvbi.italian-authority.it/trusted-services.xml</dvbisd:URI>
 			</sld:ServiceListURI>
+			<sld:Delivery>
+				<sld:DASHDelivery required="false"/>
+				<sld:DVBTDelivery required="true"/>
+			</sld:Deluvery>
 			<sld:Language>it</sld:Language>
 			<sld:TargetCountry>ITA,SMR</sld:TargetCountry>
 		</sld:ServiceListOffering>
@@ -67,6 +71,9 @@
 			<sld:ServiceListURI contentType="application/xml">
 				<dvbisd:URI>http://dvbi.TVfromTheWorld.com/engTVservices.xml</dvbisd:URI>
 			</sld:ServiceListURI>
+			<sld:Delivery>
+				<sld:DASHDelivery required="true"/>
+			</sld:Delivery>
 			<sld:Language>en</sld:Language>
 			<!-- Assumption: if TargetCountry is not specified, the service list is assumed to be targeted to any country -->
 		</sld:ServiceListOffering>
@@ -76,6 +83,10 @@
 			<sld:ServiceListURI contentType="application/xml">
 				<dvbisd:URI>http://dvbi.TVfromTheWorld.com/TVservices_Germany.xml</dvbisd:URI>
 			</sld:ServiceListURI>
+			<sld:Delivery>
+				<sld:DASHDelivery required="false"/>
+				<sld:DVBTDelivery required="false"/>
+			</sld:Delivery>
 			<sld:Language>de</sld:Language>
 			<sld:Language>en</sld:Language>
 			<sld:TargetCountry>DEU</sld:TargetCountry>
@@ -107,6 +118,9 @@
 					http://alt.british-service-list-provider.co.uk/documentaries.xml
 				</dvbisd:URI>
 			</sld:ServiceListURI>
+			<sld:Delivery>
+				<sld:DASHDelivery required="true"/>
+			</sld:Delivery>
 			<sld:Language>en</sld:Language>
 			<sld:TargetCountry>GBR</sld:TargetCountry>
 			<sld:TargetCountry>FRA</sld:TargetCountry>
@@ -136,6 +150,10 @@
 					http://www.satip.info/sites/satip/files/files/ASTRA_19_2_E.xml
 				</dvbisd:URI>
 			</sld:ServiceListURI>
+			<sld:Delivery>
+				<sld:DASHDelivery required="false"/>
+				<sld:DVBSDelivery required="true"/>
+			</sld:Delivery>
 			<sld:TargetCountry>DEU</sld:TargetCountry>
 		</sld:ServiceListOffering>
 	</sld:ProviderOffering>
@@ -158,6 +176,10 @@
 			<sld:ServiceListURI contentType="application/xml">
 				<dvbisd:URI>https://raw.githubusercontent.com/DVBproject/DVB-I-Reference-Client/master/backend/servicelists/example.xml</dvbisd:URI>
 			</sld:ServiceListURI>
+			<sld:Delivery>
+				<sld:DASHDelivery required="true"/>
+				<sld:DVBTDelivery required="false"/>
+			</sld:Delivery
 		</sld:ServiceListOffering>
 	</sld:ProviderOffering>
 </sld:ServiceListEntryPoints>
