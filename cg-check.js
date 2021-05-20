@@ -581,7 +581,9 @@ module.exports = class ContentGuideCheck {
 			errs.pushCode(errCode?`${errCode}-2`:"GE002", `invalid ${tva.a_href.attribute()} value ${genreValue.quote()} for ${tva.e_Genre.elementize()}`);
 	}
 	if (count>maxGenres)
-		errs.pushCode(errCode?`${errCode}-3`:"GE003", `More than ${maxGenres} ${tva.e_Genre.elementize()} element${(maxGenres>1?"s":"")} specified`);
+		errs.pushCode(errCode?`${errCode}-3`:"GE003", `More than ${maxGenres} ${tva.e_Genre.elementize()} element${(maxGenres!=1?"s":"")} specified`);
+	if (count<minGenres)
+		errs.pushCode(errCode?`${errCode}-4`:"GE004", `Less than ${minGenres} ${tva.e_Genre.elementize()} element${(minGenres!=1?"s":"")} specified`);
 }
 
 /**
@@ -642,7 +644,9 @@ module.exports = class ContentGuideCheck {
 			errs.pushCode(errCode?`${errCode}-6`:"PG006", `only a single ${tva.e_ExplanatoryText.elementize()} element is premitted in ${tva.e_ParentalGuidance.elementize()}`);
 	}
 	if (countParentalGuidance>maxPGelements)
-		errs.pushCode(errCode?`${errCode}-7`:"PG007", `no more than ${maxPGelements} ${tva.e_ParentalGuidance.elementize()} elements are premitted`);
+		errs.pushCode(errCode?`${errCode}-7`:"PG007", `no more than ${maxPGelements} ${tva.e_ParentalGuidance.elementize()} element${maxPGelements!=1?"s":""} are premitted`);
+	if (countParentalGuidance<minPGelements)
+		errs.pushCode(errCode?`${errCode}-8`:"PG008", `less than ${minPGelements} ${tva.e_ParentalGuidance.elementize()} element${minPGelements!=1?"s":""} are specified`);
 }
 
 
@@ -726,41 +730,41 @@ module.exports = class ContentGuideCheck {
 					case tva.e_PersonName:
 						foundPersonName++;
 						// required to have a GivenName optionally have a FamilyName
-						vn(CG_SCHEMA, SCHEMA_PREFIX, elem, errs );
+						vn(CG_SCHEMA, SCHEMA_PREFIX, elem, errs, errCode?`${errCode}-3`:"CL003" );
 						break;
 					case tva.e_Character:
 						foundCharacter++;
 						// required to have a GivenName optionally have a FamilyName
-						vn(CG_SCHEMA, SCHEMA_PREFIX, elem, errs );
+						vn(CG_SCHEMA, SCHEMA_PREFIX, elem, errs, errCode?`${errCode}-4`:"CL004" );
 						break;
 					case tva.e_OrganizationName:
 						foundOrganizationName++;
 						if (unEntity(elem.text()).length > dvbi.MAX_ORGANIZATION_NAME_LENGTH)
-							errs.pushCode(errCode?`${errCode}-3`:"CL003", 
+							errs.pushCode(errCode?`${errCode}-5`:"CL005", 
 								`length of ${tva.e_OrganizationName.elementize()} in ${tva.e_CreditsItem.elementize()} exceeds ${dvbi.MAX_ORGANIZATION_NAME_LENGTH} characters`);
 						break;
 					default:
 						if (elem.name()!="text")
-							errs.pushCode(errCode?`${errCode}-4`:"CL004", `extra element ${elem.name().elementize()} found in ${tva.e_CreditsItem.elementize()}`);
+							errs.pushCode(errCode?`${errCode}-6`:"CL006", `extra element ${elem.name().elementize()} found in ${tva.e_CreditsItem.elementize()}`);
 				}
 				if (foundPersonName>1)
-					errs.pushCode(errCode?`${errCode}-5`:"CL005", singleElementError(tva.e_PersonName, tva.e_CreditsItem));
+					errs.pushCode(errCode?`${errCode}-10`:"CL010", singleElementError(tva.e_PersonName, tva.e_CreditsItem));
 				if (foundCharacter>1)
-					errs.pushCode(errCode?`${errCode}-6`:"CL006", singleElementError(tva.e_Character, tva.e_CreditsItem));
+					errs.pushCode(errCode?`${errCode}-11`:"CL011", singleElementError(tva.e_Character, tva.e_CreditsItem));
 				if (foundOrganizationName>1)
-					errs.pushCode(errCode?`${errCode}-7`:"CL007", singleElementError(tva.e_OrganizationName, tva.e_CreditsItem));
+					errs.pushCode(errCode?`${errCode}-12`:"CL012", singleElementError(tva.e_OrganizationName, tva.e_CreditsItem));
 				if (foundCharacter>0 && foundPersonName==0)
-					errs.pushCode(errCode?`${errCode}-8`:"CL008", `${tva.e_Character.elementize()} in ${tva.e_CreditsItem.elementize()} requires ${tva.e_PersonName.elementize()}`);
+					errs.pushCode(errCode?`${errCode}-13`:"CL013", `${tva.e_Character.elementize()} in ${tva.e_CreditsItem.elementize()} requires ${tva.e_PersonName.elementize()}`);
 				if (foundOrganizationName>0 && (foundPersonName>0 || foundCharacter>0))
-					errs.pushCode(errCode?`${errCode}-9`:"CL009", `${tva.e_OrganizationName.elementize()} can only be present when ${tva.e_PersonName.elementize()} is absent in ${tva.e_CreditsItem.elementize()}`);
+					errs.pushCode(errCode?`${errCode}-14`:"CL014", `${tva.e_OrganizationName.elementize()} can only be present when ${tva.e_PersonName.elementize()} is absent in ${tva.e_CreditsItem.elementize()}`);
 			});
 			/* jshint +W083 */
 			if (foundPersonName>1)
-				errs.pushCode(errCode?`${errCode}-10`:"CL010", singleElementError(tva.e_PersonName, tva.e_CreditsItem));
+				errs.pushCode(errCode?`${errCode}-20`:"CL020", singleElementError(tva.e_PersonName, tva.e_CreditsItem));
 			if (foundCharacter>1)
-				errs.pushCode(errCode?`${errCode}-11`:"CL011", singleElementError(tva.e_Character, tva.e_CreditsItem));
+				errs.pushCode(errCode?`${errCode}-21`:"CL021", singleElementError(tva.e_Character, tva.e_CreditsItem));
 			if (foundOrganizationName>1)
-				errs.pushCode(errCode?`${errCode}-12`:"CL012", singleElementError(tva.e_OrganizationName, tva.e_CreditsItem));
+				errs.pushCode(errCode?`${errCode}-22`:"CL022", singleElementError(tva.e_OrganizationName, tva.e_CreditsItem));
 		}
 	}
 }
@@ -1208,8 +1212,9 @@ module.exports = class ContentGuideCheck {
  * @param {Class}   errs                errors found in validaton
  * @param {string}  parentLanguage	    the xml:lang of the parent element to ProgramInformation
  * @param {string}  errCode             error code prefix to be used in reports, if not present then use local codes
+ * @param {boolean} TypeIsRequired      true is the @type is a required attribute in this use of <Title>
  */
-/* private */  ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, allowSecondary, errs, parentLanguage, errCode=null) {
+/* private */  ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, allowSecondary, errs, parentLanguage, errCode=null, TypeIsRequired=false) {
 	
 	if (!BasicDescription) {
 		errs.pushCode("VT000", "ValidateTitle() called with BasicDescription==null");
@@ -1226,10 +1231,13 @@ module.exports = class ContentGuideCheck {
 		}
 	}
 
-	let t=0, Title;
+	let t=0, Title, requiredAttributes=[], optionalAttributes=[tva.a_lang];
+	if (TypeIsRequired) 
+		requiredAttributes.push(tva.a_type);
+	else optionalAttributes.push(tva.a_type);
 	while ((Title=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_Title, ++t), CG_SCHEMA))!=null) {
 
-		checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, Title, [tva.a_type], [tva.a_lang], errs, errCode?`${errCode}-1`:"VT001");
+		checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, Title, requiredAttributes, optionalAttributes, errs, errCode?`${errCode}-1`:"VT001");
 		
 		let titleType=Title.attr(tva.a_type) ? Title.attr(tva.a_type).value() : mpeg7.DEFAULT_TITLE_TYPE;
 		let titleLang=this.GetLanguage(this.knownLanguages, errs, Title, parentLanguage, false, "VT002");
@@ -1297,31 +1305,32 @@ module.exports = class ContentGuideCheck {
 				case CG_REQUEST_SCHEDULE_WINDOW:
 				case CG_REQUEST_SCHEDULE_TIME:
 					checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title, tva.e_Synopsis], [tva.e_Genre, tva.e_ParentalGuidance, tva.e_RelatedMaterial], errs, "BD010");	
-					this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, parentLanguage);
-					this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL], requestType, errs, parentLanguage);
-					this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 1, errs);
-					this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 2, errs);
+					this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, parentLanguage, "BD011", true);
+					this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL], requestType, errs, parentLanguage, "BD012");
+					this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 1, errs, "BD013");
+					this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 2, errs, "BD014");
 					this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  0, 1, errs);
 					break;
 				case CG_REQUEST_PROGRAM:	// 6.10.5.3
 					checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title, tva.e_Synopsis], [tva.e_Keyword, tva.e_Genre, tva.e_ParentalGuidance, tva.e_CreditsList, tva.e_RelatedMaterial], errs, "BD020");
-					this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, parentLanguage);
-					this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_LONG_LABEL], requestType, errs, parentLanguage);
-					this.ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 20, errs, parentLanguage);
-					this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 1, errs);
-					this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 2, errs);	
-					this.ValidateCreditsList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs);	
+					this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, parentLanguage, "BD021", true);
+					this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_LONG_LABEL], requestType, errs, parentLanguage, "BD022");
+					this.ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 20, errs, parentLanguage, "BD023");
+					this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 1, errs, "BD024");
+					this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 2, errs, "BD025");	
+					this.ValidateCreditsList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs, "BD026");	
 					this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  0, 1, errs);						
 					break;
 				case CG_REQUEST_BS_CONTENTS:  // 6.10.5.4					
 					checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title], [tva.e_Synopsis, tva.e_ParentalGuidance, tva.e_RelatedMaterial], errs, "BD030");
-					this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, parentLanguage);
-					this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [], [tva.SYNOPSIS_MEDIUM_LABEL], requestType, errs, parentLanguage);
-					this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 2, errs);
+					this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, parentLanguage, "BD031", true);
+					this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [], [tva.SYNOPSIS_MEDIUM_LABEL], requestType, errs, parentLanguage, "BD032");
+					this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 2, errs, "BD033");
 					this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  0, 1, errs);
 					break;
 				case CG_REQUEST_MORE_EPISODES:
 					checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title], [tva.e_RelatedMaterial], errs, "BD040");
+					this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, parentLanguage, "BD041", true);
 					this.ValidateRelatedMaterial_MoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs);
 					break;
 				default:
@@ -1340,10 +1349,10 @@ module.exports = class ContentGuideCheck {
 						checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title], [], errs, "BD061");
 					else checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title, tva.e_Synopsis], [tva.e_Keyword, tva.e_RelatedMaterial], errs, "BD062");
 					
-					this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, false, errs, parentLanguage);						
+					this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, false, errs, parentLanguage, "BD063", false);						
 					if (!isParentGroup) {
-						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [], requestType, errs, parentLanguage);
-						this.ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 20, errs, parentLanguage);
+						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [], requestType, errs, parentLanguage, "BD064");
+						this.ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 20, errs, parentLanguage, "BD065");
 						this.ValidateRelatedMaterial_BoxSetList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs);
 					}
 				break;
@@ -1356,10 +1365,10 @@ module.exports = class ContentGuideCheck {
 						checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title], [], errs, "BD080");	
 					else 
 						checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title, tva.e_Synopsis], [tva.e_Genre, tva.e_RelatedMaterial], errs, "BD081");
-					this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, false, errs, parentLanguage);
+					this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, false, errs, parentLanguage, "BD082", false);
 					if (!isParentGroup)
-						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_SHORT_LABEL], [], requestType, errs, parentLanguage);
-					this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 1, errs);
+						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_SHORT_LABEL], [], requestType, errs, parentLanguage, "BD083");
+					this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 1, errs, "BD084");
 					this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  0, 1, errs);
 					break;
 				default:
