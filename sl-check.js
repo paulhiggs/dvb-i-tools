@@ -179,11 +179,12 @@ class ServiceListCheck {
 
 		this.allowedAudioConformancePoints.loadCS(useURLs, locs.DVB_AudioConformanceCSFilename, locs.DVB_AudioConformanceCSURL, true);
 		
-		this.allowedVideoSchemes.loadCS(useURLs, locs.DVB_VideoCodecCSFilename, locs.DVB_VideoCodecCSURL, true);
-		this.allowedVideoSchemes.loadCS(useURLs, locs.DVB_VideoCodecCS2020Filename, locs.DVB_VideoCodecCS2020URL, true);
+		this.allowedVideoSchemes.loadCS(useURLs, locs.DVB_VideoCodecCS2007Filename, locs.DVB_VideoCodecCS2007URL, true);
+		this.allowedVideoSchemes.loadCS(useURLs, locs.DVB_VideoCodecCS2021Filename, locs.DVB_VideoCodecCS2021URL, true);
 		this.allowedVideoSchemes.loadCS(useURLs, locs.MPEG7_VisualCodingFormatCSFilename, locs.MPEG7_VisualCodingFormatCSURL, true);
 
-		this.allowedVideoConformancePoints.loadCS(useURLs, locs.DVB_VideoConformanceCSFilename, locs.DVB_VideoConformanceCSURL, true);
+		this.allowedVideoConformancePoints.loadCS(useURLs, locs.DVB_VideoConformanceCS2017Filename, locs.DVB_VideoConformanceCS2017URL, true);
+		this.allowedVideoConformancePoints.loadCS(useURLs, locs.DVB_VideoConformanceCS2021Filename, locs.DVB_VideoConformanceCS2021URL, true);
 
 		this.AudioPresentationCSvalues.loadCS(useURLs, locs.MPEG7_AudioPresentationCSFilename, locs.MPEG7_AudioPresentationCSURL);
 
@@ -1428,27 +1429,27 @@ class ServiceListCheck {
 		this.ValidateSynopsisType(SL_SCHEMA, SCHEMA_PREFIX, service, dvbi.e_ServiceDescription, 
 			[], [tva.SYNOPSIS_LENGTH_BRIEF, tva.SYNOPSIS_LENGTH_SHORT, tva.SYNOPSIS_LENGTH_MEDIUM, tva.SYNOPSIS_LENGTH_LONG, tva.SYNOPSIS_LENGTH_EXTENDED], "***", errs, "SL170");
 
-		// check <Service><AdditionalServiceParameters>
-		let _ap=0, AdditionalParams;
-		while ((AdditionalParams=service.get(xPath(SCHEMA_PREFIX, dvbi.e_AdditionalServiceParameters, ++_ap), SL_SCHEMA))!=null) {
-			errs.pushCodeW("SL180", `${dvbi.e_AdditionalServiceParameters.elementize()} in ${dvbi.e_Service.elementize()} is an experimental element`);
-			this.CheckExtension(AdditionalParams, EXTENSION_LOCATION_SERVICE_ELEMENT, errs, "SL181");
-		}
-
 		// check <Service><RecordingInfo>
 		let RecordingInfo=service.get(xPath(SCHEMA_PREFIX, dvbi.e_RecordingInfo), SL_SCHEMA);
 		if (RecordingInfo && RecordingInfo.attr(dvbi.a_href) && !this.RecordingInfoCSvalues.isIn(RecordingInfo.attr(dvbi.a_href).value())) 
-			errs.pushCode("SL190", `invalid ${dvbi.e_RecordingInfo.elementize()} value ${RecordingInfo.attr(dvbi.a_href).value().quote()} for service ${thisServiceId}`, `invalid ${dvbi.e_RecordingInfo}`);
+			errs.pushCode("SL180", `invalid ${dvbi.e_RecordingInfo.elementize()} value ${RecordingInfo.attr(dvbi.a_href).value().quote()} for service ${thisServiceId}`, `invalid ${dvbi.e_RecordingInfo}`);
 
 		// check <Service><ContentGuideSource>
 		let sCG=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ContentGuideSource), SL_SCHEMA);
 		if (sCG) 
-			this.validateAContentGuideSource(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, sCG, errs, `${dvbi.e_ContentGuideSource.elementize()} in service ${thisServiceId}`, "SL200");
+			this.validateAContentGuideSource(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, sCG, errs, `${dvbi.e_ContentGuideSource.elementize()} in service ${thisServiceId}`, "SL190");
 
 		//check <Service><ContentGuideSourceRef>
 		let sCGref=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ContentGuideSourceRef), SL_SCHEMA);
 		if (sCGref && !isIn(ContentGuideSourceIDs, sCGref.text())) 
-			errs.pushCode("SL210", `content guide reference ${sCGref.text().quote()} for service ${thisServiceId.quote()} not specified`, "unspecified content guide source");
+			errs.pushCode("SL200", `content guide reference ${sCGref.text().quote()} for service ${thisServiceId.quote()} not specified`, "unspecified content guide source");
+
+		// check <Service><AdditionalServiceParameters>
+		let _ap=0, AdditionalParams;
+		while ((AdditionalParams=service.get(xPath(SCHEMA_PREFIX, dvbi.e_AdditionalServiceParameters, ++_ap), SL_SCHEMA))!=null) {
+			errs.pushCodeW("SL210", `${dvbi.e_AdditionalServiceParameters.elementize()} in ${dvbi.e_Service.elementize()} is an experimental element`);
+			this.CheckExtension(AdditionalParams, EXTENSION_LOCATION_SERVICE_ELEMENT, errs, "SL211");
+		}
 	}        
 
 	// check <Service><ContentGuideServiceRef>
@@ -1459,7 +1460,7 @@ class ServiceListCheck {
 		if (CGSR) {
 			let uniqueID=service.get(xPath(SCHEMA_PREFIX, dvbi.e_UniqueIdentifier), SL_SCHEMA);
 			if (uniqueID && (CGSR.text()==uniqueID.text()))
-				errs.pushCodeW("SL221", `${dvbi.e_ContentGuideServiceRef.elementize()} is self`, `self ${dvbi.e_ContentGuideServiceRef.elementize()}`);
+				errs.pushCodeW("SL230", `${dvbi.e_ContentGuideServiceRef.elementize()} is self`, `self ${dvbi.e_ContentGuideServiceRef.elementize()}`);
 		}
 	}
 

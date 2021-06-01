@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- revision information
+2021:  add HEVC 8K
+-->
+<ClassificationScheme xmlns="urn:dvb:metadata:schema:dvbCSschema:2007"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    uri="urn:dvb:metadata:cs:VideoConformancePointsCS:2021">
+    <Term termID="1">
+        <Name>Broadcast Conformance Points</Name>
+        <Term termID="1.1">
+            <Name>Broadcast Receiver Conformance Points</Name>
+            <Term termID="1.1.1">
+                <Name>urn:dvb:broadcast:ird:video:25_Hz_H.264_AVC_HDTV_IRD</Name>
+                <Definition>25 Hz H.264/AVC HDTV IRD as defined in clause 5.7.2 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.2">
+                <Name>urn:dvb:broadcast:ird:video:30_Hz_H.264_AVC_HDTV_IRD</Name>
+                <Definition>30 Hz H.264/AVC HDTV IRD as defined in clause 5.7.3 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.3">
+                <Name>urn:dvb:broadcast:ird:video:50_Hz_H.264_AVC_HDTV_IRD</Name>
+                <Definition>50 Hz H.264/AVC HDTV IRD as defined in clause 5.7.4 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.4">
+                <Name>urn:dvb:broadcast:ird:video:60_Hz_H.264_AVC_HDTV_IRD</Name>
+                <Definition>60 Hz H.264/AVC HDTV IRD as defined in clause 5.7.5 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.5">
+                <Name>urn:dvb:broadcast:ird:video:50_Hz_HEVC_HDTV_8-bit_IRD</Name>
+                <Definition>50 Hz HEVC HDTV 8-bit IRD as defined in table 18a in clause 5.14.1.0 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.6">
+                <Name>urn:dvb:broadcast:ird:video:60_Hz_HEVC_HDTV_8-bit_IRD</Name>
+                <Definition>60 Hz HEVC HDTV 8-bit IRD as defined in table 18a in clause 5.14.1.0 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.7">
+                <Name>urn:dvb:broadcast:ird:video:50_Hz_HEVC_HDTV_10-bit_IRD</Name>
+                <Definition>50 Hz HEVC HDTV 10-bit IRD as defined in table 18a in clause 5.14.1.0 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.8">
+                <Name>urn:dvb:broadcast:ird:video:60_Hz_HEVC_HDTV_10-bit_IRD</Name>
+                <Definition>60 Hz HEVC HDTV 10-bit IRD as defined in table 18a in clause 5.14.1.0 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.9">
+                <Name>urn:dvb:broadcast:ird:video:HEVC_UHDTV_IRD</Name>
+                <Definition>HEVC UHDTV IRD as defined in table 18a in clause 5.14.1.0 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.10">
+                <Name>urn:dvb:broadcast:ird:video:HEVC_HDR_UHDTV_IRD_using_HLG10</Name>
+                <Definition>HEVC HDR UHDTV IRD using HLG10 as defined in table 18a in clause 5.14.1.0 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.11">
+                <Name>urn:dvb:broadcast:ird:video:HEVC_HDR_UHDTV_IRD_using_PQ10</Name>
+                <Definition>HEVC HDR UHDTV IRD using PQ10 as defined in table 18a in clause 5.14.1.0 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.12">
+                <Name>urn:dvb:broadcast:ird:video:HEVC_HDR_HFR_UHDTV_IRD_using_HLG10</Name>
+                <Definition>HEVC HDR HFR UHDTV IRD using HLG10 as defined in table 18a in clause 5.14.1.0 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.13">
+                <Name>urn:dvb:broadcast:ird:video:HEVC_HDR_HFR_UHDTV_IRD_using_PQ10</Name>
+                <Definition>HEVC HDR HFR UHDTV IRD using PQ10 as defined in table 18a in clause 5.14.1.0 of ETSI TS 101 154</Definition>
+            </Term>
+			<Term termID="1.1.14">
+				<Name>urn:dvb:broadcast:ird:video:HEVC_HDR_UHDTV2_IRD</Name>
+				<Definition>HEVC HDR UHDTV2 IRD as defined in table 18a in clause 5.14.1.0 of ETSI TS 101 154</Definition>
+			</Term>
+        </Term>
+        <Term termID="1.2">
+            <Name>Broadcast Bitstream Conformance Points</Name>
+        </Term>
+    </Term>
+    <Term termID="2">
+        <Name>DASH Conformance Points</Name>
+        <Term termID="2.1">
+            <Name>DASH Player Conformance Points</Name>
+            <Term termID="2.1.1">
+                <Name>urn:dvb:dash:player:video:avc_hd_50_level40</Name>
+                <Definition>avc_hd_50_level40 DASH player as defined in table L.1 in clause L.2.1 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="2.1.2">
+                <Name>urn:dvb:dash:player:video:avc_hd_60_level40</Name>
+                <Definition>avc_hd_60_level40 DASH player as defined in table L.1 in clause L.2.1 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="2.1.3">
+                <Name>urn:dvb:dash:player:video:avc_hd_50</Name>
+                <Definition>avc_hd_50 DASH player as defined in table L.1 in clause L.2.1 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="2.1.4">
+                <Name>urn:dvb:dash:player:video:avc_hd_60</Name>
+                <Definition>avc_hd_60 DASH player as defined in table L.1 in clause L.2.1 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="2.1.5">
+                <Name>urn:dvb:dash:player:video:hevc_hd_50_8</Name>
+                <Definition>hevc_hd_50_8 DASH player as defined in table L.1 in clause L.2.1 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="2.1.6">
+                <Name>urn:dvb:dash:player:video:hevc_hd_60_8</Name>
+                <Definition>hevc_hd_60_8 DASH player as defined in table L.1 in clause L.2.1 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="2.1.7">
+                <Name>urn:dvb:dash:player:video:hevc_hd_50_10</Name>
+                <Definition>hevc_hd_50_10 DASH player as defined in table L.1 in clause L.2.1 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="2.1.8">
+                <Name>urn:dvb:dash:player:video:hevc_hd_60_10</Name>
+                <Definition>hevc_hd_60_10 DASH player as defined in table L.1 in clause L.2.1 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="2.1.9">
+                <Name>urn:dvb:dash:player:video:hevc_uhd</Name>
+                <Definition>hevc_uhd DASH player as defined in table L.1 in clause L.2.1 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="2.1.10">
+                <Name>urn:dvb:dash:player:video:hevc_uhd_hlg10</Name>
+                <Definition>hevc_uhd_hlg10 DASH player as defined in table L.1 in clause L.2.1 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="2.1.11">
+                <Name>urn:dvb:dash:player:video:hevc_uhd_pq10</Name>
+                <Definition>hevc_uhd_pq10 DASH player as defined in table L.1 in clause L.2.1 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="2.1.12">
+                <Name>urn:dvb:dash:player:video:hevc_uhd_hfr_hlg10</Name>
+                <Definition>hevc_uhd_hfr_hlg10 DASH player as defined in table L.1 in clause L.2.1 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="2.1.13">
+                <Name>urn:dvb:dash:player:video:hevc_uhd_hfr_pq10</Name>
+                <Definition>hevc_uhd_hfr_pq10 DASH player as defined in table L.1 in clause L.2.1 of ETSI TS 101 154</Definition>
+            </Term>
+			<Term termID="2.1.14">
+				<Name>urn:dvb:dash:player:video:hevc_uhd2_hdr</Name>
+				<Definition>hevc_uhd2_hdr DASH player as defined in table L.1 in clause L.2.1 of ETSI TS 101 154</Definition>
+			</Term>
+        </Term>
+        <Term termID="2.2">
+            <Name>DASH Bitstream Conformance Points</Name>
+            <Term termID="2.2.1">
+                <Name>urn:dvb:dash:bitstream:video:hdr_hlg10</Name>
+                <Definition>High dynamic range UHD  bitstream using HLG10 as defined in clause 5.2.6 of ETSI TS 103 285</Definition>
+            </Term>
+            <Term termID="2.2.2">
+                <Name>urn:dvb:dash:bitstream:video:hdr_pq10</Name>
+                <Definition>High dynamic range UHD bitstream using PQ10 as defined in clause 5.2.7 of ETSI TS 103 285</Definition>
+            </Term>
+        </Term>
+    </Term>
+</ClassificationScheme>
