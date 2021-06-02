@@ -2228,28 +2228,39 @@ module.exports = class ContentGuideCheck {
 
 
 /**
- * validate an <OnDemandProgram> elements in the <ProgramLocationTable>
+ * validate a <ProgramURL> or <AuxiliaryURL> element to see if it signals a Template XML AIT
  *
  * @param {Object} node              the element node containing the an XML AIT reference
+ * @param {Array} allowedContentTypes the contentTypes that can be signalled in the node@contentType attribute
  * @param {Class}  errs              errors found in validaton
  * @param {string} errcode           error code to be used with any errors founf
  */
-/* private */  CheckTemplateAITApplication(node, errs, errcode=null) {
+/* private */  CheckPlayerApplication(node, allowedContentTypes, errs, errcode=null) {
 
 	if (!node)  {
-		errs.pushCode(errcode?`${errcode}-0`:"TA000", "CheckTemplateAITApplication() called with node==null");
+		errs.pushCode(errcode?`${errcode}-0`:"PA000", "CheckPlayerApplication() called with node==null");
 		return;
 	}
 	if (!node.attr(tva.a_contentType)) {
-		errs.pushCode(errcode?`${errcode}-1`:"TA001", `${tva.a_contentType.attribute()} attribute is required when signalling a template AIT in ${node.name().elementize()}`);
+		errs.pushCode(errcode?`${errcode}-1`:"PA001", `${tva.a_contentType.attribute()} attribute is required when signalling a player in ${node.name().elementize()}`);
 		return;
 	}
-	if (node.attr(tva.a_contentType).value()==dvbi.XML_AIT_CONTENT_TYPE) {
-		if (!patterns.isHTTPURL(node.text()))
-			errs.pushCode(errcode?`${errcode}-2`:"TA002", `${node.name().elementize()}=${node.text().quote()} is not a valid AIT URL`, "invalid URL");
+
+	if (allowedContentTypes.includes(node.attr(tva.a_contentType))) {
+		switch (node.attr(tva.a_contentType).value()) {
+			case dvbi.XML_AIT_CONTENT_TYPE:
+				if (!patterns.isHTTPURL(node.text()))
+					errs.pushCode(errcode?`${errcode}-2`:"PA002", `${node.name().elementize()}=${node.text().quote()} is not a valid AIT URL`, "invalid URL");
+				break;
+			case dvbi.HTML5_APP:
+			case dvbi.XHTML_APP:
+				if (!patterns.isHTTPURL(node.text()))
+					errs.pushCode(errcode?`${errcode}-3`:"PA003", `${node.name().elementize()}=${node.text().quote()} is not a valid URL`, "invalid URL");		
+				break;
+		}
 	}
 	else
-		errs.pushCode(errcode?`${errcode}-3`:"TA003", `${tva.a_contentType.attribute(node.name())}=${node.attr(tva.a_contentType).value().quote()} is not valid for a template AIT`);
+		errs.pushCode(errcode?`${errcode}-4`:"PA004", `${tva.a_contentType.attribute(node.name())}=${node.attr(tva.a_contentType).value().quote()} is not valid for a player`);
 }
 
 
@@ -2322,14 +2333,12 @@ module.exports = class ContentGuideCheck {
 	// <ProgramURL>
 	let pUrl=0, ProgramURL;
 	while ((ProgramURL=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_ProgramURL, ++pUrl), CG_SCHEMA))!=null) 
-		this.CheckTemplateAITApplication(ProgramURL, errs, "OD020");
+		this.CheckPlayerApplication(ProgramURL, [dvbi.XML_AIT_CONTENT_TYPE], errs, "OD020");
 
 	// <AuxiliaryURL>
 	let aux=0, AuxiliaryURL;
 	while ((AuxiliaryURL=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_AuxiliaryURL, ++aux), CG_SCHEMA))!=null) 
-		this.CheckTemplateAITApplication(AuxiliaryURL, errs, "OD030");
-	if (--aux>1)
-		errs.pushCode("OD031", `only a single ${tva.e_AuxiliaryURL.elementize()} is permitted in ${OnDemandProgram.name().elementize()}`);
+		this.CheckPlayerApplication(AuxiliaryURL, [dvbi.XML_AIT_CONTENT_TYPE, dvbi.HTML5_APP, dvbi.XHTML_APP, dvbi.iOS_APP, dvbi.ANDROID_APP], errs, "OD030");
 	
 	// <InstanceDescription>
 	let id=0, InstanceDescription;
