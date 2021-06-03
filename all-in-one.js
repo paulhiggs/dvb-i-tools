@@ -6,6 +6,25 @@ const express=require("express");
 //const cluster = require('cluster');
 //const totalCPUs = require('os').cpus().length;
 
+// morgan - https://github.com/expressjs/morgan
+const morgan=require("morgan");
+
+// file upload for express - https://github.com/richardgirges/express-fileupload
+const fileupload=require("express-fileupload");
+
+// favourite icon - https://www.npmjs.com/package/serve-favicon
+const favicon=require("serve-favicon");
+
+const fs=require("fs"), path=require("path");
+
+// command line arguments - https://github.com/75lb/command-line-args
+const commandLineArgs=require('command-line-args');
+
+// fetch API for node.js - https://www.npmjs.com/package/node-fetch
+const fetch=require('node-fetch');
+
+const https=require("https");
+
 // pauls useful tools
 const phlib=require('./phlib/phlib.js');
 
@@ -27,24 +46,6 @@ const ErrorList=require("./ErrorList.js");
 
 const locs=require("./data-locations.js");
 
-// morgan - https://github.com/expressjs/morgan
-const morgan=require("morgan");
-
-// file upload for express - https://github.com/richardgirges/express-fileupload
-const fileupload=require("express-fileupload");
-
-// favourite icon - https://www.npmjs.com/package/serve-favicon
-const favicon=require("serve-favicon");
-
-const fs=require("fs"), path=require("path");
-
-// command line arguments - https://github.com/75lb/command-line-args
-const commandLineArgs=require('command-line-args');
-
-// fetch API for node.js - https://www.npmjs.com/package/node-fetch
-const fetch=require('node-fetch');
-
-const https=require("https");
 const DEFAULT_HTTP_SERVICE_PORT=3030;
 const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","selfsigned.crt");
 

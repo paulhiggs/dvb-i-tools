@@ -6,6 +6,9 @@ const fs=require("fs");
 // libxmljs - https://www.npmjs.com/package/libxmljs2
 const libxml=require('libxmljs2');
 
+// Fetch() API for node.js- https://www.npmjs.com/package/node-fetch
+const fetch=require('node-fetch');
+
 const {xPath, xPathM, isIn}=require("./utils.js");
 
 const ISOcountries=require("./ISOcountries.js");
