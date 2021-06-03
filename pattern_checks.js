@@ -2,6 +2,50 @@
 // pattern_checks.js
   
 
+const e_pct="&#x25;",
+      e_quot="&#x22;",
+	  e_lowalpha="a-z",
+	  e_highalpha="A-Z",
+	  e_alpha=`${e_lowalpha}${e_highalpha}`,
+	  e_digit="0-9",
+	  e_safe="$\-_.+",
+	  e_extra=`!*(),${e_quot}`,	
+	  e_hex=`${e_digit}A-Fa-f`,
+	  e_unreserved=`${e_alpha}${e_digit}${e_safe}${e_extra}`,
+	  e_hex16=`[${e_hex}]{1,4}`,
+	  e_allFs="", // e_allFs="[fF]{4}",
+	  e_chrs=`${e_unreserved}${e_pct}&amp;~;=:@`,
+	  e_uword=`(:([${e_digit}]{1,4}|[1-5][${e_digit}]{4}|6[0-4][${e_digit}]{3}|65[0-4][${e_digit}]{2}|655[0-2][${e_digit}]|6553[0-5]))`, 
+	  e_DecimalByte=`((25[0-5]|(2[0-4]|1{0,1}[${e_digit}]){0,1}[${e_digit}]))`, 
+	  e_Scheme=`[${e_alpha}][${e_alpha}${e_digit}+\-.]*`,
+	  e_User=`([${e_unreserved}${e_pct}&amp;~;=]+)`,
+	  e_Password=`([${e_unreserved}${e_pct}&amp;~;=]+)`,
+	  e_NamedHost=`[${e_alpha}${e_digit}${e_pct}._~\-]+`,
+	  e_IPv4Host=`${e_DecimalByte}(.${e_DecimalByte}){3}`,
+	  e_IPv6Address=`((${e_hex16}:){7,7}${e_hex16}|(${e_hex16}:){1,7}:|(${e_hex16}:){1,6}:${e_hex16}|(${e_hex16}:){1,5}(:${e_hex16}){1,2}|(${e_hex16}:){1,4}(:${e_hex16}){1,3}|(${e_hex16}:){1,3}(:${e_hex16}){1,4}|(${e_hex16}:){1,2}(:${e_hex16}){1,5}|${e_hex16}:((:${e_hex16}){1,6})|:((:${e_hex16}){1,7}|:)|fe80:(:${e_hex16}){0,4}${e_pct}[${e_hex}]{1,}|::(${e_allFs}(0{1,4}){0,1}:){0,1}${e_IPv4Host}|(${e_hex16}:){1,4}:${e_IPv4Host})`,
+	  e_IPv6Host=`\\[${e_IPv6Address}\]`,
+	  e_IPvFutureHost=`\\[v[a-f${e_digit}][${e_unreserved}${e_pct}&amp;~;=:]+\]`,
+	  e_Port=`${e_uword}`,
+	  e_Path=`(/[${e_chrs}]+)`,
+	  e_AuthorityAndPath=`(${e_User}(:${e_Password})?@)?(${e_NamedHost}|${e_IPv6Host}|${e_IPvFutureHost})${e_Port}?${e_Path}*/?`,
+	  e_PathNoAuthority=`(/?[${e_chrs}]+${e_Path}*/?)`,
+	  e_RelativePath=`[${e_chrs}]+${e_Path}*`,
+	  e_AbsolutePath=`${e_Path}+`,
+	  e_Query=`(\\?[${e_chrs}/?]*)`,
+	  e_Fragment=`(#[${e_chrs}/?]*)`,
+	  e_NamespaceID=`[${e_alpha}${e_digit}][${e_alpha}${e_digit}-]{1,31}`,
+	  e_NSSothers=`()+,\-\.:=@;$_!*'`,
+	  e_NSSreserved=`${e_pct}/?#`,
+	  e_NamespaceSpecific=`[${e_alpha}${e_digit}${e_NSSothers}${e_NSSreserved}]+`,
+	  e_URN=`urn:${e_NamespaceID}:${e_NamespaceSpecific}`,
+	  e_URL=`(${e_Scheme}:(//${e_AuthorityAndPath}|${e_PathNoAuthority})|(${e_RelativePath}/?|${e_AbsolutePath}/?))${e_Query}?${e_Fragment}?`;
+
+const URNregex=new RegExp(`^${e_URN}$`,'i'),
+      URLregex=new RegExp(`^${e_URL}$`,'i');
+
+const e_HTTPURL=`https?:(//${e_AuthorityAndPath}|${e_PathNoAuthority})${e_Query}?${e_Fragment}?`;
+const HTTPURLregex=new RegExp(`^${e_HTTPURL}$`,'i');
+
 /**
  * checks if the argument complies to the TV Anytime defintion of RatioType
  *
@@ -35,7 +79,8 @@ module.exports.isUTCDateTime = function (str) {
  * see RFC 3986 - https://tools.ietf.org/html/rfc3986
  */
 module.exports.isHTTPURL=function (arg) {
-	return this.isURI(arg.trim(), '(https?:\\/\\/)');
+//	return this.isURI(arg.trim(), '(https?:\\/\\/)');
+	return HTTPURLregex.test(arg.trim());
 };
 
 
@@ -45,14 +90,27 @@ module.exports.isHTTPURL=function (arg) {
  * @param {string} arg  The value whose format is to be checked
  * @returns {boolean} true if the argument is an HTTP URL
  */
- module.exports.isURI=function (arg, scheme='([a-zA-Z][-a-zA-Z\\d.+]*:)') {
-	let pattern = new RegExp('^'+scheme+ // protocol
+module.exports.isURI=function (arg, scheme='([a-zA-Z][-a-zA-Z\\d.+]*:)') {
+/*	let pattern = new RegExp('^'+scheme+ // protocol
 		'((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
 		'((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
-		'(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
+		'(\\:\\d+)?(\\/[-a-z\\d%_.~+()]*)*'+ // port and path
 		'(\\?[\\/?;&a-z\\d%_.:~+=-]*)?'+ // query string
 		'(\\#[\\/?;&a-z\\d%_.:~+=-]*)?$','i'); // fragment locator
-	return pattern.test(arg);
+	return pattern.test(arg); */
+	return this.isURL(arg) || this.isURN(arg);
+};
+
+
+/**
+ * isURL and isURN use the syntax from MPEG DASH - http://github.com/MPEGGroup/DASHSchema/
+ * @param {*} arg 
+ */
+module.exports.isURL=function (arg) {
+	return URLregex.test(arg);
+};
+module.exports.isURN=function (arg) {
+	return URNregex.test(arg);
 };
 
 
