@@ -2252,12 +2252,12 @@ module.exports = class ContentGuideCheck {
 				if (!patterns.isHTTPURL(node.text()))
 					errs.pushCode(errcode?`${errcode}-2`:"PA002", `${node.name().elementize()}=${node.text().quote()} is not a valid AIT URL`, "invalid URL");
 				break;
-			case dvbi.HTML5_APP:
+/*			case dvbi.HTML5_APP:
 			case dvbi.XHTML_APP:
 				if (!patterns.isHTTPURL(node.text()))
 					errs.pushCode(errcode?`${errcode}-3`:"PA003", `${node.name().elementize()}=${node.text().quote()} is not a valid URL`, "invalid URL");		
 				break;
-		}
+*/		}
 	}
 	else
 		errs.pushCode(errcode?`${errcode}-4`:"PA004", `${tva.a_contentType.attribute(node.name())}=${node.attr(tva.a_contentType).value().quote()} is not valid for a player`);
@@ -2338,7 +2338,7 @@ module.exports = class ContentGuideCheck {
 	// <AuxiliaryURL>
 	let aux=0, AuxiliaryURL;
 	while ((AuxiliaryURL=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_AuxiliaryURL, ++aux), CG_SCHEMA))!=null) 
-		this.CheckPlayerApplication(AuxiliaryURL, [dvbi.XML_AIT_CONTENT_TYPE, dvbi.HTML5_APP, dvbi.XHTML_APP, dvbi.iOS_APP, dvbi.ANDROID_APP], errs, "OD030");
+		this.CheckPlayerApplication(AuxiliaryURL, [dvbi.XML_AIT_CONTENT_TYPE /*, dvbi.HTML5_APP, dvbi.XHTML_APP, dvbi.iOS_APP, dvbi.ANDROID_APP*/], errs, "OD030");
 	
 	// <InstanceDescription>
 	let id=0, InstanceDescription;

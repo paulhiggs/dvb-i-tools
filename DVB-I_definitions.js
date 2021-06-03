@@ -25,8 +25,8 @@ module.exports = Object.freeze({
 	XML_AIT_CONTENT_TYPE: "application/vnd.dvb.ait+xml",
 	HTML5_APP: "text/html",
 	XHTML_APP: "application/xhtml+xml",
-	iOS_APP: "application/vnd.dvb.app.ios",
-	ANDROID_APP: "application/vnd.dvb.app.android",
+//	iOS_APP: "application/vnd.dvb.app.ios",
+//	ANDROID_APP: "application/vnd.dvb.app.android",
     TEMPLATE_AIT_URI: "urn:fvc:metadata:cs:HowRelatedCS:2018:templateAIT",
     
 	PAGINATION_FIRST_URI: PAGINATION_PREFIX+"first",
