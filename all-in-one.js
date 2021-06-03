@@ -45,7 +45,7 @@ const commandLineArgs=require('command-line-args');
 const fetch=require('node-fetch');
 
 const https=require("https");
-const DEFAULT_HTTP_SERVICE_PORT=3010;
+const DEFAULT_HTTP_SERVICE_PORT=3030;
 const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","selfsigned.crt");
 
 /**
@@ -398,7 +398,7 @@ knownGenres.loadCSExt(options.urls?
 		{files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename], leafNodesOnly:false});
 
 const ISOcountries=require("./ISOcountries.js");
-let isoCountries=new ISOcountries();
+let isoCountries=new ISOcountries(false, true);
 isoCountries.loadCountries(options.urls?
 	{url:locs.ISO3166_URL, purge:true}:
 	{file:locs.ISO3166_Filename, purge:true});

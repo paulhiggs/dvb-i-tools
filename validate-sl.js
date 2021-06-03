@@ -3,16 +3,6 @@
 // express framework - https://expressjs.com/en/4x/api.html
 const express=require("express");
 
-// pauls useful tools
-const phlib=require('./phlib/phlib.js');
-
-// the service list validation
-const ServiceListCheck=require('./sl-check.js');
-var slcheck;
-
-// error buffer
-const ErrorList=require("./dvb-common/ErrorList.js");
-
 // morgan - https://github.com/expressjs/morgan
 const morgan=require("morgan");
 
@@ -29,6 +19,21 @@ const commandLineArgs=require('command-line-args');
 
 // fetch API for node.js - https://www.npmjs.com/package/node-fetch
 const fetch=require('node-fetch');
+
+
+// pauls useful tools
+const phlib=require('./phlib/phlib.js');
+
+const locs=require('./data-locations.js');
+
+// error buffer
+const ErrorList=require("./ErrorList.js");
+
+// the service list validation
+const ServiceListCheck=require('./sl-check.js');
+var slcheck;
+
+
 
 const https=require("https");
 const DEFAULT_HTTP_SERVICE_PORT=3010;

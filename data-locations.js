@@ -16,7 +16,7 @@ module.exports.TVA_FormatCSURL=`${REPO_RAW}tva/${TVA_FormatCS}`;
 
 const TVA_PictureCS="PictureFormatCS.xml";
 module.exports.TVA_PictureFormatCSFilename=path.join("tva", TVA_PictureCS);
-module.exports. TVA_PictureFormatCSURL=`${REPO_RAW}tva/${TVA_PictureCS}`;
+module.exports.TVA_PictureFormatCSURL=`${REPO_RAW}tva/${TVA_PictureCS}`;
 
 const DVB_ContentSubjectCS="DVBContentSubjectCS-2019.xml";
 module.exports.DVBI_ContentSubjectFilename=path.join("dvbi", DVB_ContentSubjectCS);
