@@ -384,28 +384,12 @@ const optionDefinitions=[
  
 const options=commandLineArgs(optionDefinitions);
 
-/**
- * synchronously read a file if it exists
- * 
- * @param {string} filename  The name of the file to read
- * @returns the contents of the file or "null" if the file does not exist
- */
-	function readmyfile(filename) {
-	try {
-		let stats=fs.statSync(filename);
-		if (stats.isFile()) return fs.readFileSync(filename); 
-	}
-	catch (err) {console.log(err.code,err.path);}
-	return null;
-}
-
 const IANAlanguages=require("./IANAlanguages.js");
 let knownLanguages=new IANAlanguages();
 knownLanguages.loadLanguages(options.urls?
 	{url:locs.IANA_Subtag_Registry_URL}:
 	{file:locs.IANA_Subtag_Registry_Filename}
 );
-
 
 const ClassificationScheme=require("./ClassificationScheme.js");
 let knownGenres=new ClassificationScheme();
@@ -513,6 +497,22 @@ app.get("*", function(req,res) {
 var http_server=app.listen(options.port, function() {
 	console.log(`HTTP listening on port number ${http_server.address().port}`);
 });
+
+
+/**
+ * synchronously read a file if it exists
+ * 
+ * @param {string} filename  The name of the file to read
+ * @returns the contents of the file or "null" if the file does not exist
+ */
+ function readmyfile(filename) {
+	try {
+		let stats=fs.statSync(filename);
+		if (stats.isFile()) return fs.readFileSync(filename); 
+	}
+	catch (err) {console.log(err.code,err.path);}
+	return null;
+}
 
 
 // start the HTTPS server

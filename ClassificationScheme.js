@@ -8,6 +8,7 @@
 const fs=require('fs');
 const libxml=require('libxmljs2');
 const fetch=require('node-fetch');
+const { isHTTPURL } = require("./pattern_checks");
 
 
 /**
@@ -129,6 +130,19 @@ module.exports = class ClassificationScheme {
 	    else this.loadFromFile(CSfilename, leafNodesOnly);
     }
     
+    /**
+     * loads classification scheme values from either a local file or an URL based location 
+
+     * @param {String} CSfilename     the filename of the classification scheme
+     * @param {String} CSurl          URL to the classification scheme
+     * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded 
+     */
+    loadCS2(from, leafNodesOnly=false) {
+        if (isHTTPURL(from))
+            this.loadFromURL(CSurl, leafNodesOnly);
+        else this.loadFromFile(CSfilename, leafNodesOnly);
+    }
+
     loadCSExt(options) {
         if (!options) options={};
         if (!options.leafNodesOnly) options.leafNodesOnly=false;

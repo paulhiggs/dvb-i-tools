@@ -1,9 +1,10 @@
 {
 	"name": "dvb-i-tools",
 	"description": "DVB-I V&V Tools",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"private": true,
 	"dependencies": {
+		"cluster": "^0.7.7",
 		"command-line-args": "^5.1.1",
 		"express": "4.x",
 		"express-fileupload": "^1.2.1",
@@ -11,7 +12,8 @@
 		"libxmljs2": "^0.26.7",
 		"morgan": "^1.10.0",
 		"node-fetch": "^2.6.1",
-		"serve-favicon": "^2.5.0"
+		"serve-favicon": "^2.5.0",
+		"sync-fetch": "^0.3.0"
 	},
 	"engines": {
 		"node": ">= 15.0.0",
