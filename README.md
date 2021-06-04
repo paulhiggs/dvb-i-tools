@@ -17,7 +17,7 @@ These parameter names are case sensitive and the comparisons made with their val
 Note that these values are case sensitive, and a case sensitive matching is performed with the values, thus "AUT" != "aut"
 
 ### Installation
-1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-csr.git`
+1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
 1. Install necessary libraries (express, libxmljs, morgan)  `npm install`
 
 ### Operation
@@ -80,7 +80,6 @@ Checks performed:
 * SAT&lt;IP parameters are only specified with 
   
 ### Use
-
 #### URL based validation  
 &lt;server&gt;/check gives a basic/primitive UI. Enter the URL to your service list and press "Submit" button. Await results!
 #### File based validation
@@ -88,7 +87,7 @@ Checks performed:
 
 
 ### Installation
-1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-sl-check.git`
+1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
 1. Install necessary libraries (express, libxmljs, morgan)  `npm install`
 1. run it - `node validate-sl [--urls] [--port 3010] [--sport 3011]`
 
@@ -100,7 +99,6 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 * --urls [-u] forces the classification scheme, country and language values to be read from the internet. Default is to load values from local files.
 * --port [-p] set the HTTP listening port (default: 3010)
 * --sport [-s] set the HTTPS listening port (default: 3011)
-
 
 
 ## validate-cg.js
@@ -120,7 +118,7 @@ Checks performed:
 &lt;server&gt;/checkFile gives a basic/primitive UI. Select the file containing a DVB-I content guide metadata fragment and the type of response from the endpoint. Press "Submit" button and await results!
 
 ### Installation
-1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-cg-check.git`
+1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
 1. Install necessary libraries (express, libxmljs, morgan)  `npm install`
 1. run it - `node validate-cg [--urls] [--port 3020] [--sport 3021]`
 
@@ -133,3 +131,30 @@ If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `s
 
 
 ## all-in-one.js
+Implements csr.js, validate-cg.js and validate-sl.js in a single node
+
+### Description
+Same as for the individual applications
+
+### Use
+#### URL based validation  
+&lt;server&gt;/checkSL gives a basic/primitive UI. Enter the URL to your service list and press "Submit" button. Await results!
+&lt;server&gt;/checkCG gives a basic/primitive UI. Enter the URL for a content guide query and the type of query/response from the endpoint. Press "Submit" button and await results!
+#### File based validation
+&lt;server&gt;/checkSLFile gives a basic/primitive UI. Select the service list file and press "Submit" button. Await results!
+&lt;server&gt;/checkCGFile gives a basic/primitive UI. Select the file containing a DVB-I content guide metadata fragment and the type of response from the endpoint. Press "Submit" button and await results!
+
+### Installation
+1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
+1. Install necessary libraries (express, libxmljs, morgan)  `npm install`
+1. run it - `node validate-cg [--urls] [--port 3030] [--sport 3031]`
+
+If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
+
+#### Command Line Arguments
+* --urls [-u] forces the classification scheme, country and language values to be read from the internet. Default is to load values from local files.
+* --port [-p] set the HTTP listening port (default: 3030)
+* --sport [-s] set the HTTPS listening port (default: 3031)
+* --nocsr  do not start the CSR function
+* --nosl   do not perform service list validation
+* --nocg   do not perform content guide validation
