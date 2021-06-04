@@ -2147,9 +2147,9 @@ module.exports = class ContentGuideCheck {
 		function checkGenre(node, errs, errcode=null) {
 			if (!node) return null;
 			checkAttributes(node, [tva.a_href], [tva.a_type], errs, errcode?`${errcode}-1`:"ChG001");
-			let GenreType=(node.attr(tva.a_type)?node.attr(tva.a_type).value():"other");
-			if (GenreType!="other")
-				errs.pushCode(errcode?`${errcode}-2`:"ChG002", `${tva.a_type.attribute(`${node.parent().name()}.${+node.name()}`)} must contain ${"other".quote()}`);
+			let GenreType=(node.attr(tva.a_type)?node.attr(tva.a_type).value():tva.GENRE_TYPE_OTHER);
+			if (GenreType!=tva.GENRE_TYPE_OTHER)
+				errs.pushCode(errcode?`${errcode}-2`:"ChG002", `${tva.a_type.attribute(`${node.parent().name()}.${+node.name()}`)} must contain ${tva.GENRE_TYPE_OTHER.quote()}`);
 
 			return (node.attr(tva.a_href)?node.attr(tva.a_href).value():null);
 		}
