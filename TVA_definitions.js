@@ -23,6 +23,8 @@ module.exports = Object.freeze({
 	DEFAULT_GENRE_TYPE: "main",
 	ALL_GENRE_TYPES: ["main", "secondary", "other"],
 
+	DELIVERY_MODE_STREAMING: "streaming",
+
 	SCAN_TYPES: 	["interlaced", "progressive"],
 	COLOR_TYPES:	["color", "blackAndWhite", "blackAndWhiteAndColor", "colorized"],
 	

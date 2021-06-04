@@ -2373,8 +2373,8 @@ module.exports = class ContentGuideCheck {
 		// <DeliveryMode>
 		let dm=0, DeliveryMode;
 		while ((DeliveryMode=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_DeliveryMode, ++dm), CG_SCHEMA))!=null)
-			if (DeliveryMode.text()!="streaming")
-				errs.pushCode("OD070", `${OnDemandProgram.name()}.${tva.e_DeliveryMode} must be ${"streaming".quote()}`);
+			if (DeliveryMode.text()!=tva.DELIVERY_MODE_STREAMING)
+				errs.pushCode("OD070", `${OnDemandProgram.name()}.${tva.e_DeliveryMode} must be ${tva.DELIVERY_MODE_STREAMING.quote()}`);
 		if (--dm>1)
 			errs.pushCode("OD071", `only a single ${tva.e_DeliveryMode.elementize()} is permitted in ${OnDemandProgram.name().elementize()}`);
 		
