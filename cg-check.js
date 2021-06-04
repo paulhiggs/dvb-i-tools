@@ -652,13 +652,11 @@ module.exports = class ContentGuideCheck {
 	/**
 	 * validate a name (either PersonName of Character) to ensure a single GivenName is present with a single optional FamilyName
 	 *
-	 * @param {string}  CG_SCHEMA        Used when constructing Xpath queries
-	 * @param {string}  SCHEMA_PREFIX    Used when constructing Xpath queries
 	 * @param {Object}  elem             the element whose children should be checked
 	 * @param {Class}   errs             errors found in validaton
 	 * @param {string}  errCode          error code prefix to be used in reports, if not present then use local codes
 	 */
-	/* private */  ValidateName(CG_SCHEMA, SCHEMA_PREFIX, elem, errs, errCode=null) {
+	/* private */  ValidateName(elem, errs, errCode=null) {
 		
 		function checkNamePart(elem, errs, errCode=null) {
 			if (unEntity(elem.text()).length > dvbi.MAX_NAME_PART_LENGTH)	
@@ -727,12 +725,12 @@ module.exports = class ContentGuideCheck {
 						case tva.e_PersonName:
 							foundPersonName++;
 							// required to have a GivenName optionally have a FamilyName
-							vn(CG_SCHEMA, SCHEMA_PREFIX, elem, errs, errCode?`${errCode}-3`:"CL003" );
+							vn(elem, errs, errCode?`${errCode}-3`:"CL003" );
 							break;
 						case tva.e_Character:
 							foundCharacter++;
 							// required to have a GivenName optionally have a FamilyName
-							vn(CG_SCHEMA, SCHEMA_PREFIX, elem, errs, errCode?`${errCode}-4`:"CL004" );
+							vn(elem, errs, errCode?`${errCode}-4`:"CL004" );
 							break;
 						case tva.e_OrganizationName:
 							foundOrganizationName++;
