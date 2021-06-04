@@ -48,42 +48,58 @@ const supportedRequests=[
 	{value:CG_REQUEST_BS_LISTS, label:"Box Set Lists"},
 	{value:CG_REQUEST_BS_CONTENTS, label:"Box Set Contents"}];
 
-const OTHER_ELEMENTS_OK="!!!";
 
 
 /**
  * check that the specified child elements are in the parent element
  *
- * @param {string} CG_SCHEMA              Used when constructing Xpath queries
- * @param {string} SCHEMA_PREFIX          Used when constructing Xpath queries
- * @param {Object} parentElement          the element whose children should be checked
- * @param {Array}  mandatoryChildElements the names of elements that are required within the element
- * @param {Array}  optionalChildElements  the names of elements that are optional within the element
- * @param {Class}  errs                   errors found in validaton
- * @param {string} errCode                error code to be used for any error found 
+ * @param {Object}  parentElement         the element whose children should be checked
+ * @param {Array}   childElements		  the names of elements and their cardinality
+ * @param {boolean} allowOtherElements    flag indicating if other (foreign defined) elements are permitted
+ * @param {Class}   errs                  errors found in validaton
+ * @param {string}  errCode               error code to be used for any error found 
  * @returns {boolean} true if no errors are found (all mandatory elements are present and no extra elements are specified)
+ * 
+ * NOTE: elements are described as an object containing "name", "minOccurs", "maxOccurs".
+ *   Default values for minOccurs and maxOccurs are 1
  */
-function checkTopElements(CG_SCHEMA, SCHEMA_PREFIX,  parentElement, mandatoryChildElements, optionalChildElements, errs, errCode=null) {
+ function checkTopElementsAndCardinality(parentElement, childElements, allowOtherElements, errs, errCode=null) {
+
+	function findElementIn(elementList, elementName) {
+		if (elementList instanceof Array)
+			return elementList.find(element => element.name == elementName);
+		else return false;
+	}
 	if (!parentElement) {
-		errs.pushCode(errCode?`${errCode}-0`:"TE000", "checkTopElements() called with a 'null' element to check");
+		errs.pushCode(errCode?`${errCode}-0`:"TE000", "checkTopElementsAndCardinality() called with a 'null' element to check");
 		return false;
 	}
 	let rv=true, thisElem=phlib.elementize(`${parentElement.parent().name()}.${parentElement.name()}`);
 	// check that each of the specifid childElements exists
-	mandatoryChildElements.forEach(elem => {
-		if (!parentElement.get(xPath(SCHEMA_PREFIX, elem), CG_SCHEMA)) {
-			errs.pushCode(errCode?`${errCode}-1`:"TE010", `Mandatory element ${elem.elementize()} not specified in ${thisElem}`);
+	childElements.forEach(elem => {
+		let _min=elem.hasOwnProperty('minOccurs')?elem.minOccurs:1;
+		let _max=elem.hasOwnProperty('maxOccurs')?elem.maxOccurs:1;
+		let count=CountChildElements(parentElement, elem.name);
+		if (count==0 && _min!=0) {
+			errs.pushCode(errCode?`${errCode}-1`:"TE010", `Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`);
 			rv=false;
 		}
+		else {
+			if (count<_min || count>_max) {
+				errs.pushCode(errCode?`${errCode}-1`:"TE011", 
+					`Cardinality of ${elem.name.elementize()} in ${thisElem} is not in the range ${_min}..${(_max==Infinity)?"unbounded":_max}`);
+				rv=false;				
+			}
+		}
 	});
-	
+
 	// check that no additional child elements existance if the "Other Child Elements are OK" flag is not set
-	if (!isIn(optionalChildElements, OTHER_ELEMENTS_OK)) {
+	if (!allowOtherElements) {
 		let children=parentElement.childNodes();
 		if (children) children.forEachSubElement(child => {
-			let childName=child.name();
-			if (!isIn(mandatoryChildElements, childName) && !isIn(optionalChildElements, childName)) {		
-				errs.pushCode(errCode?`${errCode}-2`:"TE011", `Element ${childName.elementize()} is not permitted in ${thisElem}`);
+			let _childName=child.name();
+			if (!findElementIn(childElements, _childName)) {		
+				errs.pushCode(errCode?`${errCode}-2`:"TE011", `Element ${_childName.elementize()} is not permitted in ${thisElem}`);
 				rv=false;
 			}
 		});
@@ -553,21 +569,18 @@ module.exports = class ContentGuideCheck {
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {Object}  BasicDescription    the element whose children should be checked
-	 * @param {integer} minGenres           the minimum number of genre elements
-	 * @param {integer} maxGenres           the maximum number of genre elements
 	 * @param {Class}   errs                errors found in validaton
 	 * @param {string}  errCode             error code prefix to be used in reports, if not present then use local codes
 	 */
-	/* private */  ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, minGenres, maxGenres, errs, errCode=null) {
+	/* private */  ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, errCode=null) {
 
 		if (!BasicDescription) {
 			errs.pushCode("GE000", "ValidateGenre() called with BasicDescription=null");
 			return;
 		}
 
-		let g=0, Genre, count=0;
+		let g=0, Genre;
 		while ((Genre=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_Genre, ++g), CG_SCHEMA))!=null) {
-			count++;
 			let genreType=Genre.attr(tva.a_type)?Genre.attr(tva.a_type).value():tva.DEFAULT_GENRE_TYPE;
 			if (genreType!=tva.GENRE_TYPE_MAIN)
 				errs.pushCode(errCode?`${errCode}-1`:"GE001", `${tva.a_type.attribute()}=${genreType.quote()} not permitted for ${tva.e_Genre.elementize()}`);
@@ -576,10 +589,6 @@ module.exports = class ContentGuideCheck {
 			if (!this.allowedGenres.isIn(genreValue))
 				errs.pushCode(errCode?`${errCode}-2`:"GE002", `invalid ${tva.a_href.attribute()} value ${genreValue.quote()} for ${tva.e_Genre.elementize()}`);
 		}
-		if (count>maxGenres)
-			errs.pushCode(errCode?`${errCode}-3`:"GE003", `More than ${maxGenres} ${tva.e_Genre.elementize()} element${(maxGenres!=1?"s":"")} specified`);
-		if (count<minGenres)
-			errs.pushCode(errCode?`${errCode}-4`:"GE004", `Less than ${minGenres} ${tva.e_Genre.elementize()} element${(minGenres!=1?"s":"")} specified`);
 	}
 
 	/**
@@ -588,12 +597,10 @@ module.exports = class ContentGuideCheck {
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {Object}  BasicDescription    the element whose children should be checked
-	 * @param {integer} minPGelements       the minimum number of genre elements
-	 * @param {integer} maxPGelements       the maximum number of genre elements
 	 * @param {Class}   errs                errors found in validaton
 	 * @param {string}  errCode             error code prefix to be used in reports, if not present then use local codes
 	 */
-	/* private */  ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, minPGelements, maxPGelements, errs, errCode=null) {
+	/* private */  ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, errCode=null) {
 		// first <ParentalGuidance> element must contain an <mpeg7:MinimumAge> element
 
 		if (!BasicDescription) {
@@ -639,10 +646,6 @@ module.exports = class ContentGuideCheck {
 			if (countExplanatoryText > 1)
 				errs.pushCode(errCode?`${errCode}-6`:"PG006", `only a single ${tva.e_ExplanatoryText.elementize()} element is premitted in ${tva.e_ParentalGuidance.elementize()}`);
 		}
-		if (countParentalGuidance>maxPGelements)
-			errs.pushCode(errCode?`${errCode}-7`:"PG007", `no more than ${maxPGelements} ${tva.e_ParentalGuidance.elementize()} element${maxPGelements!=1?"s":""} are premitted`);
-		if (countParentalGuidance<minPGelements)
-			errs.pushCode(errCode?`${errCode}-8`:"PG008", `less than ${minPGelements} ${tva.e_ParentalGuidance.elementize()} element${minPGelements!=1?"s":""} are specified`);
 	}
 
 
@@ -666,7 +669,7 @@ module.exports = class ContentGuideCheck {
 			errs.pushCode("VN000", "ValidateName() called with elem==null");
 			return;
 		}
-		let familyNameCount=0, givenNameCount=0, otherElemCount=0, children=elem.childNodes();
+		let familyNameCount=0, givenNameCount=0, children=elem.childNodes();
 		if (children) children.forEachSubElement(subElem => {
 			switch (subElem.name()) {
 				case tva.e_GivenName:
@@ -676,9 +679,7 @@ module.exports = class ContentGuideCheck {
 				case tva.e_FamilyName:
 					familyNameCount++;
 					checkNamePart(subElem, errs, errCode?`${errCode}-3`:"VN003");
-					break;
-				default:
-					otherElemCount++;			
+					break;	
 			}
 		});
 			
@@ -812,23 +813,17 @@ module.exports = class ContentGuideCheck {
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {Object}  BasicDescription    the element whose children should be checked
-	 * @param {integer} minRMelements       the minimum number of RelatedMaterial elements
-	 * @param {integer} maxRMelements       the maximum number of RelatedMaterial elements
 	 * @param {Class}   errs                errors found in validaton
 	 */
-	/* private */  ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, minRMelements, maxRMelements, errs) {
+	/* private */  ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs) {
 		
 		if (!BasicDescription) {
 			errs.pushCode("RM000", "ValidateRelatedMaterial() called with BasicDescription==null");
 			return;
 		}	
-		let rm=0, RelatedMaterial, countRelatedMaterial=0;
-		while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) {
-			countRelatedMaterial++;
+		let rm=0, RelatedMaterial;
+		while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) 
 			this.CheckImageRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, errs);
-		}
-		if (countRelatedMaterial > maxRMelements)
-			errs.pushCode("RM001", `a maximum of ${maxRMelements} ${tva.e_RelatedMaterial.elementize()} element${maxRMelements>1?"s are":" is"} permitted`);
 	}
 
 
@@ -924,13 +919,9 @@ module.exports = class ContentGuideCheck {
 		}
 		switch (BasicDescription.parent().name()) {
 			case tva.e_ProgramInformation:
-				let rm=0, RelatedMaterial, countRelatedMaterial=0;
-				while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) {
-					countRelatedMaterial++;
+				let rm=0, RelatedMaterial;
+				while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) 
 					this.ValidatePromotionalStillImage(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, errs, BasicDescription.name(), "More Episodes");
-				}
-				if (countRelatedMaterial > 1)
-					errs.pushCode("RMME001", `a maximum of 1 ${tva.e_RelatedMaterial.elementize()} element is permitted in ${BasicDescription.name().elementize()} for this request type`);
 				break;
 			case tva.e_GroupInformation:
 				this.ValidatePagination(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "More Episodes");
@@ -1300,32 +1291,54 @@ module.exports = class ContentGuideCheck {
 					case CG_REQUEST_SCHEDULE_NOWNEXT:  //6.10.5.2
 					case CG_REQUEST_SCHEDULE_WINDOW:
 					case CG_REQUEST_SCHEDULE_TIME:
-						checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title, tva.e_Synopsis], [tva.e_Genre, tva.e_ParentalGuidance, tva.e_RelatedMaterial], errs, "BD010");	
+						checkTopElementsAndCardinality(BasicDescription, 
+							[{name:tva.e_Title, maxOccurs:Infinity},
+							 {name:tva.e_Synopsis, maxOccurs:Infinity},
+							 {name:tva.e_Genre, minOccurs:0},
+							 {name:tva.e_ParentalGuidance, minOccurs:0, maxOccurs:2},
+							 {name:tva.e_RelatedMaterial, minOccurs:0, }],
+							false, errs, "BD010");
 						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, parentLanguage, "BD011", true);
 						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL], requestType, errs, parentLanguage, "BD012");
-						this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 1, errs, "BD013");
-						this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 2, errs, "BD014");
-						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  0, 1, errs);
+						this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD013");
+						this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD014");
+						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs);
 						break;
 					case CG_REQUEST_PROGRAM:	// 6.10.5.3
-						checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title, tva.e_Synopsis], [tva.e_Keyword, tva.e_Genre, tva.e_ParentalGuidance, tva.e_CreditsList, tva.e_RelatedMaterial], errs, "BD020");
+						checkTopElementsAndCardinality(BasicDescription,
+							[{name:tva.e_Title, maxOccurs:Infinity},
+							 {name:tva.e_Synopsis, maxOccurs:Infinity},
+							 {name:tva.e_Keyword, minOccurs:0, maxOccurs:Infinity},
+							 {name:tva.e_Genre, minOccurs:0},
+							 {name:tva.e_ParentalGuidance, minOccurs:0, maxOccurs:2},
+							 {name:tva.e_CreditsList, minOccurs:0},
+							 {name:tva.e_RelatedMaterial, minOccurs:0}],
+							false, errs, "BD020");
 						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, parentLanguage, "BD021", true);
 						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_LONG_LABEL], requestType, errs, parentLanguage, "BD022");
 						this.ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 20, errs, parentLanguage, "BD023");
-						this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 1, errs, "BD024");
-						this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 2, errs, "BD025");	
+						this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD024");
+						this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD025");	
 						this.ValidateCreditsList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs, "BD026");	
-						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  0, 1, errs);						
+						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs);						
 						break;
 					case CG_REQUEST_BS_CONTENTS:  // 6.10.5.4					
-						checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title], [tva.e_Synopsis, tva.e_ParentalGuidance, tva.e_RelatedMaterial], errs, "BD030");
+						checkTopElementsAndCardinality(BasicDescription,
+							[{name:tva.e_Title, maxOccurs:Infinity},
+							 {name:tva.e_Synopsis, minOccurs:0, maxOccurs:Infinity},
+							 {name:tva.e_ParentalGuidance, minOccurs:0, maxOccurs:2},
+							 {name:tva.e_RelatedMaterial, minOccurs:0}],
+							false, errs, "BD030");
 						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, parentLanguage, "BD031", true);
 						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [], [tva.SYNOPSIS_MEDIUM_LABEL], requestType, errs, parentLanguage, "BD032");
-						this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 2, errs, "BD033");
-						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  0, 1, errs);
+						this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD033");
+						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs);
 						break;
 					case CG_REQUEST_MORE_EPISODES:
-						checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title], [tva.e_RelatedMaterial], errs, "BD040");
+						checkTopElementsAndCardinality(BasicDescription,
+							[{name:tva.e_Title, maxOccurs:Infinity},
+							 {name:tva.e_RelatedMaterial, minOccurs:0}],
+							false, errs, "BD040");
 						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, parentLanguage, "BD041", true);
 						this.ValidateRelatedMaterial_MoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs);
 						break;
@@ -1338,12 +1351,21 @@ module.exports = class ContentGuideCheck {
 				switch (requestType) {
 					case CG_REQUEST_SCHEDULE_NOWNEXT:  //6.10.17.3 - BasicDescription for NowNext should be empty
 					case CG_REQUEST_SCHEDULE_WINDOW:
-						checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [], [], errs, "BD060");
+						checkTopElementsAndCardinality(BasicDescription, [], false, errs, "BD060");
+						break;
+					case CG_REQUEST_BS_CONTENTS:
+						// BasicDescription must be empty
+						checkTopElementsAndCardinality(BasicDescription, [], false, errs, "BD090");
 						break;
 					case CG_REQUEST_BS_LISTS:	// 6.10.5.5
-						if (isParentGroup) 
-							checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title], [], errs, "BD061");
-						else checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title, tva.e_Synopsis], [tva.e_Keyword, tva.e_RelatedMaterial], errs, "BD062");
+						if (isParentGroup)
+							checkTopElementsAndCardinality(BasicDescription, [{name:tva.e_Title, maxOccurs:Infinity}], false, errs, "BD061");
+						else checkTopElementsAndCardinality(BasicDescription, 
+									[{name:tva.e_Title, maxOccurs:Infinity},
+									 {name:tva.e_Synopsis, maxOccurs:Infinity},
+									 {name:tva.e_Keyword, minOccurs:0, maxOccurs:Infinity},
+									 {name:tva.e_RelatedMaterial, minOccurs:0, maxOccurs:Infinity}],
+									false, errs, "BD062");
 						
 						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, false, errs, parentLanguage, "BD063", false);						
 						if (!isParentGroup) {
@@ -1353,23 +1375,23 @@ module.exports = class ContentGuideCheck {
 						}
 					break;
 					case CG_REQUEST_MORE_EPISODES: 
-						checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [], [tva.e_RelatedMaterial], errs, "BD070");	
+						checkTopElementsAndCardinality(BasicDescription, [{name:tva.e_RelatedMaterial, maxOccurs:4}], false, errs, "BD070");
 						this.ValidateRelatedMaterial_MoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs);
 						break;
 					case CG_REQUEST_BS_CATEGORIES:
-						if (isParentGroup) 
-							checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title], [], errs, "BD080");	
-						else 
-							checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.e_Title, tva.e_Synopsis], [tva.e_Genre, tva.e_RelatedMaterial], errs, "BD081");
+						if (isParentGroup)
+							checkTopElementsAndCardinality(BasicDescription, [{name:tva.e_Title, maxOccurs:Infinity}], false, errs, "BD080");
+						else checkTopElementsAndCardinality(BasicDescription,
+										[{name:tva.e_Title, maxOccurs:Infinity},
+										 {name:tva.e_Synopsis, maxOccurs:Infinity},
+										 {name:tva.e_Genre, minOccurs:0},
+										 {name:tva.e_RelatedMaterial, minOccurs:0}],
+										false, errs, "BD081");
 						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, false, errs, parentLanguage, "BD082", false);
 						if (!isParentGroup)
 							this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_SHORT_LABEL], [], requestType, errs, parentLanguage, "BD083");
-						this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 1, errs, "BD084");
-						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  0, 1, errs);
-						break;
-					case CG_REQUEST_BS_CONTENTS:
-						// BasicDescription must be empty
-						checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [], [], errs, "BD090");
+						this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD084");
+						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs);
 						break;
 					default:
 						errs.pushCode("BD100", `ValidateBasicDescription() called with invalid requestType/element (${requestType}/${parentElement.name()})`);
@@ -1402,8 +1424,12 @@ module.exports = class ContentGuideCheck {
 			return null;
 		}
 		
-		checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, ProgramInformation, [tva.e_BasicDescription], [tva.e_OtherIdentifier, tva.e_MemberOf, tva.e_EpisodeOf], errs, "PI001");
-		
+		checkTopElementsAndCardinality(ProgramInformation, 
+				[{name:tva.e_BasicDescription},
+				 {name:tva.e_OtherIdentifier, minOccurs:0, maxOccurs:Infinity},
+				 {name:tva.e_MemberOf, minOccurs:0, maxOccurs:Infinity},
+				 {name:tva.e_EpisodeOf, minOccurs:0, maxOccurs:Infinity}],
+				false, errs, "PI001");		
 		checkAttributes(ProgramInformation, [tva.a_programId], [tva.a_lang], errs, "PI002");
 
 		let piLang=this.GetLanguage(this.knownLanguages, errs, ProgramInformation, parentLanguage, false, "PI010");
@@ -1554,26 +1580,43 @@ module.exports = class ContentGuideCheck {
 			case CG_REQUEST_BS_CATEGORIES:
 				if (isParentGroup) {
 					checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_ordered, tva.a_numOfItems], errs, "GIB001");
-					checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.e_GroupType], [tva.e_BasicDescription], errs, "GIB002");
+					checkTopElementsAndCardinality(GroupInformation,
+						[{name:tva.e_GroupType},
+						 {name:tva.e_BasicDescription, minOccurs:0}],
+						false, errs, "GIB002");
 				}
 				else {
 					checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang], errs, "GIB003");
-					checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.e_GroupType, tva.e_MemberOf], [tva.e_BasicDescription], errs, "GIB004");
+					checkTopElementsAndCardinality(GroupInformation,
+						[{name:tva.e_GroupType},
+						 {name:tva.e_BasicDescription, minOccurs:0},
+						 {name:tva.e_MemberOf}],
+						false, errs, "GIB004");
 				}
 				break;
 			case CG_REQUEST_BS_LISTS:
 				if (isParentGroup) {
 					checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_ordered, tva.a_numOfItems], errs, "GIB005");
-					checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.e_GroupType], [tva.e_BasicDescription], errs, "GIB006");
+					checkTopElementsAndCardinality(GroupInformation,
+						[{name:tva.e_GroupType},
+						 {name:tva.e_BasicDescription, minOccurs:0}],
+						false, errs, "GIB006");
 				}
 				else {
 					checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_serviceIDRef], errs, "GIB007");
-					checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.e_GroupType, tva.e_MemberOf], [tva.e_BasicDescription], errs, "GIB008");
+					checkTopElementsAndCardinality(GroupInformation,
+						[{name:tva.e_GroupType},
+						 {name:tva.e_BasicDescription, minOccurs:0},
+						 {name:tva.e_MemberOf}],
+						false, errs, "GIB008");
 				}
 				break;
 			case CG_REQUEST_BS_CONTENTS:
 				checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_ordered, tva.a_numOfItems, tva.a_serviceIDRef], errs, "GIB009");
-				checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.e_GroupType], [tva.e_BasicDescription], errs, "GIB0010");
+				checkTopElementsAndCardinality(GroupInformation,
+					[{name:tva.e_GroupType},
+					 {name:tva.e_BasicDescription, minOccurs:0}],
+					false, errs, "GIB010");
 				break;
 		}
 
@@ -1957,12 +2000,19 @@ module.exports = class ContentGuideCheck {
 			return;
 		}
 		
-		checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, AVAttributes, [], [tva.e_AudioAttributes, tva.e_VideoAttributes, tva.e_CaptioningAttributes], errs, "AV001");
+		checkTopElementsAndCardinality(AVAttributes,
+			[{name:tva.e_AudioAttributes, minOccurs:0, maxOccurs:Infinity},
+			 {name:tva.e_VideoAttributes, minOccurs:0, maxOccurs:Infinity},
+			 {name:tva.e_CaptioningAttributes, minOccurs:0, maxOccurs:Infinity}],
+			false, errs, "AV001");
 
 		// <AudioAttributes>
 		let aa=0, AudioAttributes, foundAttributes=[], audioCounts=[];
 		while ((AudioAttributes=AVAttributes.get(xPath(SCHEMA_PREFIX, tva.e_AudioAttributes, ++aa), CG_SCHEMA))!=null) {
-			checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, AudioAttributes, [], [tva.e_MixType, tva.e_AudioLanguage], errs, "AV010");
+			checkTopElementsAndCardinality(AudioAttributes,
+				[{name:tva.e_MixType, minOccurs:0},
+				 {name:tva.e_AudioLanguage, minOccurs:0}],
+				false, errs, "AV010");
 
 			let MixType=AudioAttributes.get(xPath(SCHEMA_PREFIX, tva.e_MixType), CG_SCHEMA);
 			if (MixType) {
@@ -2003,13 +2053,17 @@ module.exports = class ContentGuideCheck {
 		// <VideoAttributes>
 		let va=0, VideoAttributes;
 		while ((VideoAttributes=AVAttributes.get(xPath(SCHEMA_PREFIX, tva.e_VideoAttributes, ++va), CG_SCHEMA))!=null) {
-			checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, VideoAttributes, [], [tva.e_HorizontalSize, tva.e_VerticalSize, tva.e_AspectRatio], errs, "AV030");
+			checkTopElementsAndCardinality(VideoAttributes, 
+				[{name:tva.e_HorizontalSize, minOccurs:0},
+				 {name:tva.e_VerticalSize, minOccurs:0},
+				 {name:tva.e_AspectRatio, minOccurs:0}],
+				false, errs, "AV030");	
 		}
 
 		// <CaptioningAttributes>
 		let CaptioningAttributes=AVAttributes.get(xPath(SCHEMA_PREFIX, tva.e_CaptioningAttributes), CG_SCHEMA);
 		if (CaptioningAttributes) {
-			checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, CaptioningAttributes, [], [tva.e_Coding], errs, "AV040");
+			checkTopElementsAndCardinality(CaptioningAttributes, [{name:tva.e_Coding, minOccurs:0}], false, errs, "AV040");	
 			
 			let Coding=CaptioningAttributes.get(xPath(SCHEMA_PREFIX, tva.e_Coding), CG_SCHEMA);
 			if (Coding) {
@@ -2042,7 +2096,10 @@ module.exports = class ContentGuideCheck {
 			return false;
 		}
 
-		let isRestart=checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, [tva.e_HowRelated, tva.e_MediaLocator], [], errs, "RR001");
+		let isRestart=checkTopElementsAndCardinality(RelatedMaterial, 
+			[{name:tva.e_HowRelated},
+			 {name:tva.e_MediaLocator}], 
+			false, errs, "RR001");
 		
 		let HowRelated=RelatedMaterial.get(xPath(SCHEMA_PREFIX, tva.e_HowRelated), CG_SCHEMA);
 		if (HowRelated) {
@@ -2057,7 +2114,10 @@ module.exports = class ContentGuideCheck {
 		
 		let MediaLocator=RelatedMaterial.get(xPath(SCHEMA_PREFIX, tva.e_MediaLocator), CG_SCHEMA);
 		if (MediaLocator) 
-			if (!checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, MediaLocator, [tva.e_MediaUri, tva.e_AuxiliaryURI], [OTHER_ELEMENTS_OK], errs, "RR003"))
+			if (!checkTopElementsAndCardinality(MediaLocator,
+					[{name:tva.e_MediaUri},
+					 {name:tva.e_AuxiliaryURI}], 
+					true, errs, "RR003"))
 				isRestart=false;
 		
 		return isRestart;
@@ -2078,12 +2138,6 @@ module.exports = class ContentGuideCheck {
 	 * @param {Class}  errs                errors found in validaton
 	 */
 	/* private */  ValidateInstanceDescription(CG_SCHEMA, SCHEMA_PREFIX, VerifyType, InstanceDescription, isCurrentProgram, parentLanguage, programCRIDs, requestType, errs) {
-
-		function countElements(CG_SCHEMA, SCHEMA_PREFIX, node, elementName) {
-			let count=0;
-			while (node.get(xPath(SCHEMA_PREFIX, elementName, ++count), CG_SCHEMA)!=null);
-			return count-1;
-		}
 
 		function isRestartAvailability(str) { return [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(str); }
 		function isMediaAvailability(str) { return [dvbi.MEDIA_AVAILABLE, dvbi.MEDIA_UNAVAILABLE].includes(str); }
@@ -2106,10 +2160,23 @@ module.exports = class ContentGuideCheck {
 		}
 		switch (VerifyType) {
 			case tva.e_OnDemandProgram:
-				checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, InstanceDescription, [tva.e_Genre], [tva.e_CaptionLanguage, tva.e_SignLanguage, tva.e_AVAttributes, tva.e_OtherIdentifier], errs, "ID001");
+				checkTopElementsAndCardinality(InstanceDescription, 
+					[{name:tva.e_Genre, minOccurs:2, maxOccurs:2},
+					 {name:tva.e_CaptionLanguage, minOccurs:0},
+					 {name:tva.e_SignLanguage, minOccurs:0},
+					 {name:tva.e_AVAttributes, minOccurs:0},
+					 {name:tva.e_OtherIdentifier, minOccurs:0 , maxOccurs:Infinity}],
+					false, errs, "ID001");
 				break;
 			case tva.e_ScheduleEvent:
-				checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, InstanceDescription, [], [tva.e_CaptionLanguage, tva.e_SignLanguage, tva.e_AVAttributes, tva.e_OtherIdentifier, tva.e_Genre, tva.e_RelatedMaterial], errs, "ID002");
+				checkTopElementsAndCardinality(InstanceDescription, 
+					[{name:tva.e_Genre, minOccurs:0},
+					 {name:tva.e_CaptionLanguage, minOccurs:0},
+					 {name:tva.e_SignLanguage, minOccurs:0},
+					 {name:tva.e_AVAttributes, minOccurs:0},
+					 {name:tva.e_OtherIdentifier, minOccurs:0 , maxOccurs:Infinity}, 
+					 {name:tva.e_RelatedMaterial, minOccurs:0}],
+					false, errs, "ID002");
 				break;
 			default:
 				errs.pushCode("ID003", `ValidateInstanceDescription() called with VerifyType=${VerifyType}`);
@@ -2123,12 +2190,8 @@ module.exports = class ContentGuideCheck {
 				// A177r1 Table 54 - must be 2 elements
 				
 				let Genre1=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_Genre, 1), CG_SCHEMA),
-					Genre2=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_Genre, 2), CG_SCHEMA),
-					Genre3=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_Genre, 3), CG_SCHEMA);
+					Genre2=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_Genre, 2), CG_SCHEMA);
 					
-				if (Genre3)
-					errs.pushCode("ID010", `exactly 2 ${phlib.elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} elements are required for ${VerifyType}`);
-
 				let g1href=checkGenre(Genre1, errs, "ID011");
 				if (g1href && !isAvailability(g1href))
 					errs.pushCode("ID012", `first ${phlib.elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a media or fepg availability indicator`);
@@ -2160,9 +2223,6 @@ module.exports = class ContentGuideCheck {
 		}
 		
 		// <CaptionLanguage>
-		let captionCount=countElements(CG_SCHEMA, SCHEMA_PREFIX, InstanceDescription, tva.e_CaptionLanguage);
-		if (captionCount > 1)
-			errs.pushCode("ID020", `only a single ${tva.e_CaptionLanguage.elementize()} element is permitted in ${InstanceDescription.name().elementize()}`);
 		let CaptionLanguage=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_CaptionLanguage), CG_SCHEMA);
 		if (CaptionLanguage) {
 			CheckLanguage(this.knownLanguages, errs, CaptionLanguage.text(), `${InstanceDescription.name()}.${tva.e_CaptionLanguage}`, "ID021");
@@ -2170,9 +2230,6 @@ module.exports = class ContentGuideCheck {
 		}
 		
 		// <SignLanguage>
-		let signCount=countElements(CG_SCHEMA, SCHEMA_PREFIX, InstanceDescription, tva.e_SignLanguage);
-		if (signCount > 1)
-			errs.pushCode("ID030", `only a single ${tva.e_SignLanguage.elementize()} element is premitted in ${InstanceDescription.name().elementize()}`);
 		let SignLanguage=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_SignLanguage), CG_SCHEMA);
 		if (SignLanguage) {
 			CheckLanguage(this.knownLanguages, errs, SignLanguage.text(), `${InstanceDescription.name()}.${tva.e_SignLanguage}`, "ID-310");
@@ -2285,22 +2342,43 @@ module.exports = class ContentGuideCheck {
 		let validRequest=true;
 		switch (requestType) {
 			case CG_REQUEST_BS_CONTENTS:
-				checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, OnDemandProgram, 
-						[tva.e_Program, tva.e_ProgramURL, tva.e_PublishedDuration, tva.e_StartOfAvailability, tva.e_EndOfAvailability, tva.e_Free], 
-						[tva.e_InstanceDescription, tva.e_AuxiliaryURL, tva.e_DeliveryMode], errs, "OD001");
+				checkTopElementsAndCardinality(OnDemandProgram,
+					[{name:tva.e_Program},
+					 {name:tva.e_ProgramURL},
+					 {name:tva.e_AuxiliaryURL, minOccurs:0},
+					 {name:tva.e_InstanceDescription, minOccurs:0},
+					 {name:tva.e_PublishedDuration},
+					 {name:tva.e_StartOfAvailability},
+					 {name:tva.e_EndOfAvailability},
+					 {name:tva.e_Free}],
+					false, errs, "OD001");
 				break;
 			case CG_REQUEST_MORE_EPISODES:
-				checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, OnDemandProgram, 
-						[tva.e_Program, tva.e_ProgramURL, tva.e_PublishedDuration, tva.e_StartOfAvailability, tva.e_EndOfAvailability, tva.e_Free], 
-						[tva.e_AuxiliaryURL], errs, "OD002");
+				checkTopElementsAndCardinality(OnDemandProgram,
+					[{name:tva.e_Program},
+					 {name:tva.e_ProgramURL},
+					 {name:tva.e_AuxiliaryURL, minOccurs:0},
+					 {name:tva.e_PublishedDuration},
+					 {name:tva.e_StartOfAvailability},
+					 {name:tva.e_EndOfAvailability},
+					 {name:tva.e_Free}],
+					false, errs, "OD002");
 				break;
 			case CG_REQUEST_SCHEDULE_NOWNEXT:
 			case CG_REQUEST_SCHEDULE_TIME:
 			case CG_REQUEST_SCHEDULE_WINDOW:
 			case CG_REQUEST_PROGRAM:
-				checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, OnDemandProgram, 
-						[tva.e_Program, tva.e_ProgramURL, tva.e_InstanceDescription, tva.e_PublishedDuration, tva.e_StartOfAvailability, tva.e_EndOfAvailability, tva.e_DeliveryMode, tva.e_Free], 
-						[tva.e_AuxiliaryURL], errs, "OD003");
+				checkTopElementsAndCardinality(OnDemandProgram,
+					[{name:tva.e_Program},
+					 {name:tva.e_ProgramURL},
+					 {name:tva.e_AuxiliaryURL, minOccurs:0},
+					 {name:tva.e_InstanceDescription},
+					 {name:tva.e_PublishedDuration},
+					 {name:tva.e_StartOfAvailability},
+					 {name:tva.e_EndOfAvailability},
+					 {name:tva.e_DeliveryMode},
+					 {name:tva.e_Free}],
+					false, errs, "OD003");
 				break;
 			default:
 				errs.pushCode("OD004", `requestType=${requestType} is not valid for ${OnDemandProgram.name()}`);
@@ -2414,8 +2492,16 @@ module.exports = class ContentGuideCheck {
 		while ((ScheduleEvent=Schedule.get(xPath(SCHEMA_PREFIX, tva.e_ScheduleEvent, ++se), CG_SCHEMA))!=null) {
 			let seLang=this.GetLanguage(this.knownLanguages, errs, ScheduleEvent, parentLanguage, false, "SE001");
 			
-			checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, ScheduleEvent, [tva.e_Program, tva.e_PublishedStartTime, tva.e_PublishedDuration], 
-				[tva.e_ProgramURL, tva.e_InstanceDescription, tva.e_ActualStartTime, tva.e_FirstShowing, tva.e_Free], errs, "SE002");
+			checkTopElementsAndCardinality(ScheduleEvent, 
+				[{name:tva.e_Program}, 
+				 {name:tva.e_ProgramURL, minOccurs:0},
+				 {name:tva.e_InstanceDescription, minOccurs:0},
+				 {name:tva.e_PublishedStartTime},
+				 {name:tva.e_PublishedDuration},
+				 {name:tva.e_ActualStartTime, minOccurs:0}, 
+				 {name:tva.e_FirstShowing, minOccurs:0 }, 
+				 {name: tva.e_Free, minOccurs:0}], 
+				false, errs, "SE002");
 			
 			// <Program>
 			let Program=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_Program), CG_SCHEMA);
@@ -2506,7 +2592,7 @@ module.exports = class ContentGuideCheck {
 			return;
 		}
 
-		checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, Schedule, [], [tva.e_ScheduleEvent], errs, "VS001");
+		checkTopElementsAndCardinality(Schedule, [{name:tva.e_ScheduleEvent, minOccurs:0, maxOccurs:Infinity}], false, errs, "VS001");
 		checkAttributes(Schedule, [tva.a_serviceIDRef, tva.a_start, tva.a_end], [], errs, "VS002");
 		
 		let scheduleLang=this.GetLanguage(this.knownLanguages, errs, Schedule, parentLanguage, false, "VS003");	
@@ -2553,7 +2639,10 @@ module.exports = class ContentGuideCheck {
 			errs.pushCode("PL001", `${tva.e_ProgramLocationTable.elementize()} is not specified`);
 			return;
 		}
-		checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, ProgramLocationTable, [], [tva.e_Schedule, tva.e_OnDemandProgram], errs, "PL010");
+		checkTopElementsAndCardinality(ProgramLocationTable, 
+			[{name:tva.e_Schedule, minOccurs:0, maxOccurs:Infinity},
+			 {name:tva.e_OnDemandProgram, minOccurs:0, maxOccurs:Infinity}], 
+			false, errs, "PL010");
 		checkAttributes(ProgramLocationTable, [], [tva.a_lang], errs, "PL011");
 		
 		let pltLang=this.GetLanguage(this.knownLanguages, errs, ProgramLocationTable, parentLang, false, "PL012");	
@@ -2635,14 +2724,21 @@ module.exports = class ContentGuideCheck {
 		switch (requestType) {
 			case CG_REQUEST_SCHEDULE_TIME:
 				// schedule response (6.5.4.1) has <ProgramLocationTable> and <ProgramInformationTable> elements 
-				checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, [tva.e_ProgramLocationTable, tva.e_ProgramInformationTable], [], errs, "CG011"); 
+				checkTopElementsAndCardinality(ProgramDescription,
+					[{name:tva.e_ProgramLocationTable},
+					 {name:tva.e_ProgramInformationTable}],
+					false, errs, "CG011");
 				
 				this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, null, requestType, errs);
 				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, null, requestType, errs);
 				break;
 			case CG_REQUEST_SCHEDULE_NOWNEXT:
 				// schedule response (6.5.4.1) has <ProgramLocationTable> and <ProgramInformationTable> elements 
-				checkTopElements(CG_SCHEMA, SCHEMA_PREFIX,  ProgramDescription, [tva.e_ProgramLocationTable, tva.e_ProgramInformationTable, tva.e_GroupInformationTable], [], errs, "CG021"); 
+				checkTopElementsAndCardinality(ProgramDescription,
+					[{name:tva.e_ProgramLocationTable},
+					 {name:tva.e_ProgramInformationTable},
+					 {name:tva.e_GroupInformationTable}],
+					false, errs, "CG021");
 			
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
 				if (this.hasElement(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tva.e_GroupInformationTable))
@@ -2651,7 +2747,11 @@ module.exports = class ContentGuideCheck {
 				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, currentProgramCRIDnn, requestType, errs);
 				break;
 			case CG_REQUEST_SCHEDULE_WINDOW:
-				checkTopElements(CG_SCHEMA, SCHEMA_PREFIX,  ProgramDescription, [tva.e_ProgramLocationTable, tva.e_ProgramInformationTable, tva.e_GroupInformationTable], [], errs, "CG031"); 
+				checkTopElementsAndCardinality(ProgramDescription,
+					[{name:tva.e_ProgramLocationTable},
+					 {name:tva.e_ProgramInformationTable},
+				 	 {name:tva.e_GroupInformationTable}],
+					false, errs, "CG031");
 
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
 				if (this.hasElement(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tva.e_GroupInformationTable))
@@ -2661,15 +2761,21 @@ module.exports = class ContentGuideCheck {
 				break;
 			case CG_REQUEST_PROGRAM:
 				// program information response (6.6.2) has <ProgramLocationTable> and <ProgramInformationTable> elements
-				checkTopElements(CG_SCHEMA, SCHEMA_PREFIX,  ProgramDescription, [tva.e_ProgramLocationTable, tva.e_ProgramInformationTable], [], errs, "CG041"); 
+				checkTopElementsAndCardinality(ProgramDescription,
+					[{name:tva.e_ProgramLocationTable},
+					 {name:tva.e_ProgramInformationTable}],
+					false, errs, "CG041");	
 			
 				this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, null, requestType, errs);
 				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, null, requestType, errs);
 				break;
 			case CG_REQUEST_MORE_EPISODES:
 				// more episodes response (6.7.3) has <ProgramInformationTable>, <GroupInformationTable> and <ProgramLocationTable> elements 
-				checkTopElements(CG_SCHEMA, SCHEMA_PREFIX,  ProgramDescription, 
-						[tva.e_ProgramLocationTable, tva.e_ProgramInformationTable, tva.e_GroupInformationTable], [], errs, "CG051");
+				checkTopElementsAndCardinality(ProgramDescription,
+					[{name:tva.e_ProgramLocationTable},
+					 {name:tva.e_ProgramInformationTable},
+					 {name:tva.e_GroupInformationTable}],
+					false, errs, "CG051");
 
 				this.CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, requestType, groupIds, errs, o);
 				this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, groupIds, requestType, errs, o);
@@ -2677,20 +2783,23 @@ module.exports = class ContentGuideCheck {
 				break;
 			case CG_REQUEST_BS_CATEGORIES:
 				// box set categories response (6.8.2.3) has <GroupInformationTable> element
-				checkTopElements(CG_SCHEMA, SCHEMA_PREFIX,  ProgramDescription, [tva.e_GroupInformationTable], [], errs, "CG061"); 
+				checkTopElementsAndCardinality(ProgramDescription, [{name:tva.e_GroupInformationTable}], false, errs, "CG061"); 
 
 				this.CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, requestType, null, errs, null);
 				break;
 			case CG_REQUEST_BS_LISTS:
 				// box set lists response (6.8.3.3) has <GroupInformationTable> element
-				checkTopElements(CG_SCHEMA, SCHEMA_PREFIX,  ProgramDescription, [tva.e_GroupInformationTable], [], errs, "CG071"); 
+				ccheckTopElementsAndCardinality(ProgramDescription, [{name:tva.e_GroupInformationTable}], false, errs, "CG071"); 
 				
 				this.CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, requestType, null, errs, null);
 				break;
 			case CG_REQUEST_BS_CONTENTS:
 				// box set contents response (6.8.4.3) has <ProgramInformationTable>, <GroupInformationTable> and <ProgramLocationTable> elements 
-				checkTopElements(CG_SCHEMA, SCHEMA_PREFIX,  ProgramDescription, 
-					[tva.e_ProgramLocationTable, tva.e_ProgramInformationTable, tva.e_GroupInformationTable], [], errs, "CG081");
+				checkTopElementsAndCardinality(ProgramDescription,
+					[{name:tva.e_ProgramLocationTable},
+					 {name:tva.e_ProgramInformationTable},
+					 {name:tva.e_GroupInformationTable}],
+					false, errs, "CG081");
 				
 				this.CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, requestType, groupIds, errs, o);
 				this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, groupIds, requestType, errs, o);
