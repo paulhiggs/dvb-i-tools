@@ -38,9 +38,6 @@ const DVB_VideoCodecCS="VideoCodecCS.xml";
 module.exports.DVB_VideoCodecCS2007Filename=path.join("dvb/cs/2007", DVB_VideoCodecCS);
 module.exports.DVB_VideoCodecCS2007URL=`${DVB_METADATA}cs/2007/${DVB_VideoCodecCS}`;
 
-module.exports.DVB_VideoCodecCS2020Filename=path.join("dvb/cs/2020", DVB_VideoCodecCS);
-module.exports.DVB_VideoCodecCS2020URL=`${DVB_METADATA}cs/2020/${DVB_VideoCodecCS}`;
-
 module.exports.DVB_VideoCodecCS2021Filename=path.join("dvb/cs/2021", DVB_VideoCodecCS);
 module.exports.DVB_VideoCodecCS2021URL=`${DVB_METADATA}cs/2021/${DVB_VideoCodecCS}`;
 
