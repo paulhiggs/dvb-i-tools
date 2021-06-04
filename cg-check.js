@@ -1443,7 +1443,7 @@ module.exports = class ContentGuideCheck {
 					}
 					break;
 				case tva.e_MemberOf:			// <ProgramInformation><MemberOf>
-					if (requestType==CG_REQUEST_SCHEDULE_NOWNEXT || requestType==CG_REQUEST_SCHEDULE_WINDOW) {
+					if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW].includes(requestType)) {
 						// xsi:type is optional for Now/Next
 						checkAttributes(child, [tva.a_index, tva.a_crid], [tva.a_type], errs, "PI041");
 						if (child.attr(tva.a_crid) && child.attr(tva.a_crid).value()==dvbi.CRID_NOW)
@@ -2090,7 +2090,7 @@ module.exports = class ContentGuideCheck {
 		function isEPGAvailability(str) { return [dvbi.FORWARD_EPG_AVAILABLE, dvbi.FORWARD_EPG_UNAVAILABLE].includes(str); }
 		function isAvailability(str) { return isMediaAvailability(str) || isEPGAvailability(str); }
 		
-		function checkGenre(node, CG_SCHEMA, SCHEMA_PREFIX, errs, errcode=null) {
+		function checkGenre(node, errs, errcode=null) {
 			if (!node) return null;
 			checkAttributes(node, [tva.a_href], [tva.a_type], errs, errcode?`${errcode}-1`:"ChG001");
 			let GenreType=(node.attr(tva.a_type)?node.attr(tva.a_type).value():"other");
@@ -2129,11 +2129,11 @@ module.exports = class ContentGuideCheck {
 				if (Genre3)
 					errs.pushCode("ID010", `exactly 2 ${phlib.elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} elements are required for ${VerifyType}`);
 
-				let g1href=checkGenre(Genre1, CG_SCHEMA, SCHEMA_PREFIX, errs, "ID011");
+				let g1href=checkGenre(Genre1, errs, "ID011");
 				if (g1href && !isAvailability(g1href))
 					errs.pushCode("ID012", `first ${phlib.elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a media or fepg availability indicator`);
 
-				let g2href=checkGenre(Genre2, CG_SCHEMA, SCHEMA_PREFIX, errs, "ID013");
+				let g2href=checkGenre(Genre2, errs, "ID013");
 				if (g2href && !isAvailability(g2href))
 					errs.pushCode("ID014", `second ${phlib.elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a media or fepg availability indicator`);
 				
