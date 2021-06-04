@@ -1,5 +1,8 @@
 /* jshint esversion: 8 */
 
+// libxmljs2 - github.com/marudor/libxmljs2
+const libxml=require("libxmljs2");
+
 const phlib=require('./phlib/phlib');
 
 const fs=require("fs");
@@ -21,8 +24,6 @@ const patterns=require("./pattern_checks.js");
 
 const locs=require("./data-locations.js");
 
-// libxmljs2 - github.com/marudor/libxmljs2
-const libxml=require("libxmljs2");
 
 // convenience/readability values
 const DEFAULT_LANGUAGE="***";
@@ -94,15 +95,13 @@ function checkTopElements(CG_SCHEMA, SCHEMA_PREFIX,  parentElement, mandatoryChi
 /**
  * check that the specified child elements are in the parent element
  *
- * @param {string} CG_SCHEMA          Used when constructing Xpath queries
- * @param {string} SCHEMA_PREFIX      Used when constructing Xpath queries
  * @param {Object} parentElement      the element whose attributes should be checked
  * @param {Array}  requiredAttributes the element names permitted within the parent
  * @param {Array}  optionalAttributes the element names permitted within the parent
  * @param {Class}  errs               errors found in validaton
  * @param {string} errCode            error code prefix to be used in reports, if not present then use local codes
  */
-function checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, parentElement, requiredAttributes, optionalAttributes, errs, errCode=null)
+function checkAttributes(parentElement, requiredAttributes, optionalAttributes, errs, errCode=null)
 {
 	if (!requiredAttributes || !parentElement) {
 		errs.pushCode("AT000", "checkAttributes() called with parentElement==null or requiredAttributes==null");
@@ -446,7 +445,7 @@ module.exports = class ContentGuideCheck {
 		let shortLangs=[], mediumLangs=[], longLangs=[];
 		while ((Synopsis=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_Synopsis, ++s), CG_SCHEMA))!=null) {
 			
-			checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, Synopsis, [tva.a_length], [tva.a_lang], errs, "SY001");
+			checkAttributes(Synopsis, [tva.a_length], [tva.a_lang], errs, "SY001");
 
 			let synopsisLang=this.GetLanguage(this.knownLanguages, errs, Synopsis, parentLanguage, false, "SY002");
 			let synopsisLength=Synopsis.attr(tva.a_length)?Synopsis.attr(tva.a_length).value():null;
@@ -527,7 +526,7 @@ module.exports = class ContentGuideCheck {
 		let k=0, Keyword, counts=[];
 		while ((Keyword=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_Keyword, ++k), CG_SCHEMA))!=null) {
 			
-			checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, Keyword, [], [tva.a_lang, tva.a_type], errs, "KW001");
+			checkAttributes(Keyword, [], [tva.a_lang, tva.a_type], errs, "KW001");
 
 			let keywordType=Keyword.attr(tva.a_type)?Keyword.attr(tva.a_type).value():tva.DEFAULT_KEYWORD_TYPE;
 			let keywordLang=this.GetLanguage(this.knownLanguages, errs, Keyword, parentLanguage, false, "KW002");
@@ -614,12 +613,12 @@ module.exports = class ContentGuideCheck {
 						errs.pushCode(errCode?`${errCode}-2`:"PG012", `${tva.e_MinimumAge.elementize()} must be in the first ${tva.e_ParentalGuidance.elementize()} element`);
 					
 					if (pgChild.name()==tva.e_ParentalRating) {
-						checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, pgChild, [tva.a_href], [], errs, errCode?`${errCode}-3`:"PG013");
+						checkAttributes(pgChild, [tva.a_href], [], errs, errCode?`${errCode}-3`:"PG013");
 					}
 					break;		
 				case tva.e_ExplanatoryText:
 					countExplanatoryText++;
-					checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, pgChild, [tva.a_length], [], errs, errCode?`${errCode}-4`:"PG004") ;
+					checkAttributes(pgChild, [tva.a_length], [], errs, errCode?`${errCode}-4`:"PG004") ;
 					if (pgChild.attr(tva.a_length)) {
 						if (pgChild.attr(tva.a_length).value()!=tva.v_lengthLong)
 							errs.pushCode(errCode?`${errCode}-3`:"PG003", `${tva.a_length.attribute()}=${pgChild.attr(tva.a_length).value().quote()} is not allowed for ${tva.e_ExplanatoryText.elementize()}`);
@@ -712,7 +711,7 @@ module.exports = class ContentGuideCheck {
 		if (CreditsList) {
 			let ci=0, CreditsItem;
 			while ((CreditsItem=CreditsList.get(xPath(SCHEMA_PREFIX, tva.e_CreditsItem, ++ci), CG_SCHEMA))!=null) {
-				checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, CreditsItem, [tva.a_role], [], errs, errCode?`${errCode}-1`:"CL001");
+				checkAttributes(CreditsItem, [tva.a_role], [], errs, errCode?`${errCode}-1`:"CL001");
 				if (CreditsItem.attr(tva.a_role)) {
 					let CreditsItemRole=CreditsItem.attr(tva.a_role).value();
 					if (!this.allowedCreditItemRoles.isIn(CreditsItemRole))
@@ -790,7 +789,7 @@ module.exports = class ContentGuideCheck {
 			
 			let MediaUri=RelatedMaterial.get(xPathM(SCHEMA_PREFIX, [tva.e_MediaLocator, tva.e_MediaUri]), CG_SCHEMA) ;
 			if (MediaUri) {
-				checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, MediaUri, [tva.a_contentType], [], errs, "IRM002");
+				checkAttributes(MediaUri, [tva.a_contentType], [], errs, "IRM002");
 				if (MediaUri.attr(tva.a_contentType)) {
 					let contentType=MediaUri.attr(tva.a_contentType).value();
 					if (!isJPEGmime(contentType) && !isPNGmime(contentType)) 
@@ -863,7 +862,7 @@ module.exports = class ContentGuideCheck {
 			if (!HowRelated) 
 				this.NoChildElement(errs, tva.e_HowRelated.elementize(), tva.e_RelatedMaterial.elementize(), "VP001");
 			else {	
-				checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, HowRelated, [tva.a_href], [], errs, "VP002");
+				checkAttributes(HowRelated, [tva.a_href], [], errs, "VP002");
 				if (HowRelated.attr(tva.a_href))
 					switch (HowRelated.attr(tva.a_href).value()) {
 						case dvbi.PAGINATION_FIRST_URI:
@@ -1012,7 +1011,7 @@ module.exports = class ContentGuideCheck {
 			return;
 		}
 		
-		checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, HowRelated, [tva.a_href], [], errs, "TA002");
+		checkAttributes(HowRelated, [tva.a_href], [], errs, "TA002");
 		if (HowRelated.attr(tva.a_href)) {
 			if (HowRelated.attr(tva.a_href).value()!=dvbi.TEMPLATE_AIT_URI) 
 				errs.pushCode("TA003", `${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} does not designate a Template AIT`);
@@ -1023,7 +1022,7 @@ module.exports = class ContentGuideCheck {
 						if (subElems) subElems.forEachSubElement(child => {
 							if (child.name()==tva.e_AuxiliaryURI) {
 								hasAuxiliaryURI=true;
-								checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, child, [tva.a_contentType], [], errs, "TA010");
+								checkAttributes(child, [tva.a_contentType], [], errs, "TA010");
 								if (child.attr(tva.a_contentType)) {
 									let contentType=child.attr(tva.a_contentType).value();
 									if (contentType!=dvbi.XML_AIT_CONTENT_TYPE) 
@@ -1077,7 +1076,7 @@ module.exports = class ContentGuideCheck {
 			return;
 		}
 		
-		checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, HowRelated, [tva.a_href], [], errs, "PS002");
+		checkAttributes(HowRelated, [tva.a_href], [], errs, "PS002");
 		if (HowRelated.attr(tva.a_href)) {
 			if (HowRelated.attr(tva.a_href).value()!=dvbi.PROMOTIONAL_STILL_IMAGE_URI) 
 				errs.pushCode("PS010", `${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} does not designate a Promotional Still Image`);
@@ -1089,7 +1088,7 @@ module.exports = class ContentGuideCheck {
 						if (child.name()==tva.e_StillPictureFormat) {
 							hasStillPictureFormat=true;
 							
-							checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, child, [tva.a_horizontalSize, tva.a_verticalSize, tva.a_href], [], errs, "PS021");
+							checkAttributes(child, [tva.a_horizontalSize, tva.a_verticalSize, tva.a_href], [], errs, "PS021");
 							
 							if (child.attr(tva.a_href)) {
 								let href=child.attr(tva.a_href).value();
@@ -1116,7 +1115,7 @@ module.exports = class ContentGuideCheck {
 						if (subElems) subElems.forEachSubElement(child => {
 							if (child.name()==tva.e_MediaUri) {
 								hasMediaURI=true;
-								checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, child, [tva.a_contentType], [], errs, "PS031");
+								checkAttributes(child, [tva.a_contentType], [], errs, "PS031");
 								if (child.attr(tva.a_contentType)) {
 									let contentType=child.attr(tva.a_contentType).value();
 									if (!isJPEGmime(contentType) && !isPNGmime(contentType)) 
@@ -1162,7 +1161,7 @@ module.exports = class ContentGuideCheck {
 			if (!HowRelated) 
 				this.NoChildElement(errs, tva.e_HowRelated.elementize(), tva.e_RelatedMaterial.elementize());
 			else {		
-				checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, HowRelated, [tva.a_href], [], errs, "MB010");
+				checkAttributes(HowRelated, [tva.a_href], [], errs, "MB010");
 				if (HowRelated.attr(tva.a_href)) {
 					let hrHref=HowRelated.attr(tva.a_href).value();
 					switch (hrHref) {
@@ -1234,7 +1233,7 @@ module.exports = class ContentGuideCheck {
 		else optionalAttributes.push(tva.a_type);
 		while ((Title=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_Title, ++t), CG_SCHEMA))!=null) {
 
-			checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, Title, requiredAttributes, optionalAttributes, errs, errCode?`${errCode}-1`:"VT001");
+			checkAttributes(Title, requiredAttributes, optionalAttributes, errs, errCode?`${errCode}-1`:"VT001");
 			
 			let titleType=Title.attr(tva.a_type) ? Title.attr(tva.a_type).value() : mpeg7.DEFAULT_TITLE_TYPE;
 			let titleLang=this.GetLanguage(this.knownLanguages, errs, Title, parentLanguage, false, "VT002");
@@ -1405,7 +1404,7 @@ module.exports = class ContentGuideCheck {
 		
 		checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, ProgramInformation, [tva.e_BasicDescription], [tva.e_OtherIdentifier, tva.e_MemberOf, tva.e_EpisodeOf], errs, "PI001");
 		
-		checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, ProgramInformation, [tva.a_programId], [tva.a_lang], errs, "PI002");
+		checkAttributes(ProgramInformation, [tva.a_programId], [tva.a_lang], errs, "PI002");
 
 		let piLang=this.GetLanguage(this.knownLanguages, errs, ProgramInformation, parentLanguage, false, "PI010");
 		let isCurrentProgram=false, programCRID=null;
@@ -1430,7 +1429,7 @@ module.exports = class ContentGuideCheck {
 						errs.pushCode("PI021", `${tva.e_OtherIdentifier.elementize()} is not permitted in this request type`);
 					break;
 				case tva.e_EpisodeOf:			// <ProgramInformation><EpisodeOf>
-					checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, child, [tva.a_crid], [], errs, "PI031");
+					checkAttributes(child, [tva.a_crid], [], errs, "PI031");
 					
 					// <ProgramInformation><EpisodeOf>@crid
 					if (child.attr(tva.a_crid)) {
@@ -1446,12 +1445,12 @@ module.exports = class ContentGuideCheck {
 				case tva.e_MemberOf:			// <ProgramInformation><MemberOf>
 					if (requestType==CG_REQUEST_SCHEDULE_NOWNEXT || requestType==CG_REQUEST_SCHEDULE_WINDOW) {
 						// xsi:type is optional for Now/Next
-						checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, child, [tva.a_index, tva.a_crid], [tva.a_type], errs, "PI041");
+						checkAttributes(child, [tva.a_index, tva.a_crid], [tva.a_type], errs, "PI041");
 						if (child.attr(tva.a_crid) && child.attr(tva.a_crid).value()==dvbi.CRID_NOW)
 							isCurrentProgram=true;
 					}
 					else 
-						checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, child, [tva.a_type, tva.a_index, tva.a_crid], [], errs, "PI042");
+						checkAttributes(child, [tva.a_type, tva.a_index, tva.a_crid], [], errs, "PI042");
 							
 					// <ProgramInformation><MemberOf>@xsi:type
 					if (child.attr(tva.a_type) && child.attr(tva.a_type).value()!=tva.t_MemberOfType)
@@ -1511,7 +1510,7 @@ module.exports = class ContentGuideCheck {
 			errs.pushCode("PI101", `${tva.e_ProgramInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`);
 			return null;
 		}
-		checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, ProgramInformationTable, [], [tva.a_lang], errs, "PI102");
+		checkAttributes(ProgramInformationTable, [], [tva.a_lang], errs, "PI102");
 		let pitLang=this.GetLanguage(this.knownLanguages, errs, ProgramInformationTable, parentLang, false, "PI103");
 
 		let pi=0, ProgramInformation, cnt=0, indexes=[], currentProgramCRID=null;
@@ -1554,26 +1553,26 @@ module.exports = class ContentGuideCheck {
 		switch (requestType) {
 			case CG_REQUEST_BS_CATEGORIES:
 				if (isParentGroup) {
-					checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_ordered, tva.a_numOfItems], errs, "GIB001");
+					checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_ordered, tva.a_numOfItems], errs, "GIB001");
 					checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.e_GroupType], [tva.e_BasicDescription], errs, "GIB002");
 				}
 				else {
-					checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.a_groupId], [tva.a_lang], errs, "GIB003");
+					checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang], errs, "GIB003");
 					checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.e_GroupType, tva.e_MemberOf], [tva.e_BasicDescription], errs, "GIB004");
 				}
 				break;
 			case CG_REQUEST_BS_LISTS:
 				if (isParentGroup) {
-					checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_ordered, tva.a_numOfItems], errs, "GIB005");
+					checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_ordered, tva.a_numOfItems], errs, "GIB005");
 					checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.e_GroupType], [tva.e_BasicDescription], errs, "GIB006");
 				}
 				else {
-					checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_serviceIDRef], errs, "GIB007");
+					checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_serviceIDRef], errs, "GIB007");
 					checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.e_GroupType, tva.e_MemberOf], [tva.e_BasicDescription], errs, "GIB008");
 				}
 				break;
 			case CG_REQUEST_BS_CONTENTS:
-				checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_ordered, tva.a_numOfItems, tva.a_serviceIDRef], errs, "GIB009");
+				checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_ordered, tva.a_numOfItems, tva.a_serviceIDRef], errs, "GIB009");
 				checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.e_GroupType], [tva.e_BasicDescription], errs, "GIB0010");
 				break;
 		}
@@ -1604,7 +1603,7 @@ module.exports = class ContentGuideCheck {
 		if (!isParentGroup) {
 			let MemberOf=GroupInformation.get(xPath(SCHEMA_PREFIX, tva.e_MemberOf), CG_SCHEMA);
 			if (MemberOf) {
-				checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, MemberOf, [tva.a_type, tva.a_index, tva.a_crid], [], errs, "GIB041");
+				checkAttributes(MemberOf, [tva.a_type, tva.a_index, tva.a_crid], [], errs, "GIB041");
 				if (MemberOf.attr(tva.a_type) && MemberOf.attr(tva.a_type).value()!=tva.t_MemberOfType)
 					errs.pushCode("GIB042", `${GroupInformation.name()}.${tva.e_MemberOf}@xsi:${tva.a_type} is invalid (${MemberOf.attr(tva.a_type).value().quote()})`);
 				
@@ -1655,7 +1654,7 @@ module.exports = class ContentGuideCheck {
 			errs.pushCode("GIS000", "ValidateGroupInformationSchedules() called with GroupInformation==null");
 			return;
 		}
-		checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.a_groupId, tva.a_ordered, tva.a_numOfItems], [tva.a_lang], errs, "GIS001");
+		checkAttributes(GroupInformation, [tva.a_groupId, tva.a_ordered, tva.a_numOfItems], [tva.a_lang], errs, "GIS001");
 
 		if (GroupInformation.attr(tva.a_groupId)) {
 			let groupId=GroupInformation.attr(tva.a_groupId).value();
@@ -1697,7 +1696,7 @@ module.exports = class ContentGuideCheck {
 		if (categoryGroup) 
 			errs.pushCode("GIM001", `${CATEGORY_GROUP_NAME} should not be specified for this request type`);
 		
-		checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, [tva.a_groupId, tva.a_ordered, tva.a_numOfItems], [tva.a_lang], errs, "GIM002");
+		checkAttributes(GroupInformation, [tva.a_groupId, tva.a_ordered, tva.a_numOfItems], [tva.a_lang], errs, "GIM002");
 		
 		if (GroupInformation.attr(tva.a_groupId)) {
 			let groupId=GroupInformation.attr(tva.a_groupId).value();
@@ -1711,7 +1710,7 @@ module.exports = class ContentGuideCheck {
 		
 		let GroupType=GroupInformation.get(xPath(SCHEMA_PREFIX, tva.e_GroupType), CG_SCHEMA);
 		if (GroupType) {
-			checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, GroupType, [tva.a_type, tva.a_value], [], errs, "GIM011");
+			checkAttributes(GroupType, [tva.a_type, tva.a_value], [], errs, "GIM011");
 			
 			if (GroupType.attr(tva.a_type) && GroupType.attr(tva.a_type).value()!=tva.t_ProgramGroupTypeType) 
 				errs.pushCode("GIM012", `${tva.e_GroupType}@xsi:${tva.a_type} must be ${tva.t_ProgramGroupTypeType.quote()}`);
@@ -1967,14 +1966,14 @@ module.exports = class ContentGuideCheck {
 
 			let MixType=AudioAttributes.get(xPath(SCHEMA_PREFIX, tva.e_MixType), CG_SCHEMA);
 			if (MixType) {
-				checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, MixType, [tva.a_href], [], errs, "AV011"); 
+				checkAttributes(MixType, [tva.a_href], [], errs, "AV011"); 
 				if (MixType.attr(tva.a_href) && !isValidAudioMixType(MixType.attr(tva.a_href).value()))
 					errs.pushCode("AV012", `${tva.e_AudioAttributes}.${tva.e_MixType} is not valid`);
 			}
 					
 			let AudioLanguage=AudioAttributes.get(xPath(SCHEMA_PREFIX, tva.e_AudioLanguage), CG_SCHEMA);
 			if (AudioLanguage) {
-				checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, AudioLanguage, [tva.a_purpose], [], errs, "AV013" );
+				checkAttributes(AudioLanguage, [tva.a_purpose], [], errs, "AV013" );
 				let validLanguage=false, validPurpose=false, audioLang=AudioLanguage.text();
 				if (AudioLanguage.attr(tva.a_purpose)) {
 					if (!(validPurpose=isValidAudioLanguagePurpose(AudioLanguage.attr(tva.a_purpose).value())))
@@ -2014,7 +2013,7 @@ module.exports = class ContentGuideCheck {
 			
 			let Coding=CaptioningAttributes.get(xPath(SCHEMA_PREFIX, tva.e_Coding), CG_SCHEMA);
 			if (Coding) {
-				checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, Coding, [tva.a_href], [], errs, "AV041");
+				checkAttributes(Coding, [tva.a_href], [], errs, "AV041");
 				if (Coding.attr(tva.a_href)) {
 					let codingHref=Coding.attr(tva.a_href).value();
 					if (!([dvbi.DVB_BITMAP_SUBTITLES, dvbi.DVB_CHARACTER_SUBTITLES, dvbi.EBU_TT_D].includes(codingHref)))
@@ -2047,7 +2046,7 @@ module.exports = class ContentGuideCheck {
 		
 		let HowRelated=RelatedMaterial.get(xPath(SCHEMA_PREFIX, tva.e_HowRelated), CG_SCHEMA);
 		if (HowRelated) {
-			checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, HowRelated, [tva.a_href], [], errs, "RR002");
+			checkAttributes(HowRelated, [tva.a_href], [], errs, "RR002");
 			if (HowRelated.attr(tva.a_href)) {
 				if (!isRestartLink(HowRelated.attr(tva.a_href).value())) {
 					errs.pushCode("RR003", `invalid ${tva.a_href.attribute(tva.e_HowRelated)} (${HowRelated.attr(tva.a_href).value()}) for Restart Application Link`);
@@ -2093,7 +2092,7 @@ module.exports = class ContentGuideCheck {
 		
 		function checkGenre(node, CG_SCHEMA, SCHEMA_PREFIX, errs, errcode=null) {
 			if (!node) return null;
-			checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, node, [tva.a_href], [tva.a_type], errs, errcode?`${errcode}-1`:"ChG001");
+			checkAttributes(node, [tva.a_href], [tva.a_type], errs, errcode?`${errcode}-1`:"ChG001");
 			let GenreType=(node.attr(tva.a_type)?node.attr(tva.a_type).value():"other");
 			if (GenreType!="other")
 				errs.pushCode(errcode?`${errcode}-2`:"ChG002", `${tva.a_type.attribute(`${node.parent().name()}.${+node.name()}`)} must contain ${"other".quote()}`);
@@ -2146,7 +2145,7 @@ module.exports = class ContentGuideCheck {
 			case tva.e_ScheduleEvent:
 				let Genre=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_Genre), CG_SCHEMA);
 				if (Genre) {
-					checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, Genre, [tva.a_href], [tva.a_type], errs, "ID016");
+					checkAttributes(Genre, [tva.a_href], [tva.a_type], errs, "ID016");
 					if (Genre.attr(tva.a_href)) {
 						if (isRestartAvailability(Genre.attr(tva.a_href).value())) {
 							restartGenre=Genre;
@@ -2191,7 +2190,7 @@ module.exports = class ContentGuideCheck {
 		// <OtherIdentifier>
 		let oi=0, OtherIdentifier;
 		while ((OtherIdentifier=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_OtherIdentifier, ++oi), CG_SCHEMA))!=null) {
-			checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, OtherIdentifier, [tva.a_type], [], errs, "VID052");
+			checkAttributes(OtherIdentifier, [tva.a_type], [], errs, "VID052");
 			if (OtherIdentifier.attr(tva.a_type)) {			
 				let oiType=OtherIdentifier.attr(tva.a_type).value();
 		
@@ -2308,14 +2307,14 @@ module.exports = class ContentGuideCheck {
 				validRequest=false;
 		}
 			
-		checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, OnDemandProgram, [], [tva.a_serviceIDRef, tva.a_lang], errs, "OD005"); 
+		checkAttributes(OnDemandProgram, [], [tva.a_serviceIDRef, tva.a_lang], errs, "OD005"); 
 		let odpLang=this.GetLanguage(this.knownLanguages, errs, OnDemandProgram, parentLanguage, false, "OD006");
 		this.checkTAGUri(OnDemandProgram, errs, "OD007");	
 		
 		// <Program>
 		let prog=0, Program;
 		while ((Program=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_Program, ++prog), CG_SCHEMA))!=null) {
-			checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, Program, [tva.a_crid], [], errs, "OD012");
+			checkAttributes(Program, [tva.a_crid], [], errs, "OD012");
 			if (Program.attr(tva.a_crid)) {
 				let programCRID=Program.attr(tva.a_crid).value();
 				if (!isCRIDURI(programCRID))
@@ -2421,7 +2420,7 @@ module.exports = class ContentGuideCheck {
 			// <Program>
 			let Program=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_Program), CG_SCHEMA);
 			if (Program) {
-				checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, Program, [tva.a_crid], [], errs, "SE010" );
+				checkAttributes(Program, [tva.a_crid], [], errs, "SE010" );
 
 				let ProgramCRID=Program.attr(tva.a_crid);
 				if (ProgramCRID) {
@@ -2508,7 +2507,7 @@ module.exports = class ContentGuideCheck {
 		}
 
 		checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, Schedule, [], [tva.e_ScheduleEvent], errs, "VS001");
-		checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, Schedule, [tva.a_serviceIDRef, tva.a_start, tva.a_end], [], errs, "VS002");
+		checkAttributes(Schedule, [tva.a_serviceIDRef, tva.a_start, tva.a_end], [], errs, "VS002");
 		
 		let scheduleLang=this.GetLanguage(this.knownLanguages, errs, Schedule, parentLanguage, false, "VS003");	
 		let serviceIdRef=this.checkTAGUri(Schedule, errs, "VS004");
@@ -2555,7 +2554,7 @@ module.exports = class ContentGuideCheck {
 			return;
 		}
 		checkTopElements(CG_SCHEMA, SCHEMA_PREFIX, ProgramLocationTable, [], [tva.e_Schedule, tva.e_OnDemandProgram], errs, "PL010");
-		checkAttributes(CG_SCHEMA, SCHEMA_PREFIX, ProgramLocationTable, [], [tva.a_lang], errs, "PL011");
+		checkAttributes(ProgramLocationTable, [], [tva.a_lang], errs, "PL011");
 		
 		let pltLang=this.GetLanguage(this.knownLanguages, errs, ProgramLocationTable, parentLang, false, "PL012");	
 		
