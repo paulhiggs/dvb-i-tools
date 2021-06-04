@@ -483,7 +483,6 @@ if (!options.nocsr) {
 	});
 	
 	app.get('/stats', function(req, res) {
-		
 		res.status(404).end();
 	});
 }
