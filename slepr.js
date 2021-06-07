@@ -9,7 +9,7 @@ const libxml=require('libxmljs2');
 // Fetch() API for node.js- https://www.npmjs.com/package/node-fetch
 const fetch=require('node-fetch');
 
-const {xPath, xPathM, isIn}=require("./utils.js");
+const {xPath, isIn}=require("./utils.js");
 
 const ISOcountries=require("./ISOcountries.js");
 const dvbi=require("./DVB-I_definitions.js");
@@ -36,7 +36,11 @@ const DVB_DASH_DELIVERY="dvb-dash",
 class SLEPR {
 
     constructor(useURLs, preloadedLanguageValidator=null, preloadedCountries=null) {
+        this.loadDataFiles(useURLs, preloadedLanguageValidator, preloadedCountries);
+    }  
 
+
+    /* public */ loadDataFiles(useURLs, preloadedLanguageValidator=null, preloadedCountries=null) {
         if (preloadedLanguageValidator) 
           this.knownLanguages=preloadedLanguageValidator;
         else {
@@ -55,7 +59,7 @@ class SLEPR {
 				this.knownCountries.loadCountries({url:locs.ISO3166_URL, purge:true});
 			else this.knownCountries.loadCountries({file:locs.ISO3166_Filename, purge:true});
 		}
-    }  
+    }
 
     /**
      * read in the master XML document as text
@@ -72,20 +76,36 @@ class SLEPR {
             }
             return response;
         }
-
-        if (patterns.isHTTPURL(filename)) {
+      if (patterns.isHTTPURL(filename)) {
             fetch(filename)
                 .then(handleErrors)
                 .then(response => response.text())
                 .then(responseText => masterSLEPR=responseText.replace(/(\r\n|\n|\r|\t)/gm,""))
-                .catch(error => {console.log(`error (${error}) retrieving ${filename}`); masterSLEPR=EMPTY_SLEPR;});
+                .catch(error => {console.log(`error (${error}) retrieving ${filename}`); masterSLEPR=EMPTY_SLEPR;}); 
+            masterSLEPR=fetch(filename);
         }
         else fs.readFile(filename, {encoding: 'utf-8'}, function(err,data){
-            if (!err) {
+            if (!err) 
                 masterSLEPR=data.replace(/(\r\n|\n|\r|\t)/gm,"");
-            } else
+             else 
                 console.log(err);
         });	
+/*
+        if (patterns.isHTTPURL(filename)) {
+            this.masterSLEPR=fetch(filename).text().replace(/(\r\n|\n|\r|\t)/gm,"");
+        }
+        else {
+            try {
+                let stats=fs.statSync(filename);
+                if (stats.isFile()) {
+                    this.masterSLEPR=fs.readFileSync(filename, {encoding: 'utf-8'}).replace(/(\r\n|\n|\r|\t)/gm,""); 
+                    console.log(`read in ${this.masterSLEPR}`)
+                }
+                else console.log(`ER: ${filename} is not a file`)
+            }
+            catch (err) {console.log(err );} //err.code, err.path
+        }
+*/
     }
 
     /**
@@ -255,124 +275,125 @@ class SLEPR {
         
 
     /* public */ processServiceListRequest(req, res) {
-
-		if (!this.checkQuery(req)) {
+ 		if (!this.checkQuery(req)) {
 			res.status(400);
+            res.end();
+            return false;
 		}
-		else {
-			let slepr=libxml.parseXmlString(masterSLEPR);
-	
-			let SLEPR_SCHEMA={}, SCHEMA_PREFIX=slepr.root().namespace().prefix();
-			SLEPR_SCHEMA[SCHEMA_PREFIX]=slepr.root().namespace().href();
+        let slepr=libxml.parseXmlString(masterSLEPR);
 
-			if (req.query.ProviderName) {
-				// if ProviderName is specified, remove any ProviderOffering entries that do not match the name
-				let prov, p=0, providerCleanup=[];
-				while ((prov=slepr.get('//'+xPath(SCHEMA_PREFIX, dvbi.e_ProviderOffering, ++p), SLEPR_SCHEMA))!=null) {
-					let provName, n=0, matchedProvider=false;
-					while (!matchedProvider && (provName=prov.get(xPath(SCHEMA_PREFIX, dvbi.e_Provider)+'/'+xPath(SCHEMA_PREFIX, dvbi.e_Name, ++n), SLEPR_SCHEMA))) {
-						if (isIn(req.query.ProviderName, provName.text())) 
-							matchedProvider=true;					
-					}
-					if (!matchedProvider) 
-						providerCleanup.push(prov);
-				}
-				providerCleanup.forEach(provider => provider.remove());
-			}
+        let SLEPR_SCHEMA={}, SCHEMA_PREFIX=slepr.root().namespace().prefix();
+        SLEPR_SCHEMA[SCHEMA_PREFIX]=slepr.root().namespace().href();
 
-			if (req.query.regulatorListFlag || req.query.Language || req.query.TargetCountry || req.query.Genre) {
-				let prov, p=0, servicesToRemove=[];
-				while ((prov=slepr.get('//'+xPath(SCHEMA_PREFIX, dvbi.e_ProviderOffering, ++p), SLEPR_SCHEMA))!=null) {
-					let serv, s=0;
-					while ((serv=prov.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceListOffering, ++s), SLEPR_SCHEMA))!=null) {
-						let removeService=false;
-					
-						// remove services that do not match the specified regulator list flag
-						if (req.query.regulatorListFlag) {
-							// The regulatorListFlag has been specified in the query, so it has to match. Default in instance document is "false"
-							let flag=serv.attr(dvbi.a_regulatorListFlag)?serv.attr(dvbi.a_regulatorListFlag).value():"false";
-							if (req.query.regulatorListFlag!=flag ) 
-								removeService=true;
-						}
+        if (req.query.ProviderName) {
+            // if ProviderName is specified, remove any ProviderOffering entries that do not match the name
+            let prov, p=0, providerCleanup=[];
+            while ((prov=slepr.get('//'+xPath(SCHEMA_PREFIX, dvbi.e_ProviderOffering, ++p), SLEPR_SCHEMA))!=null) {
+                let provName, n=0, matchedProvider=false;
+                while (!matchedProvider && (provName=prov.get(xPath(SCHEMA_PREFIX, dvbi.e_Provider)+'/'+xPath(SCHEMA_PREFIX, dvbi.e_Name, ++n), SLEPR_SCHEMA))) {
+                    if (isIn(req.query.ProviderName, provName.text())) 
+                        matchedProvider=true;					
+                }
+                if (!matchedProvider) 
+                    providerCleanup.push(prov);
+            }
+            providerCleanup.forEach(provider => provider.remove());
+        }
 
-                        // remove remaining services that do not match the specified language
-						if (!removeService && req.query.Language) {
-							let lang, l=0, keepService=false, hasLanguage=false;
-							while (!keepService && (lang=serv.get(xPath(SCHEMA_PREFIX, dvbi.e_Language, ++l), SLEPR_SCHEMA))) {
-								if (isIn(req.query.Language, lang.text())) keepService=true;
-								hasLanguage=true;
-							}
-							if (hasLanguage && !keepService) removeService=true;
-						}
-						
-						// remove remaining services that do not match the specified target country
-						if (!removeService && req.query.TargetCountry) {
-							let targetCountry, c=0, keepService=false, hasCountry=false;
-							while (!keepService && (targetCountry=serv.get(xPath(SCHEMA_PREFIX, dvbi.e_TargetCountry, ++c), SLEPR_SCHEMA))) {	
-								// note that the <TargetCountry> element can signal multiple values. Its XML pattern is "\c\c\c(,\c\c\c)*"
-								let countries=targetCountry.text().split(",");
-								/* jslint -W083 */
-								countries.forEach(country => {
-									if (isIn(req.query.TargetCountry, country)) keepService=true;
-								});
-								/* jslint +W083 */
-								hasCountry=true;
-							}
-							if (hasCountry && !keepService) removeService=true;
-						}
+        if (req.query.regulatorListFlag || req.query.Language || req.query.TargetCountry || req.query.Genre) {
+            let prov, p=0, servicesToRemove=[];
+            while ((prov=slepr.get('//'+xPath(SCHEMA_PREFIX, dvbi.e_ProviderOffering, ++p), SLEPR_SCHEMA))!=null) {
+                let serv, s=0;
+                while ((serv=prov.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceListOffering, ++s), SLEPR_SCHEMA))!=null) {
+                    let removeService=false;
+                
+                    // remove services that do not match the specified regulator list flag
+                    if (req.query.regulatorListFlag) {
+                        // The regulatorListFlag has been specified in the query, so it has to match. Default in instance document is "false"
+                        let flag=serv.attr(dvbi.a_regulatorListFlag)?serv.attr(dvbi.a_regulatorListFlag).value():"false";
+                        if (req.query.regulatorListFlag!=flag ) 
+                            removeService=true;
+                    }
 
-						// remove remaining services that do not match the specified genre
-						if (!removeService && req.query.Genre) {
-							let genre, g=0, keepService=false, hasGenre=false;
-							while (!keepService && (genre=serv.get(xPath(SCHEMA_PREFIX, dvbi.e_Genre, ++g), SLEPR_SCHEMA))) {			
-								if (isIn(req.query.Genre, genre.text())) keepService=true;
-								hasGenre=true;
-							}
-							if (hasGenre && !keepService) removeService=true;
-						}
-
-                        // remove remaining services that do not have the requested delivery modes
-						if (!removeService && req.query.Delivery) {
-							let delivery=serv.get(xPath(SCHEMA_PREFIX, dvbi.e_Delivery), SLEPR_SCHEMA);
-
-							if (!delivery)
-								removeService=true;
-							else {
-								// check that there is a 'delivery system' for at least one of those requested
-								let keepService=false;
-
-								if ((isIn(req.query.Delivery, DVB_DASH_DELIVERY) && hasChild(delivery, dvbi.e_DASHDelivery)) ||
-  								    (isIn(req.query.Delivery, DVB_T_DELIVERY) && hasChild(delivery, dvbi.e_DVBTDelivery)) ||
-								    (isIn(req.query.Delivery, DVB_C_DELIVERY) && hasChild(delivery, dvbi.e_DVBCDelivery)) ||
-								    (isIn(req.query.Delivery, DVB_S_DELIVERY) && hasChild(delivery, dvbi.e_DVBSDelivery)) ||
-									(isIn(req.query.Delivery, DVB_IPTV_DELIVERY) && (hasChild(delivery, dvbi.e_RTSPDelivery) || hasChild(delivery, dvbi.e_MulticastTSDelivery))) ||
-									(isIn(req.query.Delivery, DVB_APPLICATION_DELIVERY) && hasChild(delivery, dvbi.e_ApplicationDelivery))
-								) {
-									keepService=true;
-								}
-
-								if (!keepSerice) removeService=true;
-							}
+                    // remove remaining services that do not match the specified language
+                    if (!removeService && req.query.Language) {
+                        let lang, l=0, keepService=false, hasLanguage=false;
+                        while (!keepService && (lang=serv.get(xPath(SCHEMA_PREFIX, dvbi.e_Language, ++l), SLEPR_SCHEMA))) {
+                            if (isIn(req.query.Language, lang.text())) keepService=true;
+                            hasLanguage=true;
                         }
+                        if (hasLanguage && !keepService) removeService=true;
+                    }
+                    
+                    // remove remaining services that do not match the specified target country
+                    if (!removeService && req.query.TargetCountry) {
+                        let targetCountry, c=0, keepService=false, hasCountry=false;
+                        while (!keepService && (targetCountry=serv.get(xPath(SCHEMA_PREFIX, dvbi.e_TargetCountry, ++c), SLEPR_SCHEMA))) {	
+                            // note that the <TargetCountry> element can signal multiple values. Its XML pattern is "\c\c\c(,\c\c\c)*"
+                            let countries=targetCountry.text().split(",");
+                            /* jslint -W083 */
+                            countries.forEach(country => {
+                                if (isIn(req.query.TargetCountry, country)) keepService=true;
+                            });
+                            /* jslint +W083 */
+                            hasCountry=true;
+                        }
+                        if (hasCountry && !keepService) removeService=true;
+                    }
 
-						if (removeService) servicesToRemove.push(serv);						
-					}
-				}
-				servicesToRemove.forEach(service => service.remove());
-			}
-				
-			// remove any <ProviderOffering> elements that no longer have any <ServiceListOffering>
-			let prov, p=0, providersToRemove=[];
-			while ((prov=slepr.get('//'+xPath(SCHEMA_PREFIX, dvbi.e_ProviderOffering, ++p), SLEPR_SCHEMA))!=null) {
-				if (!prov.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceListOffering, 1), SLEPR_SCHEMA)) 
-					providersToRemove.push(prov);
-			}
-			providersToRemove.forEach(provider => provider.remove());
+                    // remove remaining services that do not match the specified genre
+                    if (!removeService && req.query.Genre) {
+                        let genre, g=0, keepService=false, hasGenre=false;
+                        while (!keepService && (genre=serv.get(xPath(SCHEMA_PREFIX, dvbi.e_Genre, ++g), SLEPR_SCHEMA))) {			
+                            if (isIn(req.query.Genre, genre.text())) keepService=true;
+                            hasGenre=true;
+                        }
+                        if (hasGenre && !keepService) removeService=true;
+                    }
 
-			res.type('text/xml');
-			res.send(slepr.toString());
-		}
+                    // remove remaining services that do not have the requested delivery modes
+                    if (!removeService && req.query.Delivery) {
+                        let delivery=serv.get(xPath(SCHEMA_PREFIX, dvbi.e_Delivery), SLEPR_SCHEMA);
+
+                        if (!delivery)
+                            removeService=true;
+                        else {
+                            // check that there is a 'delivery system' for at least one of those requested
+                            let keepService=false;
+
+                            if ((isIn(req.query.Delivery, DVB_DASH_DELIVERY) && hasChild(delivery, dvbi.e_DASHDelivery)) ||
+                                (isIn(req.query.Delivery, DVB_T_DELIVERY) && hasChild(delivery, dvbi.e_DVBTDelivery)) ||
+                                (isIn(req.query.Delivery, DVB_C_DELIVERY) && hasChild(delivery, dvbi.e_DVBCDelivery)) ||
+                                (isIn(req.query.Delivery, DVB_S_DELIVERY) && hasChild(delivery, dvbi.e_DVBSDelivery)) ||
+                                (isIn(req.query.Delivery, DVB_IPTV_DELIVERY) && (hasChild(delivery, dvbi.e_RTSPDelivery) || hasChild(delivery, dvbi.e_MulticastTSDelivery))) ||
+                                (isIn(req.query.Delivery, DVB_APPLICATION_DELIVERY) && hasChild(delivery, dvbi.e_ApplicationDelivery))
+                            ) {
+                                keepService=true;
+                            }
+
+                            if (!keepService) removeService=true;
+                        }
+                    }
+
+                    if (removeService) servicesToRemove.push(serv);						
+                }
+            }
+            servicesToRemove.forEach(service => service.remove());
+        }
+            
+        // remove any <ProviderOffering> elements that no longer have any <ServiceListOffering>
+        let prov, p=0, providersToRemove=[];
+        while ((prov=slepr.get('//'+xPath(SCHEMA_PREFIX, dvbi.e_ProviderOffering, ++p), SLEPR_SCHEMA))!=null) {
+            if (!prov.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceListOffering, 1), SLEPR_SCHEMA)) 
+                providersToRemove.push(prov);
+        }
+        providersToRemove.forEach(provider => provider.remove());
+
+        res.type('text/xml');
+        res.send(slepr.toString());
+
 		res.end();
+        return true;
     }
 }
 
