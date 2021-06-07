@@ -84,7 +84,7 @@
 				<dvbisd:URI>http://dvbi.TVfromTheWorld.com/TVservices_Germany.xml</dvbisd:URI>
 			</sld:ServiceListURI>
 			<sld:Delivery>
-				<sld:DASHDelivery required="false"/>
+				<sld:DASHDelivery required="true"/>
 				<sld:DVBTDelivery required="false"/>
 			</sld:Delivery>
 			<sld:Language>de</sld:Language>
