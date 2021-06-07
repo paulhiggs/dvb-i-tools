@@ -43,7 +43,7 @@
 			<sld:Delivery>
 				<sld:DASHDelivery required="false"/>
 				<sld:DVBTDelivery required="true"/>
-			</sld:Deluvery>
+			</sld:Delivery>
 			<sld:Language>it</sld:Language>
 			<sld:TargetCountry>ITA,SMR</sld:TargetCountry>
 		</sld:ServiceListOffering>
@@ -172,14 +172,14 @@
 			</sld:ElectronicAddress>
 		</sld:Provider>
 		<sld:ServiceListOffering regulatorListFlag="false">
-		<sld:ServiceListName>DVB-I Reference Client service list </sld:ServiceListName>
+			<sld:ServiceListName>DVB-I Reference Client service list </sld:ServiceListName>
 			<sld:ServiceListURI contentType="application/xml">
 				<dvbisd:URI>https://raw.githubusercontent.com/DVBproject/DVB-I-Reference-Client/master/backend/servicelists/example.xml</dvbisd:URI>
 			</sld:ServiceListURI>
 			<sld:Delivery>
 				<sld:DASHDelivery required="true"/>
 				<sld:DVBTDelivery required="false"/>
-			</sld:Delivery
+			</sld:Delivery>
 		</sld:ServiceListOffering>
 	</sld:ProviderOffering>
 </sld:ServiceListEntryPoints>
