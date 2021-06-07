@@ -207,6 +207,7 @@ module.exports = Object.freeze({
 	e_ContentGuideSourceRef: "ContentGuideSourceRef",
 	e_ContentProtection: "ContentProtection",
 	e_Coordinates: "Coordinates",
+	e_Delivery: "Delivery",
 	e_DASHDeliveryParameters: "DASHDeliveryParameters",
 	e_DisplayName: "DisplayName",
 	e_DRMSystemId: "DRMSystemId",
