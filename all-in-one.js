@@ -56,8 +56,8 @@ const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","s
  * @returns {boolean} true if the object being checked is empty
  */
 function isEmpty(obj) {
-    for(let key in obj) {
-        if(obj.hasOwnProperty(key))
+    for (let key in obj) {
+        if (obj.hasOwnProperty(key))
             return false;
     }
     return true;
@@ -79,7 +79,6 @@ function tabulateResults(res, error, errs) {
 
 	const RESULT_WITH_INSTRUCTION="<br><p><i>Results:</i></p>";
 	const SUMMARY_FORM_HEADER="<table><tr><th>item</th><th>count</th></tr>";
-
 	
 	DETAIL_FORM_HEADER = (mode) => `<table><tr><th>code</th><th>${mode}</th></tr>`;
 
@@ -401,7 +400,7 @@ knownGenres.loadCSExt(options.urls?
 const ISOcountries=require("./ISOcountries.js");
 let isoCountries=new ISOcountries(false, true);
 isoCountries.loadCountries(options.urls?
-	{url:locs.ISO3166_URL, purge:true}:
+	{url:locs.ISO3166_Url, purge:true}:
 	{file:locs.ISO3166_Filename, purge:true});
 
 
