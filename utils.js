@@ -20,7 +20,7 @@
  */
 module.exports.xPathM = function (SCHEMA_PREFIX, elementNames) {
 	let t="";
-	elementNames.forEach(elementName => {
+	if (elementNames) elementNames.forEach(elementName => {
 		if (t.length) { t+="/"; first=false;}
 		t+=`${SCHEMA_PREFIX}:${elementName}`;
 	});
@@ -29,6 +29,9 @@ module.exports.xPathM = function (SCHEMA_PREFIX, elementNames) {
 
 
 /* local */ function findInSet(values, value, caseSensitive) {
+	if (!values || !value)
+		return false;
+
 	let vlc=value.toLowerCase();
     if (typeof(values)=="string" || values instanceof String)
         return caseSensitive? values==value : values.toLowerCase()==vlc;
