@@ -407,24 +407,24 @@ isoCountries.loadCountries(options.urls?
 if (!options.nosl) {
 	slcheck=new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoCountries);
 
-	// handle HTTP POST requests to /check
+	// handle HTTP POST requests to /checkSL
 	app.post("/checkSL", function(req, res) {
 		req.query.SLurl=req.body.SLurl;
 		processSLQuery(req, res);
 	});
 
-	// handle HTTP GET requests to /check
+	// handle HTTP GET requests to /checkSL
 	app.get("/checkSL", function(req,res){
 		processSLQuery(req, res);
 	});
 
-	// handle HTTP POST requests to /checkFile
+	// handle HTTP POST requests to /checkSLFile
 	app.post("/checkSLFile", function(req,res) {
 		req.query.SLfile=req.body.SLfile;
 		processSLFile(req, res);
 	});
 
-	// handle HTTP GET requests to /checkFile
+	// handle HTTP GET requests to /checkSLFile
 	app.get("/checkSLFile", function(req,res){
 		processSLFile(req, res);
 	});
@@ -444,24 +444,24 @@ if (!options.nosl) {
 if (!options.nocg) {
 	cgcheck=new ContentGuideCheck(options.urls, knownLanguages, knownGenres);
 
-	// handle HTTP POST requests to /check
+	// handle HTTP POST requests to /checkCG
 	app.post("/checkCG", function(req, res) {
 		req.query.CGurl=req.body.CGurl;
 		processCGQuery(req, res);
 	});
 
-	// handle HTTP GET requests to /check
+	// handle HTTP GET requests to /checkCG
 	app.get("/checkCG", function(req, res) {
 		processCGQuery(req, res);
 	});
 
-	// handle HTTP POST requests to /checkFile
+	// handle HTTP POST requests to /checkCGFile
 	app.post("/checkCGFile", function(req, res) {
 		req.query.CGfile=req.body.CGfile;
 		processCGFile(req, res);
 	});
 
-	// handle HTTP GET requests to /checkFile
+	// handle HTTP GET requests to /checkCGFile
 	app.get("/checkCGFile", function(req, res) {
 		processCGFile(req, res);
 	});

@@ -20,5 +20,5 @@ module.exports = Object.freeze({
 
 	DEFAULT_TITLE_TYPE: "main",
 
-	__zzzDVB_IENDzzz__: null
+	__zzzMPEG7ENDzzz__: null
 });
