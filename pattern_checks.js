@@ -79,7 +79,6 @@ module.exports.isUTCDateTime = function (str) {
  * see RFC 3986 - https://tools.ietf.org/html/rfc3986
  */
 module.exports.isHTTPURL=function (arg) {
-//	return this.isURI(arg.trim(), '(https?:\\/\\/)');
 	return HTTPURLregex.test(arg.trim());
 };
 
@@ -91,13 +90,6 @@ module.exports.isHTTPURL=function (arg) {
  * @returns {boolean} true if the argument is an HTTP URL
  */
 module.exports.isURI=function (arg, scheme='([a-zA-Z][-a-zA-Z\\d.+]*:)') {
-/*	let pattern = new RegExp('^'+scheme+ // protocol
-		'((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
-		'((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
-		'(\\:\\d+)?(\\/[-a-z\\d%_.~+()]*)*'+ // port and path
-		'(\\?[\\/?;&a-z\\d%_.:~+=-]*)?'+ // query string
-		'(\\#[\\/?;&a-z\\d%_.:~+=-]*)?$','i'); // fragment locator
-	return pattern.test(arg); */
 	return this.isURL(arg) || this.isURN(arg);
 };
 

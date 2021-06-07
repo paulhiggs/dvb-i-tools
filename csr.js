@@ -181,9 +181,6 @@ if (cluster.isMaster) {
 			}
 	});
 
-//	loadDataFiles(options.urls);
-//	loadServiceListRegistry(options.file);
-
 	// start the HTTP server
 	var http_server=app.listen(options.port, function() {
 		console.log(`HTTP listening on port number ${http_server.address().port}, PID=${process.pid}`);

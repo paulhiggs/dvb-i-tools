@@ -12,8 +12,7 @@
 		"libxmljs2": "^0.26.7",
 		"morgan": "^1.10.0",
 		"node-fetch": "^2.6.1",
-		"serve-favicon": "^2.5.0",
-		"sync-fetch": "^0.3.0"
+		"serve-favicon": "^2.5.0"
 	},
 	"engines": {
 		"node": ">= 15.0.0",

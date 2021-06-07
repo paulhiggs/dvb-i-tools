@@ -85,8 +85,6 @@ module.exports = Object.freeze({
 	FORWARD_EPG_AVAILABLE: "urn:fvc:metadata:cs:FEPGAvailabilityCS:2014-10:fepg_available",
 	FORWARD_EPG_UNAVAILABLE: "urn:fvc:metadata:cs:FEPGAvailabilityCS:2014-10:fepg_unavailable",
 
-//A177r1 6.11.10 - Restart Link
-	// RESTART_LINK: "urn:fvc:metadata:cs:RestartAvailabilityCS:2018:restart",
 //A177r1 6.5.5 - Restart Link
 	RESTART_LINK: "urn:fvc:metadata:cs:HowRelatedCS:2018:restart",
 
