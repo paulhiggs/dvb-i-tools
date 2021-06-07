@@ -66,7 +66,7 @@ module.exports.DVB_VideoConformanceCS2021URL=`${DVB_METADATA}cs/2021/${DVB_Video
 
 const ISO3166="iso3166-countries.json";
 module.exports.ISO3166_Filename=path.join("iso", ISO3166);
-module.exports.ISO3166_URL=`${REPO_RAW}iso/${ISO3166}`;
+module.exports.ISO3166_Url=`${REPO_RAW}iso/${ISO3166}`;
 
 const DVBI_RecordingInfoCS="DVBRecordingInfoCS-2019.xml";
 module.exports.DVBI_RecordingInfoCSFilename=path.join("dvbi", DVBI_RecordingInfoCS);

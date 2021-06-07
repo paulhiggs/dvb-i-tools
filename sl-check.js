@@ -138,7 +138,7 @@ class ServiceListCheck {
 		else {
 			this.knownCountries=new ISOcountries(false, true);
 			if (useURLs) 
-				this.knownCountries.loadCountries({url:locs.ISO3166_URL, purge:true});
+				this.knownCountries.loadCountries({url:locs.ISO3166_Url, purge:true});
 			else this.knownCountries.loadCountries({file:locs.ISO3166_Filename, purge:true});
 		}
 
