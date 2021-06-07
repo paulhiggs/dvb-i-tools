@@ -262,7 +262,7 @@ knownGenres.loadCSExt(options.urls?
 const ISOcountries=require("./ISOcountries.js");
 let isoCountries=new ISOcountries(false, true);
 isoCountries.loadCountries(options.urls?
-	{url:locs.ISO3166_URL, purge:true}:
+	{url:locs.ISO3166_Url, purge:true}:
 	{file:locs.ISO3166_Filename, purge:true});
 
 slcheck=new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoCountries);
