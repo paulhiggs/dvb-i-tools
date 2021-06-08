@@ -355,7 +355,7 @@ morgan.token("agent", function getAgent(req) {
     return `(${req.headers["user-agent"]})`;
 });
 morgan.token("parseErr", function getParseErr(req) {
-    if (req.parseErr) return `(${req.parseErr})`;
+    if (req.parseErr.length>0) return `(query errors=${req.parseErr.length})`;
     return "";
 });
 morgan.token("location", function getCheckedLocation(req) {
@@ -469,7 +469,7 @@ if (!options.nocg) {
 
 
 if (!options.nocsr) {
-	csr = new SLEPR(options.urls, knownLanguages, isoCountries);
+	csr = new SLEPR(options.urls, knownLanguages, isoCountries, knownGenres);
 	csr.loadServiceListRegistry(options.CSRfile);
 
 	app.get('/query', function(req, res) {

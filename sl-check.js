@@ -107,8 +107,6 @@ InvalidCountryCode = (value, src, loc) => `invalid country code ${value.quote()}
 
 
 
-
-
 class ServiceListCheck {
 
 	constructor(useURLs, preloadedLanguageValidator=null, preloadedGenres=null, preloadedCountries=null ) {
@@ -127,7 +125,7 @@ class ServiceListCheck {
 			this.allowedGenres=preloadedGenres;
 		else {
 			this.allowedGenres=new ClassificationScheme();
-			console.log("loading classification schemes...");
+			console.log("loading Genre classification schemes...");
 			if (useURLs) 
 				this.allowedGenres.loadCSExt({urls:[locs.TVA_ContentCSURL, locs.TVA_FormatCSURL, locs.DVBI_ContentSubjectURL], leafNodesOnly:false});
 			else this.allowedGenres.loadCSExt({files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename], leafNodesOnly:false});

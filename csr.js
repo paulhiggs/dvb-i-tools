@@ -68,6 +68,12 @@ knownCountries.loadCountries(options.urls?
 	{url:locs.ISO3166_Url, purge:true}:
 	{file:locs.ISO3166_Filename, purge:true});
 
+const ClassificationScheme=require("./ClassificationScheme.js");
+let knownGenres=new ClassificationScheme();
+knownGenres.loadCSExt(options.urls?
+	{urls:[locs.TVA_ContentCSURL, locs.TVA_FormatCSURL, locs.DVBI_ContentSubjectURL], leafNodesOnly:false}:
+	{files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename], leafNodesOnly:false});
+
 const RELOAD='RELOAD', UPDATE='UPDATE',
 	  INCR_REQUESTS='REQUESTS++', INCR_FAILURES='FAILURES++',
 	  STATS='STATS';
@@ -128,7 +134,7 @@ if (cluster.isMaster) {
 		return req.protocol;
 	});
 	morgan.token('parseErr',function getParseErr(req) {
-		if (req.parseErr) return `(${req.parseErr})`;
+		if (req.parseErr.length>0) return `(query errors=${req.parseErr.length})`;
 		return "";
 	});
 	morgan.token('agent',function getAgent(req) {
@@ -137,7 +143,7 @@ if (cluster.isMaster) {
 	
 
 	var csr = new SLEPR(options.urls);
-	csr.loadServiceListRegistry(options.file);
+	csr.loadServiceListRegistry(options.file, knownLanguages, knownCountries, knownGenres);
 
 	app.use(morgan(':pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr'));
 	app.use(favicon(path.join('phlib','ph-icon.ico')));
@@ -168,14 +174,17 @@ if (cluster.isMaster) {
 		if (msg.topic)
 			switch (msg.topic) {
 				case UPDATE:
-
-					knownLanguages.loadLanguages(options.urls?
-						{url:locs.IANA_Subtag_Registry_URL}:
-						{file:locs.IANA_Subtag_Registry_Filename});
 					knownCountries.loadCountries(options.urls?
 						{url:locs.ISO3166_Url, purge:true}:
 						{file:locs.ISO3166_Filename, purge:true});
-					csr.loadDataFiles(options.urls, knownLanguages, knownCountries);
+					knownLanguages.loadLanguages(options.urls?
+							{url:locs.IANA_Subtag_Registry_URL}:
+							{file:locs.IANA_Subtag_Registry_Filename}
+						);
+					knownGenres.loadCSExt(options.urls?
+						{urls:[locs.TVA_ContentCSURL, locs.TVA_FormatCSURL, locs.DVBI_ContentSubjectURL], leafNodesOnly:false}:
+						{files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename], leafNodesOnly:false});		
+					csr.loadDataFiles(options.urls, knownLanguages, knownCountries, knownGenres);
 					csr.loadServiceListRegistry(options.file);
 					break;
 			}

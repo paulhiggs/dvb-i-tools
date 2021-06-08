@@ -11,7 +11,6 @@ const fetch=require('node-fetch');
 
 const {xPath, isIn}=require("./utils.js");
 
-const ISOcountries=require("./ISOcountries.js");
 const dvbi=require("./DVB-I_definitions.js");
 
 const locs=require("./data-locations.js");
@@ -24,7 +23,10 @@ const EMPTY_SLEPR="<ServiceListEntryPoints xmlns=\"urn:dvb:metadata:servicelistd
 const allowed_arguments=[dvbi.e_ProviderName, dvbi.a_regulatorListFlag, dvbi.e_Language, dvbi.e_TargetCountry, dvbi.e_Genre, dvbi.e_Delivery];
 
 const patterns=require("./pattern_checks.js");
+
 const IANAlanguages=require('./IANAlanguages.js');
+const ClassificationScheme=require("./ClassificationScheme.js");
+const ISOcountries=require("./ISOcountries.js");
 
 const DVB_DASH_DELIVERY="dvb-dash",
       DVB_T_DELIVERY="dvb-t",
@@ -35,17 +37,15 @@ const DVB_DASH_DELIVERY="dvb-dash",
 
 class SLEPR {
 
-    constructor(useURLs, preloadedLanguageValidator=null, preloadedCountries=null) {
-        this.loadDataFiles(useURLs, preloadedLanguageValidator, preloadedCountries);
+    constructor(useURLs, preloadedLanguageValidator=null, preloadedCountries=null, preloadedGenres=null) {
+        this.loadDataFiles(useURLs, preloadedLanguageValidator, preloadedCountries, preloadedGenres);
     }  
 
-
-    /* public */ loadDataFiles(useURLs, preloadedLanguageValidator=null, preloadedCountries=null) {
+    /* public */ loadDataFiles(useURLs, preloadedLanguageValidator=null, preloadedCountries=null, preloadedGenres=null) {
         if (preloadedLanguageValidator) 
           this.knownLanguages=preloadedLanguageValidator;
         else {
             this.knownLanguages=new IANAlanguages();
-            console.log("loading languages...");
             if (useURLs) 
                 this.knownLanguages.loadLanguages({url: locs.IANA_Subtag_Registry_URL, purge: true});
             else this.knownLanguages.loadLanguages({file: locs.IANA_Subtag_Registry_Filename, purge: true});
@@ -59,6 +59,15 @@ class SLEPR {
 				this.knownCountries.loadCountries({url:locs.ISO3166_URL, purge:true});
 			else this.knownCountries.loadCountries({file:locs.ISO3166_Filename, purge:true});
 		}
+
+        if (preloadedGenres)
+            this.knownGenres=preloadedGenres;
+        else {
+			this.knownGenres=new ClassificationScheme();
+            this.knownGenres.loadCSExt(useURLs?
+                {urls:[locs.TVA_ContentCSURL, locs.TVA_FormatCSURL, locs.DVBI_ContentSubjectURL], leafNodesOnly:false}:
+                {files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename], leafNodesOnly:false});
+        }
     }
 
     /**
@@ -68,15 +77,15 @@ class SLEPR {
      */
     /* public */ loadServiceListRegistry(filename) {
 
-        console.log(`loading SLR from ${filename}`);
-
         function handleErrors(response) {
             if (!response.ok) {
                 throw Error(response.statusText);
             }
             return response;
         }
-      if (patterns.isHTTPURL(filename)) {
+        console.log(`loading SLR from ${filename}`);
+
+        if (patterns.isHTTPURL(filename)) {
             fetch(filename)
                 .then(handleErrors)
                 .then(response => response.text())
@@ -84,28 +93,12 @@ class SLEPR {
                 .catch(error => {console.log(`error (${error}) retrieving ${filename}`); masterSLEPR=EMPTY_SLEPR;}); 
             masterSLEPR=fetch(filename);
         }
-        else fs.readFile(filename, {encoding: 'utf-8'}, function(err,data){
+        else fs.readFile(filename, {encoding: 'utf-8'}, function(err,data) {
             if (!err) 
                 masterSLEPR=data.replace(/(\r\n|\n|\r|\t)/gm,"");
              else 
                 console.log(err);
         });	
-/*
-        if (patterns.isHTTPURL(filename)) {
-            this.masterSLEPR=fetch(filename).text().replace(/(\r\n|\n|\r|\t)/gm,"");
-        }
-        else {
-            try {
-                let stats=fs.statSync(filename);
-                if (stats.isFile()) {
-                    this.masterSLEPR=fs.readFileSync(filename, {encoding: 'utf-8'}).replace(/(\r\n|\n|\r|\t)/gm,""); 
-                    console.log(`read in ${this.masterSLEPR}`)
-                }
-                else console.log(`ER: ${filename} is not a file`)
-            }
-            catch (err) {console.log(err );} //err.code, err.path
-        }
-*/
     }
 
     /**
@@ -123,159 +116,126 @@ class SLEPR {
     
     /* private */ checkQuery(req) {
 
-            /**
-             * checks the possible values used in the &Delivery query parameter
-             * @param {string} DeliverySystem the query value provided
-             * @returns {Boolean} true if DeliverySystem is valid, otherwise false
-             */
-            function isValidDelivery(DeliverySystem) {
+        /**
+         * checks the possible values used in the &Delivery query parameter
+         * @param {string} DeliverySystem the query value provided
+         * @returns {Boolean} true if DeliverySystem is valid, otherwise false
+         */
+        function isValidDelivery(DeliverySystem) {
 
-                return [DVB_DASH_DELIVERY, DVB_T_DELIVERY, DVB_S_DELIVERY, DVB_C_DELIVERY, 
-                    DVB_IPTV_DELIVERY, DVB_APPLICATION_DELIVERY].includes(DeliverySystem);
-            }
-
-        /*	function isGenre(genre) {
-                // DVB-I Genre is defined through classification schemes
-                // permitted values through TVA:ContentCS, TVA:FormatCS, DVB-I:ContentSubject 
-                return true;
-            }
-        
-            function isProvider(provider) {
-                return true;
-            } */
-
-            if (req.query) {
-                
-                // check for any erronous arguments
-                for (var key in req.query) {
-                    if (!isIn(allowed_arguments, key, false)) {
-                        req.parseErr=`invalid argument [${key}]`;
-                        return false;
-                    }
-                }
-                
-                //regulatorListFlag needs to be a boolean, "true" or "false" only
-                if (req.query.regulatorListFlag) {
-                    if (!(typeof req.query.regulatorListFlag=="string" || req.query.regulatorListFlag instanceof String)) {
-                        req.parseErr=`invalid type for regulatorListFlag [${typeof(req.query.regulatorListFlag)}]`;
-                        return false;
-                    }
-                    if (!["true","false"].includes(req.query.regulatorListFlag.toLowerCase())) {
-                        req.parseErr=`invalid value for regulatorListFlag [${req.query.regulatorListFlag}]`;
-                        return false;				
-                    }
-                }
-                
-                //TargetCountry(s)
-                if (req.query.TargetCountry) {
-                    if (typeof req.query.TargetCountry=="string" || req.query.TargetCountry instanceof String) {
-                        if (!this.knownCountries.isISO3166code(req.query.TargetCountry,false)) {
-                            req.parseErr=`incorrect country [${req.query.TargetCountry}]`;
-                            return false;
-                        }					
-                    }	
-                    else if (Array.isArray(req.query.TargetCountry)) {
-                        for (let i=0; i<req.query.TargetCountry.length; i++ ) {
-                            if (!this.knownCountries.isISO3166code(req.query.TargetCountry[i], false)) {
-                                req.parseErr=`incorrect country [${req.query.TargetCountry[i]}]`;
-                                return false;
-                            }
-                        }
-                    }
-                    else {
-                        req.parseErr=`invalid type [${typeof(req.query.Language)}] for country`;
-                        return false;
-                    }			
-                }
-        
-                //Language(s)
-                if (req.query.Language) {
-                    if (typeof req.query.Language=="string" || req.query.Language instanceof String) {
-                        if (!patterns.isTVAAudioLanguageType(req.query.Language, false)) {
-                            req.parseErr=`incorrect language [${req.query.Language}]`;
-                            return false;
-                        }					
-                    }	
-                    else if (Array.isArray(req.query.Language)) {
-                        for (let i=0; i<req.query.Language.length; i++ ) {
-                            if (!patterns.isTVAAudioLanguageType(req.query.Language[i], false)) {
-                                req.parseErr=`incorrect language [${req.query.Language[i]}]`;
-                                return false;
-                            }
-                        }
-                    }
-                    else {
-                        req.parseErr=`invalid type [${typeof(req.query.Language)}] for language`;
-                        return false;
-                    }
-                }
-
-                //DeliverySystems(s)
-                if (req.query.Delivery) {
-                    if (typeof req.query.Delivery=="string" || req.query.Delivery instanceof String) {
-                        if (!!isValidDelivery(req.query.Delivery)) {
-                            req.parseErr=`incorrect delivery system [${req.query.Delivery}]`;
-                            return false;
-                        }					
-                    }	
-                    else if (Array.isArray(req.query.Delivery)) {
-                        for (let i=0; i<req.query.Delivery.length; i++ ) {
-                            if (!isValidDelivery(req.query.Delivery[i])) {
-                                req.parseErr=`incorrect delivery system [${req.query.Delivery[i]}]`;
-                                return false;
-                            }
-                        }
-                    }
-                    else {
-                        req.parseErr=`invalid type [${typeof(req.query.Delivery)}] for language`;
-                        return false;
-                    }
-                }	
-        /* value space of these arguments is not checked
-                // Genre(s)
-                if (req.query.Genre) {
-                    if (typeof req.query.Genre=="string" || req.query.Genre instanceof String){
-                        if (!isGenre(req.query.Genre)) {
-                            req.parseErr=`invalid genre [${req.query.Genre}]`
-                            return false;
-                        }					
-                    }	
-                    else if (Array.isArray(req.query.Genre)) {
-                        for (let i=0; i<req.query.Genre.length; i++ ) {
-                            if (!isGenre(req.query.Genre[i])) {
-                                req.parseErr=`invalid genre [${req.query.Genre[i]}]`
-                                return false;
-                            }
-                        }
-                    }
-                    else {
-                        req.parseErr=`invalid type [${typeof(req.query.Genre)}] for genre`
-                        return false
-                    }
-                }		
-                //Provider Name(s)
-                if (req.query.ProviderName) {
-                    if (typeof req.query.ProviderName=="string" || req.query.ProviderName instanceof String){
-                        if (!isProvider(req.query.ProviderName)) {
-                            return false;
-                        }					
-                    }	
-                    else if (Array.isArray(req.query.ProviderName)) {
-                        for (let i=0; i<req.query.ProviderName.length; i++ ) {
-                            if (!isProvider(req.query.ProviderName[i])) {
-                                return false;
-                            }
-                        }
-                    }
-                }			
-        */
-            }	
-            return true;
+            return [DVB_DASH_DELIVERY, DVB_T_DELIVERY, DVB_S_DELIVERY, DVB_C_DELIVERY, 
+                DVB_IPTV_DELIVERY, DVB_APPLICATION_DELIVERY].includes(DeliverySystem);
         }
+    
+        /* function isProvider(provider) {
+            return true;
+        } */
+
+        req.parseErr=[];
+
+        if (req.query) {
+            
+            // check for any erronous arguments
+            for (var key in req.query) {
+                if (!isIn(allowed_arguments, key, false)) 
+                    req.parseErr.push(`invalid argument [${key}]`);
+            }
+            
+            //regulatorListFlag needs to be a boolean, "true" or "false" only
+            if (req.query.regulatorListFlag) {
+                if (!(typeof req.query.regulatorListFlag=="string" || req.query.regulatorListFlag instanceof String)) 
+                    req.parseErr.push(`invalid type for regulatorListFlag [${typeof(req.query.regulatorListFlag)}]`);
+
+                if (!["true","false"].includes(req.query.regulatorListFlag.toLowerCase())) 
+                    req.parseErr.push(`invalid value for regulatorListFlag [${req.query.regulatorListFlag}]`);
+            }
+            
+            //TargetCountry(s)
+            if (req.query.TargetCountry) {
+                if (typeof req.query.TargetCountry=="string" || req.query.TargetCountry instanceof String) {
+                    if (!this.knownCountries.isISO3166code(req.query.TargetCountry,false)) 
+                        req.parseErr.push(`invalid TargetCountry [${req.query.TargetCountry}]`);				
+                }	
+                else if (Array.isArray(req.query.TargetCountry)) {
+                    for (let i=0; i<req.query.TargetCountry.length; i++ ) 
+                        if (!this.knownCountries.isISO3166code(req.query.TargetCountry[i], false)) 
+                            req.parseErr.push(`invalid TargetCountry [${req.query.TargetCountry[i]}]`);
+                }
+                else
+                    req.parseErr.push(`invalid type [${typeof(req.query.Language)}] for TargetCountry`);	
+            }
+    
+            //Language(s)
+            if (req.query.Language) {
+                if (typeof req.query.Language=="string" || req.query.Language instanceof String) {
+                    if (!patterns.isTVAAudioLanguageType(req.query.Language, false)) 
+                        req.parseErr.push(`invalid Language [${req.query.Language}]`);			
+                }	
+                else if (Array.isArray(req.query.Language)) {
+                    for (let i=0; i<req.query.Language.length; i++ ) 
+                        if (!patterns.isTVAAudioLanguageType(req.query.Language[i], false)) 
+                            req.parseErr.push(`invalid Language [${req.query.Language[i]}]`);
+                }
+                else
+                    req.parseErr.push(`invalid type [${typeof(req.query.Language)}] for Language`);
+            }
+
+            //DeliverySystems(s)
+            if (req.query.Delivery) {
+                if (typeof req.query.Delivery=="string" || req.query.Delivery instanceof String) {
+                    if (!!isValidDelivery(req.query.Delivery)) 
+                        req.parseErr.push(`invalid Delivery system [${req.query.Delivery}]`);			
+                }	
+                else if (Array.isArray(req.query.Delivery)) {
+                    for (let i=0; i<req.query.Delivery.length; i++ ) 
+                        if (!isValidDelivery(req.query.Delivery[i])) 
+                            req.parseErr.push(`ivalid Delivery system [${req.query.Delivery[i]}]`);
+                }
+                else 
+                    req.parseErr.push(`invalid type [${typeof(req.query.Delivery)}] for Delivery`);
+            }	
+
+            // Genre(s)
+            if (req.query.Genre) {
+                if (typeof req.query.Genre=="string" || req.query.Genre instanceof String) {
+                    if (!this.knownGenres.isIn(req.query.Genre)) 
+                        req.parseErr.push(`invalid Genre [${req.query.Genre}]`);			
+                }	
+                else if (Array.isArray(req.query.Genre)) {
+                    for (let i=0; i<req.query.Genre.length; i++ ) 
+                        if (!this.knownGenres.isIn(req.query.Genre[i])) 
+                            req.parseErr.push(`invalid Genre [${req.query.Genre[i]}]`);
+                }
+                else 
+                    req.parseErr.push(`invalid type [${typeof(req.query.Genre)}] for Genre`);
+
+            }		
+/* value space of these arguments is not checked
+            //Provider Name(s)
+            if (req.query.ProviderName) {
+                if (typeof req.query.ProviderName=="string" || req.query.ProviderName instanceof String) {
+                    if (!isProvider(req.query.ProviderName)) 
+                        req.parseErr.push(`invalid provider [${req.query.ProviderName}]`);
+                }	
+                else if (Array.isArray(req.query.ProviderName)) {
+                    for (let i=0; i<req.query.ProviderName.length; i++ )
+                        if (!isProvider(req.query.ProviderName[i]))
+                            req.parseErr.push(`invalid provider [${req.query.ProviderName[i]}]`);
+                }
+                else 
+                    req.parseErr.push(`invalid type [${typeof(req.query.ProviderName)}] for provider`);
+            }			
+*/
+        }	
+        return req.parseErr.length==0;
+    }
         
 
     /* public */ processServiceListRequest(req, res) {
  		if (!this.checkQuery(req)) {
+            if (req.parseErr) req.parseErr.forEach(err => {
+                res.write(`${err}\n`);
+            });
 			res.status(400);
             res.end();
             return false;
