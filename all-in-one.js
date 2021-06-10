@@ -45,23 +45,11 @@ var csr=null;
 const ErrorList=require("./ErrorList.js");
 
 const locs=require("./data-locations.js");
+const globals=require("./globals.js");
+const {isEmpty, readmyfile}=require("./utils.js");
 
-const DEFAULT_HTTP_SERVICE_PORT=3030;
 const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","selfsigned.crt");
 
-/**
- * checks of the object provided is empty, either contains no values or properties
- *
- * @param {Object} obj  The item (array, string, object) to be checked
- * @returns {boolean} true if the object being checked is empty
- */
-function isEmpty(obj) {
-    for (let key in obj) {
-        if (obj.hasOwnProperty(key))
-            return false;
-    }
-    return true;
-}
 
 
 function PAGE_TOP(label) {
@@ -373,23 +361,20 @@ app.use(express.urlencoded({ extended: true }));
 
 // parse command line options
 const optionDefinitions=[
-  {name: 'urls', alias: 'u', type: Boolean, defaultValue: false},
-  {name: 'port', alias: 'p', type: Number, defaultValue: DEFAULT_HTTP_SERVICE_PORT },
-  {name: 'sport', alias: 's', type: Number, defaultValue: DEFAULT_HTTP_SERVICE_PORT+1 },
-  {name: 'nocsr', type: Boolean, defaultValue: false},
-  {name: 'nosl', type: Boolean, defaultValue: false},
-  {name: 'nocg', type: Boolean, defaultValue: false},
-  {name: 'CSRfile', alias: 'f', type: String, defaultValue:SLEPR_data.MASTER_SLEPR_FILE}
+	{name:'urls', alias:'u', type:Boolean, defaultValue:false},
+	{name:'port', alias:'p', type:Number, defaultValue:globals.HTTPPort.all_in_one },
+	{name:'sport', alias:'s', type:Number, defaultValue:globals.HTTPPort.all_in_one+1 },
+	{name:'nocsr', type:Boolean, defaultValue:false},
+	{name:'nosl', type:Boolean, defaultValue:false},
+	{name:'nocg', type:Boolean, defaultValue:false},
+	{name:'CSRfile', alias:'f', type:String, defaultValue:SLEPR_data.MASTER_SLEPR_FILE}
 ];
  
 const options=commandLineArgs(optionDefinitions);
 
 const IANAlanguages=require("./IANAlanguages.js");
 let knownLanguages=new IANAlanguages();
-knownLanguages.loadLanguages(options.urls?
-	{url:locs.IANA_Subtag_Registry.url}:
-	{file:locs.IANA_Subtag_Registry.file}
-);
+knownLanguages.loadLanguages(options.urls?{url:locs.IANA_Subtag_Registry.url}:{file:locs.IANA_Subtag_Registry.file});
 
 const ClassificationScheme=require("./ClassificationScheme.js");
 let knownGenres=new ClassificationScheme();
@@ -467,7 +452,7 @@ if (!options.nocg) {
 
 
 if (!options.nocsr) {
-	csr = new SLEPR(options.urls, knownLanguages, isoCountries, knownGenres);
+	csr=new SLEPR(options.urls, knownLanguages, isoCountries, knownGenres);
 	csr.loadServiceListRegistry(options.CSRfile);
 
 	app.get('/query', function(req, res) {
@@ -496,27 +481,12 @@ var http_server=app.listen(options.port, function() {
 });
 
 
-/**
- * synchronously read a file if it exists
- * 
- * @param {string} filename  The name of the file to read
- * @returns the contents of the file or "null" if the file does not exist
- */
- function readmyfile(filename) {
-	try {
-		let stats=fs.statSync(filename);
-		if (stats.isFile()) return fs.readFileSync(filename); 
-	}
-	catch (err) {console.log(err.code,err.path);}
-	return null;
-}
-
 
 // start the HTTPS server
 // sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
 var https_options={
-	key: readmyfile(keyFilename),
-	cert: readmyfile(certFilename)
+	key:readmyfile(keyFilename),
+	cert:readmyfile(certFilename)
 };
 
 if (https_options.key && https_options.cert) {

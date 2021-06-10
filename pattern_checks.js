@@ -126,7 +126,7 @@ module.exports.isURN=function (arg) {
  * @returns {boolean}  true is the argment is formatted as a DVB locator
  */
 module.exports.isDVBLocator = function (locator) {
-    let locatorRegex = new RegExp(/^dvb:\/\/[\dA-Fa-f]+\.[\dA-Fa-f]*\.[\dA-Fa-f]+;[\dA-Fa-f]+$/);
+    let locatorRegex=new RegExp(/^dvb:\/\/[\dA-Fa-f]+\.[\dA-Fa-f]*\.[\dA-Fa-f]+;[\dA-Fa-f]+$/);
     return locatorRegex.test(locator.trim());
 };
 
@@ -195,7 +195,7 @@ module.exports.validFrameRate=function(rate) {
 module.exports.isURL=function(url) {
 	// genericurl as defined in RFC1738 - https://tools.ietf.org/html/rfc1738
 	
-	let genericURL = new RegExp(/^[-a-z\d@:%._\+~#=]{1,256}\\.[a-z\d()]{1,6}\b([-a-z\d()@:%_\+.~#?&//=]*)$/, 'i');
+	let genericURL=new RegExp(/^[-a-z\d@:%._\+~#=]{1,256}\\.[a-z\d()]{1,6}\b([-a-z\d()@:%_\+.~#?&//=]*)$/, 'i');
 	return genericURL.test(url.trim());
 };
 

@@ -26,40 +26,26 @@ const https=require('https');
 const keyFilename=path.join('.','selfsigned.key'), certFilename=path.join('.','selfsigned.crt');
 
 const locs=require('./data-locations.js');
-
-
+const globals=require('./globals.js');
+const {readmyfile}=require('./utils.js');
 
 // SLEPR == Service List Entry Point Registry
 const slepr_data=require('./slepr-data.js');
 const SLEPR=require('./slepr.js');
 
 // command line options
-const DEFAULT_HTTP_SERVICE_PORT=3000;
 const optionDefinitions=[
-  { name: 'urls', alias: 'u', type: Boolean, defaultValue: false},
-  { name: 'port', alias: 'p', type: Number, defaultValue:DEFAULT_HTTP_SERVICE_PORT },
-  { name: 'sport', alias: 's', type: Number, defaultValue:DEFAULT_HTTP_SERVICE_PORT+1 },
-  { name: 'file', alias: 'f', type: String, defaultValue:slepr_data.MASTER_SLEPR_FILE}
+	{ name:'urls', alias:'u', type:Boolean, defaultValue:false},
+	{ name:'port', alias:'p', type:Number, defaultValue:globals.HTTPPort.csr },
+	{ name:'sport', alias:'s', type:Number, defaultValue:globals.HTTPPort.csr+1 },
+	{ name:'file', alias:'f', type:String, defaultValue:slepr_data.MASTER_SLEPR_FILE}
 ];
-
-
-function readmyfile(filename) {
-	try {
-		let stats=fs.statSync(filename);
-		if (stats.isFile()) return fs.readFileSync(filename); 
-	}
-	catch (err) {console.log(err.code,err.path);}
-	return null;
-}
 
 const options=commandLineArgs(optionDefinitions);
 
-
 const IANAlanguages=require('./IANAlanguages.js');
 var knownLanguages=new IANAlanguages();
-knownLanguages.loadLanguages(options.urls?
-	{url:locs.IANA_Subtag_Registry.url}:
-	{file:locs.IANA_Subtag_Registry.file}
+knownLanguages.loadLanguages(options.urls?{url:locs.IANA_Subtag_Registry.url}:{file:locs.IANA_Subtag_Registry.file}
 );
 
 const ISOcountries=require("./ISOcountries.js");
@@ -140,7 +126,7 @@ if (cluster.isMaster) {
 	});
 	
 
-	var csr = new SLEPR(options.urls);
+	var csr=new SLEPR(options.urls);
 	csr.loadServiceListRegistry(options.file, knownLanguages, knownCountries, knownGenres);
 
 	app.use(morgan(':pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr'));

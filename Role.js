@@ -3,7 +3,6 @@
  * Manages Classification Scheme checking
  * 
  */
-const { throws } = require("assert");
 const fs=require('fs');
 const fetch=require('node-fetch');
 

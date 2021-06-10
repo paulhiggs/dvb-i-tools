@@ -29,6 +29,9 @@ const ErrorList=require("./ErrorList.js");
 
 const locs=require("./data-locations.js");
 
+const globals = require("./globals");
+const {isEmpty, readmyfile}=require('./utils.js');
+
 // the content guide validation
 const ContentGuideCheck=require('./cg-check.js');
 var cgcheck=null;
@@ -126,21 +129,6 @@ var cgcheck=null;
 
 
 /**
- * checks is an object has none of its own properties
- * 
- * @param {Object} obj 	The object to check 
- * @returns {Booolean} true if the object does not contain ant local properties
- */
-function isEmpty(obj) {
-    for(let key in obj) {
-        if(obj.hasOwnProperty(key))
-            return false;
-    }
-    return true;
-}
-
-
-/**
  * Process the content guide specificed for errors and display them
  *
  * @param {Object} req The request from Express
@@ -213,22 +201,19 @@ function processFile(req, res) {
 
 
 // command line options
-const DEFAULT_HTTP_SERVICE_PORT=3020;
 const optionDefinitions=[
-  { name: 'urls', alias: 'u', type: Boolean, defaultValue: false},
-  { name: 'port', alias: 'p', type: Number, defaultValue:DEFAULT_HTTP_SERVICE_PORT },
-  { name: 'sport', alias: 's', type: Number, defaultValue:DEFAULT_HTTP_SERVICE_PORT+1 }
+	{ name:'urls', alias:'u', type:Boolean, defaultValue:false},
+	{ name:'port', alias:'p', type:Number, defaultValue:globals.HTTPPort.cg },
+	{ name:'sport', alias:'s', type:Number, defaultValue:globals.HTTPPort.cg+1 }
 ];
 const options=commandLineArgs(optionDefinitions);
 
 const IANAlanguages=require("./IANAlanguages.js");
 let knownLanguages=new IANAlanguages();
-knownLanguages.loadLanguages(options.urls?
-	{url:locs.IANA_Subtag_Registry.url}:
-	{file:locs.IANA_Subtag_Registry.file}
-);
+knownLanguages.loadLanguages(options.urls?{url:locs.IANA_Subtag_Registry.url}:{file:locs.IANA_Subtag_Registry.file});
 
 const ClassificationScheme=require("./ClassificationScheme.js");
+
 let knownGenres=new ClassificationScheme();
 knownGenres.loadCS(options.urls?
 		{urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url]}:
@@ -301,20 +286,7 @@ var http_server=app.listen(options.port, function() {
 
 
 
-/**
- * Synchronously reads a file (if it exists)
- * 
- * @param {String} filename 	The name of the file to read
- * @returns {Buffer} the buffer containing the data from the file, or null if there is a problem reading
- */
- function readmyfile(filename) {
-    try {
-        let stats=fs.statSync(filename);
-        if (stats.isFile()) return fs.readFileSync(filename); 
-    }
-    catch (err) {console.log(err.code, err.path);}
-    return null;
-}
+
 
 // start the HTTPS server
 // sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt

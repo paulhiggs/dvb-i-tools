@@ -29,30 +29,14 @@ const locs=require('./data-locations.js');
 // error buffer
 const ErrorList=require("./ErrorList.js");
 
+const {isEmpty, readmyfile}=require('./utils.js');
+
 // the service list validation
 const ServiceListCheck=require('./sl-check.js');
 var slcheck;
 
-
-
 const https=require("https");
-const DEFAULT_HTTP_SERVICE_PORT=3010;
 const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","selfsigned.crt");
-
-
-/**
- * checks of the object provided is empty, either contains no values or properties
- *
- * @param {Object} obj  The item (array, string, object) to be checked
- * @returns {boolean} true if the object being checked is empty
- */
-function isEmpty(obj) {
-    for(let key in obj) {
-        if(obj.hasOwnProperty(key))
-            return false;
-    }
-    return true;
-}
 
 
 /**
@@ -239,9 +223,9 @@ app.use(morgan(":remote-addr :protocol :method :url :status :res[content-length]
 
 // parse command line options
 const optionDefinitions=[
-  {name: 'urls', alias: 'u', type: Boolean, defaultValue: false},
-  {name: 'port', alias: 'p', type: Number, defaultValue: DEFAULT_HTTP_SERVICE_PORT },
-  {name: 'sport', alias: 's', type: Number, defaultValue: DEFAULT_HTTP_SERVICE_PORT+1 }
+	{name:'urls', alias:'u', type:Boolean, defaultValue:false},
+	{name:'port', alias:'p', type:Number, defaultValue:globals.HTTPPort.sl },
+	{name:'sport', alias:'s', type:Number, defaultValue:globals.HTTPPort.sl+1 }
 ];
  
 const options=commandLineArgs(optionDefinitions);
@@ -272,7 +256,7 @@ app.post("/check", function(req,res) {
 });
 
 // handle HTTP GET requests to /check
-app.get("/check", function(req,res){
+app.get("/check", function(req,res) {
     processQuery(req,res);
 });
 
@@ -283,11 +267,11 @@ app.post("/checkFile", function(req,res) {
 });
 
 // handle HTTP GET requests to /checkFile
-app.get("/checkFile", function(req,res){
+app.get("/checkFile", function(req,res) {
     processFile(req,res);
 });
 
-app.get('/stats', function(req,res){
+app.get('/stats', function(req,res) {
 	res.write("<html><head><title>Service List Verifier (stats)</title></head>");
 	res.write("<body>");
 	slcheck.getStats().forEach(e => {
@@ -309,26 +293,11 @@ var http_server=app.listen(options.port, function() {
 });
 
 
-/**
- * synchronously read a file if it exists
- * 
- * @param {string} filename  The name of the file to read
- * @returns the contents of the file or "null" if the file does not exist
- */
- function readmyfile(filename) {
-    try {
-        let stats=fs.statSync(filename);
-        if (stats.isFile()) return fs.readFileSync(filename); 
-    }
-    catch (err) {console.log(err.code,err.path);}
-    return null;
-}
-
 // start the HTTPS server
 // sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
 var https_options={
-    key: readmyfile(keyFilename),
-    cert: readmyfile(certFilename)
+    key:readmyfile(keyFilename),
+    cert:readmyfile(certFilename)
 };
 
 if (https_options.key && https_options.cert) {

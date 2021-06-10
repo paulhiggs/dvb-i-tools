@@ -1,5 +1,7 @@
 /* jshint esversion: 8 */
 
+const fs=require("fs");
+
 /**
  * constructs an XPath based on the provided arguments
  *
@@ -71,6 +73,35 @@ module.exports.isIni = (values, value) => findInSet(values, value, false);
 module.exports.unEntity = (str) => str.replace(/(&.+;)/ig, "*");
 
 
+/**
+ * checks is an object has none of its own properties
+ * 
+ * @param {Object} obj 	The object to check 
+ * @returns {Booolean} true if the object does not contain ant local properties
+ */
+module.exports.isEmpty = function(obj) {
+    for(let key in obj) {
+        if(obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
+};
+
+
+/**
+ * Synchronously reads a file (if it exists)
+ * 
+ * @param {String} filename 	The name of the file to read
+ * @returns {Buffer} the buffer containing the data from the file, or null if there is a problem reading
+ */
+module.exports.readmyfile = function(filename) {
+    try {
+        let stats=fs.statSync(filename);
+        if (stats.isFile()) return fs.readFileSync(filename); 
+    }
+    catch (err) {console.log(err.code, err.path);}
+    return null;
+};
 
 
 // credit to https://gist.github.com/adriengibrat/e0b6d16cdd8c584392d8#file-parseduration-es5-js
