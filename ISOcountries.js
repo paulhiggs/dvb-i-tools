@@ -86,7 +86,7 @@ module.exports = class ISOcountries {
 
 	loadCountries(options) {
 		if (!options) options={};
-		if (!options.purge) options.purge=false;
+		if (!options.purge) options.purge=true;
 
 		if (options.file)
 			this.loadCountriesFromFile(options.file, options.purge);

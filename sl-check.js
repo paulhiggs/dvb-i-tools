@@ -135,12 +135,9 @@ class ServiceListCheck {
 			this.knownCountries=preloadedCountries;
 		else {
 			this.knownCountries=new ISOcountries(false, true);
-			if (useURLs) 
-				this.knownCountries.loadCountries({url:locs.ISO3166.url, purge:true});
-			else this.knownCountries.loadCountries({file:locs.ISO3166.file, purge:true});
+			this.knownCountries.loadCountries(useURLs?{url:locs.ISO3166.url}:{file:locs.ISO3166.file});
 		}
 
-//		this.allowedGenres=new ClassificationScheme();
 		this.allowedServiceTypes=new ClassificationScheme();
 		this.allowedAudioSchemes=new ClassificationScheme();
 		this.allowedVideoSchemes=new ClassificationScheme();

@@ -64,15 +64,13 @@ knownLanguages.loadLanguages(options.urls?
 
 const ISOcountries=require("./ISOcountries.js");
 var knownCountries=new ISOcountries(false, true);
-knownCountries.loadCountries(options.urls?
-	{url:locs.ISO3166.url, purge:true}:
-	{file:locs.ISO3166.file, purge:true});
+knownCountries.loadCountries(options.urls?{url:locs.ISO3166.url}:{file:locs.ISO3166.file});
 
 const ClassificationScheme=require("./ClassificationScheme.js");
 let knownGenres=new ClassificationScheme();
 knownGenres.loadCS(options.urls?
-	{urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url], leafNodesOnly:false}:
-	{files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubject.file], leafNodesOnly:false});
+	{urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url]}:
+	{files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubject.file]});
 
 const RELOAD='RELOAD', UPDATE='UPDATE',
 	  INCR_REQUESTS='REQUESTS++', INCR_FAILURES='FAILURES++',
@@ -174,16 +172,12 @@ if (cluster.isMaster) {
 		if (msg.topic)
 			switch (msg.topic) {
 				case UPDATE:
-					knownCountries.loadCountries(options.urls?
-						{url:locs.ISO3166.url, purge:true}:
-						{file:locs.ISO3166.file, purge:true});
-					knownLanguages.loadLanguages(options.urls?
-							{url:locs.IANA_Subtag_Registry.url}:
-							{file:locs.IANA_Subtag_Registry.file}
+					knownCountries.loadCountries(options.urls?{url:locs.ISO3166.url}:{file:locs.ISO3166.filee});
+					knownLanguages.loadLanguages(options.urls?{url:locs.IANA_Subtag_Registry.url}:{file:locs.IANA_Subtag_Registry.file}
 						);
 					knownGenres.loadCS(options.urls?
-						{urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url], leafNodesOnly:false}:
-						{files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubject.file], leafNodesOnly:false});		
+						{urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url]}:
+						{files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubject.file]});		
 					csr.loadDataFiles(options.urls, knownLanguages, knownCountries, knownGenres);
 					csr.loadServiceListRegistry(options.file);
 					break;

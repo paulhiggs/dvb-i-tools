@@ -53,7 +53,7 @@ class SLEPR {
 			this.knownCountries=preloadedCountries;
 		else {
 			this.knownCountries=new ISOcountries(false, true);
-            this.knownCountries.loadCountries(useURLs?{url:locs.ISO3166.url, purge:true}:{file:locs.ISO3166.file, purge:true});
+            this.knownCountries.loadCountries(useURLs?{url:locs.ISO3166.url}:{file:locs.ISO3166.file});
 		}
 
         if (preloadedGenres)
