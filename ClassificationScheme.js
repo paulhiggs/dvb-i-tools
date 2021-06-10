@@ -8,7 +8,10 @@
 const fs=require('fs');
 const libxml=require('libxmljs2');
 const fetch=require('node-fetch');
-const { isHTTPURL } = require("./pattern_checks");
+
+const {AvlTree} = require('@datastructures-js/binary-search-tree');
+
+const { isHTTPURL }=require("./pattern_checks.js");
 
 
 /**
@@ -62,16 +65,16 @@ function loadClassificationScheme(xmlCS, leafNodesOnly=false) {
 module.exports = class ClassificationScheme {
 
     constructor () {
-        this.values=[];
+        this.values=new AvlTree();
         loadClassificationScheme.bind(this);
     }
 
     count() {
-        return this.values.length;
+        return this.values.count();
     }
 
     empty() {
-        this.values=[];
+        this.values.clear();
     }
     
     /**
@@ -92,7 +95,7 @@ module.exports = class ClassificationScheme {
 		fetch(csURL)
 			.then(handleErrors)
 			.then(response => response.text())
-			.then(strXML => loadClassificationScheme(libxml.parseXmlString(strXML), leafNodesOnly).forEach(e=>{this.values.push(e);}))
+			.then(strXML => loadClassificationScheme(libxml.parseXmlString(strXML), leafNodesOnly).forEach(e=>{this.values.insert(e, true);}))
 			.catch(error => console.log(`error (${error}) retrieving ${csURL}`));
     }
 
@@ -107,12 +110,10 @@ module.exports = class ClassificationScheme {
 
         fs.readFile(classificationScheme, {encoding: "utf-8"}, (err,data)=> {
             if (!err) {
-                loadClassificationScheme(libxml.parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm,"")), leafNodesOnly).forEach(e=>{this.values.push(e);});
+                loadClassificationScheme(libxml.parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm,"")), leafNodesOnly).forEach(e=>{this.values.insert(e,true);});
             }
             else console.log(err);
         });
-
-
     }
 
     /**
@@ -164,6 +165,6 @@ module.exports = class ClassificationScheme {
      * @returns {boolean} true if value is in the classification scheme
      */
     isIn(value) {
-        return this.values.includes(value);
+        return this.values.has(value);
     }
 };
