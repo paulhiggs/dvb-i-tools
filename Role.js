@@ -7,20 +7,22 @@ const { throws } = require("assert");
 const fs=require('fs');
 const fetch=require('node-fetch');
 
+const ClassificationScheme=require("./ClassificationScheme.js");
+//const {AvlTree} = require('@datastructures-js/binary-search-tree');
 
-module.exports = class Role {
-    constructor () {
-        this.values=[];
+module.exports = class Role  extends ClassificationScheme {
+/*    constructor () {
+        this.values=new AvlTree();
     }
 
     count() {
-        return this.values.length;
+        return this.values.count();
     }
 
     empty() {
-        this.values=[];
+        this.values.clear();
     }
-    
+*/    
     /**
      * read a classification scheme from a URL and load its hierarical values into a linear list 
      *
@@ -39,7 +41,7 @@ module.exports = class Role {
 		fetch(rolesURL)
 			.then(handleErrors)
 			.then(response => response.text())
-			.then(roles => roles.split('\n').forEach(e=>{this.values.push(e.trim());}))
+			.then(roles => roles.split('\n').forEach(e=>{this.insertValue(e.trim(), true);}))
 			.catch(error => console.log(`error (${error}) retrieving ${rolesURL}`));
     }
 
@@ -53,7 +55,7 @@ module.exports = class Role {
 
         fs.readFile(rolesFile, {encoding: "utf-8"}, (err, data)=> {
             if (!err) {
-                data.split('\n').forEach(e=>{this.values.push(e.trim());});
+                data.split('\n').forEach(e=>{this.insertValue(e.trim(), true);});
             }
             else console.log(err);
         });
@@ -73,7 +75,6 @@ module.exports = class Role {
 	    else this.loadFromFile(CSfilename);
     }
 
-
     loadRolesExt(options) {
         if (!options) options={};
         if (options.file)
@@ -84,7 +85,6 @@ module.exports = class Role {
             this.loadFromURL(options.url);
         else if (options.urls) 
             options.urls.forEach(url => this.loadFromURL(url));
-
     }
 
     /**
@@ -94,6 +94,6 @@ module.exports = class Role {
      * @returns {boolean} true if value is in the classification scheme
      */
     isIn(value) {
-        return this.values.includes(value);
+        return this.values.has(value);
     }
 };
