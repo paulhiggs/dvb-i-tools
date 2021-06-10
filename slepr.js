@@ -64,7 +64,7 @@ class SLEPR {
             this.knownGenres=preloadedGenres;
         else {
 			this.knownGenres=new ClassificationScheme();
-            this.knownGenres.loadCSExt(useURLs?
+            this.knownGenres.loadCS(useURLs?
                 {urls:[locs.TVA_ContentCSURL, locs.TVA_FormatCSURL, locs.DVBI_ContentSubjectURL], leafNodesOnly:false}:
                 {files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename], leafNodesOnly:false});
         }

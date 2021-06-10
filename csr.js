@@ -70,7 +70,7 @@ knownCountries.loadCountries(options.urls?
 
 const ClassificationScheme=require("./ClassificationScheme.js");
 let knownGenres=new ClassificationScheme();
-knownGenres.loadCSExt(options.urls?
+knownGenres.loadCS(options.urls?
 	{urls:[locs.TVA_ContentCSURL, locs.TVA_FormatCSURL, locs.DVBI_ContentSubjectURL], leafNodesOnly:false}:
 	{files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename], leafNodesOnly:false});
 
@@ -181,7 +181,7 @@ if (cluster.isMaster) {
 							{url:locs.IANA_Subtag_Registry_URL}:
 							{file:locs.IANA_Subtag_Registry_Filename}
 						);
-					knownGenres.loadCSExt(options.urls?
+					knownGenres.loadCS(options.urls?
 						{urls:[locs.TVA_ContentCSURL, locs.TVA_FormatCSURL, locs.DVBI_ContentSubjectURL], leafNodesOnly:false}:
 						{files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename], leafNodesOnly:false});		
 					csr.loadDataFiles(options.urls, knownLanguages, knownCountries, knownGenres);

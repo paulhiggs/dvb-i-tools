@@ -126,9 +126,9 @@ class ServiceListCheck {
 		else {
 			this.allowedGenres=new ClassificationScheme();
 			console.log("loading Genre classification schemes...");
-			if (useURLs) 
-				this.allowedGenres.loadCSExt({urls:[locs.TVA_ContentCSURL, locs.TVA_FormatCSURL, locs.DVBI_ContentSubjectURL], leafNodesOnly:false});
-			else this.allowedGenres.loadCSExt({files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename], leafNodesOnly:false});
+			this.allowedGenres.loadCS(useURLs?
+					{urls:[locs.TVA_ContentCSURL, locs.TVA_FormatCSURL, locs.DVBI_ContentSubjectURL]}:
+					{files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename]});
 		}
 
 		if (preloadedCountries)
@@ -167,26 +167,27 @@ class ServiceListCheck {
 	 */
 	/*private*/ loadDataFiles(useURLs) {
 		console.log("loading classification schemes...");
-		this.allowedPictureFormats.loadCS(useURLs, locs.TVA_PictureFormatCSFilename, locs.TVA_PictureFormatCSURL, false);
+		this.allowedPictureFormats.loadCS(useURLs?{url:locs.TVA_PictureFormatCSURL}:{file:locs.TVA_PictureFormatCSFilename});
 	
-		this.allowedServiceTypes.loadCS(useURLs, locs.DVBI_ServiceTypeCSFilename, locs.DVBI_ServiceTypeCSURL, false);
+		this.allowedServiceTypes.loadCS(useURLs?{url:locs.DVBI_ServiceTypeCSURL}:{file:locs.DVBI_ServiceTypeCSFilename} );
 
-		this.allowedAudioSchemes.loadCS(useURLs, locs.DVB_AudioCodecCSFilename, locs.DVB_AudioCodecCSURL, true);
-		this.allowedAudioSchemes.loadCS(useURLs, locs.DVB_AudioCodecCS2020Filename, locs.DVB_AudioCodecCS2020URL, true);
-		this.allowedAudioSchemes.loadCS(useURLs, locs.MPEG7_AudioCodingFormatCSFilename, locs.MPEG7_AudioCodingFormatCSURL, true);
+		this.allowedAudioSchemes.loadCS(useURLs?
+			{urls:[locs.DVB_AudioCodecCSURL, locs.DVB_AudioCodecCS2020URL, locs.MPEG7_AudioCodingFormatCSURL], leafNodesOnly:true} :
+			{files:[locs.DVB_AudioCodecCSFilename, locs.DVB_AudioCodecCS2020Filename, locs.MPEG7_AudioCodingFormatCSFilename], leafNodesOnly:true});
 
-		this.allowedAudioConformancePoints.loadCS(useURLs, locs.DVB_AudioConformanceCSFilename, locs.DVB_AudioConformanceCSURL, true);
+		this.allowedAudioConformancePoints.loadCS(useURLs?{url:locs.DVB_AudioConformanceCSURL, leafNodesOnly:true}:{file:locs.DVB_AudioConformanceCSFilename, leafNodesOnly:true});
 		
-		this.allowedVideoSchemes.loadCS(useURLs, locs.DVB_VideoCodecCS2007Filename, locs.DVB_VideoCodecCS2007URL, true);
-		this.allowedVideoSchemes.loadCS(useURLs, locs.DVB_VideoCodecCS2021Filename, locs.DVB_VideoCodecCS2021URL, true);
-		this.allowedVideoSchemes.loadCS(useURLs, locs.MPEG7_VisualCodingFormatCSFilename, locs.MPEG7_VisualCodingFormatCSURL, true);
+		this.allowedVideoSchemes.loadCS(useURLs?
+			{urls:[locs.DVB_VideoCodecCS2007URL, locs.DVB_VideoCodecCS2021URL, locs.MPEG7_VisualCodingFormatCSURL], leafNodesOnly:true} :
+			{files:[locs.DVB_VideoCodecCS2007Filename, locs.DVB_VideoCodecCS2021Filename, locs.MPEG7_VisualCodingFormatCSFilename], leafNodesOnly:true});
 
-		this.allowedVideoConformancePoints.loadCS(useURLs, locs.DVB_VideoConformanceCS2017Filename, locs.DVB_VideoConformanceCS2017URL, true);
-		this.allowedVideoConformancePoints.loadCS(useURLs, locs.DVB_VideoConformanceCS2021Filename, locs.DVB_VideoConformanceCS2021URL, true);
+		this.allowedVideoConformancePoints.loadCS(useURLs?
+			{urls:[locs.DVB_VideoConformanceCS2017URL, locs.DVB_VideoConformanceCS2017URL], leafNodesOnly:true} :
+			{files:[locs.DVB_VideoConformanceCS2017Filename, locs.DVB_VideoConformanceCS2021Filename], leafNodesOnly:true});
 
-		this.AudioPresentationCSvalues.loadCS(useURLs, locs.MPEG7_AudioPresentationCSFilename, locs.MPEG7_AudioPresentationCSURL);
+		this.AudioPresentationCSvalues.loadCS(useURLs?{url:locs.MPEG7_AudioPresentationCSURL} :  {file:locs.MPEG7_AudioPresentationCSFilename} );
 
-		this.RecordingInfoCSvalues.loadCS(useURLs, locs.DVBI_RecordingInfoCSFilename, locs.DVBI_RecordingInfoCSURL);
+		this.RecordingInfoCSvalues.loadCS(useURLs?{url:locs.DVBI_RecordingInfoCSURL}:{file:locs.DVBI_RecordingInfoCSFilename});		
 	}
 
 /**

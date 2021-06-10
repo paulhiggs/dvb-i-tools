@@ -11,18 +11,7 @@ const ClassificationScheme=require("./ClassificationScheme.js");
 //const {AvlTree} = require('@datastructures-js/binary-search-tree');
 
 module.exports = class Role  extends ClassificationScheme {
-/*    constructor () {
-        this.values=new AvlTree();
-    }
-
-    count() {
-        return this.values.count();
-    }
-
-    empty() {
-        this.values.clear();
-    }
-*/    
+  
     /**
      * read a classification scheme from a URL and load its hierarical values into a linear list 
      *
@@ -61,29 +50,16 @@ module.exports = class Role  extends ClassificationScheme {
         });
     }
 
-    /**
-     * loads classification scheme values from either a local file or an URL based location and return them
-     * as an array
-     *        
-     * @param {boolean} useURL        if true use the URL loading method else use the local file
-     * @param {String} CSfilename     the filename of the classification scheme
-     * @param {String} CSurl          URL to the classification scheme
-     */
-    loadRoles(useURL, CSfilename, CSurl){
-        if (useURL)
-		    this.loadFromURL(CSurl);
-	    else this.loadFromFile(CSfilename);
-    }
 
-    loadRolesExt(options) {
+    loadRoles(options) {
         if (!options) options={};
         if (options.file)
             this.loadFromFile(options.file);
-        else if (options.files)
+        if (options.files)
             options.files.forEach(file => this.loadFromFile(file));
-        else if (options.url)
+        if (options.url)
             this.loadFromURL(options.url);
-        else if (options.urls) 
+        if (options.urls) 
             options.urls.forEach(url => this.loadFromURL(url));
     }
 

@@ -77,6 +77,10 @@ module.exports = class ClassificationScheme {
         this.values.clear();
     }
     
+    insertValue(key, value) {
+        this.values.insert(key, value);
+    }
+
     /**
      * read a classification scheme from a URL and load its hierarical values into a linear list 
      *
@@ -91,11 +95,11 @@ module.exports = class ClassificationScheme {
 			}
 			return response;
 		}
-		console.log(`retrieving CS from ${csURL} via fetch()`); 
+		console.log(`retrieving CS (${leafNodesOnly?"all":"leaf"} nodes) from ${csURL} via fetch()`); 
 		fetch(csURL)
 			.then(handleErrors)
 			.then(response => response.text())
-			.then(strXML => loadClassificationScheme(libxml.parseXmlString(strXML), leafNodesOnly).forEach(e=>{this.values.insert(e, true);}))
+			.then(strXML => loadClassificationScheme(libxml.parseXmlString(strXML), leafNodesOnly).forEach(e=>{this.insertValue(e, true);}))
 			.catch(error => console.log(`error (${error}) retrieving ${csURL}`));
     }
 
@@ -106,55 +110,28 @@ module.exports = class ClassificationScheme {
      * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded 
      */
     loadFromFile(classificationScheme, leafNodesOnly=false) {
-        console.log(`reading CS from ${classificationScheme}`);
+        console.log(`reading CS (${leafNodesOnly?"all":"leaf"} nodes) from ${classificationScheme}`);
 
         fs.readFile(classificationScheme, {encoding: "utf-8"}, (err,data)=> {
             if (!err) {
-                loadClassificationScheme(libxml.parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm,"")), leafNodesOnly).forEach(e=>{this.values.insert(e,true);});
+                loadClassificationScheme(libxml.parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm,"")), leafNodesOnly).forEach(e=>{this.insertValue(e, true);});
             }
             else console.log(err);
         });
     }
 
-    /**
-     * loads classification scheme values from either a local file or an URL based location and return them
-     * as an array
-     *        
-     * @param {boolean} useURL        if true use the URL loading method else use the local file
-     * @param {String} CSfilename     the filename of the classification scheme
-     * @param {String} CSurl          URL to the classification scheme
-     * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded 
-     */
-    loadCS(useURL, CSfilename, CSurl, leafNodesOnly=false){
-        if (useURL)
-		    this.loadFromURL(CSurl, leafNodesOnly);
-	    else this.loadFromFile(CSfilename, leafNodesOnly);
-    }
-    
-    /**
-     * loads classification scheme values from either a local file or an URL based location 
 
-     * @param {String} CSfilename     the filename of the classification scheme
-     * @param {String} CSurl          URL to the classification scheme
-     * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded 
-     */
-    loadCS2(from, leafNodesOnly=false) {
-        if (isHTTPURL(from))
-            this.loadFromURL(CSurl, leafNodesOnly);
-        else this.loadFromFile(CSfilename, leafNodesOnly);
-    }
-
-    loadCSExt(options) {
+    loadCS(options) {
         if (!options) options={};
         if (!options.leafNodesOnly) options.leafNodesOnly=false;
 
         if (options.file)
             this.loadFromFile(options.file, options.leafNodesOnly);
-        else if (options.files)
-            options.files.forEach(file => this.loadFromFile(file, options.leafNodesOnly));
-        else if (options.url)
+        if (options.files)
+            options.files.forEach(file => this.loadFromFile(file, options.leafNodesOnly));  
+        if (options.url)
             this.loadFromURL(options.url, options.leafNodesOnly);
-        else if (options.urls)
+        if (options.urls)
             options.urls.forEach(url => this.loadFromURL(url, options.leafNodesOnly));
     }
 

@@ -252,33 +252,30 @@ module.exports = class ContentGuideCheck {
 		if (preloadedLanguageValidator) 
 			this.knownLanguages=preloadedLanguageValidator;
 		else {
-			this.knownLanguages=new IANAlanguages();
 			console.log("loading languages...");
-			if (useURLs) 
-				this.knownLanguages.loadLanguages({url: locs.IANA_Subtag_Registry_URL, purge: true});
-			else this.knownLanguages.loadLanguages({file: locs.IANA_Subtag_Registry_Filename, purge: true});
+			this.knownLanguages=new IANAlanguages();
+			this.knownLanguages.loadLanguages(useURLs?{url: locs.IANA_Subtag_Registry_URL, purge: true}:{file: locs.IANA_Subtag_Registry_Filename, purge: true});
 		}
 
 		if (preloadedGenres) 
 			this.allowedGenres=preloadedGenres;
 		else {
-			this.allowedGenres=new ClassificationScheme();
 			console.log("loading classification schemes...");
-			if (useURLs) 
-				this.allowedGenres.loadCSExt({urls:[locs.TVA_ContentCSURL, locs.TVA_FormatCSURL, locs.DVBI_ContentSubjectURL], leafNodesOnly:false});
-			else this.allowedGenres.loadCSExt({files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename], leafNodesOnly:false});
+			this.allowedGenres=new ClassificationScheme();
+			this.allowedGenres.loadCS(useURLs?
+						{urls:[locs.TVA_ContentCSURL, locs.TVA_FormatCSURL, locs.DVBI_ContentSubjectURL]}:
+						{files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename]});
 		}
 		
 		if (preloadedCreditItemRoles)
 			this.allowedCreditItemRoles=preloadedCreditItemRoles;
 		else {
-			this.allowedCreditItemRoles=new Role();
 			console.log("loading CreditItem roles...");
-			if (useURLs) 
-				this.allowedCreditItemRoles.loadRolesExt({urls:[locs.DVBI_CreditsItemRolesURL, locs.DVBIv2_CreditsItemRolesURL]});
-			else this.allowedCreditItemRoles.loadRolesExt({files:[locs.DVBI_CreditsItemRolesFilename, locs.DVBIv2_CreditsItemRolesFilename]});
+			this.allowedCreditItemRoles=new Role();
+			this.allowedCreditItemRoles.loadRoles(useURLs?
+					{urls:[locs.DVBI_CreditsItemRolesURL, locs.DVBIv2_CreditsItemRolesURL]}:
+					{files:[locs.DVBI_CreditsItemRolesFilename, locs.DVBIv2_CreditsItemRolesFilename]});
 		}
-
 
 		console.log("loading Schemas...");
 		this.TVAschema=libxml.parseXmlString(fs.readFileSync(locs.TVAschemaFileName));
