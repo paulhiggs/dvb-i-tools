@@ -229,13 +229,25 @@ class SLEPR {
         }	
         return req.parseErr.length==0;
     }
-        
+
 
     /* public */ processServiceListRequest(req, res) {
- 		if (!this.checkQuery(req)) {
-            if (req.parseErr) req.parseErr.forEach(err => {
-                res.write(`${err}\n`);
+
+        function prettyPrintArray(arr) {
+            let _first=true, res;
+            res="[";
+            arr.forEach(entry => {
+                if (!_first) res+=",";
+                res+=`\n\t"${entry}"`;
+                _first=false;
             });
+            res+=`${_first?"":"\n"}]`;
+            return res;
+        }
+
+ 		if (!this.checkQuery(req)) {
+            if (req.parseErr) 
+                res.write(prettyPrintArray(req.parseErr));
 			res.status(400);
             res.end();
             return false;
