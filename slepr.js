@@ -46,18 +46,14 @@ class SLEPR {
           this.knownLanguages=preloadedLanguageValidator;
         else {
             this.knownLanguages=new IANAlanguages();
-            if (useURLs) 
-                this.knownLanguages.loadLanguages({url: locs.IANA_Subtag_Registry_URL, purge: true});
-            else this.knownLanguages.loadLanguages({file: locs.IANA_Subtag_Registry_Filename, purge: true});
+            this.knownLanguages.loadLanguages(useURLs?{url: locs.IANA_Subtag_Registry.url, purge: true}:{file: locs.IANA_Subtag_Registry.file, purge: true});
         }
 
 		if (preloadedCountries)
 			this.knownCountries=preloadedCountries;
 		else {
 			this.knownCountries=new ISOcountries(false, true);
-			if (useURLs) 
-				this.knownCountries.loadCountries({url:locs.ISO3166_URL, purge:true});
-			else this.knownCountries.loadCountries({file:locs.ISO3166_Filename, purge:true});
+            this.knownCountries.loadCountries(useURLs?{url:locs.ISO3166.url, purge:true}:{file:locs.ISO3166.file, purge:true});
 		}
 
         if (preloadedGenres)
@@ -65,8 +61,8 @@ class SLEPR {
         else {
 			this.knownGenres=new ClassificationScheme();
             this.knownGenres.loadCS(useURLs?
-                {urls:[locs.TVA_ContentCSURL, locs.TVA_FormatCSURL, locs.DVBI_ContentSubjectURL], leafNodesOnly:false}:
-                {files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename], leafNodesOnly:false});
+                {urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url]}:
+                {files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubject.file]});
         }
     }
 

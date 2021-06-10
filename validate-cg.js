@@ -224,15 +224,15 @@ const options=commandLineArgs(optionDefinitions);
 const IANAlanguages=require("./IANAlanguages.js");
 let knownLanguages=new IANAlanguages();
 knownLanguages.loadLanguages(options.urls?
-	{url:locs.IANA_Subtag_Registry_URL}:
-	{file:locs.IANA_Subtag_Registry_Filename}
+	{url:locs.IANA_Subtag_Registry.url}:
+	{file:locs.IANA_Subtag_Registry.file}
 );
 
 const ClassificationScheme=require("./ClassificationScheme.js");
 let knownGenres=new ClassificationScheme();
 knownGenres.loadCS(options.urls?
-		{urls:[locs.TVA_ContentCSURL, locs.TVA_FormatCSURL, locs.DVBI_ContentSubjectURL], leafNodesOnly:false}:
-		{files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename], leafNodesOnly:false});
+		{urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url]}:
+		{files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubject.file]});
 
 cgcheck=new ContentGuideCheck(options.urls, knownLanguages, knownGenres);
 

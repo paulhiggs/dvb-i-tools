@@ -117,8 +117,8 @@ class ServiceListCheck {
 			this.knownLanguages=new IANAlanguages();
 			console.log("loading languages...");
 			if (useURLs) 
-				this.knownLanguages.loadLanguages({url: locs.IANA_Subtag_Registry_URL, purge: true});
-			else this.knownLanguages.loadLanguages({file: locs.IANA_Subtag_Registry_Filename, purge: true});
+				this.knownLanguages.loadLanguages({url: locs.IANA_Subtag_Registry.url, purge: true});
+			else this.knownLanguages.loadLanguages({file: locs.IANA_Subtag_Registry.file, purge: true});
 		}
 
 		if (preloadedGenres) 
@@ -127,8 +127,8 @@ class ServiceListCheck {
 			this.allowedGenres=new ClassificationScheme();
 			console.log("loading Genre classification schemes...");
 			this.allowedGenres.loadCS(useURLs?
-					{urls:[locs.TVA_ContentCSURL, locs.TVA_FormatCSURL, locs.DVBI_ContentSubjectURL]}:
-					{files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename]});
+					{urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url]}:
+					{files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubjectfile]});
 		}
 
 		if (preloadedCountries)
@@ -136,8 +136,8 @@ class ServiceListCheck {
 		else {
 			this.knownCountries=new ISOcountries(false, true);
 			if (useURLs) 
-				this.knownCountries.loadCountries({url:locs.ISO3166_Url, purge:true});
-			else this.knownCountries.loadCountries({file:locs.ISO3166_Filename, purge:true});
+				this.knownCountries.loadCountries({url:locs.ISO3166.url, purge:true});
+			else this.knownCountries.loadCountries({file:locs.ISO3166.file, purge:true});
 		}
 
 //		this.allowedGenres=new ClassificationScheme();
@@ -151,9 +151,9 @@ class ServiceListCheck {
 		this.AudioPresentationCSvalues=new ClassificationScheme();
 
 		console.log("loading service list schemas...");
-		this.SLschema_v1=libxml.parseXmlString(fs.readFileSync(locs.DVBI_ServiceListSchemaFilename_v1));
-		this.SLschema_v2=libxml.parseXmlString(fs.readFileSync(locs.DVBI_ServiceListSchemaFilename_v2));
-		this.SLschema_v3=libxml.parseXmlString(fs.readFileSync(locs.DVBI_ServiceListSchemaFilename_v3));
+		this.SLschema_v1=libxml.parseXmlString(fs.readFileSync(locs.DVBI_ServiceListSchema.v1.file));
+		this.SLschema_v2=libxml.parseXmlString(fs.readFileSync(locs.DVBI_ServiceListSchema.v2.file));
+		this.SLschema_v3=libxml.parseXmlString(fs.readFileSync(locs.DVBI_ServiceListSchema.v3.file));
 
 		this.extendArray();
 		this.loadDataFiles(useURLs);
@@ -167,27 +167,27 @@ class ServiceListCheck {
 	 */
 	/*private*/ loadDataFiles(useURLs) {
 		console.log("loading classification schemes...");
-		this.allowedPictureFormats.loadCS(useURLs?{url:locs.TVA_PictureFormatCSURL}:{file:locs.TVA_PictureFormatCSFilename});
+		this.allowedPictureFormats.loadCS(useURLs?{url:locs.TVA_PictureFormatCS.url}:{file:locs.TVA_PictureFormatCS.file});
 	
-		this.allowedServiceTypes.loadCS(useURLs?{url:locs.DVBI_ServiceTypeCSURL}:{file:locs.DVBI_ServiceTypeCSFilename} );
+		this.allowedServiceTypes.loadCS(useURLs?{url:locs.DVBI_ServiceTypeCS.url}:{file:locs.DVBI_ServiceTypeCS.file} );
 
 		this.allowedAudioSchemes.loadCS(useURLs?
-			{urls:[locs.DVB_AudioCodecCSURL, locs.DVB_AudioCodecCS2020URL, locs.MPEG7_AudioCodingFormatCSURL], leafNodesOnly:true} :
-			{files:[locs.DVB_AudioCodecCSFilename, locs.DVB_AudioCodecCS2020Filename, locs.MPEG7_AudioCodingFormatCSFilename], leafNodesOnly:true});
+			{urls:[locs.DVB_AudioCodecCS.y2007.url, locs.DVB_AudioCodecCS.y2020.url, locs.MPEG7_AudioCodingFormatCS.url], leafNodesOnly:true} :
+			{files:[locs.DVB_AudioCodecCS.y2007.file, locs.DVB_AudioCodecCS.y2020.file, locs.MPEG7_AudioCodingFormatCS.file], leafNodesOnly:true});
 
-		this.allowedAudioConformancePoints.loadCS(useURLs?{url:locs.DVB_AudioConformanceCSURL, leafNodesOnly:true}:{file:locs.DVB_AudioConformanceCSFilename, leafNodesOnly:true});
+		this.allowedAudioConformancePoints.loadCS(useURLs?{url:locs.DVB_AudioConformanceCS.url, leafNodesOnly:true}:{file:locs.DVB_AudioConformanceCS.file, leafNodesOnly:true});
 		
 		this.allowedVideoSchemes.loadCS(useURLs?
-			{urls:[locs.DVB_VideoCodecCS2007URL, locs.DVB_VideoCodecCS2021URL, locs.MPEG7_VisualCodingFormatCSURL], leafNodesOnly:true} :
-			{files:[locs.DVB_VideoCodecCS2007Filename, locs.DVB_VideoCodecCS2021Filename, locs.MPEG7_VisualCodingFormatCSFilename], leafNodesOnly:true});
+			{urls:[locs.DVB_VideoCodecCS.y2007.url, locs.DVB_VideoCodecCS.y2021.url, locs.MPEG7_VisualCodingFormatCS.url], leafNodesOnly:true} :
+			{files:[locs.DVB_VideoCodecCS.y2007.file, locs.DVB_VideoCodecCS.y2021.file, locs.MPEG7_VisualCodingFormatCS.file], leafNodesOnly:true});
 
 		this.allowedVideoConformancePoints.loadCS(useURLs?
-			{urls:[locs.DVB_VideoConformanceCS2017URL, locs.DVB_VideoConformanceCS2017URL], leafNodesOnly:true} :
-			{files:[locs.DVB_VideoConformanceCS2017Filename, locs.DVB_VideoConformanceCS2021Filename], leafNodesOnly:true});
+			{urls:[locs.DVB_VideoConformanceCS.y2017.url, locs.DVB_VideoConformanceCS.y2017.url], leafNodesOnly:true} :
+			{files:[locs.DVB_VideoConformanceCS.y2017.file, locs.DVB_VideoConformanceCS.y2021.file], leafNodesOnly:true});
 
-		this.AudioPresentationCSvalues.loadCS(useURLs?{url:locs.MPEG7_AudioPresentationCSURL} :  {file:locs.MPEG7_AudioPresentationCSFilename} );
+		this.AudioPresentationCSvalues.loadCS(useURLs?{url:locs.MPEG7_AudioPresentationCS.url} :  {file:locs.MPEG7_AudioPresentationCS.file} );
 
-		this.RecordingInfoCSvalues.loadCS(useURLs?{url:locs.DVBI_RecordingInfoCSURL}:{file:locs.DVBI_RecordingInfoCSFilename});		
+		this.RecordingInfoCSvalues.loadCS(useURLs?{url:locs.DVBI_RecordingInfoCS.url}:{file:locs.DVBI_RecordingInfoCS.file});		
 	}
 
 /**

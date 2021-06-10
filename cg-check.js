@@ -254,7 +254,7 @@ module.exports = class ContentGuideCheck {
 		else {
 			console.log("loading languages...");
 			this.knownLanguages=new IANAlanguages();
-			this.knownLanguages.loadLanguages(useURLs?{url: locs.IANA_Subtag_Registry_URL, purge: true}:{file: locs.IANA_Subtag_Registry_Filename, purge: true});
+			this.knownLanguages.loadLanguages(useURLs?{url: locs.IANA_Subtag_Registry.url, purge: true}:{file: locs.IANA_Subtag_Registry.file, purge: true});
 		}
 
 		if (preloadedGenres) 
@@ -263,8 +263,8 @@ module.exports = class ContentGuideCheck {
 			console.log("loading classification schemes...");
 			this.allowedGenres=new ClassificationScheme();
 			this.allowedGenres.loadCS(useURLs?
-						{urls:[locs.TVA_ContentCSURL, locs.TVA_FormatCSURL, locs.DVBI_ContentSubjectURL]}:
-						{files:[locs.TVA_ContentCSFilename, locs.TVA_FormatCSFilename, locs.DVBI_ContentSubjectFilename]});
+						{urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url]}:
+						{files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubject.file]});
 		}
 		
 		if (preloadedCreditItemRoles)
@@ -273,12 +273,12 @@ module.exports = class ContentGuideCheck {
 			console.log("loading CreditItem roles...");
 			this.allowedCreditItemRoles=new Role();
 			this.allowedCreditItemRoles.loadRoles(useURLs?
-					{urls:[locs.DVBI_CreditsItemRolesURL, locs.DVBIv2_CreditsItemRolesURL]}:
-					{files:[locs.DVBI_CreditsItemRolesFilename, locs.DVBIv2_CreditsItemRolesFilename]});
+					{urls:[locs.DVBI_CreditsItemRoles.url, locs.DVBIv2_CreditsItemRoles.url]}:
+					{files:[locs.DVBI_CreditsItemRoles.file, locs.DVBIv2_CreditsItemRoles.file]});
 		}
 
 		console.log("loading Schemas...");
-		this.TVAschema=libxml.parseXmlString(fs.readFileSync(locs.TVAschemaFileName));
+		this.TVAschema=libxml.parseXmlString(fs.readFileSync(locs.TVAschema.file));
 
 		this.supportedRequests=supportedRequests;
 
