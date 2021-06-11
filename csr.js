@@ -18,6 +18,7 @@ const fs=require('fs'), path=require('path');
 
 // command line arguments - https://www.npmjs.com/package/command-line-args
 const commandLineArgs=require('command-line-args');
+const commandLineUsage = require('command-line-usage')
 
 // Fetch() API for node.js- https://www.npmjs.com/package/node-fetch
 const fetch=require('node-fetch');
@@ -35,13 +36,74 @@ const SLEPR=require('./slepr.js');
 
 // command line options
 const optionDefinitions=[
-	{ name:'urls', alias:'u', type:Boolean, defaultValue:false},
-	{ name:'port', alias:'p', type:Number, defaultValue:globals.HTTPPort.csr },
-	{ name:'sport', alias:'s', type:Number, defaultValue:globals.HTTPPort.csr+1 },
-	{ name:'file', alias:'f', type:String, defaultValue:slepr_data.MASTER_SLEPR_FILE}
+	{ name:'urls', alias:'u', 
+		type:Boolean, defaultValue:false, 
+		description:'Load data files from network locations.'},
+	{ name:'port', alias:'p', 
+		type:Number, defaultValue:globals.HTTPPort.csr, 
+		typeLabel:'{underline ip-port}',
+		 description:`The HTTP port to listen on. Default: ${globals.HTTPPort.csr}`},
+	{ name:'sport', alias:'s', 
+		type:Number, defaultValue:globals.HTTPPort.csr+1, 
+		typeLabel:'{underline ip-port}', 
+		description:`The HTTPS port to listen on. Default: ${globals.HTTPPort.csr+1}` },
+	{ name:'file', alias:'f', 
+		type:String, defaultValue:slepr_data.MASTER_SLEPR_FILE, 
+		typeLabel:'{underline filename}', 
+		description:'local file name of master SLEPR file'},
+	{ name:'help', alias:'h', 
+		type:Boolean, defaultValue:false, 
+		description:'This help'}
 ];
 
-const options=commandLineArgs(optionDefinitions);
+const commandLineHelp=[
+	{
+		header: 'DVB Central Service Registry',
+		content: 'An implementaion of a DVB-I Service List Registry'
+	},
+	{
+		header: 'Synopsis',
+		content: '$ node csr <options>'
+	},
+	{
+		header: 'Options',
+		optionList: optionDefinitions
+	},
+	{
+		header: 'Client Query',
+		content: '{italic <host>}:{italic <port>}/query[?{italic arg}={underline value}(&{italic arg}={underline value})*]',
+	},
+	{
+		content: [
+			{header:'{italic arg}'},
+			{name:'regulatorListFlag', summary:'(true|false)'},
+			{name:'Delivery[]', summary:'(dvb-t|dvb-dash|dvb-c|dvb-s|dvb-iptv)'},
+			{name:'TargetCountry[]', summary:'{underline ISO3166 3-digit code}' },		
+			{name:'Language[]', summary:'{underline IANA 2 digit language code}'},		
+			{name:'Genre[]=??', summary:'??'},		
+			{name:'Provider[]=??', summary:'??'},		
+		]
+	},
+
+	{
+		header: 'About',
+		content: 'Project home: {underline https://github.com/paulhiggs/dvb-i-tools/}'
+	}
+];
+
+
+try {
+	var options=commandLineArgs(optionDefinitions);
+}
+catch (err) {
+	console.log(commandLineUsage(commandLineHelp));
+	process.exit(1);
+}
+
+if (options.help) {
+	console.log(commandLineUsage(commandLineHelp));
+	process.exit(0);
+}
 
 const IANAlanguages=require('./IANAlanguages.js');
 var knownLanguages=new IANAlanguages();

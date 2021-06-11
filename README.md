@@ -31,6 +31,7 @@ The server can be reloaded with an updated `slepr-master.xml` file by invoking i
 * --sport [-s] set the HTTPS listening port (default: 3001)
 * --urls [-u] load configation from network locations (default:  use local files)
 * --file [-f] name of the master registry file to use, can be an http(s) URL (default: ./slepr-master.xml)
+* --help [-h] server and client command help
 
 If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
 
