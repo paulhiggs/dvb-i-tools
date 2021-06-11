@@ -560,6 +560,7 @@ module.exports = class ContentGuideCheck {
 		}
 	}
 
+
 	/**
 	 * validate the <Genre> elements specified
 	 *
@@ -916,7 +917,7 @@ module.exports = class ContentGuideCheck {
 			case tva.e_ProgramInformation:
 				let rm=0, RelatedMaterial;
 				while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) 
-					this.ValidatePromotionalStillImage(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, errs, BasicDescription.name(), "More Episodes");
+					this.ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name());
 				break;
 			case tva.e_GroupInformation:
 				this.ValidatePagination(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "More Episodes");
@@ -972,7 +973,7 @@ module.exports = class ContentGuideCheck {
 	 * @param {Object} errs              The class where errors and warnings relating to the serivce list processing are stored 
 	 * @param {string} Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 */
-	/* private */  ValidateTemplateAIT(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, errs, Location) {
+	/* private */  ValidateTemplateAIT(RelatedMaterial, errs, Location) {
 		
 		if (!RelatedMaterial) {
 			errs.pushCode("TA000", "ValidateTemplateAIT() called with RelatedMaterial==null");
@@ -1033,9 +1034,8 @@ module.exports = class ContentGuideCheck {
 	 * @param {Object} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
 	 * @param {Object} errs              The class where errors and warnings relating to the serivce list processing are stored 
 	 * @param {string} Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
-	 * @param {string} LocationType      The type of element containing the <RelatedMaterial> element. Different validation rules apply to different location types
 	 */
-	/* private */  ValidatePromotionalStillImage(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, errs, Location, LocationType) {
+	/* private */  ValidatePromotionalStillImage(RelatedMaterial, errs, Location) {
 		
 		if (!RelatedMaterial) {
 			errs.pushCode("PS000", "ValidatePromotionalStillImage() called with RelatedMaterial==null");
@@ -1130,11 +1130,9 @@ module.exports = class ContentGuideCheck {
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {Object}  BasicDescription    the element whose children should be checked
-	 * @param {integer} minRMelements       the minimum number of RelatedMaterial elements
-	 * @param {integer} maxRMelements       the maximum number of RelatedMaterial elements
 	 * @param {Class}   errs                errors found in validaton
 	 */
-	/* private */  ValidateRelatedMaterial_BoxSetList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, Location) {
+	/* private */  ValidateRelatedMaterial_BoxSetList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs) {
 		
 		if (!BasicDescription) {
 			errs.pushCode("MB000", "ValidateRelatedMaterial_BoxSetList() called with BasicDescription==null");
@@ -1153,7 +1151,7 @@ module.exports = class ContentGuideCheck {
 					switch (hrHref) {
 						case dvbi.TEMPLATE_AIT_URI:
 							countTemplateAIT++;
-							this.ValidateTemplateAIT(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, errs, BasicDescription.name().elementize());
+							this.ValidateTemplateAIT(RelatedMaterial, errs, BasicDescription.name().elementize());
 							break;
 						case dvbi.PAGINATION_FIRST_URI:
 						case dvbi.PAGINATION_PREV_URI:
@@ -1164,7 +1162,7 @@ module.exports = class ContentGuideCheck {
 							break;
 						case dvbi.PROMOTIONAL_STILL_IMAGE_URI:  // promotional still image
 							countImage++;
-							this.ValidatePromotionalStillImage(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, errs, BasicDescription.name().elementize());
+							this.ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name().elementize());
 							break;
 						default:
 							this.InvalidHrefValue(errs, hrHref, tva.e_HowRelated.elementize(), `${tva.e_RelatedMaterial.elementize()} in Box Set List`, "MB011");
@@ -1683,10 +1681,8 @@ module.exports = class ContentGuideCheck {
 	 * @param {Class}  errs                errors found in validaton
 	 * @param {string} parentLanguage	   the xml:lang of the parent element to GroupInformation
 	 * @param {object} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
-	 * @param {array}  indexes			   an accumulation of the @index values found
-	 * @param {string} groupsFound         groupId values found (null if not needed)
 	 */
-	/* private */  ValidateGroupInformationSchedules(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup, indexes, groupsFound) {
+	/* private */  ValidateGroupInformationSchedules(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup) {
 
 		if (!GroupInformation) {
 			errs.pushCode("GIS000", "ValidateGroupInformationSchedules() called with GroupInformation==null");
@@ -1722,10 +1718,9 @@ module.exports = class ContentGuideCheck {
 	 * @param {Class}  errs                errors found in validaton
 	 * @param {string} parentLanguage	   the xml:lang of the parent element to GroupInformation
 	 * @param {object} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
-	 * @param {array}  indexes			   an accumulation of the @index values found
 	 * @param {string} groupsFound         groupId values found (null if not needed)
 	 */
-	/* private */  ValidateGroupInformationMoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup, indexes, groupsFound) {
+	/* private */  ValidateGroupInformationMoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup, groupsFound) {
 		
 		if (!GroupInformation) {
 			errs.pushCode("GIM000", "ValidateGroupInformationMoreEpisodes() called with GroupInformation==null");
@@ -1788,7 +1783,7 @@ module.exports = class ContentGuideCheck {
 		switch (requestType) {
 			case CG_REQUEST_SCHEDULE_NOWNEXT:
 			case CG_REQUEST_SCHEDULE_WINDOW:
-				this.ValidateGroupInformationSchedules(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, giLang, categoryGroup, indexes, groupsFound);
+				this.ValidateGroupInformationSchedules(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, giLang, categoryGroup);
 				break;
 			case CG_REQUEST_BS_CATEGORIES:
 			case CG_REQUEST_BS_LISTS:
@@ -1796,7 +1791,7 @@ module.exports = class ContentGuideCheck {
 				this.ValidateGroupInformationBoxSets(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, giLang, categoryGroup, indexes, groupsFound);
 				break;		
 			case CG_REQUEST_MORE_EPISODES:
-				this.ValidateGroupInformationMoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, giLang, categoryGroup, indexes, groupsFound);
+				this.ValidateGroupInformationMoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, giLang, categoryGroup, groupsFound);
 				break;				
 		}
 
@@ -1981,11 +1976,9 @@ module.exports = class ContentGuideCheck {
 	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {Object} AVAttributes        the <AVAttributes> node to be checked
-	 * @param {string} parentLanguage      XML language of the parent element (expliclt or implicit from its parent(s))
-	 * @param {string} requestType         the type of content guide request being checked
 	 * @param {Class}  errs                errors found in validaton
 	 */
-	/* private */  ValidateAVAttributes(CG_SCHEMA, SCHEMA_PREFIX, AVAttributes, parentLanguage, requestType, errs) {
+	/* private */  ValidateAVAttributes(CG_SCHEMA, SCHEMA_PREFIX, AVAttributes, errs) {
 		
 		function isValidAudioMixType(mixType) { return [mpeg7.AUDIO_MIX_MONO, mpeg7.AUDIO_MIX_STEREO, mpeg7.AUDIO_MIX_5_1].includes(mixType); }
 		function isValidAudioLanguagePurpose(purpose) {	return [dvbi.AUDIO_PURPOSE_MAIN,dvbi.AUDIO_PURPOSE_DESCRIPTION].includes(purpose);	}
@@ -2127,12 +2120,9 @@ module.exports = class ContentGuideCheck {
 	 * @param {string} VerifyType		   the type of verification to perform (OnDemandProgram | ScheduleEvent)
 	 * @param {Object} InstanceDescription the <InstanceDescription> node to be checked
 	 * @param {boolean} isCurrentProgram   indicates if this <InstanceDescription> element is for the currently airing program
-	 * @param {string} parentLanguage      XML language of the parent element (expliclt or implicit from its parent(s))
-	 * @param {array}  programCRIDs        array to record CRIDs for later use 
-	 * @param {string} requestType         the type of content guide request being checked
 	 * @param {Class}  errs                errors found in validaton
 	 */
-	/* private */  ValidateInstanceDescription(CG_SCHEMA, SCHEMA_PREFIX, VerifyType, InstanceDescription, isCurrentProgram, parentLanguage, programCRIDs, requestType, errs) {
+	/* private */  ValidateInstanceDescription(CG_SCHEMA, SCHEMA_PREFIX, VerifyType, InstanceDescription, isCurrentProgram, errs) {
 
 		function isRestartAvailability(str) { return [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(str); }
 		function isMediaAvailability(str) { return [dvbi.MEDIA_AVAILABLE, dvbi.MEDIA_UNAVAILABLE].includes(str); }
@@ -2237,7 +2227,7 @@ module.exports = class ContentGuideCheck {
 		// <AVAttributes>
 		let AVAttributes=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_AVAttributes), CG_SCHEMA);
 		if (AVAttributes)
-			this.ValidateAVAttributes(CG_SCHEMA, SCHEMA_PREFIX, AVAttributes, parentLanguage, requestType, errs);
+			this.ValidateAVAttributes(CG_SCHEMA, SCHEMA_PREFIX, AVAttributes, errs);
 		
 		// <OtherIdentifier>
 		let oi=0, OtherIdentifier;
@@ -2400,8 +2390,6 @@ module.exports = class ContentGuideCheck {
 				plCRIDs.push(programCRID);
 			}	
 		}
-		if (--prog>1)
-			errs.pushCode("OD013", `only a single ${tva.e_Program.elementize()} is permitted in ${OnDemandProgram.name().elementize()}`);
 
 		// <ProgramURL>
 		let pUrl=0, ProgramURL;
@@ -2417,22 +2405,10 @@ module.exports = class ContentGuideCheck {
 		let id=0, InstanceDescription;
 		if (validRequest)
 			while ((InstanceDescription=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_InstanceDescription, ++id), CG_SCHEMA))!=null)
-				this.ValidateInstanceDescription(CG_SCHEMA, SCHEMA_PREFIX, OnDemandProgram.name(), InstanceDescription, false, odpLang, programCRIDs, requestType, errs);
-		if (--id>1)
-			errs.pushCode("OD041", `only a single ${tva.e_InstanceDescription.elementize()} is permitted in ${OnDemandProgram.name().elementize()}`);
+				this.ValidateInstanceDescription(CG_SCHEMA, SCHEMA_PREFIX, OnDemandProgram.name(), InstanceDescription, false, errs);
 		
 		// <PublishedDuration>
-		let pd=0, PublishedDuration;
-		while ((PublishedDuration=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_PublishedDuration, ++pd), CG_SCHEMA))!=null) {
-		/*
-		* checked in schema based validation
-			if (!patterns.isISODuration(PublishedDuration.text()))
-				errs.pushCode("OD050", `${OnDemandProgram.name()}.${tva.e_PublishedDuration} is not a valid ISO Duration (xs:duration)`)
-		*/
-		}
-		if (--pd>1)
-			errs.pushCode("OD051", `only a single ${tva.e_PublishedDuration.elementize()} is permitted in ${OnDemandProgram.name().elementize()}`);
-		
+
 		// <StartOfAvailability> and <EndOfAvailability>
 		let soa=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_StartOfAvailability), CG_SCHEMA),
 			eoa=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_EndOfAvailability), CG_SCHEMA);
@@ -2448,15 +2424,11 @@ module.exports = class ContentGuideCheck {
 		while ((DeliveryMode=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_DeliveryMode, ++dm), CG_SCHEMA))!=null)
 			if (DeliveryMode.text()!=tva.DELIVERY_MODE_STREAMING)
 				errs.pushCode("OD070", `${OnDemandProgram.name()}.${tva.e_DeliveryMode} must be ${tva.DELIVERY_MODE_STREAMING.quote()}`);
-		if (--dm>1)
-			errs.pushCode("OD071", `only a single ${tva.e_DeliveryMode.elementize()} is permitted in ${OnDemandProgram.name().elementize()}`);
 		
 		// <Free>
 		let fr=0, Free;
 		while ((Free=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_Free, ++fr), CG_SCHEMA))!=null)
 			TrueValue(Free, tva.a_value, "OD080", errs);
-		if (--fr>1)
-			errs.pushCode("OD081", `only a single ${tva.e_Free.elementize()} is permitted in ${OnDemandProgram.name().elementize()}`);
 	}	
 
 
@@ -2523,7 +2495,7 @@ module.exports = class ContentGuideCheck {
 			// <InstanceDescription>
 			let InstanceDescription=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_InstanceDescription), CG_SCHEMA);
 			if (InstanceDescription) 
-				this.ValidateInstanceDescription(CG_SCHEMA, SCHEMA_PREFIX, tva.e_ScheduleEvent, InstanceDescription, isCurrentProgram, seLang, programCRIDs, requestType, errs);
+				this.ValidateInstanceDescription(CG_SCHEMA, SCHEMA_PREFIX, tva.e_ScheduleEvent, InstanceDescription, isCurrentProgram, errs);
 			
 			// <PublishedStartTime> and <PublishedDuration>
 			let pstElem=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_PublishedStartTime), CG_SCHEMA);
