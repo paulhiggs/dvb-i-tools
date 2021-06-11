@@ -1,20 +1,19 @@
 /* jshint esversion: 8 */
 /**
- * Manages Classification Scheme checking
+ * Manages Classification Scheme checking based in a flat list of roles
  * 
  */
 const fs=require('fs');
 const fetch=require('node-fetch');
 
 const ClassificationScheme=require("./ClassificationScheme.js");
-//const {AvlTree} = require('@datastructures-js/binary-search-tree');
 
 module.exports = class Role  extends ClassificationScheme {
   
     /**
      * read a classification scheme from a URL and load its hierarical values into a linear list 
      *
-     * @param {String} roleURL URL to the classification scheme
+     * @param {String} rolesURL URL to the classification scheme
      */
     loadFromURL(rolesURL) {
         
@@ -36,7 +35,7 @@ module.exports = class Role  extends ClassificationScheme {
     /**
      * read a classification scheme from a local file and load its hierarical values into a linear list 
      *
-     * @param {String} roleFule the filename of the classification scheme
+     * @param {String} rolesFile the filename of the classification scheme
      */
     loadFromFile(rolesFile) {
         console.log(`reading Roles from ${rolesFile}`);
@@ -60,15 +59,5 @@ module.exports = class Role  extends ClassificationScheme {
             this.loadFromURL(options.url);
         if (options.urls) 
             options.urls.forEach(url => this.loadFromURL(url));
-    }
-
-    /**
-     * determines if the value is in the classification scheme
-     *
-     * @param {String} value           The value to check for existance
-     * @returns {boolean} true if value is in the classification scheme
-     */
-    isIn(value) {
-        return this.values.has(value);
     }
 };
