@@ -343,7 +343,7 @@ morgan.token("agent", function getAgent(req) {
     return `(${req.headers["user-agent"]})`;
 });
 morgan.token("parseErr", function getParseErr(req) {
-    if (req.parseErr.length>0) return `(query errors=${req.parseErr.length})`;
+    if (req.parseErr && req.parseErr.length>0) return `(query errors=${req.parseErr.length})`;
     return "";
 });
 morgan.token("location", function getCheckedLocation(req) {
