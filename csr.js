@@ -18,7 +18,7 @@ const fs=require('fs'), path=require('path');
 
 // command line arguments - https://www.npmjs.com/package/command-line-args
 const commandLineArgs=require('command-line-args');
-const commandLineUsage = require('command-line-usage')
+const commandLineUsage = require('command-line-usage');
 
 // Fetch() API for node.js- https://www.npmjs.com/package/node-fetch
 const fetch=require('node-fetch');
@@ -71,20 +71,20 @@ const commandLineHelp=[
 	},
 	{
 		header: 'Client Query',
-		content: '{italic <host>}:{italic <port>}/query[?{italic arg}={underline value}(&{italic arg}={underline value})*]',
+		content: '{underline <host>}:{underline <port>}/query[?{underline arg}={underline value}(&{underline arg}={underline value})*]',
 	},
 	{
 		content: [
-			{header:'{italic arg}'},
-			{name:'regulatorListFlag', summary:'(true|false)'},
-			{name:'Delivery[]', summary:'(dvb-t|dvb-dash|dvb-c|dvb-s|dvb-iptv)'},
-			{name:'TargetCountry[]', summary:'{underline ISO3166 3-digit code}' },		
-			{name:'Language[]', summary:'{underline IANA 2 digit language code}'},		
-			{name:'Genre[]=??', summary:'??'},		
-			{name:'Provider[]=??', summary:'??'},		
+			{header:'{underline arg}'},
+			{name:'regulatorListFlag', summary:'Select only service lists that have the @regulatorListFlag set as specified (true|false)'},
+			{name:'Delivery[]', summary:'Select only service lists that use the specified delivery system (dvb-t|dvb-dash|dvb-c|dvb-s|dvb-iptv)'},
+			{name:'TargetCountry[]', summary:'Select only service lists that apply to the specified countries (form: {underline ISO3166 3-digit code})' },		
+			{name:'Language[]', summary:'Select only service lists that use the specified language (form: {underline IANA 2 digit language code})'},		
+			{name:'Genre[]', summary:'Select only service lists that match one of the given Genres'},		
+			{name:'Provider[]', summary:'Select only service lists that match one of the specified Provider names'}
 		]
 	},
-
+	{	content:'note that all query values except Provider are checked against constraints. An HTTP 400 response is returned with errors in the response body.'},
 	{
 		header: 'About',
 		content: 'Project home: {underline https://github.com/paulhiggs/dvb-i-tools/}'
@@ -107,8 +107,7 @@ if (options.help) {
 
 const IANAlanguages=require('./IANAlanguages.js');
 var knownLanguages=new IANAlanguages();
-knownLanguages.loadLanguages(options.urls?{url:locs.IANA_Subtag_Registry.url}:{file:locs.IANA_Subtag_Registry.file}
-);
+knownLanguages.loadLanguages(options.urls?{url:locs.IANA_Subtag_Registry.url}:{file:locs.IANA_Subtag_Registry.file});
 
 const ISOcountries=require("./ISOcountries.js");
 var knownCountries=new ISOcountries(false, true);
@@ -204,8 +203,7 @@ if (cluster.isMaster) {
 		process.send({ topic: RELOAD });
 		res.status(404).end();
 	});
-	
-	
+
 	app.get('/stats', function(req,res) {
 		process.send({ topic: STATS });
 		res.status(404).end();
@@ -215,14 +213,12 @@ if (cluster.isMaster) {
 		res.status(404).end();
 	});
 	
-
 	process.on('message', (msg) => {
 		if (msg.topic)
 			switch (msg.topic) {
 				case UPDATE:
 					knownCountries.loadCountries(options.urls?{url:locs.ISO3166.url}:{file:locs.ISO3166.filee});
-					knownLanguages.loadLanguages(options.urls?{url:locs.IANA_Subtag_Registry.url}:{file:locs.IANA_Subtag_Registry.file}
-						);
+					knownLanguages.loadLanguages(options.urls?{url:locs.IANA_Subtag_Registry.url}:{file:locs.IANA_Subtag_Registry.file});
 					knownGenres.loadCS(options.urls?
 						{urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url]}:
 						{files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubject.file]});		
