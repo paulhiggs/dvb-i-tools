@@ -71,7 +71,7 @@ module.exports.TVAschema={file:path.join(".", "tva_metadata_3-1.xsd")};
 
 module.exports.DVBI_ServiceListSchema={
     v1:{file:path.join(".", "dvbi_v1.0.xsd")},
-    v2:{file:path.join(".", "dvbi_v1.0.xsd")},
+    v2:{file:path.join(".", "dvbi_v2.0.xsd")},
     v3:{file:path.join(".", "dvbi_v3.0.xsd")}
 };
 

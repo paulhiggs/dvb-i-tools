@@ -310,7 +310,7 @@ class ServiceListCheck {
 			regionID="unspecified";
 		else {
 			if (isIn(knownRegionIDs, regionID)) 
-				errs.pushCode("AR003", `Duplicate ${dvbi.a_regionId.attribute()} ${regionID.quote()}`, "duplicate regionID");
+				errs.pushCode("AR003", `Duplicate ${dvbi.a_regionID.attribute()} ${regionID.quote()}`, "duplicate regionID");
 			else knownRegionIDs.push(regionID);
 		}
 		let countryCodesSpecified=Region.attr(dvbi.a_countryCodes);
@@ -1151,9 +1151,9 @@ class ServiceListCheck {
 						`${dvbi.a_contentType.attribute()}=${uriContentType.value().quote()} in service ${thisServiceId.quote()} is not valid`, 
 						`no ${dvbi.a_contentType.attribute()} for DASH`);
 
-				let URI=URIBasedLocation.get(xPath(SCHEMA_PREFIX, dvbi.e_URI), SL_SCHEMA);
-				if (URI && !patterns.isHTTPURL(URI.text()))
-					errs.pushCode("SI174", `invalid URL ${URI.text().quote()} specified for ${dvbi.e_URI.elementize()}`, "invalid resource URL");
+				let uri=URIBasedLocation.get(xPath(SCHEMA_PREFIX, dvbi.e_URI), SL_SCHEMA);
+				if (uri && !patterns.isHTTPURL(uri.text()))
+					errs.pushCode("SI174", `invalid URL ${uri.text().quote()} specified for ${dvbi.e_URI.elementize()} of service ${thisServiceId.quote()}`, "invalid resource URL");
 			}
 			
 			// <DASHDeliveryParameters><MulticastTSDeliveryParameters>
@@ -1288,6 +1288,11 @@ class ServiceListCheck {
 			return;
 		}
 		
+		if (!SL.root().namespace()) {
+			errs.pushCode("SL006", `namespace is not provided for ${dvbi.e_ServiceList.elementize()}`, 'schema error');
+			return;
+		}
+
 		let SL_SCHEMA={}, 
 			SCHEMA_PREFIX=SL.root().namespace().prefix(), 
 			SCHEMA_NAMESPACE=SL.root().namespace().href();
