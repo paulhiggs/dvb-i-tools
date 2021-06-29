@@ -1223,11 +1223,15 @@ class ServiceListCheck {
 	 * @param {string} errCode the error code to report with each error 
 	 */
 	/*private*/ SchemaCheck(XML, XSD, errs, errCode) {
-		if (!XML.validate(XSD)) 
-			XML.validationErrors.forEach(ve => {
+		let prettyXML=XML.toString();
+		let s=libxml.parseXmlString(prettyXML);
+		if (!s.validate(XSD)) {
+			let lines=prettyXML.split('\n')
+			s.validationErrors.forEach(ve => {
 				let s=ve.toString().split('\r');
-				s.forEach(err => errs.pushCode(errCode, err, 'schema error'));
+				s.forEach(err => errs.pushCodeWithFragment(errCode, err, lines[ve.line-1], 'schema error'));
 			});
+		}
 	}
 
 
@@ -1245,7 +1249,6 @@ class ServiceListCheck {
 						errs.pushCode(errCode?`${errCode}-11`:"CE011", "DVB-HB Extension only permitted in Service List Registry");
 					break;
 			}
-
 		}
 	}
 
