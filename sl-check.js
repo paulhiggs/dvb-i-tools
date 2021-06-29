@@ -1226,7 +1226,7 @@ class ServiceListCheck {
 		let prettyXML=XML.toString();
 		let s=libxml.parseXmlString(prettyXML);
 		if (!s.validate(XSD)) {
-			let lines=prettyXML.split('\n')
+			let lines=prettyXML.split('\n');
 			s.validationErrors.forEach(ve => {
 				let s=ve.toString().split('\r');
 				s.forEach(err => errs.pushCodeWithFragment(errCode, err, lines[ve.line-1], 'schema error'));
