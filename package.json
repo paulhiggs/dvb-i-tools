@@ -11,7 +11,7 @@
 		"express": "4.x",
 		"express-fileupload": "^1.2.1",
 		"express-ipfilter": "^1.2.0",
-		"libxmljs2": "^0.26.7",
+		"libxmljs2": "^0.27.0",
 		"morgan": "^1.10.0",
 		"node-fetch": "^2.6.1",
 		"serve-favicon": "^2.5.0"
