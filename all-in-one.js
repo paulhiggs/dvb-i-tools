@@ -53,10 +53,12 @@ const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","s
 
 
 function PAGE_TOP(label) {
-	const TABLE_STYLE="<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px; }	tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
+	const TABLE_STYLE="<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
 	const XML_STYLE="<style>.xmlfont {font-family: Arial, Helvetica, sans-serif; font-size:90%;}</style>";
 
-	const PG=`<html><head>${TABLE_STYLE}${XML_STYLE}<title>${label}</title></head><body>`;
+	const METAS="<meta name=\"google\" content=\"notranslate\" />"; // dont allow Chrome to translate the page - seems to 'detect' German
+	const HEAD=`<head>${METAS}${TABLE_STYLE}${XML_STYLE}<title>${label}</title></head>`;
+	const PG=`<html lang=\"en\" xml:lang=\"en\">\n${HEAD}<body>`;
 	const PH=`<h1>${label}</h1>`;
 
 	return `${PG}${PH}`;
@@ -71,8 +73,11 @@ function tabulateResults(res, error, errs) {
 	DETAIL_FORM_HEADER = (mode) => `<table><tr><th>code</th><th>${mode}</th></tr>`;
 
 	function tabluateMessage(value) {
-		res.write(`<tr><td>${value.code?phlib.HTMLize(value.code):""}</td>`);
-		res.write(`<td>${value.message?phlib.HTMLize(value.message):""}${value.element?`<br/><span class=\"xmlfont\">${phlib.HTMLize(value.element)}</span>`:""}</td></tr>`);
+		res.write('<tr>');
+		res.write(`<td>${value.code?phlib.HTMLize(value.code):""}</td>`);
+		res.write(`<td>${value.message?phlib.HTMLize(value.message):""}`);
+		res.write(`${value.element?`<br/><span class=\"xmlfont\">${phlib.HTMLize(value.element)}</span>`:""}</td>`);
+		res.write('</tr>');
 	}	
 
     res.write(RESULT_WITH_INSTRUCTION);
