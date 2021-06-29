@@ -9,9 +9,7 @@ const fs=require('fs');
 const libxml=require('libxmljs2');
 const fetch=require('node-fetch');
 
-const {AvlTree} = require('@datastructures-js/binary-search-tree');
-
-const { isHTTPURL }=require("./pattern_checks.js");
+const {AvlTree}=require('@datastructures-js/binary-search-tree');
 
 
 /**

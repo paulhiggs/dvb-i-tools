@@ -118,7 +118,6 @@ class SLEPR {
          * @returns {Boolean} true if DeliverySystem is valid, otherwise false
          */
         function isValidDelivery(DeliverySystem) {
-
             return [DVB_DASH_DELIVERY, DVB_T_DELIVERY, DVB_S_DELIVERY, DVB_C_DELIVERY, 
                 DVB_IPTV_DELIVERY, DVB_APPLICATION_DELIVERY].includes(DeliverySystem);
         }
@@ -279,7 +278,7 @@ class SLEPR {
                     if (req.query.regulatorListFlag) {
                         // The regulatorListFlag has been specified in the query, so it has to match. Default in instance document is "false"
                         let flag=serv.attr(dvbi.a_regulatorListFlag)?serv.attr(dvbi.a_regulatorListFlag).value():"false";
-                        if (req.query.regulatorListFlag!=flag ) 
+                        if (req.query.regulatorListFlag!=flag) 
                             removeService=true;
                     }
 
