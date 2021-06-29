@@ -6,12 +6,13 @@ Pauls DVB Tools
 ### Description
 This server application implements a Service List Registry as defined by the [DVB-I Service Discovery and Content Metadata specification - A177](https://www.dvb.org/resources/public/standards/a177_dvb-i_specification.pdf) in clause 5.1.3.2.
 
-The application works by reading in a reference/master XML document and then pruning our any provider and service offerings that do not match the specified query parameters. Per A177, the allowed query parameters added to the /query are
+The application works by reading in a reference/master XML document and then pruning out any provider and service offerings that do not match the specified query parameters. Per A177r2, the allowed query parameters added to the /query are
 * regulatorListFlag  ("true" or "false")
 * ProviderName
 * TargetCountry
 * Language
 * Genre
+* Delivery
 These parameter names are case sensitive and the comparisons made with their values are also case sensitive against the master Service List Entry Points Registy (SLEPR)
 
 Note that these values are case sensitive, and a case sensitive matching is performed with the values, thus "AUT" != "aut"
