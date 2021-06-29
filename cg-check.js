@@ -49,6 +49,22 @@ const supportedRequests=[
 	{value:CG_REQUEST_BS_CONTENTS, label:"Box Set Contents"}];
 
 
+/**
+ * counts the number of named elements in the specificed node 
+ * *
+ * @param {Object} node the libxmljs node to check
+ * @param {String} childElementName the name of the child element to count
+ * @returns {integer} the number of named child elments 
+ */
+function CountChildElements(node, childElementName) {
+	let r=0, childElems=node?node.childNodes():null;
+	if (childElems) childElems.forEachSubElement(elem => {
+		if (elem.name()==childElementName)
+			r++;
+	});
+	return r;
+}
+
 
 /**
  * check that the specified child elements are in the parent element
@@ -79,7 +95,7 @@ const supportedRequests=[
 	childElements.forEach(elem => {
 		let _min=elem.hasOwnProperty('minOccurs')?elem.minOccurs:1;
 		let _max=elem.hasOwnProperty('maxOccurs')?elem.maxOccurs:1;
-		let count=this.CountChildElements(parentElement, elem.name);
+		let count=CountChildElements(parentElement, elem.name);
 		if (count==0 && _min!=0) {
 			errs.pushCode(errCode?`${errCode}-1`:"TE010", `Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`);
 			rv=false;
@@ -245,6 +261,7 @@ function CheckLanguage(validator, errs, lang, loc=null, errno=null ) {
 	return true;
 }
 
+
 module.exports = class ContentGuideCheck {
 
 	constructor(useURLs, preloadedLanguageValidator=null,  preloadedGenres=null, preloadedCreditItemRoles=null) {
@@ -346,23 +363,6 @@ module.exports = class ContentGuideCheck {
 			// 8. return undefined
 			};
 		}
-	}
-
-
-	/**
-	 * counts the number of named elements in the specificed node 
-	 * *
-	 * @param {Object} node the libxmljs node to check
-	 * @param {String} childElementName the name of the child element to count
-	 * @returns {integer} the number of named child elments 
-	 */
-	/* private */  CountChildElements(node, childElementName) {
-		let r=0, childElems=node?node.childNodes():null;
-		if (childElems) childElems.forEachSubElement(elem => {
-			if (elem.name()==childElementName)
-				r++;
-		});
-		return r;
 	}
 
 
@@ -1840,7 +1840,7 @@ module.exports = class ContentGuideCheck {
 			gi=0;
 			while ((GroupInformation=GroupInformationTable.get(xPath(SCHEMA_PREFIX, tva.e_GroupInformation, ++gi), CG_SCHEMA))!=null) {
 				// this GroupInformation element is the "category group" if it does not contain a <MemberOf> element
-				if (this.CountChildElements(GroupInformation, tva.e_MemberOf)==0) {
+				if (CountChildElements(GroupInformation, tva.e_MemberOf)==0) {
 					// this GroupInformation element is not a member of another GroupInformation so it must be the "category group"
 					if (categoryGroup)
 						errs.pushCode("GI111", `only a single ${CATEGORY_GROUP_NAME} can be present in ${tva.e_GroupInformationTable.elementize()}`);
