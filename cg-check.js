@@ -2664,11 +2664,15 @@ module.exports = class ContentGuideCheck {
 		}
 		if (!CG) return;
 
-		if (!CG.validate(this.TVAschema)) 
-			CG.validationErrors.forEach(ve => {
+		let prettyXML=CG.toString();
+		let formattedCG=libxml.parseXmlString(prettyXML);
+		if (!formattedCG.validate(this.TVAschema)) {
+			let lines=prettyXML.split('\n');
+			formattedCG.validationErrors.forEach(ve => {
 				let s=ve.toString().split('\r');
-				s.forEach(err => errs.pushCode("CG001", err, "XSD validation")); 
+				s.forEach(err => errs.pushCodeWithFragment("CG001", err, lines[ve.line-1], "XSD validation")); 
 			});
+		}
 
 		if (CG.root().name()!=tva.e_TVAMain) {
 			errs.pushCode("CG002", `Root element is not ${tva.e_TVAMain.elementize()}`, "XSD validation");
