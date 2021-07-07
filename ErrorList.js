@@ -19,7 +19,6 @@ module.exports = class ErrorList {
     }
     loadDocument(doc) {
         let lines=libxml.parseXmlString(doc).toString().split('\n');
-    console.log(`num lines=${lines.length}`)
         this.markupXML=lines.map((str, index) => ({ value: str, ix: index }));
     }
     setError(err, lineNo) {
