@@ -826,8 +826,8 @@ class ServiceListCheck {
 		let mee=source.get(xPath(SCHEMA_PREFIX, dvbi.e_MoreEpisodesEndpoint), SL_SCHEMA);
 		if (mee && !patterns.isHTTPURL(mee.text()))
 			errs.pushCode(errCode?`${errCode}-i`:"GS008", `${dvbi.e_MoreEpisodesEndpoint.elementize()} is not a valid URL}`, "not URL");
-	}
-
+	}	
+	
 
 	/**
 	 * validate the language specified record any errors
@@ -844,7 +844,7 @@ class ServiceListCheck {
 		if (!node) 
 			return parentLang;
 		if (!node.attr(tva.a_lang) && isRequired) {
-			errs.pushCode(errno?errno:"AC001", `${tva.a_lang.attribute()} is required for ${node.name().quote()}`, "unspecified language");
+			errs.pushCode(errno?errno:"GL001", `${tva.a_lang.attribute()} is required for ${node.name().quote()}`, "unspecified language");
 			return parentLang;		
 		}
 
@@ -852,7 +852,8 @@ class ServiceListCheck {
 			return parentLang;
 		
 		let localLang=node.attr(tva.a_lang).value();
-		CheckLanguage(validator, errs, localLang, node.name(), errno);
+		if (validator)
+			this.checkLanguage(validator, errs, localLang, node.name(), errno);
 		return localLang;
 	}
 
