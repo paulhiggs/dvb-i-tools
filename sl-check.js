@@ -580,13 +580,13 @@ class ServiceListCheck {
 	 * @param {string} Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 * @param {string} LocationType      The type of element containing the <RelatedMaterial> element. Different validation rules apply to different location types
 	 * @param {string} SCHEMA_NAMESPACE  The namespace of XML document
-	 * @param {string} errcode			 The prefix to use for any errors found
+	 * @param {string} errCode			 The prefix to use for any errors found
 	 * @returns {string} an href value if valid, else ""
 	 */
-	/*private*/  validateRelatedMaterial(RelatedMaterial, errs, Location, LocationType, SCHEMA_NAMESPACE, errcode=null) {
+	/*private*/  validateRelatedMaterial(RelatedMaterial, errs, Location, LocationType, SCHEMA_NAMESPACE, errCode=null) {
 		let rc="";
 		if (!RelatedMaterial) {
-			errs.pushCode(errcode?`${errcode}-1`:"RM000", "validateRelatedMaterial() called with RelatedMaterial==null", "invalid args");
+			errs.pushCode(errCode?`${errCode}-1`:"RM000", "validateRelatedMaterial() called with RelatedMaterial==null", "invalid args");
 			return rc;
 		}
 		
@@ -607,7 +607,7 @@ class ServiceListCheck {
 		});
 		
 		if (!HowRelated) {
-			errs.pushCode(errcode?`${errcode}-1`:"RM001", `${tva.e_HowRelated.elementize()} not specified for ${tva.e_RelatedMaterial.elementize()} in ${Location}`, `no ${tva.e_HowRelated}`);
+			errs.pushCode(errCode?`${errCode}-1`:"RM001", `${tva.e_HowRelated.elementize()} not specified for ${tva.e_RelatedMaterial.elementize()} in ${Location}`, `no ${tva.e_HowRelated}`);
 			return rc;
 		}
 
@@ -620,12 +620,12 @@ class ServiceListCheck {
 							this.checkValidLogo(HowRelated, Format, locator, errs, Location));
 					}
 					else
-						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), tva.e_RelatedMaterial.elementize(), Location, errs, errcode?`${errcode}-11`:"RM011");
+						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-11`:"RM011");
 					break;
 				case SERVICE_RM:
 				case SERVICE_INSTANCE_RM:
 					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && (this.SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1)) 
-						errs.pushCode(errcode?`${errcode}-21`:"RM021", 
+						errs.pushCode(errCode?`${errCode}-21`:"RM021", 
 							`${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${SCHEMA_NAMESPACE.quote()} in ${Location}`, "invalid CS value");
 					
 					if (this.validOutScheduleHours(HowRelated, SCHEMA_NAMESPACE) || this.validContentFinishedBanner(HowRelated, SCHEMA_NAMESPACE) || this.validServiceApplication(HowRelated) || this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE)) {
@@ -638,7 +638,7 @@ class ServiceListCheck {
 								this.checkSignalledApplication(locator, errs, Location));
 					}
 					else 
-						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), tva.e_RelatedMaterial.elementize(), Location, errs, errcode?`${errcode}-22`:"RM022");  //!!
+						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-22`:"RM022");  //!!
 					break;
 				case CONTENT_GUIDE_RM:
 					if (this.validContentGuideSourceLogo(HowRelated, SCHEMA_NAMESPACE)) {
@@ -647,7 +647,7 @@ class ServiceListCheck {
 							this.checkValidLogo(HowRelated, Format, locator, errs, Location));
 					}
 					else
-						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), tva.e_RelatedMaterial.elementize(), Location, errs, errcode?`${errcode}-31`:"RM031");
+						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-31`:"RM031");
 					break;
 			}
 		}
@@ -751,8 +751,8 @@ class ServiceListCheck {
 	 * @param {String} invValue         The invalid value
 	 * @param {String} parentElementName The name of the parent element for elementName
 	 */
-	/*private*/  invalidValue(errs, errcode, elementName, attribName, invValue, parentElementName) {
-		errs.pushCode(errcode, 
+	/*private*/  invalidValue(errs, errCode, elementName, attribName, invValue, parentElementName) {
+		errs.pushCode(errCode, 
 			`Invalid value ${invValue?`${invValue.quote()} `:""} for ${attribName?attribName.attribute(elementName):elementName.elementize()}${parentElementName?` in ${parentElementName.elementize()}`:""}`,
 			"invalid value");	
 	}
@@ -859,7 +859,7 @@ class ServiceListCheck {
 		let briefLangs=[], shortLangs=[], mediumLangs=[], longLangs=[], extendedLangs=[];
 		while ((ste=Element.get(xPath(SCHEMA_PREFIX, ElementName, ++s), SCHEMA))!=null) {
 			
-			let synopsisLang=this.GetLanguage(this.knownLanguages, errs, ste, parentLanguage, false, errcode?`${errcode}-2`:"SY002");
+			let synopsisLang=this.GetLanguage(this.knownLanguages, errs, ste, parentLanguage, false, errCode?`${errCode}-2`:"SY002");
 			let synopsisLength=ste.attr(tva.a_length)?ste.attr(tva.a_length).value():null;
 			
 			if (synopsisLength) {
