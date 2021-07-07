@@ -289,6 +289,9 @@ class ServiceListCheck {
 			case this.knownLanguages.languageNotSpecified:
 				errs.pushCode(errCode?`${errCode}-3`:"CL003", `${loc?loc:"language"} value is not provided`, "unspecified language");
 				break;
+			case this.knownLanguages.languageInvalidType:
+				errs.pushCode(errCode?`${errCode}-4`:"CL004", `language is not a String, its "${typeof(lang)}"`, "invalid language");
+				break;
 		}
 	}
 
@@ -688,7 +691,7 @@ class ServiceListCheck {
 
 			//if lang is specified, validate the format and value of the attribute against BCP47 (RFC 5646)
 			if (lang!=UNSPECIFIED_LANG) 
-				this.checkLanguage(lang, "xml:lang", errs, errCode?`${errCode}-2`:"XL002");
+				this.checkLanguage(lang, `xml:lang in ${elementName}`, errs, errCode?`${errCode}-2`:"XL002");
 		}
 	}
 
@@ -1570,6 +1573,8 @@ class ServiceListCheck {
 		x.push(`num allowedVideoConformancePoints=${this.allowedVideoConformancePoints.count()}`);
 		x.push(`num AudioPresentationCSvalues=${this.AudioPresentationCSvalues.count()}`);
 		x.push(`num RecordingInfoCSvalues=${this.RecordingInfoCSvalues.count()}`);
+		x.push(`num knownLanguages=${this.knownLanguages.languagesList.length}`);
+		x.push(`num knownCountries=${this.knownCountries.count()}`);
 		return x;
 	}
 

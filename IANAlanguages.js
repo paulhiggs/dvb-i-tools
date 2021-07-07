@@ -12,6 +12,7 @@ module.exports = class IANAlanguages {
 		this.languageKnown=1;
 		this.languageRedundant=2;
 		this.languageNotSpecified=3;
+		this.languageInvalidType=4;
 		this.empty();
 	}
 
@@ -49,6 +50,7 @@ module.exports = class IANAlanguages {
 		let entries=languageData.split("%%");
 		entries.forEach(entry => {
 			let items=entry.replace(/(\r|\t)/gm,"").split("\n");
+
 			if (isIn(items,"Type: language") || isIn(items,"Type: extlang")) 
 				for (let i=0; i<items.length; i++) {
 					let signingLanguage=isSignLanguage(items);
@@ -145,19 +147,23 @@ module.exports = class IANAlanguages {
 	 * @return {integer} indicating the "known" state of the language
 	 */
 	isKnown(value) {
-		if (!value || !(value instanceof String))
+		if (value===null || value===undefined)
 			return this.languageNotSpecified;
 
-		if (this.languageRanges.find(range => range.start<=value && value<=range.end))
-			return this.languageKnown;
+		if (typeof(value)=="string") {
 
-		if (isIni(this.languagesList, value))
-			return this.languageKnown;
+			if (this.languageRanges.find(range => range.start<=value && value<=range.end))
+				return this.languageKnown;
 
-		if (isIni(this.redundantLanguagesList, value))
-			return this.languageRedundant;		
+			if (isIni(this.languagesList, value))
+				return this.languageKnown;
 
-		return this.languageUnknown;
+			if (isIni(this.redundantLanguagesList, value))
+				return this.languageRedundant;		
+
+			return this.languageUnknown;
+		}
+		return this.languageInvalidType;
 	}
 
 	/**
