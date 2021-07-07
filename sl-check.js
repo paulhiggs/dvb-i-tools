@@ -542,7 +542,7 @@ class ServiceListCheck {
 			if (subElems) subElems.forEachSubElement(child => {
 				if (child.name()==tva.e_MediaUri) {
 					hasMediaURI=true;
-					if (child.attr(tva.a_contentType) && !isIn(validApplicationTypes, child.attr(tva.a_contentType).value)) 
+					if (child.attr(tva.a_contentType) && !isIn(validApplicationTypes, child.attr(tva.a_contentType).value())) 
 						errs.pushCodeW("SA003", 
 							`${tva.a_contentType.attribute()} ${child.attr(tva.a_contentType).value().quote()} is not DVB AIT for ${tva.e_RelatedMaterial.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`, 
 							`invalid ${tva.a_contentType.attribute(tva.e_MediaUri)}`);
