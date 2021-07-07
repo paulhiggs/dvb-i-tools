@@ -55,9 +55,11 @@ const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","s
 function PAGE_TOP(label) {
 	const TABLE_STYLE="<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
 	const XML_STYLE="<style>.xmlfont {font-family: Arial, Helvetica, sans-serif; font-size:90%;}</style>";
+	
+	const MARKUP_TABLE_STYLE="<style></style>";
 
 	const METAS="<meta name=\"google\" content=\"notranslate\" />"; // dont allow Chrome to translate the page - seems to 'detect' German
-	const HEAD=`<head>${METAS}${TABLE_STYLE}${XML_STYLE}<title>${label}</title></head>`;
+	const HEAD=`<head>${METAS}${TABLE_STYLE}${XML_STYLE}${MARKUP_TABLE_STYLE}<title>${label}</title></head>`;
 	const PG=`<html lang=\"en\" xml:lang=\"en\">\n${HEAD}<body>`;
 	const PH=`<h1>${label}</h1>`;
 
@@ -251,6 +253,25 @@ function processSLFile(req, res) {
 
 	tabulateResults(res, error, errs);
 
+	//PH experimental stuff
+/*	if (errs && errs.markupXML) {
+		res.write("<hr><table class=\"markedup\">");
+		errs.markupXML.forEach(line => {
+			res.write(`<tr><td>${line.ix}</td>`);
+			let indent=0;
+			while (line.value.charAt(indent)==' ')
+				indent++;
+			res.write(`<td style="padding-left:${indent*10}px;"><span class=\"xmlfont\">${phlib.HTMLize(line.value)}</span>`);
+			if (line.validationErrors) {
+				line.validationErrors.forEach(error => {
+					res.write(`<br/>${phlib.HTMLize(error)}`);
+				});
+			}
+			res.write("</tr>");
+
+		})
+		res.write("</table><hr>");
+	} */
 	res.write(PAGE_BOTTOM);
 
 	return new Promise(function (resolve, reject) {
@@ -282,7 +303,7 @@ function processSLFile(req, res) {
 		fetch(req.query.CGurl)
 			.then(handleErrors)
 			.then(function (response) {return response.text();})
-			.then(function (res) {return cgcheck.validateContentGuide(res.replace(/(\r\n|\n|\r|\t)/gm, ""), req.body.requestType);})
+			.then(function (res) {return cgcheck.validateContentGuide(res, req.body.requestType);})
 			.then(function (errs) {return drawCGForm(true, res, req.query.CGurl, req.body.requestType, null, errs);})
 			.then(function (res) {res.end();})
 			.catch(function (error) {
@@ -319,7 +340,7 @@ function processCGFile(req, res) {
             errs.pushCode("PF001", `retrieval of FILE ${fname} failed`);
         }
 		if (CGxml) 
-			cgcheck.doValidateContentGuide(CGxml.toString().replace(/(\r\n|\n|\r|\t)/gm, ""), req.body.requestType, errs);
+			cgcheck.doValidateContentGuide(CGxml.toString(), req.body.requestType, errs);
 		
         drawCGForm(false, res, fname, req.body.requestType, null, errs);
     }

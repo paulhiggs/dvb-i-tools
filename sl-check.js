@@ -1296,6 +1296,8 @@ class ServiceListCheck {
 			return;
 		}
 
+		errs.loadDocument(SLtext);
+
 		let SL_SCHEMA={}, 
 			SCHEMA_PREFIX=SL.root().namespace().prefix(), 
 			SCHEMA_NAMESPACE=SL.root().namespace().href();
@@ -1450,7 +1452,6 @@ class ServiceListCheck {
 			// check <Service><AdditionalServiceParameters>
 			let _ap=0, AdditionalParams;
 			while ((AdditionalParams=service.get(xPath(SCHEMA_PREFIX, dvbi.e_AdditionalServiceParameters, ++_ap), SL_SCHEMA))!=null) {
-				errs.pushCodeW("SL210", `${dvbi.e_AdditionalServiceParameters.elementize()} in ${dvbi.e_Service.elementize()} is an experimental element`);
 				this.CheckExtension(AdditionalParams, EXTENSION_LOCATION_SERVICE_ELEMENT, errs, "SL211");
 			}
 		}        
@@ -1511,7 +1512,7 @@ class ServiceListCheck {
 	 * @returns {Class} errs     Errors found in validaton
 	 */
 	/*public*/ validateServiceList(SLtext) {
-		var errs=new ErrorList();
+		var errs=new ErrorList(SLtext);
 		this.doValidateServiceList(SLtext, errs);
 
 		return new Promise((resolve, reject) => {

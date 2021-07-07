@@ -2283,8 +2283,10 @@ module.exports = class ContentGuideCheck {
 			errs.pushCode(errcode?`${errcode}-0`:"PA000", "CheckPlayerApplication() called with node==null");
 			return;
 		}
+
 		if (!node.attr(tva.a_contentType)) {
-			errs.pushCode(errcode?`${errcode}-1`:"PA001", `${tva.a_contentType.attribute()} attribute is required when signalling a player in ${node.name().elementize()}`);
+			errs.pushCode(errcode?`${errcode}-1`:"PA001", `${tva.a_contentType.attribute()} attribute is required when signalling a player in ${node.name().elementize()}`, 
+				`missing ${tva.a_contentType.attribute()}`, node.line());
 			return;
 		}
 
@@ -2292,17 +2294,18 @@ module.exports = class ContentGuideCheck {
 			switch (node.attr(tva.a_contentType).value()) {
 				case dvbi.XML_AIT_CONTENT_TYPE:
 					if (!patterns.isHTTPURL(node.text()))
-						errs.pushCode(errcode?`${errcode}-2`:"PA002", `${node.name().elementize()}=${node.text().quote()} is not a valid AIT URL`, "invalid URL");
+						errs.pushCode(errcode?`${errcode}-2`:"PA002", `${node.name().elementize()}=${node.text().quote()} is not a valid AIT URL`, "invalid URL", node.line());
 					break;
 	/*			case dvbi.HTML5_APP:
 				case dvbi.XHTML_APP:
 					if (!patterns.isHTTPURL(node.text()))
-						errs.pushCode(errcode?`${errcode}-3`:"PA003", `${node.name().elementize()}=${node.text().quote()} is not a valid URL`, "invalid URL");		
+						errs.pushCode(errcode?`${errcode}-3`:"PA003", `${node.name().elementize()}=${node.text().quote()} is not a valid URL`, "invalid URL", node.line());		
 					break;
 	*/		}
 		}
 		else
-			errs.pushCode(errcode?`${errcode}-4`:"PA004", `${tva.a_contentType.attribute(node.name())}=${node.attr(tva.a_contentType).value().quote()} is not valid for a player`);
+			errs.pushCode(errcode?`${errcode}-4`:"PA004", `${tva.a_contentType.attribute(node.name())}=${node.attr(tva.a_contentType).value().quote()} is not valid for a player`, 
+				`invalid ${tva.a_contentType}`, node.line());
 	}
 
 
@@ -2400,7 +2403,7 @@ module.exports = class ContentGuideCheck {
 		let aux=0, AuxiliaryURL;
 		while ((AuxiliaryURL=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_AuxiliaryURL, ++aux), CG_SCHEMA))!=null) 
 			this.CheckPlayerApplication(AuxiliaryURL, [dvbi.XML_AIT_CONTENT_TYPE /*, dvbi.HTML5_APP, dvbi.XHTML_APP, dvbi.iOS_APP, dvbi.ANDROID_APP*/], errs, "OD030");
-		
+
 		// <InstanceDescription>
 		let id=0, InstanceDescription;
 		if (validRequest)
@@ -2664,13 +2667,18 @@ module.exports = class ContentGuideCheck {
 		}
 		if (!CG) return;
 
+		errs.loadDocument(CGtext);
+
 		let prettyXML=CG.toString();
 		let formattedCG=libxml.parseXmlString(prettyXML);
 		if (!formattedCG.validate(this.TVAschema)) {
 			let lines=prettyXML.split('\n');
 			formattedCG.validationErrors.forEach(ve => {
 				let s=ve.toString().split('\r');
-				s.forEach(err => errs.pushCodeWithFragment("CG001", err, lines[ve.line-1], "XSD validation")); 
+				s.forEach(err => {
+					errs.pushCodeWithFragment("CG001", err, lines[ve.line-1], "XSD validation");
+					errs.setError(err, ve.line-1);
+				}); 
 			});
 		}
 

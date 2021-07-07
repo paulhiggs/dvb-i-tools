@@ -187,9 +187,11 @@ function processFile(req, res) {
         catch (err) {
             errs.pushCode("PF001", `retrieval of FILE ${fname} failed`);
         }
-		if (CGxml) 
-			cgcheck.doValidateContentGuide(CGxml.toString().replace(/(\r\n|\n|\r|\t)/gm, ""), req.body.requestType, errs);
-		
+		if (CGxml) {
+			let doc=CGxml.toString().replace(/(\r\n|\n|\r|\t)/gm, "");
+			errs.loadDocument(doc);
+			cgcheck.doValidateContentGuide(doc, req.body.requestType, errs);
+		}
         drawForm(false, res, fname, req.body.requestType, null, errs);
     }
 	else {

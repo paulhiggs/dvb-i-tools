@@ -5,6 +5,9 @@
  * Manages errors and warnings for the application
  * 
  */
+
+const libxml=require("libxmljs2");
+
 module.exports = class ErrorList {
       
     constructor() {
@@ -12,6 +15,20 @@ module.exports = class ErrorList {
         this.countsWarn=[]; this.numCountsW=0;   // direct insertion do not maintain them
         this.errors=[];
         this.warnings=[];
+        this.markupXML=[];
+    }
+    loadDocument(doc) {
+        let lines=libxml.parseXmlString(doc).toString().split('\n');
+    console.log(`num lines=${lines.length}`)
+        this.markupXML=lines.map((str, index) => ({ value: str, ix: index }));
+    }
+    setError(err, lineNo) {
+        let found=this.markupXML.find(line => (line.ix==lineNo));
+        if (found) {
+            if (!found.validationErrors)
+                found.validationErrors=[];
+            found.validationErrors.push(err);
+        }
     }
     increment(key) {
         if (this.countsErr[key]===undefined)
@@ -35,9 +52,10 @@ module.exports = class ErrorList {
         this.errors.push({code:null, message:errMessage, element:null});
 		if (key) this.increment(key);
     }
-	pushCode(errNo, errMessage, key=null) {
+	pushCode(errNo, errMessage, key=null, lineNo=null) {
         this.errors.push({code:errNo, message:errMessage, element:null});
 		if (key) this.increment(key);
+        if (lineNo) this.setError(errMessage, lineNo);
     }
 	pushCodeWithFragment(errNo, errMessage, fragment, key=null) {
         this.errors.push({code:errNo, message:errMessage, element:fragment});
