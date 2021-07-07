@@ -11,6 +11,7 @@ module.exports = class IANAlanguages {
 		this.languageUnknown=0;
 		this.languageKnown=1;
 		this.languageRedundant=2;
+		this.languageNotSpecified=3;
 		this.empty();
 	}
 
@@ -144,6 +145,9 @@ module.exports = class IANAlanguages {
 	 * @return {integer} indicating the "known" state of the language
 	 */
 	isKnown(value) {
+		if (!value || !(value instanceof String))
+			return this.languageNotSpecified;
+
 		if (this.languageRanges.find(range => range.start<=value && value<=range.end))
 			return this.languageKnown;
 

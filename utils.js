@@ -31,7 +31,7 @@ module.exports.xPathM = function (SCHEMA_PREFIX, elementNames) {
 
 
 /* local */ function findInSet(values, value, caseSensitive) {
-	if (!values || !value)
+	if (!values || !value || !(value instanceof String))
 		return false;
 
 	let vlc=value.toLowerCase();

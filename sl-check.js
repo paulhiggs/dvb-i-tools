@@ -286,6 +286,9 @@ class ServiceListCheck {
 			case this.knownLanguages.languageRedundant:
 				errs.pushCodeW(errCode?`${errCode}-2`:"CL002", `${loc?loc:"language"} value ${lang.quote()} is redundant`, "redundant language");
 				break;	
+			case this.knownLanguages.languageNotSpecified:
+				errs.pushCode(errCode?`${errCode}-3`:"CL003", `${loc?loc:"language"} value is not provided`, "unspecified language");
+				break;
 		}
 	}
 
@@ -852,9 +855,9 @@ class ServiceListCheck {
 			return parentLang;
 		
 		let localLang=node.attr(tva.a_lang).value();
-		if (validator)
-			this.checkLanguage(validator, errs, localLang, node.name(), errno);
-		return localLang;
+		if (validator && localLang)
+			this.checkLanguage(localLang,node.name(), errs, errno);
+		return localLang;	
 	}
 
 	/**
