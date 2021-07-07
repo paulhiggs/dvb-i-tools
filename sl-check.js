@@ -6,6 +6,8 @@ const libxml=require("libxmljs2");
 const fs=require("fs");
 //const path=require("path");
 
+const phlib=require('./phlib/phlib.js');
+
 const ErrorList=require("./ErrorList.js");
 const ClassificationScheme=require("./ClassificationScheme.js");
 
@@ -828,6 +830,33 @@ class ServiceListCheck {
 
 
 	/**
+	 * validate the language specified record any errors
+	 *
+	 * @param {object} validator  the validation class to use
+	 * @param {Class}  errs       errors found in validaton
+	 * @param {Object} node       the XML node whose @lang attribute should be checked
+	 * @param {string} parentLang the language of the XML element which is the parent of node
+	 * @param {boolean} isRequired report an error if @lang is not explicitly stated
+	 * @param {string} errno      (optional) error number to use instead of local values
+	 * @returns {string} the @lang attribute of the node element of the parentLang if it does not exist of is not specified
+	 */
+	/* private */  GetLanguage(validator, errs, node, parentLang, isRequired=false, errno=null) {
+		if (!node) 
+			return parentLang;
+		if (!node.attr(tva.a_lang) && isRequired) {
+			errs.pushCode(errno?errno:"AC001", `${tva.a_lang.attribute()} is required for ${node.name().quote()}`, "unspecified language");
+			return parentLang;		
+		}
+
+		if (!node.attr(tva.a_lang))
+			return parentLang;
+		
+		let localLang=node.attr(tva.a_lang).value();
+		CheckLanguage(validator, errs, localLang, node.name(), errno);
+		return localLang;
+	}
+
+	/**
 	 * validate the SynopsisType elements 
 	 *
 	 * @param {string} SCHEMA              Used when constructing Xpath queries
@@ -894,7 +923,7 @@ class ServiceListCheck {
 					}
 				}
 				else
-					errs.pushCode(errCode?`${errCode}-15`:"SY015", `${tva.a_length.attribute()}=${quote(synopsisLength)} is not permitted`, "synopsis");
+					errs.pushCode(errCode?`${errCode}-15`:"SY015", `${tva.a_length.attribute()}=${synopsisLength.quote()} is not permitted`, "synopsis");
 			}
 		
 			if (synopsisLang && synopsisLength) 
