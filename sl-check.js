@@ -872,13 +872,13 @@ class ServiceListCheck {
 	/*private*/  ValidateSynopsisType(SCHEMA, SCHEMA_PREFIX, Element, ElementName, requiredLengths, optionalLengths, parentLanguage, errs, errCode=null) {
 
 		function synopsisLengthError(elem, label, length) {
-			return `length of ${elementize(`${tva.a_length.attribute(elem)}=${label.quote()}`)} exceeds ${length} characters`; }
+			return `length of ${phlib.elementize(`${tva.a_length.attribute(elem)}=${label.quote()}`)} exceeds ${length} characters`; }
 		function synopsisToShortError(elem, label, length) {
-			return `length of ${elementize(`${tva.a_length.attribute(elem)}=${label.quote()}`)} is less than ${length} characters`; }
+			return `length of ${phlib.elementize(`${tva.a_length.attribute(elem)}=${label.quote()}`)} is less than ${length} characters`; }
 		function singleLengthLangError(elem, length, lang) {
-			return `only a single ${elementize(elem)} is permitted per length (${length}) and language (${lang})`; }
+			return `only a single ${elem.elementize()} is permitted per length (${length}) and language (${lang})`; }
 		function requiredSynopsisError(elem, length) {
-			return `a ${elementize(elem)} element with ${tva.a_length.attribute()}=${quote(length)} is required`; }
+			return `a ${elem.elementize()} element with ${tva.a_length.attribute()}=${phlib.quote(length)} is required`; }
 
 		if (!Element) {
 			errs.pushCode("SY000", "ValidateSynopsisType() called with Element==null");

@@ -836,7 +836,7 @@ module.exports = class ContentGuideCheck {
 		
 		function checkLinkCount(errs, count, label, errCode) {
 			if (count>1) {
-				errs.pushCode(errCode, `more than 1 ${quote(`${label} pagination`)} link is specified`) ;
+				errs.pushCode(errCode, `more than 1 ${phlib.quote(`${label} pagination`)} link is specified`) ;
 				return true;
 			}
 			return false;
