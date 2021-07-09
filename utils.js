@@ -36,7 +36,7 @@ module.exports.xPathM = function (SCHEMA_PREFIX, elementNames) {
 
 	let vlc=value.toLowerCase();
     if (typeof(values)=="string" || values instanceof String)
-        return caseSensitive? values==value : values.toLowerCase()==vlc;
+        return caseSensitive ? values==value : values.toLowerCase()==vlc;
 
     if (Array.isArray(values))
 		return caseSensitive ? values.includes(value) : (values.find(element => element.toLowerCase()==vlc) != undefined);

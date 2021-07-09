@@ -930,7 +930,7 @@ class ServiceListCheck {
 					}
 				}
 				else
-					errs.pushCode(errCode?`${errCode}-15`:"SY015", `${tva.a_length.attribute()}=${synopsisLength.quote()} is not permitted`, "synopsis");
+					errs.pushCode(errCode?`${errCode}-15`:"SY015", `${tva.a_length.attribute()}=${synopsisLength.quote()} is not permitted in ${ElementName.elementize()}`, "synopsis");
 			}
 		
 			if (synopsisLang && synopsisLength) 
@@ -1468,7 +1468,7 @@ class ServiceListCheck {
 
 			// check <Service><ServiceDescription>
 			this.ValidateSynopsisType(SL_SCHEMA, SCHEMA_PREFIX, service, dvbi.e_ServiceDescription, 
-				[], [tva.SYNOPSIS_LENGTH_BRIEF, tva.SYNOPSIS_LENGTH_SHORT, tva.SYNOPSIS_LENGTH_MEDIUM, tva.SYNOPSIS_LENGTH_LONG, tva.SYNOPSIS_LENGTH_EXTENDED], "***", errs, "SL170");
+				[], [tva.SYNOPSIS_BRIEF_LABEL, tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_EXTENDED_LABEL], "***", errs, "SL170");
 
 			// check <Service><RecordingInfo>
 			let RecordingInfo=service.get(xPath(SCHEMA_PREFIX, dvbi.e_RecordingInfo), SL_SCHEMA);
