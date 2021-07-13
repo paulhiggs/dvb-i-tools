@@ -42,6 +42,7 @@ const CONTENT_GUIDE_RM="content guide";
 const SCHEMA_v1=1;
 const SCHEMA_v2=2;
 const SCHEMA_v3=3;
+const SCHEMA_v4=4;
 const SCHEMA_unknown= -1;
 
 const EXTENSION_LOCATION_SERVICE_LIST_REGISTRY=101,
@@ -153,6 +154,7 @@ class ServiceListCheck {
 		this.SLschema_v1=libxml.parseXmlString(fs.readFileSync(locs.DVBI_ServiceListSchema.v1.file));
 		this.SLschema_v2=libxml.parseXmlString(fs.readFileSync(locs.DVBI_ServiceListSchema.v2.file));
 		this.SLschema_v3=libxml.parseXmlString(fs.readFileSync(locs.DVBI_ServiceListSchema.v3.file));
+		this.SLschema_v4=libxml.parseXmlString(fs.readFileSync(locs.DVBI_ServiceListSchema.v3x.file));
 
 		this.extendArray();
 		this.loadDataFiles(useURLs);
@@ -196,12 +198,14 @@ class ServiceListCheck {
 	 * @returns {integer} Representation of the schema version or error code if unknown 
 	 */
 	/*private*/ SchemaVersion(namespace) {
+		if (namespace == dvbi.A177v4_Namespace)
+			return SCHEMA_v4;
+		if (namespace == dvbi.A177v3_Namespace)
+			return SCHEMA_v3;
+		if (namespace == dvbi.A177v2_Namespace)
+			return SCHEMA_v2;
 		if (namespace == dvbi.A177v1_Namespace)
 			return SCHEMA_v1;
-		else if (namespace == dvbi.A177v2_Namespace)
-			return SCHEMA_v2;
-		else if (namespace == dvbi.A177v3_Namespace)
-			return SCHEMA_v3;
 		
 		return SCHEMA_unknown;
 	}
@@ -1176,6 +1180,14 @@ class ServiceListCheck {
 				errs.pushCode("SI161", `${dvbi.e_SourceType.elementize()} not specified in ${dvbi.e_ServiceInstance.elementize()} of service ${thisServiceId.quote()}`, `no ${dvbi.e_SourceType}`);
 		}
 
+		// <ServiceInstance><AltServiceName>
+		let alternateNames=[], altSN, alt=0;
+		while ((altSN=ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_AltServiceName, ++p), SL_SCHEMA))!=null) {
+			if (alternateNames.includes(altSN.text())) 
+				errs.pushCodeW("SI165", `${dvbi.e_AltServiceName}=${altSn.text().quote} already specificed in ${dvbi.e_ServiceInstance.elementize()} of service ${thisServiceId.quote()}`, 'duplicate name');
+			else alternateNames.push(altSN.text());
+		}
+
 		// <ServiceInstance><DASHDeliveryParameters>
 		let DASHDeliveryParameters=ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_DASHDeliveryParameters), SL_SCHEMA);
 		if (DASHDeliveryParameters) {
@@ -1301,7 +1313,10 @@ class ServiceListCheck {
 			case SCHEMA_v3:
 				this.SchemaCheck(ServiceList, this.SLschema_v3, errs, `${errCode}-3`);
 				break;	
-			default:
+			case SCHEMA_v4:
+					this.SchemaCheck(ServiceList, this.SLschema_v4, errs, `${errCode}-4`);
+					break;	
+				default:
 				_rc=false;
 				break;	
 		}

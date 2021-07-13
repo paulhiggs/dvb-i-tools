@@ -2273,15 +2273,19 @@ module.exports = class ContentGuideCheck {
 	 * validate a <ProgramURL> or <AuxiliaryURL> element to see if it signals a Template XML AIT
 	 *
 	 * @param {Object} node              the element node containing the an XML AIT reference
-	 * @param {Array} allowedContentTypes the contentTypes that can be signalled in the node@contentType attribute
+	 * @param {Array}  allowedContentTypes the contentTypes that can be signalled in the node@contentType attribute
 	 * @param {Class}  errs              errors found in validaton
 	 * @param {string} errcode           error code to be used with any errors founf
 	 */
 	/* private */  CheckPlayerApplication(node, allowedContentTypes, errs, errcode=null) {
 
 		if (!node)  {
-			errs.pushCode(errcode?`${errcode}-0`:"PA000", "CheckPlayerApplication() called with node==null");
+			errs.pushCode(errcode?`${errcode}-0a`:"PA000a", "CheckPlayerApplication() called with node==null");
 			return;
+		}
+		if (!Array.isArray(allowedContentTypes)) {
+			errs.pushCode(errcode?`${errcode}-0b`:"PA000b", "CheckPlayerApplication() called with incorrect type for allowedContentTypes");
+			return;			
 		}
 
 		if (!node.attr(tva.a_contentType)) {

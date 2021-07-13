@@ -15,6 +15,7 @@ module.exports = Object.freeze({
 	A177v1_Namespace: "urn:dvb:metadata:servicediscovery:2019",
     A177v2_Namespace: "urn:dvb:metadata:servicediscovery:2020",
     A177v3_Namespace: "urn:dvb:metadata:servicediscovery:2021",
+    A177v4_Namespace: "urn:dvb:metadata:servicediscovery:2021x",
 	
     MAX_TITLE_LENGTH: 80,
     MAX_KEYWORD_LENGTH: 32,
@@ -192,7 +193,8 @@ module.exports = Object.freeze({
 	a_verticalSize: "verticalSize",
 	a_visible: "visible",
 
-	e_AdditionalServiceParameters: "AdditionalServiceParameters", 
+	e_AdditionalServiceParameters: "AdditionalServiceParameters",
+	e_AltServiceName: "AltServiceName", 
 	e_AudioConformancePoint: "AudioConformancePoint",
 	e_Availability: "Availability",
 	e_CASystemId: "CASystemId",
