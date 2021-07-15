@@ -1278,6 +1278,7 @@ class ServiceListCheck {
 			s.validationErrors.forEach(ve => {
 				let s=ve.toString().split('\r');
 				s.forEach(err => errs.pushCodeWithFragment(errCode, err, lines[ve.line-1], 'schema error'));
+				//s.forEach(err => errs.pushCode(errCode, `line:${ve.line-1} ${err}`, 'schema error'));
 			});
 		}
 	}
@@ -1314,9 +1315,9 @@ class ServiceListCheck {
 				this.SchemaCheck(ServiceList, this.SLschema_v3, errs, `${errCode}-3`);
 				break;	
 			case SCHEMA_v4:
-					this.SchemaCheck(ServiceList, this.SLschema_v4, errs, `${errCode}-4`);
-					break;	
-				default:
+				this.SchemaCheck(ServiceList, this.SLschema_v4, errs, `${errCode}-4`);
+				break;	
+			default:
 				_rc=false;
 				break;	
 		}
@@ -1563,6 +1564,8 @@ class ServiceListCheck {
 	 * @returns {Class} errs     Errors found in validaton
 	 */
 	/*public*/ validateServiceList(SLtext) {
+
+		// SLtext.replace(/(\r\n|\n|\r|\t)/gm,"")
 		var errs=new ErrorList(SLtext);
 		this.doValidateServiceList(SLtext, errs);
 

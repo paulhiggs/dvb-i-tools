@@ -166,7 +166,7 @@ function processSLQuery(req, res) {
 		fetch(req.query.SLurl)
 			.then(handleErrors)
 			.then(response => response.text())
-			.then(res=>slcheck.validateServiceList(res.replace(/(\r\n|\n|\r|\t)/gm,"")))
+			.then(res=>slcheck.validateServiceList(res))
 			.then(errs=>drawSLForm(true, res, req.query.SLurl, null, errs))
 			.then(res=>res.end())
 			.catch(error => {
@@ -204,7 +204,7 @@ function processSLFile(req, res) {
             errs.pushCode("PR101", `reading of FILE (${req.files.SLfile.name}) failed`);
         }
 		if (SLxml)
-			slcheck.doValidateServiceList(SLxml.toString().replace(/(\r\n|\n|\r|\t)/gm,""), errs);
+			slcheck.doValidateServiceList(SLxml.toString(), errs);
 
         drawSLForm(false, res, req.files.SLfile.name, null, errs);
     }
