@@ -25,7 +25,7 @@ const keyFilename=path.join(".", "selfsigned.key"), certFilename=path.join(".", 
 
 const phlib=require('./phlib/phlib');
 
-const ui=require('./ui.js';)
+const ui=require('./ui.js');
 
 const ErrorList=require("./ErrorList.js");
 
