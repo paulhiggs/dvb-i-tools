@@ -279,7 +279,7 @@ class ServiceListCheck {
 	 *
 	 * @param {string} lang      the language to check
 	 * @param {string} loc       the 'location' of the element containing the language value
-	 * @param {Object} errs      the class where errors and warnings relating to the serivce list processing are stored 
+	 * @param {Object} errs      the class where errors and warnings relating to the service list processing are stored 
 	 * @param {String} errCode   the error code to be reported
 	 */
 	/*private*/ checkLanguage(lang, loc, errs, errCode) {
@@ -308,7 +308,7 @@ class ServiceListCheck {
 	 * @param {Object} Region         The <Region> element to process
 	 * @param {integer} depth         The current depth in the hierarchial structure of regions
 	 * @param {Array} knownRegionIDs  The list of region IDs that have been found
-	 * @param {Object} errs           The class where errors and warnings relating to the serivce list processing are stored 
+	 * @param {Object} errs           The class where errors and warnings relating to the service list processing are stored 
 	 */
 	/*private*/  addRegion(SL_SCHEMA, SCHEMA_PREFIX, Region, depth, knownRegionIDs, errs) {
 		
@@ -467,7 +467,7 @@ class ServiceListCheck {
 	 * @param {Object} HowRelated    The <HowRelated> subelement (a libxmls ojbect tree) of the <RelatedMaterial> element
 	 * @param {Object} Format        The <Format> subelement (a libxmls ojbect tree) of the <RelatedMaterial> element
 	 * @param {Object} MediaLocator  The <MediaLocator> subelement (a libxmls ojbect tree) of the <RelatedMaterial> element
-	 * @param {Object} errs          The class where errors and warnings relating to the serivce list processing are stored 
+	 * @param {Object} errs          The class where errors and warnings relating to the service list processing are stored 
 	 * @param {string} Location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	*/
 	/*private*/  checkValidLogo(HowRelated, Format, MediaLocator, errs, Location) {
@@ -540,7 +540,7 @@ class ServiceListCheck {
 	 * verifies if the specified application is valid according to specification
 	 *
 	 * @param {Object} MediaLocator  The <MediaLocator> subelement (a libxmls ojbect tree) of the <RelatedMaterial> element
-	 * @param {Object} errs          The class where errors and warnings relating to the serivce list processing are stored 
+	 * @param {Object} errs          The class where errors and warnings relating to the service list processing are stored 
 	 * @param {string} Location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 */
 	/*private*/  checkSignalledApplication(MediaLocator, errs, Location) {
@@ -563,7 +563,7 @@ class ServiceListCheck {
 				}
 			});
 			if (!hasMediaURI) 
-				this.NoMediaLocator("application", Location, errs, "SA005");
+				this.NoMediaLocator2("application", Location, errs, MediaLocator, "SA005");
 		}
 	}
 
@@ -588,7 +588,7 @@ class ServiceListCheck {
 	 * verifies if the specified RelatedMaterial element is valid according to specification (contents and location)
 	 *
 	 * @param {Object} RelatedMaterial   The <RelatedMaterial> element (a libxmls ojbect tree) to be checked
-	 * @param {Object} errs              The class where errors and warnings relating to the serivce list processing are stored 
+	 * @param {Object} errs              The class where errors and warnings relating to the service list processing are stored 
 	 * @param {string} Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 * @param {string} LocationType      The type of element containing the <RelatedMaterial> element. Different validation rules apply to different location types
 	 * @param {string} SCHEMA_NAMESPACE  The namespace of XML document
@@ -675,7 +675,7 @@ class ServiceListCheck {
 	 * @param {String} elementName      The multilingual XML element to check
 	 * @param {String} elementLocation  The descriptive location of the element being checked (for reporting)
 	 * @param {Object} node             The XML tree node containing the element being checked
-	 * @param {Object} errs             The class where errors and warnings relating to the serivce list processing are stored 
+	 * @param {Object} errs             The class where errors and warnings relating to the service list processing are stored 
 	 * @param {String} errCode          The error code to be reported
 	 */
 	/*private*/  checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, elementName, elementLocation, node, errs, errCode=null) {
@@ -751,7 +751,9 @@ class ServiceListCheck {
 	/*private*/  NoMediaLocator(src, loc, errs, errCode=null) {
 		errs.pushCode(errCode?errCode:"XX106", `${tva.e_MediaUri.elementize()} not specified for ${src} ${tva.e_MediaLocator.elementize()} in ${loc}`, `no ${tva.e_MediaUri}`);
 	}
-
+	/*private*/  NoMediaLocator2(src, loc, errs, element, errCode=null) {
+		errs.pushCodeWithFragment(errCode?errCode:"XX106", `${tva.e_MediaUri.elementize()} not specified for ${src} ${tva.e_MediaLocator.elementize()} in ${loc}`, element.toString(), `no ${tva.e_MediaUri}`);
+	}
 
 	/**
 	 * Add an error message when an attribite contains an invalid value
@@ -1173,7 +1175,7 @@ class ServiceListCheck {
 					}
 			}
 			if (v1Params && this.SchemaVersion(SCHEMA_NAMESPACE)>=SCHEMA_v2)
-				errs.pushCodeW("SI160", `${dvbi.e_SourceType.elementize()} is deprecated in this version (serivce ${thisServiceId.quote()})`, 'deprecated feature');
+				errs.pushCodeWWithFragment("SI160", `${dvbi.e_SourceType.elementize()} is deprecated in this version (service ${thisServiceId.quote()})`, ServiceInstance.toString(), 'deprecated feature');
 		}
 		else {
 			if (this.SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1) 
@@ -1441,7 +1443,7 @@ class ServiceListCheck {
 			if (uID) {
 				thisServiceId=uID.text();
 				if (!validServiceIdentifier(thisServiceId)) 
-					errs.pushCode("SL110", `${thisServiceId.quote()} is not a valid service identifier`, "invalid tag");
+					errs.pushCodeWithFragment("SL110", `${thisServiceId.quote()} is not a valid service identifier`, uID.toString(), "invalid tag");
 				if (!uniqueServiceIdentifier(thisServiceId, knownServices)) 
 					errs.pushCode("SL111", `${thisServiceId.quote()} is not unique`, "non unique id");
 				knownServices.push(thisServiceId);			

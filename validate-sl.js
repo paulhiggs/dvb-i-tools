@@ -24,6 +24,8 @@ const fetch=require('node-fetch');
 // pauls useful tools
 const phlib=require('./phlib/phlib.js');
 
+const ui=require('/ui.js');
+
 const locs=require('./data-locations.js');
 
 // error buffer
@@ -38,84 +40,6 @@ var slcheck;
 const https=require("https");
 const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","selfsigned.crt");
 
-
-/**
- * constructs HTML output of the errors found in the service list analysis
- *
- * @param {boolean} URLmode    If true ask for a URL to a service list, if false ask for a file
- * @param {Object}  res        The Express result 
- * @param {string}  lastInput  The url of the service list - used to keep the form intact
- * @param {string}  error      a single error message to display on the form, genrrally related to loading the content to validate
- * @param {Object}  errors     the errors and warnings found during the content guide validation
- * @returns {Promise} the output stream (res) for further async processing
- */
-function drawForm(URLmode, res, lastInput=null, error=null, errs=null) {
-	
-	const TABLE_STYLE="<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px; }	tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
-	const XML_STYLE="<style>.xmlfont {font-family: Arial, Helvetica, sans-serif; font-size:90%;}</style>";
-
-	const PAGE_TOP=`<html><head>${TABLE_STYLE}${XML_STYLE}<title>DVB-I Service List Validator</title></head><body>`;
-	const PAGE_HEADING="<h1>DVB-I Service List Validator</h1>";
-	const PAGE_BOTTOM="</body></html>";
-
-	const ENTRY_FORM_URL=`<form method=\"post\"><p><i>URL:</i></p><input type=\"url\" name=\"SLurl\" value=\"${lastInput?lastInput:""}\"><input type=\"submit\" value=\"submit\"></form>`;
-	const ENTRY_FORM_FILE=`<form method=\"post\" encType=\"multipart/form-data\"><p><i>FILE:</i></p><input type=\"file\" name=\"SLfile\" value=\"${lastInput?lastInput:""}\"><input type=\"submit\" value=\"submit\"></form>`;
-	const RESULT_WITH_INSTRUCTION="<br><p><i>Results:</i></p>";
-	const SUMMARY_FORM_HEADER="<table><tr><th>item</th><th>count</th></tr>";
-
-	DETAIL_FORM_HEADER = (mode) => `<table><tr><th>code</th><th>${mode}</th></tr>`;
-
-	function tabluateMessage(value) {
-		res.write(`<tr><td>${value.code?phlib.HTMLize(value.code):""}</td>`);
-		res.write(`<td>${value.message?phlib.HTMLize(value.message):""}${value.element?`<br/><span class=\"xmlfont\">${phlib.HTMLize(value.element)}</span>`:""}</td></tr>`);
-	}	
-
-    res.write(PAGE_TOP);    
-	res.write(PAGE_HEADING);   
-	res.write(URLmode?ENTRY_FORM_URL:ENTRY_FORM_FILE);
-    res.write(RESULT_WITH_INSTRUCTION);
-
-	if (!URLmode && lastInput)
-		res.write(`${lastInput}: `);
-
-	if (error) 
-		res.write(`<p>${error}</p>`);
-	let resultsShown=false;
-	if (errs) {
-
-		if (errs.numCountsErr() > 0 || errs.numCountsWarn() > 0 ) {
-			res.write(SUMMARY_FORM_HEADER);
-
-			Object.keys(errs.countsErr).forEach( i => {res.write(`<tr><td>${phlib.HTMLize(i)}</td><td>${errs.countsErr[i]}</td></tr>`); });
-			Object.keys(errs.countsWarn).forEach( i => {res.write(`<tr><td><i>${phlib.HTMLize(i)}</i></td><td>${errs.countsWarn[i]}</td></tr>`); });
-
-			resultsShown=true;
-			res.write("</table><br/>");
-		}
-
-		if (errs.numErrors() > 0) {
-			res.write(DETAIL_FORM_HEADER("errors"));
-			errs.errors.forEach(tabluateMessage);
-			resultsShown=true;
-			res.write("</table><br/>");
-		} 
-
-		if (errs.numWarnings()>0) {
-			res.write(DETAIL_FORM_HEADER("warnings"));
-			errs.warnings.forEach(tabluateMessage);
-			resultsShown=true;
-			res.write("</table><br/>");
-		}       
-	}
-	if (!error && !resultsShown) 
-		res.write("no errors or warnings");
-
-	res.write(PAGE_BOTTOM);
-	
-	return new Promise((resolve, reject) => {
-		resolve(res);
-	});
-}
 
 
 
@@ -136,25 +60,25 @@ function processQuery(req, res) {
 	}
 
     if (isEmpty(req.query)) {
-		drawForm(true, res);
+		ui.drawSLForm(true, res);
 		res.end();
 	}
 	else if (req && req.query && req.query.SLurl) {
 		fetch(req.query.SLurl)
 			.then(handleErrors)
 			.then(response => response.text())
-			.then(res=>slcheck.validateServiceList(res.replace(/(\r\n|\n|\r|\t)/gm,"")))
-			.then(errs=>drawForm(true, res, req.query.SLurl, null, errs))
+			.then(res=>slcheck.validateServiceList(res))
+			.then(errs=>ui.drawSLForm(true, res, req.query.SLurl, null, errs))
 			.then(res=>res.end())
 			.catch(error => {
 				console.log(error);
 				console.log(`error (${error}) handling ${req.query.SLurl}`) ;
-				drawForm(true, res, req.query.SLurl, `error (${error}) handling ${req.query.SLurl}`, null);
+				ui.drawSLForm(true, res, req.query.SLurl, `error (${error}) handling ${req.query.SLurl}`, null);
 				res.end();
 			});
    }
    else {
-        drawForm(true, res, req.query.SLurl, "URL not specified");
+		ui.drawSLForm(true, res, req.query.SLurl, "URL not specified");
 		res.status(400);
 		res.end();
     }
@@ -169,7 +93,7 @@ function processQuery(req, res) {
  */ 
 function processFile(req, res) {
     if (isEmpty(req.query)) 
-        drawForm(false, res);    
+		ui.drawSLForm(false, res);    
 	else if (req && req.files && req.files.SLfile) {
         let SLxml=null;
         let errs=new ErrorList();
@@ -181,12 +105,12 @@ function processFile(req, res) {
             errs.pushCode("PR101", `reading of FILE (${req.files.SLfile.name}) failed`);
         }
 		if (SLxml)
-			slcheck.doValidateServiceList(SLxml.toString().replace(/(\r\n|\n|\r|\t)/gm,""), errs);
+			slcheck.doValidateServiceList(SLxml.toString(), errs);
 
-        drawForm(false, res, req.files.SLfile.name, null, errs);
+		ui.drawSLForm(false, res, req.files.SLfile.name, null, errs);
     }
 	else {
-        drawForm(false, res, req.files.SLfile.name, "File not specified");
+        ui.drawSLForm(false, res, req.files.SLfile.name, "File not specified");
         res.status(400);
     }
     

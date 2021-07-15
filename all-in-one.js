@@ -44,6 +44,8 @@ var csr=null;
 // error buffer
 const ErrorList=require("./ErrorList.js");
 
+const ui=require("./ui.js");
+
 const locs=require("./data-locations.js");
 const globals=require("./globals.js");
 const {isEmpty, readmyfile}=require("./utils.js");
@@ -52,95 +54,8 @@ const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","s
 
 
 
-function PAGE_TOP(label) {
-	const TABLE_STYLE="<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
-	const XML_STYLE="<style>.xmlfont {font-family: Arial, Helvetica, sans-serif; font-size:90%;}</style>";
-	
-	const MARKUP_TABLE_STYLE="<style></style>";
 
-	const METAS="<meta name=\"google\" content=\"notranslate\" />"; // dont allow Chrome to translate the page - seems to 'detect' German
-	const HEAD=`<head>${METAS}${TABLE_STYLE}${XML_STYLE}${MARKUP_TABLE_STYLE}<title>${label}</title></head>`;
-	const PG=`<html lang=\"en\" xml:lang=\"en\">\n${HEAD}<body>`;
-	const PH=`<h1>${label}</h1>`;
 
-	return `${PG}${PH}`;
-}
-const PAGE_BOTTOM="</body></html>";
-
-function tabulateResults(res, error, errs) {
-
-	const RESULT_WITH_INSTRUCTION="<br><p><i>Results:</i></p>";
-	const SUMMARY_FORM_HEADER="<table><tr><th>item</th><th>count</th></tr>";
-	
-	DETAIL_FORM_HEADER = (mode) => `<table><tr><th>code</th><th>${mode}</th></tr>`;
-
-	function tabluateMessage(value) {
-		res.write('<tr>');
-		res.write(`<td>${value.code?phlib.HTMLize(value.code):""}</td>`);
-		res.write(`<td>${value.message?phlib.HTMLize(value.message):""}`);
-		res.write(`${value.element?`<br/><span class=\"xmlfont\">${phlib.HTMLize(value.element)}</span>`:""}</td>`);
-		res.write('</tr>');
-	}	
-
-    res.write(RESULT_WITH_INSTRUCTION);
-	if (error) 
-		res.write(`<p>${error}</p>`);
-	let resultsShown=false;
-	if (errs) {
-
-		if (errs.numCountsErr()>0 || errs.numCountsWarn()>0 ) {		
-			res.write(SUMMARY_FORM_HEADER);
-			Object.keys(errs.countsErr).forEach( function (i) {return res.write(`<tr><td>${phlib.HTMLize(i)}</td><td>${errs.countsErr[i]}</td></tr>`); });
-			Object.keys(errs.countsWarn).forEach( function (i) {return res.write(`<tr><td><i>${phlib.HTMLize(i)}</i></td><td>${errs.countsWarn[i]}</td></tr>`); });
-			resultsShown=true;
-			res.write("</table><br/>");
-		}
-
-		if (errs.numErrors() > 0) {
-			res.write(DETAIL_FORM_HEADER("errors"));
-			errs.errors.forEach(tabluateMessage);
-			resultsShown=true;
-			res.write("</table><br/>");
-		} 
-
-		if (errs.numWarnings()>0) {
-			res.write(DETAIL_FORM_HEADER("warnings"));
-			errs.warnings.forEach(tabluateMessage);
-			resultsShown=true;
-			res.write("</table><br/>");
-		}     
-	}
-	if (!error && !resultsShown) 
-		res.write("no errors or warnings");
-}
-
-/**
- * constructs HTML output of the errors found in the service list analysis
- *
- * @param {boolean} URLmode    If true ask for a URL to a service list, if false ask for a file
- * @param {Object}  res        The Express result 
- * @param {string}  lastInput  The url of the service list - used to keep the form intact
- * @param {string}  error      a single error message to display on the form, genrrally related to loading the content to validate
- * @param {Object}  errors     the errors and warnings found during the content guide validation
- * @returns {Promise} the output stream (res) for further async processing
- */
-function drawSLForm(URLmode, res, lastInput=null, error=null, errs=null) {
-	
-	const ENTRY_FORM_URL=`<form method=\"post\"><p><i>URL:</i></p><input type=\"url\" name=\"SLurl\" value=\"${lastInput?lastInput:""}\"><input type=\"submit\" value=\"submit\"></form>`;
-	const ENTRY_FORM_FILE=`<form method=\"post\" encType=\"multipart/form-data\"><p><i>FILE:</i></p><input type=\"file\" name=\"SLfile\" value=\"${lastInput?lastInput:""}\"><input type=\"submit\" value=\"submit\"></form>`;
-
-    res.write(PAGE_TOP('DVB-I Service List Validator'));    
-
-	res.write(URLmode?ENTRY_FORM_URL:ENTRY_FORM_FILE);
-
-	tabulateResults(res, error, errs);
-
-	res.write(PAGE_BOTTOM);
-	
-	return new Promise((resolve, reject) => {
-		resolve(res);
-	});
-}
 
 
 /**
@@ -159,7 +74,7 @@ function processSLQuery(req, res) {
 	}
 
     if (isEmpty(req.query)) {
-		drawSLForm(true, res);
+		ui.drawSLForm(true, res);
 		res.end();
 	}
 	else if (req && req.query && req.query.SLurl) {
@@ -167,17 +82,17 @@ function processSLQuery(req, res) {
 			.then(handleErrors)
 			.then(response => response.text())
 			.then(res=>slcheck.validateServiceList(res))
-			.then(errs=>drawSLForm(true, res, req.query.SLurl, null, errs))
+			.then(errs=>ui.drawSLForm(true, res, req.query.SLurl, null, errs))
 			.then(res=>res.end())
 			.catch(error => {
 				console.log(error);
 				console.log(`error (${error}) handling ${req.query.SLurl}`) ;
-				drawSLForm(true, res, req.query.SLurl, `error (${error}) handling ${req.query.SLurl}`, null);
+				ui.drawSLForm(true, res, req.query.SLurl, `error (${error}) handling ${req.query.SLurl}`, null);
 				res.end();
 			});
    }
    else {
-        drawSLForm(true, res, req.query.SLurl, "URL not specified");
+        ui.drawSLForm(true, res, req.query.SLurl, "URL not specified");
 		res.status(400);
 		res.end();
     }
@@ -192,7 +107,7 @@ function processSLQuery(req, res) {
  */ 
 function processSLFile(req, res) {
     if (isEmpty(req.query)) 
-        drawSLForm(false, res);    
+        ui.drawSLForm(false, res);    
 	else if (req && req.files && req.files.SLfile) {
         let SLxml=null;
         let errs=new ErrorList();
@@ -206,10 +121,10 @@ function processSLFile(req, res) {
 		if (SLxml)
 			slcheck.doValidateServiceList(SLxml.toString(), errs);
 
-        drawSLForm(false, res, req.files.SLfile.name, null, errs);
+        ui.drawSLForm(false, res, req.files.SLfile.name, null, errs);
     }
 	else {
-        drawSLForm(false, res, req.files.SLfile.name, "File not specified");
+        ui.drawSLForm(false, res, req.files.SLfile.name, "File not specified");
         res.status(400);
     }
     
@@ -217,67 +132,7 @@ function processSLFile(req, res) {
 }
 
 
-/**
- * constructs HTML output of the errors found in the content guide analysis
- *
- * @param {boolean} URLmode   if true ask for a URL to a content guide, if false ask for a file
- * @param {Object}  res       the Express result 
- * @param {string}  lastInput the url or file name previously used - used to keep the form intact
- * @param {string}  lastType  the previously request type - used to keep the form intact
- * @param {string}  error     a single error message to display on the form, generally related to loading the content to validate
- * @param {ErrorList}  errors    the errors and warnings found during the content guide validation
- */
- function drawCGForm(URLmode, res, lastInput=null, lastType=null, error=null, errs=null) {
-	const ENTRY_FORM_URL=`<form method=\"post\"><p><i>URL:</i></p><input type=\"url\" name=\"CGurl\" value=\"${lastInput?lastInput:""}\"/><input type=\"submit\" value=\"submit\"/>`;
-	const ENTRY_FORM_FILE=`<form method=\"post\" encType=\"multipart/form-data\"><p><i>FILE:</i></p><input type=\"file\" name=\"CGfile\" value=\"${lastInput ? lastInput : ""}\"/><input type=\"submit\" value=\"submit\"/>`;
-	const ENTRY_FORM_END="</form>";
 
-	const ENTRY_FORM_REQUEST_TYPE_HEADER="<p><i>REQUEST TYPE:</i></p>";
-
-	const ENTRY_FORM_REQUEST_TYPE_ID="requestType";
-
-    res.write(PAGE_TOP('DVB-I Content Guide Validator'));
-    res.write(URLmode?ENTRY_FORM_URL:ENTRY_FORM_FILE);
-
-	res.write(ENTRY_FORM_REQUEST_TYPE_HEADER);
-
-	if (!lastType) 
-		lastType=cgcheck.supportedRequests[0].value;
-	cgcheck.supportedRequests.forEach(function (choice) {
-		res.write(`<input type=\"radio\" name=${ENTRY_FORM_REQUEST_TYPE_ID.quote()} value=${choice.value.quote()}`);
-		if (lastType==choice.value)
-			res.write(" checked");
-		res.write(`>${choice.label}</input>`);
-	});
-	res.write(ENTRY_FORM_END);
-
-	tabulateResults(res, error, errs);
-
-	//PH experimental stuff
-/*	if (errs && errs.markupXML) {
-		res.write("<hr><table class=\"markedup\">");
-		errs.markupXML.forEach(line => {
-			res.write(`<tr><td>${line.ix}</td>`);
-			let indent=0;
-			while (line.value.charAt(indent)==' ')
-				indent++;
-			res.write(`<td style="padding-left:${indent*10}px;"><span class=\"xmlfont\">${phlib.HTMLize(line.value)}</span>`);
-			if (line.validationErrors) {
-				line.validationErrors.forEach(error => {
-					res.write(`<br/>${phlib.HTMLize(error)}`);
-				});
-			}
-			res.write("</tr>");
-
-		})
-		res.write("</table><hr>");
-	} */
-	res.write(PAGE_BOTTOM);
-
-	return new Promise(function (resolve, reject) {
-		resolve(res);
-	});
-}
 
 
 /**
@@ -296,7 +151,7 @@ function processSLFile(req, res) {
 	}
 
     if (isEmpty(req.query)) {
-		drawCGForm(true, res);
+		ui.drawCGForm(true, res);
 		res.end();
 	}  
     else if (req && req.query && req.query.CGurl) {
@@ -304,17 +159,17 @@ function processSLFile(req, res) {
 			.then(handleErrors)
 			.then(function (response) {return response.text();})
 			.then(function (res) {return cgcheck.validateContentGuide(res, req.body.requestType);})
-			.then(function (errs) {return drawCGForm(true, res, req.query.CGurl, req.body.requestType, null, errs);})
+			.then(function (errs) {return ui.drawCGForm(true, res, req.query.CGurl, req.body.requestType, null, errs);})
 			.then(function (res) {res.end();})
 			.catch(function (error) {
 				console.log(error);
-				drawCGForm(true, res, req.query.CGurl, req.body.requestType, `error (${error}) handling ${req.query.CGurl}`);
+				ui.drawCGForm(true, res, req.query.CGurl, req.body.requestType, `error (${error}) handling ${req.query.CGurl}`);
 				res.status(400);
 				res.end();
 			});
     }
 	else {
-        drawCGForm(true, res, req.query.CGurl, req.body.requestType, "URL not specified");
+        ui.drawCGForm(true, res, req.query.CGurl, req.body.requestType, "URL not specified");
         res.status(400);
 		res.end();
 	}
@@ -329,7 +184,7 @@ function processSLFile(req, res) {
  */ 
 function processCGFile(req, res) {
     if (isEmpty(req.query)) 
-        drawCGForm(false, res);    
+        ui.drawCGForm(false, res);    
     else if (req && req.files && req.files.CGfile) {
         let CGxml=null, errs=new ErrorList(), fname="***";
 		if (req && req.files && req.files.CGfile) fname=req.files.CGfile.name;
@@ -342,10 +197,10 @@ function processCGFile(req, res) {
 		if (CGxml) 
 			cgcheck.doValidateContentGuide(CGxml.toString(), req.body.requestType, errs);
 		
-        drawCGForm(false, res, fname, req.body.requestType, null, errs);
+        ui.drawCGForm(false, res, fname, req.body.requestType, null, errs);
     }
 	else {
-        drawCGForm(false, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
+        ui.drawCGForm(false, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
         res.status(400);
 	}
     res.end();

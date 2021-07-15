@@ -25,6 +25,8 @@ const keyFilename=path.join(".", "selfsigned.key"), certFilename=path.join(".", 
 
 const phlib=require('./phlib/phlib');
 
+const ui=require('./ui.js';)
+
 const ErrorList=require("./ErrorList.js");
 
 const locs=require("./data-locations.js");
@@ -36,96 +38,7 @@ const {isEmpty, readmyfile}=require('./utils.js');
 const ContentGuideCheck=require('./cg-check.js');
 var cgcheck=null;
 
-/**
- * constructs HTML output of the errors found in the content guide analysis
- *
- * @param {boolean} URLmode   if true ask for a URL to a content guide, if false ask for a file
- * @param {Object}  res       the Express result 
- * @param {string}  lastInput the url or file name previously used - used to keep the form intact
- * @param {string}  lastType  the previously request type - used to keep the form intact
- * @param {string}  error     a single error message to display on the form, generally related to loading the content to validate
- * @param {ErrorList}  errors    the errors and warnings found during the content guide validation
- */
- function drawForm(URLmode, res, lastInput=null, lastType=null, error=null, errs=null) {
 
-	const TABLE_STYLE="<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px; }	tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
-	const XML_STYLE="<style>.xmlfont {font-family: Arial, Helvetica, sans-serif; font-size:90%;}</style>";
-
-	const PAGE_TOP=`<html><head>${TABLE_STYLE}${XML_STYLE}<title>DVB-I Content Guide Validator</title></head><body>`;
-	const PAGE_BOTTOM="</body></html>";
-
-	const PAGE_HEADING="<h1>DVB-I Content Guide Validator</h1>";
-
-	const ENTRY_FORM_URL=`<form method=\"post\"><p><i>URL:</i></p><input type=\"url\" name=\"CGurl\" value=\"${lastInput?lastInput:""}\"/><input type=\"submit\" value=\"submit\"/>`;
-	const ENTRY_FORM_FILE=`<form method=\"post\" encType=\"multipart/form-data\"><p><i>FILE:</i></p><input type=\"file\" name=\"CGfile\" value=\"${lastInput ? lastInput : ""}\"/><input type=\"submit\" value=\"submit\"/>`;
-	const ENTRY_FORM_END="</form>";
-
-	const ENTRY_FORM_REQUEST_TYPE_HEADER="<p><i>REQUEST TYPE:</i></p>";
-
-	const ENTRY_FORM_REQUEST_TYPE_ID="requestType";
-
-	const RESULT_WITH_INSTRUCTION="<br><p><i>Results:</i></p>";
-	const SUMMARY_FORM_HEADER="<table><tr><th>item</th><th>count</th></tr>";
-	
-	function DETAIL_FORM_HEADER(mode) {
-		return `<table><tr><th>code</th><th>${mode}</th></tr>`;
-	}
-	function tabluateMessage(value) {
-		res.write(`<tr><td>${value.code?phlib.HTMLize(value.code):""}</td>`);
-		res.write(`<td>${value.message?phlib.HTMLize(value.message):""}${value.element?`<br/><span class=\"xmlfont\">${phlib.HTMLize(value.element)}</span>`:""}</td></tr>`);
-	}	
-    res.write(PAGE_TOP);    
-    res.write(PAGE_HEADING);
-    res.write(URLmode?ENTRY_FORM_URL:ENTRY_FORM_FILE);
-
-	res.write(ENTRY_FORM_REQUEST_TYPE_HEADER);
-
-	if (!lastType) 
-		lastType=cgcheck.supportedRequests[0].value;
-	cgcheck.supportedRequests.forEach(function (choice) {
-		res.write(`<input type=\"radio\" name=${ENTRY_FORM_REQUEST_TYPE_ID.quote()} value=${choice.value.quote()}`);
-		if (lastType==choice.value)
-			res.write(" checked");
-		res.write(`>${choice.label}</input>`);
-	});
-	res.write(ENTRY_FORM_END);
-
-    res.write(RESULT_WITH_INSTRUCTION);
-	if (error) 
-		res.write(`<p>${error}</p>`);
-	let resultsShown=false;
-	if (errs) {
-
-		if (errs.numCountsErr()>0 || errs.numCountsWarn()>0 ) {		
-			res.write(SUMMARY_FORM_HEADER);
-			Object.keys(errs.countsErr).forEach( function (i) {return res.write(`<tr><td>${phlib.HTMLize(i)}</td><td>${errs.countsErr[i]}</td></tr>`); });
-			Object.keys(errs.countsWarn).forEach( function (i) {return res.write(`<tr><td><i>${phlib.HTMLize(i)}</i></td><td>${errs.countsWarn[i]}</td></tr>`); });
-			resultsShown=true;
-			res.write("</table><br/>");
-		}
-
-		if (errs.numErrors() > 0) {
-			res.write(DETAIL_FORM_HEADER("errors"));
-			errs.errors.forEach(tabluateMessage);
-			resultsShown=true;
-			res.write("</table><br/>");
-		} 
-
-		if (errs.numWarnings()>0) {
-			res.write(DETAIL_FORM_HEADER("warnings"));
-			errs.warnings.forEach(tabluateMessage);
-			resultsShown=true;
-			res.write("</table><br/>");
-		}     
-	}
-	if (!error && !resultsShown) res.write("no errors or warnings");
-
-	res.write(PAGE_BOTTOM);
-
-	return new Promise(function (resolve, reject) {
-		resolve(res);
-	});
-}
 
 
 /**
@@ -144,7 +57,7 @@ function processQuery(req, res) {
 	}
 
     if (isEmpty(req.query)) {
-		drawForm(true, res);
+		ui.drawCGForm(true, res);
 		res.end();
 	}  
     else if (req && req.query && req.query.CGurl) {
@@ -152,17 +65,17 @@ function processQuery(req, res) {
 			.then(handleErrors)
 			.then(function (response) {return response.text();})
 			.then(function (res) {return cgcheck.validateContentGuide(res.replace(/(\r\n|\n|\r|\t)/gm, ""), req.body.requestType);})
-			.then(function (errs) {return drawForm(true, res, req.query.CGurl, req.body.requestType, null, errs);})
+			.then(function (errs) {return ui.drawCGForm(true, res, req.query.CGurl, req.body.requestType, null, errs);})
 			.then(function (res) {res.end();})
 			.catch(function (error) {
 				console.log(error);
-				drawForm(true, res, req.query.CGurl, req.body.requestType, `error (${error}) handling ${req.query.CGurl}`);
+				ui.drawCGForm(true, res, req.query.CGurl, req.body.requestType, `error (${error}) handling ${req.query.CGurl}`);
 				res.status(400);
 				res.end();
 			});
     }
 	else {
-        drawForm(true, res, req.query.CGurl, req.body.requestType, "URL not specified");
+        ui.drawCGForm(true, res, req.query.CGurl, req.body.requestType, "URL not specified");
         res.status(400);
 		res.end();
 	}
@@ -177,7 +90,7 @@ function processQuery(req, res) {
  */ 
 function processFile(req, res) {
     if (isEmpty(req.query)) 
-        drawForm(false, res);    
+		ui.drawCGForm(false, res);    
     else if (req && req.files && req.files.CGfile) {
         let CGxml=null, errs=new ErrorList(), fname="***";
 		if (req && req.files && req.files.CGfile) fname=req.files.CGfile.name;
@@ -192,10 +105,10 @@ function processFile(req, res) {
 			errs.loadDocument(doc);
 			cgcheck.doValidateContentGuide(doc, req.body.requestType, errs);
 		}
-        drawForm(false, res, fname, req.body.requestType, null, errs);
+        ui.drawCGForm(false, res, fname, req.body.requestType, null, errs);
     }
 	else {
-        drawForm(false, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
+        ui.drawCGForm(false, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
         res.status(400);
 	}
     res.end();
