@@ -1182,7 +1182,7 @@ class ServiceListCheck {
 
 		// <ServiceInstance><AltServiceName>
 		let alternateNames=[], altSN, alt=0;
-		while ((altSN=ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_AltServiceName, ++p), SL_SCHEMA))!=null) {
+		while ((altSN=ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_AltServiceName, ++alt), SL_SCHEMA))!=null) {
 			if (alternateNames.includes(altSN.text())) 
 				errs.pushCodeW("SI165", `${dvbi.e_AltServiceName}=${altSn.text().quote} already specificed in ${dvbi.e_ServiceInstance.elementize()} of service ${thisServiceId.quote()}`, 'duplicate name');
 			else alternateNames.push(altSN.text());
