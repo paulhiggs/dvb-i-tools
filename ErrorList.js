@@ -57,7 +57,8 @@ module.exports = class ErrorList {
         if (lineNo) this.setError(errMessage, lineNo);
     }
 	pushCodeWithFragment(errNo, errMessage, fragment, key=null) {
-        this.errors.push({code:errNo, message:errMessage, element:fragment});
+        this.errors.push({code:errNo, message:errMessage, 
+            element:(typeof(fragment)=="string" || fragment instanceof String)?fragment:fragment.toString()});
 		if (key) this.increment(key);
     }
 	pushW(errMessage, key=null) {
@@ -69,7 +70,8 @@ module.exports = class ErrorList {
 		if (key) this.incrementW(key);
     }
     pushCodeWWithFragment(errNo, errMessage, fragment, key=null) {
-        this.warnings.push({code:errNo, message:errMessage, element:fragment});
+        this.warnings.push({code:errNo, message:errMessage, 
+            element:(typeof(fragment)=="string" || fragment instanceof String)?fragment:fragment.toString()});
 		if (key) this.incrementW(key);
     }
     numErrors() { return this.errors.length; }

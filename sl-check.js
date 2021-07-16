@@ -279,22 +279,23 @@ class ServiceListCheck {
 	 *
 	 * @param {string} lang      the language to check
 	 * @param {string} loc       the 'location' of the element containing the language value
+	 * @param {Ojbect} element   the element containing the language value
 	 * @param {Object} errs      the class where errors and warnings relating to the service list processing are stored 
 	 * @param {String} errCode   the error code to be reported
 	 */
-	/*private*/ checkLanguage(lang, loc, errs, errCode) {
+	/*private*/ checkLanguage(lang, loc, element, errs, errCode) {
 		switch (this.knownLanguages.isKnown(lang)) {
 			case this.knownLanguages.languageUnknown:
-				errs.pushCode(errCode?`${errCode}-1`:"CL001", `${loc?loc:"language"} value ${lang.quote()} is invalid`, "invalid language");
+				errs.pushCodeWithFragment(errCode?`${errCode}-1`:"CL001", `${loc?loc:"language"} value ${lang.quote()} is invalid`, element, "invalid language");
 				break;
 			case this.knownLanguages.languageRedundant:
-				errs.pushCodeW(errCode?`${errCode}-2`:"CL002", `${loc?loc:"language"} value ${lang.quote()} is redundant`, "redundant language");
+				errs.pushCodeWWithFragment(errCode?`${errCode}-2`:"CL002", `${loc?loc:"language"} value ${lang.quote()} is redundant`, element, "redundant language");
 				break;	
 			case this.knownLanguages.languageNotSpecified:
-				errs.pushCode(errCode?`${errCode}-3`:"CL003", `${loc?loc:"language"} value is not provided`, "unspecified language");
+				errs.pushCodeWithFragment(errCode?`${errCode}-3`:"CL003", `${loc?loc:"language"} value is not provided`, element, "unspecified language");
 				break;
 			case this.knownLanguages.languageInvalidType:
-				errs.pushCode(errCode?`${errCode}-4`:"CL004", `language is not a String, its "${typeof(lang)}"`, "invalid language");
+				errs.pushCodeWithFragment(errCode?`${errCode}-4`:"CL004", `language is not a String, its "${typeof(lang)}"`, element, "invalid language");
 				break;
 		}
 	}
@@ -688,14 +689,14 @@ class ServiceListCheck {
 		while ((elem=node.get(xPath(SCHEMA_PREFIX, elementName, ++i), SL_SCHEMA))!=null) {
 			let lang=elem.attr(dvbi.a_lang)?elem.attr(dvbi.a_lang).value():UNSPECIFIED_LANG;
 			if (isIn(elementLanguages, lang)) 
-				errs.pushCode(errCode?`${errCode}-1`:"XL001", 
+				errs.pushCodeWithFragment(errCode?`${errCode}-1`:"XL001", 
 					`${lang==UNSPECIFIED_LANG?"default language":`xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} for ${elementLocation}`, 
-					"duplicate @xml:lang");
+					elem, "duplicate @xml:lang");
 			else elementLanguages.push(lang);
 
 			//if lang is specified, validate the format and value of the attribute against BCP47 (RFC 5646)
 			if (lang!=UNSPECIFIED_LANG) 
-				this.checkLanguage(lang, `xml:lang in ${elementName}`, errs, errCode?`${errCode}-2`:"XL002");
+				this.checkLanguage(lang, `xml:lang in ${elementName}`, elem, errs, errCode?`${errCode}-2`:"XL002");
 		}
 	}
 
@@ -865,7 +866,7 @@ class ServiceListCheck {
 		
 		let localLang=node.attr(tva.a_lang).value();
 		if (validator && localLang)
-			this.checkLanguage(localLang,node.name(), errs, errno);
+			this.checkLanguage(localLang, node.name(), node, errs, errno);
 		return localLang;	
 	}
 
@@ -1082,12 +1083,12 @@ class ServiceListCheck {
 			// Check ContentAttributes/CaptionLanguage
 			cp=0;
 			while ((conf=ContentAttributes.get(xPath(SCHEMA_PREFIX, tva.e_CaptionLanguage, ++cp), SL_SCHEMA))!=null) 
-				this.checkLanguage(conf.text(), tva.e_CaptionLanguage.elementize(), errs, "SI101");
+				this.checkLanguage(conf.text(), tva.e_CaptionLanguage.elementize(), conf, errs, "SI101");
 
 			// Check ContentAttributes/SignLanguage
 			cp=0;
 			while ((conf=ContentAttributes.get(xPath(SCHEMA_PREFIX, tva.e_SignLanguage, ++cp), SL_SCHEMA))!=null)
-				this.checkLanguage(conf.text(), tva.e_SignLanguage.elementize(), errs, "SI111");
+				this.checkLanguage(conf.text(), tva.e_SignLanguage.elementize(), conf, errs, "SI111");
 		}
 		
 		// <ServiceInstance><Availability>
@@ -1203,7 +1204,8 @@ class ServiceListCheck {
 
 				let uri=URIBasedLocation.get(xPath(SCHEMA_PREFIX, dvbi.e_URI), SL_SCHEMA);
 				if (uri && !patterns.isHTTPURL(uri.text()))
-					errs.pushCode("SI174", `invalid URL ${uri.text().quote()} specified for ${dvbi.e_URI.elementize()} of service ${thisServiceId.quote()}`, "invalid resource URL");
+					errs.pushCodeWithFragment("SI174", `invalid URL ${uri.text().quote()} specified for ${dvbi.e_URI.elementize()} of service ${thisServiceId.quote()}`, 
+						DASHDeliveryParameters, "invalid resource URL");
 			}
 			
 			// <DASHDeliveryParameters><MulticastTSDeliveryParameters>
@@ -1443,7 +1445,7 @@ class ServiceListCheck {
 			if (uID) {
 				thisServiceId=uID.text();
 				if (!validServiceIdentifier(thisServiceId)) 
-					errs.pushCodeWithFragment("SL110", `${thisServiceId.quote()} is not a valid service identifier`, uID.toString(), "invalid tag");
+					errs.pushCodeWithFragment("SL110", `${thisServiceId.quote()} is not a valid service identifier`, uID, "invalid tag");
 				if (!uniqueServiceIdentifier(thisServiceId, knownServices)) 
 					errs.pushCode("SL111", `${thisServiceId.quote()} is not unique`, "non unique id");
 				knownServices.push(thisServiceId);			
@@ -1531,7 +1533,7 @@ class ServiceListCheck {
 				let tr=0, TargetRegion, lastTargetRegion="";
 				while ((TargetRegion=LCNTable.get(xPath(SCHEMA_PREFIX, dvbi.e_TargetRegion, ++tr), SL_SCHEMA))!=null) {
 					if (!isIn(knownRegionIDs, TargetRegion.text())) 
-						errs.pushCode("SL240", `${dvbi.e_TargetRegion.elementize()} ${TargetRegion.text()} in ${dvbi.e_LCNTable.elementize()} is not defined`, "undefined region");
+						errs.pushCodeWithFragment("SL240", `${dvbi.e_TargetRegion.elementize()} ${TargetRegion.text()} in ${dvbi.e_LCNTable.elementize()} is not defined`, TargetRegion, "undefined region");
 					lastTargetRegion=TargetRegion.text();
 				}
 				
