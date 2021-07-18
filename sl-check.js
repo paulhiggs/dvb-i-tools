@@ -284,12 +284,14 @@ class ServiceListCheck {
 	 * @param {String} errCode   the error code to be reported
 	 */
 	/*private*/ checkLanguage(lang, loc, element, errs, errCode) {
-		switch (this.knownLanguages.isKnown(lang)) {
+		let validatorResp=this.knownLanguages.isKnown(lang);
+		switch (validatorResp.resp) {
 			case this.knownLanguages.languageUnknown:
 				errs.pushCodeWithFragment(errCode?`${errCode}-1`:"CL001", `${loc?loc:"language"} value ${lang.quote()} is invalid`, element, "invalid language");
 				break;
 			case this.knownLanguages.languageRedundant:
-				errs.pushCodeWWithFragment(errCode?`${errCode}-2`:"CL002", `${loc?loc:"language"} value ${lang.quote()} is redundant`, element, "redundant language");
+				errs.pushCodeWWithFragment(errCode?`${errCode}-2`:"CL002", `${loc?loc:"language"} value ${lang.quote()} is redundant (use ${validatorResp.pref.quote()} instead)`, 
+					element, "redundant language");
 				break;	
 			case this.knownLanguages.languageNotSpecified:
 				errs.pushCodeWithFragment(errCode?`${errCode}-3`:"CL003", `${loc?loc:"language"} value is not provided`, element, "unspecified language");

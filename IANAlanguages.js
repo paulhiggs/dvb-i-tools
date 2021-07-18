@@ -51,7 +51,7 @@ module.exports = class IANAlanguages {
 		entries.forEach(entry => {
 			let items=entry.replace(/(\r|\t)/gm,"").split("\n");
 
-			if (isIn(items,"Type: language") || isIn(items,"Type: extlang")) 
+			if (isIn(items, "Type: language") || isIn(items," Type: extlang")) 
 				for (let i=0; i<items.length; i++) {
 					let signingLanguage=isSignLanguage(items);
 					if (items[i].startsWith("Subtag:")) {
@@ -76,12 +76,22 @@ module.exports = class IANAlanguages {
 						}
 					}
 				}
-			if (isIn(items,"Type: redundant")) 
-				for (let i=0; i<items.length; i++) 
-					if (items[i].startsWith("Tag:")) {
- 						let val=items[i].split(":")[1].trim();
-						this.redundantLanguagesList.push(val);
-					}
+			if (isIn(items, "Type: variant"))
+				for (let i=0; i<items.length; i++)
+				 if (items[i].startsWith("Prefix:")) {
+					// TODO: not sure if we use Prefix: or Subtag: values
+				 }
+			if (isIn(items, "Type: redundant")) {
+				let red={};
+				for (let i=0; i<items.length; i++) {
+					if (items[i].startsWith("Tag:")) 
+ 						red.tag=items[i].split(":")[1].trim();
+					else if (items[i].startsWith("Preferred-Value:"))
+						red.preferred=items[i].split(":")[1].trim();
+				}
+				if (red.tag && red.preferred)
+					this.redundantLanguagesList.push(red);
+			}
 		});
 	}
 
@@ -148,22 +158,24 @@ module.exports = class IANAlanguages {
 	 */
 	isKnown(value) {
 		if (value===null || value===undefined)
-			return this.languageNotSpecified;
+			return {resp:this.languageNotSpecified};
 
 		if (typeof(value)=="string") {
 
 			if (this.languageRanges.find(range => range.start<=value && value<=range.end))
-				return this.languageKnown;
+				return {resp:this.languageKnown};
 
 			if (isIni(this.languagesList, value))
-				return this.languageKnown;
+				return {resp:this.languageKnown};
 
-			if (isIni(this.redundantLanguagesList, value))
-				return this.languageRedundant;		
+			let lc=value.toLowerCase();
+			let found=this.redundantLanguagesList.find(e=>e.tag.toLowerCase()==lc);
+			if (found)
+				return {resp:this.languageRedundant, pref:found.preferred};		
 
-			return this.languageUnknown;
+			return {resp:this.languageUnknown};
 		}
-		return this.languageInvalidType;
+		return {resp:this.languageInvalidType};
 	}
 
 	/**
