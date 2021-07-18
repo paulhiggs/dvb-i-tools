@@ -753,7 +753,7 @@ class ServiceListCheck {
 		errs.pushCode(errCode?errCode:"XX106", `${tva.e_MediaUri.elementize()} not specified for ${src} ${tva.e_MediaLocator.elementize()} in ${loc}`, `no ${tva.e_MediaUri}`);
 	}
 	/*private*/  NoMediaLocator2(src, loc, errs, element, errCode=null) {
-		errs.pushCodeWithFragment(errCode?errCode:"XX106", `${tva.e_MediaUri.elementize()} not specified for ${src} ${tva.e_MediaLocator.elementize()} in ${loc}`, element.toString(), `no ${tva.e_MediaUri}`);
+		errs.pushCodeWithFragment(errCode?errCode:"XX106", `${tva.e_MediaUri.elementize()} not specified for ${src} ${tva.e_MediaLocator.elementize()} in ${loc}`, element, `no ${tva.e_MediaUri}`);
 	}
 
 	/**
@@ -1060,15 +1060,15 @@ class ServiceListCheck {
 					switch (child.name()) {
 						case tva.e_Coding:
 							if (child.attr(dvbi.a_href) && !this.allowedVideoSchemes.isIn(child.attr(dvbi.a_href).value())) 
-								errs.pushCode("SI072", `invalid ${dvbi.a_href.attribute(tva.e_VideoAttributes)} (${child.attr(dvbi.a_href).value()})`, "video codec");
+								errs.pushCodeWithFragment("SI072", `invalid ${dvbi.a_href.attribute(tva.e_Coding)} (${child.attr(dvbi.a_href).value()})`, conf, "video codec");
 							break;
 						case tva.e_PictureFormat:
-							if (child.attr(dvbi.a_href) && !isIn(this.allowedPictureFormats, child.attr(dvbi.a_href).value())) 
-								errs.pushCode("SI082", `invalid ${dvbi.a_href.attribute(tva.e_PictureFormat)} value (${child.attr(dvbi.a_href).value()})`, tva.e_PictureFormat);
+							if (child.attr(dvbi.a_href) && !this.allowedPictureFormats.isIn(child.attr(dvbi.a_href).value())) 
+								errs.pushCodeWithFragment("SI082", `invalid ${dvbi.a_href.attribute(tva.e_PictureFormat)} value (${child.attr(dvbi.a_href).value()})`, conf, tva.e_PictureFormat);
 							break;
 						case dvbi.e_Colorimetry:
 							if (child.attr(dvbi.a_href) && !isIn(dvbi.ALLOWED_COLORIMETRY, child.attr(dvbi.a_href).value())) 
-								errs.pushCode("SI084", `invalid ${dvbi.a_href.attribute(tva.e_Colorimetry)} value (${child.attr(dvbi.a_href).value()})`, tva.e_Colorimetry);
+								errs.pushCodeWithFragment("SI084", `invalid ${dvbi.a_href.attribute(tva.e_Colorimetry)} value (${child.attr(dvbi.a_href).value()})`, conf, tva.e_Colorimetry);
 							break;
 					}
 				});
@@ -1078,7 +1078,7 @@ class ServiceListCheck {
 			cp=0;
 			while ((conf=ContentAttributes.get(xPath(SCHEMA_PREFIX, dvbi.e_VideoConformancePoint, ++cp), SL_SCHEMA))!=null) 
 				if (conf.attr(dvbi.a_href) && !this.allowedVideoConformancePoints.isIn(conf.attr(dvbi.a_href).value())) 
-					errs.pushCode("SI091", `invalid ${dvbi.a_href.attribute(dvbi.e_VideoConformancePoint)} value (${conf.attr(dvbi.a_href).value()})`, "video conf point");
+					errs.pushCodeWithFragment("SI091", `invalid ${dvbi.a_href.attribute(dvbi.e_VideoConformancePoint)} value (${conf.attr(dvbi.a_href).value()})`, conf, "video conf point");
 
 			// Check ContentAttributes/CaptionLanguage
 			cp=0;
@@ -1176,7 +1176,7 @@ class ServiceListCheck {
 					}
 			}
 			if (v1Params && this.SchemaVersion(SCHEMA_NAMESPACE)>=SCHEMA_v2)
-				errs.pushCodeWWithFragment("SI160", `${dvbi.e_SourceType.elementize()} is deprecated in this version (service ${thisServiceId.quote()})`, ServiceInstance.toString(), 'deprecated feature');
+				errs.pushCodeWWithFragment("SI160", `${dvbi.e_SourceType.elementize()} is deprecated in this version (service ${thisServiceId.quote()})`, ServiceInstance, 'deprecated feature');
 		}
 		else {
 			if (this.SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1) 
@@ -1588,6 +1588,7 @@ class ServiceListCheck {
 		let x=[];
 		x.push(`num allowedGenres=${this.allowedGenres.count()}`);
 		x.push(`num allowedPictureFormats=${this.allowedPictureFormats.count()}`);
+		//this.allowedPictureFormats.values.traverseInOrder((node) => console.log(node.getKey()))
 		x.push(`num allowedServiceTypes=${this.allowedServiceTypes.count()}`);
 		x.push(`num allowedAudioSchemes=${this.allowedAudioSchemes.count()}`);
 		x.push(`num allowedAudioConformancePoints=${this.allowedAudioConformancePoints.count()}`);
