@@ -108,7 +108,7 @@ module.exports = class ClassificationScheme {
      * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded 
      */
     loadFromFile(classificationScheme, leafNodesOnly=false) {
-        console.log(`reading CS (${leafNodesOnly?"all":"leaf"} nodes) from ${classificationScheme}`);
+        console.log(`reading CS (${leafNodesOnly?"leaf":"all"} nodes) from ${classificationScheme}`);
 
         fs.readFile(classificationScheme, {encoding: "utf-8"}, (err,data)=> {
             if (!err) {
