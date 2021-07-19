@@ -357,6 +357,13 @@ class SLEPR {
         providersToRemove.forEach(provider => provider.remove());
 
         res.type('text/xml');
+        let opts=res.getHeader('X-Frame-Options');
+        if (opts)
+            opts.push('SAMEORIGIN');
+        else opts=['SAMEORIGIN'];
+        res.setHeader('X-Frame-Options', opts );
+        res.setHeader('Access-Control-Allow-Origin', "*");
+
         res.send(slepr.toString());
 
 		res.end();
