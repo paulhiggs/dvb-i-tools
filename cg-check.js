@@ -48,7 +48,6 @@ const supportedRequests=[
 	{value:CG_REQUEST_BS_LISTS, label:"Box Set Lists"},
 	{value:CG_REQUEST_BS_CONTENTS, label:"Box Set Contents"}];
 
-
 /**
  * counts the number of named elements in the specificed node 
  * *

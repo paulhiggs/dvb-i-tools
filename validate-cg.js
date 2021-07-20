@@ -57,7 +57,7 @@ function processQuery(req, res) {
 	}
 
     if (isEmpty(req.query)) {
-		ui.drawCGForm(true, res);
+		ui.drawCGForm(true, cgcheck.supportedRequests, res);
 		res.end();
 	}  
     else if (req && req.query && req.query.CGurl) {
@@ -65,17 +65,17 @@ function processQuery(req, res) {
 			.then(handleErrors)
 			.then(function (response) {return response.text();})
 			.then(function (res) {return cgcheck.validateContentGuide(res.replace(/(\r\n|\n|\r|\t)/gm, ""), req.body.requestType);})
-			.then(function (errs) {return ui.drawCGForm(true, res, req.query.CGurl, req.body.requestType, null, errs);})
+			.then(function (errs) {return ui.drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, null, errs);})
 			.then(function (res) {res.end();})
 			.catch(function (error) {
 				console.log(error);
-				ui.drawCGForm(true, res, req.query.CGurl, req.body.requestType, `error (${error}) handling ${req.query.CGurl}`);
+				ui.drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, `error (${error}) handling ${req.query.CGurl}`);
 				res.status(400);
 				res.end();
 			});
     }
 	else {
-        ui.drawCGForm(true, res, req.query.CGurl, req.body.requestType, "URL not specified");
+        ui.drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, "URL not specified");
         res.status(400);
 		res.end();
 	}
@@ -90,7 +90,7 @@ function processQuery(req, res) {
  */ 
 function processFile(req, res) {
     if (isEmpty(req.query)) 
-		ui.drawCGForm(false, res);    
+		ui.drawCGForm(false, cgcheck.supportedRequests, res);    
     else if (req && req.files && req.files.CGfile) {
         let CGxml=null, errs=new ErrorList(), fname="***";
 		if (req && req.files && req.files.CGfile) fname=req.files.CGfile.name;
@@ -108,7 +108,7 @@ function processFile(req, res) {
         ui.drawCGForm(false, res, fname, req.body.requestType, null, errs);
     }
 	else {
-        ui.drawCGForm(false, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
+        ui.drawCGForm(false, cgcheck.supportedRequests, cgcheck.supportedRequests, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
         res.status(400);
 	}
     res.end();

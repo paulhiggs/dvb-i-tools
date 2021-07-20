@@ -99,13 +99,14 @@ module.exports.drawSLForm = function (URLmode, res, lastInput=null, error=null, 
  * constructs HTML output of the errors found in the content guide analysis
  *
  * @param {boolean} URLmode   if true ask for a URL to a content guide, if false ask for a file
+ * @param {Array}   supportedRequests the content guide request types
  * @param {Object}  res       the Express result 
  * @param {string}  lastInput the url or file name previously used - used to keep the form intact
  * @param {string}  lastType  the previously request type - used to keep the form intact
  * @param {string}  error     a single error message to display on the form, generally related to loading the content to validate
  * @param {ErrorList}  errors    the errors and warnings found during the content guide validation
  */
- module.exports.drawCGForm = function(URLmode, res, lastInput=null, lastType=null, error=null, errs=null) {
+ module.exports.drawCGForm = function(URLmode, supportedRequests, res, lastInput=null, lastType=null, error=null, errs=null) {
 	const ENTRY_FORM_URL=`<form method=\"post\"><p><i>URL:</i></p><input type=\"url\" name=\"CGurl\" value=\"${lastInput?lastInput:""}\"/><input type=\"submit\" value=\"submit\"/>`;
 	const ENTRY_FORM_FILE=`<form method=\"post\" encType=\"multipart/form-data\"><p><i>FILE:</i></p><input type=\"file\" name=\"CGfile\" value=\"${lastInput ? lastInput : ""}\"/><input type=\"submit\" value=\"submit\"/>`;
 	const ENTRY_FORM_END="</form>";
@@ -120,8 +121,8 @@ module.exports.drawSLForm = function (URLmode, res, lastInput=null, error=null, 
 	res.write(ENTRY_FORM_REQUEST_TYPE_HEADER);
 
 	if (!lastType) 
-		lastType=cgcheck.supportedRequests[0].value;
-	cgcheck.supportedRequests.forEach(function (choice) {
+		lastType=supportedRequests[0].value;
+	supportedRequests.forEach(function (choice) {
 		res.write(`<input type=\"radio\" name=${ENTRY_FORM_REQUEST_TYPE_ID.quote()} value=${choice.value.quote()}`);
 		if (lastType==choice.value)
 			res.write(" checked");
