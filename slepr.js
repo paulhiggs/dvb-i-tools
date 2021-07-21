@@ -229,22 +229,20 @@ class SLEPR {
     /* public */ processServiceListRequest(req, res) {
 
         function prettyPrintArray(arr) {
-            let _first=true, res;
-            res="[";
+            let _first=true, resstr="[";
             arr.forEach(entry => {
-                if (!_first) res+=",";
-                res+=`\n\t"${entry}"`;
+                if (!_first) resstr+=",";
+                resstr+=`\n\t"${entry}"`;
                 _first=false;
             });
-            res+=`${_first?"":"\n"}]`;
-            return res;
+            resstr+=`${_first?"":"\n"}]`;
+            return resstr;
         }
 
  		if (!this.checkQuery(req)) {
             if (req.parseErr) 
                 res.write(prettyPrintArray(req.parseErr));
 			res.status(400);
-            res.end();
             return false;
 		}
         let slepr=libxml.parseXmlString(masterSLEPR);
@@ -357,19 +355,11 @@ class SLEPR {
         providersToRemove.forEach(provider => provider.remove());
 
         res.type('text/xml');
-        let opts=res.getHeader('X-Frame-Options');
-        if (opts) {
-            if (!opts.includes('SAMEORIGIN')) opts.push('SAMEORIGIN');
-        }
-        else opts=['SAMEORIGIN'];
-        res.setHeader('X-Frame-Options', opts );
-        res.setHeader('Access-Control-Allow-Origin', "*");
-
         res.send(slepr.toString());
 
-		res.end();
         return true;
     }
+
 }
 
 module.exports = SLEPR;

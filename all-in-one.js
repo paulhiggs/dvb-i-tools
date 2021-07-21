@@ -3,6 +3,8 @@
 // express framework - https://expressjs.com/en/4x/api.html
 const express=require("express");
 
+const cors=require("cors");
+
 //const cluster = require('cluster');
 //const totalCPUs = require('os').cpus().length;
 
@@ -210,6 +212,7 @@ function processCGFile(req, res) {
 
 // initialize Express
 let app=express();
+app.use(cors());
 
 app.use(express.static(__dirname));
 app.set('view engine', 'ejs');
@@ -248,10 +251,16 @@ const optionDefinitions=[
 	{name:'nocsr', type:Boolean, defaultValue:false},
 	{name:'nosl', type:Boolean, defaultValue:false},
 	{name:'nocg', type:Boolean, defaultValue:false},
-	{name:'CSRfile', alias:'f', type:String, defaultValue:SLEPR_data.MASTER_SLEPR_FILE}
+	{name:'CSRfile', alias:'f', type:String, defaultValue:SLEPR_data.MASTER_SLEPR_FILE},
+	{name:'CORSmode', alias: 'c', type:String, defaultValue:"library"}
 ];
  
 const options=commandLineArgs(optionDefinitions);
+
+if (!["none", "library", "manual"].includes(options.CORSmode)) {
+	console.log('CORSmode must be "none", "library" to use the Express cors() handler, or "manual" to have headers inserted manually');
+	process.exit(1); 
+}
 
 const IANAlanguages=require("./IANAlanguages.js");
 let knownLanguages=new IANAlanguages();
@@ -267,9 +276,11 @@ const ISOcountries=require("./ISOcountries.js");
 let isoCountries=new ISOcountries(false, true);
 isoCountries.loadCountries(options.urls?{url:locs.ISO3166.url}:{file:locs.ISO3166.file});
 
+let hasFunctions=false;
 
 if (!options.nosl) {
 	slcheck=new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoCountries);
+	hasFunctions=true;
 
 	// handle HTTP POST requests to /checkSL
 	app.post("/checkSL", function(req, res) {
@@ -304,9 +315,28 @@ if (!options.nosl) {
 	});
 }
 
+const SLEPR_query_route='/query', SLEPR_reload_route='/reload', SLEPR_stats_route='/stats';
+
+let manualCORS=function(res, req, next) {next();};
+if (options.CORSmode=="library") {
+	app.options("*", cors());
+}
+else if (options.CORSmode=="manual") {
+	manualCORS=function (req, res, next) {
+		let opts=res.getHeader('X-Frame-Options');
+        if (opts) {
+            if (!opts.includes('SAMEORIGIN')) opts.push('SAMEORIGIN');
+        }
+        else opts=['SAMEORIGIN'];
+        res.setHeader('X-Frame-Options', opts );
+        res.setHeader('Access-Control-Allow-Origin', "*");
+		next();
+	};
+}
 
 if (!options.nocg) {
 	cgcheck=new ContentGuideCheck(options.urls, knownLanguages, knownGenres);
+	hasFunctions=true;
 
 	// handle HTTP POST requests to /checkCG
 	app.post("/checkCG", function(req, res) {
@@ -335,20 +365,31 @@ if (!options.nocg) {
 if (!options.nocsr) {
 	csr=new SLEPR(options.urls, knownLanguages, isoCountries, knownGenres);
 	csr.loadServiceListRegistry(options.CSRfile);
+	hasFunctions=true;
 
-	app.get('/query', function(req, res) {
+	if (options.CORSmode=="manual") {
+		app.options(SLEPR_query_route, manualCORS); 
+	}
+	app.get(SLEPR_query_route, manualCORS, function(req, res) {
 		csr.processServiceListRequest(req, res);
+		res.end();
 	});
 
-	app.get('/reload', function(req, res) {
+	app.get(SLEPR_reload_route, function(req, res) {
 		csr.loadServiceListRegistry(options.CSRfile);
 		res.status(200).end();
 	});
 	
-	app.get('/stats', function(req, res) {
+	app.get(SLEPR_stats_route, function(req, res) {
 		res.status(404).end();
 	});
 }
+
+if (!hasFunctions) {
+	console.log("nothing to do... exiting");
+	process.exit(1);
+}
+
 
 // dont handle any other requests
 app.get("*", function(req,res) {

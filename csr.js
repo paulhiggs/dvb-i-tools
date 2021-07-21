@@ -3,6 +3,7 @@
 // node.js - https://nodejs.org/en/
 // express framework - https://expressjs.com/en/4x/api.html
 const express=require('express');
+const cors=require('cors');
 
 const cluster = require('cluster');
 const totalCPUs = require('os').cpus().length;
@@ -51,6 +52,10 @@ const optionDefinitions=[
 		type:String, defaultValue:slepr_data.MASTER_SLEPR_FILE, 
 		typeLabel:'{underline filename}', 
 		description:'local file name of master SLEPR file'},
+	{ name:'CORSmode', alias:'c',
+		type:String, defaultValue:"library",
+		typeLabel:'{underline mode}',
+		description:'type of CORS habdling "library" (default), "manual" or "none"'},
 	{ name:'help', alias:'h', 
 		type:Boolean, defaultValue:false, 
 		description:'This help'}
@@ -98,6 +103,11 @@ try {
 catch (err) {
 	console.log(commandLineUsage(commandLineHelp));
 	process.exit(1);
+}
+
+if (!["none", "library", "manual"].includes(options.CORSmode)) {
+	console.log('CORSmode must be "none", "library" to use the Express cors() handler, or "manual" to have headers inserted manually');
+	process.exit(1); 
 }
 
 if (options.help) {
@@ -171,6 +181,7 @@ if (cluster.isMaster) {
 	});
   } else {
 	var app=express();
+	app.use(cors());
 
 	morgan.token('pid', function getPID(req) {
 		return process.pid;
@@ -186,25 +197,50 @@ if (cluster.isMaster) {
 		return `(${req.headers['user-agent']})`;
 	});
 	
+	const SLEPR_query_route='/query', SLEPR_reload_route='/reload', SLEPR_stats_route='/stats';
+
+	let manualCORS=function(res, req, next) {next();};
+	if (options.CORSmode=="library") {
+		app.options("*", cors());
+	}
+	else if (options.CORSmode=="manual") {
+		manualCORS=function (req, res, next) {
+			let opts=res.getHeader('X-Frame-Options');
+			if (opts) {
+				if (!opts.includes('SAMEORIGIN')) opts.push('SAMEORIGIN');
+			}
+			else opts=['SAMEORIGIN'];
+			res.setHeader('X-Frame-Options', opts );
+			res.setHeader('Access-Control-Allow-Origin', "*");
+			next();
+		};
+	}
 
 	var csr=new SLEPR(options.urls);
 	csr.loadServiceListRegistry(options.file, knownLanguages, knownCountries, knownGenres);
 
 	app.use(morgan(':pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr'));
 	app.use(favicon(path.join('phlib','ph-icon.ico')));
-	app.get('/query', function(req,res) {
+
+	if (options.CORSmode=="library")
+		app.options(SLEPR_query_route, cors());
+	else if (options.CORSmode=="manual")
+		app.options(SLEPR_query_route, manualCORS); 
+
+	app.get(SLEPR_query_route, function(req,res) {
 		process.send({ topic: INCR_REQUESTS });
 
 		if (!csr.processServiceListRequest(req, res))
 			process.send({ topic: INCR_FAILURES });
+		res.end();
 	});
 
-	app.get('/reload', function(req,res) {
+	app.get(SLEPR_reload_route, function(req,res) {
 		process.send({ topic: RELOAD });
 		res.status(404).end();
 	});
 
-	app.get('/stats', function(req,res) {
+	app.get(SLEPR_stats_route, function(req,res) {
 		process.send({ topic: STATS });
 		res.status(404).end();
 	});
