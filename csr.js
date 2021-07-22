@@ -32,7 +32,6 @@ const globals=require('./globals.js');
 const {readmyfile}=require('./utils.js');
 
 // SLEPR == Service List Entry Point Registry
-const slepr_data=require('./slepr-data.js');
 const SLEPR=require('./slepr.js');
 
 // command line options
@@ -49,7 +48,7 @@ const optionDefinitions=[
 		typeLabel:'{underline ip-port}', 
 		description:`The HTTPS port to listen on. Default: ${globals.HTTPPort.csr+1}` },
 	{ name:'file', alias:'f', 
-		type:String, defaultValue:slepr_data.MASTER_SLEPR_FILE, 
+		type:String, defaultValue:locs.Default_SLEPR.file, 
 		typeLabel:'{underline filename}', 
 		description:'local file name of master SLEPR file'},
 	{ name:'CORSmode', alias:'c',
@@ -114,6 +113,9 @@ if (options.help) {
 	console.log(commandLineUsage(commandLineHelp));
 	process.exit(0);
 }
+
+if (options.urls && (options.file==locs.Default_SLEPR.file))
+	options.file=locs.Default_SLEPR.url;
 
 const IANAlanguages=require('./IANAlanguages.js');
 var knownLanguages=new IANAlanguages();

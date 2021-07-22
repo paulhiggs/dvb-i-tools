@@ -39,7 +39,6 @@ const ContentGuideCheck=require('./cg-check.js');
 var cgcheck=null;
 
 // the service list registrt
-const SLEPR_data=require('./slepr-data.js');
 const SLEPR=require('./slepr.js');
 var csr=null;
 
@@ -251,7 +250,7 @@ const optionDefinitions=[
 	{name:'nocsr', type:Boolean, defaultValue:false},
 	{name:'nosl', type:Boolean, defaultValue:false},
 	{name:'nocg', type:Boolean, defaultValue:false},
-	{name:'CSRfile', alias:'f', type:String, defaultValue:SLEPR_data.MASTER_SLEPR_FILE},
+	{name:'CSRfile', alias:'f', type:String, defaultValue:locs.Default_SLEPR.file},
 	{name:'CORSmode', alias: 'c', type:String, defaultValue:"library"}
 ];
  
@@ -261,6 +260,9 @@ if (!["none", "library", "manual"].includes(options.CORSmode)) {
 	console.log('CORSmode must be "none", "library" to use the Express cors() handler, or "manual" to have headers inserted manually');
 	process.exit(1); 
 }
+
+if (options.urls && (options.CSRfile==locs.Default_SLEPR.file))
+	options.CSRfile=locs.Default_SLEPR.url;
 
 const IANAlanguages=require("./IANAlanguages.js");
 let knownLanguages=new IANAlanguages();

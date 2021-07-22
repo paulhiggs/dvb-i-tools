@@ -3,17 +3,22 @@
 
 const path=require("path");
 
-const REPO_RAW="https://raw.githubusercontent.com/paulhiggs/dvb-i-tools/master/";
+const REPO_RAW="https://raw.githubusercontent.com/paulhiggs/dvb-i-tools/main/";
 const DVB_METADATA="https://dvb.org/metadata/";
 
+// SLEPR == Service List Entry Point Registry
+const SLEPR_Dir="registries", SLEPR_File="slepr-main.xml";
+module.exports.Default_SLEPR={file:path.join(SLEPR_Dir,SLEPR_File), url:`${REPO_RAW}${SLEPR_Dir}/${SLEPR_File}`};
+
+const TV_Anytime_dir="tva";
 const idTVA_ContentCS="ContentCS.xml";
-module.exports.TVA_ContentCS={file:path.join("tva", idTVA_ContentCS), url:`${REPO_RAW}tva/${idTVA_ContentCS}`};
+module.exports.TVA_ContentCS={file:path.join(TV_Anytime_dir, idTVA_ContentCS), url:`${REPO_RAW}${TV_Anytime_dir}/${idTVA_ContentCS}`};
 
 const idTVA_FormatCS="FormatCS.xml";
-module.exports.TVA_FormatCS={file:path.join("tva", idTVA_FormatCS), url:`${REPO_RAW}tva/${idTVA_FormatCS}`};
+module.exports.TVA_FormatCS={file:path.join(TV_Anytime_dir, idTVA_FormatCS), url:`${REPO_RAW}${TV_Anytime_dir}/${idTVA_FormatCS}`};
 
 const idTVA_PictureCS="PictureFormatCS.xml";
-module.exports.TVA_PictureFormatCS={file:path.join("tva", idTVA_PictureCS), url:`${REPO_RAW}tva/${idTVA_PictureCS}`};
+module.exports.TVA_PictureFormatCS={file:path.join(TV_Anytime_dir, idTVA_PictureCS), url:`${REPO_RAW}${TV_Anytime_dir}/${idTVA_PictureCS}`};
 
 const idDVB_ContentSubjectCS="DVBContentSubjectCS-2019.xml";
 module.exports.DVBI_ContentSubject={file:path.join("dvbi", idDVB_ContentSubjectCS), url:`${REPO_RAW}dvbi/${idDVB_ContentSubjectCS}`};
