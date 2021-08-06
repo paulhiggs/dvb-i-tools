@@ -32,7 +32,7 @@ const IANAlanguages=require("./IANAlanguages.js");
  - also look for TODO in the code itself
 */
 
-const ANY_NAMESPACE="$%$!!";
+const ANY_NAMESPACE="$%$!!", DEFAULT_SUBSCRIPTION_OPAQUE_NAME="-D_E_F_A_U_L_T-P_A_C_K_A_G_E-N_A_M_E-";
 
 const SERVICE_LIST_RM="service list";
 const SERVICE_RM="service";
@@ -1529,7 +1529,7 @@ class ServiceListCheck {
 		// check <ServiceList><LCNTableList>
 		let LCNtableList=SL.get("//"+xPath(SCHEMA_PREFIX, dvbi.e_LCNTableList), SL_SCHEMA);
 		if (LCNtableList) {
-			let l=0, LCNTable;
+			let l=0, LCNTable, subscriptionPackages=[];
 			while ((LCNTable=LCNtableList.get(xPath(SCHEMA_PREFIX, dvbi.e_LCNTable, ++l), SL_SCHEMA))!=null) {
 				// <LCNTable><TargetRegion>
 				let tr=0, TargetRegion, lastTargetRegion="";
@@ -1540,8 +1540,23 @@ class ServiceListCheck {
 				}
 				
 				// <LCNTable><SubscriptionPackage>
-				this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, dvbi.e_LCNTable, LCNTable, errs, "SL250");
-				
+				// this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, dvbi.e_LCNTable, LCNTable, errs, "SL250");
+
+				// start Bug2938
+				let sp=0, SubscriptionPackage, hasPackage=false;
+				while ((SubscriptionPackage=LCNTable.get(xPath(SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ++sp), SL_SCHEMA))!=null) {
+					hasPackage=true;
+					if (subscriptionPackages.includes(SubscriptionPackage.text())) 
+						errs.pushCodeWithFragment("SL251", `duplicated ${dvbi.e_SubscriptionPackage.elementize()}`, SubscriptionPackage, 'duplicate package name');
+					else subscriptionPackages.push(SubscriptionPackage.text());
+				}
+				if (!hasPackage) {
+					if (subscriptionPackages.includes(DEFAULT_SUBSCRIPTION_OPAQUE_NAME))
+						errs.pushCodeWithFragment("SL252", `a default ${dvbi.e_LCNTable.elementize()} (one without ${dvbi.e_SubscriptionPackage.elementize()}) is already defined`, LCNTable, 'ambiguous package name');
+					else subscriptionPackages.push(DEFAULT_SUBSCRIPTION_OPAQUE_NAME);
+				}
+				// end Bug2938
+
 				// <LCNTable><LCN>
 				let LCNNumbers=[], e=0, LCN;
 				while ((LCN=LCNTable.get(xPath(SCHEMA_PREFIX, dvbi.e_LCN, ++e), SL_SCHEMA))!=null) {
