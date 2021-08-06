@@ -232,8 +232,8 @@ morgan.token("parseErr", function getParseErr(req) {
 morgan.token("location", function getCheckedLocation(req) {
 	if (req.files && req.files.SLfile) return `[${req.files.SLfile.name}]`;
     if (req.query && req.query.SLurl) return `[${req.query.SLurl}]`;
-	if (req.files && req.files.CGfile) return `[${req.files.CGfile.name}]`;
-    if (req.query && req.query.CGurl) return `[${req.query.CGurl}]`;
+	if (req.files && req.files.CGfile) return `[(${req.body.requestType})${req.files.CGfile.name}]`;
+    if (req.query && req.query.CGurl) return `[(${req.body.requestType})${req.query.CGurl}]`;
 	return "[*]";
 });
 
