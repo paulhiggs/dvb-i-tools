@@ -1542,7 +1542,7 @@ class ServiceListCheck {
 				// <LCNTable><SubscriptionPackage>
 				// this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, dvbi.e_LCNTable, LCNTable, errs, "SL250");
 
-				// start Bug2938
+	/*			// start Bug2938
 				let sp=0, SubscriptionPackage, hasPackage=false;
 				while ((SubscriptionPackage=LCNTable.get(xPath(SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ++sp), SL_SCHEMA))!=null) {
 					hasPackage=true;
@@ -1555,7 +1555,7 @@ class ServiceListCheck {
 						errs.pushCodeWithFragment("SL252", `a default ${dvbi.e_LCNTable.elementize()} (one without ${dvbi.e_SubscriptionPackage.elementize()}) is already defined`, LCNTable, 'ambiguous package name');
 					else subscriptionPackages.push(DEFAULT_SUBSCRIPTION_OPAQUE_NAME);
 				}
-				// end Bug2938
+	*/			// end Bug2938
 
 				// <LCNTable><LCN>
 				let LCNNumbers=[], e=0, LCN;
