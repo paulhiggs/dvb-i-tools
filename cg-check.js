@@ -962,7 +962,7 @@ module.exports = class ContentGuideCheck {
 	 * @param {String} loc The location of the element
 	 */
 	/* private */  NoAuxiliaryURI(errs, src, loc, errno=null) {
-		NoChildElement(errs, tva.e_AuxiliaryURI.elementize(), `${src} ${tva.e_MediaLocator.elementize()}`, loc, errno?errno:"AU001");
+		this.NoChildElement(errs, tva.e_AuxiliaryURI.elementize(), `${src} ${tva.e_MediaLocator.elementize()}`, loc, errno?errno:"AU001");
 	}
 
 
