@@ -75,7 +75,7 @@ class SLEPR {
 
         function handleErrors(response) {
             if (!response.ok) {
-                throw Error(response.statusText);
+                throw Error(`fetch() returned (${response.status}) "${response.statusText}"`);
             }
             return response;
         }
