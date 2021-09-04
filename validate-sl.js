@@ -19,7 +19,7 @@ const commandLineArgs=require('command-line-args');
 
 // fetch API for node.js - https://www.npmjs.com/package/node-fetch
 const fetch=require('node-fetch');
-
+const fetcherr=require("./fetch-err-handler.js");
 
 // pauls useful tools
 const phlib=require('./phlib/phlib.js');
@@ -42,8 +42,6 @@ const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","s
 
 
 
-
-
 /**
  * Process the service list specificed for errors and display them
  *
@@ -51,21 +49,13 @@ const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","s
  * @param {Object} res  The HTTP response to be sent to the client
  */ 
 function processQuery(req, res) {
-
-	function handleErrors(response) {
-		if (!response.ok) {
-			throw Error(`fetch() returned (${response.status}) "${response.statusText}"`);
-		}
-		return response;
-	}
-
     if (isEmpty(req.query)) {
 		ui.drawSLForm(true, res);
 		res.end();
 	}
 	else if (req && req.query && req.query.SLurl) {
 		fetch(req.query.SLurl)
-			.then(handleErrors)
+			.then(fetcherr.handleErrors)
 			.then(response => response.text())
 			.then(res=>slcheck.validateServiceList(res))
 			.then(errs=>ui.drawSLForm(true, res, req.query.SLurl, null, errs))

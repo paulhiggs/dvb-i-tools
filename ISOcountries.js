@@ -1,6 +1,8 @@
 /* jshint esversion: 8 */
 
 const fetch=require('node-fetch');
+const fetcherr=require("./fetch-err-handler.js");
+
 const fs=require("fs");
 
 
@@ -69,16 +71,8 @@ module.exports = class ISOcountries {
 	loadCountriesFromURL(countriesURL, purge=false) {
 		console.log(`retrieving countries from ${countriesURL} using fetch()`);
 		if (purge) this.reset();
-
-		function handleErrors(response) {
-			if (!response.ok) {
-				throw Error(`fetch() returned (${response.status}) "${response.statusText}"`);
-			}
-			return response;
-		}
-		
 		fetch(countriesURL)
-			.then(handleErrors)
+			.then(fetcherr.handleErrors)
 			.then(response => response.text())
 			.then(responseText => this.countriesList=loadCountryData(responseText))
 			.catch(error => console.log(`error (${error}) retrieving ${countriesURL}`));

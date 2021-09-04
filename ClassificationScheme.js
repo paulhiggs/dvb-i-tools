@@ -8,6 +8,7 @@
 const fs=require('fs');
 const libxml=require('libxmljs2');
 const fetch=require('node-fetch');
+const fetcherr=require("./fetch-err-handler.js");
 
 const {AvlTree}=require('@datastructures-js/binary-search-tree');
 
@@ -87,16 +88,9 @@ module.exports = class ClassificationScheme {
      * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded 
      */
     loadFromURL(csURL, leafNodesOnly=false) {
-        
-		function handleErrors(response) {
-			if (!response.ok) {
-				throw Error(`fetch() returned (${response.status}) "${response.statusText}"`);
-			}
-			return response;
-		}
 		console.log(`retrieving CS (${leafNodesOnly?"all":"leaf"} nodes) from ${csURL} via fetch()`); 
 		fetch(csURL)
-			.then(handleErrors)
+			.then(fetcherr.handleErrors)
 			.then(response => response.text())
 			.then(strXML => loadClassificationScheme(libxml.parseXmlString(strXML), leafNodesOnly).forEach(e=>{this.insertValue(e, true);}))
 			.catch(error => console.log(`error (${error}) retrieving ${csURL}`));

@@ -54,7 +54,7 @@ const {isEmpty, readmyfile}=require("./utils.js");
 const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","selfsigned.crt");
 
 
-
+const fetcherr=require("./fetch-err-handler.js");
 
 
 
@@ -66,21 +66,13 @@ const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","s
  * @param {Object} res  The HTTP response to be sent to the client
  */ 
 function processSLQuery(req, res) {
-
-	function handleErrors(response) {
-		if (!response.ok) {
-			throw Error(`fetch() returned (${response.status}) "${response.statusText}"`);
-		}
-		return response;
-	}
-
     if (isEmpty(req.query)) {
 		ui.drawSLForm(true, res);
 		res.end();
 	}
 	else if (req && req.query && req.query.SLurl) {
 		fetch(req.query.SLurl)
-			.then(handleErrors)
+			.then(fetcherr.handleErrors)
 			.then(response => response.text())
 			.then(res=>slcheck.validateServiceList(res))
 			.then(errs=>ui.drawSLForm(true, res, req.query.SLurl, null, errs))
@@ -143,21 +135,13 @@ function processSLFile(req, res) {
  * @param {Object} res The HTTP response to be sent to the client
  */ 
  function processCGQuery(req, res) {
-
-	function handleErrors(response) {
-		if (!response.ok) {
-			throw Error(`fetch() returned (${response.status}) "${response.statusText}"`);
-		}
-		return response;
-	}
-
     if (isEmpty(req.query)) {
 		ui.drawCGForm(true, cgcheck.supportedRequests, res);
 		res.end();
 	}  
     else if (req && req.query && req.query.CGurl) {
 		fetch(req.query.CGurl)
-			.then(handleErrors)
+			.then(fetcherr.handleErrors)
 			.then(function (response) {return response.text();})
 			.then(function (res) {return cgcheck.validateContentGuide(res, req.body.requestType);})
 			.then(function (errs) {return ui.drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, null, errs);})

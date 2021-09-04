@@ -5,6 +5,7 @@
  */
 const fs=require('fs');
 const fetch=require('node-fetch');
+const fetcherr=require("./fetch-err-handler.js");
 
 const ClassificationScheme=require("./ClassificationScheme.js");
 
@@ -16,17 +17,10 @@ module.exports = class Role  extends ClassificationScheme {
      * @param {String} rolesURL URL to the classification scheme
      */
     loadFromURL(rolesURL) {
-        
-		function handleErrors(response) {
-			if (!response.ok) {
-				throw Error(`fetch() returned (${response.status}) "${response.statusText}"`);
-			}
-			return response;
-		}
 		console.log(`retrieving Roles from ${rolesURL} via fetch()`);
 
 		fetch(rolesURL)
-			.then(handleErrors)
+			.then(fetcherr.handleErrors)
 			.then(response => response.text())
 			.then(roles => roles.split('\n').forEach(e=>{this.insertValue(e.trim(), true);}))
 			.catch(error => console.log(`error (${error}) retrieving ${rolesURL}`));

@@ -13,6 +13,7 @@ const commandLineArgs=require('command-line-args');
 const favicon=require("serve-favicon");
 
 const fetch=require("node-fetch");
+const fetcherr=require("./fetch-err-handler.js");
 
 // morgan - https://github.com/expressjs/morgan
 const morgan=require("morgan");
@@ -48,21 +49,13 @@ var cgcheck=null;
  * @param {Object} res The HTTP response to be sent to the client
  */ 
 function processQuery(req, res) {
-
-	function handleErrors(response) {
-		if (!response.ok) {
-			throw Error(`fetch() returned (${response.status}) "${response.statusText}"`);
-		}
-		return response;
-	}
-
     if (isEmpty(req.query)) {
 		ui.drawCGForm(true, cgcheck.supportedRequests, res);
 		res.end();
 	}  
     else if (req && req.query && req.query.CGurl) {
 		fetch(req.query.CGurl)
-			.then(handleErrors)
+			.then(fetcherr.handleErrors)
 			.then(function (response) {return response.text();})
 			.then(function (res) {return cgcheck.validateContentGuide(res.replace(/(\r\n|\n|\r|\t)/gm, ""), req.body.requestType);})
 			.then(function (errs) {return ui.drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, null, errs);})

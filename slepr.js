@@ -8,6 +8,7 @@ const libxml=require('libxmljs2');
 
 // Fetch() API for node.js- https://www.npmjs.com/package/node-fetch
 const fetch=require('node-fetch');
+const fetcherr=require("./fetch-err-handler.js");
 
 const {xPath, isIn}=require("./utils.js");
 
@@ -72,18 +73,11 @@ class SLEPR {
      * @param {string} filename   filename of the master XML document
      */
     /* public */ loadServiceListRegistry(filename) {
-
-        function handleErrors(response) {
-            if (!response.ok) {
-                throw Error(`fetch() returned (${response.status}) "${response.statusText}"`);
-            }
-            return response;
-        }
         console.log(`loading SLR from ${filename}`);
 
         if (patterns.isHTTPURL(filename)) {
             fetch(filename)
-                .then(handleErrors)
+                .then(fetcherr.handleErrors)
                 .then(response => response.text())
                 .then(responseText => masterSLEPR=responseText.replace(/(\r\n|\n|\r|\t)/gm,""))
                 .catch(error => {console.log(`error (${error}) retrieving ${filename}`); masterSLEPR=EMPTY_SLEPR;}); 

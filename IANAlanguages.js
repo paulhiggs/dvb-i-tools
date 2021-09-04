@@ -1,6 +1,8 @@
 /* jshint esversion: 8 */
 
 const fetch=require('node-fetch');
+const fetcherr=require("./fetch-err-handler.js");
+
 const fs=require('fs');
 
 const {isIn, isIni}=require('./utils.js');
@@ -123,16 +125,8 @@ module.exports = class IANAlanguages {
 	loadLanguagesFromURL(languagesURL, purge=false) {
 		console.log(`retrieving languages from ${languagesURL} using fetch()`);
 		if (purge) this.empty();
-		
-		function handleErrors(response) {
-			if (!response.ok) {
-				throw Error(`fetch() returned (${response.status}) "${response.statusText}"`);
-			}
-			return response;
-		}
-		
 		fetch(languagesURL)
-			.then(handleErrors)
+			.then(fetcherr.handleErrors)
 			.then(response => response.text())
 			.then(responseText => this.processLanguageData(responseText))
 			.catch(error => console.log("error ("+error+") retrieving "+languagesURL));
