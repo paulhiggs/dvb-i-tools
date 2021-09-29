@@ -1,4 +1,3 @@
-/*jshint esversion: 6 */
 
 // node.js - https://nodejs.org/en/
 // express framework - https://expressjs.com/en/4x/api.html

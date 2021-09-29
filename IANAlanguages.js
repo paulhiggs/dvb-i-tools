@@ -1,6 +1,4 @@
-/* jshint esversion: 8 */
-
-const fetch=require('node-fetch');
+const fetch=import('node-fetch');
 const fetcherr=require("./fetch-err-handler.js");
 
 const fs=require('fs');

@@ -1,4 +1,3 @@
-/* jshint esversion: 8 */
 /**
  * ClassificationScheme.js
  * 
@@ -7,7 +6,7 @@
  */
 const fs=require('fs');
 const libxml=require('libxmljs2');
-const fetch=require('node-fetch');
+const fetch=import('node-fetch');
 const fetcherr=require("./fetch-err-handler.js");
 
 const {AvlTree}=require('@datastructures-js/binary-search-tree');

@@ -1,7 +1,5 @@
-/* jshint esversion: 8 */
 // pattern_checks.js
   
-
 const e_pct="&#x25;",
       e_quot="&#x22;",
 	  e_lowalpha="a-z",

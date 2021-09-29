@@ -1,4 +1,3 @@
-/* jshint esversion: 8 */
 // node.js - https://nodejs.org/en/
 // express framework - https://expressjs.com/en/4x/api.html
 const express=require("express");
@@ -23,7 +22,7 @@ const fs=require("fs"), path=require("path");
 const commandLineArgs=require('command-line-args');
 
 // fetch API for node.js - https://www.npmjs.com/package/node-fetch
-const fetch=require('node-fetch');
+const fetch=import('node-fetch');
 
 const https=require("https");
 

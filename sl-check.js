@@ -1,4 +1,3 @@
-/* jshint esversion: 8 */
 
 // libxmljs2 - github.com/marudor/libxmljs2
 const libxml=require("libxmljs2");

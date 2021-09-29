@@ -1,5 +1,3 @@
-/*jshint esversion: 8 */
-
 // node.js - https://nodejs.org/en/
 // express framework - https://expressjs.com/en/4x/api.html
 const express=require('express');
@@ -20,9 +18,6 @@ const fs=require('fs'), path=require('path');
 // command line arguments - https://www.npmjs.com/package/command-line-args
 const commandLineArgs=require('command-line-args');
 const commandLineUsage = require('command-line-usage');
-
-// Fetch() API for node.js- https://www.npmjs.com/package/node-fetch
-const fetch=require('node-fetch');
 
 const https=require('https');
 const keyFilename=path.join('.','selfsigned.key'), certFilename=path.join('.','selfsigned.crt');

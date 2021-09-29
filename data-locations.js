@@ -1,4 +1,3 @@
-/* jshint esversion: 8 */
 // data-locations.js
 
 const path=require("path");

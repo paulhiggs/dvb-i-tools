@@ -1,10 +1,9 @@
-/* jshint esversion: 8 */
 /**
  * Manages Classification Scheme checking based in a flat list of roles
  * 
  */
 const fs=require('fs');
-const fetch=require('node-fetch');
+const fetch=import('node-fetch');
 const fetcherr=require("./fetch-err-handler.js");
 
 const ClassificationScheme=require("./ClassificationScheme.js");
