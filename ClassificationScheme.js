@@ -6,7 +6,7 @@
  */
 const fs=require('fs');
 const libxml=require('libxmljs2');
-const fetch=import('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const fetcherr=require("./fetch-err-handler.js");
 
 const {AvlTree}=require('@datastructures-js/binary-search-tree');

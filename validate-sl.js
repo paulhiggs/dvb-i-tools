@@ -18,11 +18,8 @@ const fs=require("fs"), path=require("path");
 const commandLineArgs=require('command-line-args');
 
 // fetch API for node.js - https://www.npmjs.com/package/node-fetch
-const fetch=import('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const fetcherr=require("./fetch-err-handler.js");
-
-// pauls useful tools
-const phlib=require('./phlib/phlib.js');
 
 const ui=require('/ui.js');
 

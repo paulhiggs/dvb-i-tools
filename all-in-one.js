@@ -22,7 +22,8 @@ const fs=require("fs"), path=require("path");
 const commandLineArgs=require('command-line-args');
 
 // fetch API for node.js - https://www.npmjs.com/package/node-fetch
-const fetch=import('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const fetcherr=require("./fetch-err-handler.js");
 
 const https=require("https");
 
@@ -51,10 +52,6 @@ const globals=require("./globals.js");
 const {isEmpty, readmyfile}=require("./utils.js");
 
 const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","selfsigned.crt");
-
-
-const fetcherr=require("./fetch-err-handler.js");
-
 
 
 

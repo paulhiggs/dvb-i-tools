@@ -6,7 +6,7 @@ const fs=require("fs");
 const libxml=require('libxmljs2');
 
 // Fetch() API for node.js- https://www.npmjs.com/package/node-fetch
-const fetch=import('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const fetcherr=require("./fetch-err-handler.js");
 
 const {xPath, isIn}=require("./utils.js");

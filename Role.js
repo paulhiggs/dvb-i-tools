@@ -3,7 +3,7 @@
  * 
  */
 const fs=require('fs');
-const fetch=import('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const fetcherr=require("./fetch-err-handler.js");
 
 const ClassificationScheme=require("./ClassificationScheme.js");
