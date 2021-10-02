@@ -4,9 +4,6 @@ const express=require("express");
 
 const cors=require("cors");
 
-//const cluster = require('cluster');
-//const totalCPUs = require('os').cpus().length;
-
 // morgan - https://github.com/expressjs/morgan
 const morgan=require("morgan");
 
@@ -26,9 +23,6 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const fetcherr=require("./fetch-err-handler.js");
 
 const https=require("https");
-
-// pauls useful tools
-const phlib=require('./phlib/phlib.js');
 
 // the service list validation
 const ServiceListCheck=require('./sl-check.js');
@@ -104,7 +98,6 @@ function processSLFile(req, res) {
             SLxml=req.files.SLfile.data;
         }
         catch (err) {
-			// this should not happen as file is read and uploaded through the browser
             errs.pushCode("PR101", `reading of FILE (${req.files.SLfile.name}) failed`);
         }
 		if (SLxml)
