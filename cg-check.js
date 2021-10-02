@@ -90,8 +90,8 @@ function CountChildElements(node, childElementName) {
 	let rv=true, thisElem=phlib.elementize(`${parentElement.parent().name()}.${parentElement.name()}`);
 	// check that each of the specifid childElements exists
 	childElements.forEach(elem => {
-		let _min=elem.hasOwnProperty('minOccurs')?elem.minOccurs:1;
-		let _max=elem.hasOwnProperty('maxOccurs')?elem.maxOccurs:1;
+		let _min=elem?.minOccurs ? elem.minOccurs : 1;
+		let _max=elem?.maxOccurs ? elem.maxOccurs : 1;
 		let count=CountChildElements(parentElement, elem.name);
 		if (count==0 && _min!=0) {
 			errs.pushCode(errCode?`${errCode}-1`:"TE010", `Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`);
