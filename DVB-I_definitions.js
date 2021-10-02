@@ -9,7 +9,7 @@ const DVB_RELATED_CS_v1 = "urn:dvb:metadata:cs:HowRelatedCS:2019";
 const DVB_RELATED_CS_v2 = "urn:dvb:metadata:cs:HowRelatedCS:2020";
 
 
-module.exports = Object.freeze({
+export const dvbi = {
 	A177v1_Namespace: "urn:dvb:metadata:servicediscovery:2019",
     A177v2_Namespace: "urn:dvb:metadata:servicediscovery:2020",
     A177v3_Namespace: "urn:dvb:metadata:servicediscovery:2021",
@@ -282,7 +282,5 @@ module.exports = Object.freeze({
 	e_URI: "URI",
 	e_UriBasedLocation: "UriBasedLocation",
 	e_VideoConformancePoint: "VideoConformancePoint",
-	e_WildcardPostcode: "WildcardPostcode",
-	
-	__zzzDVB_IENDzzz__: null
-});
+	e_WildcardPostcode: "WildcardPostcode"
+};

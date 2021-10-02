@@ -1,26 +1,26 @@
 // libxmljs2 - github.com/marudor/libxmljs2
-const libxml=require("libxmljs2");
+import { parseXmlString } from "libxmljs2";
 
-const phlib=require('./phlib/phlib');
+import { elementize, quote } from './phlib/phlib.js';
 
-const fs=require("fs");
+import { readFileSync } from "fs";
 
-const ErrorList=require("./ErrorList.js");
-const ClassificationScheme=require("./ClassificationScheme.js");
-const Role=require("./Role.js");
-const IANAlanguages=require("./IANAlanguages.js");
+import ErrorList from "./ErrorList.js";
+import ClassificationScheme from "./ClassificationScheme.js";
+import Role from "./Role.js";
+import IANAlanguages from "./IANAlanguages.js";
 
-const dvbi=require("./DVB-I_definitions.js");
-const tva=require("./TVA_definitions.js");
-const mpeg7=require("./MPEG7_definitions.js");
+import { dvbi } from "./DVB-I_definitions.js";
+import { tva } from "./TVA_definitions.js";
+import { mpeg7 } from "./MPEG7_definitions.js";
 
-const {isJPEGmime, isPNGmime}=require("./MIME_checks.js");
-const {isCRIDURI, isTAGURI}=require("./URI_checks.js");
-const {xPath, xPathM, isIn, isIni, unEntity, parseISOduration}=require("./utils.js");
+import { isJPEGmime, isPNGmime } from "./MIME_checks.js";
+import { isCRIDURI, isTAGURI } from "./URI_checks.js";
+import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration } from "./utils.js";
 
-const patterns=require("./pattern_checks.js");
+import { isHTTPURL, isDVBLocator, isUTCDateTime } from "./pattern_checks.js";
 
-const locs=require("./data-locations.js");
+import { IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, DVBI_CreditsItemRoles, DVBIv2_CreditsItemRoles, TVAschema } from "./data-locations.js";
 
 
 // convenience/readability values
@@ -87,7 +87,7 @@ function CountChildElements(node, childElementName) {
 		errs.pushCode(errCode?`${errCode}-0`:"TE000", "checkTopElementsAndCardinality() called with a 'null' element to check");
 		return false;
 	}
-	let rv=true, thisElem=phlib.elementize(`${parentElement.parent().name()}.${parentElement.name()}`);
+	let rv=true, thisElem=elementize(`${parentElement.parent().name()}.${parentElement.name()}`);
 	// check that each of the specifid childElements exists
 	childElements.forEach(elem => {
 		let _min=elem?.minOccurs ? elem.minOccurs : 1;
@@ -146,7 +146,7 @@ function checkAttributes(parentElement, requiredAttributes, optionalAttributes, 
 	
 	parentElement.attrs().forEach(attr => {
 		if (!isIn(requiredAttributes, attr.name()) && !isIn(optionalAttributes, attr.name())) {
-			let p=`${phlib.elementize(`${parentElement.parent()?`${parentElement.parent().name()}.`:""}${parentElement.name()}`)}`;
+			let p=`${elementize(`${parentElement.parent()?`${parentElement.parent().name()}.`:""}${parentElement.name()}`)}`;
 			errs.pushCode(errCode?`${errCode}-2`:"AT002", 
 				`${attr.name().attribute()} is not permitted in ${p}`);
 		}
@@ -259,7 +259,7 @@ function CheckLanguage(validator, errs, lang, loc=null, errno=null ) {
 }
 
 
-module.exports = class ContentGuideCheck {
+export default class ContentGuideCheck {
 
 	constructor(useURLs, preloadedLanguageValidator=null,  preloadedGenres=null, preloadedCreditItemRoles=null) {
 
@@ -268,7 +268,7 @@ module.exports = class ContentGuideCheck {
 		else {
 			console.log("loading languages...");
 			this.knownLanguages=new IANAlanguages();
-			this.knownLanguages.loadLanguages(useURLs?{url: locs.IANA_Subtag_Registry.url, purge: true}:{file: locs.IANA_Subtag_Registry.file, purge: true});
+			this.knownLanguages.loadLanguages(useURLs?{url: IANA_Subtag_Registry.url, purge: true}:{file: IANA_Subtag_Registry.file, purge: true});
 		}
 
 		if (preloadedGenres) 
@@ -277,8 +277,8 @@ module.exports = class ContentGuideCheck {
 			console.log("loading classification schemes...");
 			this.allowedGenres=new ClassificationScheme();
 			this.allowedGenres.loadCS(useURLs?
-						{urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url]}:
-						{files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubject.file]});
+						{urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
+						{files:[TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file]});
 		}
 		
 		if (preloadedCreditItemRoles)
@@ -287,12 +287,12 @@ module.exports = class ContentGuideCheck {
 			console.log("loading CreditItem roles...");
 			this.allowedCreditItemRoles=new Role();
 			this.allowedCreditItemRoles.loadRoles(useURLs?
-					{urls:[locs.DVBI_CreditsItemRoles.url, locs.DVBIv2_CreditsItemRoles.url]}:
-					{files:[locs.DVBI_CreditsItemRoles.file, locs.DVBIv2_CreditsItemRoles.file]});
+					{urls:[DVBI_CreditsItemRoles.url, DVBIv2_CreditsItemRoles.url]}:
+					{files:[DVBI_CreditsItemRoles.file, DVBIv2_CreditsItemRoles.file]});
 		}
 
 		console.log("loading Schemas...");
-		this.TVAschema=libxml.parseXmlString(fs.readFileSync(locs.TVAschema.file));
+		this.TVAschema=parseXmlString(readFileSync(TVAschema.file));
 
 		this.supportedRequests=supportedRequests;
 
@@ -609,7 +609,7 @@ module.exports = class ContentGuideCheck {
 				case tva.e_MinimumAge:
 				case tva.e_ParentalRating:
 					if (countParentalGuidance==1 && pgChild.name()!=tva.e_MinimumAge)
-						errs.pushCode(errCode?`${errCode}-1`:"PG011", `first ${tva.e_ParentalGuidance.elementize()} element must contain ${phlib.elementize("mpeg7:"+tva.e_MinimumAge)}`);
+						errs.pushCode(errCode?`${errCode}-1`:"PG011", `first ${tva.e_ParentalGuidance.elementize()} element must contain ${elementize("mpeg7:"+tva.e_MinimumAge)}`);
 					
 					if (pgChild.name()==tva.e_MinimumAge && countParentalGuidance!=1)
 						errs.pushCode(errCode?`${errCode}-2`:"PG012", `${tva.e_MinimumAge.elementize()} must be in the first ${tva.e_ParentalGuidance.elementize()} element`);
@@ -627,7 +627,7 @@ module.exports = class ContentGuideCheck {
 					}
 					
 					if (unEntity(pgChild.text()).length > dvbi.MAX_EXPLANATORY_TEXT_LENGTH)
-						errs.pushCode(errCode?`${errCode}-5`:"PG005", `length of ${tva.e_ExplanatoryText.elementize()} cannot exceed ${dvbi.MAX_EXPLANATORY_TEXT_LENGTH} characters`);
+						errs.pushCode(errCode?`${errCode}-5`:"PG005", `length of ${tva._ExplanatoryText.elementize()} cannot exceed ${dvbi.MAX_EXPLANATORY_TEXT_LENGTH} characters`);
 					break;
 			}
 		}
@@ -786,11 +786,11 @@ module.exports = class ContentGuideCheck {
 				checkAttributes(MediaUri, [tva.a_contentType], [], errs, "IRM002");
 				if (MediaUri.attr(tva.a_contentType)) {
 					let contentType=MediaUri.attr(tva.a_contentType).value();
-					if (!isJPEGmime(contentType) && !isPNGmime(contentType)) 
-						errs.pushCode("IRM003", `${tva.a_contentType.attribute(tva.e_MediaUri)}=${contentType.quote()} is not valid for a ${errLocation}`);
+					if (!isJPEGmime(contentType) && !isPNGmime(tva.contentType)) 
+						errs.pushCode("IRM003", `${tva.a_contentType.attribute(tva.e_MediaUri)}=${tva.contentType.quote()} is not valid for a ${errLocation}`);
 				}
 				
-				if (!patterns.isHTTPURL(MediaUri.text()))
+				if (!isHTTPURL(MediaUri.text()))
 					errs.pushCode("IRM004", `${tva.e_MediaUri.elementize()}=${MediaUri.text().quote()} is not a valid Image URL`, "invalid URL");
 			}
 			else errs.pushCode("IRM001", `${tva.e_MediaUri.elementize()} not specified for Promotional Still Image (${tva.a_href.attribute(tva.e_HowRelated)}=${tva.cs_PromotionalStillImage})`);
@@ -833,7 +833,7 @@ module.exports = class ContentGuideCheck {
 		
 		function checkLinkCount(errs, count, label, errCode) {
 			if (count>1) {
-				errs.pushCode(errCode, `more than 1 ${phlib.quote(`${label} pagination`)} link is specified`) ;
+				errs.pushCode(errCode, `more than 1 ${quote(`${label} pagination`)} link is specified`) ;
 				return true;
 			}
 			return false;
@@ -868,7 +868,7 @@ module.exports = class ContentGuideCheck {
 					}	
 				let MediaURI=RelatedMaterial.get(xPathM(SCHEMA_PREFIX, [tva.e_MediaLocator, tva.e_MediaUri]), CG_SCHEMA);
 				if (MediaURI) {
-					if (!patterns.isHTTPURL(MediaURI.text()))
+					if (!isHTTPURL(MediaURI.text()))
 						errs.pushCode("VP011", `${tva.e_MediaUri.elementize()}=${MediaURI.text().quote()} is not a valid Pagination URL`, "invalid URL");
 				}
 				else
@@ -1107,7 +1107,7 @@ module.exports = class ContentGuideCheck {
 									if (Format && ((isJPEGmime(contentType) && !isJPEG) || (isPNGmime(contentType) && !isPNG))) 
 										errs.pushCode("PS033", `conflicting media types in ${tva.e_Format.elementize()} and ${tva.e_MediaUri.elementize()} for ${Location}`);
 								}
-								if (!patterns.isHTTPURL(child.text()))
+								if (!isHTTPURL(child.text()))
 									errs.pushCode("PS034", `${tva.e_MediaUri.elementize()}=${child.text().quote()} is not a valid Image URL`, "invalid URL");
 							}
 						});
@@ -1216,7 +1216,7 @@ module.exports = class ContentGuideCheck {
 
 			checkAttributes(Title, requiredAttributes, optionalAttributes, errs, errCode?`${errCode}-1`:"VT001");
 			
-			let titleType=Title.attr(tva.a_type) ? Title.attr(tva.a_type).value() : mpeg7.DEFAULT_TITLE_TYPE;
+			let titleType=Title.attr(tva.a_type) ? Title.attr(tva.a_type).value() : DEFAULT_TITLE_TYPE;
 			let titleLang=this.GetLanguage(this.knownLanguages, errs, Title, parentLanguage, false, "VT002");
 			let titleStr=unEntity(Title.text());
 			
@@ -1978,7 +1978,7 @@ module.exports = class ContentGuideCheck {
 	/* private */  ValidateAVAttributes(CG_SCHEMA, SCHEMA_PREFIX, AVAttributes, errs) {
 		
 		function isValidAudioMixType(mixType) { return [mpeg7.AUDIO_MIX_MONO, mpeg7.AUDIO_MIX_STEREO, mpeg7.AUDIO_MIX_5_1].includes(mixType); }
-		function isValidAudioLanguagePurpose(purpose) {	return [dvbi.AUDIO_PURPOSE_MAIN,dvbi.AUDIO_PURPOSE_DESCRIPTION].includes(purpose);	}
+		function isValidAudioLanguagePurpose(purpose) {	return [dvbi.AUDIO_PURPOSE_MAIN, dvbi.AUDIO_PURPOSE_DESCRIPTION].includes(purpose);	}
 		
 		if (!AVAttributes) {
 			errs.pushCode("AV000", "ValidateAVAttributes() called with AVAttributes==null");
@@ -2176,15 +2176,15 @@ module.exports = class ContentGuideCheck {
 					
 				let g1href=checkGenre(Genre1, errs, "ID011");
 				if (g1href && !isAvailability(g1href))
-					errs.pushCode("ID012", `first ${phlib.elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a media or fepg availability indicator`);
+					errs.pushCode("ID012", `first ${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a media or fepg availability indicator`);
 
 				let g2href=checkGenre(Genre2, errs, "ID013");
 				if (g2href && !isAvailability(g2href))
-					errs.pushCode("ID014", `second ${phlib.elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a media or fepg availability indicator`);
+					errs.pushCode("ID014", `second ${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a media or fepg availability indicator`);
 				
 				if (Genre1 && Genre2) {
 					if ((isMediaAvailability(g1href) && isMediaAvailability(g2href)) || (isEPGAvailability(g1href) && isEPGAvailability(g2href)))
-						errs.pushCode("ID015", `${phlib.elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} elements must indicate different availabilities`);
+						errs.pushCode("ID015", `${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} elements must indicate different availabilities`);
 				}
 				break;
 			case tva.e_ScheduleEvent:
@@ -2198,7 +2198,7 @@ module.exports = class ContentGuideCheck {
 								errs.pushCode("ID018", `${tva.a_type.attribute(Genre.name())} must be ${tva.GENRE_TYPE_OTHER.quote()} or omitted`);
 						}
 						else 
-							errs.pushCode("ID017", `${phlib.elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a restart link indicator`);
+							errs.pushCode("ID017", `${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a restart link indicator`);
 					}
 				}	
 				break;
@@ -2247,7 +2247,7 @@ module.exports = class ContentGuideCheck {
 		
 		// <RelatedMaterial>
 		switch (VerifyType) {
-			case tva.e_ScheduleEvent:
+			case tva.e_OnDemandProgram:
 				let RelatedMaterial=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial), CG_SCHEMA);
 				if (RelatedMaterial) {
 					if (this.ValidateRestartRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, errs))
@@ -2294,7 +2294,7 @@ module.exports = class ContentGuideCheck {
 		if (allowedContentTypes.includes(node.attr(tva.a_contentType).value())) {
 			switch (node.attr(tva.a_contentType).value()) {
 				case dvbi.XML_AIT_CONTENT_TYPE:
-					if (!patterns.isHTTPURL(node.text()))
+					if (!isHTTPURL(node.text()))
 						errs.pushCode(errcode?`${errcode}-2`:"PA002", `${node.name().elementize()}=${node.text().quote()} is not a valid AIT URL`, "invalid URL", node.line());
 					break;
 	/*			case dvbi.HTML5_APP:
@@ -2471,7 +2471,7 @@ module.exports = class ContentGuideCheck {
 				 {name:tva.e_PublishedDuration},
 				 {name:tva.e_ActualStartTime, minOccurs:0}, 
 				 {name:tva.e_FirstShowing, minOccurs:0 }, 
-				 {name: tva.e_Free, minOccurs:0}], 
+				 {name:tva.e_Free, minOccurs:0}], 
 				false, errs, "SE002");
 			
 			// <Program>
@@ -2493,7 +2493,7 @@ module.exports = class ContentGuideCheck {
 			// <ProgramURL>
 			let ProgramURL=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_ProgramURL), CG_SCHEMA);
 			if (ProgramURL) 
-				if (!patterns.isDVBLocator(ProgramURL.text()))
+				if (!isDVBLocator(ProgramURL.text()))
 					errs.pushCode("SE021", `${tva.e_ScheduleEvent}.${tva.e_ProgramURL} (${ProgramURL.text()}) is not a valid DVB locator`);
 			
 			// <InstanceDescription>
@@ -2505,7 +2505,7 @@ module.exports = class ContentGuideCheck {
 			let pstElem=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_PublishedStartTime), CG_SCHEMA);
 			if (pstElem) {
 
-				if (patterns.isUTCDateTime(pstElem.text())) {
+				if (isUTCDateTime(pstElem.text())) {
 					let PublishedStartTime=new Date(pstElem.text());
 					
 					if (scheduleStart && (PublishedStartTime < scheduleStart)) 
@@ -2526,7 +2526,7 @@ module.exports = class ContentGuideCheck {
 			
 			// <ActualStartTime> 
 			let astElem=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_ActualStartTime), CG_SCHEMA);
-			if (astElem && !patterns.isUTCDateTime(astElem.text())) 
+			if (astElem && !isUTCDateTime(astElem.text())) 
 				errs.pushCode("SE051", `${tva.e_ActualStartTime.elementize()} is not expressed in UTC format (${astElem.text()})`);
 
 			// <FirstShowing>
@@ -2662,7 +2662,7 @@ module.exports = class ContentGuideCheck {
 		let CG=null;
 
 		if (CGtext) try {
-			CG=libxml.parseXmlString(CGtext);
+			CG=parseXmlString(CGtext);
 		} catch (err) {
 			errs.pushCode("CG000", `XML parsing failed: ${err.message}`);
 		}
@@ -2671,7 +2671,7 @@ module.exports = class ContentGuideCheck {
 		errs.loadDocument(CGtext);
 
 		let prettyXML=CG.toString();
-		let formattedCG=libxml.parseXmlString(prettyXML);
+		let formattedCG=parseXmlString(prettyXML);
 		if (!formattedCG.validate(this.TVAschema)) {
 			let lines=prettyXML.split('\n');
 			formattedCG.validationErrors.forEach(ve => {
@@ -2804,4 +2804,4 @@ module.exports = class ContentGuideCheck {
 			resolve(errs);
 		});
 	}
-};
+}

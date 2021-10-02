@@ -1,51 +1,59 @@
 // node.js - https://nodejs.org/en/
 // express framework - https://expressjs.com/en/4x/api.html
-const express=require("express");
+import express from "express";
 
-const cors=require("cors");
+import cors from "cors";
 
 // morgan - https://github.com/expressjs/morgan
-const morgan=require("morgan");
+import morgan, { token } from "morgan";
 
 // file upload for express - https://github.com/richardgirges/express-fileupload
-const fileupload=require("express-fileupload");
+import fileupload from "express-fileupload";
 
 // favourite icon - https://www.npmjs.com/package/serve-favicon
-const favicon=require("serve-favicon");
+import favicon from "serve-favicon";
 
-const fs=require("fs"), path=require("path");
+import fs from "fs";
+import { join } from "path";
 
 // command line arguments - https://github.com/75lb/command-line-args
-const commandLineArgs=require('command-line-args');
+import commandLineArgs from 'command-line-args';
 
 // fetch API for node.js - https://www.npmjs.com/package/node-fetch
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const fetcherr=require("./fetch-err-handler.js");
+import { handleErrors } from "./fetch-err-handler.js";
 
-const https=require("https");
+import { createServer } from "https";
 
 // the service list validation
-const ServiceListCheck=require('./sl-check.js');
+import ServiceListCheck from './sl-check.js';
 var slcheck=null;
 
 // the content guide validation
-const ContentGuideCheck=require('./cg-check.js');
+import ContentGuideCheck from './cg-check.js';
 var cgcheck=null;
 
 // the service list registrt
-const SLEPR=require('./slepr.js');
+import SLEPR from './slepr.js';
 var csr=null;
 
 // error buffer
-const ErrorList=require("./ErrorList.js");
+import ErrorList from "./ErrorList.js";
 
-const ui=require("./ui.js");
+import { drawSLForm, drawCGForm } from "./ui.js";
 
-const locs=require("./data-locations.js");
-const globals=require("./globals.js");
-const {isEmpty, readmyfile}=require("./utils.js");
+import { Default_SLEPR, IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, ISO3166 } from "./data-locations.js";
+import { HTTPPort } from "./globals.js";
+import { isEmpty, readmyfile } from "./utils.js";
 
-const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","selfsigned.crt");
+import IANAlanguages from "./IANAlanguages.js";
+import ISOcountries from "./ISOcountries.js";
+import ClassificationScheme from "./ClassificationScheme.js";
+
+
+
+
+const keyFilename=join(".","selfsigned.key"), certFilename=join(".","selfsigned.crt");
 
 
 
@@ -57,25 +65,25 @@ const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","s
  */ 
 function processSLQuery(req, res) {
     if (isEmpty(req.query)) {
-		ui.drawSLForm(true, res);
+		drawSLForm(true, res);
 		res.end();
 	}
 	else if (req && req.query && req.query.SLurl) {
 		fetch(req.query.SLurl)
-			.then(fetcherr.handleErrors)
+			.then(handleErrors)
 			.then(response => response.text())
 			.then(res=>slcheck.validateServiceList(res))
-			.then(errs=>ui.drawSLForm(true, res, req.query.SLurl, null, errs))
+			.then(errs=>drawSLForm(true, res, req.query.SLurl, null, errs))
 			.then(res=>res.end())
 			.catch(error => {
 				console.log(error);
 				console.log(`error (${error}) handling ${req.query.SLurl}`) ;
-				ui.drawSLForm(true, res, req.query.SLurl, `error (${error}) handling ${req.query.SLurl}`, null);
+				drawSLForm(true, res, req.query.SLurl, `error (${error}) handling ${req.query.SLurl}`, null);
 				res.end();
 			});
    }
    else {
-        ui.drawSLForm(true, res, req.query.SLurl, "URL not specified");
+        drawSLForm(true, res, req.query.SLurl, "URL not specified");
 		res.status(400);
 		res.end();
     }
@@ -90,7 +98,7 @@ function processSLQuery(req, res) {
  */ 
 function processSLFile(req, res) {
     if (isEmpty(req.query)) 
-        ui.drawSLForm(false, res);    
+        drawSLForm(false, res);    
 	else if (req && req.files && req.files.SLfile) {
         let SLxml=null;
         let errs=new ErrorList();
@@ -103,10 +111,10 @@ function processSLFile(req, res) {
 		if (SLxml)
 			slcheck.doValidateServiceList(SLxml.toString(), errs);
 
-        ui.drawSLForm(false, res, req.files.SLfile.name, null, errs);
+        drawSLForm(false, res, req.files.SLfile.name, null, errs);
     }
 	else {
-        ui.drawSLForm(false, res, req.files.SLfile.name, "File not specified");
+        drawSLForm(false, res, req.files.SLfile.name, "File not specified");
         res.status(400);
     }
     
@@ -125,25 +133,25 @@ function processSLFile(req, res) {
  */ 
  function processCGQuery(req, res) {
     if (isEmpty(req.query)) {
-		ui.drawCGForm(true, cgcheck.supportedRequests, res);
+		drawCGForm(true, cgcheck.supportedRequests, res);
 		res.end();
 	}  
     else if (req && req.query && req.query.CGurl) {
 		fetch(req.query.CGurl)
-			.then(fetcherr.handleErrors)
+			.then(handleErrors)
 			.then(function (response) {return response.text();})
 			.then(function (res) {return cgcheck.validateContentGuide(res, req.body.requestType);})
-			.then(function (errs) {return ui.drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, null, errs);})
+			.then(function (errs) {return drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, null, errs);})
 			.then(function (res) {res.end();})
 			.catch(function (error) {
 				console.log(error);
-				ui.drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, `error (${error}) handling ${req.query.CGurl}`);
+				drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, `error (${error}) handling ${req.query.CGurl}`);
 				res.status(400);
 				res.end();
 			});
     }
 	else {
-        ui.drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, "URL not specified");
+        drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, "URL not specified");
         res.status(400);
 		res.end();
 	}
@@ -158,7 +166,7 @@ function processSLFile(req, res) {
  */ 
 function processCGFile(req, res) {
     if (isEmpty(req.query)) 
-        ui.drawCGForm(false, cgcheck.supportedRequests, res);    
+        drawCGForm(false, cgcheck.supportedRequests, res);    
     else if (req && req.files && req.files.CGfile) {
         let CGxml=null, errs=new ErrorList(), fname="***";
 		if (req && req.files && req.files.CGfile) fname=req.files.CGfile.name;
@@ -171,10 +179,10 @@ function processCGFile(req, res) {
 		if (CGxml) 
 			cgcheck.doValidateContentGuide(CGxml.toString(), req.body.requestType, errs);
 		
-        ui.drawCGForm(false, cgcheck.supportedRequests, res, fname, req.body.requestType, null, errs);
+        drawCGForm(false, cgcheck.supportedRequests, res, fname, req.body.requestType, null, errs);
     }
 	else {
-        ui.drawCGForm(false, cgcheck.supportedRequests, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
+        drawCGForm(false, cgcheck.supportedRequests, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
         res.status(400);
 	}
     res.end();
@@ -186,23 +194,29 @@ function processCGFile(req, res) {
 let app=express();
 app.use(cors());
 
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 app.use(express.static(__dirname));
+
 app.set('view engine', 'ejs');
 app.use(fileupload());
-app.use(favicon(path.join('phlib','ph-icon.ico')));
+app.use(favicon(join('phlib','ph-icon.ico')));
 
 
-morgan.token("protocol", function getProtocol(req) {
+token("protocol", function getProtocol(req) {
     return req.protocol;
 });
-morgan.token("agent", function getAgent(req) {
+token("agent", function getAgent(req) {
     return `(${req.headers["user-agent"]})`;
 });
-morgan.token("parseErr", function getParseErr(req) {
+token("parseErr", function getParseErr(req) {
     if (req.parseErr && req.parseErr.length>0) return `(query errors=${req.parseErr.length})`;
     return "";
 });
-morgan.token("location", function getCheckedLocation(req) {
+token("location", function getCheckedLocation(req) {
 	if (req.files && req.files.SLfile) return `[${req.files.SLfile.name}]`;
     if (req.query && req.query.SLurl) return `[${req.query.SLurl}]`;
 	if (req.files && req.files.CGfile) return `[(${req.body.requestType})${req.files.CGfile.name}]`;
@@ -218,12 +232,12 @@ app.use(express.urlencoded({ extended: true }));
 // parse command line options
 const optionDefinitions=[
 	{name:'urls', alias:'u', type:Boolean, defaultValue:false},
-	{name:'port', alias:'p', type:Number, defaultValue:globals.HTTPPort.all_in_one },
-	{name:'sport', alias:'s', type:Number, defaultValue:globals.HTTPPort.all_in_one+1 },
+	{name:'port', alias:'p', type:Number, defaultValue:HTTPPort.all_in_one },
+	{name:'sport', alias:'s', type:Number, defaultValue:HTTPPort.all_in_one+1 },
 	{name:'nocsr', type:Boolean, defaultValue:false},
 	{name:'nosl', type:Boolean, defaultValue:false},
 	{name:'nocg', type:Boolean, defaultValue:false},
-	{name:'CSRfile', alias:'f', type:String, defaultValue:locs.Default_SLEPR.file},
+	{name:'CSRfile', alias:'f', type:String, defaultValue:Default_SLEPR.file},
 	{name:'CORSmode', alias: 'c', type:String, defaultValue:"library"}
 ];
  
@@ -234,22 +248,20 @@ if (!["none", "library", "manual"].includes(options.CORSmode)) {
 	process.exit(1); 
 }
 
-if (options.urls && (options.CSRfile==locs.Default_SLEPR.file))
-	options.CSRfile=locs.Default_SLEPR.url;
+if (options.urls && (options.CSRfile==Default_SLEPR.file))
+	options.CSRfile=Default_SLEPR.url;
 
-const IANAlanguages=require("./IANAlanguages.js");
+
 let knownLanguages=new IANAlanguages();
-knownLanguages.loadLanguages(options.urls?{url:locs.IANA_Subtag_Registry.url}:{file:locs.IANA_Subtag_Registry.file});
+knownLanguages.loadLanguages(options.urls?{url:IANA_Subtag_Registry.url}:{file:IANA_Subtag_Registry.file});
 
-const ClassificationScheme=require("./ClassificationScheme.js");
 let knownGenres=new ClassificationScheme();
 knownGenres.loadCS(options.urls?
-		{urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url]}:
-		{files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubject.file]});
+		{urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
+		{files:[TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file]});
 
-const ISOcountries=require("./ISOcountries.js");
 let isoCountries=new ISOcountries(false, true);
-isoCountries.loadCountries(options.urls?{url:locs.ISO3166.url}:{file:locs.ISO3166.file});
+isoCountries.loadCountries(options.urls?{url:ISO3166.url}:{file:ISO3166.file});
 
 let hasFunctions=false;
 
@@ -390,7 +402,7 @@ if (https_options.key && https_options.cert) {
 	if (options.sport==options.port)
 		options.sport=options.port+1;
 	
-	var https_server=https.createServer(https_options, app);
+	var https_server=createServer(https_options, app);
 	https_server.listen(options.sport, function(){
 		console.log(`HTTPS listening on port number ${https_server.address().port}`);
 	});

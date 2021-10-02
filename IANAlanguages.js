@@ -1,11 +1,11 @@
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const fetcherr=require("./fetch-err-handler.js");
+import { handleErrors } from "./fetch-err-handler.js";
 
-const fs=require('fs');
+import { readFile } from 'fs';
 
-const {isIn, isIni}=require('./utils.js');
+import { isIn, isIni } from './utils.js';
 
-module.exports = class IANAlanguages {
+export default class IANAlanguages {
 
 	constructor() {
 		this.languageUnknown=0;
@@ -106,7 +106,7 @@ module.exports = class IANAlanguages {
 		console.log(`reading languages from ${languagesFile}`);
 		if (purge) this.empty();
 
-		fs.readFile(languagesFile, {encoding: "utf-8"}, function(err,data) {
+		readFile(languagesFile, {encoding: "utf-8"}, function(err,data) {
 			if (!err) {
 				this.processLanguageData(data);		
 			}
@@ -124,7 +124,7 @@ module.exports = class IANAlanguages {
 		console.log(`retrieving languages from ${languagesURL} using fetch()`);
 		if (purge) this.empty();
 		fetch(languagesURL)
-			.then(fetcherr.handleErrors)
+			.then(handleErrors)
 			.then(response => response.text())
 			.then(responseText => this.processLanguageData(responseText))
 			.catch(error => console.log("error ("+error+") retrieving "+languagesURL));

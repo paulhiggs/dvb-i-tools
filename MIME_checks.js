@@ -8,7 +8,7 @@ const JPEG_MIME = "image/jpeg",
  * @param {String} val the MIME type
  * @return {boolean} true if the MIME type represents a JPEG image, otherwise false
  */
-module.exports.isJPEGmime = (val) => val==JPEG_MIME;
+export function isJPEGmime(val) { return val==JPEG_MIME; }
 
 
 /**
@@ -17,4 +17,4 @@ module.exports.isJPEGmime = (val) => val==JPEG_MIME;
  * @param {String} val the MIME type
  * @return {boolean} true if the MIME type represents a PNG image, otherwise false
  */
-module.exports.isPNGmime = (val) => val==PNG_MIME;
+export function isPNGmime(val) { return val==PNG_MIME; }

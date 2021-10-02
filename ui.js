@@ -1,5 +1,5 @@
 
-const phlib=require('./phlib/phlib.js');
+import { HTMLize } from './phlib/phlib.js';
 
 function PAGE_TOP(label) {
 	const TABLE_STYLE="<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
@@ -22,13 +22,13 @@ function tabulateResults(res, error, errs) {
 	const RESULT_WITH_INSTRUCTION="<br><p><i>Results:</i></p>";
 	const SUMMARY_FORM_HEADER="<table><tr><th>item</th><th>count</th></tr>";
 	
-	DETAIL_FORM_HEADER = (mode) => `<table><tr><th>code</th><th>${mode}</th></tr>`;
+	function DETAIL_FORM_HEADER(mode) { return `<table><tr><th>code</th><th>${mode}</th></tr>`; }
 
 	function tabluateMessage(value) {
 		res.write('<tr>');
-		res.write(`<td>${value.code?phlib.HTMLize(value.code):""}</td>`);
-		res.write(`<td>${value.message?phlib.HTMLize(value.message):""}`);
-		res.write(`${value.element?`<br/><span class=\"xmlfont\"><pre>${phlib.HTMLize(value.element)}</pre></span>`:""}</td>`);
+		res.write(`<td>${value.code?HTMLize(value.code):""}</td>`);
+		res.write(`<td>${value.message?HTMLize(value.message):""}`);
+		res.write(`${value.element?`<br/><span class=\"xmlfont\"><pre>${HTMLize(value.element)}</pre></span>`:""}</td>`);
 		res.write('</tr>');
 	}	
 
@@ -40,8 +40,8 @@ function tabulateResults(res, error, errs) {
 
 		if (errs.numCountsErr()>0 || errs.numCountsWarn()>0 ) {		
 			res.write(SUMMARY_FORM_HEADER);
-			Object.keys(errs.countsErr).forEach( function (i) {return res.write(`<tr><td>${phlib.HTMLize(i)}</td><td>${errs.countsErr[i]}</td></tr>`); });
-			Object.keys(errs.countsWarn).forEach( function (i) {return res.write(`<tr><td><i>${phlib.HTMLize(i)}</i></td><td>${errs.countsWarn[i]}</td></tr>`); });
+			Object.keys(errs.countsErr).forEach( function (i) {return res.write(`<tr><td>${HTMLize(i)}</td><td>${errs.countsErr[i]}</td></tr>`); });
+			Object.keys(errs.countsWarn).forEach( function (i) {return res.write(`<tr><td><i>${HTMLize(i)}</i></td><td>${errs.countsWarn[i]}</td></tr>`); });
 			resultsShown=true;
 			res.write("</table><br/>");
 		}
@@ -74,7 +74,7 @@ function tabulateResults(res, error, errs) {
  * @param {Object}  errors     the errors and warnings found during the content guide validation
  * @returns {Promise} the output stream (res) for further async processing
  */
-module.exports.drawSLForm = function (URLmode, res, lastInput=null, error=null, errs=null) {
+export function drawSLForm (URLmode, res, lastInput=null, error=null, errs=null) {
 	
 	const ENTRY_FORM_URL=`<form method=\"post\"><p><i>URL:</i></p><input type=\"url\" name=\"SLurl\" value=\"${lastInput?lastInput:""}\"><input type=\"submit\" value=\"submit\"></form>`;
 	const ENTRY_FORM_FILE=`<form method=\"post\" encType=\"multipart/form-data\"><p><i>FILE:</i></p><input type=\"file\" name=\"SLfile\" value=\"${lastInput?lastInput:""}\"><input type=\"submit\" value=\"submit\"></form>`;
@@ -90,7 +90,7 @@ module.exports.drawSLForm = function (URLmode, res, lastInput=null, error=null, 
 	return new Promise((resolve, reject) => {
 		resolve(res);
 	});
-};
+}
 
 
 
@@ -105,7 +105,7 @@ module.exports.drawSLForm = function (URLmode, res, lastInput=null, error=null, 
  * @param {string}  error     a single error message to display on the form, generally related to loading the content to validate
  * @param {ErrorList}  errors    the errors and warnings found during the content guide validation
  */
- module.exports.drawCGForm = function(URLmode, supportedRequests, res, lastInput=null, lastType=null, error=null, errs=null) {
+ export function drawCGForm(URLmode, supportedRequests, res, lastInput=null, lastType=null, error=null, errs=null) {
 	const ENTRY_FORM_URL=`<form method=\"post\"><p><i>URL:</i></p><input type=\"url\" name=\"CGurl\" value=\"${lastInput?lastInput:""}\"/><input type=\"submit\" value=\"submit\"/>`;
 	const ENTRY_FORM_FILE=`<form method=\"post\" encType=\"multipart/form-data\"><p><i>FILE:</i></p><input type=\"file\" name=\"CGfile\" value=\"${lastInput ? lastInput : ""}\"/><input type=\"submit\" value=\"submit\"/>`;
 	const ENTRY_FORM_END="</form>";
@@ -155,4 +155,4 @@ module.exports.drawSLForm = function (URLmode, res, lastInput=null, error=null, 
 	return new Promise(function (resolve, reject) {
 		resolve(res);
 	});
-};
+}

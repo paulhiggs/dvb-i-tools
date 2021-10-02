@@ -1,41 +1,42 @@
 
 // node.js - https://nodejs.org/en/
 // express framework - https://expressjs.com/en/4x/api.html
-const express=require("express");
+import express, { static, urlencoded } from "express";
 
 // morgan - https://github.com/expressjs/morgan
-const morgan=require("morgan");
+import morgan, { token } from "morgan";
 
 // file upload for express - https://github.com/richardgirges/express-fileupload
-const fileupload=require("express-fileupload");
+import fileupload from "express-fileupload";
 
 // favourite icon - https://www.npmjs.com/package/serve-favicon
-const favicon=require("serve-favicon");
+import favicon from "serve-favicon";
 
-const fs=require("fs"), path=require("path");
+import fs from "fs";
+import { join } from "path";
 
 // command line arguments - https://github.com/75lb/command-line-args
-const commandLineArgs=require('command-line-args');
+import commandLineArgs from 'command-line-args';
 
 // fetch API for node.js - https://www.npmjs.com/package/node-fetch
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const fetcherr=require("./fetch-err-handler.js");
+import { handleErrors } from "./fetch-err-handler.js";
 
-const ui=require('/ui.js');
+import { drawSLForm } from '/ui.js';
 
-const locs=require('./data-locations.js');
+import { IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, ISO3166 } from './data-locations.js';
 
 // error buffer
-const ErrorList=require("./ErrorList.js");
+import ErrorList from "./ErrorList.js";
 
-const {isEmpty, readmyfile}=require('./utils.js');
+import { isEmpty, readmyfile } from './utils.js';
 
 // the service list validation
-const ServiceListCheck=require('./sl-check.js');
+import ServiceListCheck from './sl-check.js';
 var slcheck;
 
-const https=require("https");
-const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","selfsigned.crt");
+import { createServer } from "https";
+const keyFilename=join(".","selfsigned.key"), certFilename=join(".","selfsigned.crt");
 
 
 
@@ -47,25 +48,25 @@ const keyFilename=path.join(".","selfsigned.key"), certFilename=path.join(".","s
  */ 
 function processQuery(req, res) {
     if (isEmpty(req.query)) {
-		ui.drawSLForm(true, res);
+		drawSLForm(true, res);
 		res.end();
 	}
 	else if (req && req.query && req.query.SLurl) {
 		fetch(req.query.SLurl)
-			.then(fetcherr.handleErrors)
+			.then(handleErrors)
 			.then(response => response.text())
 			.then(res=>slcheck.validateServiceList(res))
-			.then(errs=>ui.drawSLForm(true, res, req.query.SLurl, null, errs))
+			.then(errs=>drawSLForm(true, res, req.query.SLurl, null, errs))
 			.then(res=>res.end())
 			.catch(error => {
 				console.log(error);
 				console.log(`error (${error}) handling ${req.query.SLurl}`) ;
-				ui.drawSLForm(true, res, req.query.SLurl, `error (${error}) handling ${req.query.SLurl}`, null);
+				drawSLForm(true, res, req.query.SLurl, `error (${error}) handling ${req.query.SLurl}`, null);
 				res.end();
 			});
    }
    else {
-		ui.drawSLForm(true, res, req.query.SLurl, "URL not specified");
+		drawSLForm(true, res, req.query.SLurl, "URL not specified");
 		res.status(400);
 		res.end();
     }
@@ -80,7 +81,7 @@ function processQuery(req, res) {
  */ 
 function processFile(req, res) {
     if (isEmpty(req.query)) 
-		ui.drawSLForm(false, res);    
+		drawSLForm(false, res);    
 	else if (req && req.files && req.files.SLfile) {
         let SLxml=null;
         let errs=new ErrorList();
@@ -94,10 +95,10 @@ function processFile(req, res) {
 		if (SLxml)
 			slcheck.doValidateServiceList(SLxml.toString(), errs);
 
-		ui.drawSLForm(false, res, req.files.SLfile.name, null, errs);
+		drawSLForm(false, res, req.files.SLfile.name, null, errs);
     }
 	else {
-        ui.drawSLForm(false, res, req.files.SLfile.name, "File not specified");
+        drawSLForm(false, res, req.files.SLfile.name, "File not specified");
         res.status(400);
     }
     
@@ -107,23 +108,28 @@ function processFile(req, res) {
 
 let app=express();
 
-app.use(express.static(__dirname));
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+app.use(static(__dirname));
+
 app.set('view engine', 'ejs');
 app.use(fileupload());
-app.use(favicon(path.join('phlib','ph-icon.ico')));
+app.use(favicon(join('phlib','ph-icon.ico')));
 
 
-morgan.token("protocol", function getProtocol(req) {
+token("protocol", function getProtocol(req) {
     return req.protocol;
 });
-morgan.token("parseErr", function getParseErr(req) {
+token("parseErr", function getParseErr(req) {
     if (req.parseErr) return `(${req.parseErr})`;
     return "";
 });
-morgan.token("agent", function getAgent(req) {
+token("agent", function getAgent(req) {
     return `(${req.headers["user-agent"]})`;
 });
-morgan.token("slLoc", function getCheckedLocation(req) {
+token("slLoc", function getCheckedLocation(req) {
 	if (req.files && req.files.SLfile) return `[${req.files.SLfile.name}]`;
     if (req.query && req.query.SLurl) return `[${req.query.SLurl}]`;
 	return "[*]";
@@ -141,24 +147,24 @@ const optionDefinitions=[
  
 const options=commandLineArgs(optionDefinitions);
 
-const IANAlanguages=require("./IANAlanguages.js");
+import IANAlanguages from "./IANAlanguages.js";
 let knownLanguages=new IANAlanguages();
-knownLanguages.loadLanguages(options.urls?{url:locs.IANA_Subtag_Registry.url}:{file:locs.IANA_Subtag_Registry.file});
+knownLanguages.loadLanguages(options.urls?{url:IANA_Subtag_Registry.url}:{file:IANA_Subtag_Registry.file});
 
-const ClassificationScheme=require("./ClassificationScheme.js");
+import ClassificationScheme from "./ClassificationScheme.js";
 let knownGenres=new ClassificationScheme();
 knownGenres.loadCS(options.urls?
-		{urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url]}:
-		{files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubject.file]});
+		{urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
+		{files:[TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file]});
 
-const ISOcountries=require("./ISOcountries.js");
+import ISOcountries from "./ISOcountries.js";
 let isoCountries=new ISOcountries(false, true);
-isoCountries.loadCountries(options.urls?{url:locs.ISO3166.url}:{file:locs.ISO3166.file});
+isoCountries.loadCountries(options.urls?{url:ISO3166.url}:{file:ISO3166.file});
 
 slcheck=new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoCountries);
 
 // initialize Express
-app.use(express.urlencoded({ extended: true }));
+app.use(urlencoded({ extended: true }));
 
 // handle HTTP POST requests to /check
 app.post("/check", function(req,res) {
@@ -215,7 +221,7 @@ if (https_options.key && https_options.cert) {
 	if (options.sport==options.port)
 		options.sport=options.port+1;
 	
-    var https_server=https.createServer(https_options, app);
+    var https_server=createServer(https_options, app);
     https_server.listen(options.sport, function(){
         console.log(`HTTPS listening on port number ${https_server.address().port}`);
     });

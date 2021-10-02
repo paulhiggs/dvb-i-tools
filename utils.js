@@ -1,5 +1,5 @@
 
-const fs=require("fs");
+import { statSync, readFileSync } from "fs";
 
 /**
  * constructs an XPath based on the provided arguments
@@ -9,7 +9,7 @@ const fs=require("fs");
  * @param {int} index              The instance of the named element to be searched for (if specified)
  * @returns {string} the XPath selector
  */
- module.exports.xPath = (SCHEMA_PREFIX, elementName, index=null) => `${SCHEMA_PREFIX}:${elementName}${index?`[${index}]`:""}`;
+ export function  xPath(SCHEMA_PREFIX, elementName, index=null) {  return `${SCHEMA_PREFIX}:${elementName}${index?`[${index}]`:""}`;  }
 
 
 /**
@@ -19,14 +19,14 @@ const fs=require("fs");
  * @param {array} elementNames the name of the element to be searched for
  * @returns {string} the XPath selector
  */
-module.exports.xPathM = function (SCHEMA_PREFIX, elementNames) {
+export function xPathM (SCHEMA_PREFIX, elementNames) {
 	let t="";
 	if (elementNames) elementNames.forEach(elementName => {
 		if (t.length) { t+="/"; first=false;}
 		t+=`${SCHEMA_PREFIX}:${elementName}`;
 	});
 	return t;
-};
+}
 
 
 /* local */ function findInSet(values, value, caseSensitive) {
@@ -50,7 +50,7 @@ module.exports.xPathM = function (SCHEMA_PREFIX, elementNames) {
  * @param {String} value The value to check for existance
  * @return {boolean} if value is in the set of values
  */
-module.exports.isIn = (values, value, caseSensitive=true) => findInSet(values, value, caseSensitive);
+export function isIn(values, value, caseSensitive=true) { return findInSet(values, value, caseSensitive); }
 
 
 /**
@@ -60,7 +60,7 @@ module.exports.isIn = (values, value, caseSensitive=true) => findInSet(values, v
  * @param {String} value The value to check for existance
  * @return {boolean} if value is in the set of values
  */
-module.exports.isIni = (values, value) => findInSet(values, value, false);
+export function isIni(values, value) { return findInSet(values, value, false); }
 
 
 /**
@@ -69,7 +69,7 @@ module.exports.isIni = (values, value) => findInSet(values, value, false);
  * @param {string} str string containing HTML or XML entities (starts with & ends with ;)
  * @return {string} the string with entities replaced with a single character '*'
  */
-module.exports.unEntity = (str) => str.replace(/(&.+;)/ig, "*");
+export function unEntity(str) { return str.replace(/(&.+;)/ig, "*"); }
 
 
 /**
@@ -78,13 +78,13 @@ module.exports.unEntity = (str) => str.replace(/(&.+;)/ig, "*");
  * @param {Object} obj 	The object to check 
  * @returns {Booolean} true if the object does not contain ant local properties
  */
-module.exports.isEmpty = function(obj) {
+export function isEmpty(obj) {
     for(let key in obj) {
         if(obj.hasOwnProperty(key))
             return false;
     }
     return true;
-};
+}
 
 
 /**
@@ -93,18 +93,18 @@ module.exports.isEmpty = function(obj) {
  * @param {String} filename 	The name of the file to read
  * @returns {Buffer} the buffer containing the data from the file, or null if there is a problem reading
  */
-module.exports.readmyfile = function(filename) {
+export function readmyfile(filename) {
     try {
-        let stats=fs.statSync(filename);
-        if (stats.isFile()) return fs.readFileSync(filename); 
+        let stats=statSync(filename);
+        if (stats.isFile()) return readFileSync(filename); 
     }
     catch (err) {console.log(err.code, err.path);}
     return null;
-};
+}
 
 
 // credit to https://gist.github.com/adriengibrat/e0b6d16cdd8c584392d8#file-parseduration-es5-js
-module.exports.parseISOduration = function(duration) {
+export function parseISOduration(duration) {
 	var durationRegex = /^(-)?P(?:(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?|(\d+)W)$/;
 	var parsed;
 	if (duration) duration.replace(durationRegex, function (_, sign, year, month, day, hour, minute, second, week) {
@@ -138,4 +138,4 @@ module.exports.parseISOduration = function(duration) {
 	};
 
 	return parsed;
-};
+}

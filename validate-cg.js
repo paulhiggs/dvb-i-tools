@@ -1,41 +1,40 @@
 
 // node.js - https://nodejs.org/en/
 // express framework - https://expressjs.com/en/4x/api.html
-const express=require("express");
+import express, { static, urlencoded } from "express";
 
-const fs=require("fs"), path=require("path");
+import fs from "fs";
+import { join } from "path";
 
 // command line arguments - https://github.com/75lb/command-line-args
-const commandLineArgs=require('command-line-args');
+import commandLineArgs from 'command-line-args';
 
 // favourite icon - https://www.npmjs.com/package/serve-favicon
-const favicon=require("serve-favicon");
+import favicon from "serve-favicon";
 
-const fetch=require("node-fetch");
-const fetcherr=require("./fetch-err-handler.js");
+import fetch from "node-fetch";
+import { handleErrors } from "./fetch-err-handler.js";
 
 // morgan - https://github.com/expressjs/morgan
-const morgan=require("morgan");
+import morgan, { token } from "morgan";
 
 // express-fileupload - https://github.com/richardgirges/express-fileupload#readme
-const fileUpload=require('express-fileupload');
+import fileUpload from 'express-fileupload';
 	
-const https=require("https");
-const keyFilename=path.join(".", "selfsigned.key"), certFilename=path.join(".", "selfsigned.crt");
+import { createServer } from "https";
+const keyFilename=join(".", "selfsigned.key"), certFilename=join(".", "selfsigned.crt");
 
-const phlib=require('./phlib/phlib');
+import { drawCGForm } from './ui.js';
 
-const ui=require('./ui.js');
+import ErrorList from "./ErrorList.js";
 
-const ErrorList=require("./ErrorList.js");
+import { IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data-locations.js";
 
-const locs=require("./data-locations.js");
-
-const globals = require("./globals");
-const {isEmpty, readmyfile}=require('./utils.js');
+import { HTTPPort } from "./globals";
+import { isEmpty, readmyfile } from './utils.js';
 
 // the content guide validation
-const ContentGuideCheck=require('./cg-check.js');
+import ContentGuideCheck from './cg-check.js';
 var cgcheck=null;
 
 
@@ -49,25 +48,25 @@ var cgcheck=null;
  */ 
 function processQuery(req, res) {
     if (isEmpty(req.query)) {
-		ui.drawCGForm(true, cgcheck.supportedRequests, res);
+		drawCGForm(true, cgcheck.supportedRequests, res);
 		res.end();
 	}  
     else if (req && req.query && req.query.CGurl) {
 		fetch(req.query.CGurl)
-			.then(fetcherr.handleErrors)
+			.then(handleErrors)
 			.then(function (response) {return response.text();})
 			.then(function (res) {return cgcheck.validateContentGuide(res.replace(/(\r\n|\n|\r|\t)/gm, ""), req.body.requestType);})
-			.then(function (errs) {return ui.drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, null, errs);})
+			.then(function (errs) {return drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, null, errs);})
 			.then(function (res) {res.end();})
 			.catch(function (error) {
 				console.log(error);
-				ui.drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, `error (${error}) handling ${req.query.CGurl}`);
+				drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, `error (${error}) handling ${req.query.CGurl}`);
 				res.status(400);
 				res.end();
 			});
     }
 	else {
-        ui.drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, "URL not specified");
+        drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, "URL not specified");
         res.status(400);
 		res.end();
 	}
@@ -82,7 +81,7 @@ function processQuery(req, res) {
  */ 
 function processFile(req, res) {
     if (isEmpty(req.query)) 
-		ui.drawCGForm(false, cgcheck.supportedRequests, res);    
+		drawCGForm(false, cgcheck.supportedRequests, res);    
     else if (req && req.files && req.files.CGfile) {
         let CGxml=null, errs=new ErrorList(), fname="***";
 		if (req && req.files && req.files.CGfile) fname=req.files.CGfile.name;
@@ -97,10 +96,10 @@ function processFile(req, res) {
 			errs.loadDocument(doc);
 			cgcheck.doValidateContentGuide(doc, req.body.requestType, errs);
 		}
-        ui.drawCGForm(false, res, fname, req.body.requestType, null, errs);
+        drawCGForm(false, res, fname, req.body.requestType, null, errs);
     }
 	else {
-        ui.drawCGForm(false, cgcheck.supportedRequests, cgcheck.supportedRequests, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
+        drawCGForm(false, cgcheck.supportedRequests, cgcheck.supportedRequests, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
         res.status(400);
 	}
     res.end();
@@ -110,37 +109,37 @@ function processFile(req, res) {
 // command line options
 const optionDefinitions=[
 	{ name:'urls', alias:'u', type:Boolean, defaultValue:false},
-	{ name:'port', alias:'p', type:Number, defaultValue:globals.HTTPPort.cg },
-	{ name:'sport', alias:'s', type:Number, defaultValue:globals.HTTPPort.cg+1 }
+	{ name:'port', alias:'p', type:Number, defaultValue:HTTPPort.cg },
+	{ name:'sport', alias:'s', type:Number, defaultValue:HTTPPort.cg+1 }
 ];
 const options=commandLineArgs(optionDefinitions);
 
-const IANAlanguages=require("./IANAlanguages.js");
+import IANAlanguages from "./IANAlanguages.js";
 let knownLanguages=new IANAlanguages();
-knownLanguages.loadLanguages(options.urls?{url:locs.IANA_Subtag_Registry.url}:{file:locs.IANA_Subtag_Registry.file});
+knownLanguages.loadLanguages(options.urls?{url:IANA_Subtag_Registry.url}:{file:IANA_Subtag_Registry.file});
 
-const ClassificationScheme=require("./ClassificationScheme.js");
+import ClassificationScheme from "./ClassificationScheme.js";
 
 let knownGenres=new ClassificationScheme();
 knownGenres.loadCS(options.urls?
-		{urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url]}:
-		{files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubject.file]});
+		{urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
+		{files:[TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file]});
 
 cgcheck=new ContentGuideCheck(options.urls, knownLanguages, knownGenres);
 
 
 //middleware
-morgan.token("protocol", function getProtocol(req) {
+token("protocol", function getProtocol(req) {
     return req.protocol;
 });
-morgan.token("parseErr", function getParseErr(req) {
+token("parseErr", function getParseErr(req) {
     if (req.parseErr) return `(${req.parseErr})`;
     return "";
 });
-morgan.token("agent", function getAgent(req) {
+token("agent", function getAgent(req) {
     return `(${req.headers["user-agent"]})`;
 });
-morgan.token("cgLoc", function getCheckedLocation(req) {
+token("cgLoc", function getCheckedLocation(req) {
 	if (req.files && req.files.CGfile) return `[${req.files.CGfile.name}]`;
     if (req.query.CGurl) return `[${req.query.CGurl}]`;
 	return "[*]";
@@ -149,14 +148,18 @@ morgan.token("cgLoc", function getCheckedLocation(req) {
 var app=express();
 app.use(morgan(":remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr :cgLoc"));
 
-app.use(express.static(__dirname));
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+app.use(static(__dirname));
 app.set('view engine', 'ejs');
 app.use(fileUpload());
 
 // initialize Express
-app.use(express.urlencoded({ extended: true }));
+app.use(urlencoded({ extended: true }));
 
-app.use(favicon(path.join('phlib', 'ph-icon.ico')));
+app.use(favicon(join('phlib', 'ph-icon.ico')));
 
 // handle HTTP POST requests to /check
 app.post("/check", function(req, res) {
@@ -206,7 +209,7 @@ if (https_options.key && https_options.cert) {
 	if (options.sport==options.port)
 		options.sport=options.port+1;
 		
-    var https_server=https.createServer(https_options, app);
+    var https_server=createServer(https_options, app);
     https_server.listen(options.sport, function() {
         console.log(`HTTPS listening on port number ${https_server.address().port}` );
     });

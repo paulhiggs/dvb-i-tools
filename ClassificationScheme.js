@@ -4,12 +4,12 @@
  * Manages Classification Scheme loading and checking
  * 
  */
-const fs=require('fs');
-const libxml=require('libxmljs2');
+import { readFile } from 'fs';
+import { parseXmlString } from 'libxmljs2';
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const fetcherr=require("./fetch-err-handler.js");
+import { handleErrors } from "./fetch-err-handler.js";
 
-const {AvlTree}=require('@datastructures-js/binary-search-tree');
+import { AvlTree } from '@datastructures-js/binary-search-tree';
 
 
 /**
@@ -19,8 +19,9 @@ const {AvlTree}=require('@datastructures-js/binary-search-tree');
  * @param {string} childElementName the name of the child element to look for
  *& @returns {boolean} true of the element contains the named child element(s) otherwise false
  */
-hasChild = (elem, childElementName) => elem ? elem.childNodes().find(el => el.type()=='element' && el.name()==childElementName) != undefined : false;
-
+function hasChild(elem, childElementName) {
+     return elem ? elem.childNodes().find(el => el.type()=='element' && el.name()==childElementName) != undefined : false;
+}
 
 /**
  * Constructs a linear list of terms from a heirarical clssification schemes which are read from an XML document and parsed by libxmljs
@@ -61,7 +62,7 @@ function loadClassificationScheme(xmlCS, leafNodesOnly=false) {
 }
 
 
-module.exports = class ClassificationScheme {
+export default class ClassificationScheme {
 
     constructor () {
         this.values=new AvlTree();
@@ -89,9 +90,9 @@ module.exports = class ClassificationScheme {
     loadFromURL(csURL, leafNodesOnly=false) {
 		console.log(`retrieving CS (${leafNodesOnly?"all":"leaf"} nodes) from ${csURL} via fetch()`); 
 		fetch(csURL)
-			.then(fetcherr.handleErrors)
+			.then(handleErrors)
 			.then(response => response.text())
-			.then(strXML => loadClassificationScheme(libxml.parseXmlString(strXML), leafNodesOnly).forEach(e=>{this.insertValue(e, true);}))
+			.then(strXML => loadClassificationScheme(parseXmlString(strXML), leafNodesOnly).forEach(e=>{this.insertValue(e, true);}))
 			.catch(error => console.log(`error (${error}) retrieving ${csURL}`));
     }
 
@@ -104,9 +105,9 @@ module.exports = class ClassificationScheme {
     loadFromFile(classificationScheme, leafNodesOnly=false) {
         console.log(`reading CS (${leafNodesOnly?"leaf":"all"} nodes) from ${classificationScheme}`);
 
-        fs.readFile(classificationScheme, {encoding: "utf-8"}, (err,data)=> {
+        readFile(classificationScheme, {encoding: "utf-8"}, (err,data)=> {
             if (!err) {
-                loadClassificationScheme(libxml.parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm,"")), leafNodesOnly).forEach(e=>{this.insertValue(e, true);});
+                loadClassificationScheme(parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm,"")), leafNodesOnly).forEach(e=>{this.insertValue(e, true);});
             }
             else console.log(err);
         });
@@ -136,4 +137,4 @@ module.exports = class ClassificationScheme {
     isIn(value) {
         return this.values.has(value);
     }
-};
+}

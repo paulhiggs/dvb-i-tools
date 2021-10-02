@@ -5,9 +5,9 @@
  * 
  */
 
-const libxml=require("libxmljs2");
+import { parseXmlString } from "libxmljs2";
 
-module.exports = class ErrorList {
+export default class ErrorList {
       
     constructor() {
         this.countsErr=[]; this.numCountsE=0;   // keep these counters as arrays constructed by 
@@ -17,7 +17,7 @@ module.exports = class ErrorList {
         this.markupXML=[];
     }
     loadDocument(doc) {
-        let lines=libxml.parseXmlString(doc).toString().split('\n');
+        let lines=parseXmlString(doc).toString().split('\n');
         this.markupXML=lines.map((str, index) => ({ value: str, ix: index }));
     }
     setError(err, lineNo) {
@@ -78,4 +78,4 @@ module.exports = class ErrorList {
 
     numCountsErr() { return this.numCountsE; }
     numCountsWarn() { return this.numCountsW; }
- };
+ }

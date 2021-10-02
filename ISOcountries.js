@@ -1,7 +1,7 @@
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const fetcherr=require("./fetch-err-handler.js");
+import { handleErrors } from "./fetch-err-handler.js";
 
-const fs=require("fs");
+import { readFile } from "fs";
 
 
 /**
@@ -27,7 +27,7 @@ function loadCountryData(countryData) {
 }
 
 
-module.exports = class ISOcountries {
+export default class ISOcountries {
 	
 	/**
 	 * constructor
@@ -51,7 +51,7 @@ module.exports = class ISOcountries {
 	loadCountriesFromFile(countriesFile, purge=false) {
 		console.log(`reading countries from ${countriesFile}`);
 		if (purge) this.reset();
-		fs.readFile(countriesFile, {encoding: "utf-8"}, function(err,data){
+		readFile(countriesFile, {encoding: "utf-8"}, function(err,data){
 			if (!err) {
 				this.countriesList=loadCountryData(data);
 			} else {
@@ -70,7 +70,7 @@ module.exports = class ISOcountries {
 		console.log(`retrieving countries from ${countriesURL} using fetch()`);
 		if (purge) this.reset();
 		fetch(countriesURL)
-			.then(fetcherr.handleErrors)
+			.then(handleErrors)
 			.then(response => response.text())
 			.then(responseText => this.countriesList=loadCountryData(responseText))
 			.catch(error => console.log(`error (${error}) retrieving ${countriesURL}`));

@@ -2,13 +2,13 @@
  * Manages Classification Scheme checking based in a flat list of roles
  * 
  */
-const fs=require('fs');
+import { readFile } from 'fs';
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const fetcherr=require("./fetch-err-handler.js");
+import { handleErrors } from "./fetch-err-handler.js";
 
-const ClassificationScheme=require("./ClassificationScheme.js");
+import ClassificationScheme from "./ClassificationScheme.js";
 
-module.exports = class Role  extends ClassificationScheme {
+export default class Role  extends ClassificationScheme {
   
     /**
      * read a classification scheme from a URL and load its hierarical values into a linear list 
@@ -19,7 +19,7 @@ module.exports = class Role  extends ClassificationScheme {
 		console.log(`retrieving Roles from ${rolesURL} via fetch()`);
 
 		fetch(rolesURL)
-			.then(fetcherr.handleErrors)
+			.then(handleErrors)
 			.then(response => response.text())
 			.then(roles => roles.split('\n').forEach(e=>{this.insertValue(e.trim(), true);}))
 			.catch(error => console.log(`error (${error}) retrieving ${rolesURL}`));
@@ -33,7 +33,7 @@ module.exports = class Role  extends ClassificationScheme {
     loadFromFile(rolesFile) {
         console.log(`reading Roles from ${rolesFile}`);
 
-        fs.readFile(rolesFile, {encoding: "utf-8"}, (err, data)=> {
+        readFile(rolesFile, {encoding: "utf-8"}, (err, data)=> {
             if (!err) {
                 data.split('\n').forEach(e=>{this.insertValue(e.trim(), true);});
             }

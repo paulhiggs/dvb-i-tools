@@ -1,19 +1,19 @@
 // SLEPR - Service List End Point Resolver
 
-const fs=require("fs");
+import { readFile } from "fs";
 
 // libxmljs - https://www.npmjs.com/package/libxmljs2
-const libxml=require('libxmljs2');
+import { parseXmlString } from 'libxmljs2';
 
 // Fetch() API for node.js- https://www.npmjs.com/package/node-fetch
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const fetcherr=require("./fetch-err-handler.js");
+import { handleErrors } from "./fetch-err-handler.js";
 
-const {xPath, isIn}=require("./utils.js");
+import { xPath, isIn } from "./utils.js";
 
-const dvbi=require("./DVB-I_definitions.js");
+import { dvbi } from "./DVB-I_definitions.js";
 
-const locs=require("./data-locations.js");
+import { IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data-locations.js";
 
 var masterSLEPR="";
 const EMPTY_SLEPR="<ServiceListEntryPoints xmlns=\"urn:dvb:metadata:servicelistdiscovery:2021\"></ServiceListEntryPoints>";
@@ -22,11 +22,11 @@ const EMPTY_SLEPR="<ServiceListEntryPoints xmlns=\"urn:dvb:metadata:servicelistd
 // permitted query parameters
 const allowed_arguments=[dvbi.e_ProviderName, dvbi.a_regulatorListFlag, dvbi.e_Language, dvbi.e_TargetCountry, dvbi.e_Genre, dvbi.e_Delivery];
 
-const patterns=require("./pattern_checks.js");
+import { isHTTPURL, isTVAAudioLanguageType } from "./pattern_checks.js";
 
-const IANAlanguages=require('./IANAlanguages.js');
-const ClassificationScheme=require("./ClassificationScheme.js");
-const ISOcountries=require("./ISOcountries.js");
+import IANAlanguages from './IANAlanguages.js';
+import ClassificationScheme from "./ClassificationScheme.js";
+import ISOcountries from "./ISOcountries.js";
 
 const DVB_DASH_DELIVERY="dvb-dash",
       DVB_T_DELIVERY="dvb-t",
@@ -46,14 +46,14 @@ class SLEPR {
           this.knownLanguages=preloadedLanguageValidator;
         else {
             this.knownLanguages=new IANAlanguages();
-            this.knownLanguages.loadLanguages(useURLs?{url: locs.IANA_Subtag_Registry.url, purge: true}:{file: locs.IANA_Subtag_Registry.file, purge: true});
+            this.knownLanguages.loadLanguages(useURLs?{url: IANA_Subtag_Registry.url, purge: true}:{file: IANA_Subtag_Registry.file, purge: true});
         }
 
 		if (preloadedCountries)
 			this.knownCountries=preloadedCountries;
 		else {
 			this.knownCountries=new ISOcountries(false, true);
-            this.knownCountries.loadCountries(useURLs?{url:locs.ISO3166.url}:{file:locs.ISO3166.file});
+            this.knownCountries.loadCountries(useURLs?{url:ISO3166.url}:{file:ISO3166.file});
 		}
 
         if (preloadedGenres)
@@ -61,8 +61,8 @@ class SLEPR {
         else {
 			this.knownGenres=new ClassificationScheme();
             this.knownGenres.loadCS(useURLs?
-                {urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url]}:
-                {files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubject.file]});
+                {urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
+                {files:[TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file]});
         }
     }
 
@@ -74,15 +74,15 @@ class SLEPR {
     /* public */ loadServiceListRegistry(filename) {
         console.log(`loading SLR from ${filename}`);
 
-        if (patterns.isHTTPURL(filename)) {
+        if (isHTTPURL(filename)) {
             fetch(filename)
-                .then(fetcherr.handleErrors)
+                .then(handleErrors)
                 .then(response => response.text())
                 .then(responseText => masterSLEPR=responseText.replace(/(\r\n|\n|\r|\t)/gm,""))
                 .catch(error => {console.log(`error (${error}) retrieving ${filename}`); masterSLEPR=EMPTY_SLEPR;}); 
             masterSLEPR=fetch(filename);
         }
-        else fs.readFile(filename, {encoding: 'utf-8'}, function(err,data) {
+        else readFile(filename, {encoding: 'utf-8'}, function(err,data) {
             if (!err) 
                 masterSLEPR=data.replace(/(\r\n|\n|\r|\t)/gm,"");
              else 
@@ -156,12 +156,12 @@ class SLEPR {
             //Language(s)
             if (req.query.Language) {
                 if (typeof req.query.Language=="string" || req.query.Language instanceof String) {
-                    if (!patterns.isTVAAudioLanguageType(req.query.Language, false)) 
+                    if (!isTVAAudioLanguageType(req.query.Language, false)) 
                         req.parseErr.push(`invalid Language [${req.query.Language}]`);			
                 }	
                 else if (Array.isArray(req.query.Language)) {
                     for (let i=0; i<req.query.Language.length; i++ ) 
-                        if (!patterns.isTVAAudioLanguageType(req.query.Language[i], false)) 
+                        if (!isTVAAudioLanguageType(req.query.Language[i], false)) 
                             req.parseErr.push(`invalid Language [${req.query.Language[i]}]`);
                 }
                 else
@@ -238,7 +238,7 @@ class SLEPR {
 			res.status(400);
             return false;
 		}
-        let slepr=libxml.parseXmlString(masterSLEPR);
+        let slepr=parseXmlString(masterSLEPR);
 
         let SLEPR_SCHEMA={}, SCHEMA_PREFIX=slepr.root().namespace().prefix();
         SLEPR_SCHEMA[SCHEMA_PREFIX]=slepr.root().namespace().href();
@@ -355,5 +355,5 @@ class SLEPR {
 
 }
 
-module.exports = SLEPR;
+export default SLEPR;
 

@@ -1,33 +1,34 @@
 // node.js - https://nodejs.org/en/
 // express framework - https://expressjs.com/en/4x/api.html
-const express=require('express');
-const cors=require('cors');
+import express from 'express';
+import cors from 'cors';
 
-const cluster = require('cluster');
+import { isMaster, fork, on, workers } from 'cluster';
 const totalCPUs = require('os').cpus().length;
 
 
 // morgan - https://www.npmjs.com/package/morgan
-const morgan=require('morgan');
+import morgan, { token } from 'morgan';
 
 // favourite icon - https://www.npmjs.com/package/serve-favicon
-const favicon=require('serve-favicon');
+import favicon from 'serve-favicon';
 
-const fs=require('fs'), path=require('path');
+import fs from 'fs';
+import { join } from 'path';
 
 // command line arguments - https://www.npmjs.com/package/command-line-args
-const commandLineArgs=require('command-line-args');
-const commandLineUsage = require('command-line-usage');
+import commandLineArgs from 'command-line-args';
+import commandLineUsage from 'command-line-usage';
 
-const https=require('https');
-const keyFilename=path.join('.','selfsigned.key'), certFilename=path.join('.','selfsigned.crt');
+import { createServer } from 'https';
+const keyFilename=join('.','selfsigned.key'), certFilename=join('.','selfsigned.crt');
 
-const locs=require('./data-locations.js');
-const globals=require('./globals.js');
-const {readmyfile}=require('./utils.js');
+import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from './data-locations.js';
+import { HTTPPort } from './globals.js';
+import { readmyfile } from './utils.js';
 
 // SLEPR == Service List Entry Point Registry
-const SLEPR=require('./slepr.js');
+import SLEPR from './slepr.js';
 
 // command line options
 const optionDefinitions=[
@@ -35,15 +36,15 @@ const optionDefinitions=[
 		type:Boolean, defaultValue:false, 
 		description:'Load data files from network locations.'},
 	{ name:'port', alias:'p', 
-		type:Number, defaultValue:globals.HTTPPort.csr, 
+		type:Number, defaultValue:HTTPPort.csr, 
 		typeLabel:'{underline ip-port}',
-		 description:`The HTTP port to listen on. Default: ${globals.HTTPPort.csr}`},
+		 description:`The HTTP port to listen on. Default: ${HTTPPort.csr}`},
 	{ name:'sport', alias:'s', 
-		type:Number, defaultValue:globals.HTTPPort.csr+1, 
+		type:Number, defaultValue:HTTPPort.csr+1, 
 		typeLabel:'{underline ip-port}', 
-		description:`The HTTPS port to listen on. Default: ${globals.HTTPPort.csr+1}` },
+		description:`The HTTPS port to listen on. Default: ${HTTPPort.csr+1}` },
 	{ name:'file', alias:'f', 
-		type:String, defaultValue:locs.Default_SLEPR.file, 
+		type:String, defaultValue:Default_SLEPR.file, 
 		typeLabel:'{underline filename}', 
 		description:'local file name of master SLEPR file'},
 	{ name:'CORSmode', alias:'c',
@@ -109,28 +110,28 @@ if (options.help) {
 	process.exit(0);
 }
 
-if (options.urls && (options.file==locs.Default_SLEPR.file))
-	options.file=locs.Default_SLEPR.url;
+if (options.urls && (options.file==Default_SLEPR.file))
+	options.file=Default_SLEPR.url;
 
-const IANAlanguages=require('./IANAlanguages.js');
+import IANAlanguages from './IANAlanguages.js';
 var knownLanguages=new IANAlanguages();
-knownLanguages.loadLanguages(options.urls?{url:locs.IANA_Subtag_Registry.url}:{file:locs.IANA_Subtag_Registry.file});
+knownLanguages.loadLanguages(options.urls?{url:IANA_Subtag_Registry.url}:{file:IANA_Subtag_Registry.file});
 
-const ISOcountries=require("./ISOcountries.js");
+import ISOcountries from "./ISOcountries.js";
 var knownCountries=new ISOcountries(false, true);
-knownCountries.loadCountries(options.urls?{url:locs.ISO3166.url}:{file:locs.ISO3166.file});
+knownCountries.loadCountries(options.urls?{url:ISO3166.url}:{file:ISO3166.file});
 
-const ClassificationScheme=require("./ClassificationScheme.js");
+import ClassificationScheme from "./ClassificationScheme.js";
 let knownGenres=new ClassificationScheme();
 knownGenres.loadCS(options.urls?
-	{urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url]}:
-	{files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubject.file]});
+	{urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
+	{files:[TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file]});
 
 const RELOAD='RELOAD', UPDATE='UPDATE',
 	  INCR_REQUESTS='REQUESTS++', INCR_FAILURES='FAILURES++',
 	  STATS='STATS';
 
-if (cluster.isMaster) {
+if (isMaster) {
 
 	var metrics={
 		numRequests:0,
@@ -143,23 +144,23 @@ if (cluster.isMaster) {
 
 	// Fork workers.
 	for (let i=0; i<totalCPUs; i++) {
-	  cluster.fork();
+	  fork();
 	}
   
-	cluster.on('exit', (worker, code, signal) => {
+	on('exit', (worker, code, signal) => {
 	  console.log(`worker ${worker.process.pid} died`);
 	  console.log("Let's fork another worker!");
-	  cluster.fork();
+	  fork();
 	});
 
-	cluster.on('message', (worker, msg, handle) => {
+	on('message', (worker, msg, handle) => {
 		if (msg.topic)
 			switch (msg.topic) {
 				case RELOAD: 
 					metrics.reloadRequests++;
-					for (const id in cluster.workers) {
+					for (const id in workers) {
 						// Here we notify each worker of the updated value
-						cluster.workers[id].send({topic: UPDATE});
+						workers[id].send({topic: UPDATE});
 					}
 					break;
 				case INCR_REQUESTS:
@@ -180,17 +181,17 @@ if (cluster.isMaster) {
 	var app=express();
 	app.use(cors());
 
-	morgan.token('pid', function getPID(req) {
+	token('pid', function getPID(req) {
 		return process.pid;
 	});
-	morgan.token('protocol', function getProtocol(req) {
+	token('protocol', function getProtocol(req) {
 		return req.protocol;
 	});
-	morgan.token('parseErr',function getParseErr(req) {
+	token('parseErr',function getParseErr(req) {
 		if (req.parseErr.length>0) return `(query errors=${req.parseErr.length})`;
 		return "";
 	});
-	morgan.token('agent',function getAgent(req) {
+	token('agent',function getAgent(req) {
 		return `(${req.headers['user-agent']})`;
 	});
 	
@@ -217,7 +218,7 @@ if (cluster.isMaster) {
 	csr.loadServiceListRegistry(options.file, knownLanguages, knownCountries, knownGenres);
 
 	app.use(morgan(':pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr'));
-	app.use(favicon(path.join('phlib','ph-icon.ico')));
+	app.use(favicon(join('phlib','ph-icon.ico')));
 
 	if (options.CORSmode=="library")
 		app.options(SLEPR_query_route, cors());
@@ -250,11 +251,11 @@ if (cluster.isMaster) {
 		if (msg.topic)
 			switch (msg.topic) {
 				case UPDATE:
-					knownCountries.loadCountries(options.urls?{url:locs.ISO3166.url}:{file:locs.ISO3166.filee});
-					knownLanguages.loadLanguages(options.urls?{url:locs.IANA_Subtag_Registry.url}:{file:locs.IANA_Subtag_Registry.file});
+					knownCountries.loadCountries(options.urls?{url:ISO3166.url}:{file:ISO3166.filee});
+					knownLanguages.loadLanguages(options.urls?{url:IANA_Subtag_Registry.url}:{file:IANA_Subtag_Registry.file});
 					knownGenres.loadCS(options.urls?
-						{urls:[locs.TVA_ContentCS.url, locs.TVA_FormatCS.url, locs.DVBI_ContentSubject.url]}:
-						{files:[locs.TVA_ContentCS.file, locs.TVA_FormatCS.file, locs.DVBI_ContentSubject.file]});		
+						{urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
+						{files:[TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file]});		
 					csr.loadDataFiles(options.urls, knownLanguages, knownCountries, knownGenres);
 					csr.loadServiceListRegistry(options.file);
 					break;
@@ -278,7 +279,7 @@ if (cluster.isMaster) {
 		if (options.sport==options.port)
 			options.sport=options.port+1;
 			
-		var https_server=https.createServer(https_options, app);
+		var https_server=createServer(https_options, app);
 		https_server.listen(options.sport, function(){
 			console.log(`HTTPS listening on port number ${https_server.address().port}`);
 		});

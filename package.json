@@ -1,8 +1,9 @@
 {
 	"name": "dvb-i-tools",
 	"description": "DVB-I V&V Tools",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"private": true,
+	"type":"module",
 	"dependencies": {
 		"@datastructures-js/binary-search-tree": "^4.3.0",
 		"cluster": "^0.7.7",
