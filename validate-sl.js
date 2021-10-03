@@ -1,7 +1,5 @@
-
-// node.js - https://nodejs.org/en/
 // express framework - https://expressjs.com/en/4x/api.html
-import express, { static, urlencoded } from "express";
+import express from "express";
 
 // morgan - https://github.com/expressjs/morgan
 import morgan, { token } from "morgan";
@@ -12,8 +10,10 @@ import fileupload from "express-fileupload";
 // favourite icon - https://www.npmjs.com/package/serve-favicon
 import favicon from "serve-favicon";
 
-import fs from "fs";
 import { join } from "path";
+const keyFilename=join(".","selfsigned.key"), certFilename=join(".","selfsigned.crt");
+
+import { createServer } from "https";
 
 // command line arguments - https://github.com/75lb/command-line-args
 import commandLineArgs from 'command-line-args';
@@ -22,22 +22,18 @@ import commandLineArgs from 'command-line-args';
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 import { handleErrors } from "./fetch-err-handler.js";
 
-import { drawSLForm } from '/ui.js';
+import { drawSLForm } from './ui.js';
+
+import ErrorList from "./ErrorList.js";
 
 import { IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, ISO3166 } from './data-locations.js';
 
-// error buffer
-import ErrorList from "./ErrorList.js";
-
+import { HTTPPort } from "./globals.js";
 import { isEmpty, readmyfile } from './utils.js';
 
 // the service list validation
 import ServiceListCheck from './sl-check.js';
-var slcheck;
-
-import { createServer } from "https";
-const keyFilename=join(".","selfsigned.key"), certFilename=join(".","selfsigned.crt");
-
+var slcheck=null;
 
 
 /**
@@ -112,10 +108,14 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-app.use(static(__dirname));
+app.use(express.static(__dirname));
 
 app.set('view engine', 'ejs');
 app.use(fileupload());
+
+// initialize Express
+app.use(express.urlencoded({ extended: true }));
+
 app.use(favicon(join('phlib','ph-icon.ico')));
 
 
@@ -141,8 +141,8 @@ app.use(morgan(":remote-addr :protocol :method :url :status :res[content-length]
 // parse command line options
 const optionDefinitions=[
 	{name:'urls', alias:'u', type:Boolean, defaultValue:false},
-	{name:'port', alias:'p', type:Number, defaultValue:globals.HTTPPort.sl },
-	{name:'sport', alias:'s', type:Number, defaultValue:globals.HTTPPort.sl+1 }
+	{name:'port', alias:'p', type:Number, defaultValue:HTTPPort.sl },
+	{name:'sport', alias:'s', type:Number, defaultValue:HTTPPort.sl+1 }
 ];
  
 const options=commandLineArgs(optionDefinitions);
@@ -162,9 +162,6 @@ let isoCountries=new ISOcountries(false, true);
 isoCountries.loadCountries(options.urls?{url:ISO3166.url}:{file:ISO3166.file});
 
 slcheck=new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoCountries);
-
-// initialize Express
-app.use(urlencoded({ extended: true }));
 
 // handle HTTP POST requests to /check
 app.post("/check", function(req,res) {

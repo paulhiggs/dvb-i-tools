@@ -1,28 +1,26 @@
-
-// node.js - https://nodejs.org/en/
 // express framework - https://expressjs.com/en/4x/api.html
-import express, { static, urlencoded } from "express";
-
-import fs from "fs";
-import { join } from "path";
-
-// command line arguments - https://github.com/75lb/command-line-args
-import commandLineArgs from 'command-line-args';
-
-// favourite icon - https://www.npmjs.com/package/serve-favicon
-import favicon from "serve-favicon";
-
-import fetch from "node-fetch";
-import { handleErrors } from "./fetch-err-handler.js";
+import express from "express";
 
 // morgan - https://github.com/expressjs/morgan
 import morgan, { token } from "morgan";
 
 // express-fileupload - https://github.com/richardgirges/express-fileupload#readme
 import fileUpload from 'express-fileupload';
-	
-import { createServer } from "https";
+
+// favourite icon - https://www.npmjs.com/package/serve-favicon
+import favicon from "serve-favicon";
+
+import { join } from "path";
 const keyFilename=join(".", "selfsigned.key"), certFilename=join(".", "selfsigned.crt");
+
+import { createServer } from "https";
+
+// command line arguments - https://github.com/75lb/command-line-args
+import commandLineArgs from 'command-line-args';
+
+// fetch API for node - https://www.npmjs.com/package/node-fetch
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+import { handleErrors } from "./fetch-err-handler.js";
 
 import { drawCGForm } from './ui.js';
 
@@ -30,14 +28,12 @@ import ErrorList from "./ErrorList.js";
 
 import { IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data-locations.js";
 
-import { HTTPPort } from "./globals";
+import { HTTPPort } from "./globals.js";
 import { isEmpty, readmyfile } from './utils.js';
 
 // the content guide validation
 import ContentGuideCheck from './cg-check.js';
 var cgcheck=null;
-
-
 
 
 /**
@@ -152,12 +148,12 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-app.use(static(__dirname));
+app.use(express.static(__dirname));
 app.set('view engine', 'ejs');
 app.use(fileUpload());
 
 // initialize Express
-app.use(urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 
 app.use(favicon(join('phlib', 'ph-icon.ico')));
 

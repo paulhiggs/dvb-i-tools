@@ -193,4 +193,4 @@ export default class IANAlanguages {
 		
 		return res;
 	}	
-};
+}

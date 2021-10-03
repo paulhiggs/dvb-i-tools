@@ -1,11 +1,5 @@
-// node.js - https://nodejs.org/en/
 // express framework - https://expressjs.com/en/4x/api.html
 import express from 'express';
-import cors from 'cors';
-
-import { isMaster, fork, on, workers } from 'cluster';
-const totalCPUs = require('os').cpus().length;
-
 
 // morgan - https://www.npmjs.com/package/morgan
 import morgan, { token } from 'morgan';
@@ -13,19 +7,29 @@ import morgan, { token } from 'morgan';
 // favourite icon - https://www.npmjs.com/package/serve-favicon
 import favicon from 'serve-favicon';
 
-import fs from 'fs';
 import { join } from 'path';
+const keyFilename=join('.','selfsigned.key'), certFilename=join('.','selfsigned.crt');
+
+import { createServer } from 'https';
 
 // command line arguments - https://www.npmjs.com/package/command-line-args
 import commandLineArgs from 'command-line-args';
 import commandLineUsage from 'command-line-usage';
 
-import { createServer } from 'https';
-const keyFilename=join('.','selfsigned.key'), certFilename=join('.','selfsigned.crt');
-
 import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from './data-locations.js';
+
 import { HTTPPort } from './globals.js';
 import { readmyfile } from './utils.js';
+
+// Extensible multi-core server manager -https://www.npmjs.com/package/cluster
+import { isMaster } from 'cluster';
+import clu from 'cluster';
+const fork=clu.fork;
+
+import osu from 'node-os-utils';
+const totalCPUs = osu.cpu.count();
+
+import cors from 'cors';
 
 // SLEPR == Service List Entry Point Registry
 import SLEPR from './slepr.js';
@@ -147,13 +151,13 @@ if (isMaster) {
 	  fork();
 	}
   
-	on('exit', (worker, code, signal) => {
+	process.on('exit', (worker, code, signal) => {
 	  console.log(`worker ${worker.process.pid} died`);
 	  console.log("Let's fork another worker!");
 	  fork();
 	});
 
-	on('message', (worker, msg, handle) => {
+	process.on('message', (worker, msg, handle) => {
 		if (msg.topic)
 			switch (msg.topic) {
 				case RELOAD: 
@@ -188,7 +192,7 @@ if (isMaster) {
 		return req.protocol;
 	});
 	token('parseErr',function getParseErr(req) {
-		if (req.parseErr.length>0) return `(query errors=${req.parseErr.length})`;
+		if (req.parseErr?.length>0) return `(query errors=${req.parseErr.length})`;
 		return "";
 	});
 	token('agent',function getAgent(req) {

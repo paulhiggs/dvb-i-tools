@@ -1,4 +1,3 @@
-// node.js - https://nodejs.org/en/
 // express framework - https://expressjs.com/en/4x/api.html
 import express from "express";
 
@@ -13,8 +12,10 @@ import fileupload from "express-fileupload";
 // favourite icon - https://www.npmjs.com/package/serve-favicon
 import favicon from "serve-favicon";
 
-import fs from "fs";
 import { join } from "path";
+const keyFilename=join(".","selfsigned.key"), certFilename=join(".","selfsigned.crt");
+
+import { createServer } from "https";
 
 // command line arguments - https://github.com/75lb/command-line-args
 import commandLineArgs from 'command-line-args';
@@ -23,7 +24,14 @@ import commandLineArgs from 'command-line-args';
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 import { handleErrors } from "./fetch-err-handler.js";
 
-import { createServer } from "https";
+import { drawSLForm, drawCGForm } from "./ui.js";
+
+import ErrorList from "./ErrorList.js";
+
+import { Default_SLEPR, IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, ISO3166 } from "./data-locations.js";
+
+import { HTTPPort } from "./globals.js";
+import { isEmpty, readmyfile } from "./utils.js";
 
 // the service list validation
 import ServiceListCheck from './sl-check.js';
@@ -37,23 +45,9 @@ var cgcheck=null;
 import SLEPR from './slepr.js';
 var csr=null;
 
-// error buffer
-import ErrorList from "./ErrorList.js";
-
-import { drawSLForm, drawCGForm } from "./ui.js";
-
-import { Default_SLEPR, IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, ISO3166 } from "./data-locations.js";
-import { HTTPPort } from "./globals.js";
-import { isEmpty, readmyfile } from "./utils.js";
-
 import IANAlanguages from "./IANAlanguages.js";
 import ISOcountries from "./ISOcountries.js";
 import ClassificationScheme from "./ClassificationScheme.js";
-
-
-
-
-const keyFilename=join(".","selfsigned.key"), certFilename=join(".","selfsigned.crt");
 
 
 

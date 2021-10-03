@@ -3,7 +3,7 @@
 	"description": "DVB-I V&V Tools",
 	"version": "0.3.0",
 	"private": true,
-	"type":"module",
+	"type": "module",
 	"dependencies": {
 		"@datastructures-js/binary-search-tree": "^4.3.0",
 		"cluster": "^0.7.7",
@@ -15,6 +15,7 @@
 		"libxmljs2": "^0.28.0",
 		"morgan": "^1.10.0",
 		"node-fetch": "^3.0.0",
+		"node-os-utils": "^1.3.5",
 		"serve-favicon": "^2.5.0"
 	},
 	"engines": {
