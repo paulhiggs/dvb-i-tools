@@ -4,7 +4,7 @@ Pauls DVB Tools
 ## csr.js - a DVB-I CSR / SLR
 
 ### Description
-This server application implements a Service List Registry as defined by the [DVB-I Service Discovery and Content Metadata specification - A177](https://www.dvb.org/resources/public/standards/a177_dvb-i_specification.pdf) in clause 5.1.3.2.
+This server application implements a Service List Registry as defined by the [DVB-I Service Discovery and Content Metadata specification - A177r2](https://dvb.org/wp-content/uploads/2020/11/A177r2_Service-Discovery-and-Programme-Metadata-for-DVB-I_ts_103-770-v120_June-2021.pdf) in clause 5.1.3.2.
 
 The application works by reading in a reference/master XML document and then pruning out any provider and service offerings that do not match the specified query parameters. Per A177r2, the allowed query parameters added to the /query are
 * regulatorListFlag  ("true" or "false")
@@ -50,6 +50,7 @@ Validates the value space of the instance document, validation against the schem
 Supports 
 * the [:2019 schema](http://dvb.org/wp-content/uploads/2019/11/A177_DVB-I_Nov_2019.pdf) 
 * the [:2020 schema](https://dvb.org/wp-content/uploads/2019/11/A177r1_Service-Discovery-and-Programme-Metadata-for-DVB-I_July-2020.pdf) with its classification scheme updates
+* the [:2021 schema](https://dvb.org/wp-content/uploads/2020/11/A177r2_Service-Discovery-and-Programme-Metadata-for-DVB-I_ts_103-770-v120_June-2021.pdf) with its classification scheme updates
 * the :202x schema currently in development
 
 Checks performed:
@@ -84,7 +85,7 @@ Checks performed:
 * For &lt;DASHDeliveryParameters&gt;
   * valid @contentType in &lt;UriBasedLocation&gt;
 * only one element for each @xml:lang is specified in any mpeg7:TextualType element
-* SAT&lt;IP parameters are only specified with 
+* SAT&lt;IP parameters are only specified with DVB-T or DVB-S delivery parameters
   
 ### Use
 #### URL based validation  
