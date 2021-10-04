@@ -13,6 +13,7 @@ The application works by reading in a reference/master XML document and then pru
 * Language
 * Genre
 * Delivery
+
 These parameter names are case sensitive and the comparisons made with their values are also case sensitive against the master Service List Entry Points Registy (SLEPR)
 
 Note that these values are case sensitive, and a case sensitive matching is performed with the values, thus "AUT" != "aut"
