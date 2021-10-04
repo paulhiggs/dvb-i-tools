@@ -114,4 +114,4 @@ export default class ISOcountries {
 		}
 		return found;
 	}
-};
+}

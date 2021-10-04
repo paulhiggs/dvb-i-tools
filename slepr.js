@@ -34,8 +34,8 @@ const DVB_DASH_DELIVERY="dvb-dash",
       DVB_C_DELIVERY="dvb-c",
       DVB_IPTV_DELIVERY="dvb-iptv",
       DVB_APPLICATION_DELIVERY="application";
-
-class SLEPR {
+      
+export default class SLEPR {
 
     constructor(useURLs, preloadedLanguageValidator=null, preloadedCountries=null, preloadedGenres=null) {
         this.loadDataFiles(useURLs, preloadedLanguageValidator, preloadedCountries, preloadedGenres);
@@ -354,6 +354,3 @@ class SLEPR {
     }
 
 }
-
-export default SLEPR;
-

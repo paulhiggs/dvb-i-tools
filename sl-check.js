@@ -71,7 +71,7 @@ function validServiceIdentifier(identifier) {
  */
 function uniqueServiceIdentifier(identifier, identifiers) {
 	return !isIn(identifiers, identifier);
-};
+}
 
 /** 
  * determines if the identifer provided refers to a valid application being used with the service
@@ -81,7 +81,7 @@ function uniqueServiceIdentifier(identifier, identifiers) {
  */
 function validServiceControlApplication(hrefType) {
 	return [dvbi.APP_IN_PARALLEL, dvbi.APP_IN_CONTROL].includes(hrefType);
-};
+}
 
 /** 
  * determines if the identifer provided refers to a valid application to be launched when a service is unavailable
@@ -117,7 +117,7 @@ function InvalidCountryCode(value, src, loc) {
 }
 
 
-class ServiceListCheck {
+export default class ServiceListCheck {
 
 	constructor(useURLs, preloadedLanguageValidator=null, preloadedGenres=null, preloadedCountries=null ) {
 
@@ -1628,4 +1628,3 @@ class ServiceListCheck {
 	}
 
 }
-export default ServiceListCheck;

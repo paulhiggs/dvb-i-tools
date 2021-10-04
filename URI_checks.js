@@ -5,7 +5,7 @@
  * @param {string} identifier  The service identifier to be checked
  * @return {boolean}           true if the service identifier is in RFC4151 TAG URI format
  */
-export function isTAGURI (identifier){
+export function isTAGURI (identifier) {
     // RFC 4151 compliant - https://tools.ietf.org/html/rfc4151
     // tagURI = "tag:" taggingEntity ":" specific [ "#" fragment ]
 

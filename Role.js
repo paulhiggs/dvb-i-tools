@@ -53,4 +53,4 @@ export default class Role  extends ClassificationScheme {
         if (options.urls) 
             options.urls.forEach(url => this.loadFromURL(url));
     }
-};
+}
