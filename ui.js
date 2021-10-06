@@ -30,7 +30,7 @@ function tabulateResults(res, error, errs) {
 		res.write(`<td>${value.message?HTMLize(value.message):""}`);
 		res.write(`${value.element?`<br/><span class=\"xmlfont\"><pre>${HTMLize(value.element)}</pre></span>`:""}</td>`);
 		res.write('</tr>');
-	}	
+	}
 
     res.write(RESULT_WITH_INSTRUCTION);
 	if (error) 
@@ -58,7 +58,7 @@ function tabulateResults(res, error, errs) {
 			errs.warnings.forEach(tabluateMessage);
 			resultsShown=true;
 			res.write("</table><br/>");
-		}     
+		}
 	}
 	if (!error && !resultsShown) 
 		res.write("no errors or warnings");
@@ -79,7 +79,7 @@ export function drawSLForm (URLmode, res, lastInput=null, error=null, errs=null)
 	const ENTRY_FORM_URL=`<form method=\"post\"><p><i>URL:</i></p><input type=\"url\" name=\"SLurl\" value=\"${lastInput?lastInput:""}\"><input type=\"submit\" value=\"submit\"></form>`;
 	const ENTRY_FORM_FILE=`<form method=\"post\" encType=\"multipart/form-data\"><p><i>FILE:</i></p><input type=\"file\" name=\"SLfile\" value=\"${lastInput?lastInput:""}\"><input type=\"submit\" value=\"submit\"></form>`;
 
-    res.write(PAGE_TOP('DVB-I Service List Validator'));    
+	res.write(PAGE_TOP('DVB-I Service List Validator'));    
 
 	res.write(URLmode?ENTRY_FORM_URL:ENTRY_FORM_FILE);
 
@@ -114,8 +114,8 @@ export function drawSLForm (URLmode, res, lastInput=null, error=null, errs=null)
 
 	const ENTRY_FORM_REQUEST_TYPE_ID="requestType";
 
-    res.write(PAGE_TOP('DVB-I Content Guide Validator'));
-    res.write(URLmode?ENTRY_FORM_URL:ENTRY_FORM_FILE);
+	res.write(PAGE_TOP('DVB-I Content Guide Validator'));
+	res.write(URLmode?ENTRY_FORM_URL:ENTRY_FORM_FILE);
 
 	res.write(ENTRY_FORM_REQUEST_TYPE_HEADER);
 

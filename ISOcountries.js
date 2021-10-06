@@ -51,7 +51,7 @@ export default class ISOcountries {
 	loadCountriesFromFile(countriesFile, purge=false) {
 		console.log(`reading countries from ${countriesFile}`);
 		if (purge) this.reset();
-		readFile(countriesFile, {encoding: "utf-8"}, function(err,data){
+		readFile(countriesFile, {encoding: "utf-8"}, function(err,data) {
 			if (!err) {
 				this.countriesList=loadCountryData(data);
 			} else {

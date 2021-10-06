@@ -50,7 +50,6 @@ import ISOcountries from "./ISOcountries.js";
 import ClassificationScheme from "./ClassificationScheme.js";
 
 
-
 /**
  * Process the service list specificed for errors and display them
  *
@@ -58,7 +57,7 @@ import ClassificationScheme from "./ClassificationScheme.js";
  * @param {Object} res  The HTTP response to be sent to the client
  */ 
 function processSLQuery(req, res) {
-    if (isEmpty(req.query)) {
+	if (isEmpty(req.query)) {
 		drawSLForm(true, res);
 		res.end();
 	}
@@ -75,9 +74,9 @@ function processSLQuery(req, res) {
 				drawSLForm(true, res, req.query.SLurl, `error (${error}) handling ${req.query.SLurl}`, null);
 				res.end();
 			});
-   }
-   else {
-        drawSLForm(true, res, req.query.SLurl, "URL not specified");
+	}
+	else {
+		drawSLForm(true, res, req.query.SLurl, "URL not specified");
 		res.status(400);
 		res.end();
     }
@@ -91,28 +90,27 @@ function processSLQuery(req, res) {
  * @param {Object} res  The HTTP response to be sent to the client
  */ 
 function processSLFile(req, res) {
-    if (isEmpty(req.query)) 
-        drawSLForm(false, res);    
+	if (isEmpty(req.query)) 
+		drawSLForm(false, res);    
 	else if (req && req.files && req.files.SLfile) {
-        let SLxml=null;
-        let errs=new ErrorList();
-        try {
-            SLxml=req.files.SLfile.data;
-        }
-        catch (err) {
-            errs.pushCode("PR101", `reading of FILE (${req.files.SLfile.name}) failed`);
-        }
+		let SLxml=null;
+		let errs=new ErrorList();
+		try {
+			SLxml=req.files.SLfile.data;
+		}
+		catch (err) {
+			errs.pushCode("PR101", `reading of FILE (${req.files.SLfile.name}) failed`);
+		}
 		if (SLxml)
 			slcheck.doValidateServiceList(SLxml.toString(), errs);
 
-        drawSLForm(false, res, req.files.SLfile.name, null, errs);
-    }
+		drawSLForm(false, res, req.files.SLfile.name, null, errs);
+	}
 	else {
-        drawSLForm(false, res, req.files.SLfile.name, "File not specified");
-        res.status(400);
-    }
-    
-    res.end();
+		drawSLForm(false, res, req.files.SLfile.name, "File not specified");
+		res.status(400);
+	}
+	res.end();
 }
 
 
@@ -126,11 +124,11 @@ function processSLFile(req, res) {
  * @param {Object} res The HTTP response to be sent to the client
  */ 
  function processCGQuery(req, res) {
-    if (isEmpty(req.query)) {
+ 	if (isEmpty(req.query)) {
 		drawCGForm(true, cgcheck.supportedRequests, res);
 		res.end();
-	}  
-    else if (req && req.query && req.query.CGurl) {
+	}
+	else if (req && req.query && req.query.CGurl) {
 		fetch(req.query.CGurl)
 			.then(handleErrors)
 			.then(function (response) {return response.text();})
@@ -143,10 +141,10 @@ function processSLFile(req, res) {
 				res.status(400);
 				res.end();
 			});
-    }
+	}
 	else {
-        drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, "URL not specified");
-        res.status(400);
+		drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, "URL not specified");
+		res.status(400);
 		res.end();
 	}
 }
@@ -159,27 +157,27 @@ function processSLFile(req, res) {
  * @param {Object} res The HTTP response to be sent to the client
  */ 
 function processCGFile(req, res) {
-    if (isEmpty(req.query)) 
-        drawCGForm(false, cgcheck.supportedRequests, res);    
-    else if (req && req.files && req.files.CGfile) {
-        let CGxml=null, errs=new ErrorList(), fname="***";
+	if (isEmpty(req.query)) 
+		drawCGForm(false, cgcheck.supportedRequests, res);    
+	else if (req && req.files && req.files.CGfile) {
+		let CGxml=null, errs=new ErrorList(), fname="***";
 		if (req && req.files && req.files.CGfile) fname=req.files.CGfile.name;
-        try {
-            CGxml=req.files.CGfile.data;
-        }
-        catch (err) {
-            errs.pushCode("PF001", `retrieval of FILE ${fname} failed`);
-        }
+		try {
+			CGxml=req.files.CGfile.data;
+		}
+		catch (err) {
+			errs.pushCode("PF001", `retrieval of FILE ${fname} failed`);
+		}
 		if (CGxml) 
 			cgcheck.doValidateContentGuide(CGxml.toString(), req.body.requestType, errs);
 		
-        drawCGForm(false, cgcheck.supportedRequests, res, fname, req.body.requestType, null, errs);
+		drawCGForm(false, cgcheck.supportedRequests, res, fname, req.body.requestType, null, errs);
     }
 	else {
-        drawCGForm(false, cgcheck.supportedRequests, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
-        res.status(400);
+		drawCGForm(false, cgcheck.supportedRequests, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
+		res.status(400);
 	}
-    res.end();
+	res.end();
 }
 
 
@@ -201,20 +199,20 @@ app.use(favicon(join('phlib','ph-icon.ico')));
 
 
 token("protocol", function getProtocol(req) {
-    return req.protocol;
+	return req.protocol;
 });
 token("agent", function getAgent(req) {
-    return `(${req.headers["user-agent"]})`;
+	return `(${req.headers["user-agent"]})`;
 });
 token("parseErr", function getParseErr(req) {
-    if (req.parseErr && req.parseErr.length>0) return `(query errors=${req.parseErr.length})`;
-    return "";
+	if (req.parseErr && req.parseErr.length>0) return `(query errors=${req.parseErr.length})`;
+	return "";
 });
 token("location", function getCheckedLocation(req) {
 	if (req.files && req.files.SLfile) return `[${req.files.SLfile.name}]`;
-    if (req.query && req.query.SLurl) return `[${req.query.SLurl}]`;
+	if (req.query && req.query.SLurl) return `[${req.query.SLurl}]`;
 	if (req.files && req.files.CGfile) return `[(${req.body.requestType})${req.files.CGfile.name}]`;
-    if (req.query && req.query.CGurl) return `[(${req.body.requestType})${req.query.CGurl}]`;
+	if (req.query && req.query.CGurl) return `[(${req.body.requestType})${req.query.CGurl}]`;
 	return "[*]";
 });
 
@@ -270,7 +268,7 @@ if (!options.nosl) {
 	});
 
 	// handle HTTP GET requests to /checkSL
-	app.get("/checkSL", function(req,res){
+	app.get("/checkSL", function(req,res) {
 		processSLQuery(req, res);
 	});
 
@@ -281,11 +279,11 @@ if (!options.nosl) {
 	});
 
 	// handle HTTP GET requests to /checkSLFile
-	app.get("/checkSLFile", function(req,res){
+	app.get("/checkSLFile", function(req,res) {
 		processSLFile(req, res);
 	});
 
-	app.get('/SLstats', function(req,res){
+	app.get('/SLstats', function(req,res) {
 		res.write("<html><head><title>Service List Verifier (stats)</title></head>");
 		res.write("<body>");
 		slcheck.getStats().forEach(e => {
@@ -305,12 +303,12 @@ if (options.CORSmode=="library") {
 else if (options.CORSmode=="manual") {
 	manualCORS=function (req, res, next) {
 		let opts=res.getHeader('X-Frame-Options');
-        if (opts) {
-            if (!opts.includes('SAMEORIGIN')) opts.push('SAMEORIGIN');
-        }
-        else opts=['SAMEORIGIN'];
-        res.setHeader('X-Frame-Options', opts );
-        res.setHeader('Access-Control-Allow-Origin', "*");
+		if (opts) {
+			if (!opts.includes('SAMEORIGIN')) opts.push('SAMEORIGIN');
+		}
+		else opts=['SAMEORIGIN'];
+		res.setHeader('X-Frame-Options', opts );
+		res.setHeader('Access-Control-Allow-Origin', "*");
 		next();
 	};
 }
@@ -397,7 +395,7 @@ if (https_options.key && https_options.cert) {
 		options.sport=options.port+1;
 	
 	var https_server=createServer(https_options, app);
-	https_server.listen(options.sport, function(){
+	https_server.listen(options.sport, function() {
 		console.log(`HTTPS listening on port number ${https_server.address().port}`);
 	});
 }

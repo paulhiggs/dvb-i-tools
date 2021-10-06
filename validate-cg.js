@@ -43,7 +43,7 @@ var cgcheck=null;
  * @param {Object} res The HTTP response to be sent to the client
  */ 
 function processQuery(req, res) {
-    if (isEmpty(req.query)) {
+	if (isEmpty(req.query)) {
 		drawCGForm(true, cgcheck.supportedRequests, res);
 		res.end();
 	}  
@@ -60,10 +60,10 @@ function processQuery(req, res) {
 				res.status(400);
 				res.end();
 			});
-    }
+	}
 	else {
-        drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, "URL not specified");
-        res.status(400);
+		drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, "URL not specified");
+		res.status(400);
 		res.end();
 	}
 }
@@ -76,29 +76,29 @@ function processQuery(req, res) {
  * @param {Object} res The HTTP response to be sent to the client
  */ 
 function processFile(req, res) {
-    if (isEmpty(req.query)) 
+	if (isEmpty(req.query)) 
 		drawCGForm(false, cgcheck.supportedRequests, res);    
-    else if (req && req.files && req.files.CGfile) {
-        let CGxml=null, errs=new ErrorList(), fname="***";
+	else if (req && req.files && req.files.CGfile) {
+		let CGxml=null, errs=new ErrorList(), fname="***";
 		if (req && req.files && req.files.CGfile) fname=req.files.CGfile.name;
-        try {
-            CGxml=req.files.CGfile.data;
-        }
-        catch (err) {
-            errs.pushCode("PF001", `retrieval of FILE ${fname} failed`);
-        }
+		try {
+			CGxml=req.files.CGfile.data;
+		}
+		catch (err) {
+			errs.pushCode("PF001", `retrieval of FILE ${fname} failed`);
+		}
 		if (CGxml) {
 			let doc=CGxml.toString().replace(/(\r\n|\n|\r|\t)/gm, "");
 			errs.loadDocument(doc);
 			cgcheck.doValidateContentGuide(doc, req.body.requestType, errs);
 		}
-        drawCGForm(false, res, fname, req.body.requestType, null, errs);
-    }
-	else {
-        drawCGForm(false, cgcheck.supportedRequests, cgcheck.supportedRequests, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
-        res.status(400);
+		drawCGForm(false, res, fname, req.body.requestType, null, errs);
 	}
-    res.end();
+	else {
+		drawCGForm(false, cgcheck.supportedRequests, cgcheck.supportedRequests, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
+		res.status(400);
+	}
+	res.end();
 }
 
 
@@ -126,18 +126,18 @@ cgcheck=new ContentGuideCheck(options.urls, knownLanguages, knownGenres);
 
 //middleware
 token("protocol", function getProtocol(req) {
-    return req.protocol;
+	return req.protocol;
 });
 token("parseErr", function getParseErr(req) {
-    if (req.parseErr) return `(${req.parseErr})`;
-    return "";
+	if (req.parseErr) return `(${req.parseErr})`;
+	return "";
 });
 token("agent", function getAgent(req) {
-    return `(${req.headers["user-agent"]})`;
+	return `(${req.headers["user-agent"]})`;
 });
 token("cgLoc", function getCheckedLocation(req) {
 	if (req.files && req.files.CGfile) return `[${req.files.CGfile.name}]`;
-    if (req.query.CGurl) return `[${req.query.CGurl}]`;
+	if (req.query.CGurl) return `[${req.query.CGurl}]`;
 	return "[*]";
 });
 
@@ -159,35 +159,35 @@ app.use(favicon(join('phlib', 'ph-icon.ico')));
 
 // handle HTTP POST requests to /check
 app.post("/check", function(req, res) {
-    req.query.CGurl=req.body.CGurl;
-    processQuery(req, res);
+	req.query.CGurl=req.body.CGurl;
+	processQuery(req, res);
 });
 
 // handle HTTP GET requests to /check
 app.get("/check", function(req, res) {
-    processQuery(req, res);
+	processQuery(req, res);
 });
 
 // handle HTTP POST requests to /checkFile
 app.post("/checkFile", function(req, res) {
 	req.query.CGfile=req.body.CGfile;
-    processFile(req, res);
+	processFile(req, res);
 });
 
 // handle HTTP GET requests to /checkFile
 app.get("/checkFile", function(req, res) {
-    processFile(req, res);
+	processFile(req, res);
 });
 
 // dont handle any other requests
 app.get("*", function(req, res) {
-    res.status(404).end();
+	res.status(404).end();
 });
 
 
 // start the HTTP server
 var http_server=app.listen(options.port, function() {
-    console.log(`HTTP listening on port number ${http_server.address().port}`);
+	console.log(`HTTP listening on port number ${http_server.address().port}`);
 });
 
 
@@ -197,16 +197,16 @@ var http_server=app.listen(options.port, function() {
 // start the HTTPS server
 // sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
 var https_options={
-    key:readmyfile(keyFilename),
-    cert:readmyfile(certFilename)
+	key:readmyfile(keyFilename),
+	cert:readmyfile(certFilename)
 };
 
 if (https_options.key && https_options.cert) {
 	if (options.sport==options.port)
 		options.sport=options.port+1;
 		
-    var https_server=createServer(https_options, app);
-    https_server.listen(options.sport, function() {
-        console.log(`HTTPS listening on port number ${https_server.address().port}` );
-    });
+	var https_server=createServer(https_options, app);
+	https_server.listen(options.sport, function() {
+		console.log(`HTTPS listening on port number ${https_server.address().port}` );
+	});
 }

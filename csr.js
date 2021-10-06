@@ -148,13 +148,13 @@ if (isMaster) {
 
 	// Fork workers.
 	for (let i=0; i<totalCPUs; i++) {
-	  fork();
+		fork();
 	}
   
 	process.on('exit', (worker, code, signal) => {
-	  console.log(`worker ${worker.process.pid} died`);
-	  console.log("Let's fork another worker!");
-	  fork();
+		console.log(`worker ${worker.process.pid} died`);
+		console.log("Let's fork another worker!");
+		fork();
 	});
 
 	process.on('message', (worker, msg, handle) => {
@@ -284,7 +284,7 @@ if (isMaster) {
 			options.sport=options.port+1;
 			
 		var https_server=createServer(https_options, app);
-		https_server.listen(options.sport, function(){
+		https_server.listen(options.sport, function() {
 			console.log(`HTTPS listening on port number ${https_server.address().port}`);
 		});
 	}

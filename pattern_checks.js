@@ -1,7 +1,7 @@
 // pattern_checks.js
   
 const e_pct="&#x25;",
-      e_quot="&#x22;",
+	  e_quot="&#x22;",
 	  e_lowalpha="a-z",
 	  e_highalpha="A-Z",
 	  e_alpha=`${e_lowalpha}${e_highalpha}`,
@@ -51,8 +51,8 @@ const HTTPURLregex=new RegExp(`^${e_HTTPURL}$`,'i');
  * @returns {boolean} true if the argment is compliant to a tva:RatioType
  */
 export function isRatioType (str) {
-    const ratioRegex=new RegExp(/^\d+:\d+$/);
-    return ratioRegex.test(str.trim());
+	const ratioRegex=new RegExp(/^\d+:\d+$/);
+	return ratioRegex.test(str.trim());
 }
 
 
@@ -63,8 +63,8 @@ export function isRatioType (str) {
  * @returns {boolean}  true if the argment is formatted according to UTC ("Zulu") time
  */
 export function isUTCDateTime (str) {
-    const UTCregex=new RegExp(/^[\d]{4}-((0[1-9])|(1[0-2]))-((0[1-9])|1\d|2\d|(3[0-1]))T(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))Z$/);
-    return UTCregex.test(str.trim());
+	const UTCregex=new RegExp(/^[\d]{4}-((0[1-9])|(1[0-2]))-((0[1-9])|1\d|2\d|(3[0-1]))T(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))Z$/);
+	return UTCregex.test(str.trim());
 }
 
 
@@ -126,8 +126,8 @@ export function isURN (arg) {
  * @returns {boolean}  true if the argment is formatted according to UTC ("Zulu") time
  */
  export function isISODuration (duration) {
-    let isoRegex=new RegExp(/^(-|\+)?P(?:([-+]?[0-9,.]*)Y)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)W)?(?:([-+]?[0-9,.]*)D)?(?:T(?:([-+]?[0-9,.]*)H)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)S)?)?$/);
-    return isoRegex.test(duration.trim());
+	let isoRegex=new RegExp(/^(-|\+)?P(?:([-+]?[0-9,.]*)Y)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)W)?(?:([-+]?[0-9,.]*)D)?(?:T(?:([-+]?[0-9,.]*)H)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)S)?)?$/);
+	return isoRegex.test(duration.trim());
 }
  
  
@@ -139,8 +139,8 @@ export function isURN (arg) {
  * @returns {boolean}  true is the argment is formatted as a DVB locator
  */
 export function isDVBLocator (locator) {
-    let locatorRegex=new RegExp(/^dvb:\/\/[\dA-Fa-f]+\.[\dA-Fa-f]*\.[\dA-Fa-f]+;[\dA-Fa-f]+$/);
-    return locatorRegex.test(locator.trim());
+	let locatorRegex=new RegExp(/^dvb:\/\/[\dA-Fa-f]+\.[\dA-Fa-f]*\.[\dA-Fa-f]+;[\dA-Fa-f]+$/);
+	return locatorRegex.test(locator.trim());
 }
 
 

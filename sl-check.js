@@ -46,7 +46,7 @@ const SCHEMA_v4=4;
 const SCHEMA_unknown= -1;
 
 const EXTENSION_LOCATION_SERVICE_LIST_REGISTRY=101,
-      EXTENSION_LOCATION_SERVICE_ELEMENT=201,
+	  EXTENSION_LOCATION_SERVICE_ELEMENT=201,
 	  EXTENSION_LOCATION_DASH_INSTANCE=202,
 	  EXTENSION_LOCATION_OTHER_DELIVERY=203;
 
@@ -1053,7 +1053,7 @@ export default class ServiceListCheck {
 							if (child.attr(dvbi.a_href) && !this.AudioPresentationCSvalues.isIn(child.attr(dvbi.a_href).value())) 
 								errs.pushCode("SI055", `invalid ${dvbi.a_href.attribute(child.name())} value for (${child.attr(dvbi.a_href).value()})`, "audio codec");
 							break;
-					}				
+					}
 				});
 				/* jshint +W083 */
 
@@ -1101,7 +1101,7 @@ export default class ServiceListCheck {
 			while ((conf=ContentAttributes.get(xPath(SCHEMA_PREFIX, tva.e_SignLanguage, ++cp), SL_SCHEMA))!=null)
 				this.checkLanguage(conf.text(), tva.e_SignLanguage.elementize(), conf, errs, "SI111");
 		}
-		
+
 		// <ServiceInstance><Availability>
 		let Availability=ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_Availability), SL_SCHEMA);
 		if (Availability) {
@@ -1111,7 +1111,7 @@ export default class ServiceListCheck {
 					// validTo should be >= validFrom
 					let fr=new Date(Period.attr(dvbi.a_validFrom).value()), 
 						to=new Date(Period.attr(dvbi.a_validTo).value());
-				
+
 					if (to.getTime() < fr.getTime()) 
 						errs.pushCode("SI124", `invalid availability period for service ${thisServiceId.quote()}. ${fr}>${to}`, "period start>end");
 				}
@@ -1521,7 +1521,7 @@ export default class ServiceListCheck {
 			while ((AdditionalParams=service.get(xPath(SCHEMA_PREFIX, dvbi.e_AdditionalServiceParameters, ++_ap), SL_SCHEMA))!=null) {
 				this.CheckExtension(AdditionalParams, EXTENSION_LOCATION_SERVICE_ELEMENT, errs, "SL211");
 			}
-		}        
+		}
 
 		// check <Service><ContentGuideServiceRef>
 		// issues a warning if this is a reference to self

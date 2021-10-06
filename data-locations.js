@@ -74,10 +74,10 @@ export const DVBIv2_CreditsItemRoles={file:join(pathDVBI, v2Credits), url:`${REP
 export const TVAschema={file:join(".", "tva_metadata_3-1.xsd")};
 
 export const DVBI_ServiceListSchema={
-    v1:{file:join(".", "dvbi_v1.0.xsd")},
-    v2:{file:join(".", "dvbi_v2.0.xsd")},
-    v3:{file:join(".", "dvbi_v3.0.xsd")},
-    v3x:{file:join(".", "dvbi_v3.x.xsd")}
+	v1:{file:join(".", "dvbi_v1.0.xsd")},
+	v2:{file:join(".", "dvbi_v2.0.xsd")},
+	v3:{file:join(".", "dvbi_v3.0.xsd")},
+	v3x:{file:join(".", "dvbi_v3.x.xsd")}
 };
 
 const languagesFilename="language-subtag-registry";

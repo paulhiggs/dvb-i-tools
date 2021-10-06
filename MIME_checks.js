@@ -1,7 +1,7 @@
 
 const JPEG_MIME = "image/jpeg", 
       PNG_MIME =  "image/png";
-	  
+
 /**
  * determines if the value is a valid JPEG MIME type
  *

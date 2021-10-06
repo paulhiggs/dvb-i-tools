@@ -11,62 +11,62 @@ const DVB_RELATED_CS_v2 = "urn:dvb:metadata:cs:HowRelatedCS:2020";
 
 export const dvbi = {
 	A177v1_Namespace: "urn:dvb:metadata:servicediscovery:2019",
-    A177v2_Namespace: "urn:dvb:metadata:servicediscovery:2020",
-    A177v3_Namespace: "urn:dvb:metadata:servicediscovery:2021",
-    A177v4_Namespace: "urn:dvb:metadata:servicediscovery:2021x",
-	
-    MAX_TITLE_LENGTH: 80,
-    MAX_KEYWORD_LENGTH: 32,
+	A177v2_Namespace: "urn:dvb:metadata:servicediscovery:2020",
+	A177v3_Namespace: "urn:dvb:metadata:servicediscovery:2021",
+	A177v4_Namespace: "urn:dvb:metadata:servicediscovery:2021x",
+
+	MAX_TITLE_LENGTH: 80,
+	MAX_KEYWORD_LENGTH: 32,
 	MAX_ORGANIZATION_NAME_LENGTH: 32,
 	MAX_NAME_PART_LENGTH: 32,
 	MAX_EXPLANATORY_TEXT_LENGTH: 160,
-	
+
 	XML_AIT_CONTENT_TYPE: "application/vnd.dvb.ait+xml",
 	HTML5_APP: "text/html",
 	XHTML_APP: "application/xhtml+xml",
 //	iOS_APP: "application/vnd.dvb.app.ios",
 //	ANDROID_APP: "application/vnd.dvb.app.android",
-    TEMPLATE_AIT_URI: "urn:fvc:metadata:cs:HowRelatedCS:2018:templateAIT",
-    
+	TEMPLATE_AIT_URI: "urn:fvc:metadata:cs:HowRelatedCS:2018:templateAIT",
+
 	PAGINATION_FIRST_URI: PAGINATION_PREFIX+"first",
 	PAGINATION_PREV_URI: PAGINATION_PREFIX+"prev",
 	PAGINATION_NEXT_URI: PAGINATION_PREFIX+"next",
 	PAGINATION_LAST_URI : PAGINATION_PREFIX+"last",
-	  
+
 	CRID_NOW: CRID_NOW_NEXT_PREFIX+"now",
 	CRID_LATER: CRID_NOW_NEXT_PREFIX+"later",
 	CRID_EARLIER: CRID_NOW_NEXT_PREFIX+"earlier", 
-	
+
 	PROMOTIONAL_STILL_IMAGE_URI: "urn:tva:metadata:cs:HowRelatedCS:2012:19",
-	
+
 	MAX_SUBREGION_LEVELS: 3, // definied for <RegionElement> in Table 33 of A177
 
-    JPEG_IMAGE_CS_VALUE: FILE_FORMAT_CS+":1",
-    PNG_IMAGE_CS_VALUE: FILE_FORMAT_CS+":15",	
+	JPEG_IMAGE_CS_VALUE: FILE_FORMAT_CS+":1",
+	PNG_IMAGE_CS_VALUE: FILE_FORMAT_CS+":15",	
 	
 	EIT_PROGRAMME_CRID_TYPE: "eit-programme-crid",
 	EIT_SERIES_CRID_TYPE: "eit-series-crid",
 
 // A177v1 only table 15 - deprecated in A177v2
-    DVBT_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":dvb-t",
-    DVBS_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":dvb-s",
-    DVBC_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":dvb-c",
-    DVBIPTV_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":dvb-iptv",
-    DVBDASH_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":dvb-dash",
-    DVBAPPLICATION_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":application",
+	DVBT_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":dvb-t",
+	DVBS_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":dvb-s",
+	DVBC_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":dvb-c",
+	DVBIPTV_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":dvb-iptv",
+	DVBDASH_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":dvb-dash",
+	DVBAPPLICATION_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":application",
 
 // A177 5.2.7.2
-    CONTENT_TYPE_DASH_MPD: "application/dash+xml",    // MPD of linear service
-    CONTENT_TYPE_DVB_PLAYLIST: "application/xml",     // XML Playlist
+	CONTENT_TYPE_DASH_MPD: "application/dash+xml",    // MPD of linear service
+	CONTENT_TYPE_DVB_PLAYLIST: "application/xml",     // XML Playlist
 
 // A177 5.5.24  <VideoAttribites><Colorimetry>
 	COLORIMETRY_BT709: "urn:dvb:metadata:cs:ColorimetryCS:2020:1",
 	COLORIMETRY_BT2020_NCL: "urn:dvb:metadata:cs:ColorimetryCS:2020:2.1",
 	COLORIMETRY_BT2100_NCL: "urn:dvb:metadata:cs:ColorimetryCS:2020:3.1",
-	
+
 	ALLOWED_COLORIMETRY: ["urn:dvb:metadata:cs:ColorimetryCS:2020:1",
 			"urn:dvb:metadata:cs:ColorimetryCS:2020:2.1", "urn:dvb:metadata:cs:ColorimetryCS:2020:3.1"],
-	
+
 // A177 6.11.2 - Audio Purpose
 	AUDIO_PURPOSE_MAIN: "urn:tva:metadata:cs:AudioPurposeCS:2007:1",
 	AUDIO_PURPOSE_DESCRIPTION: "urn:tva:metadata:cs:AudioPurposeCS:2007:6",
@@ -88,27 +88,27 @@ export const dvbi = {
 	RESTART_LINK: "urn:fvc:metadata:cs:HowRelatedCS:2018:restart",
 
 // A177 6.11.11 - Restart Availability
-    RESTART_AVAILABLE: "urn:fvc:metadata:cs:RestartAvailabilityCS:2018:restart_available",
+	RESTART_AVAILABLE: "urn:fvc:metadata:cs:RestartAvailabilityCS:2018:restart_available",
 	RESTART_CHECK: "urn:fvc:metadata:cs:RestartAvailabilityCS:2018:restart_check",
 	RESTART_PENDING: "urn:fvc:metadata:cs:RestartAvailabilityCS:2018:restart_pending",
 
 // A177v1 7.3.1
-    BANNER_OUTSIDE_AVAILABILITY_v1: DVB_RELATED_CS_v1+":1000.1",
-    LOGO_SERVICE_LIST_v1: DVB_RELATED_CS_v1+":1001.1",
-    LOGO_SERVICE_v1: DVB_RELATED_CS_v1+":1001.2",
-    LOGO_CG_PROVIDER_v1: DVB_RELATED_CS_v1+":1002.1",
+	BANNER_OUTSIDE_AVAILABILITY_v1: DVB_RELATED_CS_v1+":1000.1",
+	LOGO_SERVICE_LIST_v1: DVB_RELATED_CS_v1+":1001.1",
+	LOGO_SERVICE_v1: DVB_RELATED_CS_v1+":1001.2",
+	LOGO_CG_PROVIDER_v1: DVB_RELATED_CS_v1+":1002.1",
 
 // A177v2 7.3.1
-    BANNER_OUTSIDE_AVAILABILITY_v2: DVB_RELATED_CS_v2+":1000.1",
+	BANNER_OUTSIDE_AVAILABILITY_v2: DVB_RELATED_CS_v2+":1000.1",
 	BANNER_CONTENT_FINISHED_v2: DVB_RELATED_CS_v2+":1000.2",	// added in A177v2
-    LOGO_SERVICE_LIST_v2: DVB_RELATED_CS_v2+":1001.1",
-    LOGO_SERVICE_v2: DVB_RELATED_CS_v2+":1001.2",
-    LOGO_CG_PROVIDER_v2: DVB_RELATED_CS_v2+":1002.1",
+	LOGO_SERVICE_LIST_v2: DVB_RELATED_CS_v2+":1001.1",
+	LOGO_SERVICE_v2: DVB_RELATED_CS_v2+":1001.2",
+	LOGO_CG_PROVIDER_v2: DVB_RELATED_CS_v2+":1002.1",
 
 // A177 7.3.2
-    APP_IN_PARALLEL: LINKED_APLICATION_CS+":1.1",
-    APP_IN_CONTROL: LINKED_APLICATION_CS+":1.2",
-    APP_OUTSIDE_AVAILABILITY: LINKED_APLICATION_CS+":2",
+	APP_IN_PARALLEL: LINKED_APLICATION_CS+":1.1",
+	APP_IN_CONTROL: LINKED_APLICATION_CS+":1.2",
+	APP_OUTSIDE_AVAILABILITY: LINKED_APLICATION_CS+":2",
 
 // possible values for DVB-S polarization
 	DVBS_POLARIZATION_VALUES: ["horizontal", "vertical", "left circular", "right circular"],

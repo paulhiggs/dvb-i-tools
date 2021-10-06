@@ -43,7 +43,7 @@ var slcheck=null;
  * @param {Object} res  The HTTP response to be sent to the client
  */ 
 function processQuery(req, res) {
-    if (isEmpty(req.query)) {
+	if (isEmpty(req.query)) {
 		drawSLForm(true, res);
 		res.end();
 	}
@@ -60,12 +60,12 @@ function processQuery(req, res) {
 				drawSLForm(true, res, req.query.SLurl, `error (${error}) handling ${req.query.SLurl}`, null);
 				res.end();
 			});
-   }
-   else {
+	}
+	else {
 		drawSLForm(true, res, req.query.SLurl, "URL not specified");
 		res.status(400);
 		res.end();
-    }
+	}
 }
 
 
@@ -76,29 +76,28 @@ function processQuery(req, res) {
  * @param {Object} res  The HTTP response to be sent to the client
  */ 
 function processFile(req, res) {
-    if (isEmpty(req.query)) 
+	if (isEmpty(req.query)) 
 		drawSLForm(false, res);    
 	else if (req && req.files && req.files.SLfile) {
-        let SLxml=null;
-        let errs=new ErrorList();
-        try {
-            SLxml=req.files.SLfile.data;
-        }
-        catch (err) {
+		let SLxml=null;
+		let errs=new ErrorList();
+		try {
+			SLxml=req.files.SLfile.data;
+		}
+		catch (err) {
 			// this should not happen as file is read and uploaded through the browser
-            errs.pushCode("PR101", `reading of FILE (${req.files.SLfile.name}) failed`);
-        }
+			errs.pushCode("PR101", `reading of FILE (${req.files.SLfile.name}) failed`);
+		}
 		if (SLxml)
 			slcheck.doValidateServiceList(SLxml.toString(), errs);
 
 		drawSLForm(false, res, req.files.SLfile.name, null, errs);
-    }
+	}
 	else {
-        drawSLForm(false, res, req.files.SLfile.name, "File not specified");
-        res.status(400);
-    }
-    
-    res.end();
+		drawSLForm(false, res, req.files.SLfile.name, "File not specified");
+		res.status(400);
+	}
+	res.end();
 }
 
 
@@ -120,18 +119,18 @@ app.use(favicon(join('phlib','ph-icon.ico')));
 
 
 token("protocol", function getProtocol(req) {
-    return req.protocol;
+	return req.protocol;
 });
 token("parseErr", function getParseErr(req) {
-    if (req.parseErr) return `(${req.parseErr})`;
-    return "";
+	if (req.parseErr) return `(${req.parseErr})`;
+	return "";
 });
 token("agent", function getAgent(req) {
-    return `(${req.headers["user-agent"]})`;
+	return `(${req.headers["user-agent"]})`;
 });
 token("slLoc", function getCheckedLocation(req) {
 	if (req.files && req.files.SLfile) return `[${req.files.SLfile.name}]`;
-    if (req.query && req.query.SLurl) return `[${req.query.SLurl}]`;
+	if (req.query && req.query.SLurl) return `[${req.query.SLurl}]`;
 	return "[*]";
 });
 
@@ -165,24 +164,24 @@ slcheck=new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoCount
 
 // handle HTTP POST requests to /check
 app.post("/check", function(req,res) {
-    req.query.SLurl=req.body.SLurl;
-    processQuery(req,res);
+	req.query.SLurl=req.body.SLurl;
+	processQuery(req,res);
 });
 
 // handle HTTP GET requests to /check
 app.get("/check", function(req,res) {
-    processQuery(req,res);
+	processQuery(req,res);
 });
 
 // handle HTTP POST requests to /checkFile
 app.post("/checkFile", function(req,res) {
-    req.query.SLfile=req.body.SLfile;
-    processFile(req,res);
+	req.query.SLfile=req.body.SLfile;
+	processFile(req,res);
 });
 
 // handle HTTP GET requests to /checkFile
 app.get("/checkFile", function(req,res) {
-    processFile(req,res);
+	processFile(req,res);
 });
 
 app.get('/stats', function(req,res) {
@@ -197,30 +196,30 @@ app.get('/stats', function(req,res) {
 
 // dont handle any other requests
 app.get("*", function(req,res) {
-    res.status(404).end();
+	res.status(404).end();
 });
 
 
 // start the HTTP server
 var http_server=app.listen(options.port, function() {
-    console.log(`HTTP listening on port number ${http_server.address().port}`);
+	console.log(`HTTP listening on port number ${http_server.address().port}`);
 });
 
 
 // start the HTTPS server
 // sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
 var https_options={
-    key:readmyfile(keyFilename),
-    cert:readmyfile(certFilename)
+	key:readmyfile(keyFilename),
+	cert:readmyfile(certFilename)
 };
 
 if (https_options.key && https_options.cert) {
 	if (options.sport==options.port)
 		options.sport=options.port+1;
 	
-    var https_server=createServer(https_options, app);
-    https_server.listen(options.sport, function(){
-        console.log(`HTTPS listening on port number ${https_server.address().port}`);
-    });
+	var https_server=createServer(https_options, app);
+	https_server.listen(options.sport, function() {
+		console.log(`HTTPS listening on port number ${https_server.address().port}`);
+	});
 }
 

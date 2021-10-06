@@ -20,7 +20,7 @@ import { AvlTree } from '@datastructures-js/binary-search-tree';
  *& @returns {boolean} true of the element contains the named child element(s) otherwise false
  */
 function hasChild(elem, childElementName) {
-     return elem ? elem.childNodes().find(el => el.type()=='element' && el.name()==childElementName) != undefined : false;
+	return elem ? elem.childNodes().find(el => el.type()=='element' && el.name()==childElementName) != undefined : false;
 }
 
 /**
@@ -31,15 +31,15 @@ function hasChild(elem, childElementName) {
  * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded 
  */
 function addCSTerm(vals, CSuri, term, leafNodesOnly=false) {
-    if (term.type()!="element") return;
-    if (term.name()==="Term") {
-        if (!leafNodesOnly || (leafNodesOnly && !hasChild(term, "Term")))
-            if (term.attr("termID")) 
-                vals.push(`${CSuri}:${term.attr("termID").value()}`);
-        var st=0, subTerm;
-        while ((subTerm=term.child(st++))!=null)
-            addCSTerm(vals, CSuri, subTerm, leafNodesOnly);
-    }
+	if (term.type()!="element") return;
+	if (term.name()==="Term") {
+		if (!leafNodesOnly || (leafNodesOnly && !hasChild(term, "Term")))
+ 			if (term.attr("termID")) 
+				vals.push(`${CSuri}:${term.attr("termID").value()}`);
+		let st=0, subTerm;
+		while ((subTerm=term.child(st++))!=null)
+			addCSTerm(vals, CSuri, subTerm, leafNodesOnly);
+	}
 }
 
 
@@ -51,90 +51,89 @@ function addCSTerm(vals, CSuri, term, leafNodesOnly=false) {
  * @returns {Array} values parsed from the classification scheme 
  */
 function loadClassificationScheme(xmlCS, leafNodesOnly=false) {
-    let vals=[];
-    if (!xmlCS) return vals;
-    let CSnamespace = xmlCS.root().attr("uri");
-    if (!CSnamespace) return vals;
-    var t=0, term;
-    while ((term=xmlCS.root().child(t++))!=null)
-        addCSTerm(vals, CSnamespace.value(), term, leafNodesOnly);
-    return vals;
-}
+	let vals=[];
+	if (!xmlCS) return vals;
+	let CSnamespace = xmlCS.root().attr("uri");
+	if (!CSnamespace) return vals;
+	let t=0, term;
+	while ((term=xmlCS.root().child(t++))!=null)
+		addCSTerm(vals, CSnamespace.value(), term, leafNodesOnly);
+	return vals;
+}	
 
 
 export default class ClassificationScheme {
 
-    constructor () {
-        this.values=new AvlTree();
-        loadClassificationScheme.bind(this);
-    }
+	constructor () {
+		this.values=new AvlTree();
+		loadClassificationScheme.bind(this);
+	}
 
-    count() {
-        return this.values.count();
-    }
+	count() {
+		return this.values.count();
+	}
 
-    empty() {
-        this.values.clear();
-    }
-    
-    insertValue(key, value) {
-        this.values.insert(key, value);
-    }
+	empty() {
+		this.values.clear();
+	}
 
-    /**
-     * read a classification scheme from a URL and load its hierarical values into a linear list 
-     *
-     * @param {String} csURL URL to the classification scheme
-     * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded 
-     */
-    loadFromURL(csURL, leafNodesOnly=false) {
+	insertValue(key, value) {
+		this.values.insert(key, value);
+	}
+
+	/**
+	 * read a classification scheme from a URL and load its hierarical values into a linear list 
+	 *
+	 * @param {String} csURL URL to the classification scheme
+	 * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded 
+	 */
+	loadFromURL(csURL, leafNodesOnly=false) {
 		console.log(`retrieving CS (${leafNodesOnly?"all":"leaf"} nodes) from ${csURL} via fetch()`); 
 		fetch(csURL)
 			.then(handleErrors)
 			.then(response => response.text())
 			.then(strXML => loadClassificationScheme(parseXmlString(strXML), leafNodesOnly).forEach(e=>{this.insertValue(e, true);}))
 			.catch(error => console.log(`error (${error}) retrieving ${csURL}`));
-    }
+	}
 
-    /**
-     * read a classification scheme from a local file and load its hierarical values into a linear list 
-     *
-     * @param {String} classificationScheme the filename of the classification scheme
-     * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded 
-     */
-    loadFromFile(classificationScheme, leafNodesOnly=false) {
-        console.log(`reading CS (${leafNodesOnly?"leaf":"all"} nodes) from ${classificationScheme}`);
+	/**
+	 * read a classification scheme from a local file and load its hierarical values into a linear list 
+	 *
+	 * @param {String} classificationScheme the filename of the classification scheme
+	 * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded 
+	 */
+	loadFromFile(classificationScheme, leafNodesOnly=false) {
+		console.log(`reading CS (${leafNodesOnly?"leaf":"all"} nodes) from ${classificationScheme}`);
 
-        readFile(classificationScheme, {encoding: "utf-8"}, (err,data)=> {
-            if (!err) {
-                loadClassificationScheme(parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm,"")), leafNodesOnly).forEach(e=>{this.insertValue(e, true);});
-            }
-            else console.log(err);
-        });
-    }
+ 		readFile(classificationScheme, {encoding: "utf-8"}, (err,data)=> {
+ 			if (!err) 
+				loadClassificationScheme(parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm,"")), leafNodesOnly).forEach(e=>{this.insertValue(e, true);});
+			else console.log(err);
+		});
+	}
 
 
-    loadCS(options) {
-        if (!options) options={};
-        if (!options.leafNodesOnly) options.leafNodesOnly=false;
+	loadCS(options) {
+		if (!options) options={};
+		if (!options.leafNodesOnly) options.leafNodesOnly=false;
 
-        if (options.file)
-            this.loadFromFile(options.file, options.leafNodesOnly);
-        if (options.files)
-            options.files.forEach(file => this.loadFromFile(file, options.leafNodesOnly));  
-        if (options.url)
-            this.loadFromURL(options.url, options.leafNodesOnly);
-        if (options.urls)
-            options.urls.forEach(url => this.loadFromURL(url, options.leafNodesOnly));
-    }
+		if (options.file)
+			this.loadFromFile(options.file, options.leafNodesOnly);
+		if (options.files)
+			options.files.forEach(file => this.loadFromFile(file, options.leafNodesOnly));  
+		if (options.url)
+			this.loadFromURL(options.url, options.leafNodesOnly);
+		if (options.urls)
+			options.urls.forEach(url => this.loadFromURL(url, options.leafNodesOnly));
+	}
 
-    /**
-     * determines if the value is in the classification scheme
-     *
-     * @param {String} value           The value to check for existance
-     * @returns {boolean} true if value is in the classification scheme
-     */
-    isIn(value) {
-        return this.values.has(value);
-    }
+	/**
+	 * determines if the value is in the classification scheme
+	 *
+	 * @param {String} value           The value to check for existance
+	 * @returns {boolean} true if value is in the classification scheme
+	 */
+	isIn(value) {
+		return this.values.has(value);
+	}
 }

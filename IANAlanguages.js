@@ -184,7 +184,7 @@ export default class IANAlanguages {
 		return this.languageUnknown;
 	}
 	
-	isKnownSignLanguage(value){
+	isKnownSignLanguage(value) {
 		let lcValue=value.toLowerCase();
 		let res=this.checkSignLanguage(lcValue);
 		

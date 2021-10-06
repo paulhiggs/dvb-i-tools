@@ -79,11 +79,11 @@ export function unEntity(str) { return str.replace(/(&.+;)/ig, "*"); }
  * @returns {Booolean} true if the object does not contain ant local properties
  */
 export function isEmpty(obj) {
-    for(let key in obj) {
-        if(obj.hasOwnProperty(key))
-            return false;
-    }
-    return true;
+	for(let key in obj) {
+		if (obj.hasOwnProperty(key))
+			return false;
+	}
+	return true;
 }
 
 
@@ -94,12 +94,12 @@ export function isEmpty(obj) {
  * @returns {Buffer} the buffer containing the data from the file, or null if there is a problem reading
  */
 export function readmyfile(filename) {
-    try {
-        let stats=statSync(filename);
-        if (stats.isFile()) return readFileSync(filename); 
-    }
-    catch (err) {console.log(err.code, err.path);}
-    return null;
+	try {
+		let stats=statSync(filename);
+		if (stats.isFile()) return readFileSync(filename); 
+	}
+	catch (err) {console.log(err.code, err.path);}
+	return null;
 }
 
 
