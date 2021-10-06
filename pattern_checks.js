@@ -50,8 +50,8 @@ const HTTPURLregex=new RegExp(`^${e_HTTPURL}$`,'i');
  * @param {string}     str string contining value to check
  * @returns {boolean} true if the argment is compliant to a tva:RatioType
  */
+const ratioRegex=new RegExp(/^\d+:\d+$/);
 export function isRatioType (str) {
-	const ratioRegex=new RegExp(/^\d+:\d+$/);
 	return ratioRegex.test(str.trim());
 }
 
@@ -62,8 +62,8 @@ export function isRatioType (str) {
  * @param {string} str string contining the UTC time
  * @returns {boolean}  true if the argment is formatted according to UTC ("Zulu") time
  */
+const UTCregex=new RegExp(/^[\d]{4}-((0[1-9])|(1[0-2]))-((0[1-9])|1\d|2\d|(3[0-1]))T(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))Z$/);
 export function isUTCDateTime (str) {
-	const UTCregex=new RegExp(/^[\d]{4}-((0[1-9])|(1[0-2]))-((0[1-9])|1\d|2\d|(3[0-1]))T(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))Z$/);
 	return UTCregex.test(str.trim());
 }
 
@@ -87,24 +87,9 @@ export function isHTTPURL (arg) {
  * @param {string} arg  The value whose format is to be checked
  * @returns {boolean} true if the argument is an HTTP URL
  */
-export function isURI (arg, scheme='([a-zA-Z][-a-zA-Z\\d.+]*:)') {
+export function isURI (arg) {
 	return this.isURL(arg) || this.isURN(arg);
 }
-
-
-/*
- * checks of the specified argument matches an HTTP or HTTPS URL (or no protocol is specified)
- *
- * @param {string} url  The value whose format is to be checked
- * @returns {boolean} true if the argument is an HTTP URL
- */
- /*export function isURL(url) {
-	// genericurl as defined in RFC1738 - https://tools.ietf.org/html/rfc1738
-	
-	let genericURL=new RegExp(/^[-a-z\d@:%._\+~#=]{1,256}\\.[a-z\d()]{1,6}\b([-a-z\d()@:%_\+.~#?&//=]*)$/, 'i');
-	return genericURL.test(url.trim());
-}
-*/
 
 
 /**
@@ -125,8 +110,8 @@ export function isURN (arg) {
  * @param {string} duration string contining the UTC time
  * @returns {boolean}  true if the argment is formatted according to UTC ("Zulu") time
  */
+ const isoRegex=new RegExp(/^(-|\+)?P(?:([-+]?[\d,.]*)Y)?(?:([-+]?[\d,.]*)M)?(?:([-+]?[\d,.]*)W)?(?:([-+]?[\d,.]*)D)?(?:T(?:([-+]?[\d,.]*)H)?(?:([-+]?[\d,.]*)M)?(?:([-+]?[0\d,.]*)S)?)?$/);
  export function isISODuration (duration) {
-	let isoRegex=new RegExp(/^(-|\+)?P(?:([-+]?[0-9,.]*)Y)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)W)?(?:([-+]?[0-9,.]*)D)?(?:T(?:([-+]?[0-9,.]*)H)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)S)?)?$/);
 	return isoRegex.test(duration.trim());
 }
  
@@ -138,8 +123,8 @@ export function isURN (arg) {
  * @param {string} locator string contining the DVB locator
  * @returns {boolean}  true is the argment is formatted as a DVB locator
  */
+const locatorRegex=new RegExp(/^dvb:\/\/[\dA-Fa-f]+\.[\dA-Fa-f]*\.[\dA-Fa-f]+;[\dA-Fa-f]+$/);
 export function isDVBLocator (locator) {
-	let locatorRegex=new RegExp(/^dvb:\/\/[\dA-Fa-f]+\.[\dA-Fa-f]*\.[\dA-Fa-f]+;[\dA-Fa-f]+$/);
 	return locatorRegex.test(locator.trim());
 }
 
@@ -149,10 +134,9 @@ export function isDVBLocator (locator) {
  * @param {String} postcode  the postcode value to check
  * @returns {boolean} true if the postcode argument is a valid postcode , otherwise false 
  */
+const postcodeRegex=new RegExp(/[a-z\d]+([\- ][a-z\d]+)?$/, 'i');
 export function isPostcode(postcode) {
-	if (!postcode) return false;
-
-	let postcodeRegex=new RegExp(/[a-z\d]+([\- ][a-z\d]+)?$/, 'i');
+	if (!postcode) return false;	
 	return postcodeRegex.test(postcode.trim());
 }
 
@@ -162,12 +146,11 @@ export function isPostcode(postcode) {
  * @param {String} postcode  the postcode value to check
  * @returns {boolean} true if the postcode argument is a valid wildcarded postcode , otherwise false 
  */
+ const WildcardFirstRegex=new RegExp(/^(\*[a-z\\d]*[\- ]?[a-z\d]+)/, 'i');
+ const WildcardMiddleRegex=new RegExp(/^(([a-z\d]+\*[\- ]?[a-z\d]+)|([a-z\d]+[\- ]?\\*[a-z\d]+))$/, 'i');
+ const WildcardEndRegex=new RegExp(/^([a-z\d]+[\- ]?[a-z\d]*\*)$/, 'i');
  export function isWildcardPostcode(postcode) {
 	if (!postcode) return false;
-
-	let WildcardFirstRegex=new RegExp(/^(\*[a-z\\d]*[\- ]?[a-z\d]+)/, 'i');
-	let WildcardMiddleRegex=new RegExp(/^(([a-z\d]+\*[\- ]?[a-z\d]+)|([a-z\d]+[\- ]?\\*[a-z\d]+))$/, 'i');
-	let WildcardEndRegex=new RegExp(/^([a-z\d]+[\- ]?[a-z\d]*\*)$/, 'i');
 	return WildcardEndRegex.test(postcode.trim()) || WildcardMiddleRegex.test(postcode.trim())|| WildcardFirstRegex.test(postcode.trim());
 }
 
@@ -178,8 +161,8 @@ export function isPostcode(postcode) {
  * @param {string} ext  the signalled extensionName
  * @returns {boolean} true if the signalled extensionName is in the specification defined format, else false
  */
-export function validExtensionName(ext) {
-	let ExtensionRegex=new RegExp(/^[a-z\d][a-z\d:\-/\.]*[a-z\d]$/,'i');
+const ExtensionRegex=new RegExp(/^[a-z\d][a-z\d:\-/\.]*[a-z\d]$/,'i');
+export function validExtensionName(ext) {	
 	return ExtensionRegex.test(ext.trim());
 }
 
@@ -191,10 +174,9 @@ export function validExtensionName(ext) {
  * @param {string} ratre  the signalled frameRate
  * @returns {boolean} true if the signalled frameRate is a valid TV-Anytime FrameRateType, else false
  */
+const FrameRateRegex1=new RegExp(/^\d{1,3}(\.\d{1,3})?$/);
+const FrameRateRegex2=new RegExp(/^\d{1,3}\/1\.001$/);
 export function validFrameRate(rate) {
-	let FrameRateRegex1=new RegExp(/^\d{1,3}(\.\d{1,3})?$/);
-	let FrameRateRegex2=new RegExp(/^\d{1,3}\/1\.001$/);
-	
 	return FrameRateRegex1.test(rate.trim()) || FrameRateRegex2.test(rate.trim());
 }
 
@@ -206,9 +188,9 @@ export function validFrameRate(rate) {
  * @param {string} domain  The value whose format is to be checked
  * @returns {boolean} true if the argument is a domain name
  */
+const DomainNameRegex=new RegExp(/^[a-z\d]+([\-\.]{1}[a-z\d]+)*\.[a-z]{2,5}(:[\d]{1,5})?(\/.*)?$/, 'i');
 export function isDomainName(domain) {
 	if (!domain) return false;
-	let DomainNameRegex=new RegExp(/^[a-z\d]+([\-\.]{1}[a-z\d]+)*\.[a-z]{2,5}(:[\d]{1,5})?(\/.*)?$/, 'i');
     return DomainNameRegex.test(domain.trim());
 }
 
@@ -221,10 +203,9 @@ export function isDomainName(domain) {
  * @param {string} arg  The value whose format is to be checked
  * @returns {boolean} true if the argument is an RTSP URL
  */
+const RTSPRegex=new RegExp(/^rtsp:\/\/.*$/, 'i');
 export function isRTSPURL(arg) {
 	if (!(arg && isURL(arg))) return false;
-	
-	let RTSPRegex=new RegExp(/^rtsp:\/\/.*$/, 'i');
 	return RTSPRegex.test(arg.trim());
 }
 
@@ -235,10 +216,9 @@ export function isRTSPURL(arg) {
  * @param {string} the value to check, likely from an Interval@days attribute
  * @returns {boolean} true if the value is properly formated
  */
+const DaysListRegex=new RegExp(/^([1-7]\s+)*[1-7]$/); // list of values 1-7 separeted by spaces
  export function validServiceDaysList(daysList) {
 	if (!daysList) return false;
-	// list of values 1-7 separeted by spaces
-	let DaysListRegex=new RegExp(/^([1-7]\s+)*[1-7]$/);
 	return DaysListRegex.test(daysList.trim());
 }
 
@@ -249,11 +229,9 @@ export function isRTSPURL(arg) {
  * @param {string} val the value to check, likely from an Interval@startTime or @endTime attributes
  * @returns {boolean} true if the value is properly formated
  */
+const ZuluRegex=new RegExp(/^(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))Z$/);
 export function validZuluTimeType(time) {
 	if (!time) return false;
-	// <pattern value="(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))Z"/>
-	
-	let ZuluRegex=new RegExp(/^(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))Z$/);
 	return ZuluRegex.test(time.trim());
 }
 
