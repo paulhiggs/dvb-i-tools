@@ -22,7 +22,7 @@ import { statSync, readFileSync } from "fs";
 export function xPathM (SCHEMA_PREFIX, elementNames) {
 	let t="";
 	if (elementNames) elementNames.forEach(elementName => {
-		if (t.length) { t+="/"; first=false;}
+		if (t.length!=0) t+="/";
 		t+=`${SCHEMA_PREFIX}:${elementName}`;
 	});
 	return t;
