@@ -241,9 +241,10 @@ export function validZuluTimeType(time) {
  * @param {String} languageCode 
  * @param {Boolean} caseSensitive
  */
+const languageFormat=`^[${e_lowalpha}]{1,8}(-[${e_lowalpha}${e_digit}]{1,8})*$`;
 export function isTVAAudioLanguageType(languageCode, caseSensitive=true) {
 	// any language specified should be an XML language
-	const languageRegex=new RegExp(/^[a-z]{1,8}(-[a-z0-9]{1,8})*$/, caseSensitive?'':'i');
+	const languageRegex=new RegExp(languageFormat, caseSensitive?'':'i');
 	return languageRegex.test(languageCode);
 }
 
