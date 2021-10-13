@@ -110,9 +110,8 @@ function CountChildElements(node, childElementName) {
 	if (!allowOtherElements) {
 		let children=parentElement.childNodes();
 		if (children) children.forEachSubElement(child => {
-			let _childName=child.name();
-			if (!findElementIn(childElements, _childName)) {		
-				errs.pushCode(errCode?`${errCode}-2`:"TE011", `Element ${_childName.elementize()} is not permitted in ${thisElem}`);
+			if (!findElementIn(childElements, child.name())) {		
+				errs.pushCodeWithFragment(errCode?`${errCode}-2`:"TE011", `Element ${child.name().elementize()} is not permitted in ${thisElem}`, child);
 				rv=false;
 			}
 		});
@@ -786,8 +785,8 @@ export default class ContentGuideCheck {
 				checkAttributes(MediaUri, [tva.a_contentType], [], errs, "IRM002");
 				if (MediaUri.attr(tva.a_contentType)) {
 					let contentType=MediaUri.attr(tva.a_contentType).value();
-					if (!isJPEGmime(contentType) && !isPNGmime(tva.contentType)) 
-						errs.pushCode("IRM003", `${tva.a_contentType.attribute(tva.e_MediaUri)}=${tva.contentType.quote()} is not valid for a ${errLocation}`);
+					if (!isJPEGmime(contentType) && !isPNGmime(tva.a_contentType)) 
+						errs.pushCode("IRM003", `${tva.a_contentType.attribute(tva.e_MediaUri)}=${contentType} is a valid image type`, 'invalid image type');
 				}
 				
 				if (!isHTTPURL(MediaUri.text()))
@@ -2305,8 +2304,8 @@ export default class ContentGuideCheck {
 	*/		}
 		}
 		else
-			errs.pushCode(errcode?`${errcode}-4`:"PA004", `${tva.a_contentType.attribute(node.name())}=${node.attr(tva.a_contentType).value().quote()} is not valid for a player`, 
-				`invalid ${tva.a_contentType}`, node.line());
+			errs.pushCodeWithFragment(errcode?`${errcode}-4`:"PA004", `${tva.a_contentType.attribute(node.name())}=${node.attr(tva.a_contentType).value().quote()} is not valid for a player`, 
+				node, `invalid ${tva.a_contentType}`);
 	}
 
 
@@ -2407,7 +2406,7 @@ export default class ContentGuideCheck {
 
 		// <InstanceDescription>
 		let id=0, InstanceDescription;
-		if (validRequest)
+		if (validRequest && [CG_REQUEST_BS_CONTENTS, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType))
 			while ((InstanceDescription=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_InstanceDescription, ++id), CG_SCHEMA))!=null)
 				this.ValidateInstanceDescription(CG_SCHEMA, SCHEMA_PREFIX, OnDemandProgram.name(), InstanceDescription, false, errs);
 		
@@ -2425,9 +2424,10 @@ export default class ContentGuideCheck {
 		
 		// <DeliveryMode>
 		let dm=0, DeliveryMode;
-		while ((DeliveryMode=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_DeliveryMode, ++dm), CG_SCHEMA))!=null)
-			if (DeliveryMode.text()!=tva.DELIVERY_MODE_STREAMING)
-				errs.pushCode("OD070", `${OnDemandProgram.name()}.${tva.e_DeliveryMode} must be ${tva.DELIVERY_MODE_STREAMING.quote()}`);
+		if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType))
+			while ((DeliveryMode=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_DeliveryMode, ++dm), CG_SCHEMA))!=null)
+				if (DeliveryMode.text()!=tva.DELIVERY_MODE_STREAMING)
+					errs.pushCode("OD070", `${OnDemandProgram.name()}.${tva.e_DeliveryMode} must be ${tva.DELIVERY_MODE_STREAMING.quote()}`);
 		
 		// <Free>
 		let fr=0, Free;
