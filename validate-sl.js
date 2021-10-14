@@ -19,7 +19,8 @@ import { createServer } from "https";
 import commandLineArgs from 'command-line-args';
 
 // fetch API for node.js - https://www.npmjs.com/package/node-fetch
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+/* jshint -W024*/ 
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args)); /* jshint +W024*/ 
 import { handleErrors } from "./fetch-err-handler.js";
 
 import { drawSLForm } from './ui.js';
@@ -86,7 +87,7 @@ function processFile(req, res) {
 		}
 		catch (err) {
 			// this should not happen as file is read and uploaded through the browser
-			errs.pushCode("PR101", `reading of FILE (${req.files.SLfile.name}) failed`);
+			errs.addError({code:"PR101", message:`reading of FILE (${req.files.SLfile.name}) failed`});
 		}
 		if (SLxml)
 			slcheck.doValidateServiceList(SLxml.toString(), errs);

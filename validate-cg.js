@@ -19,7 +19,8 @@ import { createServer } from "https";
 import commandLineArgs from 'command-line-args';
 
 // fetch API for node - https://www.npmjs.com/package/node-fetch
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+/* jshint -W024*/ 
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args)); /* jshint +W024*/ 
 import { handleErrors } from "./fetch-err-handler.js";
 
 import { drawCGForm } from './ui.js';
@@ -85,7 +86,7 @@ function processFile(req, res) {
 			CGxml=req.files.CGfile.data;
 		}
 		catch (err) {
-			errs.pushCode("PF001", `retrieval of FILE ${fname} failed`);
+			errs.addError({code:"PF001", message:`retrieval of FILE ${fname} failed`});
 		}
 		if (CGxml) {
 			let doc=CGxml.toString().replace(/(\r\n|\n|\r|\t)/gm, "");

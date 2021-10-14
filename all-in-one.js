@@ -21,7 +21,8 @@ import { createServer } from "https";
 import commandLineArgs from 'command-line-args';
 
 // fetch API for node.js - https://www.npmjs.com/package/node-fetch
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+/* jshint -W024*/ 
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args)); /* jshint +W024*/ 
 import { handleErrors } from "./fetch-err-handler.js";
 
 import { drawSLForm, drawCGForm } from "./ui.js";
@@ -99,7 +100,7 @@ function processSLFile(req, res) {
 			SLxml=req.files.SLfile.data;
 		}
 		catch (err) {
-			errs.pushCode("PR101", `reading of FILE (${req.files.SLfile.name}) failed`);
+			errs.addError({code:"PR101", message:`reading of FILE (${req.files.SLfile.name}) failed`});
 		}
 		if (SLxml)
 			slcheck.doValidateServiceList(SLxml.toString(), errs);
@@ -166,7 +167,7 @@ function processCGFile(req, res) {
 			CGxml=req.files.CGfile.data;
 		}
 		catch (err) {
-			errs.pushCode("PF001", `retrieval of FILE ${fname} failed`);
+			errs.addError({code:"PF001", message:`retrieval of FILE ${fname} failed`});
 		}
 		if (CGxml) 
 			cgcheck.doValidateContentGuide(CGxml.toString(), req.body.requestType, errs);

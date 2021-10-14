@@ -5,7 +5,7 @@ import { elementize, quote } from './phlib/phlib.js';
 
 import { readFileSync } from "fs";
 
-import ErrorList from "./ErrorList.js";
+import ErrorList, { ERROR, WARNING, APPLICATION } from "./ErrorList.js";
 import ClassificationScheme from "./ClassificationScheme.js";
 import Role from "./Role.js";
 import IANAlanguages from "./IANAlanguages.js";
@@ -84,7 +84,7 @@ function CountChildElements(node, childElementName) {
 		else return false;
 	}
 	if (!parentElement) {
-		errs.pushCode(errCode?`${errCode}-0`:"TE000", "checkTopElementsAndCardinality() called with a 'null' element to check");
+		errs.addError({type:ERROR, code:errCode?`${errCode}-0`:"TE000", message:"checkTopElementsAndCardinality() called with a 'null' element to check"});
 		return false;
 	}
 	let rv=true, thisElem=elementize(`${parentElement.parent().name()}.${parentElement.name()}`);
@@ -94,13 +94,13 @@ function CountChildElements(node, childElementName) {
 		let _max=elem?.maxOccurs ? elem.maxOccurs : 1;
 		let count=CountChildElements(parentElement, elem.name);
 		if (count==0 && _min!=0) {
-			errs.pushCode(errCode?`${errCode}-1`:"TE010", `Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`);
+			errs.addError({type:ERROR, code:errCode?`${errCode}-1`:"TE001", message:`Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`});
 			rv=false;
 		}
 		else {
 			if (count<_min || count>_max) {
-				errs.pushCode(errCode?`${errCode}-1`:"TE011", 
-					`Cardinality of ${elem.name.elementize()} in ${thisElem} is not in the range ${_min}..${(_max==Infinity)?"unbounded":_max}`);
+				errs.addError({type:ERROR, code:errCode?`${errCode}-2`:"TE002", 
+								message:`Cardinality of ${elem.name.elementize()} in ${thisElem} is not in the range ${_min}..${(_max==Infinity)?"unbounded":_max}`});
 				rv=false;				
 			}
 		}
@@ -110,8 +110,10 @@ function CountChildElements(node, childElementName) {
 	if (!allowOtherElements) {
 		let children=parentElement.childNodes();
 		if (children) children.forEachSubElement(child => {
-			if (!findElementIn(childElements, child.name())) {		
-				errs.pushCodeWithFragment(errCode?`${errCode}-2`:"TE011", `Element ${child.name().elementize()} is not permitted in ${thisElem}`, child);
+			if (!findElementIn(childElements, child.name())) {	
+				errs.addError({type:ERROR, code:errCode?`${errCode}-3`:"TE003", 
+								message:`Element ${child.name().elementize()} is not permitted in ${thisElem}`, 
+								fragment:child});
 				rv=false;
 			}
 		});
@@ -132,22 +134,21 @@ function CountChildElements(node, childElementName) {
 function checkAttributes(parentElement, requiredAttributes, optionalAttributes, errs, errCode=null)
 {
 	if (!requiredAttributes || !parentElement) {
-		errs.pushCode("AT000", "checkAttributes() called with parentElement==null or requiredAttributes==null");
+		errs.addError({type:APPLICATION, code:"AT000", message:"checkAttributes() called with parentElement==null or requiredAttributes==null"});
 		return;
 	}
 	
 	requiredAttributes.forEach(attributeName => {
 		if (!parentElement.attr(attributeName)) {
 			let p=`${(parentElement.parent()?`${parentElement.parent().name()}.`:"")}${parentElement.name()}`;
-			errs.pushCode(errCode?`${errCode}-1`:"AT001", `${attributeName.attribute(`${p}`)} is a required attribute`);
+			errs.addError({code:errCode?`${errCode}-1`:"AT001", message:`${attributeName.attribute(`${p}`)} is a required attribute`});
 		}
 	});
 	
 	parentElement.attrs().forEach(attr => {
 		if (!isIn(requiredAttributes, attr.name()) && !isIn(optionalAttributes, attr.name())) {
 			let p=`${elementize(`${parentElement.parent()?`${parentElement.parent().name()}.`:""}${parentElement.name()}`)}`;
-			errs.pushCode(errCode?`${errCode}-2`:"AT002", 
-				`${attr.name().attribute()} is not permitted in ${p}`);
+			errs.addError({code:errCode?`${errCode}-2`:"AT002",  message:`${attr.name().attribute()} is not permitted in ${p}`});
 		}
 	});
 }
@@ -171,27 +172,27 @@ function checkAttributes(parentElement, requiredAttributes, optionalAttributes, 
  *
  * @param {Node}    elem       the XML element to be checked
  * @param {string}  attrName   the name of the attribute carrying the boolean value
- * @param {string}  errno      the error number used as a prefix for reporting errors
+ * @param {string}  errCode    the error number used as a prefix for reporting errors
  * @param {Class}   errs       errors found in validaton
  * @param {array}   allowed    the set or permitted values
  * @param {boolean} isRequired true if the specificed attribued is required to be specified for the element
  */
- function AllowedValue(elem, attrName, errno, errs, allowed, isRequired=true) {
+ function AllowedValue(elem, attrName, errCode, errs, allowed, isRequired=true) {
 	if (!elem) {
-		errs.pushCode(`${errno}-0`, "AllowedValue() called with elem==null");
+		errs.addError({code:`${errCode}-0`, message:"AllowedValue() called with elem==null"});
 		return;
 	}
 
 	if (elem.attr(attrName)) {
 		if (!isIn(allowed, elem.attr(attrName).value())) {
 			let str="";
-			allowed.forEach(value => str=str+((str.length!=0)?" or ":"")+value);
-			errs.pushCode(`${errno}-1`, `${attrName.attribute(`${elem.parent().name}.${elem.name()}`)} must be ${str}`);
+			allowed.forEach(value => str=str+((str.length)?" or ":"")+value);
+			errs.addError({code:`${errCode}-1`, message:`${attrName.attribute(`${elem.parent().name}.${elem.name()}`)} must be ${str}`});
 		}
 	}
 	else 
 		if (isRequired) 
-			errs.pushCode(`${errno}-2`, `${attrName.attribute()} must be specified for ${elem.parent().name()}.${elem.name()}`);
+			errs.addError({code:`${errCode}-2`, message:`${attrName.attribute()} must be specified for ${elem.parent().name()}.${elem.name()}`});
 }
 
 
@@ -200,12 +201,12 @@ function checkAttributes(parentElement, requiredAttributes, optionalAttributes, 
  *
  * @param {Node}    elem       the XML element to be checked
  * @param {string}  attrName   the name of the attribute carrying the boolean value
- * @param {string}  errno      the error number used as a prefix for reporting errors
+ * @param {string}  errCode    the error number used as a prefix for reporting errors
  * @param {Class}   errs       errors found in validaton
  * @param {boolean} isRequired true if the specificed attribued is required to be specified for the element
  */
-function BooleanValue(elem, attrName, errno, errs, isRequired=true) {
-	AllowedValue(elem, attrName, errno, errs, ["true", "false"], isRequired);
+function BooleanValue(elem, attrName, errCode, errs, isRequired=true) {
+	AllowedValue(elem, attrName, errCode, errs, ["true", "false"], isRequired);
 }
 
 
@@ -214,12 +215,12 @@ function BooleanValue(elem, attrName, errno, errs, isRequired=true) {
  *
  * @param {Node}    elem       the XML element to be checked
  * @param {string}  attrName   the name of the attribute carrying the boolean value
- * @param {string}  errno      the error number used as a prefix for reporting errors
+ * @param {string}  errCode    the error number used as a prefix for reporting errors
  * @param {Class}   errs       errors found in validaton
  * @param {boolean} isRequired true if the specificed attribued is required to be specified for the element
  */
- function TrueValue(elem, attrName, errno, errs, isRequired=true) {
-	AllowedValue(elem, attrName, errno, errs, ["true"], isRequired);
+ function TrueValue(elem, attrName, errCode, errs, isRequired=true) {
+	AllowedValue(elem, attrName, errCode, errs, ["true"], isRequired);
 }
 
 /** 
@@ -227,12 +228,12 @@ function BooleanValue(elem, attrName, errno, errs, isRequired=true) {
  *
  * @param {Node}    elem       the XML element to be checked
  * @param {string}  attrName   the name of the attribute carrying the boolean value
- * @param {string}  errno      the error number used as a prefix for reporting errors
+ * @param {string}  errCode    the error number used as a prefix for reporting errors
  * @param {Class}   errs       errors found in validaton
  * @param {boolean} isRequired true if the specificed attribued is required to be specified for the element
  */
-function FalseValue(elem, attrName, errno, errs, isRequired=true) {
-	AllowedValue(elem, attrName, errno, errs, ["false"], isRequired);
+function FalseValue(elem, attrName, errCode, errs, isRequired=true) {
+	AllowedValue(elem, attrName, errCode, errs, ["false"], isRequired);
 }
 
 
@@ -243,15 +244,17 @@ function FalseValue(elem, attrName, errno, errs, isRequired=true) {
  * @param {Class}  errs       errors found in validaton
  * @param {string} lang 	  that should be displayed in HTML
  * @param {string} loc        (optional) "location" of the language being checked
- * @param {string} errno      (optional) error number to use instead of local values
+ * @param {string} errCode      (optional) error number to use instead of local values
  */
-function CheckLanguage(validator, errs, lang, loc=null, errno=null ) {
+function CheckLanguage(validator, errs, lang, loc=null, errCode=null ) {
 	if (!validator) {
-		errs.pushCode(errno?`${errno}-1`:"LA001", `cannot validate language ${lang.quote()}${loc?" for "+loc.elementize():""}`, "no language validator");
+		errs.addError({code:errCode?`${errCode}-1`:"LA001", message:`cannot validate language ${lang.quote()}${loc?" for "+loc.elementize():""}`, 
+						key:"no language validator"});
 		return false;
 	}
 	if (!validator.isKnown(lang))  {
-		errs.pushCode(errno?`${errno}-2`:"LA002", `language ${lang.quote()} specified${loc?" for "+loc.elementize():""} is invalid`, "invalid language");
+		errs.addError({code:errCode?`${errCode}-2`:"LA002", message:`language ${lang.quote()} specified${loc?" for "+loc.elementize():""} is invalid`, 
+						key:"invalid language"});
 		return false;
 	}
 	return true;
@@ -370,14 +373,14 @@ export default class ContentGuideCheck {
 	 * @param {Object} node       the XML node whose @lang attribute should be checked
 	 * @param {string} parentLang the language of the XML element which is the parent of node
 	 * @param {boolean} isRequired report an error if @lang is not explicitly stated
-	 * @param {string} errno      (optional) error number to use instead of local values
+	 * @param {string} errCode     (optional) error number to use instead of local values
 	 * @returns {string} the @lang attribute of the node element of the parentLang if it does not exist of is not specified
 	 */
-	/* private */  GetLanguage(validator, errs, node, parentLang, isRequired=false, errno=null) {
+	/* private */  GetLanguage(validator, errs, node, parentLang, isRequired=false, errCode=null) {
 		if (!node) 
 			return parentLang;
 		if (!node.attr(tva.a_lang) && isRequired) {
-			errs.pushCode(errno?errno:"AC001", `${tva.a_lang.attribute()} is required for ${node.name().quote()}`, "unspecified language");
+			errs.addError({code:errCode?errCode:"AC001", message:`${tva.a_lang.attribute()} is required for ${node.name().quote()}`, key:"unspecified language"});
 			return parentLang;		
 		}
 
@@ -385,7 +388,7 @@ export default class ContentGuideCheck {
 			return parentLang;
 		
 		let localLang=node.attr(tva.a_lang).value();
-		CheckLanguage(validator, errs, localLang, node.name(), errno);
+		CheckLanguage(validator, errs, localLang, node.name(), errCode);
 		return localLang;
 	}
 
@@ -417,7 +420,8 @@ export default class ContentGuideCheck {
 		if (elem && elem.attr(tva.a_serviceIDRef)) {
 			let svcID=elem.attr(tva.a_serviceIDRef).value();
 			if (!isTAGURI(svcID))
-				errs.pushCodeW(errCode?errCode:"UR001", `${tva.a_serviceIDRef.attribute(elem.name())} ${svcID.quote()} is not a TAG URI`);
+				errs.addError({type:WARNING, code:errCode?errCode:"UR001", 
+								message:`${tva.a_serviceIDRef.attribute(elem.name())} ${svcID.quote()} is not a TAG URI`});
 			return svcID;
 		}
 		return "";
@@ -447,7 +451,7 @@ export default class ContentGuideCheck {
 			return `a ${tva.e_Synopsis.elementize()} with ${tva.a_length.attribute()}=${length.quote()} is required`; }
 		
 		if (!BasicDescription) {
-			errs.pushCode("SY000", "ValidateSynopsis() called with BasicDescription==null");
+			errs.addError({type:APPLICATION, code:"SY000", message:"ValidateSynopsis() called with BasicDescription==null"});
 			return;
 		}
 		let s=0, Synopsis, hasShort=false, hasMedium=false, hasLong=false;
@@ -465,40 +469,49 @@ export default class ContentGuideCheck {
 					switch (synopsisLength) {
 					case tva.SYNOPSIS_SHORT_LABEL:
 						if (_len > tva.SYNOPSIS_SHORT_LENGTH)
-							errs.pushCodeWithFragment(errCode?`${errCode}-11`:"SY011", synopsisLengthError(tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_SHORT_LENGTH, _len), Synopsis.toString());
+							errs.addError({code:errCode?`${errCode}-11`:"SY011", message:synopsisLengthError(tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_SHORT_LENGTH, _len), 
+											key:Synopsis.toString()});
 						hasShort=true;
 						break;
 					case tva.SYNOPSIS_MEDIUM_LABEL:
 						if (_len > tva.SYNOPSIS_MEDIUM_LENGTH)
-							errs.pushCodeWithFragment(errCode?`${errCode}-12`:"SY012", synopsisLengthError(tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_MEDIUM_LENGTH, _len), Synopsis.toString());
+							errs.addError({code:errCode?`${errCode}-12`:"SY012", 
+											message:synopsisLengthError(tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_MEDIUM_LENGTH, _len), 
+											fragment:Synopsis.toString()});
 						hasMedium=true;
 						break;
 					case tva.SYNOPSIS_LONG_LABEL:
 						if (_len > tva.SYNOPSIS_LONG_LENGTH)
-							errs.pushCodeWithFragment(errCode?`${errCode}-13`:"SY013", synopsisLengthError(tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_LONG_LENGTH, _len), Synopsis.toString());
+							errs.addError({code:errCode?`${errCode}-13`:"SY013", 
+											message:synopsisLengthError(tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_LONG_LENGTH, _len), 
+											fragment:Synopsis.toString()});
 						hasLong=true;
 						break;						
 					}
 				}
 				else
-					errs.pushCodeWithFragment(errCode?`${errCode}-14`:"SY014", `${tva.a_length.attribute()}=${synopsisLength.quote()} is not permitted for this request type`, Synopsis.toString());
+					errs.addError({code:errCode?`${errCode}-14`:"SY014", 
+									message:`${tva.a_length.attribute()}=${synopsisLength.quote()} is not permitted for this request type`, 
+									fragment:Synopsis.toString()});
 			}
 		
 			if (synopsisLang && synopsisLength) {
 				switch (synopsisLength) {
 					case tva.SYNOPSIS_SHORT_LABEL:
 						if (isIn(shortLangs, synopsisLang)) 
-							errs.pushCodeWithFragment(errCode?`${errCode}-16`:"SY016", singleLengthLangError(synopsisLength, synopsisLang), Synopsis.toString());
+							errs.addError({code:errCode?`${errCode}-16`:"SY016", 
+											message:singleLengthLangError(synopsisLength, synopsisLang), 
+											fragment:Synopsis.toString()});
 						else shortLangs.push(synopsisLang);
 						break;
 					case tva.SYNOPSIS_MEDIUM_LABEL:
 						if (isIn(mediumLangs, synopsisLang)) 
-							errs.pushCodeWithFragment(errCode?`${errCode}-17`:"SY017", singleLengthLangError(synopsisLength, synopsisLang), Synopsis.toString());
+							errs.addError({code:errCode?`${errCode}-17`:"SY017", message:singleLengthLangError(synopsisLength, synopsisLang), fragment:Synopsis.toString()});
 						else mediumLangs.push(synopsisLang);
 						break;
 					case tva.SYNOPSIS_LONG_LABEL:
 						if (isIn(longLangs, synopsisLang)) 
-							errs.pushCodeWithFragment(errCode?`${errCode}-18`:"SY018", singleLengthLangError(synopsisLength, synopsisLang), Synopsis.toString());
+							errs.addError({code:errCode?`${errCode}-18`:"SY018", message:singleLengthLangError(synopsisLength, synopsisLang), fragment:Synopsis.toString()});
 						else longLangs.push(synopsisLang);
 						break;
 				}
@@ -506,11 +519,11 @@ export default class ContentGuideCheck {
 		}
 		
 		if (isIn(requiredLengths, tva.SYNOPSIS_SHORT_LABEL) && !hasShort)
-			errs.pushCode(errCode?`${errCode}-19`:"SY019", requiredSynopsisError(tva.SYNOPSIS_SHORT_LABEL));
+			errs.addError({code:errCode?`${errCode}-19`:"SY019", message:requiredSynopsisError(tva.SYNOPSIS_SHORT_LABEL)});
 		if (isIn(requiredLengths, tva.SYNOPSIS_MEDIUM_LABEL) && !hasMedium)
-			errs.pushCode(errCode?`${errCode}-20`:"SY020", requiredSynopsisError(tva.SYNOPSIS_MEDIUM_LABEL));
+			errs.addError({code:errCode?`${errCode}-20`:"SY020", message:requiredSynopsisError(tva.SYNOPSIS_MEDIUM_LABEL)});
 		if (isIn(requiredLengths, tva.SYNOPSIS_LONG_LABEL) && !hasLong)
-			errs.pushCode(errCode?`${errCode}-21`:"SY021", requiredSynopsisError(tva.SYNOPSIS_LONG_LABEL));
+			errs.addError({code:errCode?`${errCode}-21`:"SY021", message:requiredSynopsisError(tva.SYNOPSIS_LONG_LABEL)});
 	}
 
 
@@ -529,7 +542,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, minKeywords, maxKeywords, errs, parentLanguage, errCode=null) {
 
 		if (!BasicDescription) {
-			errs.pushCode("KW000", "ValidateKeyword() called with BasicDescription=null");
+			errs.addError({type:APPLICATION, code:"KW000", message:"ValidateKeyword() called with BasicDescription=null"});
 			return;
 		}
 		let k=0, Keyword, counts=[];
@@ -544,15 +557,16 @@ export default class ContentGuideCheck {
 				counts[keywordLang]=1;
 			else counts[keywordLang]++;
 			if (keywordType!=tva.KEYWORD_TYPE_MAIN && keywordType!=tva.KEYWORD_TYPE_OTHER)
-				errs.pushCode(errCode?`${errCode}-1`:"KW011", `${tva.a_type.attribute()}=${keywordType.quote()} not permitted for ${tva.e_Keyword.elementize()}`);
+				errs.addError({code:errCode?`${errCode}-1`:"KW011", 
+								message:`${tva.a_type.attribute()}=${keywordType.quote()} not permitted for ${tva.e_Keyword.elementize()}`});
 			if (unEntity(Keyword.text()).length > dvbi.MAX_KEYWORD_LENGTH)
-				errs.pushCode(errCode?`${errCode}-2`:"KW012", `length of ${tva.e_Keyword.elementize()} is greater than ${dvbi.MAX_KEYWORD_LENGTH}`);
+				errs.addError({code:errCode?`${errCode}-2`:"KW012", message:`length of ${tva.e_Keyword.elementize()} is greater than ${dvbi.MAX_KEYWORD_LENGTH}`});
 		}
 		
 		for (let i in counts) {
 			if (counts[i]!=0 && counts[i]>maxKeywords) 
-				errs.pushCode(errCode?`${errCode}-3`:"KW013", 
-					`More than ${maxKeywords} ${tva.e_Keyword.elementize()} element${(maxKeywords>1?"s":"")} specified${(i==DEFAULT_LANGUAGE?"":" for language "+i.quote())}`);
+				errs.addError({code:errCode?`${errCode}-3`:"KW013", 
+					message:`More than ${maxKeywords} ${tva.e_Keyword.elementize()} element${(maxKeywords>1?"s":"")} specified${(i==DEFAULT_LANGUAGE?"":" for language "+i.quote())}`});
 		}
 	}
 
@@ -569,7 +583,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, errCode=null) {
 
 		if (!BasicDescription) {
-			errs.pushCode("GE000", "ValidateGenre() called with BasicDescription=null");
+			errs.addError({type:APPLICATION, code:"GE000", message:"ValidateGenre() called with BasicDescription=null"});
 			return;
 		}
 
@@ -577,11 +591,13 @@ export default class ContentGuideCheck {
 		while ((Genre=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_Genre, ++g), CG_SCHEMA))!=null) {
 			let genreType=Genre.attr(tva.a_type)?Genre.attr(tva.a_type).value():tva.DEFAULT_GENRE_TYPE;
 			if (genreType!=tva.GENRE_TYPE_MAIN)
-				errs.pushCode(errCode?`${errCode}-1`:"GE001", `${tva.a_type.attribute()}=${genreType.quote()} not permitted for ${tva.e_Genre.elementize()}`);
+				errs.addError({code:errCode?`${errCode}-1`:"GE001", 
+								message:`${tva.a_type.attribute()}=${genreType.quote()} not permitted for ${tva.e_Genre.elementize()}`});
 			
 			let genreValue=Genre.attr(tva.a_href)?Genre.attr(tva.a_href).value():"";
 			if (!this.allowedGenres.isIn(genreValue))
-				errs.pushCode(errCode?`${errCode}-2`:"GE002", `invalid ${tva.a_href.attribute()} value ${genreValue.quote()} for ${tva.e_Genre.elementize()}`);
+				errs.addError({code:errCode?`${errCode}-2`:"GE002", 
+								message:`invalid ${tva.a_href.attribute()} value ${genreValue.quote()} for ${tva.e_Genre.elementize()}`});
 		}
 	}
 
@@ -598,7 +614,7 @@ export default class ContentGuideCheck {
 		// first <ParentalGuidance> element must contain an <mpeg7:MinimumAge> element
 
 		if (!BasicDescription) {
-			errs.pushCode("PG000", "ValidateParentalGuidance() called with BasicDescription=null");
+			errs.addError({type:APPLICATION, code:"PG000", message:"ValidateParentalGuidance() called with BasicDescription=null"});
 			return;
 		}
 
@@ -608,10 +624,12 @@ export default class ContentGuideCheck {
 				case tva.e_MinimumAge:
 				case tva.e_ParentalRating:
 					if (countParentalGuidance==1 && pgChild.name()!=tva.e_MinimumAge)
-						errs.pushCode(errCode?`${errCode}-1`:"PG011", `first ${tva.e_ParentalGuidance.elementize()} element must contain ${elementize("mpeg7:"+tva.e_MinimumAge)}`);
+						errs.addError({code:errCode?`${errCode}-1`:"PG011", 
+										message:`first ${tva.e_ParentalGuidance.elementize()} element must contain ${elementize("mpeg7:"+tva.e_MinimumAge)}`});
 					
 					if (pgChild.name()==tva.e_MinimumAge && countParentalGuidance!=1)
-						errs.pushCode(errCode?`${errCode}-2`:"PG012", `${tva.e_MinimumAge.elementize()} must be in the first ${tva.e_ParentalGuidance.elementize()} element`);
+						errs.addError({code:errCode?`${errCode}-2`:"PG012", 
+										message:`${tva.e_MinimumAge.elementize()} must be in the first ${tva.e_ParentalGuidance.elementize()} element`});
 					
 					if (pgChild.name()==tva.e_ParentalRating) {
 						checkAttributes(pgChild, [tva.a_href], [], errs, errCode?`${errCode}-3`:"PG013");
@@ -622,11 +640,13 @@ export default class ContentGuideCheck {
 					checkAttributes(pgChild, [tva.a_length], [], errs, errCode?`${errCode}-4`:"PG004") ;
 					if (pgChild.attr(tva.a_length)) {
 						if (pgChild.attr(tva.a_length).value()!=tva.v_lengthLong)
-							errs.pushCode(errCode?`${errCode}-3`:"PG003", `${tva.a_length.attribute()}=${pgChild.attr(tva.a_length).value().quote()} is not allowed for ${tva.e_ExplanatoryText.elementize()}`);
+							errs.addError({code:errCode?`${errCode}-3`:"PG003", 
+											message:`${tva.a_length.attribute()}=${pgChild.attr(tva.a_length).value().quote()} is not allowed for ${tva.e_ExplanatoryText.elementize()}`});
 					}
 					
 					if (unEntity(pgChild.text()).length > dvbi.MAX_EXPLANATORY_TEXT_LENGTH)
-						errs.pushCode(errCode?`${errCode}-5`:"PG005", `length of ${tva._ExplanatoryText.elementize()} cannot exceed ${dvbi.MAX_EXPLANATORY_TEXT_LENGTH} characters`);
+						errs.addError({code:errCode?`${errCode}-5`:"PG005", 
+										message:`length of ${tva._ExplanatoryText.elementize()} cannot exceed ${dvbi.MAX_EXPLANATORY_TEXT_LENGTH} characters`});
 					break;
 			}
 		}
@@ -638,7 +658,8 @@ export default class ContentGuideCheck {
 			if (ParentalGuidance.childNodes()) ParentalGuidance.childNodes().forEachSubElement(checkPGchild);
 
 			if (countExplanatoryText > 1)
-				errs.pushCode(errCode?`${errCode}-6`:"PG006", `only a single ${tva.e_ExplanatoryText.elementize()} element is premitted in ${tva.e_ParentalGuidance.elementize()}`);
+				errs.addError({code:errCode?`${errCode}-6`:"PG006", 
+								message:`only a single ${tva.e_ExplanatoryText.elementize()} element is premitted in ${tva.e_ParentalGuidance.elementize()}`});
 		}
 	}
 
@@ -654,11 +675,12 @@ export default class ContentGuideCheck {
 		
 		function checkNamePart(elem, errs, errCode=null) {
 			if (unEntity(elem.text()).length > dvbi.MAX_NAME_PART_LENGTH)	
-				errs.pushCode(errCode?`${errCode}-1`:"VN001", `${elem.name().elementize()} in ${elem.parent().name().elementize()} is longer than ${dvbi.MAX_NAME_PART_LENGTH} characters`);
+				errs.addError({code:errCode?`${errCode}-1`:"VN001", 
+								message:`${elem.name().elementize()} in ${elem.parent().name().elementize()} is longer than ${dvbi.MAX_NAME_PART_LENGTH} characters`});
 		}
 		
 		if (!elem) {
-			errs.pushCode("VN000", "ValidateName() called with elem==null");
+			errs.addError({type:APPLICATION, code:"VN000", message:"ValidateName() called with elem==null"});
 			return;
 		}
 		let familyNameCount=0, givenNameCount=0, children=elem.childNodes();
@@ -676,9 +698,9 @@ export default class ContentGuideCheck {
 		});
 			
 		if (givenNameCount==0)
-			errs.pushCode("VN004", `${tva.e_GivenName.elementize()} is mandatory in ${elem.name().elementize()}`);
+			errs.addError({code:"VN004", message:`${tva.e_GivenName.elementize()} is mandatory in ${elem.name().elementize()}`});
 		if (familyNameCount>1)
-			errs.pushCode("VN005", `only a single ${tva.e_FamilyName.elementize()} is permitted in ${elem.name().elementize()}`);
+			errs.addError({code:"VN005", message:`only a single ${tva.e_FamilyName.elementize()} is permitted in ${elem.name().elementize()}`});
 	}
 
 
@@ -697,7 +719,7 @@ export default class ContentGuideCheck {
 			return `only a single ${elementname.elementize()} is permitted in ${parentElemmentName.elementize()}`;
 		}
 		if (!BasicDescription) {
-			errs.pushCode("CL000", "ValidateCreditsList() called with BasicDescription==null");
+			errs.addError({type:APPLICATION, code:"CL000", message:"ValidateCreditsList() called with BasicDescription==null"});
 			return;
 		}
 		let CreditsList=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_CreditsList), CG_SCHEMA);
@@ -708,7 +730,8 @@ export default class ContentGuideCheck {
 				if (CreditsItem.attr(tva.a_role)) {
 					let CreditsItemRole=CreditsItem.attr(tva.a_role).value();
 					if (!this.allowedCreditItemRoles.isIn(CreditsItemRole))
-						errs.pushCode(errCode?`${errCode}-2`:"CL002", `${CreditsItemRole.quote()} is not valid for ${tva.a_role.attribute(tva.e_CreditsItem)}`);
+						errs.addError({code:errCode?`${errCode}-2`:"CL002", 
+										message:`${CreditsItemRole.quote()} is not valid for ${tva.a_role.attribute(tva.e_CreditsItem)}`});
 				}
 				
 				let foundPersonName=0, foundCharacter=0, foundOrganizationName=0;
@@ -729,31 +752,33 @@ export default class ContentGuideCheck {
 						case tva.e_OrganizationName:
 							foundOrganizationName++;
 							if (unEntity(elem.text()).length > dvbi.MAX_ORGANIZATION_NAME_LENGTH)
-								errs.pushCode(errCode?`${errCode}-5`:"CL005", 
-									`length of ${tva.e_OrganizationName.elementize()} in ${tva.e_CreditsItem.elementize()} exceeds ${dvbi.MAX_ORGANIZATION_NAME_LENGTH} characters`);
+								errs.addError({code:errCode?`${errCode}-5`:"CL005", 
+									message:`length of ${tva.e_OrganizationName.elementize()} in ${tva.e_CreditsItem.elementize()} exceeds ${dvbi.MAX_ORGANIZATION_NAME_LENGTH} characters`});
 							break;
 						default:
 							if (elem.name()!="text")
-								errs.pushCode(errCode?`${errCode}-6`:"CL006", `extra element ${elem.name().elementize()} found in ${tva.e_CreditsItem.elementize()}`);
+								errs.addError({code:errCode?`${errCode}-6`:"CL006", message:`extra element ${elem.name().elementize()} found in ${tva.e_CreditsItem.elementize()}`});
 					}
 					if (foundPersonName>1)
-						errs.pushCode(errCode?`${errCode}-10`:"CL010", singleElementError(tva.e_PersonName, tva.e_CreditsItem));
+						errs.addError({code:errCode?`${errCode}-10`:"CL010", message:singleElementError(tva.e_PersonName, tva.e_CreditsItem)});
 					if (foundCharacter>1)
-						errs.pushCode(errCode?`${errCode}-11`:"CL011", singleElementError(tva.e_Character, tva.e_CreditsItem));
+						errs.addError({code:errCode?`${errCode}-11`:"CL011", message:singleElementError(tva.e_Character, tva.e_CreditsItem)});
 					if (foundOrganizationName>1)
-						errs.pushCode(errCode?`${errCode}-12`:"CL012", singleElementError(tva.e_OrganizationName, tva.e_CreditsItem));
+						errs.addError({code:errCode?`${errCode}-12`:"CL012", message:singleElementError(tva.e_OrganizationName, tva.e_CreditsItem)});
 					if (foundCharacter>0 && foundPersonName==0)
-						errs.pushCode(errCode?`${errCode}-13`:"CL013", `${tva.e_Character.elementize()} in ${tva.e_CreditsItem.elementize()} requires ${tva.e_PersonName.elementize()}`);
+						errs.addError({code:errCode?`${errCode}-13`:"CL013", 
+										message:`${tva.e_Character.elementize()} in ${tva.e_CreditsItem.elementize()} requires ${tva.e_PersonName.elementize()}`});
 					if (foundOrganizationName>0 && (foundPersonName>0 || foundCharacter>0))
-						errs.pushCode(errCode?`${errCode}-14`:"CL014", `${tva.e_OrganizationName.elementize()} can only be present when ${tva.e_PersonName.elementize()} is absent in ${tva.e_CreditsItem.elementize()}`);
+						errs.addError({code:errCode?`${errCode}-14`:"CL014", 
+										message:`${tva.e_OrganizationName.elementize()} can only be present when ${tva.e_PersonName.elementize()} is absent in ${tva.e_CreditsItem.elementize()}`});
 				});
 				/* jshint +W083 */
 				if (foundPersonName>1)
-					errs.pushCode(errCode?`${errCode}-20`:"CL020", singleElementError(tva.e_PersonName, tva.e_CreditsItem));
+					errs.addError({code:errCode?`${errCode}-20`:"CL020", message:singleElementError(tva.e_PersonName, tva.e_CreditsItem)});
 				if (foundCharacter>1)
-					errs.pushCode(errCode?`${errCode}-21`:"CL021", singleElementError(tva.e_Character, tva.e_CreditsItem));
+					errs.addError({code:errCode?`${errCode}-21`:"CL021",message:singleElementError(tva.e_Character, tva.e_CreditsItem)});
 				if (foundOrganizationName>1)
-					errs.pushCode(errCode?`${errCode}-22`:"CL022", singleElementError(tva.e_OrganizationName, tva.e_CreditsItem));
+					errs.addError({code:errCode?`${errCode}-22`:"CL022", message:singleElementError(tva.e_OrganizationName, tva.e_CreditsItem)});
 			}
 		}
 	}
@@ -771,7 +796,7 @@ export default class ContentGuideCheck {
 	/* private */  CheckImageRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, errs) {
 
 		if (!RelatedMaterial) {
-			errs.pushCode("IRM000", "CheckImageRelatedMaterial() called with RelatedMaterial==null");
+			errs.addError({code:"IRM000", message:"CheckImageRelatedMaterial() called with RelatedMaterial==null"});
 			return;
 		}
 		let HowRelated=RelatedMaterial.get(xPath(SCHEMA_PREFIX, tva.e_HowRelated), CG_SCHEMA);
@@ -786,13 +811,14 @@ export default class ContentGuideCheck {
 				if (MediaUri.attr(tva.a_contentType)) {
 					let contentType=MediaUri.attr(tva.a_contentType).value();
 					if (!isJPEGmime(contentType) && !isPNGmime(tva.a_contentType)) 
-						errs.pushCode("IRM003", `${tva.a_contentType.attribute(tva.e_MediaUri)}=${contentType} is a valid image type`, 'invalid image type');
+						errs.addError({code:"IRM003", 
+										message:`${tva.a_contentType.attribute(tva.e_MediaUri)}=${contentType} is a valid image type`, key:'invalid image type'});
 				}
 				
 				if (!isHTTPURL(MediaUri.text()))
-					errs.pushCode("IRM004", `${tva.e_MediaUri.elementize()}=${MediaUri.text().quote()} is not a valid Image URL`, "invalid URL");
+					errs.addError({code:"IRM004", message:`${tva.e_MediaUri.elementize()}=${MediaUri.text().quote()} is not a valid Image URL`, key:"invalid URL"});
 			}
-			else errs.pushCode("IRM001", `${tva.e_MediaUri.elementize()} not specified for Promotional Still Image (${tva.a_href.attribute(tva.e_HowRelated)}=${tva.cs_PromotionalStillImage})`);
+			else errs.addError({code:"IRM001", message:`${tva.e_MediaUri.elementize()} not specified for Promotional Still Image (${tva.a_href.attribute(tva.e_HowRelated)}=${tva.cs_PromotionalStillImage})`});
 			return true;
 		}
 		return false;
@@ -810,7 +836,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs) {
 		
 		if (!BasicDescription) {
-			errs.pushCode("RM000", "ValidateRelatedMaterial() called with BasicDescription==null");
+			errs.addError({code:"RM000", message:"ValidateRelatedMaterial() called with BasicDescription==null"});
 			return;
 		}	
 		let rm=0, RelatedMaterial;
@@ -832,14 +858,14 @@ export default class ContentGuideCheck {
 		
 		function checkLinkCount(errs, count, label, errCode) {
 			if (count>1) {
-				errs.pushCode(errCode, `more than 1 ${quote(`${label} pagination`)} link is specified`) ;
+				errs.addError({code:errCode, message:`more than 1 ${quote(`${label} pagination`)} link is specified`});
 				return true;
 			}
 			return false;
 		}
 		
 		if (!BasicDescription) {
-			errs.pushCode("VP000", "ValidatePagination() called with BasicDescription==null");
+			errs.addError({type:APPLICATION, code:"VP000", message:"ValidatePagination() called with BasicDescription==null"});
 			return;
 		}
 		let countPaginationFirst=0, countPaginationPrev=0, countPaginationNext=0, countPaginationLast=0;
@@ -868,10 +894,10 @@ export default class ContentGuideCheck {
 				let MediaURI=RelatedMaterial.get(xPathM(SCHEMA_PREFIX, [tva.e_MediaLocator, tva.e_MediaUri]), CG_SCHEMA);
 				if (MediaURI) {
 					if (!isHTTPURL(MediaURI.text()))
-						errs.pushCode("VP011", `${tva.e_MediaUri.elementize()}=${MediaURI.text().quote()} is not a valid Pagination URL`, "invalid URL");
+						errs.addError({code:"VP011", message:`${tva.e_MediaUri.elementize()}=${MediaURI.text().quote()} is not a valid Pagination URL`, key:"invalid URL"});
 				}
 				else
-					errs.pushCode("VP010", `${tva.e_MediaLocator.elementize()}${tva.e_MediaUri.elementize()} not specified for pagination link`);
+					errs.addError({code:"VP010", message:`${tva.e_MediaLocator.elementize()}${tva.e_MediaUri.elementize()} not specified for pagination link`});
 			}
 		}
 
@@ -884,12 +910,12 @@ export default class ContentGuideCheck {
 		if (!linkCountErrs) {
 			let numPaginations=countPaginationFirst+countPaginationPrev+countPaginationNext+countPaginationLast;
 			if (numPaginations!=0 && numPaginations!=2 && numPaginations!=4)
-				errs.pushCode("VP020", `only 0, 2 or 4 paginations links may be signalled in ${tva.e_RelatedMaterial.elementize()} elements for ${Location}`);
+				errs.addError({code:"VP020", message:`only 0, 2 or 4 paginations links may be signalled in ${tva.e_RelatedMaterial.elementize()} elements for ${Location}`});
 			else if (numPaginations==2) {
 				if (countPaginationPrev==1 && countPaginationLast==1) 
-					errs.pushCode("VP021", `${"previous".quote()} and ${"last".quote()} links cannot be specified alone`);
+					errs.addError({code:"VP021", message:`${"previous".quote()} and ${"last".quote()} links cannot be specified alone`});
 				if (countPaginationFirst==1 && countPaginationNext==1) 
-					errs.pushCode("VP022", `${"first".quote()} and ${"next".quote()} links cannot be specified alone`);
+					errs.addError({code:"VP022", message:`${"first".quote()} and ${"next".quote()} links cannot be specified alone`});
 			}
 		}
 	}
@@ -906,7 +932,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateRelatedMaterial_MoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs) {
 		
 		if (!BasicDescription) {
-			errs.pushCode("RMME000", "ValidateRelatedMaterial_MoreEpisodes() called with BasicDescription==null");
+			errs.addError({type:APPLICATION, code:"RMME000", message:"ValidateRelatedMaterial_MoreEpisodes() called with BasicDescription==null"});
 			return;
 		}
 		switch (BasicDescription.parent().name()) {
@@ -930,10 +956,11 @@ export default class ContentGuideCheck {
 	 * @param {string} missingElement  Name of the missing element
 	 * @param {string} parentElement   Name of the element which should contain the missingElement
 	 * @param {string} schemaLoctation The location in the schema of the element
-	 * @param {string} errno           The error number to show in the log
+	 * @param {string} errCode         The error number to show in the log
 	 */
-	/* private */  NoChildElement(errs, missingElement, parentElement, schemaLocation=null, errno=null) {
-		errs.pushCode(errno?errno:"NC001", `${missingElement} element not specified for ${parentElement}${schemaLocation?(" in "+schemaLocation):""}`);
+	/* private */  NoChildElement(errs, missingElement, parentElement, schemaLocation=null, errCode=null) {
+		errs.addError({code:errCode?errCode:"NC001", 
+						message:`${missingElement} element not specified for ${parentElement}${schemaLocation?(" in "+schemaLocation):""}`});
 	}
 
 
@@ -944,10 +971,10 @@ export default class ContentGuideCheck {
 	 * @param {string} value   The invalid value for the href attribute
 	 * @param {string} src     The element missing the @href
 	 * @param {string} loc     The location of the element
-	 * @param {string} errno   The error number to show in the log
+	 * @param {string} errCode The error number to show in the log
 	 */
-	/* private */  InvalidHrefValue(errs, value, src, loc=null, errno=null) {
-		errs.pushCode(errno?errno:"HV001", `invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${src}${loc?(" in "+loc):""}`);
+	/* private */  InvalidHrefValue(errs, value, src, loc=null, errCode=null) {
+		errs.addError({code:errCode?errCode:"HV001", message:`invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${src}${loc?(" in "+loc):""}`});
 	}
 
 
@@ -957,9 +984,10 @@ export default class ContentGuideCheck {
 	 * @param {Object} errs Errors buffer
 	 * @param {String} src The type of element with the <MediaLocator>
 	 * @param {String} loc The location of the element
+	 * @param {string} errCode The error number to show in the log
 	 */
-	/* private */  NoAuxiliaryURI(errs, src, loc, errno=null) {
-		this.NoChildElement(errs, tva.e_AuxiliaryURI.elementize(), `${src} ${tva.e_MediaLocator.elementize()}`, loc, errno?errno:"AU001");
+	/* private */  NoAuxiliaryURI(errs, src, loc, errCode=null) {
+		this.NoChildElement(errs, tva.e_AuxiliaryURI.elementize(), `${src} ${tva.e_MediaLocator.elementize()}`, loc, errCode?errCode:"AU001");
 	}
 
 
@@ -972,7 +1000,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateTemplateAIT(RelatedMaterial, errs, Location) {
 		
 		if (!RelatedMaterial) {
-			errs.pushCode("TA000", "ValidateTemplateAIT() called with RelatedMaterial==null");
+			errs.addError({type:APPLICATION, code:"TA000", message:"ValidateTemplateAIT() called with RelatedMaterial==null"});
 			return;
 		}
 		let HowRelated=null, MediaLocator=[];
@@ -997,7 +1025,7 @@ export default class ContentGuideCheck {
 		checkAttributes(HowRelated, [tva.a_href], [], errs, "TA002");
 		if (HowRelated.attr(tva.a_href)) {
 			if (HowRelated.attr(tva.a_href).value()!=dvbi.TEMPLATE_AIT_URI) 
-				errs.pushCode("TA003", `${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} does not designate a Template AIT`);
+				errs.addError({code:"TA003", message:`${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} does not designate a Template AIT`});
 			else {		
 				if (MediaLocator.length!=0) 
 					MediaLocator.forEach(ml => {
@@ -1009,8 +1037,8 @@ export default class ContentGuideCheck {
 								if (child.attr(tva.a_contentType)) {
 									let contentType=child.attr(tva.a_contentType).value();
 									if (contentType!=dvbi.XML_AIT_CONTENT_TYPE) 
-										errs.pushCode("TA011", 
-											`invalid ${tva.a_contentType.attribute()}=${contentType.quote()} specified for ${RelatedMaterial.name().elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`);
+										errs.addError({code:"TA011", 
+											message:`invalid ${tva.a_contentType.attribute()}=${contentType.quote()} specified for ${RelatedMaterial.name().elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`});
 								}
 							}
 						});	
@@ -1034,7 +1062,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidatePromotionalStillImage(RelatedMaterial, errs, Location) {
 		
 		if (!RelatedMaterial) {
-			errs.pushCode("PS000", "ValidatePromotionalStillImage() called with RelatedMaterial==null");
+			errs.addError({type:APPLICATION, code:"PS000", message:"ValidatePromotionalStillImage() called with RelatedMaterial==null"});
 			return;
 		}
 		let HowRelated=null, Format=null, MediaLocator=[];
@@ -1061,7 +1089,7 @@ export default class ContentGuideCheck {
 		checkAttributes(HowRelated, [tva.a_href], [], errs, "PS002");
 		if (HowRelated.attr(tva.a_href)) {
 			if (HowRelated.attr(tva.a_href).value()!=dvbi.PROMOTIONAL_STILL_IMAGE_URI) 
-				errs.pushCode("PS010", `${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} does not designate a Promotional Still Image`);
+				errs.addError({code:"PS010", message:`${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} does not designate a Promotional Still Image`});
 			else {
 				let isJPEG=false, isPNG=false;
 				if (Format) {
@@ -1101,13 +1129,14 @@ export default class ContentGuideCheck {
 								if (child.attr(tva.a_contentType)) {
 									let contentType=child.attr(tva.a_contentType).value();
 									if (!isJPEGmime(contentType) && !isPNGmime(contentType)) 
-										errs.pushCode("PS032", 
-											`invalid ${tva.a_contentType.attribute(tva.e_MediaLocator)}=${contentType.quote()} specified for ${RelatedMaterial.name().elementize()} in ${Location}`);
+										errs.addError({code:"PS032", 
+														message:`invalid ${tva.a_contentType.attribute(tva.e_MediaLocator)}=${contentType.quote()} specified for ${RelatedMaterial.name().elementize()} in ${Location}`});
 									if (Format && ((isJPEGmime(contentType) && !isJPEG) || (isPNGmime(contentType) && !isPNG))) 
-										errs.pushCode("PS033", `conflicting media types in ${tva.e_Format.elementize()} and ${tva.e_MediaUri.elementize()} for ${Location}`);
+										errs.addError({code:"PS033",
+														message:`conflicting media types in ${tva.e_Format.elementize()} and ${tva.e_MediaUri.elementize()} for ${Location}`});
 								}
 								if (!isHTTPURL(child.text()))
-									errs.pushCode("PS034", `${tva.e_MediaUri.elementize()}=${child.text().quote()} is not a valid Image URL`, "invalid URL");
+									errs.addError({code:"PS034", message:`${tva.e_MediaUri.elementize()}=${child.text().quote()} is not a valid Image URL`, key:"invalid URL"});
 							}
 						});
 						if (!hasMediaURI) 
@@ -1131,7 +1160,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateRelatedMaterial_BoxSetList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs) {
 		
 		if (!BasicDescription) {
-			errs.pushCode("MB000", "ValidateRelatedMaterial_BoxSetList() called with BasicDescription==null");
+			errs.addError({type:APPLICATION, code:"MB000", message:"ValidateRelatedMaterial_BoxSetList() called with BasicDescription==null"});
 			return;
 		}
 		let countImage=0, countTemplateAIT=0, hasPagination=false;
@@ -1167,11 +1196,11 @@ export default class ContentGuideCheck {
 			}
 		}
 		if (countTemplateAIT==0)
-			errs.pushCode("MB021", `a ${tva.e_RelatedMaterial.elementize()} element signalling the Template XML AIT must be specified for a Box Set List`);
+			errs.addError({code:"MB021", message:`a ${tva.e_RelatedMaterial.elementize()} element signalling the Template XML AIT must be specified for a Box Set List`});
 		if (countTemplateAIT>1)
-			errs.pushCode("MB022", `only one ${tva.e_RelatedMaterial.elementize()} element signalling the Template XML AIT can be specified for a Box Set List`);
+			errs.addError({code:"MB022", message:`only one ${tva.e_RelatedMaterial.elementize()} element signalling the Template XML AIT can be specified for a Box Set List`});
 		if (countImage>1)
-			errs.pushCode("MB023", `only one ${tva.e_RelatedMaterial.elementize()} element signalling the promotional still image can be specified for a Box Set List`);
+			errs.addError({code:"MB023", message:`only one ${tva.e_RelatedMaterial.elementize()} element signalling the promotional still image can be specified for a Box Set List`});
 		
 		if (hasPagination)
 			this.ValidatePagination(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "Box Set List");
@@ -1193,7 +1222,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, allowSecondary, errs, parentLanguage, errCode=null, TypeIsRequired=false) {
 		
 		if (!BasicDescription) {
-			errs.pushCode("VT000", "ValidateTitle() called with BasicDescription==null");
+			errs.addError({type:APPLICATION, code:"VT000", message:"ValidateTitle() called with BasicDescription==null"});
 			return;
 		}
 		
@@ -1202,8 +1231,8 @@ export default class ContentGuideCheck {
 		function analyseLang(lang, index, array) {
 			if (!isIn(mainSet, lang)) {
 				let tLoc= lang!=DEFAULT_LANGUAGE ? ` for @xml:${tva.a_lang}=${lang.quote()}` : "";
-				errs.pushCode(errCode?`${errCode}-16`:"VT016", 
-					`${tva.a_type.attribute()}=${mpeg7.TITLE_TYPE_SECONDARY.quote()} specified without ${tva.a_type.attribute()}=${mpeg7.TITLE_TYPE_MAIN.quote()}${tLoc}`);
+				errs.addError({code:errCode?`${errCode}-16`:"VT016", 
+					message:`${tva.a_type.attribute()}=${mpeg7.TITLE_TYPE_SECONDARY.quote()} specified without ${tva.a_type.attribute()}=${mpeg7.TITLE_TYPE_MAIN.quote()}${tLoc}`});
 			}
 		}
 
@@ -1220,29 +1249,29 @@ export default class ContentGuideCheck {
 			let titleStr=unEntity(Title.text());
 			
 			if (titleStr.length > dvbi.MAX_TITLE_LENGTH)
-				errs.pushCode(errCode?`${errCode}-11`:"VT011", `${tva.e_Title.elementize()} length exceeds ${dvbi.MAX_TITLE_LENGTH} characters`);
+				errs.addError({code:errCode?`${errCode}-11`:"VT011", message:`${tva.e_Title.elementize()} length exceeds ${dvbi.MAX_TITLE_LENGTH} characters`});
 				
 			switch (titleType) {
 				case mpeg7.TITLE_TYPE_MAIN:
 					if (isIn(mainSet, titleLang))
-						errs.pushCode(errCode?`${errCode}-12`:"VT012", 
-							`only a single language (${titleLang}) is permitted for ${tva.a_type.attribute(tva.e_Title)}=${mpeg7.TITLE_TYPE_MAIN.quote()}`);
+						errs.addError({code:errCode?`${errCode}-12`:"VT012", 
+							message:`only a single language (${titleLang}) is permitted for ${tva.a_type.attribute(tva.e_Title)}=${mpeg7.TITLE_TYPE_MAIN.quote()}`});
 					else mainSet.push(titleLang);
 					break;
 				case mpeg7.TITLE_TYPE_SECONDARY:
 					if (allowSecondary) {
 						if (isIn(secondarySet, titleLang))
-							errs.pushCode(errCode?`${errCode}-13`:"VT013", 
-								`only a single language (${titleLang}) is permitted for ${tva.a_type.attribute(tva.e_Title)}=${mpeg7.TITLE_TYPE_SECONDARY.quote()}`);
+							errs.addError({code:errCode?`${errCode}-13`:"VT013", 
+								message:`only a single language (${titleLang}) is permitted for ${tva.a_type.attribute(tva.e_Title)}=${mpeg7.TITLE_TYPE_SECONDARY.quote()}`});
 						else secondarySet.push(titleLang);
 					}
 					else 
-						errs.pushCode(errCode?`${errCode}-14`:"VT014", 
-							`${tva.a_type.attribute(tva.e_Title)}=${mpeg7.TITLE_TYPE_SECONDARY.quote()} is not permitted for this ${BasicDescription.name().elementize()}`);
+						errs.addError({code:errCode?`${errCode}-14`:"VT014", 
+							message:`${tva.a_type.attribute(tva.e_Title)}=${mpeg7.TITLE_TYPE_SECONDARY.quote()} is not permitted for this ${BasicDescription.name().elementize()}`});
 					break;
 				default:	
-					errs.pushCode(errCode?`${errCode}-15`:"VT015", 
-						`${tva.a_type.attribute()} must be ${mpeg7.TITLE_TYPE_MAIN.quote()} or ${mpeg7.TITLE_TYPE_SECONDARY.quote()} for ${tva.e_Title.elementize()}`);
+					errs.addError({code:errCode?`${errCode}-15`:"VT015", 
+						message:`${tva.a_type.attribute()} must be ${mpeg7.TITLE_TYPE_MAIN.quote()} or ${mpeg7.TITLE_TYPE_SECONDARY.quote()} for ${tva.e_Title.elementize()}`});
 			}	
 			secondarySet.forEach(analyseLang);
 		}
@@ -1263,7 +1292,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateBasicDescription(CG_SCHEMA, SCHEMA_PREFIX, parentElement, requestType, errs, parentLanguage, categoryGroup) {
 
 		if (!parentElement) {
-			errs.pushCode("BD000", "ValidateBasicDescription() called with parentElement==null");
+			errs.addError({type:APPLICATION, code:"BD000", message:"ValidateBasicDescription() called with parentElement==null"});
 			return;
 		}
 
@@ -1332,7 +1361,7 @@ export default class ContentGuideCheck {
 						this.ValidateRelatedMaterial_MoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs);
 						break;
 					default:
-						errs.pushCode("BD050", `ValidateBasicDescription() called with invalid requestType/element (${requestType}/${parentElement.name()})`);
+						errs.addError({type:APPLICATION, code:"BD050", message:`ValidateBasicDescription() called with invalid requestType/element (${requestType}/${parentElement.name()})`});
 				}
 				break;
 
@@ -1383,11 +1412,11 @@ export default class ContentGuideCheck {
 						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs);
 						break;
 					default:
-						errs.pushCode("BD100", `ValidateBasicDescription() called with invalid requestType/element (${requestType}/${parentElement.name()})`);
+						errs.addError({type:APPLICATION, code:"BD100", message:`ValidateBasicDescription() called with invalid requestType/element (${requestType}/${parentElement.name()})`});
 					}
 				break;
 			default:
-				errs.pushCode("BD003", `ValidateBasicDescription() called with invalid element (${parentElement.name()})`);	
+				errs.addError({type:APPLICATION, code:"BD003", message:`ValidateBasicDescription() called with invalid element (${parentElement.name()})`});
 		}
 	}
 
@@ -1409,7 +1438,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramInformation, parentLanguage, programCRIDs, groupCRIDs, requestType, indexes, errs) {
 		
 		if (!ProgramInformation) {
-			errs.pushCode("PI000", "ValidateProgramInformation() called with ProgramInformation==null");
+			errs.addError({type:APPLICATION, code:"PI000", message:"ValidateProgramInformation() called with ProgramInformation==null"});
 			return null;
 		}
 		
@@ -1427,9 +1456,9 @@ export default class ContentGuideCheck {
 		if (ProgramInformation.attr(tva.a_programId)) {
 			programCRID=ProgramInformation.attr(tva.a_programId).value();
 			if (!isCRIDURI(programCRID)) 
-				errs.pushCode("PI011", `${tva.a_programId.attribute(ProgramInformation.name())} is not a valid CRID (${programCRID})`);
+				errs.addError({code:"PI011", message:`${tva.a_programId.attribute(ProgramInformation.name())} is not a valid CRID (${programCRID})`});
 			if (isIni(programCRIDs, programCRID))
-				errs.pushCode("PI012", `${tva.a_programId.attribute(ProgramInformation.name())}=${programCRID.quote()} is already used`);
+				errs.addError({code:"PI012", message:`${tva.a_programId.attribute(ProgramInformation.name())}=${programCRID.quote()} is already used`});
 			else programCRIDs.push(programCRID);
 		}
 
@@ -1441,7 +1470,7 @@ export default class ContentGuideCheck {
 			switch (child.name()) {
 				case tva.e_OtherIdentifier:		// <ProgramInformation><OtherIdentifier>
 					if (requestType==CG_REQUEST_MORE_EPISODES)
-						errs.pushCode("PI021", `${tva.e_OtherIdentifier.elementize()} is not permitted in this request type`);
+						errs.addError({code:"PI021", message:`${tva.e_OtherIdentifier.elementize()} is not permitted in this request type`});
 					break;
 				case tva.e_EpisodeOf:			// <ProgramInformation><EpisodeOf>
 					checkAttributes(child, [tva.a_crid], [], errs, "PI031");
@@ -1450,11 +1479,11 @@ export default class ContentGuideCheck {
 					if (child.attr(tva.a_crid)) {
 						let foundCRID=child.attr(tva.a_crid).value();
 						if (groupCRIDs && !isIni(groupCRIDs, foundCRID)) 
-							errs.pushCode("PI032", 
-								`${tva.a_crid.attribute(`${ProgramInformation.name()}.${tva.e_EpisodeOf}`)}=${foundCRID.quote()} is not a defined Group CRID for ${tva.e_EpisodeOf.elementize()}`);
+							errs.addError({code:"PI032", 
+								message:`${tva.a_crid.attribute(`${ProgramInformation.name()}.${tva.e_EpisodeOf}`)}=${foundCRID.quote()} is not a defined Group CRID for ${tva.e_EpisodeOf.elementize()}`});
 						else
 							if (!isCRIDURI(foundCRID))
-								errs.pushCode("PI033", `${tva.a_crid.attribute(`${ProgramInformation.name()}.${tva.e_EpisodeOf}`)}=${foundCRID.quote()} is not a valid CRID`);
+								errs.addError({code:"PI033", message:`${tva.a_crid.attribute(`${ProgramInformation.name()}.${tva.e_EpisodeOf}`)}=${foundCRID.quote()} is not a valid CRID`});
 					}
 					break;
 				case tva.e_MemberOf:			// <ProgramInformation><MemberOf>
@@ -1469,18 +1498,18 @@ export default class ContentGuideCheck {
 							
 					// <ProgramInformation><MemberOf>@xsi:type
 					if (child.attr(tva.a_type) && child.attr(tva.a_type).value()!=tva.t_MemberOfType)
-						errs.pushCode("PI043", `${attribute(`xsi:${tva.a_type}`)} must be ${tva.t_MemberOfType.quote()} for ${ProgramInformation.name()}.${tva.e_MemberOf}`);
+						errs.addError({code:"PI043", message:`${attribute(`xsi:${tva.a_type}`)} must be ${tva.t_MemberOfType.quote()} for ${ProgramInformation.name()}.${tva.e_MemberOf}`});
 				
 					// <ProgramInformation><MemberOf>@crid
 					let foundCRID=null;
 					if (child.attr(tva.a_crid)) {
 						foundCRID=child.attr(tva.a_crid).value();
 						if (groupCRIDs && !isIni(groupCRIDs, foundCRID)) 
-							errs.pushCode("PI044", 
-								`${tva.a_crid.attribute(`${ProgramInformation.name()}.${tva.e_MemberOf}`)}=${foundCRID.quote()} is not a defined Group CRID for ${tva.e_MemberOf.elementize()}`);
+							errs.addError({code:"PI044", 
+								message:`${tva.a_crid.attribute(`${ProgramInformation.name()}.${tva.e_MemberOf}`)}=${foundCRID.quote()} is not a defined Group CRID for ${tva.e_MemberOf.elementize()}`});
 						else
 							if (!isCRIDURI(foundCRID))
-								errs.pushCode("PI045", `${tva.a_crid.attribute(`${ProgramInformation.name()}.${tva.e_MemberOf}`)}=${foundCRID.quote()} is not a valid CRID`);
+								errs.addError({code:"PI045", message:`${tva.a_crid.attribute(`${ProgramInformation.name()}.${tva.e_MemberOf}`)}=${foundCRID.quote()} is not a valid CRID`});
 					}
 					
 					// <ProgramInformation><MemberOf>@index
@@ -1488,7 +1517,7 @@ export default class ContentGuideCheck {
 						let index=valUnsignedInt(child.attr(tva.a_index).value());
 						let indexInCRID=`${(foundCRID?foundCRID:"noCRID")}(${index})`;
 						if (isIni(indexes, indexInCRID))
-							errs.pushCode("PI046", `${tva.a_index.attribute(tva.e_MemberOf)}=${index} is in use by another ${ProgramInformation.name()} element`);
+							errs.addError({code:"PI046", message:`${tva.a_index.attribute(tva.e_MemberOf)}=${index} is in use by another ${ProgramInformation.name()} element`});
 						else 
 							indexes.push(indexInCRID);
 					}
@@ -1516,13 +1545,13 @@ export default class ContentGuideCheck {
 	 */
 	/* private */  CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, parentLang, programCRIDs, groupCRIDs, requestType, errs, o=null) { 
 		if (!ProgramDescription) {
-			errs.pushCode("PI100", "CheckProgramInformation() called with ProgramDescription==null");
+			errs.addError({type:APPLICATION, code:"PI100", message:"CheckProgramInformation() called with ProgramDescription==null"});
 			return null;
 		}
 			
 		let ProgramInformationTable=ProgramDescription.get(xPath(SCHEMA_PREFIX, tva.e_ProgramInformationTable), CG_SCHEMA);
 		if (!ProgramInformationTable) {
-			errs.pushCode("PI101", `${tva.e_ProgramInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`);
+			errs.addError({code:"PI101", message:`${tva.e_ProgramInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`});
 			return null;
 		}
 		checkAttributes(ProgramInformationTable, [], [tva.a_lang], errs, "PI102");
@@ -1537,8 +1566,8 @@ export default class ContentGuideCheck {
 
 		if (o && o.childCount!=0) {
 			if (o.childCount!=cnt)
-				errs.pushCode("PI110", 
-					`number of items (${cnt}) in ${tva.e_ProgramInformationTable.elementize()} does match ${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${o.childCount})`);
+				errs.addError({code:"PI110", 
+					message:`number of items (${cnt}) in ${tva.e_ProgramInformationTable.elementize()} does match ${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${o.childCount})`});
 		}
 		return currentProgramCRID;
 	}
@@ -1560,7 +1589,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateGroupInformationBoxSets(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup, indexes, groupsFound) {
 
 		if (!GroupInformation) {
-			errs.pushCode("GIB000", "ValidateGroupInformationBoxSets() called with GroupInformation==null");
+			errs.addError({type:APPLIACTION, code:"GIB000", message:"ValidateGroupInformationBoxSets() called with GroupInformation==null"});
 			return;
 		}
 		let isParentGroup=GroupInformation==categoryGroup;
@@ -1616,20 +1645,20 @@ export default class ContentGuideCheck {
 					groupsFound.push(groupId);				
 			}
 			else
-				errs.pushCode("GIB021", `${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is not a CRID`);
+				errs.addError({code:"GIB021", message:`${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is not a CRID`});
 		}
 
 		let categoryCRID=(categoryGroup && categoryGroup.attr(tva.a_groupId)) ? categoryGroup.attr(tva.a_groupId).value() : "";
 
 		if ([CG_REQUEST_BS_LISTS, CG_REQUEST_BS_CATEGORIES].includes(requestType)) {
 			if (!isParentGroup && GroupInformation.attr(tva.a_ordered)) 
-				errs.pushCode("GIB031", `${tva.a_ordered.attribute(GroupInformation.name())} is only permitted in the ${CATEGORY_GROUP_NAME}`);
+				errs.addError({code:"GIB031", message:`${tva.a_ordered.attribute(GroupInformation.name())} is only permitted in the ${CATEGORY_GROUP_NAME}`});
 			if (isParentGroup && !GroupInformation.attr(tva.a_ordered)) 
-				errs.pushCode("GIB032", `${tva.a_ordered.attribute(GroupInformation.name())} is required for this request type`);
+				errs.addError({code:"GIB032", message:`${tva.a_ordered.attribute(GroupInformation.name())} is required for this request type`});
 			if (!isParentGroup && GroupInformation.attr(tva.a_numOfItems)) 
-				errs.pushCode("GIB033", `${tva.a_numOfItems.attribute(GroupInformation.name())} is only permitted in the ${CATEGORY_GROUP_NAME}`);
+				errs.addError({code:"GIB033", message:`${tva.a_numOfItems.attribute(GroupInformation.name())} is only permitted in the ${CATEGORY_GROUP_NAME}`});
 			if (isParentGroup && !GroupInformation.attr(tva.a_numOfItems)) 
-				errs.pushCode("GIB034", `${tva.a_numOfItems.attribute(GroupInformation.name())}is required for this request type`);
+				errs.addError({code:"GIB034", message:`${tva.a_numOfItems.attribute(GroupInformation.name())}is required for this request type`});
 		}
 
 		if (!isParentGroup) {
@@ -1637,27 +1666,27 @@ export default class ContentGuideCheck {
 			if (MemberOf) {
 				checkAttributes(MemberOf, [tva.a_type, tva.a_index, tva.a_crid], [], errs, "GIB041");
 				if (MemberOf.attr(tva.a_type) && MemberOf.attr(tva.a_type).value()!=tva.t_MemberOfType)
-					errs.pushCode("GIB042", `${GroupInformation.name()}.${tva.e_MemberOf}@xsi:${tva.a_type} is invalid (${MemberOf.attr(tva.a_type).value().quote()})`);
+					errs.addError({code:"GIB042", message:`${GroupInformation.name()}.${tva.e_MemberOf}@xsi:${tva.a_type} is invalid (${MemberOf.attr(tva.a_type).value().quote()})`});
 				
 				if (MemberOf.attr(tva.a_index)) {
 					let index=valUnsignedInt(MemberOf.attr(tva.a_index).value());
 					if (index>=1) {
 						if (indexes) {
 							if (indexes.includes(index)) 
-								errs.pushCode("GI043", `duplicated ${tva.a_index.attribute(`${GroupInformation.name()}.${tva.e_MemberOf}`)} values (${index})`);
+								errs.addError({code:"GI043", message:`duplicated ${tva.a_index.attribute(`${GroupInformation.name()}.${tva.e_MemberOf}`)} values (${index})`});
 							else indexes.push(index);
 						}
 					}
 					else 
-						errs.pushCode("GIB44", `${tva.a_index.attribute(`${GroupInformation.name()}.${tva.e_MemberOf}`)} must be an integer >= 1 (parsed ${index})`);
+						errs.addError({code:"GIB44", message:`${tva.a_index.attribute(`${GroupInformation.name()}.${tva.e_MemberOf}`)} must be an integer >= 1 (parsed ${index})`});
 				}
 
 				if (MemberOf.attr(tva.a_crid) && MemberOf.attr(tva.a_crid).value()!=categoryCRID)
-					errs.pushCode("GIB045", 
-						`${tva.a_crid.attribute(`${GroupInformation.name()}.${tva.e_MemberOf}`)} (${MemberOf.attr(tva.a_crid).value()}) does not match the ${CATEGORY_GROUP_NAME} crid (${categoryCRID})`);
+					errs.addError({code:"GIB045", 
+						message:`${tva.a_crid.attribute(`${GroupInformation.name()}.${tva.e_MemberOf}`)} (${MemberOf.attr(tva.a_crid).value()}) does not match the ${CATEGORY_GROUP_NAME} crid (${categoryCRID})`});
 			}
 			else
-				errs.pushCode("GIB046", `${GroupInformation.name()} requires a ${tva.e_MemberOf.elementize()} element referring to the ${CATEGORY_GROUP_NAME} (${categoryCRID})`);
+				errs.addError({code:"GIB046", message:`${GroupInformation.name()} requires a ${tva.e_MemberOf.elementize()} element referring to the ${CATEGORY_GROUP_NAME} (${categoryCRID})`});
 		}
 		
 		this.checkTAGUri(GroupInformation, errs, "GIB51");	
@@ -1681,7 +1710,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateGroupInformationSchedules(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup) {
 
 		if (!GroupInformation) {
-			errs.pushCode("GIS000", "ValidateGroupInformationSchedules() called with GroupInformation==null");
+			errs.addError({type:APPLICATION, code:"GIS000", message:"ValidateGroupInformationSchedules() called with GroupInformation==null"});
 			return;
 		}
 		checkAttributes(GroupInformation, [tva.a_groupId, tva.a_ordered, tva.a_numOfItems], [tva.a_lang], errs, "GIS001");
@@ -1690,13 +1719,13 @@ export default class ContentGuideCheck {
 			let groupId=GroupInformation.attr(tva.a_groupId).value();
 			if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW].includes(requestType)) 
 				if (!([dvbi.CRID_NOW, dvbi.CRID_LATER, dvbi.CRID_EARLIER].includes(groupId)))
-					errs.pushCode("GIS011", `${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is valid for this request type`);
+					errs.addError({code:"GIS011", message:`${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is valid for this request type`});
 		}
 
 		if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW].includes(requestType)) {		
 			TrueValue(GroupInformation, tva.a_ordered, "GIS013", errs);
 			if (!GroupInformation.attr(tva.a_numOfItems)) 
-				errs.pushCode("GIS015", `${tva.a_numOfItems.attribute(GroupInformation.name())} is required for this request type`);
+				errs.addError({code:"GIS015", message:`${tva.a_numOfItems.attribute(GroupInformation.name())} is required for this request type`});
 		}
 
 		// <GroupInformation><BasicDescription>
@@ -1719,18 +1748,18 @@ export default class ContentGuideCheck {
 	/* private */  ValidateGroupInformationMoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup, groupsFound) {
 		
 		if (!GroupInformation) {
-			errs.pushCode("GIM000", "ValidateGroupInformationMoreEpisodes() called with GroupInformation==null");
+			errs.addError({type:APPLICATION, code:"GIM000", message:"ValidateGroupInformationMoreEpisodes() called with GroupInformation==null"});
 			return;
 		}
 		if (categoryGroup) 
-			errs.pushCode("GIM001", `${CATEGORY_GROUP_NAME} should not be specified for this request type`);
+			errs.addError({code:"GIM001", message:`${CATEGORY_GROUP_NAME} should not be specified for this request type`});
 		
 		checkAttributes(GroupInformation, [tva.a_groupId, tva.a_ordered, tva.a_numOfItems], [tva.a_lang], errs, "GIM002");
 		
 		if (GroupInformation.attr(tva.a_groupId)) {
 			let groupId=GroupInformation.attr(tva.a_groupId).value();
 			if (!isCRIDURI(groupId)) 
-				errs.pushCode("GIM003", `${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is not a valid CRID`);
+				errs.addError({code:"GIM003", message:`${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is not a valid CRID`});
 			else 
 				groupsFound.push(groupId);
 		}
@@ -1742,12 +1771,12 @@ export default class ContentGuideCheck {
 			checkAttributes(GroupType, [tva.a_type, tva.a_value], [], errs, "GIM011");
 			
 			if (GroupType.attr(tva.a_type) && GroupType.attr(tva.a_type).value()!=tva.t_ProgramGroupTypeType) 
-				errs.pushCode("GIM012", `${tva.e_GroupType}@xsi:${tva.a_type} must be ${tva.t_ProgramGroupTypeType.quote()}`);
+				errs.addError({code:"GIM012", message:`${tva.e_GroupType}@xsi:${tva.a_type} must be ${tva.t_ProgramGroupTypeType.quote()}`});
 			if (GroupType.attr(tva.a_value) && GroupType.attr(tva.a_value).value()!="otherCollection") 
-				errs.pushCode("GIM013", `${tva.a_value.attribute(tva.e_GroupType)} must be ${"otherCollection".quote()}`);
+				errs.addError({code:"GIM013", message:`${tva.a_value.attribute(tva.e_GroupType)} must be ${"otherCollection".quote()}`});
 		}
 		else
-			errs.pushCode("GIM014", `${tva.e_GroupType.elementize()} is required in ${GroupInformation.name().elementize()}`);
+			errs.addError({code:"GIM014", message:`${tva.e_GroupType.elementize()} is required in ${GroupInformation.name().elementize()}`});
 
 		// <GroupInformation><BasicDescription>
 		this.ValidateBasicDescription(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup);
@@ -1770,7 +1799,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup, indexes, groupsFound) {
 
 		if (!GroupInformation) {
-			errs.pushCode("GI000", "ValidateGroupInformation() called with GroupInformation==null");
+			errs.addError({type:APPLICATION, code:"GI000", message:"ValidateGroupInformation() called with GroupInformation==null"});
 			return;
 		}
 
@@ -1794,12 +1823,12 @@ export default class ContentGuideCheck {
 		let GroupType=GroupInformation.get(xPath(SCHEMA_PREFIX, tva.e_GroupType), CG_SCHEMA);
 		if (GroupType) {
 			if (!(GroupType.attr(tva.a_type) && GroupType.attr(tva.a_type).value()==tva.t_ProgramGroupTypeType)) 
-				errs.pushCode("GI011", `${tva.e_GroupType}@xsi:${tva.a_type}=${tva.t_ProgramGroupTypeType.quote()} is required`);
+				errs.addError({code:"GI011", message:`${tva.e_GroupType}@xsi:${tva.a_type}=${tva.t_ProgramGroupTypeType.quote()} is required`});
 			if (!(GroupType.attr(tva.a_value) && GroupType.attr(tva.a_value).value()=="otherCollection")) 
-				errs.pushCode("GI022", `${tva.a_value.attribute(tva.e_GroupType)}=${"otherCollection".quote()} is required`);
+				errs.addError({code:"GI022", message:`${tva.a_value.attribute(tva.e_GroupType)}=${"otherCollection".quote()} is required`});
 		}
 		else
-			errs.pushCode("GI014", `${tva.e_GroupType.elementize()} is required in ${GroupInformation.name().elementize()}`);
+			errs.addError({code:"GI014", message:`${tva.e_GroupType.elementize()} is required in ${GroupInformation.name().elementize()}`});
 	}
 
 
@@ -1818,14 +1847,14 @@ export default class ContentGuideCheck {
 	/* private */  CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, parentLang, requestType, groupIds, errs, o) { 
 		
 		if (!ProgramDescription) {
-			errs.pushCode("GI100", "CheckGroupInformation() called with ProgramDescription==null");
+			errs.addError({type:APPLICATION, code:"GI100", message:"CheckGroupInformation() called with ProgramDescription==null"});
 			return;
 		}
 		let gi, GroupInformation;
 		let GroupInformationTable=ProgramDescription.get(xPath(SCHEMA_PREFIX, tva.e_GroupInformationTable), CG_SCHEMA);
 		
 		if (!GroupInformationTable) {
-			errs.pushCode("GI101", `${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`);
+			errs.addError({code:"GI101", message:`${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`});
 			return;
 		}
 		let gitLang=this.GetLanguage(this.knownLanguages, errs, GroupInformationTable, parentLang, false, "GI102");
@@ -1839,12 +1868,12 @@ export default class ContentGuideCheck {
 				if (CountChildElements(GroupInformation, tva.e_MemberOf)==0) {
 					// this GroupInformation element is not a member of another GroupInformation so it must be the "category group"
 					if (categoryGroup)
-						errs.pushCode("GI111", `only a single ${CATEGORY_GROUP_NAME} can be present in ${tva.e_GroupInformationTable.elementize()}`);
+						errs.addError({code:"GI111", message:`only a single ${CATEGORY_GROUP_NAME} can be present in ${tva.e_GroupInformationTable.elementize()}`});
 					else categoryGroup=GroupInformation;
 				}
 			}
 			if (!categoryGroup)
-				errs.pushCode("GI112", `a ${CATEGORY_GROUP_NAME} must be specified in ${tva.e_GroupInformationTable.elementize()} for this request type`);
+				errs.addError({code:"GI112", message:`a ${CATEGORY_GROUP_NAME} must be specified in ${tva.e_GroupInformationTable.elementize()} for this request type`});
 		}
 		
 		let indexes=[], giCount=0;
@@ -1857,14 +1886,15 @@ export default class ContentGuideCheck {
 		if (categoryGroup) {
 			let numOfItems=(categoryGroup.attr(tva.a_numOfItems) ? valUnsignedInt(categoryGroup.attr(tva.a_numOfItems).value()) : 0);
 			if (requestType!=CG_REQUEST_BS_CONTENTS && numOfItems!=giCount)
-				errs.pushCode("GI113", `${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${numOfItems}) does match the number of items (${giCount})`);
+				errs.addError({code:"GI113", 
+								message:`${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${numOfItems}) does match the number of items (${giCount})`});
 
 			if (o) 
 				o.childCount=numOfItems;
 		}
 
 		if (requestType==CG_REQUEST_MORE_EPISODES && giCount>1)
-			errs.pushCode("GI114", `only one ${tva.e_GroupInformation} element is premitted for this request type`);
+			errs.addError({code:"GI114", message:`only one ${tva.e_GroupInformation} element is premitted for this request type`});
 	}
 
 
@@ -1886,13 +1916,13 @@ export default class ContentGuideCheck {
 
 		function validValues(errs, numOfItems, numAllowed, grp) {
 			if (numOfItems<=0)
-				errs.pushCode("VNN101", `${tva.a_numOfItems.attribute(tva.e_GroupInformation)} must be > 0 for ${grp.quote()}`);		
+				errs.addError({code:"VNN101", message:`${tva.a_numOfItems.attribute(tva.e_GroupInformation)} must be > 0 for ${grp.quote()}`});		
 			if (numOfItems>numAllowed)
-				errs.pushCode("VNN102", `${tva.a_numOfItems.attribute(tva.e_GroupInformation)} must be <= ${numAllowed} for ${grp.quote()}`);
+				errs.addError({code:"VNN102", message:`${tva.a_numOfItems.attribute(tva.e_GroupInformation)} must be <= ${numAllowed} for ${grp.quote()}`});
 		}
 		
 		if (!GroupInformation) {
-			errs.pushCode("VNN000", "ValidateGroupInformationNowNext() called with GroupInformation==null");
+			errs.addError({type:APPLICATION, code:"VNN000", message:"ValidateGroupInformationNowNext() called with GroupInformation==null"});
 			return;
 		}
 
@@ -1915,12 +1945,12 @@ export default class ContentGuideCheck {
 						break;
 				}
 				if (isIni(groupCRIDsFound, grp))
-					errs.pushCode("VNN001", `only a single ${grp.quote()} structural CRID is premitted in this request`);
+					errs.addError({code:"VNN001", message:`only a single ${grp.quote()} structural CRID is premitted in this request`});
 				else 
 					groupCRIDsFound.push(grp);
 			}
 			else 
-				errs.pushCode("VNN002", `${tva.e_GroupInformation.elementize()} for ${grp.quote()} is not permitted for this request type`);
+				errs.addError({code:"VNN002", message:`${tva.e_GroupInformation.elementize()} for ${grp.quote()} is not permitted for this request type`});
 		}
 	}
 
@@ -1939,13 +1969,13 @@ export default class ContentGuideCheck {
 	/* private */  CheckGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, parentLang, groupIds, requestType, errs) { 
 		
 		if (!ProgramDescription) {
-			errs.pushCode("NN000", "CheckGroupInformationNowNext() called with ProgramDescription==null");
+			errs.addError({type:APPLICATION, code:"NN000", message:"CheckGroupInformationNowNext() called with ProgramDescription==null"});
 			return;
 		}
 		
 		let GroupInformationTable=ProgramDescription.get(xPath(SCHEMA_PREFIX, tva.e_GroupInformationTable), CG_SCHEMA);
 		if (!GroupInformationTable) {
-			errs.pushCode("NN001", `${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`);
+			errs.addError({code:"NN001", message:`${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`});
 			return;
 		}
 		let gitLang=this.GetLanguage(this.knownLanguages, errs, GroupInformationTable, parentLang, false, "NN002");
@@ -1960,7 +1990,7 @@ export default class ContentGuideCheck {
 					this.ValidateGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, gitLang, 10, 1, 10, groupIds);
 					break;
 				default:
-					errs.pushCode("NN003", `${tva.e_GroupInformation.elementize()} not processed for this request type`);
+					errs.addError({code:"NN003", message:`${tva.e_GroupInformation.elementize()} not processed for this request type`});
 			}
 		}
 	}
@@ -1980,7 +2010,7 @@ export default class ContentGuideCheck {
 		function isValidAudioLanguagePurpose(purpose) {	return [dvbi.AUDIO_PURPOSE_MAIN, dvbi.AUDIO_PURPOSE_DESCRIPTION].includes(purpose);	}
 		
 		if (!AVAttributes) {
-			errs.pushCode("AV000", "ValidateAVAttributes() called with AVAttributes==null");
+			errs.addError({type:APPLICATION, code:"AV000", message:"ValidateAVAttributes() called with AVAttributes==null"});
 			return;
 		}
 		
@@ -2002,7 +2032,7 @@ export default class ContentGuideCheck {
 			if (MixType) {
 				checkAttributes(MixType, [tva.a_href], [], errs, "AV011"); 
 				if (MixType.attr(tva.a_href) && !isValidAudioMixType(MixType.attr(tva.a_href).value()))
-					errs.pushCode("AV012", `${tva.e_AudioAttributes}.${tva.e_MixType} is not valid`);
+					errs.addError({code:"AV012", message:`${tva.e_AudioAttributes}.${tva.e_MixType} is not valid`});
 			}
 					
 			let AudioLanguage=AudioAttributes.get(xPath(SCHEMA_PREFIX, tva.e_AudioLanguage), CG_SCHEMA);
@@ -2011,7 +2041,7 @@ export default class ContentGuideCheck {
 				let validLanguage=false, validPurpose=false, audioLang=AudioLanguage.text();
 				if (AudioLanguage.attr(tva.a_purpose)) {
 					if (!(validPurpose=isValidAudioLanguagePurpose(AudioLanguage.attr(tva.a_purpose).value())))
-						errs.pushCode("AV014", `${tva.a_purpose.attribute(tva.e_AudioLanguage)} is not valid`);
+						errs.addError({code:"AV014", message:`${tva.a_purpose.attribute(tva.e_AudioLanguage)} is not valid`});
 				}
 
 				validLanguage=CheckLanguage(this.knownLanguages, errs, audioLang, `${tva.e_AudioAttributes}.${tva.e_AudioLanguage}`, "AV015");
@@ -2023,7 +2053,7 @@ export default class ContentGuideCheck {
 
 					let combo=`${audioLang}!--!${AudioLanguage.attr(tva.a_purpose).value()}`;
 					if (isIn(foundAttributes, combo))
-						errs.pushCode("AV016", `audio ${tva.a_purpose.attribute()} ${AudioLanguage.attr(tva.a_purpose).value().quote()} already specified for language ${audioLang.quote()}`);
+						errs.addError({code:"AV016", message:`audio ${tva.a_purpose.attribute()} ${AudioLanguage.attr(tva.a_purpose).value().quote()} already specified for language ${audioLang.quote()}`});
 					else
 						foundAttributes.push(combo);
 				}
@@ -2031,7 +2061,7 @@ export default class ContentGuideCheck {
 		}
 		audioCounts.forEach(audioLang => {
 			if (audioCounts[audioLang]>2)
-				errs.pushCode("AV020", `more than 2 ${tva.e_AudioAttributes.elementize()} elements for language ${audioLang.quote()}`);
+				errs.addError({code:"AV020", message:`more than 2 ${tva.e_AudioAttributes.elementize()} elements for language ${audioLang.quote()}`});
 		});
 		
 		// <VideoAttributes>
@@ -2055,7 +2085,8 @@ export default class ContentGuideCheck {
 				if (Coding.attr(tva.a_href)) {
 					let codingHref=Coding.attr(tva.a_href).value();
 					if (!([dvbi.DVB_BITMAP_SUBTITLES, dvbi.DVB_CHARACTER_SUBTITLES, dvbi.EBU_TT_D].includes(codingHref)))
-						errs.pushCode("AV042", `${tva.a_href.attribute(`${tva.e_CaptioningAttributes}.${tva.e_Coding}`)} is not valid - should be DVB (bitmap or character) or EBU TT-D`);
+						errs.addError({code:"AV042", 
+										message:`${tva.a_href.attribute(`${tva.e_CaptioningAttributes}.${tva.e_Coding}`)} is not valid - should be DVB (bitmap or character) or EBU TT-D`});
 				}
 			}		
 		}
@@ -2076,7 +2107,7 @@ export default class ContentGuideCheck {
 		function isRestartLink(str) { return str==dvbi.RESTART_LINK; }
 
 		if (!RelatedMaterial) {
-			errs.pushCode("RR000", "ValidateRestartRelatedMaterial() called with RelatedMaterial==null");
+			errs.addError({type:APPLICATION, code:"RR000", message:"ValidateRestartRelatedMaterial() called with RelatedMaterial==null"});
 			return false;
 		}
 
@@ -2090,7 +2121,7 @@ export default class ContentGuideCheck {
 			checkAttributes(HowRelated, [tva.a_href], [], errs, "RR002");
 			if (HowRelated.attr(tva.a_href)) {
 				if (!isRestartLink(HowRelated.attr(tva.a_href).value())) {
-					errs.pushCode("RR003", `invalid ${tva.a_href.attribute(tva.e_HowRelated)} (${HowRelated.attr(tva.a_href).value()}) for Restart Application Link`);
+					errs.addError({code:"RR003", message:`invalid ${tva.a_href.attribute(tva.e_HowRelated)} (${HowRelated.attr(tva.a_href).value()}) for Restart Application Link`});
 					isRestart=false;
 				}
 			}
@@ -2130,13 +2161,13 @@ export default class ContentGuideCheck {
 			checkAttributes(node, [tva.a_href], [tva.a_type], errs, errcode?`${errcode}-1`:"ChG001");
 			let GenreType=(node.attr(tva.a_type)?node.attr(tva.a_type).value():tva.GENRE_TYPE_OTHER);
 			if (GenreType!=tva.GENRE_TYPE_OTHER)
-				errs.pushCode(errcode?`${errcode}-2`:"ChG002", `${tva.a_type.attribute(`${node.parent().name()}.${+node.name()}`)} must contain ${tva.GENRE_TYPE_OTHER.quote()}`);
+				errs.addError({code:errcode?`${errcode}-2`:"ChG002", message:`${tva.a_type.attribute(`${node.parent().name()}.${+node.name()}`)} must contain ${tva.GENRE_TYPE_OTHER.quote()}`});
 
 			return (node.attr(tva.a_href)?node.attr(tva.a_href).value():null);
 		}
 
 		if (!InstanceDescription) {
-			errs.pushCode("ID000", "ValidateInstanceDescription() called with InstanceDescription==null");
+			errs.addError({type:APPLICATION, code:"ID000", message:"ValidateInstanceDescription() called with InstanceDescription==null"});
 			return;
 		}
 		switch (VerifyType) {
@@ -2160,7 +2191,7 @@ export default class ContentGuideCheck {
 					false, errs, "ID002");
 				break;
 			default:
-				errs.pushCode("ID003", `ValidateInstanceDescription() called with VerifyType=${VerifyType}`);
+				errs.addError({type:APPLICATION, code:"ID003", message:`message:ValidateInstanceDescription() called with VerifyType=${VerifyType}`});
 		}
 
 		let restartGenre=null, restartRelatedMaterial=null;
@@ -2175,15 +2206,15 @@ export default class ContentGuideCheck {
 					
 				let g1href=checkGenre(Genre1, errs, "ID011");
 				if (g1href && !isAvailability(g1href))
-					errs.pushCode("ID012", `first ${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a media or fepg availability indicator`);
+					errs.addError({code:"ID012", message:`first ${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a media or fepg availability indicator`});
 
 				let g2href=checkGenre(Genre2, errs, "ID013");
 				if (g2href && !isAvailability(g2href))
-					errs.pushCode("ID014", `second ${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a media or fepg availability indicator`);
+					errs.addError({code:"ID014", message:`second ${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a media or fepg availability indicator`});
 				
 				if (Genre1 && Genre2) {
 					if ((isMediaAvailability(g1href) && isMediaAvailability(g2href)) || (isEPGAvailability(g1href) && isEPGAvailability(g2href)))
-						errs.pushCode("ID015", `${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} elements must indicate different availabilities`);
+						errs.addError({code:"ID015", message:`${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} elements must indicate different availabilities`});
 				}
 				break;
 			case tva.e_ScheduleEvent:
@@ -2194,10 +2225,10 @@ export default class ContentGuideCheck {
 						if (isRestartAvailability(Genre.attr(tva.a_href).value())) {
 							restartGenre=Genre;
 							if (Genre.attr(tva.a_type) && Genre.attr(tva.a_type).value()!=tva.GENRE_TYPE_OTHER) 
-								errs.pushCode("ID018", `${tva.a_type.attribute(Genre.name())} must be ${tva.GENRE_TYPE_OTHER.quote()} or omitted`);
+								errs.addError({code:"ID018", message:`${tva.a_type.attribute(Genre.name())} must be ${tva.GENRE_TYPE_OTHER.quote()} or omitted`});
 						}
 						else 
-							errs.pushCode("ID017", `${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a restart link indicator`);
+							errs.addError({code:"ID017", message:`${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a restart link indicator`});
 					}
 				}	
 				break;
@@ -2217,7 +2248,7 @@ export default class ContentGuideCheck {
 			FalseValue(SignLanguage, tva.a_closed, "ID032", errs);
 			// check value is "sgn" according to ISO 639-2 or a sign language listed in ISO 639-3
 			if (SignLanguage.text()!="sgn" && !this.knownLanguages.isKnownSignLanguage(SignLanguage.text())) 
-				errs.pushCode("ID033", `invalid ${tva.e_SignLanguage.elementize()} ${SignLanguage.text().quote()} in ${InstanceDescription.name().elementize()}`);
+				errs.addError({code:"ID033", message:`invalid ${tva.e_SignLanguage.elementize()} ${SignLanguage.text().quote()} in ${InstanceDescription.name().elementize()}`});
 		}
 		
 		// <AVAttributes>
@@ -2237,10 +2268,10 @@ export default class ContentGuideCheck {
 						// all good
 					}
 					else 
-						errs.pushCode("ID050", `${tva.a_type.attribute(tva.e_OtherIdentifier)}=${oiType.quote()} is not valid for ${VerifyType}.${InstanceDescription.name()}`);		
+						errs.addError({code:"ID050", message:`${tva.a_type.attribute(tva.e_OtherIdentifier)}=${oiType.quote()} is not valid for ${VerifyType}.${InstanceDescription.name()}`});		
 					if ([dvbi.EIT_PROGRAMME_CRID_TYPE, dvbi.EIT_SERIES_CRID_TYPE].includes(oiType))
 						if (!isCRIDURI(OtherIdentifier.text()))
-							errs.pushCode("ID051", `${tva.e_OtherIdentifier} must be a CRID for ${tva.a_type.attribute()}=${oiType.quote()}`);
+							errs.addError({code:"ID051", message:`${tva.e_OtherIdentifier} must be a CRID for ${tva.a_type.attribute()}=${oiType.quote()}`});
 			}
 		}
 		
@@ -2256,10 +2287,10 @@ export default class ContentGuideCheck {
 			case tva.e_ScheduleEvent:
 				// Genre and RelatedMaterial for restart capability should only be specified for the "current" (ie. 'now') program
 				if (!isCurrentProgram && (restartGenre || restartRelatedMaterial))
-					errs.pushCode("ID060", `restart ${tva.e_Genre.elementize()} and ${tva.e_RelatedMaterial.elementize()} are only permitted for the current (${"now".quote()}) program`);
+					errs.addError({code:"ID060", message:`restart ${tva.e_Genre.elementize()} and ${tva.e_RelatedMaterial.elementize()} are only permitted for the current (${"now".quote()}) program`});
 				
 				if ((restartGenre && !restartRelatedMaterial) || (restartRelatedMaterial && !restartGenre))
-					errs.pushCode("ID061", `both ${tva.e_Genre.elementize()} and ${tva.e_RelatedMaterial.elementize()} are required together for ${VerifyType}`)	;	
+					errs.addError({code:"ID061", message:`both ${tva.e_Genre.elementize()} and ${tva.e_RelatedMaterial.elementize()} are required together for ${VerifyType}`});	
 				break;
 		}
 	}
@@ -2276,17 +2307,17 @@ export default class ContentGuideCheck {
 	/* private */  CheckPlayerApplication(node, allowedContentTypes, errs, errcode=null) {
 
 		if (!node)  {
-			errs.pushCode(errcode?`${errcode}-0a`:"PA000a", "CheckPlayerApplication() called with node==null");
+			errs.addError({type:APPLICATION, code:"PA000a", message:"CheckPlayerApplication() called with node==null"});
 			return;
 		}
 		if (!Array.isArray(allowedContentTypes)) {
-			errs.pushCode(errcode?`${errcode}-0b`:"PA000b", "CheckPlayerApplication() called with incorrect type for allowedContentTypes");
+			errs.addError({type:APPLICATION, code:"PA000b", message:"CheckPlayerApplication() called with incorrect type for allowedContentTypes"});
 			return;			
 		}
 
 		if (!node.attr(tva.a_contentType)) {
-			errs.pushCode(errcode?`${errcode}-1`:"PA001", `${tva.a_contentType.attribute()} attribute is required when signalling a player in ${node.name().elementize()}`, 
-				`missing ${tva.a_contentType.attribute()}`, node.line());
+			errs.addError({code:errcode?`${errcode}-1`:"PA001", message:`${tva.a_contentType.attribute()} attribute is required when signalling a player in ${node.name().elementize()}`, 
+				key:`missing ${tva.a_contentType.attribute()}`, line:node.line()});
 			return;
 		}
 
@@ -2294,18 +2325,19 @@ export default class ContentGuideCheck {
 			switch (node.attr(tva.a_contentType).value()) {
 				case dvbi.XML_AIT_CONTENT_TYPE:
 					if (!isHTTPURL(node.text()))
-						errs.pushCode(errcode?`${errcode}-2`:"PA002", `${node.name().elementize()}=${node.text().quote()} is not a valid AIT URL`, "invalid URL", node.line());
+						errs.addError({code:errcode?`${errcode}-2`:"PA002", message:`${node.name().elementize()}=${node.text().quote()} is not a valid AIT URL`, key:"invalid URL", line:node.line()});
 					break;
 	/*			case dvbi.HTML5_APP:
 				case dvbi.XHTML_APP:
 					if (!patterns.isHTTPURL(node.text()))
-						errs.pushCode(errcode?`${errcode}-3`:"PA003", `${node.name().elementize()}=${node.text().quote()} is not a valid URL`, "invalid URL", node.line());		
+						errs.addError({code:errcode?`${errcode}-3`:"PA003", message:`${node.name().elementize()}=${node.text().quote()} is not a valid URL`, key:"invalid URL", line:node.line()});		
 					break;
 	*/		}
 		}
 		else
-			errs.pushCodeWithFragment(errcode?`${errcode}-4`:"PA004", `${tva.a_contentType.attribute(node.name())}=${node.attr(tva.a_contentType).value().quote()} is not valid for a player`, 
-				node, `invalid ${tva.a_contentType}`);
+			errs.addError({code:errcode?`${errcode}-4`:"PA004",
+							message:`${tva.a_contentType.attribute(node.name())}=${node.attr(tva.a_contentType).value().quote()} is not valid for a player`, 
+							fragment:node, key:`invalid ${tva.a_contentType}`});
 	}
 
 
@@ -2324,7 +2356,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateOnDemandProgram(CG_SCHEMA, SCHEMA_PREFIX, OnDemandProgram, parentLanguage, programCRIDs, plCRIDs, requestType, errs) {
 
 		if (!OnDemandProgram) {
-			errs.pushCode("OD000", "ValidateOnDemandProgram() called with OnDemandProgram==null");
+			errs.addError({type:APPLICATION, code:"OD000", message:"ValidateOnDemandProgram() called with OnDemandProgram==null"});
 			return;
 		}
 		let validRequest=true;
@@ -2369,7 +2401,7 @@ export default class ContentGuideCheck {
 					false, errs, "OD003");
 				break;
 			default:
-				errs.pushCode("OD004", `requestType=${requestType} is not valid for ${OnDemandProgram.name()}`);
+				errs.addError({code:"OD004", message:`requestType=${requestType} is not valid for ${OnDemandProgram.name()}`});
 				validRequest=false;
 		}
 			
@@ -2384,11 +2416,11 @@ export default class ContentGuideCheck {
 			if (Program.attr(tva.a_crid)) {
 				let programCRID=Program.attr(tva.a_crid).value();
 				if (!isCRIDURI(programCRID))
-					errs.pushCode("OD010", `${tva.a_crid.attribute(`${OnDemandProgram.name()}.${tva.e_Program}`)} is not a CRID URI`);
+					errs.addError({code:"OD010", message:`${tva.a_crid.attribute(`${OnDemandProgram.name()}.${tva.e_Program}`)} is not a CRID URI`});
 				else {
 					if (!isIni(programCRIDs, programCRID))
-						errs.pushCode("OD011", 
-							`${tva.a_crid.attribute(`${OnDemandProgram.name()}.${tva.e_Program}`)}=${programCRID.quote()} does not refer to a program in the ${tva.e_ProgramInformationTable.elementize()}`);
+						errs.addError({code:"OD011", 
+								message:`${tva.a_crid.attribute(`${OnDemandProgram.name()}.${tva.e_Program}`)}=${programCRID.quote()} does not refer to a program in the ${tva.e_ProgramInformationTable.elementize()}`});
 				}
 				plCRIDs.push(programCRID);
 			}	
@@ -2419,7 +2451,7 @@ export default class ContentGuideCheck {
 		if (soa && eoa) {
 			let fr=new Date(soa.text()), to=new Date(eoa.text());	
 			if (to.getTime() < fr.getTime()) 
-				errs.pushCode("OD062", `${tva.e_StartOfAvailability.elementize()} must be earlier than ${tva.e_EndOfAvailability.elementize()}`);
+				errs.addError({code:"OD062", message:`${tva.e_StartOfAvailability.elementize()} must be earlier than ${tva.e_EndOfAvailability.elementize()}`});
 		}
 		
 		// <DeliveryMode>
@@ -2427,7 +2459,7 @@ export default class ContentGuideCheck {
 		if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType))
 			while ((DeliveryMode=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_DeliveryMode, ++dm), CG_SCHEMA))!=null)
 				if (DeliveryMode.text()!=tva.DELIVERY_MODE_STREAMING)
-					errs.pushCode("OD070", `${OnDemandProgram.name()}.${tva.e_DeliveryMode} must be ${tva.DELIVERY_MODE_STREAMING.quote()}`);
+					errs.addError({code:"OD070", message:`${OnDemandProgram.name()}.${tva.e_DeliveryMode} must be ${tva.DELIVERY_MODE_STREAMING.quote()}`});
 		
 		// <Free>
 		let fr=0, Free;
@@ -2454,7 +2486,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateScheduleEvents(CG_SCHEMA, SCHEMA_PREFIX, Schedule, parentLanguage, programCRIDs, plCRIDs, currentProgramCRID, scheduleStart, scheduleEnd, requestType, errs) {
 		
 		if (!Schedule) {
-			errs.pushCode("SE000", "ValidateScheduleEvents() called with Schedule==null");
+			errs.addError({type:APPLICATION, code:"SE000", message:"ValidateScheduleEvents() called with Schedule==null"});
 			return;
 		}
 		
@@ -2482,9 +2514,10 @@ export default class ContentGuideCheck {
 				let ProgramCRID=Program.attr(tva.a_crid);
 				if (ProgramCRID) {
 					if (!isCRIDURI(ProgramCRID.value()))
-						errs.pushCode("SE011", `${tva.a_crid.attribute(tva.e_Program)} is not a valid CRID (${ProgramCRID.value()})`);
+						errs.addError({code:"SE011", message:`${tva.a_crid.attribute(tva.e_Program)} is not a valid CRID (${ProgramCRID.value()})`});
 					if (!isIni(programCRIDs, ProgramCRID.value()))
-						errs.pushCode("SE012", `${tva.a_crid.attribute(tva.e_Program)}=${ProgramCRID.value().quote()} does not refer to a program in the ${tva.e_ProgramInformationTable.elementize()}`);
+						errs.addError({code:"SE012", 
+									message:`${tva.a_crid.attribute(tva.e_Program)}=${ProgramCRID.value().quote()} does not refer to a program in the ${tva.e_ProgramInformationTable.elementize()}`});
 					plCRIDs.push(ProgramCRID.value());
 					isCurrentProgram=(ProgramCRID.value()==currentProgramCRID) ;
 				}
@@ -2494,7 +2527,7 @@ export default class ContentGuideCheck {
 			let ProgramURL=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_ProgramURL), CG_SCHEMA);
 			if (ProgramURL) 
 				if (!isDVBLocator(ProgramURL.text()))
-					errs.pushCode("SE021", `${tva.e_ScheduleEvent}.${tva.e_ProgramURL} (${ProgramURL.text()}) is not a valid DVB locator`);
+					errs.addError({code:"SE021", message:`${tva.e_ScheduleEvent}.${tva.e_ProgramURL} (${ProgramURL.text()}) is not a valid DVB locator`});
 			
 			// <InstanceDescription>
 			let InstanceDescription=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_InstanceDescription), CG_SCHEMA);
@@ -2509,25 +2542,28 @@ export default class ContentGuideCheck {
 					let PublishedStartTime=new Date(pstElem.text());
 					
 					if (scheduleStart && (PublishedStartTime < scheduleStart)) 
-						errs.pushCode("SE041", `${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is earlier than ${tva.a_start.attribute(tva.e_Schedule)}`);
+						errs.addError({code:"SE041", 
+										message:`${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is earlier than ${tva.a_start.attribute(tva.e_Schedule)}`});
 					if (scheduleEnd && (PublishedStartTime > scheduleEnd)) 
-						errs.pushCode("SE042", `${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is after ${tva.a_end.attribute(tva.e_Schedule)}`);
+						errs.addError({code:"SE042", 
+										message:`${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is after ${tva.a_end.attribute(tva.e_Schedule)}`});
 
 					let pdElem=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_PublishedDuration), CG_SCHEMA);
 					if (pdElem && scheduleEnd) {
 						let parsedPublishedDuration=parseISOduration(pdElem.text());
 						if (parsedPublishedDuration.add(PublishedStartTime) > scheduleEnd) 
-							errs.pushCode("SE043", `${tva.e_PublishedStartTime}+${tva.e_PublishedDuration} of event is after ${tva.a_end.attribute(tva.e_Schedule)}`);
+							errs.addError({code:"SE043", 
+											message:`${tva.e_PublishedStartTime}+${tva.e_PublishedDuration} of event is after ${tva.a_end.attribute(tva.e_Schedule)}`});
 					}
 				}
 				else 
-					errs.pushCode("SE049", `${tva.e_PublishedStartTime.elementize()} is not expressed in UTC format (${pstElem.text()})`);
+					errs.addError({code:"SE049", message:`${tva.e_PublishedStartTime.elementize()} is not expressed in UTC format (${pstElem.text()})`});
 			}
 			
 			// <ActualStartTime> 
 			let astElem=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_ActualStartTime), CG_SCHEMA);
 			if (astElem && !isUTCDateTime(astElem.text())) 
-				errs.pushCode("SE051", `${tva.e_ActualStartTime.elementize()} is not expressed in UTC format (${astElem.text()})`);
+				errs.addError({code:"SE051", message:`${tva.e_ActualStartTime.elementize()} is not expressed in UTC format (${astElem.text()})`});
 
 			// <FirstShowing>
 			let FirstShowing=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_FirstShowing), CG_SCHEMA);
@@ -2559,7 +2595,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateSchedule(CG_SCHEMA, SCHEMA_PREFIX, Schedule, parentLanguage, programCRIDS, plCRIDs, currentProgramCRID, requestType, errs) {
 
 		if (!Schedule) {
-			errs.pushCode("VS000", "ValidateSchedule() called with Schedule==null");
+			errs.addError({type:APPLICATION, code:"VS000", message:"ValidateSchedule() called with Schedule==null"});
 			return;
 		}
 
@@ -2577,7 +2613,7 @@ export default class ContentGuideCheck {
 
 		if (startSchedule && endSchedule) 
 			if (to.getTime() <= fr.getTime()) 
-				errs.pushCode("VS012", `${tva.a_start.attribute(Schedule.name())} must be earlier than ${tva.a_end.attribute()}`);
+				errs.addError({code:"VS012", message:`${tva.a_start.attribute(Schedule.name())} must be earlier than ${tva.a_end.attribute()}`});
 		
 				this.ValidateScheduleEvents(CG_SCHEMA, SCHEMA_PREFIX, Schedule, scheduleLang, programCRIDS, plCRIDs, currentProgramCRID, fr, to, requestType, errs);
 		
@@ -2601,13 +2637,13 @@ export default class ContentGuideCheck {
 	/* private */  CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, parentLang, programCRIDs, currentProgramCRID, requestType, errs, o=null) {
 
 		if (!ProgramDescription) {
-			errs.pushCode("PL000", "CheckProgramLocation() called with ProgramDescription==null");
+			errs.addError({type:APPLICATION, code:"PL000", message:"CheckProgramLocation() called with ProgramDescription==null"});
 			return;
 		}
 		
 		let ProgramLocationTable=ProgramDescription.get(xPath(SCHEMA_PREFIX, tva.e_ProgramLocationTable), CG_SCHEMA);
 		if (!ProgramLocationTable) {
-			errs.pushCode("PL001", `${tva.e_ProgramLocationTable.elementize()} is not specified`);
+			errs.addError({code:"PL001", message:`${tva.e_ProgramLocationTable.elementize()} is not specified`});
 			return;
 		}
 		checkTopElementsAndCardinality(ProgramLocationTable, 
@@ -2631,7 +2667,8 @@ export default class ContentGuideCheck {
 					let thisServiceIdRef=this.ValidateSchedule(CG_SCHEMA, SCHEMA_PREFIX, child, pltLang, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
 					if (thisServiceIdRef.length)
 						if (isIni(foundServiceIds, thisServiceIdRef))
-							errs.pushCode("PL020", `A ${tva.e_Schedule.elementize()} element with ${tva.a_serviceIDRef.attribute()}=${thisServiceIdRef.quote()} is already specified`);
+							errs.addError({code:"PL020", 
+											message:`A ${tva.e_Schedule.elementize()} element with ${tva.a_serviceIDRef.attribute()}=${thisServiceIdRef.quote()} is already specified`});
 						else 
 							foundServiceIds.push(thisServiceIdRef);
 					cnt++;
@@ -2641,12 +2678,14 @@ export default class ContentGuideCheck {
 
 		if (o && o.childCount!=0) {
 			if (o.childCount!=cnt)
-				errs.pushCode("PL021", `number of items (${cnt}) in the ${tva.e_ProgramLocationTable.elementize()} does match ${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${o.childCount})`);
+				errs.addError({code:"PL021", 
+								message:`number of items (${cnt}) in the ${tva.e_ProgramLocationTable.elementize()} does match ${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${o.childCount})`});
 		}
 
 		programCRIDs.forEach(programCRID => {
 			if (!isIni(plCRIDs, programCRID))
-				errs.pushCode("PL022", `CRID ${programCRID.quote()} specified in ${tva.e_ProgramInformationTable.elementize()} is not specified in ${tva.e_ProgramLocationTable.elementize()}`);		
+				errs.addError({code:"PL022", 
+								message:`CRID ${programCRID.quote()} specified in ${tva.e_ProgramInformationTable.elementize()} is not specified in ${tva.e_ProgramLocationTable.elementize()}`});
 		});
 	}
 
@@ -2664,7 +2703,7 @@ export default class ContentGuideCheck {
 		if (CGtext) try {
 			CG=parseXmlString(CGtext);
 		} catch (err) {
-			errs.pushCode("CG000", `XML parsing failed: ${err.message}`);
+			errs.addError({type:APPLICATION, code:"CG000", message:`XML parsing failed: ${err.message}`});
 		}
 		if (!CG) return;
 
@@ -2677,14 +2716,14 @@ export default class ContentGuideCheck {
 			formattedCG.validationErrors.forEach(ve => {
 				let s=ve.toString().split('\r');
 				s.forEach(err => {
-					errs.pushCodeWithFragment("CG001", err, lines[ve.line-1], "XSD validation");
+					errs.addError({code:"CG001", message:err, fragment:lines[ve.line-1], key:"XSD validation"});
 					errs.setError(err, ve.line-1);
 				}); 
 			});
 		}
 
 		if (CG.root().name()!=tva.e_TVAMain) {
-			errs.pushCode("CG002", `Root element is not ${tva.e_TVAMain.elementize()}`, "XSD validation");
+			errs.addError({code:"CG002", message:`Root element is not ${tva.e_TVAMain.elementize()}`, key:"XSD validation"});
 			return;
 		}
 		let CG_SCHEMA={}, 
@@ -2695,7 +2734,7 @@ export default class ContentGuideCheck {
 		let tvaMainLang=this.GetLanguage(this.knownLanguages, errs, CG.root(), DEFAULT_LANGUAGE, true, "CG003");
 		let ProgramDescription=CG.get(xPath(SCHEMA_PREFIX, tva.e_ProgramDescription), CG_SCHEMA);
 		if (!ProgramDescription) {
-			errs.pushCode("CG004", `No ${tva.e_ProgramDescription.elementize()} element specified.`);
+			errs.addError({code:"CG004", message:`No ${tva.e_ProgramDescription.elementize()} element specified.`});
 			return;
 		}
 		

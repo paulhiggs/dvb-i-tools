@@ -7,6 +7,8 @@
 
 import { parseXmlString } from "libxmljs2";
 
+export const ERROR=1, WARNING=2, APPLICATION=3;
+
 export default class ErrorList {
 
 	constructor() {
@@ -20,7 +22,7 @@ export default class ErrorList {
 		let lines=parseXmlString(doc).toString().split('\n');
 		this.markupXML=lines.map((str, index) => ({ value: str, ix: index }));
 	}
-	setError(err, lineNo) {
+	/* private */ setError(err, lineNo) {
 		let found=this.markupXML.find(line => (line.ix==lineNo));
 		if (found) {
 			if (!found.validationErrors)
@@ -28,7 +30,7 @@ export default class ErrorList {
 			found.validationErrors.push(err);
 		}
 	}
-	increment(key) {
+	/* private */ increment(key) {
 		if (this.countsErr[key]===undefined)
 			this.set(key);
 		else this.countsErr[key]++;
@@ -37,7 +39,7 @@ export default class ErrorList {
 		this.countsErr[key]=value;
 		this.numCountsE++;
 	}
-	incrementW(key) {
+	/* private */ incrementW(key) {
 		if (this.countsWarn[key]===undefined)
 			this.setW(key);
 		else this.countsWarn[key]++;
@@ -46,33 +48,50 @@ export default class ErrorList {
 		this.countsWarn[key]=value;
 		this.numCountsW++;
 	}
-	push(errMessage, key=null) {
-		this.errors.push({code:null, message:errMessage, element:null});
-		if (key) this.increment(key);
-	}
-	pushCode(errNo, errMessage, key=null, lineNo=null) {
-		this.errors.push({code:errNo, message:errMessage, element:null});
-		if (key) this.increment(key);
-		if (lineNo) this.setError(errMessage, lineNo);
-	}
-	pushCodeWithFragment(errNo, errMessage, fragment, key=null) {
-		this.errors.push({code:errNo, message:errMessage, 
-		element:(typeof(fragment)=="string" || fragment instanceof String)?fragment:fragment.toString()});
-		if (key) this.increment(key);
-	}
-	pushW(errMessage, key=null) {
-	this.warnings.push({code:null, message:errMessage, element:null});
-		if (key) this.incrementW(key);
-	}
-	pushCodeW(errNo, errMessage, key=null) {
-		this.warnings.push({code:errNo, message:errMessage, element:null});
-		if (key) this.incrementW(key);
-	}
-	pushCodeWWithFragment(errNo, errMessage, fragment, key=null) {
-		this.warnings.push({code:errNo, message:errMessage, 
-			element:(typeof(fragment)=="string" || fragment instanceof String)?fragment:fragment.toString()});
-		if (key) this.incrementW(key);
-	}
+
+	/**
+	 * 
+	 * @param {integer} e.type     (optional) ERROR(default) or WARNING
+	 * @param {sring} e.code       Error code
+	 * @param {string} e.message   The error message
+	 * @param {string} e.key       (optional)The category of the message
+	 * @param {string or libxmljs2:Node} e.fragment (optional) The XML fragment (or node in the XML document) triggering the error
+	 * @param {integer} e.line     (optional) the line number of the element in the XML document that triggered the error
+	 */
+	addError(e) {
+		let _INVALID_CALL='invalid addError call';
+		if (!e.type) e.type=ERROR;
+
+		if (![ERROR, WARNING, APPLICATION].includes(e.type)) this.push(`addError() called with invalid type property (${e.type})`, _INVALID_CALL);
+		if (!e.code) {
+			this.errors.push({code:"ERR001", message:'addError() called without errNo property'});
+			this.increment(_INVALID_CALL);
+		}
+		if (!e.message) {
+			this.errors.push({code:"ERR002", message:'addError() called without errMessage property'});
+			this.increment(_INVALID_CALL);
+		}
+		let newError={code:e.code, message:e.message, 
+						element:e.fragment?((typeof(e.fragment)=="string" || e.fragment instanceof String)?e.fragment:e.fragment.toString()):null
+		};
+
+		switch (e.type) {
+			case ERROR: 
+				this.errors.push(newError);
+				if (e.key) this.increment(e.key);
+				break;
+			case APPLICATION:
+				this.errors.push(newError);
+				this.increment('application process error');
+				break;
+			case WARNING: 
+				this.warnings.push(NewError);
+				if (e.key) this.incrementW(e.key);
+				break;
+		}
+		if (e.line)
+			this.setError(e.message, e.line);
+	} 
 	numErrors() { return this.errors.length; }
 	numWarnings() { return this.warnings.length; }
 
