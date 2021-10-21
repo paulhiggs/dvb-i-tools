@@ -11,7 +11,6 @@ const e_pct="&#x25;",
 	  e_hex=`${e_digit}A-Fa-f`,
 	  e_unreserved=`${e_alpha}${e_digit}${e_safe}${e_extra}`,
 	  e_hex16=`[${e_hex}]{1,4}`,
-	  e_allFs="", // e_allFs="[fF]{4}",
 	  e_chrs=`${e_unreserved}${e_pct}&amp;~;=:@`,
 	  e_uword=`(:([${e_digit}]{1,4}|[1-5][${e_digit}]{4}|6[0-4][${e_digit}]{3}|65[0-4][${e_digit}]{2}|655[0-2][${e_digit}]|6553[0-5]))`, 
 	  e_DecimalByte=`((25[0-5]|(2[0-4]|1{0,1}[${e_digit}]){0,1}[${e_digit}]))`, 
@@ -20,8 +19,22 @@ const e_pct="&#x25;",
 	  e_Password=`([${e_unreserved}${e_pct}&amp;~;=]+)`,
 	  e_NamedHost=`[${e_alpha}${e_digit}${e_pct}._~\-]+`,
 	  e_IPv4Host=`${e_DecimalByte}(.${e_DecimalByte}){3}`,
-	  e_IPv6Address=`((${e_hex16}:){7,7}${e_hex16}|(${e_hex16}:){1,7}:|(${e_hex16}:){1,6}:${e_hex16}|(${e_hex16}:){1,5}(:${e_hex16}){1,2}|(${e_hex16}:){1,4}(:${e_hex16}){1,3}|(${e_hex16}:){1,3}(:${e_hex16}){1,4}|(${e_hex16}:){1,2}(:${e_hex16}){1,5}|${e_hex16}:((:${e_hex16}){1,6})|:((:${e_hex16}){1,7}|:)|fe80:(:${e_hex16}){0,4}${e_pct}[${e_hex}]{1,}|::(${e_allFs}(0{1,4}){0,1}:){0,1}${e_IPv4Host}|(${e_hex16}:){1,4}:${e_IPv4Host})`,
+
+	  e_v6_8words=`(${e_hex16}:){7,7}${e_hex16}`,				// TEST: 1:2:3:4:5:6:7:8
+	  e_v6_7words=`(${e_hex16}:){1,7}:`,						// TEST: 1::                              1:2:3:4:5:6:7::
+	  e_v6_6words=`(${e_hex16}:){1,6}:${e_hex16}`,				// TEST: 1::8             1:2:3:4:5:6::8  1:2:3:4:5:6::8
+	  e_v6_5words=`(${e_hex16}:){1,5}(:${e_hex16}){1,2}`,		// TEST: 1::7:8           1:2:3:4:5::7:8  1:2:3:4:5::8
+	  e_v6_4words=`(${e_hex16}:){1,4}(:${e_hex16}){1,3}`,		// TEST: 1::6:7:8         1:2:3:4::6:7:8  1:2:3:4::8
+	  e_v6_3words=`(${e_hex16}:){1,3}(:${e_hex16}){1,4}`,		// TEST: 1::5:6:7:8       1:2:3::5:6:7:8  1:2:3::8
+	  e_v6_2words=`(${e_hex16}:){1,2}(:${e_hex16}){1,5}`,		// TEST: 1::4:5:6:7:8     1:2::4:5:6:7:8  1:2::8
+	  e_v6_1word=`${e_hex16}:((:${e_hex16}){1,6})`,				// TEST: 1::3:4:5:6:7:8   1::3:4:5:6:7:8  1::8
+	  e_v6_nowords=`:((:${e_hex16}){1,7}|:)`,					// TEST: ::2:3:4:5:6:7:8  ::2:3:4:5:6:7:8 ::8       ::   
+	  e_v6_linklocal=`fe08:(:${e_hex16}){0,4}${e_pct}[${e_alpha}${e_digit}]{1,}`,					// TEST: fe08::7:8%eth0      fe08::7:8%1                                      (link-local IPv6 addresses with zone index)
+	  e_v6_v4mapped=`::(ffff(0{1,4}){0,1}:){0,1}${e_IPv4Host}|(${e_hex16}:){1,4}:${e_IPv4Host}`,	// TEST: ::255.255.255.255   ::ffff:255.255.255.255  ::ffff:0:255.255.255.255 (IPv4-mapped IPv6 addresses and IPv4-translated addresses)
+	  e_v6_v4embed=`(${e_hex16}:){1,4}:${e_IPv4Host}`,												// TEST: 2001:db8:3:4::192.0.2.33  64:ff9b::192.0.2.33                        (IPv4-Embedded IPv6 Address)
+	  e_IPv6Address=`(${e_v6_8words}|${e_v6_7words}|${e_v6_6words}|${e_v6_5words}|${e_v6_4words}|${e_v6_3words}|${e_v6_2words}|${e_v6_1word}|${e_v6_nowords}|${e_v6_linklocal}|${e_v6_v4mapped}|${e_v6_v4embed})`,	  
 	  e_IPv6Host=`\\[${e_IPv6Address}\]`,
+
 	  e_IPvFutureHost=`\\[v[a-f${e_digit}][${e_unreserved}${e_pct}&amp;~;=:]+\]`,
 	  e_Port=`${e_uword}`,
 	  e_Path=`(/[${e_chrs}]+)`,
@@ -37,6 +50,7 @@ const e_pct="&#x25;",
 	  e_NamespaceSpecific=`[${e_alpha}${e_digit}${e_NSSothers}${e_NSSreserved}]+`,
 	  e_URN=`urn:${e_NamespaceID}:${e_NamespaceSpecific}`,
 	  e_URL=`(${e_Scheme}:(//${e_AuthorityAndPath}|${e_PathNoAuthority})|(${e_RelativePath}/?|${e_AbsolutePath}/?))${e_Query}?${e_Fragment}?`;
+
 
 const URNregex=new RegExp(`^${e_URN}$`,'i'),
       URLregex=new RegExp(`^${e_URL}$`,'i');
