@@ -5,7 +5,7 @@
 	"version": "0.3.0",
 	"private": true,
 	"bugs": {
-		"url":"https://githib.com/paulhiggs/dvb-i-tools/issues"
+		"url":"https://github.com/paulhiggs/dvb-i-tools/issues"
 	},
 	"dependencies": {
 		"@datastructures-js/binary-search-tree": "^4.3.0",

@@ -14,7 +14,7 @@ function PAGE_TOP(label) {
 
 	return `${PG}${PH}`;
 }
-const PAGE_BOTTOM="<br/><hr><p><i>Submit issues at </i><a href=\"https://githib.com/paulhiggs/dvb-i-tools/issues\">https://githib.com/paulhiggs/dvb-i-tools/issues</a></p></body></html>";
+const PAGE_BOTTOM="<br/><hr><p><i>Submit issues at </i><a href=\"https://github.com/paulhiggs/dvb-i-tools/issues\">https://github.com/paulhiggs/dvb-i-tools/issues</a></p></body></html>";
 
 
 function tabulateResults(res, error, errs) {
