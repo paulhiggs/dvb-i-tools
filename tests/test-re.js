@@ -147,6 +147,19 @@ const tests0=[
 	{item:"dur-02", function:isISODuration, evaluate:"PT1H00M00S", expect:true},
 	{item:"dur-03", function:isISODuration, evaluate:"PT45M", expect:true},
 	{item:"dur-04", function:isISODuration, evaluate:"PT1H16.3S", expect:true},
+	{item:"dur-05", function:isISODuration, evaluate:"+PT1H16.3S", expect:true},
+	{item:"dur-06", function:isISODuration, evaluate:"-PT1H16.3S", expect:true},
+	{item:"dur-07", function:isISODuration, evaluate:"P3Y6M4DT12H30M5S", expect:true},
+	{item:"dur-08", function:isISODuration, evaluate:"P+3Y6M4DT12H30M5S", expect:true},
+	{item:"dur-09", function:isISODuration, evaluate:"P-3Y6M4DT12H30M5S", expect:true},
+
+	{item:"dur-31", function:isISODuration, evaluate:"P3MT", expect:false},
+
+	
+	{item:"dur-31", function:isISODuration, evaluate:"PT", expect:false},
+	{item:"dur-32", function:isISODuration, evaluate:"P", expect:false},
+	{item:"dur-33", function:isISODuration, evaluate:"P3MT", expect:false},
+
 ];
 
 function doTest(test) {

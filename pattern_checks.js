@@ -120,12 +120,13 @@ export function isURN(arg) {
 
 
 /**
- * checks if the argument complies to an XML representation of UTC time
+ * checks if the argument complies to an XML representation of UTC time (i.e. ISO 8601-2:2019)
  *
  * @param {string} duration string contining the UTC time
  * @returns {boolean}  true if the argment is formatted according to UTC ("Zulu") time
  */
-const isoRegex=new RegExp(`^(-|\\+)?P(?:([-+]?[${e_digit},.]*)Y)?(?:([-+]?[${e_digit},.]*)M)?(?:([-+]?[${e_digit},.]*)W)?(?:([-+]?[${e_digit},.]*)D)?(?:T(?:([-+]?[${e_digit},.]*)H)?(?:([-+]?[${e_digit},.]*)M)?(?:([-+]?[${e_digit},.]*)S)?)?$`);
+// based on https://stackoverflow.com/questions/32044846/regex-for-iso-8601-durations
+const isoRegex=new RegExp(/^[-+]?P(?!$)(([-+]?\d+Y)|([-+]?\d+\.\d+Y$))?(([-+]?\d+M)|([-+]?\d+\.\d+M$))?(([-+]?\d+W)|([-+]?\d+\.\d+W$))?(([-+]?\d+D)|([-+]?\d+\.\d+D$))?(T(?=[\d+-])(([-+]?\d+H)|([-+]?\d+\.\d+H$))?(([-+]?\d+M)|([-+]?\d+\.\d+M$))?([-+]?\d+(\.\d+)?S)?)??$/);
 export function isISODuration(duration) {
 	return duration ? isoRegex.test(duration.trim()) : false;
 }
