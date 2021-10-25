@@ -13,7 +13,7 @@ import ClassificationScheme from "./ClassificationScheme.js";
 import { dvbi } from "./DVB-I_definitions.js";
 
 import { tva } from "./TVA_definitions.js";
-import { isJPEGmime, isPNGmime } from "./MIME_checks.js";
+import { isJPEGmime, isPNGmime, isWebPmime, isAllowedImageMime } from "./MIME_checks.js";
 import { isTAGURI } from "./URI_checks.js";
 
 import { xPath, xPathM, isIn, unEntity } from "./utils.js";
