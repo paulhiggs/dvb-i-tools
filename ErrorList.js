@@ -51,7 +51,8 @@ export default class ErrorList {
 
 	/*private*/ prettyPrint(node) {
 		// clean up and redo formatting 
-		return parseXmlString(node.toString().replace(/[\t\n\r]/ig, "")).toString({declaration:false, format:true});
+	    return node.toString({declaration:false, format:true});
+		//return parseXmlString(node.toString().replace(/[\t\r\n]/ig, "")).toString({declaration:false, format:true});
 	}
 	/**
 	 * 
