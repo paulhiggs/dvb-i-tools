@@ -1244,7 +1244,7 @@ export default class ContentGuideCheck {
 
 			checkAttributes(Title, requiredAttributes, optionalAttributes, errs, errCode?`${errCode}-1`:"VT001");
 			
-			let titleType=Title.attr(tva.a_type) ? Title.attr(tva.a_type).value() : DEFAULT_TITLE_TYPE;
+			let titleType=Title.attr(tva.a_type) ? Title.attr(tva.a_type).value() : mpeg7.DEFAULT_TITLE_TYPE;
 			let titleLang=this.GetLanguage(this.knownLanguages, errs, Title, parentLanguage, false, "VT002");
 			let titleStr=unEntity(Title.text());
 			

@@ -92,7 +92,7 @@ export default class ErrorList {
 				this.increment('application process error');
 				break;
 			case WARNING: 
-				this.warnings.push(NewError);
+				this.warnings.push(newError);
 				if (e.key) this.incrementW(e.key);
 				break;
 		}
