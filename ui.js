@@ -59,6 +59,25 @@ function tabulateResults(res, error, errs) {
 			resultsShown=true;
 			res.write("</table><br/>");
 		}
+
+		if (errs.markupXML.length>0) {
+			res.write("<hr/>EXPERIMENTAL - not all errors are indicated<hr/>");
+			res.write("<style>.tooltip {color: red; position: relative; display: inline-block; }");
+			res.write(".tooltip .tooltiptext {visibility: hidden; background-color: red; color: #fff; text-align: center; padding: 5px 0; border-radius: 6px;position: absolute; z-index: 1; }");
+			res.write(".tooltip:hover .tooltiptext {visibility: visible; }");
+			res.write("</style>");
+			res.write("<pre>");
+			errs.markupXML.forEach(line => {
+				res.write(`<span${line.validationErrors?" class=\"tooltip\"":""}>${HTMLize(line.value)}`);
+				if (line.validationErrors) {
+					res.write("<span class=\"tooltiptext\">");
+					line.validationErrors.forEach(errMessage => res.write(`${HTMLize(errMessage)}<br/>`));
+					res.write("</span>");
+				}
+				res.write("</span><br/>");
+			});
+			res.write("</pre><hr/>");
+		}
 	}
 	if (!error && !resultsShown) 
 		res.write("no errors or warnings");

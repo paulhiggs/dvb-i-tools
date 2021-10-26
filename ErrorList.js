@@ -49,6 +49,10 @@ export default class ErrorList {
 		this.numCountsW++;
 	}
 
+	/*private*/ prettyPrint(node) {
+		// clean up and redo formatting 
+		return parseXmlString(node.toString().replace(/[\t\n\r]/ig, "")).toString({declaration:false, format:true});
+	}
 	/**
 	 * 
 	 * @param {integer} e.type     (optional) ERROR(default) or WARNING
@@ -62,17 +66,20 @@ export default class ErrorList {
 		let _INVALID_CALL='invalid addError call';
 		if (!e.type) e.type=ERROR;
 
-		if (![ERROR, WARNING, APPLICATION].includes(e.type)) this.push(`addError() called with invalid type property (${e.type})`, _INVALID_CALL);
+		if (![ERROR, WARNING, APPLICATION].includes(e.type)) {
+			this.errors.push({code:"ERR000", message:`addError() called with invalid type property (${e.type})`});
+			this.increment(_INVALID_CALL);
+		}
 		if (!e.code) {
-			this.errors.push({code:"ERR001", message:'addError() called without errNo property'});
+			this.errors.push({code:"ERR001", message:'addError() called without code property'});
 			this.increment(_INVALID_CALL);
 		}
 		if (!e.message) {
-			this.errors.push({code:"ERR002", message:'addError() called without errMessage property'});
+			this.errors.push({code:"ERR002", message:'addError() called without message property'});
 			this.increment(_INVALID_CALL);
 		}
 		let newError={code:e.code, message:e.message, 
-						element:e.fragment?((typeof(e.fragment)=="string" || e.fragment instanceof String)?e.fragment:e.fragment.toString()):null
+						element:e.fragment?((typeof(e.fragment)=="string" || e.fragment instanceof String)?e.fragment:this.prettyPrint(e.fragment)):null
 		};
 
 		switch (e.type) {
@@ -89,8 +96,10 @@ export default class ErrorList {
 				if (e.key) this.incrementW(e.key);
 				break;
 		}
+		if (!e.line && e.fragment && typeof(e.fragment)!="string")
+			e.line=e.fragment.line();
 		if (e.line)
-			this.setError(e.message, e.line);
+			this.setError(e.message, e.line-1);
 	} 
 	numErrors() { return this.errors.length; }
 	numWarnings() { return this.warnings.length; }

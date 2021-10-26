@@ -537,7 +537,8 @@ export default class ServiceListCheck {
 						if (!isJPEGmime(contentType) && !isPNGmime(contentType))
 							errs.addError({code:"VL022", 
 								message:`invalid ${tva.a_contentType.attribute()} ${contentType.quote()} specified for ${tva.e_RelatedMaterial.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`, 
-								key:`invalid ${tva.a_contentType.attribute(tva.e_MediaUri)}`});
+								key:`invalid ${tva.a_contentType.attribute(tva.e_MediaUri)}`,
+								fragment:child});
 						if (Format && ((isJPEGmime(contentType) && !isJPEG) || (isPNGmime(contentType) && !isPNG))) 
 							errs.addError({code:"VL023", message:`conflicting media types in ${tva.e_Format.elementize()} and ${tva.e_MediaUri.elementize()} for ${Location}`, key:"conflicting mime types"});
 					}
@@ -1088,17 +1089,17 @@ export default class ServiceListCheck {
 						case tva.e_Coding:
 							if (child.attr(dvbi.a_href) && !this.allowedVideoSchemes.isIn(child.attr(dvbi.a_href).value())) 
 								errs.addError({code:"SI072", message:`invalid ${dvbi.a_href.attribute(tva.e_Coding)} (${child.attr(dvbi.a_href).value()})`, 
-											fragment:conf, key:"video codec"});
+											fragment:conf, line:child.line(), key:"video codec"});
 							break;
 						case tva.e_PictureFormat:
 							if (child.attr(dvbi.a_href) && !this.allowedPictureFormats.isIn(child.attr(dvbi.a_href).value())) 
 								errs.addError({code:"SI082", message:`invalid ${dvbi.a_href.attribute(tva.e_PictureFormat)} value (${child.attr(dvbi.a_href).value()})`, 
-											fragment:conf, key:tva.e_PictureFormat});
+											fragment:conf, line:child.line(), key:tva.e_PictureFormat});
 							break;
 						case dvbi.e_Colorimetry:
 							if (child.attr(dvbi.a_href) && !isIn(dvbi.ALLOWED_COLORIMETRY, child.attr(dvbi.a_href).value())) 
 								errs.addError({code:"SI084", message:`invalid ${dvbi.a_href.attribute(dvbi.e_Colorimetry)} value (${child.attr(dvbi.a_href).value()})`, 
-											fragment:conf, key:dvbi.e_Colorimetry});
+											fragment:conf, line:child.line(), key:dvbi.e_Colorimetry});
 							break;
 					}
 				});
@@ -1317,7 +1318,7 @@ export default class ServiceListCheck {
 			let lines=prettyXML.split('\n');
 			s.validationErrors.forEach(ve => {
 				let s=ve.toString().split('\r');
-				s.forEach(err => errs.addError({code:errCode, message:err, fragment:lines[ve.line-1], key:'schema error'}));
+				s.forEach(err => errs.addError({code:errCode, message:err, fragment:lines[ve.line-1], line:ve.line, key:'schema error'}));
 			});
 		}
 	}
@@ -1483,7 +1484,7 @@ export default class ServiceListCheck {
 				if (!validServiceIdentifier(thisServiceId)) 
 					errs.addError({code:"SL110", message:`${thisServiceId.quote()} is not a valid service identifier`, fragment:uID, key:"invalid tag"});
 				if (!uniqueServiceIdentifier(thisServiceId, knownServices)) 
-					errs.addError({code:"SL111", message:`${thisServiceId.quote()} is not unique`, key:"non unique id"});
+					errs.addError({code:"SL111", message:`${thisServiceId.quote()} is not unique`, key:"non unique id", fragment:uID});
 				knownServices.push(thisServiceId);			
 			}
 
@@ -1604,13 +1605,15 @@ export default class ServiceListCheck {
 						let _chanNum=LCN.attr(dvbi.a_channelNumber).value();
 
 						if (isIn(LCNNumbers, _chanNum)) 
-							errs.addError({code:"SL262", message:`duplicated channel number ${_chanNum} for ${dvbi.e_TargetRegion.elementize()} ${lastTargetRegion}`, key:"duplicate channel number"});
+							errs.addError({code:"SL262", message:`duplicated channel number ${_chanNum} for ${dvbi.e_TargetRegion.elementize()} ${lastTargetRegion}`, 
+											key:"duplicate channel number", fragment:LCN});
 						else LCNNumbers.push(_chanNum);
 					}
 
 					// LCN@serviceRef
 					if (LCN.attr(dvbi.a_serviceRef) && !isIn(knownServices, LCN.attr(dvbi.a_serviceRef).value())) 
-						errs.addError({code:"SL263", message:`LCN reference to unknown service ${LCN.attr(dvbi.a_serviceRef).value()}`, key:"LCN unknown services"});
+						errs.addError({code:"SL263", message:`LCN reference to unknown service ${LCN.attr(dvbi.a_serviceRef).value()}`, 
+										key:"LCN unknown services", fragment:LCN});
 				}
 			}
 		}

@@ -84,7 +84,7 @@ function CountChildElements(node, childElementName) {
 		else return false;
 	}
 	if (!parentElement) {
-		errs.addError({type:ERROR, code:errCode?`${errCode}-0`:"TE000", message:"checkTopElementsAndCardinality() called with a 'null' element to check"});
+		errs.addError({type:APPLICATION, code:errCode?`${errCode}-0`:"TE000", message:"checkTopElementsAndCardinality() called with a 'null' element to check"});
 		return false;
 	}
 	let rv=true, thisElem=elementize(`${parentElement.parent().name()}.${parentElement.name()}`);
@@ -94,12 +94,12 @@ function CountChildElements(node, childElementName) {
 		let _max=elem?.maxOccurs ? elem.maxOccurs : 1;
 		let count=CountChildElements(parentElement, elem.name);
 		if (count==0 && _min!=0) {
-			errs.addError({type:ERROR, code:errCode?`${errCode}-1`:"TE001", message:`Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`});
+			errs.addError({tcode:errCode?`${errCode}-1`:"TE001", message:`Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`});
 			rv=false;
 		}
 		else {
 			if (count<_min || count>_max) {
-				errs.addError({type:ERROR, code:errCode?`${errCode}-2`:"TE002", 
+				errs.addError({code:errCode?`${errCode}-2`:"TE002", 
 								message:`Cardinality of ${elem.name.elementize()} in ${thisElem} is not in the range ${_min}..${(_max==Infinity)?"unbounded":_max}`});
 				rv=false;				
 			}
@@ -111,7 +111,7 @@ function CountChildElements(node, childElementName) {
 		let children=parentElement.childNodes();
 		if (children) children.forEachSubElement(child => {
 			if (!findElementIn(childElements, child.name())) {	
-				errs.addError({type:ERROR, code:errCode?`${errCode}-3`:"TE003", 
+				errs.addError({code:errCode?`${errCode}-3`:"TE003", 
 								message:`Element ${child.name().elementize()} is not permitted in ${thisElem}`, 
 								fragment:child});
 				rv=false;
@@ -179,7 +179,7 @@ function checkAttributes(parentElement, requiredAttributes, optionalAttributes, 
  */
  function AllowedValue(elem, attrName, errCode, errs, allowed, isRequired=true) {
 	if (!elem) {
-		errs.addError({code:`${errCode}-0`, message:"AllowedValue() called with elem==null"});
+		errs.addError({type:APPLICATION, code:`${errCode}-0`, message:"AllowedValue() called with elem==null"});
 		return;
 	}
 
@@ -187,12 +187,12 @@ function checkAttributes(parentElement, requiredAttributes, optionalAttributes, 
 		if (!isIn(allowed, elem.attr(attrName).value())) {
 			let str="";
 			allowed.forEach(value => str=str+((str.length)?" or ":"")+value);
-			errs.addError({code:`${errCode}-1`, message:`${attrName.attribute(`${elem.parent().name}.${elem.name()}`)} must be ${str}`});
+			errs.addError({code:`${errCode}-1`, message:`${attrName.attribute(`${elem.parent().name}.${elem.name()}`)} must be ${str}`, fragment:elem});
 		}
 	}
 	else 
 		if (isRequired) 
-			errs.addError({code:`${errCode}-2`, message:`${attrName.attribute()} must be specified for ${elem.parent().name()}.${elem.name()}`});
+			errs.addError({code:`${errCode}-2`, message:`${attrName.attribute()} must be specified for ${elem.parent().name()}.${elem.name()}`, fragment:elem});
 }
 
 
@@ -248,7 +248,7 @@ function FalseValue(elem, attrName, errCode, errs, isRequired=true) {
  */
 function CheckLanguage(validator, errs, lang, loc=null, errCode=null ) {
 	if (!validator) {
-		errs.addError({code:errCode?`${errCode}-1`:"LA001", message:`cannot validate language ${lang.quote()}${loc?" for "+loc.elementize():""}`, 
+		errs.addError({type:APPLICATION, code:errCode?`${errCode}-1`:"LA001", message:`cannot validate language ${lang.quote()}${loc?" for "+loc.elementize():""}`, 
 						key:"no language validator"});
 		return false;
 	}
@@ -470,21 +470,21 @@ export default class ContentGuideCheck {
 					case tva.SYNOPSIS_SHORT_LABEL:
 						if (_len > tva.SYNOPSIS_SHORT_LENGTH)
 							errs.addError({code:errCode?`${errCode}-11`:"SY011", message:synopsisLengthError(tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_SHORT_LENGTH, _len), 
-											key:Synopsis.toString()});
+											fragment:Synopsis});
 						hasShort=true;
 						break;
 					case tva.SYNOPSIS_MEDIUM_LABEL:
 						if (_len > tva.SYNOPSIS_MEDIUM_LENGTH)
 							errs.addError({code:errCode?`${errCode}-12`:"SY012", 
 											message:synopsisLengthError(tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_MEDIUM_LENGTH, _len), 
-											fragment:Synopsis.toString()});
+											fragment:Synopsis});
 						hasMedium=true;
 						break;
 					case tva.SYNOPSIS_LONG_LABEL:
 						if (_len > tva.SYNOPSIS_LONG_LENGTH)
 							errs.addError({code:errCode?`${errCode}-13`:"SY013", 
 											message:synopsisLengthError(tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_LONG_LENGTH, _len), 
-											fragment:Synopsis.toString()});
+											fragment:Synopsis});
 						hasLong=true;
 						break;						
 					}
@@ -492,7 +492,7 @@ export default class ContentGuideCheck {
 				else
 					errs.addError({code:errCode?`${errCode}-14`:"SY014", 
 									message:`${tva.a_length.attribute()}=${synopsisLength.quote()} is not permitted for this request type`, 
-									fragment:Synopsis.toString()});
+									fragment:Synopsis});
 			}
 		
 			if (synopsisLang && synopsisLength) {
@@ -501,17 +501,17 @@ export default class ContentGuideCheck {
 						if (isIn(shortLangs, synopsisLang)) 
 							errs.addError({code:errCode?`${errCode}-16`:"SY016", 
 											message:singleLengthLangError(synopsisLength, synopsisLang), 
-											fragment:Synopsis.toString()});
+											fragment:Synopsis});
 						else shortLangs.push(synopsisLang);
 						break;
 					case tva.SYNOPSIS_MEDIUM_LABEL:
 						if (isIn(mediumLangs, synopsisLang)) 
-							errs.addError({code:errCode?`${errCode}-17`:"SY017", message:singleLengthLangError(synopsisLength, synopsisLang), fragment:Synopsis.toString()});
+							errs.addError({code:errCode?`${errCode}-17`:"SY017", message:singleLengthLangError(synopsisLength, synopsisLang), fragment:Synopsis});
 						else mediumLangs.push(synopsisLang);
 						break;
 					case tva.SYNOPSIS_LONG_LABEL:
 						if (isIn(longLangs, synopsisLang)) 
-							errs.addError({code:errCode?`${errCode}-18`:"SY018", message:singleLengthLangError(synopsisLength, synopsisLang), fragment:Synopsis.toString()});
+							errs.addError({code:errCode?`${errCode}-18`:"SY018", message:singleLengthLangError(synopsisLength, synopsisLang), fragment:Synopsis});
 						else longLangs.push(synopsisLang);
 						break;
 				}
@@ -2317,7 +2317,7 @@ export default class ContentGuideCheck {
 
 		if (!node.attr(tva.a_contentType)) {
 			errs.addError({code:errcode?`${errcode}-1`:"PA001", message:`${tva.a_contentType.attribute()} attribute is required when signalling a player in ${node.name().elementize()}`, 
-				key:`missing ${tva.a_contentType.attribute()}`, line:node.line()});
+				key:`missing ${tva.a_contentType.attribute()}`});
 			return;
 		}
 
@@ -2325,12 +2325,12 @@ export default class ContentGuideCheck {
 			switch (node.attr(tva.a_contentType).value()) {
 				case dvbi.XML_AIT_CONTENT_TYPE:
 					if (!isHTTPURL(node.text()))
-						errs.addError({code:errcode?`${errcode}-2`:"PA002", message:`${node.name().elementize()}=${node.text().quote()} is not a valid AIT URL`, key:"invalid URL", line:node.line()});
+						errs.addError({code:errcode?`${errcode}-2`:"PA002", message:`${node.name().elementize()}=${node.text().quote()} is not a valid AIT URL`, key:"invalid URL"});
 					break;
 	/*			case dvbi.HTML5_APP:
 				case dvbi.XHTML_APP:
 					if (!patterns.isHTTPURL(node.text()))
-						errs.addError({code:errcode?`${errcode}-3`:"PA003", message:`${node.name().elementize()}=${node.text().quote()} is not a valid URL`, key:"invalid URL", line:node.line()});		
+						errs.addError({code:errcode?`${errcode}-3`:"PA003", message:`${node.name().elementize()}=${node.text().quote()} is not a valid URL`, key:"invalid URL"});		
 					break;
 	*/		}
 		}

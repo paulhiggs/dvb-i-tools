@@ -10,7 +10,7 @@ import { statSync, readFileSync } from "fs";
  * @returns {string} the XPath selector
  */
 export function xPath(SCHEMA_PREFIX, elementName, index=null) {  
-	return (SCHEMA_PREFIX ? `${SCHEMA_PREFIX}:` : "") +`${elementName}${index?`[${index}]`:""}`;  
+	return `${SCHEMA_PREFIX}:${elementName}${index?`[${index}]`:""}`;  
 }
 
 
@@ -25,7 +25,7 @@ export function xPathM(SCHEMA_PREFIX, elementNames) {
 	let t="";
 	if (elementNames) elementNames.forEach(elementName => {
 		if (t.length!=0) t+="/";
-		t+=(SCHEMA_PREFIX?`${SCHEMA_PREFIX}:`:"")+elementName;
+		t+=`${SCHEMA_PREFIX}:${elementName}`;
 	});
 	return t;
 }
