@@ -9,7 +9,9 @@ import { statSync, readFileSync } from "fs";
  * @param {int} index              The instance of the named element to be searched for (if specified)
  * @returns {string} the XPath selector
  */
- export function  xPath(SCHEMA_PREFIX, elementName, index=null) {  return `${SCHEMA_PREFIX}:${elementName}${index?`[${index}]`:""}`;  }
+export function xPath(SCHEMA_PREFIX, elementName, index=null) {  
+	return (SCHEMA_PREFIX ? `${SCHEMA_PREFIX}:` : "") +`${elementName}${index?`[${index}]`:""}`;  
+}
 
 
 /**
@@ -19,11 +21,11 @@ import { statSync, readFileSync } from "fs";
  * @param {array} elementNames the name of the element to be searched for
  * @returns {string} the XPath selector
  */
-export function xPathM (SCHEMA_PREFIX, elementNames) {
+export function xPathM(SCHEMA_PREFIX, elementNames) {
 	let t="";
 	if (elementNames) elementNames.forEach(elementName => {
 		if (t.length!=0) t+="/";
-		t+=`${SCHEMA_PREFIX}:${elementName}`;
+		t+=(SCHEMA_PREFIX?`${SCHEMA_PREFIX}:`:"")+elementName;
 	});
 	return t;
 }
