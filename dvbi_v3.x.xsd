@@ -17,6 +17,7 @@
 <schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2021x" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2019" targetNamespace="urn:dvb:metadata:servicediscovery:2021x" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<import namespace="urn:tva:metadata:2019" schemaLocation="tva_metadata_3-1.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
+	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
 	<element name="ServiceList" type="dvbisd:ServiceListType"/>
 	<element name="Playlist" type="dvbisd:DASHPlaylistType"/>
 	<complexType name="ServiceListType">
@@ -35,11 +36,13 @@
 			<any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 		<attribute name="version" type="positiveInteger" use="required"/>
+		<attribute ref="xml:lang" use="required"/>
 	</complexType>
 	<complexType name="ContentGuideSourceListType">
 		<sequence>
 			<element name="ContentGuideSource" type="dvbisd:ContentGuideSourceType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
+		<attribute ref="xml:lang"/>
 	</complexType>
 	<complexType name="ContentGuideSourceType">
 		<sequence>
@@ -53,6 +56,7 @@
 		</sequence>
 		<attribute name="CGSID" type="dvbisd:ContentGuideProviderIdType" use="required"/>
 		<attribute name="minimumMetadataUpdatePeriod" type="duration"/>
+		<attribute ref="xml:lang"/>
 	</complexType>
 	<simpleType name="ContentGuideProviderIdType">
 		<restriction base="ID"/>
@@ -81,6 +85,7 @@
 		</sequence>
 		<attribute name="dynamic" type="boolean" default="false"/>
 		<attribute name="version" type="positiveInteger" use="required"/>
+		<attribute ref="xml:lang"/>
 	</complexType>
 	<complexType name="ServiceInstanceType">
 		<sequence>
@@ -113,6 +118,7 @@
 			</choice>
 		</sequence>
 		<attribute name="priority" type="integer"/>
+		<attribute ref="xml:lang"/>
 	</complexType>
 	<complexType name="ContentProtectionType">
 		<sequence>
@@ -276,6 +282,7 @@
 			<element name="Region" type="dvbisd:RegionType" maxOccurs="unbounded"/>
 		</sequence>
 		<attribute name="version" type="positiveInteger" use="required"/>
+		<attribute ref="xml:lang"/>
 	</complexType>
 	<complexType name="RegionType">
 		<sequence>
@@ -290,6 +297,7 @@
 		</sequence>
 		<attribute name="regionID" type="dvbisd:RegionIdType" use="required"/>
 		<attribute name="countryCodes" type="dvbisd:ISO-3166-List" use="optional"/>
+		<attribute ref="xml:lang"/>
 	</complexType>
 	<simpleType name="RegionIdType">
 		<restriction base="ID"/>
@@ -413,6 +421,7 @@
 			</element>
 			<element name="SourceMediaLocator" type="mpeg7:MediaLocatorType" minOccurs="0"/>
 		</sequence>
+		<attribute ref="xml:lang"/>
 	</complexType>
 	<complexType name="ExtendedTVAMediaLocatorType">
 		<complexContent>

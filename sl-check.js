@@ -402,7 +402,8 @@ export default class ServiceListCheck {
 		return this.match([ 
 			{ver: SCHEMA_v1, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v1 },
 			{ver: SCHEMA_v2, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
-			{ver: SCHEMA_v3, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 }
+			{ver: SCHEMA_v3, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
+			{ver: SCHEMA_v4, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 }
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null) ;
 	}
 
@@ -419,7 +420,8 @@ export default class ServiceListCheck {
 		// return true if val is a valid CS value for Content Finished Banner (A177 5.2.7.3)
 		return this.match([ 
 			{ver: SCHEMA_v2, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
-			{ver: SCHEMA_v3, val: dvbi.BANNER_CONTENT_FINISHED_v2 }
+			{ver: SCHEMA_v3, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
+			{ver: SCHEMA_v4, val: dvbi.BANNER_CONTENT_FINISHED_v2 }
 			], namespace==ANY_NAMESPACE?namespace:this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -436,7 +438,8 @@ export default class ServiceListCheck {
 		return this.match([ 
 			{ver: SCHEMA_v1, val: dvbi.LOGO_SERVICE_LIST_v1 },
 			{ver: SCHEMA_v2, val: dvbi.LOGO_SERVICE_LIST_v2 },
-			{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_LIST_v2 }
+			{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_LIST_v2 },
+			{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_LIST_v2 }
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -453,7 +456,8 @@ export default class ServiceListCheck {
 		return this.match([
 			{ver: SCHEMA_v1, val: dvbi.LOGO_SERVICE_v1},
 			{ver: SCHEMA_v2, val: dvbi.LOGO_SERVICE_v2},
-			{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_v2}
+			{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_v2},
+			{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_v2}
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -470,7 +474,8 @@ export default class ServiceListCheck {
 		return this.match([
 			{ver: SCHEMA_v1, val: dvbi.LOGO_CG_PROVIDER_v1},
 			{ver: SCHEMA_v2, val: dvbi.LOGO_CG_PROVIDER_v2},
-			{ver: SCHEMA_v3, val: dvbi.LOGO_CG_PROVIDER_v2}
+			{ver: SCHEMA_v3, val: dvbi.LOGO_CG_PROVIDER_v2},
+			{ver: SCHEMA_v4, val: dvbi.LOGO_CG_PROVIDER_v2}
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -517,7 +522,7 @@ export default class ServiceListCheck {
 								isPNG=true;
 								break;
 							default:
-								this.InvalidHrefValue(href, `${tva.e_RelatedMaterial.elementize()}${tva.e_Format.elementize()}${dvbi.e_StillPictureFormat.elementize()}`, Location, errs, "VL012");
+								this.InvalidHrefValue(href, `${tva.e_RelatedMaterial.elementize()}${tva.e_Format.elementize()}${dvbi.e_StillPictureFormat.elementize()}`, Location, child, errs, "VL012");
 						}
 					} 
 				}
@@ -651,7 +656,7 @@ export default class ServiceListCheck {
 							this.checkValidLogo(HowRelated, Format, locator, errs, Location));
 					}
 					else
-						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-11`:"RM011");
+						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), tva.e_RelatedMaterial.elementize(), Location, HowRelated, errs, errCode?`${errCode}-11`:"RM011");
 					break;
 				case SERVICE_RM:
 				case SERVICE_INSTANCE_RM:
@@ -659,7 +664,8 @@ export default class ServiceListCheck {
 						errs.addError({code:errCode?`${errCode}-21`:"RM021", 
 						message:`${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${SCHEMA_NAMESPACE.quote()} in ${Location}`, key:"invalid CS value"});
 					
-					if (this.validOutScheduleHours(HowRelated, SCHEMA_NAMESPACE) || this.validContentFinishedBanner(HowRelated, SCHEMA_NAMESPACE) || this.validServiceApplication(HowRelated) || this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE)) {
+					if (this.validOutScheduleHours(HowRelated, SCHEMA_NAMESPACE) || this.validContentFinishedBanner(HowRelated, SCHEMA_NAMESPACE) || 
+					    this.validServiceApplication(HowRelated) || this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
 						if (this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE) || this.validOutScheduleHours(HowRelated, SCHEMA_NAMESPACE))
 							MediaLocator.forEach(locator =>
@@ -669,7 +675,7 @@ export default class ServiceListCheck {
 								this.checkSignalledApplication(locator, errs, Location));
 					}
 					else 
-						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-22`:"RM022");  //!!
+						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), tva.e_RelatedMaterial.elementize(), Location, HowRelated, errs, errCode?`${errCode}-22`:"RM022");  //!!
 					break;
 				case CONTENT_GUIDE_RM:
 					if (this.validContentGuideSourceLogo(HowRelated, SCHEMA_NAMESPACE)) {
@@ -678,7 +684,7 @@ export default class ServiceListCheck {
 							this.checkValidLogo(HowRelated, Format, locator, errs, Location));
 					}
 					else
-						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-31`:"RM031");
+						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), tva.e_RelatedMaterial.elementize(), Location, HowRelated, errs, errCode?`${errCode}-31`:"RM031");
 					break;
 			}
 		}
@@ -702,10 +708,27 @@ export default class ServiceListCheck {
 			errs.addError({type:APPLICATION, code:errCode?`${errCode}-0`:"XL000", message:"checkXMLLangs() called with node==null"});
 			return;
 		}
-		const UNSPECIFIED_LANG="unspecified";
+
+		const NO_DOCUMENT_LANGUAGE='**';
+		/**
+		 * Recurse up the XML element hierarchy until we find an element with an @xml:lang attribute or return a ficticouus 
+		 * value of topmost level element does not contain @xml:lang
+		 * @param {Element} node 
+		 */
+		function ancestorLanguage(node) {
+			if (node.type() != 'element')
+				return NO_DOCUMENT_LANGUAGE;
+
+			if (node.attr(dvbi.a_lang))
+				return (node.attr(dvbi.a_lang).value());
+
+			return ancestorLanguage(node.parent());
+		}
+
+		const UNSPECIFIED_LANG=NO_DOCUMENT_LANGUAGE;
 		let elementLanguages=[], i=0, elem;
 		while ((elem=node.get(xPath(SCHEMA_PREFIX, elementName, ++i), SL_SCHEMA))!=null) {
-			let lang=elem.attr(dvbi.a_lang)?elem.attr(dvbi.a_lang).value():UNSPECIFIED_LANG;
+			let lang=elem.attr(dvbi.a_lang)?elem.attr(dvbi.a_lang).value():ancestorLanguage(elem.parent());
 			if (isIn(elementLanguages, lang)) 
 				errs.addError({code:errCode?`${errCode}-1`:"XL001", 
 					message:`${lang==UNSPECIFIED_LANG?"default language":`xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} for ${elementLocation}`, 
@@ -740,12 +763,14 @@ export default class ServiceListCheck {
 	 * @param {String} value    The invalid value for the href attribute
 	 * @param {String} src      The element missing the @href
 	 * @param {String} loc      The location of the element
+	 * @param {Element} node    The XML element with the problematic @href attribute
 	 * @param {Object} errs     Errors buffer
 	 * @param {String} errCode  The error code to be reported
 	 */
-	/*private*/  InvalidHrefValue(value, src, loc, errs, errCode=null) {
+	/*private*/  InvalidHrefValue(value, src, loc, node, errs, errCode=null) {
 		errs.addError({code:errCode?errCode:"XX103", 
-						message:`invalid ${dvbi.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`, 
+						message:`invalid ${dvbi.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`,
+						fragment: node, 
 						key:"invalid href"});
 	}
 
@@ -836,7 +861,7 @@ export default class ServiceListCheck {
 	/*private*/  validateAContentGuideSource(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, source, errs, loc, errCode=null) {
 
 		if (!source) {
-			errs.addError({code:"GS000", message:"validateAContentGuideSource() called with source==null"});
+			errs.addError({type:APPLICATION, code:"GS000", message:"validateAContentGuideSource() called with source==null"});
 			return;
 		}
 		loc=loc?loc:source.parent().name().elementize();
@@ -1200,6 +1225,7 @@ export default class ServiceListCheck {
 							break;
 						case SCHEMA_v2:
 						case SCHEMA_v3:
+						case SCHEMA_v4:
 							if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_OtherDeliveryParameters), SL_SCHEMA))
 								errs.addError({code:"SI159", 
 									message:`${dvbi.e_OtherDeliveryParameters.elementize()} must be specified with user-defined ${dvbi.e_SourceType} ${SourceType.text().quote()}`, 
@@ -1326,7 +1352,7 @@ export default class ServiceListCheck {
 
 	/*private*/ CheckExtension(extn, extLoc, errs, errCode=null) {
 		if (!extn) {
-			errs.addError({code:errCode?`${errCode}-0`:"CE000", message:"CheckExtension() called with extn=null"});
+			errs.addError({type:APPLICATION, code:errCode?`${errCode}-0`:"CE000", message:"CheckExtension() called with extn==null"});
 			return;
 		}
 		// extension type is checked in schema validation
@@ -1372,11 +1398,16 @@ export default class ServiceListCheck {
 	 * @param {Class} errs     Errors found in validaton
 	 */
 	/*public*/ doValidateServiceList(SLtext, errs) {
-		let SL=null;
-		if (SLtext) try {
-			SL=parseXmlString(SLtext);
+		if (!SLtext) {
+			errs.addError({type:APPLICATION, code:"SL000", message:'doValidateServiceList() called with SLtext==null'});
+			return;
+		}
+		let SL=null, reformattedSL=parseXmlString(SLtext.replace(/[\r\n\t]/gm,"")).toString();
+		try {
+			SL=parseXmlString(reformattedSL);
 		} catch (err) {
 			errs.addError({code:"SL001", message:`XML parsing failed: ${err.message}`, key:"malformed XML"});
+			return;
 		}
 		if (!SL || !SL.root()) {
 			errs.addError({code:"SL002", message:"SL is empty"});
@@ -1388,7 +1419,7 @@ export default class ServiceListCheck {
 			return;
 		}
 
-		errs.loadDocument(SLtext);
+		errs.loadDocument(reformattedSL);
 
 		let SL_SCHEMA={}, 
 			SCHEMA_PREFIX=SL.root().namespace().prefix(), 
@@ -1628,7 +1659,6 @@ export default class ServiceListCheck {
 	 */
 	/*public*/ validateServiceList(SLtext) {
 
-		// SLtext.replace(/(\r\n|\n|\r|\t)/gm,"")
 		var errs=new ErrorList(SLtext);
 		this.doValidateServiceList(SLtext, errs);
 
