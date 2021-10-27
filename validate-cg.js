@@ -77,7 +77,7 @@ function processQuery(req, res) {
  * @param {Object} res The HTTP response to be sent to the client
  */ 
 function processFile(req, res) {
-	if (isEmpty(req.query)) 
+	if (!req.files?.CGfile || isEmpty(req.query)) 
 		drawCGForm(false, cgcheck.supportedRequests, res);    
 	else if (req && req.files && req.files.CGfile) {
 		let CGxml=null, errs=new ErrorList(), fname="***";

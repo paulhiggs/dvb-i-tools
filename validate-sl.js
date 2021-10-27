@@ -77,7 +77,7 @@ function processQuery(req, res) {
  * @param {Object} res  The HTTP response to be sent to the client
  */ 
 function processFile(req, res) {
-	if (isEmpty(req.query)) 
+	if (!req.files.SLfile || isEmpty(req.query)) 
 		drawSLForm(false, res);    
 	else if (req && req.files && req.files.SLfile) {
 		let SLxml=null;

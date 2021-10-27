@@ -336,9 +336,14 @@ export default class ServiceListCheck {
 			regionID="unspecified";
 		else {
 			if (isIn(knownRegionIDs, regionID)) 
-				errs.addError({code:"AR003", message:`Duplicate ${dvbi.a_regionID.attribute()} ${regionID.quote()}`, key:"duplicate regionID"});
+				errs.addError({code:"AR002", message:`Duplicate ${dvbi.a_regionID.attribute()} ${regionID.quote()}`, key:"duplicate regionID"});
 			else knownRegionIDs.push(regionID);
 		}
+
+		// check optional @xml:lang
+		if (Region.attr(dvbi.a_lang))
+			this.checkLanguage(Region.attr(dvbi.a_lang).value(), `xml:lang in ${dvbi.e_Region.elementize()} for ${dvbi.a_regionID.attribute()}=${regionID}`, null, errs, "AR003");	
+
 		let countryCodesSpecified=Region.attr(dvbi.a_countryCodes);
 		if ((depth!=0) && countryCodesSpecified) 
 			errs.addError({code:"AR004", message:`${dvbi.a_countryCodes.attribute(Region.name())} not permitted for sub-region ${regionID.quote()}`, key:"ccode in subRegion"});
@@ -624,6 +629,10 @@ export default class ServiceListCheck {
 			errs.addError({type:APPLICATION, code:errCode?`${errCode}-1`:"RM000", message:"validateRelatedMaterial() called with RelatedMaterial==null", key:"invalid args"});
 			return rc;
 		}
+
+		// check optional @xml:lang
+		if (RelatedMaterial.attr(dvbi.a_lang))
+			this.checkLanguage(RelatedMaterial.attr(dvbi.a_lang).value(), `xml:lang in ${dvbi.e_RelatedMaterial.elementize()}`, RelatedMaterial, errs, "RM001");	
 		
 		let HowRelated=null, Format=null, MediaLocator=[];
 		let elems=RelatedMaterial.childNodes();
@@ -642,7 +651,7 @@ export default class ServiceListCheck {
 		});
 		
 		if (!HowRelated) {
-			errs.addError({code:errCode?`${errCode}-1`:"RM001", 
+			errs.addError({code:errCode?`${errCode}-1`:"RM002", 
 							message:`${tva.e_HowRelated.elementize()} not specified for ${tva.e_RelatedMaterial.elementize()} in ${Location}`, key:`no ${tva.e_HowRelated}`});
 			return rc;
 		}
@@ -715,28 +724,27 @@ export default class ServiceListCheck {
 		 * value of topmost level element does not contain @xml:lang
 		 * @param {Element} node 
 		 */
-		function ancestorLanguage(node) {
+		function searchLanguage(node) {
 			if (node.type() != 'element')
 				return NO_DOCUMENT_LANGUAGE;
 
 			if (node.attr(dvbi.a_lang))
 				return (node.attr(dvbi.a_lang).value());
 
-			return ancestorLanguage(node.parent());
+			return searchLanguage(node.parent());
 		}
 
-		const UNSPECIFIED_LANG=NO_DOCUMENT_LANGUAGE;
 		let elementLanguages=[], i=0, elem;
 		while ((elem=node.get(xPath(SCHEMA_PREFIX, elementName, ++i), SL_SCHEMA))!=null) {
-			let lang=elem.attr(dvbi.a_lang)?elem.attr(dvbi.a_lang).value():ancestorLanguage(elem.parent());
+			let lang=searchLanguage(elem);
 			if (isIn(elementLanguages, lang)) 
 				errs.addError({code:errCode?`${errCode}-1`:"XL001", 
-					message:`${lang==UNSPECIFIED_LANG?"default language":`xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} for ${elementLocation}`, 
+					message:`${lang==NO_DOCUMENT_LANGUAGE?"document language":`xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} for ${elementLocation}`, 
 					fragment:elem, key:"duplicate @xml:lang"});
 			else elementLanguages.push(lang);
 
-			//if lang is specified, validate the format and value of the attribute against BCP47 (RFC 5646)
-			if (lang!=UNSPECIFIED_LANG) 
+			//if lang is specified for the element (i.e. not inherited from an ancestor), validate the format and value of the attribute against BCP47 (RFC 5646)
+			if (elem.attr(dvbi.a_lang) && lang!=NO_DOCUMENT_LANGUAGE) 
 				this.checkLanguage(lang, `xml:lang in ${elementName}`, elem, errs, errCode?`${errCode}-2`:"XL002");
 		}
 	}
@@ -865,6 +873,10 @@ export default class ServiceListCheck {
 			return;
 		}
 		loc=loc?loc:source.parent().name().elementize();
+		
+		// check optional @xml:lang
+		if (source.attr(dvbi.a_lang))
+			this.checkLanguage(source.attr(dvbi.a_lang).value(), `xml:lang in ${dvbi.e_ContentGuideSource.elementize()} in ${loc}`, null, errs, "GS002");		
 		
 		this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_Name, loc, source, errs, errCode?`${errCode}c`:"GS003");
 		this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ProviderName, loc, source, errs, errCode?`${errCode}d`:"GS004");
@@ -1060,6 +1072,10 @@ export default class ServiceListCheck {
 					errs.addError({code:`${errCode}-1`, message:`${dvbi.e_IPMulticastAddress.elementize()}${dvbi.e_CNAME.elementize()} is not a valid domain name for use as a CNAME`, key:"invalid CNAME"});
 			}
 		}
+
+		// check optional @xml:lang
+		if (ServiceInstance.attr(dvbi.a_lang))
+			this.checkLanguage(ServiceInstance.attr(dvbi.a_lang).value(), `xml:lang in ${dvbi.e_ServiceInstance.elementize()} for ${thisServiceId}`, null, errs, "SI005");	
 
 		//<ServiceInstance><DisplayName>
 		this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010");
@@ -1415,7 +1431,7 @@ export default class ServiceListCheck {
 		}
 		
 		if (!SL.root().namespace()) {
-			errs.addError({code:"SL006", message:`namespace is not provided for ${dvbi.e_ServiceList.elementize()}`, key:'schema error'});
+			errs.addError({code:"SL003", message:`namespace is not provided for ${dvbi.e_ServiceList.elementize()}`, key:'schema error'});
 			return;
 		}
 
@@ -1427,14 +1443,18 @@ export default class ServiceListCheck {
 		SL_SCHEMA[SCHEMA_PREFIX]=SCHEMA_NAMESPACE;
 
 		if (SL.root().name() !== dvbi.e_ServiceList) {
-			errs.addError({code:"SL003", message:`Root element is not ${dvbi.e_ServiceList.elementize()}`, key:'schema error'});
+			errs.addError({code:"SL004", message:`Root element is not ${dvbi.e_ServiceList.elementize()}`, key:'schema error'});
 			return;
 		}
 
 		if (!this.doSchemaVerification(SL, SCHEMA_NAMESPACE, errs, "SL005")) {
-			errs.addError({code:"SL004", message:`Unsupported namespace ${SCHEMA_NAMESPACE.quote()}`, key:'schema error'});
+			errs.addError({code:"SL006", message:`Unsupported namespace ${SCHEMA_NAMESPACE.quote()}`, key:'schema error'});
 			return;
 		}
+
+		// check @xml:lang in <ServiceList>
+		if (SL.root().attr(dvbi.a_lang))
+			this.checkLanguage(SL.root().attr(dvbi.a_lang).value(), `xml:lang in ${dvbi.e_ServiceList.elementize()}`, null, errs, "SL011");
 
 		//check <ServiceList><Name>
 		this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_Name, dvbi.e_ServiceList, SL, errs, "SL020");
@@ -1456,6 +1476,11 @@ export default class ServiceListCheck {
 		// check <ServiceList><RegionList> and remember regionID values
 		let knownRegionIDs=[], RegionList=SL.get(xPath(SCHEMA_PREFIX, dvbi.e_RegionList), SL_SCHEMA);
 		if (RegionList) {
+
+			// check optional @xml:lang
+			if (RegionList.attr(dvbi.a_lang))
+				this.checkLanguage(RegionList.attr(dvbi.a_lang).value(), `xml:lang in ${dvbi.e_RegionList.elementize()}}`, null, errs, "SL051");	
+
 			// recurse the regionlist - Regions can be nested in Regions
 			let r=0, Region;
 			while ((Region=RegionList.get(xPath(SCHEMA_PREFIX, dvbi.e_Region, ++r), SL_SCHEMA))!=null)
@@ -1475,6 +1500,11 @@ export default class ServiceListCheck {
 			CGSourceList=SL.get(xPath(SCHEMA_PREFIX, dvbi.e_ContentGuideSourceList), SL_SCHEMA);
 		if (CGSourceList) {
 			let cgs=0, CGSource;
+
+			// check optional @xml:lang 
+			if (CGSourceList.attr(dvbi.a_lang))
+				this.checkLanguage(CGSourceList.attr(dvbi.a_lang).value(), `xml:lang in ${dvbi.e_CGSourceList.elementize()}`, null, errs, "SL011");
+
 			while ((CGSource=CGSourceList.get(xPath(SCHEMA_PREFIX, dvbi.e_ContentGuideSource, ++cgs), SL_SCHEMA))!=null) {
 
 				this.validateAContentGuideSource(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, CGSource, errs,
@@ -1504,10 +1534,10 @@ export default class ServiceListCheck {
 			errs.setW("num services", s);
 			thisServiceId=`service-${s}`;  // use a default value in case <UniqueIdentifier> is not specified
 			
-			let serviceOptionalElements=[dvbi.e_ServiceInstance, dvbi.e_TargetRegion, tva.e_RelatedMaterial, dvbi.e_ServiceGenre, dvbi.e_ServiceType, dvbi.e_RecordingInfo, dvbi.e_ContentGuideSource, dvbi.e_ContentGuideSourceRef, dvbi.e_ContentGuideServiceRef];
-			if (this.SchemaVersion(SCHEMA_NAMESPACE) > SCHEMA_v2)
-				serviceOptionalElements.push(dvbi.e_ServiceDescription);
-			
+			// check optional @xml:lang
+			if (service.attr(dvbi.a_lang))
+				this.checkLanguage(service.attr(dvbi.a_lang).value(), `xml:lang in ${dvbi.e_Service.elementize()} for ${thisServiceId}`, null, errs, "SL101");		
+
 			// check <Service><UniqueIdentifier>
 			let uID=service.get(xPath(SCHEMA_PREFIX, dvbi.e_UniqueIdentifier), SL_SCHEMA);
 			if (uID) {

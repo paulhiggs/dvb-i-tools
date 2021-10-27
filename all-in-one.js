@@ -91,7 +91,7 @@ function processSLQuery(req, res) {
  * @param {Object} res  The HTTP response to be sent to the client
  */ 
 function processSLFile(req, res) {
-	if (isEmpty(req.query)) 
+	if (!req.files?.SLfile || isEmpty(req.query)) 
 		drawSLForm(false, res);    
 	else if (req && req.files && req.files.SLfile) {
 		let SLxml=null;
@@ -158,7 +158,7 @@ function processSLFile(req, res) {
  * @param {Object} res The HTTP response to be sent to the client
  */ 
 function processCGFile(req, res) {
-	if (isEmpty(req.query)) 
+	if (!req.files?.CGFile || isEmpty(req.query)) 
 		drawCGForm(false, cgcheck.supportedRequests, res);    
 	else if (req && req.files && req.files.CGfile) {
 		let CGxml=null, errs=new ErrorList(), fname="***";
