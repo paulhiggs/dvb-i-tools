@@ -513,7 +513,7 @@ export default class ServiceListCheck {
 								isPNG=true;
 								break;
 							default:
-								this.InvalidHrefValue(href, `${tva.e_RelatedMaterial.elementize()}${tva.e_Format.elementize()}${dvbi.e_StillPictureFormat.elementize()}`, Location, errs, "VL012");
+								this.InvalidHrefValue(href, child, `${tva.e_RelatedMaterial.elementize()}${tva.e_Format.elementize()}${dvbi.e_StillPictureFormat.elementize()}`, Location, errs, "VL012");
 						}
 					} 
 				}
@@ -640,14 +640,14 @@ export default class ServiceListCheck {
 
 		if (HowRelated.attr(dvbi.a_href)) {	
 			switch (LocationType) {
-				case SERVICE_LIST_RM: 
+				case SERVICE_LIST_RM:
 					if (this.validServiceListLogo(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
 						MediaLocator.forEach(locator => 
 							this.checkValidLogo(HowRelated, Format, locator, errs, Location));
 					}
 					else
-						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-11`:"RM011");
+						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-11`:"RM011");
 					break;
 				case SERVICE_RM:
 				case SERVICE_INSTANCE_RM:
@@ -665,7 +665,7 @@ export default class ServiceListCheck {
 								this.checkSignalledApplication(locator, errs, Location));
 					}
 					else 
-						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-22`:"RM022");  //!!
+						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-22`:"RM022");  //!!
 					break;
 				case CONTENT_GUIDE_RM:
 					if (this.validContentGuideSourceLogo(HowRelated, SCHEMA_NAMESPACE)) {
@@ -674,7 +674,7 @@ export default class ServiceListCheck {
 							this.checkValidLogo(HowRelated, Format, locator, errs, Location));
 					}
 					else
-						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-31`:"RM031");
+						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-31`:"RM031");
 					break;
 			}
 		}
@@ -734,13 +734,14 @@ export default class ServiceListCheck {
 	 * Add an error message when the @href contains an invalid value
 	 *
 	 * @param {String} value    The invalid value for the href attribute
+	 * @param {Node}   element  The XML node with the invalid HREF value
 	 * @param {String} src      The element missing the @href
 	 * @param {String} loc      The location of the element
 	 * @param {Object} errs     Errors buffer
 	 * @param {String} errCode  The error code to be reported
 	 */
-	/*private*/  InvalidHrefValue(value, src, loc, errs, errCode=null) {
-		errs.addError({code:errCode?errCode:"XX103", 
+	/*private*/  InvalidHrefValue(value, element, src, loc, errs, errCode) {
+		errs.addError({code:errCode, fragment:element, line:element.line(),
 						message:`invalid ${dvbi.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`, 
 						key:"invalid href"});
 	}
@@ -1231,14 +1232,14 @@ export default class ServiceListCheck {
 			if (URIBasedLocation) {
 				let uriContentType=URIBasedLocation.attr(dvbi.a_contentType);
 				if (uriContentType && !validDASHcontentType(uriContentType.value()))
-					errs.addError({code:"SI173", 
+					errs.addError({code:"SI173", fragment:URIBasedLocation,
 						message:`${dvbi.a_contentType.attribute()}=${uriContentType.value().quote()} in service ${thisServiceId.quote()} is not valid`, 
 						key:`no ${dvbi.a_contentType.attribute()} for DASH`});
 
 				let uri=URIBasedLocation.get(xPath(SCHEMA_PREFIX, dvbi.e_URI), SL_SCHEMA);
 				if (uri && !isHTTPURL(uri.text()))
 					errs.addError({code:"SI174", message:`invalid URL ${uri.text().quote()} specified for ${dvbi.e_URI.elementize()} of service ${thisServiceId.quote()}`, 
-						fragment:DASHDeliveryParameters, key:"invalid resource URL"});
+						fragment:uri, key:"invalid resource URL"});
 			}
 			
 			// <DASHDeliveryParameters><MulticastTSDeliveryParameters>
