@@ -291,7 +291,7 @@ export default class ServiceListCheck {
 		switch (validatorResp.resp) {
 			case this.knownLanguages.languageUnknown:
 				errs.addError({type:WARNING, code:errCode?`${errCode}-1`:"CL001", 
-									message:`${loc?loc:"language"} value ${lang.quote()} is invalid`, fragment:element, key:"invalid language"});
+								message:`${loc?loc:"language"} value ${lang.quote()} is invalid`, fragment:element, key:"invalid language"});
 				break;
 			case this.knownLanguages.languageRedundant:
 				errs.addError({type:WARNING, code:errCode?`${errCode}-2`:"CL002", 
@@ -398,7 +398,8 @@ export default class ServiceListCheck {
 		return this.match([ 
 			{ver: SCHEMA_v1, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v1 },
 			{ver: SCHEMA_v2, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
-			{ver: SCHEMA_v3, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 }
+			{ver: SCHEMA_v3, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
+			{ver: SCHEMA_v4, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 }
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null) ;
 	}
 
@@ -415,7 +416,8 @@ export default class ServiceListCheck {
 		// return true if val is a valid CS value for Content Finished Banner (A177 5.2.7.3)
 		return this.match([ 
 			{ver: SCHEMA_v2, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
-			{ver: SCHEMA_v3, val: dvbi.BANNER_CONTENT_FINISHED_v2 }
+			{ver: SCHEMA_v3, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
+			{ver: SCHEMA_v4, val: dvbi.BANNER_CONTENT_FINISHED_v2 }
 			], namespace==ANY_NAMESPACE?namespace:this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -432,7 +434,8 @@ export default class ServiceListCheck {
 		return this.match([ 
 			{ver: SCHEMA_v1, val: dvbi.LOGO_SERVICE_LIST_v1 },
 			{ver: SCHEMA_v2, val: dvbi.LOGO_SERVICE_LIST_v2 },
-			{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_LIST_v2 }
+			{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_LIST_v2 },
+			{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_LIST_v2 }
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -449,7 +452,8 @@ export default class ServiceListCheck {
 		return this.match([
 			{ver: SCHEMA_v1, val: dvbi.LOGO_SERVICE_v1},
 			{ver: SCHEMA_v2, val: dvbi.LOGO_SERVICE_v2},
-			{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_v2}
+			{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_v2},
+			{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_v2}
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -466,7 +470,8 @@ export default class ServiceListCheck {
 		return this.match([
 			{ver: SCHEMA_v1, val: dvbi.LOGO_CG_PROVIDER_v1},
 			{ver: SCHEMA_v2, val: dvbi.LOGO_CG_PROVIDER_v2},
-			{ver: SCHEMA_v3, val: dvbi.LOGO_CG_PROVIDER_v2}
+			{ver: SCHEMA_v3, val: dvbi.LOGO_CG_PROVIDER_v2},
+			{ver: SCHEMA_v4, val: dvbi.LOGO_CG_PROVIDER_v2}
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
