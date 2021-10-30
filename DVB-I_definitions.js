@@ -8,6 +8,10 @@ const LINKED_APLICATION_CS = "urn:dvb:metadata:cs:LinkedApplicationCS:2019";
 const DVB_RELATED_CS_v1 = "urn:dvb:metadata:cs:HowRelatedCS:2019";
 const DVB_RELATED_CS_v2 = "urn:dvb:metadata:cs:HowRelatedCS:2020";
 
+const CaptionCodingFormatCS="urn:tva:metadata:cs:CaptionCodingFormatCS:2015",
+	  ColorimetryCS="urn:dvb:metadata:cs:ColorimetryCS:2020";
+
+
 
 export const dvbi = {
 	A177v1_Namespace: "urn:dvb:metadata:servicediscovery:2019",
@@ -60,21 +64,20 @@ export const dvbi = {
 	CONTENT_TYPE_DVB_PLAYLIST: "application/xml",     // XML Playlist
 
 // A177 5.5.24  <VideoAttribites><Colorimetry>
-	COLORIMETRY_BT709: "urn:dvb:metadata:cs:ColorimetryCS:2020:1",
-	COLORIMETRY_BT2020_NCL: "urn:dvb:metadata:cs:ColorimetryCS:2020:2.1",
-	COLORIMETRY_BT2100_NCL: "urn:dvb:metadata:cs:ColorimetryCS:2020:3.1",
+	COLORIMETRY_BT709: `${ColorimetryCS}:1`,
+	COLORIMETRY_BT2020_NCL: `${ColorimetryCS}:2.1`,
+	COLORIMETRY_BT2100_NCL: `${ColorimetryCS}:3.1`,
 
-	ALLOWED_COLORIMETRY: ["urn:dvb:metadata:cs:ColorimetryCS:2020:1",
-			"urn:dvb:metadata:cs:ColorimetryCS:2020:2.1", "urn:dvb:metadata:cs:ColorimetryCS:2020:3.1"],
+	ALLOWED_COLORIMETRY: [`${ColorimetryCS}:1`, `${ColorimetryCS}:2.1`, `${ColorimetryCS}:3.1`],
 
 // A177 6.11.2 - Audio Purpose
 	AUDIO_PURPOSE_MAIN: "urn:tva:metadata:cs:AudioPurposeCS:2007:1",
 	AUDIO_PURPOSE_DESCRIPTION: "urn:tva:metadata:cs:AudioPurposeCS:2007:6",
 
 // A177 6.11.3 - Caption Coding Format
-	DVB_BITMAP_SUBTITLES: "urn:tva:metadata:cs:CaptionCodingFormatCS:2015:2.1",
-	DVB_CHARACTER_SUBTITLES: "urn:tva:metadata:cs:CaptionCodingFormatCS:2015:2.2",
-	EBU_TT_D: "urn:tva:metadata:cs:CaptionCodingFormatCS:2015:3.2",
+	DVB_BITMAP_SUBTITLES: `${CaptionCodingFormatCS}:2.1`,
+	DVB_CHARACTER_SUBTITLES: `${CaptionCodingFormatCS}:2.2`,
+	EBU_TT_D: `${CaptionCodingFormatCS}:3.2`,
 
 // A177 6.11.6 - Media Availability
 	MEDIA_AVAILABLE: "urn:fvc:metadata:cs:MediaAvailabilityCS:2014-07:media_available",

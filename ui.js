@@ -69,7 +69,7 @@ function tabulateResults(res, error, errs) {
 				res.write(`<span${qualifier}>${HTMLize(line.value)}</span><br/>`);
 			});
 			res.write("</pre><hr/>");
-		}
+		} 
 	}
 	if (!error && !resultsShown) 
 		res.write("no errors or warnings");

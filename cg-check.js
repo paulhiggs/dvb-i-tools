@@ -141,14 +141,16 @@ function checkAttributes(parentElement, requiredAttributes, optionalAttributes, 
 	requiredAttributes.forEach(attributeName => {
 		if (!parentElement.attr(attributeName)) {
 			let p=`${(parentElement.parent()?`${parentElement.parent().name()}.`:"")}${parentElement.name()}`;
-			errs.addError({code:errCode?`${errCode}-1`:"AT001", message:`${attributeName.attribute(`${p}`)} is a required attribute`});
+			errs.addError({code:errCode?`${errCode}-1`:"AT001", message:`${attributeName.attribute(`${p}`)} is a required attribute`, 
+					key:'missing attribute'});
 		}
 	});
 	
 	parentElement.attrs().forEach(attr => {
 		if (!isIn(requiredAttributes, attr.name()) && !isIn(optionalAttributes, attr.name())) {
 			let p=`${elementize(`${parentElement.parent()?`${parentElement.parent().name()}.`:""}${parentElement.name()}`)}`;
-			errs.addError({code:errCode?`${errCode}-2`:"AT002",  message:`${attr.name().attribute()} is not permitted in ${p}`});
+			errs.addError({code:errCode?`${errCode}-2`:"AT002",  message:`${attr.name().attribute()} is not permitted in ${p}`,
+					key:'unexpected attribute'});
 		}
 	});
 }
@@ -248,12 +250,12 @@ function FalseValue(elem, attrName, errCode, errs, isRequired=true) {
  */
 function CheckLanguage(validator, errs, lang, loc=null, errCode=null ) {
 	if (!validator) {
-		errs.addError({type:APPLICATION, code:errCode?`${errCode}-1`:"LA001", message:`cannot validate language ${lang.quote()}${loc?" for "+loc.elementize():""}`, 
+		errs.addError({type:APPLICATION, code:errCode?`${errCode}-1`:"LA001", message:`cannot validate language ${lang.quote()}${loc?` for ${loc.elementize()}`:""}`, 
 						key:"no language validator"});
 		return false;
 	}
 	if (!validator.isKnown(lang))  {
-		errs.addError({code:errCode?`${errCode}-2`:"LA002", message:`language ${lang.quote()} specified${loc?" for "+loc.elementize():""} is invalid`, 
+		errs.addError({code:errCode?`${errCode}-2`:"LA002", message:`language ${lang.quote()} specified${loc?` for ${loc.elementize()}`:""} is invalid`, 
 						key:"invalid language"});
 		return false;
 	}
@@ -2028,7 +2030,7 @@ export default class ContentGuideCheck {
 			if (MixType) {
 				checkAttributes(MixType, [tva.a_href], [], errs, "AV011"); 
 				if (MixType.attr(tva.a_href) && !isValidAudioMixType(MixType.attr(tva.a_href).value()))
-					errs.addError({code:"AV012", message:`${tva.e_AudioAttributes}.${tva.e_MixType} is not valid`});
+					errs.addError({code:"AV012", message:`${tva.e_AudioAttributes}.${tva.e_MixType} is not valid`, fragment:MixType});
 			}
 					
 			let AudioLanguage=AudioAttributes.get(xPath(SCHEMA_PREFIX, tva.e_AudioLanguage), CG_SCHEMA);
@@ -2037,7 +2039,7 @@ export default class ContentGuideCheck {
 				let validLanguage=false, validPurpose=false, audioLang=AudioLanguage.text();
 				if (AudioLanguage.attr(tva.a_purpose)) {
 					if (!(validPurpose=isValidAudioLanguagePurpose(AudioLanguage.attr(tva.a_purpose).value())))
-						errs.addError({code:"AV014", message:`${tva.a_purpose.attribute(tva.e_AudioLanguage)} is not valid`});
+						errs.addError({code:"AV014", message:`${tva.a_purpose.attribute(tva.e_AudioLanguage)} is not valid`, fragment:AudioLanguage});
 				}
 
 				validLanguage=CheckLanguage(this.knownLanguages, errs, audioLang, `${tva.e_AudioAttributes}.${tva.e_AudioLanguage}`, "AV015");
@@ -2082,7 +2084,8 @@ export default class ContentGuideCheck {
 					let codingHref=Coding.attr(tva.a_href).value();
 					if (!([dvbi.DVB_BITMAP_SUBTITLES, dvbi.DVB_CHARACTER_SUBTITLES, dvbi.EBU_TT_D].includes(codingHref)))
 						errs.addError({code:"AV042", 
-										message:`${tva.a_href.attribute(`${tva.e_CaptioningAttributes}.${tva.e_Coding}`)} is not valid - should be DVB (bitmap or character) or EBU TT-D`});
+										message:`${tva.a_href.attribute(`${tva.e_CaptioningAttributes}.${tva.e_Coding}`)} is not valid - should be DVB (bitmap or character) or EBU TT-D`,
+										fragment:Coding});
 				}
 			}		
 		}
@@ -2117,7 +2120,7 @@ export default class ContentGuideCheck {
 			checkAttributes(HowRelated, [tva.a_href], [], errs, "RR002");
 			if (HowRelated.attr(tva.a_href)) {
 				if (!isRestartLink(HowRelated.attr(tva.a_href).value())) {
-					errs.addError({code:"RR003", message:`invalid ${tva.a_href.attribute(tva.e_HowRelated)} (${HowRelated.attr(tva.a_href).value()}) for Restart Application Link`});
+					errs.addError({code:"RR003", message:`invalid ${tva.a_href.attribute(tva.e_HowRelated)} (${HowRelated.attr(tva.a_href).value()}) for Restart Application Link`, HowRelated});
 					isRestart=false;
 				}
 			}
@@ -2446,8 +2449,10 @@ export default class ContentGuideCheck {
 
 		if (soa && eoa) {
 			let fr=new Date(soa.text()), to=new Date(eoa.text());	
-			if (to.getTime() < fr.getTime()) 
-				errs.addError({code:"OD062", message:`${tva.e_StartOfAvailability.elementize()} must be earlier than ${tva.e_EndOfAvailability.elementize()}`});
+			if (to.getTime() < fr.getTime()) {
+				errs.addError({code:"OD062", message:`${tva.e_StartOfAvailability.elementize()} must be earlier than ${tva.e_EndOfAvailability.elementize()}`, fragment:soa});
+				errs.addError({code:"OD063", message:`${tva.e_StartOfAvailability.elementize()} must be earlier than ${tva.e_EndOfAvailability.elementize()}`, fragemnt:eoa});
+			}
 		}
 		
 		// <DeliveryMode>
@@ -2455,7 +2460,7 @@ export default class ContentGuideCheck {
 		if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType))
 			while ((DeliveryMode=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_DeliveryMode, ++dm), CG_SCHEMA))!=null)
 				if (DeliveryMode.text()!=tva.DELIVERY_MODE_STREAMING)
-					errs.addError({code:"OD070", message:`${OnDemandProgram.name()}.${tva.e_DeliveryMode} must be ${tva.DELIVERY_MODE_STREAMING.quote()}`});
+					errs.addError({code:"OD070", message:`${OnDemandProgram.name()}.${tva.e_DeliveryMode} must be ${tva.DELIVERY_MODE_STREAMING.quote()}`, fragment:DeliveryMode});
 		
 		// <Free>
 		let fr=0, Free;
@@ -2510,10 +2515,11 @@ export default class ContentGuideCheck {
 				let ProgramCRID=Program.attr(tva.a_crid);
 				if (ProgramCRID) {
 					if (!isCRIDURI(ProgramCRID.value()))
-						errs.addError({code:"SE011", message:`${tva.a_crid.attribute(tva.e_Program)} is not a valid CRID (${ProgramCRID.value()})`});
+						errs.addError({code:"SE011", message:`${tva.a_crid.attribute(tva.e_Program)} is not a valid CRID (${ProgramCRID.value()})`, fragment:Program});
 					if (!isIni(programCRIDs, ProgramCRID.value()))
 						errs.addError({code:"SE012", 
-									message:`${tva.a_crid.attribute(tva.e_Program)}=${ProgramCRID.value().quote()} does not refer to a program in the ${tva.e_ProgramInformationTable.elementize()}`});
+									message:`${tva.a_crid.attribute(tva.e_Program)}=${ProgramCRID.value().quote()} does not refer to a program in the ${tva.e_ProgramInformationTable.elementize()}`,
+									fragment:Program});
 					plCRIDs.push(ProgramCRID.value());
 					isCurrentProgram=(ProgramCRID.value()==currentProgramCRID) ;
 				}
@@ -2523,7 +2529,7 @@ export default class ContentGuideCheck {
 			let ProgramURL=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_ProgramURL), CG_SCHEMA);
 			if (ProgramURL) 
 				if (!isDVBLocator(ProgramURL.text()))
-					errs.addError({code:"SE021", message:`${tva.e_ScheduleEvent}.${tva.e_ProgramURL} (${ProgramURL.text()}) is not a valid DVB locator`});
+					errs.addError({code:"SE021", message:`${tva.e_ScheduleEvent}.${tva.e_ProgramURL} (${ProgramURL.text()}) is not a valid DVB locator`, fragment:ProgramURL});
 			
 			// <InstanceDescription>
 			let InstanceDescription=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_InstanceDescription), CG_SCHEMA);
@@ -2539,27 +2545,30 @@ export default class ContentGuideCheck {
 					
 					if (scheduleStart && (PublishedStartTime < scheduleStart)) 
 						errs.addError({code:"SE041", 
-										message:`${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is earlier than ${tva.a_start.attribute(tva.e_Schedule)}`});
+										message:`${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is earlier than ${tva.a_start.attribute(tva.e_Schedule)}`,
+										fragment:pstElem});
 					if (scheduleEnd && (PublishedStartTime > scheduleEnd)) 
 						errs.addError({code:"SE042", 
-										message:`${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is after ${tva.a_end.attribute(tva.e_Schedule)}`});
+										message:`${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is after ${tva.a_end.attribute(tva.e_Schedule)}`,
+										fragment:pstElem});
 
 					let pdElem=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_PublishedDuration), CG_SCHEMA);
 					if (pdElem && scheduleEnd) {
 						let parsedPublishedDuration=parseISOduration(pdElem.text());
 						if (parsedPublishedDuration.add(PublishedStartTime) > scheduleEnd) 
 							errs.addError({code:"SE043", 
-											message:`${tva.e_PublishedStartTime}+${tva.e_PublishedDuration} of event is after ${tva.a_end.attribute(tva.e_Schedule)}`});
+											message:`${tva.e_PublishedStartTime}+${tva.e_PublishedDuration} of event is after ${tva.a_end.attribute(tva.e_Schedule)}`,
+											fragment:pdElem});
 					}
 				}
 				else 
-					errs.addError({code:"SE049", message:`${tva.e_PublishedStartTime.elementize()} is not expressed in UTC format (${pstElem.text()})`});
+					errs.addError({code:"SE049", message:`${tva.e_PublishedStartTime.elementize()} is not expressed in UTC format (${pstElem.text()})`, fragment:pstElem});
 			}
 			
 			// <ActualStartTime> 
 			let astElem=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_ActualStartTime), CG_SCHEMA);
 			if (astElem && !isUTCDateTime(astElem.text())) 
-				errs.addError({code:"SE051", message:`${tva.e_ActualStartTime.elementize()} is not expressed in UTC format (${astElem.text()})`});
+				errs.addError({code:"SE051", message:`${tva.e_ActualStartTime.elementize()} is not expressed in UTC format (${astElem.text()})`, fragment:astElem});
 
 			// <FirstShowing>
 			let FirstShowing=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_FirstShowing), CG_SCHEMA);
@@ -2609,7 +2618,7 @@ export default class ContentGuideCheck {
 
 		if (startSchedule && endSchedule) 
 			if (to.getTime() <= fr.getTime()) 
-				errs.addError({code:"VS012", message:`${tva.a_start.attribute(Schedule.name())} must be earlier than ${tva.a_end.attribute()}`});
+				errs.addError({code:"VS012", message:`${tva.a_start.attribute(Schedule.name())} must be earlier than ${tva.a_end.attribute()}`, fragment:Schedule});
 		
 				this.ValidateScheduleEvents(CG_SCHEMA, SCHEMA_PREFIX, Schedule, scheduleLang, programCRIDS, plCRIDs, currentProgramCRID, fr, to, requestType, errs);
 		

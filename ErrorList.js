@@ -22,12 +22,12 @@ export default class ErrorList {
 		let lines=parseXmlString(doc).toString().split('\n');
 		this.markupXML=lines.map((str, index) => ({ value: str, ix: index }));
 	}
-	/* private */ setError(err, lineNo) {
+	/* private */ setError(code, message, lineNo) {
 		let found=this.markupXML.find(line => (line.ix==lineNo));
 		if (found) {
 			if (!found.validationErrors)
 				found.validationErrors=[];
-			found.validationErrors.push(err);
+			found.validationErrors.push(`${code}: ${message}`);
 		}
 	}
 	/* private */ increment(key) {
@@ -74,10 +74,12 @@ export default class ErrorList {
 		if (!e.code) {
 			this.errors.push({code:"ERR001", message:'addError() called without code property'});
 			this.increment(_INVALID_CALL);
+			e.code="ERR001";
 		}
 		if (!e.message) {
 			this.errors.push({code:"ERR002", message:'addError() called without message property'});
 			this.increment(_INVALID_CALL);
+			e.message="no error message";
 		}
 		let newError={code:e.code, message:e.message, 
 						element:e.fragment?((typeof(e.fragment)=="string" || e.fragment instanceof String)?e.fragment:this.prettyPrint(e.fragment)):null
@@ -100,7 +102,7 @@ export default class ErrorList {
 		if (!e.line && e.fragment && typeof(e.fragment)!="string")
 			e.line=e.fragment.line();
 		if (e.line)
-			this.setError(e.message, e.line-1);
+			this.setError(e.code, e.message, e.line-1);
 	} 
 	numErrors() { return this.errors.length; }
 	numWarnings() { return this.warnings.length; }
