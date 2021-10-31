@@ -94,7 +94,7 @@ function CountChildElements(node, childElementName) {
 		let _max=elem?.maxOccurs ? elem.maxOccurs : 1;
 		let count=CountChildElements(parentElement, elem.name);
 		if (count==0 && _min!=0) {
-			errs.addError({tcode:errCode?`${errCode}-1`:"TE001", message:`Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`});
+			errs.addError({code:errCode?`${errCode}-1`:"TE001", message:`Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`});
 			rv=false;
 		}
 		else {
