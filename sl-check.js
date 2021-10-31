@@ -332,19 +332,19 @@ export default class ServiceListCheck {
 			regionID="unspecified";
 		else {
 			if (isIn(knownRegionIDs, regionID)) 
-				errs.addError({code:"AR003", message:`Duplicate ${dvbi.a_regionID.attribute()} ${regionID.quote()}`, key:"duplicate regionID"});
+				errs.addError({code:"AR003", message:`Duplicate ${dvbi.a_regionID.attribute()} ${regionID.quote()}`, key:"duplicate regionID", line:Region.line()});
 			else knownRegionIDs.push(regionID);
 		}
 		let countryCodesSpecified=Region.attr(dvbi.a_countryCodes);
 		if ((depth!=0) && countryCodesSpecified) 
-			errs.addError({code:"AR004", message:`${dvbi.a_countryCodes.attribute(Region.name())} not permitted for sub-region ${regionID.quote()}`, key:"ccode in subRegion"});
+			errs.addError({code:"AR004", message:`${dvbi.a_countryCodes.attribute(Region.name())} not permitted for sub-region ${regionID.quote()}`, key:"ccode in subRegion", line:Region.line()});
 
 		if (countryCodesSpecified) {
 			let countries=countryCodesSpecified.value().split(",");
 			if (countries) 
 				countries.forEach(country => {
 					if (!this.knownCountries.isISO3166code(country)) 
-						errs.addError({code:"AR005", message:`invalid country code (${country}) for region ${regionID.quote()}`, key:"invalid country code"});
+						errs.addError({code:"AR005", message:`invalid country code (${country}) for region ${regionID.quote()}`, key:"invalid country code", line:Region.line()});
 				});
 		}
 
@@ -354,10 +354,10 @@ export default class ServiceListCheck {
 		let pc=0, Postcode, PostcodeErrorMessage="invalid postcode";
 		while ((Postcode=Region.get(xPath(SCHEMA_PREFIX, dvbi.e_Postcode, ++pc), SL_SCHEMA))!=null) 
 			if (!isPostcode(Postcode.text()))
-				errs.addError({code:"AR011", message:`${Postcode.text().quote()} is not a valid postcode`, key:PostcodeErrorMessage});
+				errs.addError({code:"AR011", message:`${Postcode.text().quote()} is not a valid postcode`, key:PostcodeErrorMessage, fragment:Postcode});
 		
 		if (depth > dvbi.MAX_SUBREGION_LEVELS) 
-			errs.addError({code:"AR007", message:`${dvbi.e_Region.elementize()} depth exceeded (>${dvbi.MAX_SUBREGION_LEVELS}) for sub-region ${regionID.quote()}`, key:"region depth exceeded"});
+			errs.addError({code:"AR007", message:`${dvbi.e_Region.elementize()} depth exceeded (>${dvbi.MAX_SUBREGION_LEVELS}) for sub-region ${regionID.quote()}`, key:"region depth exceeded", line:Region.line()});
 
 		let rc=0, RegionChild;
 		while ((RegionChild=Region.get(xPath(SCHEMA_PREFIX, dvbi.e_Region, ++rc), SL_SCHEMA))!=null) 
@@ -651,7 +651,7 @@ export default class ServiceListCheck {
 		if (!HowRelated) {
 			errs.addError({code:errCode?`${errCode}-1`:"RM001", 
 							message:`${tva.e_HowRelated.elementize()} not specified for ${tva.e_RelatedMaterial.elementize()} in ${Location}`, 
-							fragment:RelatedMaterial, key:`no ${tva.e_HowRelated}`});
+							line:RelatedMaterial.line(), key:`no ${tva.e_HowRelated}`});
 			return rc;
 		}
 
@@ -670,7 +670,7 @@ export default class ServiceListCheck {
 				case SERVICE_INSTANCE_RM:
 					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && (this.SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1)) 
 						errs.addError({code:errCode?`${errCode}-21`:"RM021", 
-						message:`${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${SCHEMA_NAMESPACE.quote()} in ${Location}`, key:"invalid CS value"});
+							message:`${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${SCHEMA_NAMESPACE.quote()} in ${Location}`, key:"invalid CS value", fragment:HowRelated});
 					
 					if (this.validOutScheduleHours(HowRelated, SCHEMA_NAMESPACE) || this.validContentFinishedBanner(HowRelated, SCHEMA_NAMESPACE) || this.validServiceApplication(HowRelated) || this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
@@ -712,7 +712,7 @@ export default class ServiceListCheck {
 	 */
 	/*private*/  checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, elementName, elementLocation, node, errs, errCode=null) {
 		if (!node) {
-			errs.addError({type:APPLICATION, code:errCode?`${errCode}-0`:"XL000", message:"checkXMLLangs() called with node==null"});
+			errs.addError({type:APPLICATION, code:"XL000", message:"checkXMLLangs() called with node==null"});
 			return;
 		}
 		const UNSPECIFIED_LANG="unspecified";
@@ -737,13 +737,14 @@ export default class ServiceListCheck {
 	 *
 	 * @param {String} source     The missing source type
 	 * @param {String} serviceId  The serviceId whose instance is missing delivery parameters
+	 * @param {Object} element    The <SourceType> element for which delivery parameters are not specified
 	 * @param {Object} errs       Errors buffer
 	 * @param {String} errCode    The error code to be reported
 	 */
-	/*private*/  NoDeliveryParams(source, serviceId, errs, errCode=null) {
-		errs.addError({code:errCode?errCode:"XX101", 
+	/*private*/  NoDeliveryParams(source, serviceId, element, errs, errCode) {
+		errs.addError({code:errCode, 
 						message:`${source} delivery parameters not specified for service instance in service ${serviceId.quote()}`,
-						key:"no delivery params"});
+						fragment:element, key:"no delivery params"});
 	}
 
 
@@ -776,23 +777,6 @@ export default class ServiceListCheck {
 		errs.addError({code:errCode, 
 						message:`${loc} has an unspecified ${dvbi.e_TargetRegion.elementize()} ${region.quote()}`, 
 						key:"target region"});	
-	}
-
-
-	/**
-	 * Add an error message when an attribite contains an invalid value
-	 *
-	 * @param {Object} errs             Errors buffer
-	 * @param {String} errCode          The error code to be reported
-	 * @param {String} elementName      The name of element 
-	 * @param {String} attribName       The name of the attribute with the invalid value
-	 * @param {String} invValue         The invalid value
-	 * @param {String} parentElementName The name of the parent element for elementName
-	 */
-	/*private*/  invalidValue(errs, errCode, elementName, attribName, invValue, parentElementName) {
-		errs.addError({code:errCode, 
-			message:`Invalid value ${invValue?`${invValue.quote()} `:""}for ${attribName?attribName.attribute(elementName):elementName.elementize()}${parentElementName?` in ${parentElementName.elementize()}`:""}`,
-			key:"invalid value"});	
 	}
 
 
@@ -881,7 +865,7 @@ export default class ServiceListCheck {
 		if (!node) 
 			return parentLang;
 		if (!node.attr(tva.a_lang) && isRequired) {
-			errs.addError({code:errCode?errCode:"GL001", message:`${tva.a_lang.attribute()} is required for ${node.name().quote()}`, key:"unspecified language"});
+			errs.addError({code:errCode?errCode:"GL001", message:`${tva.a_lang.attribute()} is required for ${node.name().quote()}`, key:"unspecified language", line:node.line()});
 			return parentLang;		
 		}
 
@@ -1049,14 +1033,16 @@ export default class ServiceListCheck {
 		this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010");
 
 		// check @href of <ServiceInstance><RelatedMaterial>
-		let rm=0, countControlApps=0, RelatedMaterial;
+		let rm=0, controlApps=[], RelatedMaterial;
 		while ((RelatedMaterial=ServiceInstance.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), SL_SCHEMA))!=null) {
 			let foundHref=this.validateRelatedMaterial(RelatedMaterial, errs, `service instance of ${thisServiceId.quote()}`, SERVICE_INSTANCE_RM, SCHEMA_NAMESPACE, "SI020");
 			if (foundHref!="" && validServiceControlApplication(foundHref)) 
-				countControlApps++;
+				controlApps.push(RelatedMaterial);
 		}
-		if (countControlApps>1)
-			errs.addError({code:"SI021", message:"only a single service control application can be signalled in a service instance", key:"multi apps"});
+		if (controlApps.length>1)
+			controlApps.forEach(app => {
+				errs.addError({code:"SI021", message:"only a single service control application can be signalled in a service instance", fragment:app, key:"multi apps"});
+			});
 
 		// <ServiceInstance><ContentProtection>
 
@@ -1146,7 +1132,7 @@ export default class ServiceListCheck {
 						to=new Date(Period.attr(dvbi.a_validTo).value());
 
 					if (to.getTime() < fr.getTime()) 
-						errs.addError({code:"SI124", message:`invalid availability period for service ${thisServiceId.quote()}. ${fr}>${to}`, key:"period start>end"});
+						errs.addError({code:"SI124", message:`invalid availability period for service ${thisServiceId.quote()}. ${fr}>${to}`, fragment:Period, key:"period start>end"});
 				}
 		}
 
@@ -1163,27 +1149,27 @@ export default class ServiceListCheck {
 			switch (SourceType.text()) {
 				case dvbi.DVBT_SOURCE_TYPE:
 					if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_DVBTDeliveryParameters), SL_SCHEMA) ) 
-						this.NoDeliveryParams("DVB-T", thisServiceId, errs, "SI151"); 
+						this.NoDeliveryParams("DVB-T", thisServiceId, SourceType, errs, "SI151"); 
 					v1Params=true;
 					break;
 				case dvbi.DVBS_SOURCE_TYPE:
 					if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_DVBSDeliveryParameters), SL_SCHEMA) ) 
-						this.NoDeliveryParams("DVB-S", thisServiceId, errs, "SI152");
+						this.NoDeliveryParams("DVB-S", thisServiceId, SourceType, errs, "SI152");
 					v1Params=true;
 					break;
 				case dvbi.DVBC_SOURCE_TYPE:
 					if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_DVBCDeliveryParameters), SL_SCHEMA) ) 
-						this.NoDeliveryParams("DVB-C", thisServiceId, errs, "SI153");
+						this.NoDeliveryParams("DVB-C", thisServiceId, SourceType, errs, "SI153");
 					v1Params=true;
 					break;
 				case dvbi.DVBDASH_SOURCE_TYPE:
 					if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_DASHDeliveryParameters), SL_SCHEMA) ) 
-						this.NoDeliveryParams("DVB-DASH", thisServiceId, errs, "SI154");
+						this.NoDeliveryParams("DVB-DASH", thisServiceId, SourceType, errs, "SI154");
 					v1Params=true;
 					break;
 				case dvbi.DVBIPTV_SOURCE_TYPE:
 					if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_MulticastTSDeliveryParameters), SL_SCHEMA) && !ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_RTSPDeliveryParameters), SL_SCHEMA) ) 
-						this.NoDeliveryParams("Multicast or RTSP", thisServiceId, errs, "SI155");
+						this.NoDeliveryParams("Multicast or RTSP", thisServiceId, SourceType, errs, "SI155");
 					v1Params=true;
 					break;
 				case dvbi.DVBAPPLICATION_SOURCE_TYPE:
@@ -1195,14 +1181,18 @@ export default class ServiceListCheck {
 						ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_SATIPDeliveryParametersDeliveryParameters), SL_SCHEMA) ||
 						ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_MulticastTSDeliveryParameters), SL_SCHEMA) ||
 						ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_RTSPDeliveryParameters), SL_SCHEMA) ) {
-							errs.addError({code:"SI156", message:`Delivery parameters are not permitted for Application service instance in Service ${thisServiceId.quote()}`, key:"invalid application"});
+							errs.addError({code:"SI156", message:`Delivery parameters are not permitted for Application service instance in Service ${thisServiceId.quote()}`, 
+									fragment:SourceType, key:"invalid application"});
 							v1Params=true;
 						}
 						else {
 							// no xxxxDeliveryParameters is signalled
 							// check for appropriate Service.RelatedMaterial or Service.ServiceInstance.RelatedMaterial
-							if (!this.hasSignalledApplication(SL_SCHEMA, SCHEMA_PREFIX, service) && !this.hasSignalledApplication(SL_SCHEMA, SCHEMA_PREFIX, ServiceInstance)) 
-								errs.addError({code:"SI157", message:`No Application is signalled for ${dvbi.e_SourceType}=${dvbi.DVBAPPLICATION_SOURCE_TYPE.quote()} in Service ${thisServiceId.quote()}`, key:"no application"});
+							if (!this.hasSignalledApplication(SL_SCHEMA, SCHEMA_PREFIX, service) && !this.hasSignalledApplication(SL_SCHEMA, SCHEMA_PREFIX, ServiceInstance)) {
+								errs.addError({code:"SI157a", message:`No Application is signalled for ${dvbi.e_SourceType}=${dvbi.DVBAPPLICATION_SOURCE_TYPE.quote()} in Service ${thisServiceId.quote()}`, 
+										line:service, key:"no application"});
+								errs.addError({code:"SI157b", message:`No Application is signalled for ${dvbi.e_SourceType}=${dvbi.DVBAPPLICATION_SOURCE_TYPE.quote()} in Service ${thisServiceId.quote()}`, 
+										line:ServiceInstance, key:"no application"});							}
 						}
 					break;
 				default:
@@ -1216,7 +1206,7 @@ export default class ServiceListCheck {
 							if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_OtherDeliveryParameters), SL_SCHEMA))
 								errs.addError({code:"SI159", 
 									message:`${dvbi.e_OtherDeliveryParameters.elementize()} must be specified with user-defined ${dvbi.e_SourceType} ${SourceType.text().quote()}`, 
-									key:`no ${dvbi.e_OtherDeliveryParameters}`});
+									line:ServiceInstance.line(), key:`no ${dvbi.e_OtherDeliveryParameters}`});
 							break;
 					}
 			}

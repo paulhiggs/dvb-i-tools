@@ -1080,7 +1080,7 @@ export default class ContentGuideCheck {
 		});
 
 		if (!HowRelated) {
-			this.NochildElement(errs, tva.e_HowRelated.elementize(), RelatedMaterial.name(), Location, "PS001");
+			this.NoChildElement(errs, tva.e_HowRelated.elementize(), RelatedMaterial.name(), Location, "PS001");
 			return;
 		}
 		
@@ -1717,7 +1717,7 @@ export default class ContentGuideCheck {
 			let groupId=GroupInformation.attr(tva.a_groupId).value();
 			if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW].includes(requestType)) 
 				if (!([dvbi.CRID_NOW, dvbi.CRID_LATER, dvbi.CRID_EARLIER].includes(groupId)))
-					errs.addError({code:"GIS011", message:`${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is valid for this request type`});
+					errs.addError({code:"GIS011", message:`${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is not valid for this request type`, line:GroupInformation.line()});
 		}
 
 		if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW].includes(requestType)) {		
@@ -1757,7 +1757,7 @@ export default class ContentGuideCheck {
 		if (GroupInformation.attr(tva.a_groupId)) {
 			let groupId=GroupInformation.attr(tva.a_groupId).value();
 			if (!isCRIDURI(groupId)) 
-				errs.addError({code:"GIM003", message:`${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is not a valid CRID`});
+				errs.addError({code:"GIM003", message:`${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is not a valid CRID`, line:GroupInformation.line()});
 			else 
 				groupsFound.push(groupId);
 		}
@@ -1769,9 +1769,9 @@ export default class ContentGuideCheck {
 			checkAttributes(GroupType, [tva.a_type, tva.a_value], [], errs, "GIM011");
 			
 			if (GroupType.attr(tva.a_type) && GroupType.attr(tva.a_type).value()!=tva.t_ProgramGroupTypeType) 
-				errs.addError({code:"GIM012", message:`${tva.e_GroupType}@xsi:${tva.a_type} must be ${tva.t_ProgramGroupTypeType.quote()}`});
+				errs.addError({code:"GIM012", message:`${tva.e_GroupType}@xsi:${tva.a_type} must be ${tva.t_ProgramGroupTypeType.quote()}`, fragment:GroupType});
 			if (GroupType.attr(tva.a_value) && GroupType.attr(tva.a_value).value()!="otherCollection") 
-				errs.addError({code:"GIM013", message:`${tva.a_value.attribute(tva.e_GroupType)} must be ${"otherCollection".quote()}`});
+				errs.addError({code:"GIM013", message:`${tva.a_value.attribute(tva.e_GroupType)} must be ${"otherCollection".quote()}`, fragment:GroupType});
 		}
 		else
 			errs.addError({code:"GIM014", message:`${tva.e_GroupType.elementize()} is required in ${GroupInformation.name().elementize()}`});
@@ -1821,9 +1821,9 @@ export default class ContentGuideCheck {
 		let GroupType=GroupInformation.get(xPath(SCHEMA_PREFIX, tva.e_GroupType), CG_SCHEMA);
 		if (GroupType) {
 			if (!(GroupType.attr(tva.a_type) && GroupType.attr(tva.a_type).value()==tva.t_ProgramGroupTypeType)) 
-				errs.addError({code:"GI011", message:`${tva.e_GroupType}@xsi:${tva.a_type}=${tva.t_ProgramGroupTypeType.quote()} is required`});
+				errs.addError({code:"GI011", message:`${tva.e_GroupType}@xsi:${tva.a_type}=${tva.t_ProgramGroupTypeType.quote()} is required`, fragment:GroupType});
 			if (!(GroupType.attr(tva.a_value) && GroupType.attr(tva.a_value).value()=="otherCollection")) 
-				errs.addError({code:"GI022", message:`${tva.a_value.attribute(tva.e_GroupType)}=${"otherCollection".quote()} is required`});
+				errs.addError({code:"GI022", message:`${tva.a_value.attribute(tva.e_GroupType)}=${"otherCollection".quote()} is required`, fragment:GroupType});
 		}
 		else
 			errs.addError({code:"GI014", message:`${tva.e_GroupType.elementize()} is required in ${GroupInformation.name().elementize()}`});
