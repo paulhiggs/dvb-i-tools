@@ -62,6 +62,15 @@ function CountChildElements(node, childElementName) {
 	return r;
 }
 
+function getNamedChildElements(node, childElementName) {
+	let res=[], childElems=node?node.childNodes():null;
+	if (childElems) childElems.forEachSubElement(elem => {
+		if (elem.name()==childElementName)
+			res.push(elem);
+	});
+	return res;
+}
+
 
 /**
  * check that the specified child elements are in the parent element
@@ -76,15 +85,15 @@ function CountChildElements(node, childElementName) {
  * NOTE: elements are described as an object containing "name", "minOccurs", "maxOccurs".
  *   Default values for minOccurs and maxOccurs are 1
  */
- function checkTopElementsAndCardinality(parentElement, childElements, allowOtherElements, errs, errCode=null) {
-
+ function checkTopElementsAndCardinality(parentElement, childElements, allowOtherElements, errs, errCode )
+ {
 	function findElementIn(elementList, elementName) {
 		if (elementList instanceof Array)
 			return elementList.find(element => element.name == elementName);
 		else return false;
 	}
 	if (!parentElement) {
-		errs.addError({type:APPLICATION, code:errCode?`${errCode}-0`:"TE000", message:"checkTopElementsAndCardinality() called with a 'null' element to check"});
+		errs.addError({type:APPLICATION, code:"TE000", message:"checkTopElementsAndCardinality() called with a 'null' element to check"});
 		return false;
 	}
 	let rv=true, thisElem=elementize(`${parentElement.parent().name()}.${parentElement.name()}`);
@@ -92,15 +101,20 @@ function CountChildElements(node, childElementName) {
 	childElements.forEach(elem => {
 		let _min=elem?.minOccurs ? elem.minOccurs : 1;
 		let _max=elem?.maxOccurs ? elem.maxOccurs : 1;
-		let count=CountChildElements(parentElement, elem.name);
+//		let count=CountChildElements(parentElement, elem.name);
+		let namedChildren=getNamedChildElements(parentElement, elem.name), count=namedChildren.length;
+
 		if (count==0 && _min!=0) {
-			errs.addError({code:errCode?`${errCode}-1`:"TE001", message:`Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`});
+			errs.addError({code:`${errCode}-1`, line:parentElement.line(), 
+								message:`Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`});
 			rv=false;
 		}
 		else {
 			if (count<_min || count>_max) {
-				errs.addError({code:errCode?`${errCode}-2`:"TE002", 
-								message:`Cardinality of ${elem.name.elementize()} in ${thisElem} is not in the range ${_min}..${(_max==Infinity)?"unbounded":_max}`});
+				namedChildren.forEach(child => 
+					errs.addError({code:`${errCode}-2`, line:child.line(),
+									message:`Cardinality of ${elem.name.elementize()} in ${thisElem} is not in the range ${_min}..${(_max==Infinity)?"unbounded":_max}`})
+				);
 				rv=false;				
 			}
 		}
@@ -111,9 +125,8 @@ function CountChildElements(node, childElementName) {
 		let children=parentElement.childNodes();
 		if (children) children.forEachSubElement(child => {
 			if (!findElementIn(childElements, child.name())) {	
-				errs.addError({code:errCode?`${errCode}-3`:"TE003", 
-								message:`Element ${child.name().elementize()} is not permitted in ${thisElem}`, 
-								fragment:child});
+				errs.addError({code:`${errCode}-3`, line:child.line(),
+								message:`Element ${child.name().elementize()} is not permitted in ${thisElem}`});
 				rv=false;
 			}
 		});
@@ -129,9 +142,9 @@ function CountChildElements(node, childElementName) {
  * @param {Array}  requiredAttributes the element names permitted within the parent
  * @param {Array}  optionalAttributes the element names permitted within the parent
  * @param {Class}  errs               errors found in validaton
- * @param {string} errCode            error code prefix to be used in reports, if not present then use local codes
+ * @param {string} errCode            error code to be used in reports,
  */
-function checkAttributes(parentElement, requiredAttributes, optionalAttributes, errs, errCode=null)
+function checkAttributes(parentElement, requiredAttributes, optionalAttributes, errs, errCode)
 {
 	if (!requiredAttributes || !parentElement) {
 		errs.addError({type:APPLICATION, code:"AT000", message:"checkAttributes() called with parentElement==null or requiredAttributes==null"});
@@ -141,7 +154,7 @@ function checkAttributes(parentElement, requiredAttributes, optionalAttributes, 
 	requiredAttributes.forEach(attributeName => {
 		if (!parentElement.attr(attributeName)) {
 			let p=`${(parentElement.parent()?`${parentElement.parent().name()}.`:"")}${parentElement.name()}`;
-			errs.addError({code:errCode?`${errCode}-1`:"AT001", message:`${attributeName.attribute(`${p}`)} is a required attribute`, 
+			errs.addError({code:errCode, message:`${attributeName.attribute(`${p}`)} is a required attribute`, 
 					key:'missing attribute'});
 		}
 	});
@@ -149,7 +162,7 @@ function checkAttributes(parentElement, requiredAttributes, optionalAttributes, 
 	parentElement.attrs().forEach(attr => {
 		if (!isIn(requiredAttributes, attr.name()) && !isIn(optionalAttributes, attr.name())) {
 			let p=`${elementize(`${parentElement.parent()?`${parentElement.parent().name()}.`:""}${parentElement.name()}`)}`;
-			errs.addError({code:errCode?`${errCode}-2`:"AT002",  message:`${attr.name().attribute()} is not permitted in ${p}`,
+			errs.addError({code:errCode, message:`${attr.name().attribute()} is not permitted in ${p}`,
 					key:'unexpected attribute'});
 		}
 	});
@@ -245,17 +258,17 @@ function FalseValue(elem, attrName, errCode, errs, isRequired=true) {
  * @param {object} validator  the validation class to use
  * @param {Class}  errs       errors found in validaton
  * @param {string} lang 	  that should be displayed in HTML
- * @param {string} loc        (optional) "location" of the language being checked
- * @param {string} errCode      (optional) error number to use instead of local values
+ * @param {string} loc        "location" of the language being checked
+ * @param {string} errCode    error number to use instead of local values
  */
-function CheckLanguage(validator, errs, lang, loc=null, errCode=null ) {
+function CheckLanguage(validator, errs, lang, loc, errCode ) {
 	if (!validator) {
-		errs.addError({type:APPLICATION, code:errCode?`${errCode}-1`:"LA001", message:`cannot validate language ${lang.quote()}${loc?` for ${loc.elementize()}`:""}`, 
+		errs.addError({type:APPLICATION, code:`${errCode}-1`, message:`cannot validate language ${lang.quote()}${loc?` for ${loc.elementize()}`:""}`, 
 						key:"no language validator"});
 		return false;
 	}
 	if (!validator.isKnown(lang))  {
-		errs.addError({code:errCode?`${errCode}-2`:"LA002", message:`language ${lang.quote()} specified${loc?` for ${loc.elementize()}`:""} is invalid`, 
+		errs.addError({code:`${errCode}-2`, message:`language ${lang.quote()} specified${loc?` for ${loc.elementize()}`:""} is invalid`, 
 						key:"invalid language"});
 		return false;
 	}
@@ -371,14 +384,14 @@ export default class ContentGuideCheck {
 	 * @param {Object} node       the XML node whose @lang attribute should be checked
 	 * @param {string} parentLang the language of the XML element which is the parent of node
 	 * @param {boolean} isRequired report an error if @lang is not explicitly stated
-	 * @param {string} errCode     (optional) error number to use instead of local values
+	 * @param {string} errCode     error number to use
 	 * @returns {string} the @lang attribute of the node element of the parentLang if it does not exist of is not specified
 	 */
-	/* private */  GetLanguage(validator, errs, node, parentLang, isRequired=false, errCode=null) {
+	/* private */  GetLanguage(validator, errs, node, parentLang, isRequired, errCode) {
 		if (!node) 
 			return parentLang;
 		if (!node.attr(tva.a_lang) && isRequired) {
-			errs.addError({code:errCode?errCode:"AC001", message:`${tva.a_lang.attribute()} is required for ${node.name().quote()}`, key:"unspecified language"});
+			errs.addError({code:errCode, message:`${tva.a_lang.attribute()} is required for ${node.name().quote()}`, key:"unspecified language"});
 			return parentLang;		
 		}
 
@@ -437,9 +450,9 @@ export default class ContentGuideCheck {
 	 * @param {string} requestType         the type of content guide request being checked
 	 * @param {Class}  errs                errors found in validaton
 	 * @param {string} parentLanguage	   the xml:lang of the parent element to ProgramInformation
-	 * @param {string} errCode             error code prefix to be used in reports, if not present then use local codes
+	 * @param {string} errCode             error code prefix to be used in reports
 	 */
-	/* private */  ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, requiredLengths, optionalLengths, requestType, errs, parentLanguage, errCode=null) {
+	/* private */  ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, requiredLengths, optionalLengths, requestType, errs, parentLanguage, errCode) {
 		
 		function synopsisLengthError(label, length, actual) {
 			return `length of ${tva.a_length.attribute(tva.e_Synopsis)}=${label.quote()} exceeds ${length} characters, measured(${actual})`; }
@@ -456,9 +469,9 @@ export default class ContentGuideCheck {
 		let shortLangs=[], mediumLangs=[], longLangs=[];
 		while ((Synopsis=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_Synopsis, ++s), CG_SCHEMA))!=null) {
 			
-			checkAttributes(Synopsis, [tva.a_length], [tva.a_lang], errs, "SY001");
+			checkAttributes(Synopsis, [tva.a_length], [tva.a_lang], errs, `${errCode}-1`);
 
-			let synopsisLang=this.GetLanguage(this.knownLanguages, errs, Synopsis, parentLanguage, false, "SY002");
+			let synopsisLang=this.GetLanguage(this.knownLanguages, errs, Synopsis, parentLanguage, false, `${errCode}-2`);
 			let synopsisLength=Synopsis.attr(tva.a_length)?Synopsis.attr(tva.a_length).value():null;
 			
 			if (synopsisLength) {
@@ -467,20 +480,20 @@ export default class ContentGuideCheck {
 					switch (synopsisLength) {
 					case tva.SYNOPSIS_SHORT_LABEL:
 						if (_len > tva.SYNOPSIS_SHORT_LENGTH)
-							errs.addError({code:errCode?`${errCode}-11`:"SY011", message:synopsisLengthError(tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_SHORT_LENGTH, _len), 
+							errs.addError({code:`${errCode}-11`, message:synopsisLengthError(tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_SHORT_LENGTH, _len), 
 											fragment:Synopsis});
 						hasShort=true;
 						break;
 					case tva.SYNOPSIS_MEDIUM_LABEL:
 						if (_len > tva.SYNOPSIS_MEDIUM_LENGTH)
-							errs.addError({code:errCode?`${errCode}-12`:"SY012", 
+							errs.addError({code:`${errCode}-12`, 
 											message:synopsisLengthError(tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_MEDIUM_LENGTH, _len), 
 											fragment:Synopsis});
 						hasMedium=true;
 						break;
 					case tva.SYNOPSIS_LONG_LABEL:
 						if (_len > tva.SYNOPSIS_LONG_LENGTH)
-							errs.addError({code:errCode?`${errCode}-13`:"SY013", 
+							errs.addError({code:`${errCode}-13`, 
 											message:synopsisLengthError(tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_LONG_LENGTH, _len), 
 											fragment:Synopsis});
 						hasLong=true;
@@ -488,7 +501,7 @@ export default class ContentGuideCheck {
 					}
 				}
 				else
-					errs.addError({code:errCode?`${errCode}-14`:"SY014", 
+					errs.addError({code:`${errCode}-14`, 
 									message:`${tva.a_length.attribute()}=${synopsisLength.quote()} is not permitted for this request type`, 
 									fragment:Synopsis});
 			}
@@ -497,19 +510,19 @@ export default class ContentGuideCheck {
 				switch (synopsisLength) {
 					case tva.SYNOPSIS_SHORT_LABEL:
 						if (isIn(shortLangs, synopsisLang)) 
-							errs.addError({code:errCode?`${errCode}-16`:"SY016", 
+							errs.addError({code:`${errCode}-16`, 
 											message:singleLengthLangError(synopsisLength, synopsisLang), 
 											fragment:Synopsis});
 						else shortLangs.push(synopsisLang);
 						break;
 					case tva.SYNOPSIS_MEDIUM_LABEL:
 						if (isIn(mediumLangs, synopsisLang)) 
-							errs.addError({code:errCode?`${errCode}-17`:"SY017", message:singleLengthLangError(synopsisLength, synopsisLang), fragment:Synopsis});
+							errs.addError({code:`${errCode}-17`, message:singleLengthLangError(synopsisLength, synopsisLang), fragment:Synopsis});
 						else mediumLangs.push(synopsisLang);
 						break;
 					case tva.SYNOPSIS_LONG_LABEL:
 						if (isIn(longLangs, synopsisLang)) 
-							errs.addError({code:errCode?`${errCode}-18`:"SY018", message:singleLengthLangError(synopsisLength, synopsisLang), fragment:Synopsis});
+							errs.addError({code:`${errCode}-18`, message:singleLengthLangError(synopsisLength, synopsisLang), fragment:Synopsis});
 						else longLangs.push(synopsisLang);
 						break;
 				}
@@ -517,11 +530,11 @@ export default class ContentGuideCheck {
 		}
 		
 		if (isIn(requiredLengths, tva.SYNOPSIS_SHORT_LABEL) && !hasShort)
-			errs.addError({code:errCode?`${errCode}-19`:"SY019", message:requiredSynopsisError(tva.SYNOPSIS_SHORT_LABEL)});
+			errs.addError({code:`${errCode}-19`, message:requiredSynopsisError(tva.SYNOPSIS_SHORT_LABEL)});
 		if (isIn(requiredLengths, tva.SYNOPSIS_MEDIUM_LABEL) && !hasMedium)
-			errs.addError({code:errCode?`${errCode}-20`:"SY020", message:requiredSynopsisError(tva.SYNOPSIS_MEDIUM_LABEL)});
+			errs.addError({code:`${errCode}-20`, message:requiredSynopsisError(tva.SYNOPSIS_MEDIUM_LABEL)});
 		if (isIn(requiredLengths, tva.SYNOPSIS_LONG_LABEL) && !hasLong)
-			errs.addError({code:errCode?`${errCode}-21`:"SY021", message:requiredSynopsisError(tva.SYNOPSIS_LONG_LABEL)});
+			errs.addError({code:`${errCode}-21`, message:requiredSynopsisError(tva.SYNOPSIS_LONG_LABEL)});
 	}
 
 
@@ -535,9 +548,9 @@ export default class ContentGuideCheck {
 	 * @param {integer} maxKeywords         the maximum number of keywords
 	 * @param {Class}   errs                errors found in validaton
 	 * @param {string}  parentLanguage	    the xml:lang of the parent element to ProgramInformation
-	 * @param {string}  errCode             error code prefix to be used in reports, if not present then use local codes
+	 * @param {string}  errCode             error code prefix to be used in reports
 	 */
-	/* private */  ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, minKeywords, maxKeywords, errs, parentLanguage, errCode=null) {
+	/* private */  ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, minKeywords, maxKeywords, errs, parentLanguage, errCode) {
 
 		if (!BasicDescription) {
 			errs.addError({type:APPLICATION, code:"KW000", message:"ValidateKeyword() called with BasicDescription=null"});
@@ -546,24 +559,24 @@ export default class ContentGuideCheck {
 		let k=0, Keyword, counts=[];
 		while ((Keyword=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_Keyword, ++k), CG_SCHEMA))!=null) {
 			
-			checkAttributes(Keyword, [], [tva.a_lang, tva.a_type], errs, "KW001");
+			checkAttributes(Keyword, [], [tva.a_lang, tva.a_type], errs, `${errCode}-1`);
 
 			let keywordType=Keyword.attr(tva.a_type)?Keyword.attr(tva.a_type).value():tva.DEFAULT_KEYWORD_TYPE;
-			let keywordLang=this.GetLanguage(this.knownLanguages, errs, Keyword, parentLanguage, false, "KW002");
+			let keywordLang=this.GetLanguage(this.knownLanguages, errs, Keyword, parentLanguage, false, `${errCode}-2`);
 
 			if (counts[keywordLang]===undefined)
 				counts[keywordLang]=1;
 			else counts[keywordLang]++;
 			if (keywordType!=tva.KEYWORD_TYPE_MAIN && keywordType!=tva.KEYWORD_TYPE_OTHER)
-				errs.addError({code:errCode?`${errCode}-1`:"KW011", 
+				errs.addError({code:`${errCode}-11`, 
 								message:`${tva.a_type.attribute()}=${keywordType.quote()} not permitted for ${tva.e_Keyword.elementize()}`});
 			if (unEntity(Keyword.text()).length > dvbi.MAX_KEYWORD_LENGTH)
-				errs.addError({code:errCode?`${errCode}-2`:"KW012", message:`length of ${tva.e_Keyword.elementize()} is greater than ${dvbi.MAX_KEYWORD_LENGTH}`});
+				errs.addError({code:`${errCode}-12`, message:`length of ${tva.e_Keyword.elementize()} is greater than ${dvbi.MAX_KEYWORD_LENGTH}`});
 		}
 		
 		for (let i in counts) {
 			if (counts[i]!=0 && counts[i]>maxKeywords) 
-				errs.addError({code:errCode?`${errCode}-3`:"KW013", 
+				errs.addError({code:`${errCode}-13`, 
 					message:`More than ${maxKeywords} ${tva.e_Keyword.elementize()} element${(maxKeywords>1?"s":"")} specified${(i==DEFAULT_LANGUAGE?"":" for language "+i.quote())}`});
 		}
 	}
@@ -576,9 +589,9 @@ export default class ContentGuideCheck {
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {Object}  BasicDescription    the element whose children should be checked
 	 * @param {Class}   errs                errors found in validaton
-	 * @param {string}  errCode             error code prefix to be used in reports, if not present then use local codes
+	 * @param {string}  errCode             error code prefix to be used in reports
 	 */
-	/* private */  ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, errCode=null) {
+	/* private */  ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, errCode) {
 
 		if (!BasicDescription) {
 			errs.addError({type:APPLICATION, code:"GE000", message:"ValidateGenre() called with BasicDescription=null"});
@@ -589,12 +602,12 @@ export default class ContentGuideCheck {
 		while ((Genre=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_Genre, ++g), CG_SCHEMA))!=null) {
 			let genreType=Genre.attr(tva.a_type)?Genre.attr(tva.a_type).value():tva.DEFAULT_GENRE_TYPE;
 			if (genreType!=tva.GENRE_TYPE_MAIN)
-				errs.addError({code:errCode?`${errCode}-1`:"GE001", 
+				errs.addError({code:`${errCode}-1`, 
 								message:`${tva.a_type.attribute()}=${genreType.quote()} not permitted for ${tva.e_Genre.elementize()}`});
 			
 			let genreValue=Genre.attr(tva.a_href)?Genre.attr(tva.a_href).value():"";
 			if (!this.allowedGenres.isIn(genreValue))
-				errs.addError({code:errCode?`${errCode}-2`:"GE002", 
+				errs.addError({code:`${errCode}-2`, 
 								message:`invalid ${tva.a_href.attribute()} value ${genreValue.quote()} for ${tva.e_Genre.elementize()}`});
 		}
 	}
@@ -606,9 +619,9 @@ export default class ContentGuideCheck {
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {Object}  BasicDescription    the element whose children should be checked
 	 * @param {Class}   errs                errors found in validaton
-	 * @param {string}  errCode             error code prefix to be used in reports, if not present then use local codes
+	 * @param {string}  errCode             error code prefix to be used in reports
 	 */
-	/* private */  ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, errCode=null) {
+	/* private */  ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, errCode) {
 		// first <ParentalGuidance> element must contain an <mpeg7:MinimumAge> element
 
 		if (!BasicDescription) {
@@ -622,28 +635,28 @@ export default class ContentGuideCheck {
 				case tva.e_MinimumAge:
 				case tva.e_ParentalRating:
 					if (countParentalGuidance==1 && pgChild.name()!=tva.e_MinimumAge)
-						errs.addError({code:errCode?`${errCode}-1`:"PG011", 
+						errs.addError({code:`${errCode}-1`, 
 										message:`first ${tva.e_ParentalGuidance.elementize()} element must contain ${elementize("mpeg7:"+tva.e_MinimumAge)}`});
 					
 					if (pgChild.name()==tva.e_MinimumAge && countParentalGuidance!=1)
-						errs.addError({code:errCode?`${errCode}-2`:"PG012", 
+						errs.addError({code:`${errCode}-2`, 
 										message:`${tva.e_MinimumAge.elementize()} must be in the first ${tva.e_ParentalGuidance.elementize()} element`});
 					
 					if (pgChild.name()==tva.e_ParentalRating) {
-						checkAttributes(pgChild, [tva.a_href], [], errs, errCode?`${errCode}-3`:"PG013");
+						checkAttributes(pgChild, [tva.a_href], [], errs, `${errCode}-3`);
 					}
 					break;		
 				case tva.e_ExplanatoryText:
 					countExplanatoryText++;
-					checkAttributes(pgChild, [tva.a_length], [], errs, errCode?`${errCode}-4`:"PG004") ;
+					checkAttributes(pgChild, [tva.a_length], [], errs, `${errCode}-4`);
 					if (pgChild.attr(tva.a_length)) {
 						if (pgChild.attr(tva.a_length).value()!=tva.v_lengthLong)
-							errs.addError({code:errCode?`${errCode}-3`:"PG003", 
+							errs.addError({code:`${errCode}-5`, 
 											message:`${tva.a_length.attribute()}=${pgChild.attr(tva.a_length).value().quote()} is not allowed for ${tva.e_ExplanatoryText.elementize()}`});
 					}
 					
 					if (unEntity(pgChild.text()).length > dvbi.MAX_EXPLANATORY_TEXT_LENGTH)
-						errs.addError({code:errCode?`${errCode}-5`:"PG005", 
+						errs.addError({code:`${errCode}-6`, 
 										message:`length of ${tva._ExplanatoryText.elementize()} cannot exceed ${dvbi.MAX_EXPLANATORY_TEXT_LENGTH} characters`});
 					break;
 			}
@@ -656,7 +669,7 @@ export default class ContentGuideCheck {
 			if (ParentalGuidance.childNodes()) ParentalGuidance.childNodes().forEachSubElement(checkPGchild);
 
 			if (countExplanatoryText > 1)
-				errs.addError({code:errCode?`${errCode}-6`:"PG006", 
+				errs.addError({code:`${errCode}-7`, 
 								message:`only a single ${tva.e_ExplanatoryText.elementize()} element is premitted in ${tva.e_ParentalGuidance.elementize()}`});
 		}
 	}
@@ -667,13 +680,13 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {Object}  elem             the element whose children should be checked
 	 * @param {Class}   errs             errors found in validaton
-	 * @param {string}  errCode          error code prefix to be used in reports, if not present then use local codes
+	 * @param {string}  errCode          error code prefix to be used in reports
 	 */
-	/* private */  ValidateName(elem, errs, errCode=null) {
+	/* private */  ValidateName(elem, errs, errCode) {
 		
-		function checkNamePart(elem, errs, errCode=null) {
+		function checkNamePart(elem, errs, errCode) {
 			if (unEntity(elem.text()).length > dvbi.MAX_NAME_PART_LENGTH)	
-				errs.addError({code:errCode?`${errCode}-1`:"VN001", 
+				errs.addError({code:errCode, fragment:elem,
 								message:`${elem.name().elementize()} in ${elem.parent().name().elementize()} is longer than ${dvbi.MAX_NAME_PART_LENGTH} characters`});
 		}
 		
@@ -686,19 +699,19 @@ export default class ContentGuideCheck {
 			switch (subElem.name()) {
 				case tva.e_GivenName:
 					givenNameCount++;
-					checkNamePart(subElem, errs, errCode?`${errCode}-2`:"VN002");
+					checkNamePart(subElem, errs, `${errCode}-2`);
 					break;
 				case tva.e_FamilyName:
 					familyNameCount++;
-					checkNamePart(subElem, errs, errCode?`${errCode}-3`:"VN003");
+					checkNamePart(subElem, errs, `${errCode}-3`);
 					break;	
 			}
 		});
 			
 		if (givenNameCount==0)
-			errs.addError({code:"VN004", message:`${tva.e_GivenName.elementize()} is mandatory in ${elem.name().elementize()}`});
+			errs.addError({code:`${errCode}-4`, message:`${tva.e_GivenName.elementize()} is mandatory in ${elem.name().elementize()}`});
 		if (familyNameCount>1)
-			errs.addError({code:"VN005", message:`only a single ${tva.e_FamilyName.elementize()} is permitted in ${elem.name().elementize()}`});
+			errs.addError({code:`${errCode}-5`, message:`only a single ${tva.e_FamilyName.elementize()} is permitted in ${elem.name().elementize()}`});
 	}
 
 
@@ -709,9 +722,9 @@ export default class ContentGuideCheck {
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {Object}  BasicDescription    the element whose children should be checked
 	 * @param {Class}   errs                errors found in validaton
-	 * @param {string}  errCode             error code prefix to be used in reports, if not present then use local codes
+	 * @param {string}  errCode             error code prefix to be used in reports
 	 */
-	/* private */  ValidateCreditsList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, errCode=null) {
+	/* private */  ValidateCreditsList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, errCode) {
 		
 		function singleElementError(elementname, parentElemmentName) {
 			return `only a single ${elementname.elementize()} is permitted in ${parentElemmentName.elementize()}`;
@@ -724,11 +737,11 @@ export default class ContentGuideCheck {
 		if (CreditsList) {
 			let ci=0, CreditsItem;
 			while ((CreditsItem=CreditsList.get(xPath(SCHEMA_PREFIX, tva.e_CreditsItem, ++ci), CG_SCHEMA))!=null) {
-				checkAttributes(CreditsItem, [tva.a_role], [], errs, errCode?`${errCode}-1`:"CL001");
+				checkAttributes(CreditsItem, [tva.a_role], [], errs, `${errCode}-1`);
 				if (CreditsItem.attr(tva.a_role)) {
 					let CreditsItemRole=CreditsItem.attr(tva.a_role).value();
 					if (!this.allowedCreditItemRoles.isIn(CreditsItemRole))
-						errs.addError({code:errCode?`${errCode}-2`:"CL002", 
+						errs.addError({code:`${errCode}-2`, 
 										message:`${CreditsItemRole.quote()} is not valid for ${tva.a_role.attribute(tva.e_CreditsItem)}`});
 				}
 				
@@ -750,33 +763,33 @@ export default class ContentGuideCheck {
 						case tva.e_OrganizationName:
 							foundOrganizationName++;
 							if (unEntity(elem.text()).length > dvbi.MAX_ORGANIZATION_NAME_LENGTH)
-								errs.addError({code:errCode?`${errCode}-5`:"CL005", 
+								errs.addError({code:`${errCode}-5`, 
 									message:`length of ${tva.e_OrganizationName.elementize()} in ${tva.e_CreditsItem.elementize()} exceeds ${dvbi.MAX_ORGANIZATION_NAME_LENGTH} characters`});
 							break;
 						default:
 							if (elem.name()!="text")
-								errs.addError({code:errCode?`${errCode}-6`:"CL006", message:`extra element ${elem.name().elementize()} found in ${tva.e_CreditsItem.elementize()}`});
+								errs.addError({code:`${errCode}-6`, message:`extra element ${elem.name().elementize()} found in ${tva.e_CreditsItem.elementize()}`});
 					}
 					if (foundPersonName>1)
-						errs.addError({code:errCode?`${errCode}-10`:"CL010", message:singleElementError(tva.e_PersonName, tva.e_CreditsItem)});
+						errs.addError({code:`${errCode}-10`, message:singleElementError(tva.e_PersonName, tva.e_CreditsItem)});
 					if (foundCharacter>1)
-						errs.addError({code:errCode?`${errCode}-11`:"CL011", message:singleElementError(tva.e_Character, tva.e_CreditsItem)});
+						errs.addError({code:e`${errCode}-11`, message:singleElementError(tva.e_Character, tva.e_CreditsItem)});
 					if (foundOrganizationName>1)
-						errs.addError({code:errCode?`${errCode}-12`:"CL012", message:singleElementError(tva.e_OrganizationName, tva.e_CreditsItem)});
+						errs.addError({code:`${errCode}-12`, message:singleElementError(tva.e_OrganizationName, tva.e_CreditsItem)});
 					if (foundCharacter>0 && foundPersonName==0)
-						errs.addError({code:errCode?`${errCode}-13`:"CL013", 
+						errs.addError({code:`${errCode}-13`, 
 										message:`${tva.e_Character.elementize()} in ${tva.e_CreditsItem.elementize()} requires ${tva.e_PersonName.elementize()}`});
 					if (foundOrganizationName>0 && (foundPersonName>0 || foundCharacter>0))
-						errs.addError({code:errCode?`${errCode}-14`:"CL014", 
+						errs.addError({code:`${errCode}-14`, 
 										message:`${tva.e_OrganizationName.elementize()} can only be present when ${tva.e_PersonName.elementize()} is absent in ${tva.e_CreditsItem.elementize()}`});
 				});
 				/* jshint +W083 */
 				if (foundPersonName>1)
-					errs.addError({code:errCode?`${errCode}-20`:"CL020", message:singleElementError(tva.e_PersonName, tva.e_CreditsItem)});
+					errs.addError({code:`${errCode}-20`, message:singleElementError(tva.e_PersonName, tva.e_CreditsItem)});
 				if (foundCharacter>1)
-					errs.addError({code:errCode?`${errCode}-21`:"CL021",message:singleElementError(tva.e_Character, tva.e_CreditsItem)});
+					errs.addError({code:`${errCode}-21`,message:singleElementError(tva.e_Character, tva.e_CreditsItem)});
 				if (foundOrganizationName>1)
-					errs.addError({code:errCode?`${errCode}-22`:"CL022", message:singleElementError(tva.e_OrganizationName, tva.e_CreditsItem)});
+					errs.addError({code:`${errCode}-22`, message:singleElementError(tva.e_OrganizationName, tva.e_CreditsItem)});
 			}
 		}
 	}
@@ -871,7 +884,7 @@ export default class ContentGuideCheck {
 		while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) {
 			let HowRelated=RelatedMaterial.get(xPath(SCHEMA_PREFIX, tva.e_HowRelated), CG_SCHEMA);
 			if (!HowRelated) 
-				this.NoChildElement(errs, tva.e_HowRelated.elementize(), tva.e_RelatedMaterial.elementize(), "VP001");
+				this.NoChildElement(errs, tva.e_HowRelated.elementize(), tva.e_RelatedMaterial.elementize(), Location, "VP001");
 			else {	
 				checkAttributes(HowRelated, [tva.a_href], [], errs, "VP002");
 				if (HowRelated.attr(tva.a_href))
@@ -956,8 +969,8 @@ export default class ContentGuideCheck {
 	 * @param {string} schemaLoctation The location in the schema of the element
 	 * @param {string} errCode         The error number to show in the log
 	 */
-	/* private */  NoChildElement(errs, missingElement, parentElement, schemaLocation=null, errCode=null) {
-		errs.addError({code:errCode?errCode:"NC001", 
+	/* private */  NoChildElement(errs, missingElement, parentElement, schemaLocation, errCode) {
+		errs.addError({code:errCode, 
 						message:`${missingElement} element not specified for ${parentElement}${schemaLocation?(" in "+schemaLocation):""}`});
 	}
 
@@ -971,21 +984,8 @@ export default class ContentGuideCheck {
 	 * @param {string} loc     The location of the element
 	 * @param {string} errCode The error number to show in the log
 	 */
-	/* private */  InvalidHrefValue(errs, value, src, loc=null, errCode=null) {
-		errs.addError({code:errCode?errCode:"HV001", message:`invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${src}${loc?(" in "+loc):""}`});
-	}
-
-
-	/**
-	 * Add an error message when the MediaLocator does not contain a MediaUri sub-element
-	 *
-	 * @param {Object} errs Errors buffer
-	 * @param {String} src The type of element with the <MediaLocator>
-	 * @param {String} loc The location of the element
-	 * @param {string} errCode The error number to show in the log
-	 */
-	/* private */  NoAuxiliaryURI(errs, src, loc, errCode=null) {
-		this.NoChildElement(errs, tva.e_AuxiliaryURI.elementize(), `${src} ${tva.e_MediaLocator.elementize()}`, loc, errCode?errCode:"AU001");
+	/* private */  InvalidHrefValue(errs, value, src, loc, errCode) {
+		errs.addError({code:errCode, message:`invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`});
 	}
 
 
@@ -1041,7 +1041,7 @@ export default class ContentGuideCheck {
 							}
 						});	
 						if (!hasAuxiliaryURI) 
-							this.NoAuxiliaryURI(errs, "template AIT", Location, "TA012");
+							this.NoChildElement(errs, tva.e_AuxiliaryURI.elementize(), `template AIT ${tva.e_MediaLocator.elementize()}`, Location, "TA012");
 					});
 				else 
 					this.NoChildElement(errs, tva.e_MediaLocator.elementize(), RelatedMaterial.name(), Location, "TA013");
@@ -1166,7 +1166,7 @@ export default class ContentGuideCheck {
 		while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) {
 			let HowRelated=RelatedMaterial.get(xPath(SCHEMA_PREFIX, tva.e_HowRelated), CG_SCHEMA);
 			if (!HowRelated) 
-				this.NoChildElement(errs, tva.e_HowRelated.elementize(), tva.e_RelatedMaterial.elementize());
+				this.NoChildElement(errs, tva.e_HowRelated.elementize(), tva.e_RelatedMaterial.elementize(), null, "MB009");
 			else {		
 				checkAttributes(HowRelated, [tva.a_href], [], errs, "MB010");
 				if (HowRelated.attr(tva.a_href)) {
@@ -1214,10 +1214,10 @@ export default class ContentGuideCheck {
 	 * @param {boolean} allowSecondary      indicates if  Title with @type="secondary" is permitted
 	 * @param {Class}   errs                errors found in validaton
 	 * @param {string}  parentLanguage	    the xml:lang of the parent element to ProgramInformation
-	 * @param {string}  errCode             error code prefix to be used in reports, if not present then use local codes
+	 * @param {string}  errCode             error code prefix to be used in reports
 	 * @param {boolean} TypeIsRequired      true is the @type is a required attribute in this use of <Title>
 	 */
-	/* private */  ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, allowSecondary, errs, parentLanguage, errCode=null, TypeIsRequired=false) {
+	/* private */  ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, allowSecondary, errs, parentLanguage, errCode, TypeIsRequired) {
 		
 		if (!BasicDescription) {
 			errs.addError({type:APPLICATION, code:"VT000", message:"ValidateTitle() called with BasicDescription==null"});
@@ -1229,7 +1229,7 @@ export default class ContentGuideCheck {
 		function analyseLang(lang, index, array) {
 			if (!isIn(mainSet, lang)) {
 				let tLoc= lang!=DEFAULT_LANGUAGE ? ` for @xml:${tva.a_lang}=${lang.quote()}` : "";
-				errs.addError({code:errCode?`${errCode}-16`:"VT016", 
+				errs.addError({code:`${errCode}-16`, 
 					message:`${tva.a_type.attribute()}=${mpeg7.TITLE_TYPE_SECONDARY.quote()} specified without ${tva.a_type.attribute()}=${mpeg7.TITLE_TYPE_MAIN.quote()}${tLoc}`});
 			}
 		}
@@ -1240,35 +1240,35 @@ export default class ContentGuideCheck {
 		else optionalAttributes.push(tva.a_type);
 		while ((Title=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_Title, ++t), CG_SCHEMA))!=null) {
 
-			checkAttributes(Title, requiredAttributes, optionalAttributes, errs, errCode?`${errCode}-1`:"VT001");
+			checkAttributes(Title, requiredAttributes, optionalAttributes, errs, `${errCode}-1`);
 			
 			let titleType=Title.attr(tva.a_type) ? Title.attr(tva.a_type).value() : mpeg7.DEFAULT_TITLE_TYPE;
-			let titleLang=this.GetLanguage(this.knownLanguages, errs, Title, parentLanguage, false, "VT002");
+			let titleLang=this.GetLanguage(this.knownLanguages, errs, Title, parentLanguage, false, `${errCode}-2`);
 			let titleStr=unEntity(Title.text());
 			
 			if (titleStr.length > dvbi.MAX_TITLE_LENGTH)
-				errs.addError({code:errCode?`${errCode}-11`:"VT011", message:`${tva.e_Title.elementize()} length exceeds ${dvbi.MAX_TITLE_LENGTH} characters`});
+				errs.addError({code:`${errCode}-11`, message:`${tva.e_Title.elementize()} length exceeds ${dvbi.MAX_TITLE_LENGTH} characters`});
 				
 			switch (titleType) {
 				case mpeg7.TITLE_TYPE_MAIN:
 					if (isIn(mainSet, titleLang))
-						errs.addError({code:errCode?`${errCode}-12`:"VT012", 
+						errs.addError({code:`${errCode}-12`, 
 							message:`only a single language (${titleLang}) is permitted for ${tva.a_type.attribute(tva.e_Title)}=${mpeg7.TITLE_TYPE_MAIN.quote()}`});
 					else mainSet.push(titleLang);
 					break;
 				case mpeg7.TITLE_TYPE_SECONDARY:
 					if (allowSecondary) {
 						if (isIn(secondarySet, titleLang))
-							errs.addError({code:errCode?`${errCode}-13`:"VT013", 
+							errs.addError({code:`${errCode}-13`, 
 								message:`only a single language (${titleLang}) is permitted for ${tva.a_type.attribute(tva.e_Title)}=${mpeg7.TITLE_TYPE_SECONDARY.quote()}`});
 						else secondarySet.push(titleLang);
 					}
 					else 
-						errs.addError({code:errCode?`${errCode}-14`:"VT014", 
+						errs.addError({code:`${errCode}-14`, 
 							message:`${tva.a_type.attribute(tva.e_Title)}=${mpeg7.TITLE_TYPE_SECONDARY.quote()} is not permitted for this ${BasicDescription.name().elementize()}`});
 					break;
 				default:	
-					errs.addError({code:errCode?`${errCode}-15`:"VT015", 
+					errs.addError({code:`${errCode}-15`, 
 						message:`${tva.a_type.attribute()} must be ${mpeg7.TITLE_TYPE_MAIN.quote()} or ${mpeg7.TITLE_TYPE_SECONDARY.quote()} for ${tva.e_Title.elementize()}`});
 			}	
 			secondarySet.forEach(analyseLang);
@@ -1297,7 +1297,7 @@ export default class ContentGuideCheck {
 		let isParentGroup=parentElement==categoryGroup;
 		let BasicDescription=parentElement.get(xPath(SCHEMA_PREFIX, tva.e_BasicDescription), CG_SCHEMA);
 		if (!BasicDescription) {
-			this.NoChildElement(errs, tva.e_BasicDescription.elementize(), parentElement.name());
+			this.NoChildElement(errs, tva.e_BasicDescription.elementize(), parentElement.name(), null, "BD010");
 			return;
 		}
 
@@ -1549,7 +1549,7 @@ export default class ContentGuideCheck {
 			
 		let ProgramInformationTable=ProgramDescription.get(xPath(SCHEMA_PREFIX, tva.e_ProgramInformationTable), CG_SCHEMA);
 		if (!ProgramInformationTable) {
-			errs.addError({code:"PI101", message:`${tva.e_ProgramInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`});
+			//errs.addError({code:"PI101", message:`${tva.e_ProgramInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`});
 			return null;
 		}
 		checkAttributes(ProgramInformationTable, [], [tva.a_lang], errs, "PI102");
@@ -1852,7 +1852,7 @@ export default class ContentGuideCheck {
 		let GroupInformationTable=ProgramDescription.get(xPath(SCHEMA_PREFIX, tva.e_GroupInformationTable), CG_SCHEMA);
 		
 		if (!GroupInformationTable) {
-			errs.addError({code:"GI101", message:`${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`});
+			//errs.addError({code:"GI101", message:`${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`});
 			return;
 		}
 		let gitLang=this.GetLanguage(this.knownLanguages, errs, GroupInformationTable, parentLang, false, "GI102");
@@ -2155,12 +2155,12 @@ export default class ContentGuideCheck {
 		function isEPGAvailability(str) { return [dvbi.FORWARD_EPG_AVAILABLE, dvbi.FORWARD_EPG_UNAVAILABLE].includes(str); }
 		function isAvailability(str) { return isMediaAvailability(str) || isEPGAvailability(str); }
 		
-		function checkGenre(node, errs, errcode=null) {
+		function checkGenre(node, errs, errcode) {
 			if (!node) return null;
-			checkAttributes(node, [tva.a_href], [tva.a_type], errs, errcode?`${errcode}-1`:"ChG001");
+			checkAttributes(node, [tva.a_href], [tva.a_type], errs, `${errcode}-1`);
 			let GenreType=(node.attr(tva.a_type)?node.attr(tva.a_type).value():tva.GENRE_TYPE_OTHER);
 			if (GenreType!=tva.GENRE_TYPE_OTHER)
-				errs.addError({code:errcode?`${errcode}-2`:"ChG002", message:`${tva.a_type.attribute(`${node.parent().name()}.${+node.name()}`)} must contain ${tva.GENRE_TYPE_OTHER.quote()}`});
+				errs.addError({code:`${errcode}-2`, message:`${tva.a_type.attribute(`${node.parent().name()}.${+node.name()}`)} must contain ${tva.GENRE_TYPE_OTHER.quote()}`});
 
 			return (node.attr(tva.a_href)?node.attr(tva.a_href).value():null);
 		}
@@ -2301,9 +2301,9 @@ export default class ContentGuideCheck {
 	 * @param {Object} node              the element node containing the an XML AIT reference
 	 * @param {Array}  allowedContentTypes the contentTypes that can be signalled in the node@contentType attribute
 	 * @param {Class}  errs              errors found in validaton
-	 * @param {string} errcode           error code to be used with any errors founf
+	 * @param {string} errcode           error code to be used with any errors found
 	 */
-	/* private */  CheckPlayerApplication(node, allowedContentTypes, errs, errcode=null) {
+	/* private */  CheckPlayerApplication(node, allowedContentTypes, errs, errcode) {
 
 		if (!node)  {
 			errs.addError({type:APPLICATION, code:"PA000a", message:"CheckPlayerApplication() called with node==null"});
@@ -2315,8 +2315,8 @@ export default class ContentGuideCheck {
 		}
 
 		if (!node.attr(tva.a_contentType)) {
-			errs.addError({code:errcode?`${errcode}-1`:"PA001", message:`${tva.a_contentType.attribute()} attribute is required when signalling a player in ${node.name().elementize()}`, 
-				key:`missing ${tva.a_contentType.attribute()}`});
+			errs.addError({code:`${errcode}-1`, message:`${tva.a_contentType.attribute()} attribute is required when signalling a player in ${node.name().elementize()}`, 
+				key:`missing ${tva.a_contentType.attribute()}`, fragment:node});
 			return;
 		}
 
@@ -2324,17 +2324,17 @@ export default class ContentGuideCheck {
 			switch (node.attr(tva.a_contentType).value()) {
 				case dvbi.XML_AIT_CONTENT_TYPE:
 					if (!isHTTPURL(node.text()))
-						errs.addError({code:errcode?`${errcode}-2`:"PA002", message:`${node.name().elementize()}=${node.text().quote()} is not a valid AIT URL`, key:"invalid URL"});
+						errs.addError({code:`${errcode}-2`, message:`${node.name().elementize()}=${node.text().quote()} is not a valid AIT URL`, key:"invalid URL", fragment:node});
 					break;
 	/*			case dvbi.HTML5_APP:
 				case dvbi.XHTML_APP:
 					if (!patterns.isHTTPURL(node.text()))
-						errs.addError({code:errcode?`${errcode}-3`:"PA003", message:`${node.name().elementize()}=${node.text().quote()} is not a valid URL`, key:"invalid URL"});		
+						errs.addError({code:`${errcode}-3`, message:`${node.name().elementize()}=${node.text().quote()} is not a valid URL`, key:"invalid URL", fragment:node});		
 					break;
 	*/		}
 		}
 		else
-			errs.addError({code:errcode?`${errcode}-4`:"PA004",
+			errs.addError({code:`${errcode}-4`,
 							message:`${tva.a_contentType.attribute(node.name())}=${node.attr(tva.a_contentType).value().quote()} is not valid for a player`, 
 							fragment:node, key:`invalid ${tva.a_contentType}`});
 	}
@@ -2510,7 +2510,7 @@ export default class ContentGuideCheck {
 			// <Program>
 			let Program=ScheduleEvent.get(xPath(SCHEMA_PREFIX, tva.e_Program), CG_SCHEMA);
 			if (Program) {
-				checkAttributes(Program, [tva.a_crid], [], errs, "SE010" );
+				checkAttributes(Program, [tva.a_crid], [], errs, "SE010");
 
 				let ProgramCRID=Program.attr(tva.a_crid);
 				if (ProgramCRID) {
@@ -2648,7 +2648,7 @@ export default class ContentGuideCheck {
 		
 		let ProgramLocationTable=ProgramDescription.get(xPath(SCHEMA_PREFIX, tva.e_ProgramLocationTable), CG_SCHEMA);
 		if (!ProgramLocationTable) {
-			errs.addError({code:"PL001", message:`${tva.e_ProgramLocationTable.elementize()} is not specified`});
+			//errs.addError({code:"PL001", message:`${tva.e_ProgramLocationTable.elementize()} is not specified`});
 			return;
 		}
 		checkTopElementsAndCardinality(ProgramLocationTable, 

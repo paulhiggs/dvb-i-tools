@@ -65,7 +65,7 @@ function tabulateResults(res, error, errs) {
 			res.write("<style>.errs {position:relative; cursor:pointer; color:red;} .errs[title]:hover:after {opacity:1; transition-delay:.1s; }</style>");
 			res.write("<pre>");
 			errs.markupXML.forEach(line => {
-				let qualifier=line.validationErrors?` class="errs" title="${line.validationErrors.map(err=>HTMLize(err)).join('&#013;')}"`:"";
+				let qualifier=line.validationErrors?` class="errs" title="${line.validationErrors.map(err=>HTMLize(err)).join('&#10;')}"`:"";
 				res.write(`<span${qualifier}>${HTMLize(line.value)}</span><br/>`);
 			});
 			res.write("</pre><hr/>");
