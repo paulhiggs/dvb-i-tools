@@ -1,6 +1,7 @@
 
 // libxmljs2 - github.com/marudor/libxmljs2
 import { parseXmlString } from "libxmljs2";
+import format from 'xml-formatter';
 
 import { readFileSync } from "fs";
 //const path=require("path");
@@ -1317,13 +1318,13 @@ export default class ServiceListCheck {
 	 * @param {string} errCode the error code to report with each error 
 	 */
 	/*private*/ SchemaCheck(XML, XSD, errs, errCode) {
-		let prettyXML=XML.toString();
-		let s=parseXmlString(prettyXML);
-		if (!s.validate(XSD)) {
+	//	let s=parseXmlString(prettyXML);
+		if (!XML.validate(XSD)) {
+			let prettyXML=format(XML.toString(), {collapseContent:true, lineSeparator:'\n'});
 			let lines=prettyXML.split('\n');
-			s.validationErrors.forEach(ve => {
-				let s=ve.toString().split('\r');
-				s.forEach(err => errs.addError({code:errCode, message:err, fragment:lines[ve.line-1], line:ve.line, key:'schema error'}));
+			XML.validationErrors.forEach(ve => {
+				let splt=ve.toString().split('\r');
+				splt.forEach(err => errs.addError({code:errCode, message:err, fragment:lines[ve.line-1], line:ve.line-1, key:'schema error'}));
 			});
 		}
 	}
@@ -1378,9 +1379,10 @@ export default class ServiceListCheck {
 	 * @param {Class} errs     Errors found in validaton
 	 */
 	/*public*/ doValidateServiceList(SLtext, errs) {
-		let SL=null;
+		let SL=null, prettyXML=format(SLtext, {collapseContent:true, lineSeparator:'\n'});
+		
 		if (SLtext) try {
-			SL=parseXmlString(SLtext);
+			SL=parseXmlString(prettyXML);
 		} catch (err) {
 			errs.addError({code:"SL001", message:`XML parsing failed: ${err.message}`, key:"malformed XML"});
 		}
@@ -1402,7 +1404,7 @@ export default class ServiceListCheck {
 		SL_SCHEMA[SCHEMA_PREFIX]=SCHEMA_NAMESPACE;
 
 		if (SL.root().name() !== dvbi.e_ServiceList) {
-			errs.addError({code:"SL003", message:`Root element is not ${dvbi.e_ServiceList.elementize()}`, key:'schema error'});
+			errs.addError({code:"SL003", message:`Root element is not ${dvbi.e_ServiceList.elementize()}`, line:SL.root().line(), key:'schema error'});
 			return;
 		}
 
