@@ -62,7 +62,6 @@ export default class ErrorList {
 	/* private method */ prettyPrint(node) {
 		// clean up and redo formatting 
 		return node.toString({declaration:false, format:true});
-		//return parseXmlString(node.toString().replace(/[\t\r\n]/ig, "")).toString({declaration:false, format:true});
 	}
 	/* private method */ insertErrorData(type, key, err) {
 		switch (type) {
