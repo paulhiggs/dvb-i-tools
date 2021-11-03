@@ -52,7 +52,7 @@ function processQuery(req, res) {
 		fetch(req.query.CGurl)
 			.then(handleErrors)
 			.then(function (response) {return response.text();})
-			.then(function (res) {return cgcheck.validateContentGuide(res.replace(/(\r\n|\n|\r|\t)/gm, ""), req.body.requestType);})
+			.then(function (res) {return cgcheck.validateContentGuide(res, req.body.requestType);})
 			.then(function (errs) {return drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, null, errs);})
 			.then(function (res) {res.end();})
 			.catch(function (error) {
@@ -89,9 +89,7 @@ function processFile(req, res) {
 			errs.addError({code:"PF001", message:`retrieval of FILE ${fname} failed`});
 		}
 		if (CGxml) {
-			let doc=CGxml.toString().replace(/(\r\n|\n|\r|\t)/gm, "");
-			errs.loadDocument(doc);
-			cgcheck.doValidateContentGuide(doc, req.body.requestType, errs);
+			cgcheck.doValidateContentGuide(CGxml.toString(), req.body.requestType, errs);
 		}
 		drawCGForm(false, res, fname, req.body.requestType, null, errs);
 	}

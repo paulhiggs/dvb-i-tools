@@ -2742,10 +2742,9 @@ export default class ContentGuideCheck {
 	 * @param {Class} errs errors found in validaton
 	 */
 	doValidateContentGuide(CGtext, requestType, errs) {
-		let CG=null, prettyXML="";
+		let CG=null, prettyXML=format(CGtext, {collapseContent:true, lineSeparator:'\n'});
 
 		if (CGtext) try {
-			prettyXML=format(CGtext, {collapseContent:true, lineSeparator:'\n'});
 			CG=parseXmlString(prettyXML);
 		} catch (err) {
 			errs.addError({type:APPLICATION, code:"CG000", message:`XML parsing failed: ${err.message}`});
