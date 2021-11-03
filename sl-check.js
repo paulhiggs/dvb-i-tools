@@ -673,7 +673,8 @@ export default class ServiceListCheck {
 						errs.addError({code:errCode?`${errCode}-21`:"RM021", 
 							message:`${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${SCHEMA_NAMESPACE.quote()} in ${Location}`, key:"invalid CS value", fragment:HowRelated});
 					
-					if (this.validOutScheduleHours(HowRelated, SCHEMA_NAMESPACE) || this.validContentFinishedBanner(HowRelated, SCHEMA_NAMESPACE) || this.validServiceApplication(HowRelated) || this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE)) {
+					if (this.validOutScheduleHours(HowRelated, SCHEMA_NAMESPACE) || this.validContentFinishedBanner(HowRelated, SCHEMA_NAMESPACE) || 
+					      this.validServiceApplication(HowRelated) || this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
 						if (this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE) || this.validOutScheduleHours(HowRelated, SCHEMA_NAMESPACE))
 							MediaLocator.forEach(locator =>
@@ -716,13 +717,29 @@ export default class ServiceListCheck {
 			errs.addError({type:APPLICATION, code:"XL000", message:"checkXMLLangs() called with node==null"});
 			return;
 		}
-		const UNSPECIFIED_LANG="unspecified";
+		const NO_DOCUMENT_LANGUAGE='**'; // this should not be needed as @xml:lang is required in <ServiceList>
+		/**
+		 * Recurse up the XML element hierarchy until we find an element with an @xml:lang attribute or return a ficticouus 
+		 * value of topmost level element does not contain @xml:lang
+		 * @param {Element} node 
+		 */
+		 function ancestorLanguage(node) {
+			if (node.type() != 'element')
+				return NO_DOCUMENT_LANGUAGE;
+
+			if (node.attr(dvbi.a_lang))
+				return (node.attr(dvbi.a_lang).value());
+
+			return ancestorLanguage(node.parent());
+		}
+
+		const UNSPECIFIED_LANG=NO_DOCUMENT_LANGUAGE;
 		let elementLanguages=[], i=0, elem;
 		while ((elem=node.get(xPath(SCHEMA_PREFIX, elementName, ++i), SL_SCHEMA))!=null) {
-			let lang=elem.attr(dvbi.a_lang)?elem.attr(dvbi.a_lang).value():UNSPECIFIED_LANG;
+			let lang=elem.attr(dvbi.a_lang)?elem.attr(dvbi.a_lang).value():ancestorLanguage(elem.parent());
 			if (isIn(elementLanguages, lang)) 
 				errs.addError({code:errCode?`${errCode}-1`:"XL001", 
-					message:`${lang==UNSPECIFIED_LANG?"default language":`xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} for ${elementLocation}`, 
+					message:`${lang==NO_DOCUMENT_LANGUAGE?"default language":`xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} for ${elementLocation}`, 
 					fragment:elem, key:"duplicate @xml:lang"});
 			else elementLanguages.push(lang);
 
@@ -1204,6 +1221,7 @@ export default class ServiceListCheck {
 							break;
 						case SCHEMA_v2:
 						case SCHEMA_v3:
+						case SCHEMA_v4:
 							if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_OtherDeliveryParameters), SL_SCHEMA))
 								errs.addError({code:"SI159", 
 									message:`${dvbi.e_OtherDeliveryParameters.elementize()} must be specified with user-defined ${dvbi.e_SourceType} ${SourceType.text().quote()}`, 
@@ -1332,7 +1350,7 @@ export default class ServiceListCheck {
 
 	/*private*/ CheckExtension(extn, extLoc, errs, errCode=null) {
 		if (!extn) {
-			errs.addError({code:errCode?`${errCode}-0`:"CE000", message:"CheckExtension() called with extn=null"});
+			errs.addError({type:APPLICATION, code:errCode?`${errCode}-0`:"CE000", message:"CheckExtension() called with extn=null"});
 			return;
 		}
 		// extension type is checked in schema validation
@@ -1379,12 +1397,18 @@ export default class ServiceListCheck {
 	 * @param {Class} errs     Errors found in validaton
 	 */
 	/*public*/ doValidateServiceList(SLtext, errs) {
+		if (!SLtext) {
+			errs.addError({type:APPLICATION, code:"SL000", message:'doValidateServiceList() called with SLtext==null'});
+			return;
+		}
+
 		let SL=null, prettyXML=format(SLtext, {collapseContent:true, lineSeparator:'\n'});
 		
-		if (SLtext) try {
+		try {
 			SL=parseXmlString(prettyXML);
 		} catch (err) {
 			errs.addError({code:"SL001", message:`XML parsing failed: ${err.message}`, key:"malformed XML"});
+			return;
 		}
 		if (!SL || !SL.root()) {
 			errs.addError({code:"SL002", message:"SL is empty"});
@@ -1396,7 +1420,7 @@ export default class ServiceListCheck {
 			return;
 		}
 
-		errs.loadDocument(SLtext);
+		errs.loadDocument(prettyXML);
 
 		let SL_SCHEMA={}, 
 			SCHEMA_PREFIX=SL.root().namespace().prefix(), 
@@ -1637,8 +1661,6 @@ export default class ServiceListCheck {
 	 * @returns {Class} errs     Errors found in validaton
 	 */
 	/*public*/ validateServiceList(SLtext) {
-
-		// SLtext.replace(/(\r\n|\n|\r|\t)/gm,"")
 		var errs=new ErrorList(SLtext);
 		this.doValidateServiceList(SLtext, errs);
 
