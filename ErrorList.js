@@ -106,17 +106,15 @@ export default class ErrorList {
 			return;
 
 		if (e.fragments) {
-			let newError={code:e.code, message:e.message, 
-				element:e.fragment?((typeof(e.fragment)=="string" || e.fragment instanceof String)?e.fragment:this.prettyPrint(e.fragment)):null};
+			// TODO: check this use of fragments: property 
+			let newError={code:e.code, message:e.message};
 			
-			e.fragmenta.forEach(fragment =>{
+			e.fragments.forEach(fragment =>{
 				newError.element=this.prettryPrint(fragment);
 
 				this.insertErrorData(e.type, e.key, newError);
-				if (!e.line && typeof(fragment)!="string")
-					e.line=fragment.line();
-				if (e.line)
-					this.setError(e.code, e.message, e.line-1);
+				if (typeof(fragment)!="string")
+					this.setError(e.code, e.message, fragment.line()-1);
 			});
 		} 
 		else if (e.fragment) {

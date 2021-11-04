@@ -11,7 +11,7 @@ const DVB_RELATED_CS_v2 = "urn:dvb:metadata:cs:HowRelatedCS:2020";
 const CaptionCodingFormatCS="urn:tva:metadata:cs:CaptionCodingFormatCS:2015",
 	  ColorimetryCS="urn:dvb:metadata:cs:ColorimetryCS:2020";
 
-
+import {tva} from './TVA_definitions.js';
 
 export const dvbi = {
 	A177v1_Namespace: "urn:dvb:metadata:servicediscovery:2019",
@@ -41,7 +41,7 @@ export const dvbi = {
 	CRID_LATER: CRID_NOW_NEXT_PREFIX+"later",
 	CRID_EARLIER: CRID_NOW_NEXT_PREFIX+"earlier", 
 
-	PROMOTIONAL_STILL_IMAGE_URI: "urn:tva:metadata:cs:HowRelatedCS:2012:19",
+	PROMOTIONAL_STILL_IMAGE_URI: tva.cs_PromotionalStillImage,
 
 	MAX_SUBREGION_LEVELS: 3, // definied for <RegionElement> in Table 33 of A177
 
@@ -123,7 +123,7 @@ export const dvbi = {
 	ALLOWED_TRANSPORT_PROTOCOLS: ["RTP-AVP", "UDP-FEC"],
 
 // A177 defined elements and attributes	
-	a_Address: "Address",
+	a_Address: "Address", 
 	a_CGSID: "CGSID",
 	a_channelNumber: "channelNumber",
 	a_contentLanguage: "contentLanguage",

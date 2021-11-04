@@ -799,49 +799,6 @@ export default class ContentGuideCheck {
 
 
 	/**
-	 * validate a <RelatedMaterial> if it is signalled as an carrying an image
-	 *
-	 * @param {string}  CG_SCHEMA         Used when constructing Xpath queries
-	 * @param {string}  SCHEMA_PREFIX     Used when constructing Xpath queries
-	 * @param {Object}  ReltedMaterial    the element whose children should be checked
-	 * @param {Class}   errs              errors found in validaton
-	 * @returns {boolean}  true if the RelatedMaterial element is evaluated here
-	 */
-	/* private */  CheckImageRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, errs) {
-
-		if (!RelatedMaterial) {
-			errs.addError({code:"IRM000", message:"CheckImageRelatedMaterial() called with RelatedMaterial==null"});
-			return;
-		}
-		let HowRelated=RelatedMaterial.get(xPath(SCHEMA_PREFIX, tva.e_HowRelated), CG_SCHEMA);
-		if (!(HowRelated && HowRelated.attr(tva.a_href))) return false;
-
-		if (HowRelated.attr(tva.a_href).value()==tva.cs_PromotionalStillImage) {
-			// Promotional Still Image
-			
-			let MediaUri=RelatedMaterial.get(xPathM(SCHEMA_PREFIX, [tva.e_MediaLocator, tva.e_MediaUri]), CG_SCHEMA) ;
-			if (MediaUri) {
-				checkAttributes(MediaUri, [tva.a_contentType], [], errs, "IRM002");
-				if (MediaUri.attr(tva.a_contentType)) {
-					let contentType=MediaUri.attr(tva.a_contentType).value();
-					if (!isJPEGmime(contentType) && !isPNGmime(contentType)) 
-						errs.addError({code:"IRM003", 
-										message:`${tva.a_contentType.attribute(tva.e_MediaUri)}=${contentType} is a valid image type`, key:'invalid image type', fragment:MediaUri});
-				}
-				
-				if (!isHTTPURL(MediaUri.text()))
-					errs.addError({code:"IRM004", message:`${tva.e_MediaUri.elementize()}=${MediaUri.text().quote()} is not a valid Image URL`, key:"invalid URL", fragment:MediaUri});
-			}
-			else 
-				errs.addError({code:"IRM001", message:`${tva.e_MediaUri.elementize()} not specified for Promotional Still Image (${tva.a_href.attribute(tva.e_HowRelated)}=${tva.cs_PromotionalStillImage})`,
-								fragment:RelatedMaterial});
-			return true;
-		}
-		return false;
-	}
-
-
-	/**
 	 * validate the <RelatedMaterial> elements specified
 	 *
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
@@ -852,12 +809,13 @@ export default class ContentGuideCheck {
 	/* private */  ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs) {
 		
 		if (!BasicDescription) {
-			errs.addError({code:"RM000", message:"ValidateRelatedMaterial() called with BasicDescription==null"});
+			errs.addError({type:APPLICATION, code:"RM000", message:"ValidateRelatedMaterial() called with BasicDescription==null"});
 			return;
 		}	
+		
 		let rm=0, RelatedMaterial;
 		while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) 
-			this.CheckImageRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, errs);
+			this.ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name().elementize());
 	}
 
 
@@ -1091,7 +1049,7 @@ export default class ContentGuideCheck {
 			this.NoChildElement(errs, tva.e_HowRelated.elementize(), RelatedMaterial, Location, "PS001");
 			return;
 		}
-		
+	
 		checkAttributes(HowRelated, [tva.a_href], [], errs, "PS002");
 		if (HowRelated.attr(tva.a_href)) {
 			if (HowRelated.attr(tva.a_href).value()!=dvbi.PROMOTIONAL_STILL_IMAGE_URI) 
@@ -1615,7 +1573,7 @@ export default class ContentGuideCheck {
 			return;
 		}
 		let isParentGroup=GroupInformation==categoryGroup;
-		
+	
 		switch (requestType) {
 			case CG_REQUEST_BS_CATEGORIES:
 				if (isParentGroup) {
@@ -1666,12 +1624,13 @@ export default class ContentGuideCheck {
 				if (groupsFound) 
 					groupsFound.push(groupId);				
 			}
+/*	not neede as format of groupId attribute is check against the schema
 			else
-				errs.addError({code:"GIB021", message:`${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is not a CRID`});
+				errs.addError({code:"GIB021", message:`${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is not a CRID`}); */
 		}
 
 		let categoryCRID=(categoryGroup && categoryGroup.attr(tva.a_groupId)) ? categoryGroup.attr(tva.a_groupId).value() : "";
-
+/* these are cheked through requestType/isParentGroup/checkAttributes above
 		if ([CG_REQUEST_BS_LISTS, CG_REQUEST_BS_CATEGORIES].includes(requestType)) {
 			if (!isParentGroup && GroupInformation.attr(tva.a_ordered)) 
 				errs.addError({code:"GIB031", message:`${tva.a_ordered.attribute(GroupInformation.name())} is only permitted in the ${CATEGORY_GROUP_NAME}`, line:GroupInformation.line()});
@@ -1682,7 +1641,7 @@ export default class ContentGuideCheck {
 			if (isParentGroup && !GroupInformation.attr(tva.a_numOfItems)) 
 				errs.addError({code:"GIB034", message:`${tva.a_numOfItems.attribute(GroupInformation.name())} is required for this request type`, line:GroupInformation.line()});
 		}
-
+*/
 		if (!isParentGroup) {
 			let MemberOf=GroupInformation.get(xPath(SCHEMA_PREFIX, tva.e_MemberOf), CG_SCHEMA);
 			if (MemberOf) {

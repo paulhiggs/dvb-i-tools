@@ -292,20 +292,21 @@ export default class ServiceListCheck {
 		switch (validatorResp.resp) {
 			case this.knownLanguages.languageUnknown:
 				errs.addError({type:WARNING, code:errCode?`${errCode}-1`:"CL001", 
-								message:`${loc?loc:"language"} value ${lang.quote()} is invalid`, fragment:element, key:"invalid language"});
+								message:`${loc?loc:"language"} value ${lang.quote()} is invalid`, fragment:element, 
+								line:element.line(), key:"invalid language"});
 				break;
 			case this.knownLanguages.languageRedundant:
 				errs.addError({type:WARNING, code:errCode?`${errCode}-2`:"CL002", 
-						message:`${loc?loc:"language"} value ${lang.quote()} is redundant (use ${validatorResp.pref.quote()} instead)`, 
-						fragment:element, key:"redundant language"});
+						message:`${loc?loc:"language"} value ${lang.quote()} is deprecated (use ${validatorResp.pref.quote()} instead)`, 
+						line:element.line(), key:"deprecated language"});
 				break;	
 			case this.knownLanguages.languageNotSpecified:
 				errs.addError({code:errCode?`${errCode}-3`:"CL003", message:`${loc?loc:"language"} value is not provided`, 
-					fragment:element, key:"unspecified language"});
+						line:element.line(),key:"unspecified language"});
 				break;
 			case this.knownLanguages.languageInvalidType:
 				errs.addError({code:errCode?`${errCode}-4`:"CL004", message:`language is not a String, its "${typeof(lang)}"`, 
-					fragment:element, key:"invalid language"});
+					line:element.line(), key:"invalid language"});
 				break;
 		}
 	}
