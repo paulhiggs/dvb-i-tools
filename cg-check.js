@@ -15,7 +15,6 @@ import { dvbi } from "./DVB-I_definitions.js";
 import { tva } from "./TVA_definitions.js";
 import { mpeg7 } from "./MPEG7_definitions.js";
 
-import { isJPEGmime, isPNGmime } from "./MIME_checks.js";
 import { isCRIDURI, isTAGURI } from "./URI_checks.js";
 import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration } from "./utils.js";
 
@@ -23,6 +22,9 @@ import { isHTTPURL, isDVBLocator, isUTCDateTime } from "./pattern_checks.js";
 
 import { IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, DVBI_CreditsItemRoles, DVBIv2_CreditsItemRoles, TVAschema } from "./data-locations.js";
 
+import { ValidatePromotionalStillImage } from "./RelatedMaterialChecks.js";
+import { cg_InvalidHrefValue } from "./CommonErrors.js";
+import { checkAttributes, checkTopElementsAndCardinality} from "./schema_checks.js";
 
 // convenience/readability values
 const DEFAULT_LANGUAGE="***";
@@ -61,111 +63,6 @@ function CountChildElements(node, childElementName) {
 			r++;
 	});
 	return r;
-}
-
-function getNamedChildElements(node, childElementName) {
-	let res=[], childElems=node?node.childNodes():null;
-	if (childElems) childElems.forEachSubElement(elem => {
-		if (elem.name()==childElementName)
-			res.push(elem);
-	});
-	return res;
-}
-
-
-/**
- * check that the specified child elements are in the parent element
- *
- * @param {Object}  parentElement         the element whose children should be checked
- * @param {Array}   childElements		  the names of elements and their cardinality
- * @param {boolean} allowOtherElements    flag indicating if other (foreign defined) elements are permitted
- * @param {Class}   errs                  errors found in validaton
- * @param {string}  errCode               error code to be used for any error found 
- * @returns {boolean} true if no errors are found (all mandatory elements are present and no extra elements are specified)
- * 
- * NOTE: elements are described as an object containing "name", "minOccurs", "maxOccurs".
- *   Default values for minOccurs and maxOccurs are 1
- */
- function checkTopElementsAndCardinality(parentElement, childElements, allowOtherElements, errs, errCode )
- {
-	function findElementIn(elementList, elementName) {
-		if (elementList instanceof Array)
-			return elementList.find(element => element.name == elementName);
-		else return false;
-	}
-	if (!parentElement) {
-		errs.addError({type:APPLICATION, code:"TE000", message:"checkTopElementsAndCardinality() called with a 'null' element to check"});
-		return false;
-	}
-	let rv=true, thisElem=elementize(`${parentElement.parent().name()}.${parentElement.name()}`);
-	// check that each of the specifid childElements exists
-	childElements.forEach(elem => {
-		let _min=elem.hasOwnProperty('minOccurs') ? elem.minOccurs : 1;
-		let _max=elem.hasOwnProperty('maxOccurs') ? elem.maxOccurs : 1;
-		let namedChildren=getNamedChildElements(parentElement, elem.name), count=namedChildren.length;
-
-		if (count==0 && _min!=0) {
-			errs.addError({code:`${errCode}-1`, line:parentElement.line(), 
-								message:`Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`});
-			rv=false;
-		}
-		else {
-			if (count<_min || count>_max) {
-				namedChildren.forEach(child => 
-					errs.addError({code:`${errCode}-2`, line:child.line(),
-									message:`Cardinality of ${elem.name.elementize()} in ${thisElem} is not in the range ${_min}..${(_max==Infinity)?"unbounded":_max}`})
-				);
-				rv=false;				
-			}
-		} 
-	});
-
-	// check that no additional child elements existance if the "Other Child Elements are OK" flag is not set
-	if (!allowOtherElements) {
-		let children=parentElement.childNodes();
-		if (children) children.forEachSubElement(child => {
-			if (!findElementIn(childElements, child.name())) {	
-				errs.addError({code:`${errCode}-3`, line:child.line(),
-								message:`Element ${child.name().elementize()} is not permitted in ${thisElem}`});
-				rv=false;
-			}
-		});
-	}
-	return rv;
-}
-
-
-/**
- * check that the specified child elements are in the parent element
- *
- * @param {Object} parentElement      the element whose attributes should be checked
- * @param {Array}  requiredAttributes the element names permitted within the parent
- * @param {Array}  optionalAttributes the element names permitted within the parent
- * @param {Class}  errs               errors found in validaton
- * @param {string} errCode            error code to be used in reports,
- */
-function checkAttributes(parentElement, requiredAttributes, optionalAttributes, errs, errCode)
-{
-	if (!requiredAttributes || !parentElement) {
-		errs.addError({type:APPLICATION, code:"AT000", message:"checkAttributes() called with parentElement==null or requiredAttributes==null"});
-		return;
-	}
-	
-	requiredAttributes.forEach(attributeName => {
-		if (!parentElement.attr(attributeName)) {
-			let p=`${(parentElement.parent()?`${parentElement.parent().name()}.`:"")}${parentElement.name()}`;
-			errs.addError({code:errCode, message:`${attributeName.attribute(`${p}`)} is a required attribute`, 
-					key:'missing attribute',line:parentElement.line()});
-		}
-	});
-	
-	parentElement.attrs().forEach(attr => {
-		if (!isIn(requiredAttributes, attr.name()) && !isIn(optionalAttributes, attr.name())) {
-			let p=`${elementize(`${parentElement.parent()?`${parentElement.parent().name()}.`:""}${parentElement.name()}`)}`;
-			errs.addError({code:errCode, message:`${attr.name().attribute()} is not permitted in ${p}`,
-					key:'unexpected attribute', line:parentElement.line()});
-		}
-	});
 }
 
 
@@ -815,7 +712,7 @@ export default class ContentGuideCheck {
 		
 		let rm=0, RelatedMaterial;
 		while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) 
-			this.ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name().elementize());
+			ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name().elementize());
 	}
 
 
@@ -913,7 +810,7 @@ export default class ContentGuideCheck {
 			case tva.e_ProgramInformation:
 				let rm=0, RelatedMaterial;
 				while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) 
-					this.ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name());
+					ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name());
 				break;
 			case tva.e_GroupInformation:
 				this.ValidatePagination(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "More Episodes");
@@ -923,34 +820,6 @@ export default class ContentGuideCheck {
 
 
 	//------------------------------- ERROR TEMPLATES -------------------------------
-	/**
-	 * Add an error message when the a required element is not present
-	 *
-	 * @param {Object} errs            Errors buffer
-	 * @param {string} missingElement  Name of the missing element
-	 * @param {XMLnode} parentElement  Name of the element which should contain the missingElement
-	 * @param {string} schemaLoctation The location in the schema of the element
-	 * @param {string} errCode         The error number to show in the log
-	 */
-	/* private */  NoChildElement(errs, missingElement, parentElement, schemaLocation, errCode) {
-		errs.addError({code:errCode, 
-						message:`${missingElement} element not specified for ${parentElement.name().elementize()}${schemaLocation?(" in "+schemaLocation):""}`,
-					 line:parentElement.line()});
-	}
-
-
-	/**
-	 * Add an error message when the @href contains an invalid value
-	 *
-	 * @param {Object} errs    Errors buffer
-	 * @param {string} value   The invalid value for the href attribute
-	 * @param {string} src     The element missing the @href
-	 * @param {string} loc     The location of the element
-	 * @param {string} errCode The error number to show in the log
-	 */
-	/* private */  InvalidHrefValue(errs, value, src, loc, errCode) {
-		errs.addError({code:errCode, message:`invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`});
-	}
 
 
 	/** TemplateAITPromotional Still Image
@@ -1016,110 +885,6 @@ export default class ContentGuideCheck {
 	}
 
 
-	/**
-	 * verifies if the specified RelatedMaterial contains a Promotional Still Image
-	 *
-	 * @param {Object} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
-	 * @param {Object} errs              The class where errors and warnings relating to the serivce list processing are stored 
-	 * @param {string} Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
-	 */
-	/* private */  ValidatePromotionalStillImage(RelatedMaterial, errs, Location) {
-		
-		if (!RelatedMaterial) {
-			errs.addError({type:APPLICATION, code:"PS000", message:"ValidatePromotionalStillImage() called with RelatedMaterial==null"});
-			return;
-		}
-		let HowRelated=null, Format=null, MediaLocator=[];
-		let children=RelatedMaterial.childNodes();
-		if (children) children.forEachSubElement(elem => {
-			switch (elem.name()) {
-				case tva.e_HowRelated:
-					HowRelated=elem;
-					break;
-				case tva.e_Format:
-					Format=elem;
-					break;
-				case tva.e_MediaLocator:
-					MediaLocator.push(elem);
-					break;
-			}
-		});
-
-		if (!HowRelated) {
-			this.NoChildElement(errs, tva.e_HowRelated.elementize(), RelatedMaterial, Location, "PS001");
-			return;
-		}
-	
-		checkAttributes(HowRelated, [tva.a_href], [], errs, "PS002");
-		if (HowRelated.attr(tva.a_href)) {
-			if (HowRelated.attr(tva.a_href).value()!=dvbi.PROMOTIONAL_STILL_IMAGE_URI) 
-				errs.addError({code:"PS010", message:`${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} does not designate a Promotional Still Image`,
-								fragment:HowRelated});
-			else {
-				let isJPEG=false, isPNG=false;
-				if (Format) {
-					let subElems=Format.childNodes(), hasStillPictureFormat=false;
-					if (subElems) subElems.forEachSubElement(child => {
-						if (child.name()==tva.e_StillPictureFormat) {
-							hasStillPictureFormat=true;
-							
-							checkAttributes(child, [tva.a_horizontalSize, tva.a_verticalSize, tva.a_href], [], errs, "PS021");
-							
-							if (child.attr(tva.a_href)) {
-								let href=child.attr(tva.a_href).value();
-								switch (href) {
-									case dvbi.JPEG_IMAGE_CS_VALUE:
-										isJPEG=true;
-										break;
-									case dvbi.PNG_IMAGE_CS_VALUE:
-										isPNG=true;
-										break;
-									default:
-										this.InvalidHrefValue(errs, href, `${RelatedMaterial.name()}.${tva.e_Format}.${tva.e_StillPictureFormat}`, Location, "PS022");
-								}
-							}
-						}
-					});
-					if (!hasStillPictureFormat) 
-						this.NoChildElement(errs, tva.e_StillPictureFormat.elementize(), Format, Location, "PS023");
-				}
-
-				if (MediaLocator.length!=0) 
-					MediaLocator.forEach(ml => {
-						let subElems=ml.childNodes(), hasMediaURI=false;
-						if (subElems) subElems.forEachSubElement(child => {
-							if (child.name()==tva.e_MediaUri) {
-								hasMediaURI=true;
-								checkAttributes(child, [tva.a_contentType], [], errs, "PS031");
-								if (child.attr(tva.a_contentType)) {
-									let contentType=child.attr(tva.a_contentType).value();
-									if (!isJPEGmime(contentType) && !isPNGmime(contentType)) 
-										errs.addError({code:"PS032", 
-														message:`invalid ${tva.a_contentType.attribute(tva.e_MediaLocator)}=${contentType.quote()} specified for ${RelatedMaterial.name().elementize()} in ${Location}`,
-														fragment:child});
-									if (Format && ((isJPEGmime(contentType) && !isJPEG) || (isPNGmime(contentType) && !isPNG))) {
-							/* TODO: this could be improved by allowing an array of elements to be passed in the fragment property, .e.
-										errs.addError({code:"PS033",
-														message:`conflicting media types in ${tva.e_Format.elementize()} and ${tva.e_MediaUri.elementize()} for ${Location}`, 
-														fragments:[Format,child]});*/
-										errs.addError({code:"PS033-1",
-														message:`conflicting media types in ${tva.e_Format.elementize()} and ${tva.e_MediaUri.elementize()} for ${Location}`, fragment:Format});
-										errs.addError({code:"PS033-2",
-														message:`conflicting media types in ${tva.e_Format.elementize()} and ${tva.e_MediaUri.elementize()} for ${Location}`, fragment:child});
-									}
-								}
-								if (!isHTTPURL(child.text()))
-									errs.addError({code:"PS034", message:`${tva.e_MediaUri.elementize()}=${child.text().quote()} is not a valid Image URL`, key:"invalid URL", fragment:child});
-							}
-						});
-						if (!hasMediaURI) 
-							this.NoMediaLocator(errs, "logo", Location);
-					});
-				else 
-					this.NoChildElement(errs, tva.e_MediaLocator, RelatedMaterial, Location, "PS039");
-			}
-		}
-	}
 
 
 	/**
@@ -1160,10 +925,10 @@ export default class ContentGuideCheck {
 							break;
 						case dvbi.PROMOTIONAL_STILL_IMAGE_URI:  // promotional still image
 							countImage++;
-							this.ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name().elementize());
+							ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name().elementize());
 							break;
 						default:
-							this.InvalidHrefValue(errs, hrHref, tva.e_HowRelated.elementize(), `${tva.e_RelatedMaterial.elementize()} in Box Set List`, "MB011");
+							cg_InvalidHrefValue(errs, hrHref, tva.e_HowRelated.elementize(), `${tva.e_RelatedMaterial.elementize()} in Box Set List`, "MB011");
 					}	
 				}
 			}
@@ -2202,13 +1967,8 @@ export default class ContentGuideCheck {
 				
 				if (Genre1 && Genre2) {
 					if ((isMediaAvailability(g1href) && isMediaAvailability(g2href)) || (isEPGAvailability(g1href) && isEPGAvailability(g2href))) {
-						/*TODO: allow multiple elements to be passed on a single error, i.e.
 						errs.addError({code:"ID015-1", message:`${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} elements must indicate different availabilities`, 
-									fragments:[Genre1, Genre2]}); */
-						errs.addError({code:"ID015-1", message:`${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} elements must indicate different availabilities`, 
-									fragment:Genre1});
-						errs.addError({code:"ID015-2", message:`${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} elements must indicate different availabilities`, 
-									fragment:Genre2});
+									fragments:[Genre1, Genre2]});
 					}
 				}
 				break;

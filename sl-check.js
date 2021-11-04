@@ -16,7 +16,7 @@ import { dvbi } from "./DVB-I_definitions.js";
 import { tva } from "./TVA_definitions.js";
 import { isJPEGmime, isPNGmime, isWebPmime, isAllowedImageMime } from "./MIME_checks.js";
 import { isTAGURI } from "./URI_checks.js";
-
+ 
 import { xPath, xPathM, isIn, unEntity } from "./utils.js";
 
 import { isPostcode, isHTTPURL, isDomainName, isRTSPURL } from "./pattern_checks.js";
@@ -26,7 +26,8 @@ import { IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject,
 import ISOcountries from "./ISOcountries.js";
 import IANAlanguages from "./IANAlanguages.js";
 
-
+import { checkValidLogo } from "./RelatedMaterialChecks.js";
+import { sl_InvalidHrefValue } from "./CommonErrors.js";
 
 /* TODO:
 
@@ -480,87 +481,6 @@ export default class ServiceListCheck {
 
 
 
-	/**
-	 * verifies if the specified logo is valid according to specification
-	 *
-	 * @param {Object} HowRelated    The <HowRelated> subelement (a libxmls ojbect tree) of the <RelatedMaterial> element
-	 * @param {Object} Format        The <Format> subelement (a libxmls ojbect tree) of the <RelatedMaterial> element
-	 * @param {Object} MediaLocator  The <MediaLocator> subelement (a libxmls ojbect tree) of the <RelatedMaterial> element
-	 * @param {Object} Element       The <RelatedMaterial> element
-	 * @param {Object} errs          The class where errors and warnings relating to the service list processing are stored 
-	 * @param {string} Location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
-	*/
-	/*private*/  checkValidLogo(HowRelated, Format, MediaLocator, Element, errs, Location) {
-		// irrespective of the HowRelated@href, all logos have specific requirements
-		if (!HowRelated)
-			return;
-
-		let isJPEG=false, isPNG=false; 
-		// if <Format> is specified, then it must be per A177 5.2.6.1, 5.2.6.2 or 5.2.6.3 -- which are all the same
-		if (Format) {
-			let subElems=Format.childNodes(), hasStillPictureFormat=false;
-			if (subElems) subElems.forEachSubElement(child => {
-				if (child.name()==dvbi.e_StillPictureFormat) {
-					hasStillPictureFormat=true;
-					if (!child.attr(dvbi.a_horizontalSize)) 
-						errs.addError({code:"VL010", 
-							message:`${dvbi.a_horizontalSize.attribute()} not specified for ${tva.e_RelatedMaterial.elementize()}${tva.e_Format.elementize()}${dvbi.e_StillPictureFormat.elementize()} in ${Location}`, 
-							fragment:child, key:`no ${dvbi.a_horizontalSize.attribute()}`});
-					if (!child.attr(dvbi.a_verticalSize)) 
-						errs.addError({code:"VL011", 
-							message:`${dvbi.a_verticalSize.attribute()} not specified for ${tva.e_RelatedMaterial.elementize()}${tva.e_Format.elementize()}${dvbi.e_StillPictureFormat.elementize()} in ${Location}`, 
-							fragment:child, key:`no ${dvbi.a_verticalSize.attribute()}`});
-					if (child.attr(dvbi.a_href)) {
-						let href=child.attr(dvbi.a_href).value();
-						switch (href) {
-							case dvbi.JPEG_IMAGE_CS_VALUE:
-								isJPEG=true;
-								break;
-							case dvbi.PNG_IMAGE_CS_VALUE:
-								isPNG=true;
-								break;
-							default:
-								this.InvalidHrefValue(href, child, `${tva.e_RelatedMaterial.elementize()}${tva.e_Format.elementize()}${dvbi.e_StillPictureFormat.elementize()}`, Location, errs, "VL012");
-						}
-					} 
-				}
-			});
-			if (!hasStillPictureFormat) 
-				errs.addError({code:"VL014", message:`${dvbi.e_StillPictureFormat.elementize()} not specified for ${tva.e_Format.elementize()} in ${Location}`, 
-								fragment:Format, key:"no StillPictureFormat"});
-		}
-
-		if (MediaLocator) {
-			let subElems=MediaLocator.childNodes(), hasMediaURI=false;
-			if (subElems) subElems.forEachSubElement(child => {
-				if (child.name()==tva.e_MediaUri) {
-					hasMediaURI=true;
-					
-					if (child.attr(tva.a_contentType)) {
-						let contentType=child.attr(tva.a_contentType).value();
-						if (!isJPEGmime(contentType) && !isPNGmime(contentType))
-							errs.addError({code:"VL022", 
-								message:`invalid ${tva.a_contentType.attribute()} ${contentType.quote()} specified for ${tva.e_RelatedMaterial.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`, 
-								key:`invalid ${tva.a_contentType.attribute(tva.e_MediaUri)}`,
-								fragment:child});
-						if (Format && ((isJPEGmime(contentType) && !isJPEG) || (isPNGmime(contentType) && !isPNG))) 
-							errs.addError({code:"VL023", message:`conflicting media types in ${tva.e_Format.elementize()} and ${tva.e_MediaUri.elementize()} for ${Location}`, 
-											fragment:child, key:"conflicting mime types"});
-					}
-					if (!isHTTPURL(child.text())) 
-						errs.addError({code:"VL024", message:`invalid URL ${child.text().quote()} specified for ${child.name().elementize()}`, 
-										fragment:child, key:"invalid resource URL"});
-				}
-			});
-			if (!hasMediaURI) 
-				errs.addError({code:"VL025", 
-					message:`${tva.e_MediaUri.elementize()} not specified for logo ${tva.e_MediaLocator.elementize()} in ${Location}`, 
-					fragment:MediaLocator, key:`no ${tva.e_MediaUri}`});
-		}
-		else 
-			errs.addError({code:"VL026", message:`${tva.e_MediaLocator} not specified for ${tva.e_RelatedMaterial.elementize()} in ${Location}`,
-					fragment:RelatedMaterial, key:`no ${tva.e_MediaLocator}`});
-	}
 
 
 	/**
@@ -663,10 +583,10 @@ export default class ServiceListCheck {
 					if (this.validServiceListLogo(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
 						MediaLocator.forEach(locator => 
-							this.checkValidLogo(HowRelated, Format, locator, RelatedMaterial, errs, Location));
+							checkValidLogo(HowRelated, Format, locator, RelatedMaterial, errs, Location));
 					}
 					else
-						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-11`:"RM011");
+						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-11`:"RM011");
 					break;
 				case SERVICE_RM:
 				case SERVICE_INSTANCE_RM:
@@ -679,22 +599,22 @@ export default class ServiceListCheck {
 						rc=HowRelated.attr(dvbi.a_href).value();
 						if (this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE) || this.validOutScheduleHours(HowRelated, SCHEMA_NAMESPACE))
 							MediaLocator.forEach(locator =>
-								this.checkValidLogo(HowRelated, Format, locator, RelatedMaterial, errs, Location));
+								checkValidLogo(HowRelated, Format, locator, RelatedMaterial, errs, Location));
 						if (this.validServiceApplication(HowRelated))
 							MediaLocator.forEach(locator =>
 								this.checkSignalledApplication(locator, errs, Location));
 					}
 					else 
-						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-22`:"RM022");  //!!
+						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-22`:"RM022");  //!!
 					break;
 				case CONTENT_GUIDE_RM:
 					if (this.validContentGuideSourceLogo(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
 						MediaLocator.forEach(locator =>
-							this.checkValidLogo(HowRelated, Format, locator, RelatedMaterial, errs, Location));
+							checkValidLogo(HowRelated, Format, locator, RelatedMaterial, errs, Location));
 					}
 					else
-						this.InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-31`:"RM031");
+						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-31`:"RM031");
 					break;
 			}
 		}
@@ -764,23 +684,6 @@ export default class ServiceListCheck {
 		errs.addError({code:errCode, 
 						message:`${source} delivery parameters not specified for service instance in service ${serviceId.quote()}`,
 						fragment:element, key:"no delivery params"});
-	}
-
-
-	/**
-	 * Add an error message when the @href contains an invalid value
-	 *
-	 * @param {String} value    The invalid value for the href attribute
-	 * @param {Node}   element  The XML node with the invalid HREF value
-	 * @param {String} src      The element missing the @href
-	 * @param {String} loc      The location of the element
-	 * @param {Object} errs     Errors buffer
-	 * @param {String} errCode  The error code to be reported
-	 */
-	/*private*/  InvalidHrefValue(value, element, src, loc, errs, errCode) {
-		errs.addError({code:errCode, fragment:element, line:element.line(),
-						message:`invalid ${dvbi.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`, 
-						key:"invalid href"});
 	}
 
 
