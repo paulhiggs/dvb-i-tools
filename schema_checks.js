@@ -37,9 +37,6 @@ export function checkAttributes(parentElement, requiredAttributes, optionalAttri
 }
 
 
-
-
-
  /**
  * check that the specified child elements are in the parent element
  *

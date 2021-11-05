@@ -261,8 +261,8 @@ export default class ContentGuideCheck {
 			console.log("loading CreditItem roles...");
 			this.allowedCreditItemRoles=new Role();
 			this.allowedCreditItemRoles.loadRoles(useURLs?
-					{urls:[DVBI_CreditsItemRoles.url, DVBIv2_CreditsItemRoles.url]}:
-					{files:[DVBI_CreditsItemRoles.file, DVBIv2_CreditsItemRoles.file]});
+						{urls:[DVBI_CreditsItemRoles.url, DVBIv2_CreditsItemRoles.url]}:
+						{files:[DVBI_CreditsItemRoles.file, DVBIv2_CreditsItemRoles.file]});
 		}
 
 		console.log("loading Schemas...");
@@ -2461,43 +2461,51 @@ export default class ContentGuideCheck {
 	 * @param {Class} errs errors found in validaton
 	 */
 	doValidateContentGuide(CGtext, requestType, errs) {
-		let CG=null, prettyXML=format(CGtext, {collapseContent:true, lineSeparator:'\n'});
-
-		if (CGtext) try {
-			CG=parseXmlString(prettyXML);
-		} catch (err) {
-			errs.addError({type:APPLICATION, code:"CG000", message:`XML parsing failed: ${err.message}`});
-		}
-		if (!CG || !CG.root()) {
-			errs.addError({code:"CG001", message:"CG is empty"});
+		if (!CGtext) {
+			errs.addError({type:APPLICATION, code:"CG000", message:'doValidateContentGuide() called with CGtext==null'});
 			return;
 		}
+
+		let CG=null, prettyXML=format(CGtext.replace(/(\n\t)/gm,"\n"), {collapseContent:true, lineSeparator:'\n'});
+
+		try {
+			CG=parseXmlString(prettyXML);
+		} catch (err) {
+			errs.addError({type:APPLICATION, code:"CG001", message:`XML parsing failed: ${err.message}`});
+			return;
+		}
+		if (!CG || !CG.root()) {
+			errs.addError({code:"CG002", message:"CG is empty"});
+			return;
+		}
+
 		errs.loadDocument(prettyXML);
+
+		if (CG.root().name()!=tva.e_TVAMain) {
+			errs.addError({code:"CG004", message:`Root element is not ${tva.e_TVAMain.elementize()}`, key:"XSD validation"});
+			return;
+		}
+
+		let CG_SCHEMA={}, 
+			SCHEMA_PREFIX=CG.root().namespace()?CG.root().namespace().prefix():"", 
+			SCHEMA_NAMESPACE=CG.root().namespace()?CG.root().namespace().href():"";
+			CG_SCHEMA[SCHEMA_PREFIX]=SCHEMA_NAMESPACE;
 
 		if (!CG.validate(this.TVAschema)) {
 			let lines=prettyXML.split('\n');
 			CG.validationErrors.forEach(ve => {
 				let s=ve.toString().split('\r');
 				s.forEach(err => {
-					errs.addError({code:"CG002", message:err, fragment:lines[ve.line-1], line:ve.line-1, key:"XSD validation"});
+					errs.addError({code:"CG003", message:err, fragment:lines[ve.line-1], line:ve.line-1, key:"XSD validation"});
 					errs.setError(err, ve.line-1);
 				}); 
 			});
 		}
 
-		if (CG.root().name()!=tva.e_TVAMain) {
-			errs.addError({code:"CG003", message:`Root element is not ${tva.e_TVAMain.elementize()}`, key:"XSD validation"});
-			return;
-		}
-		let CG_SCHEMA={}, 
-			SCHEMA_PREFIX=CG.root().namespace()?CG.root().namespace().prefix():"", 
-			SCHEMA_NAMESPACE=CG.root().namespace()?CG.root().namespace().href():"";
-		CG_SCHEMA[SCHEMA_PREFIX]=SCHEMA_NAMESPACE;
-
-		let tvaMainLang=this.GetLanguage(this.knownLanguages, errs, CG.root(), DEFAULT_LANGUAGE, true, "CG004");
+		let tvaMainLang=this.GetLanguage(this.knownLanguages, errs, CG.root(), DEFAULT_LANGUAGE, true, "CG005");
 		let ProgramDescription=CG.get(xPath(SCHEMA_PREFIX, tva.e_ProgramDescription), CG_SCHEMA);
 		if (!ProgramDescription) {
-			errs.addError({code:"CG005", message:`No ${tva.e_ProgramDescription.elementize()} element specified.`});
+			errs.addError({code:"CG006", message:`No ${tva.e_ProgramDescription.elementize()} element specified.`});
 			return;
 		}
 		
