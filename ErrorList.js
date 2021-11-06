@@ -82,7 +82,7 @@ export default class ErrorList {
 
 	addError(e) {
 		let _INVALID_CALL='invalid addError call', argsOK=true;
-		if (!e.type) e.type=ERROR;
+		if (!e.hasOwnProperty('type')) e.type=ERROR;
 
 		if (![ERROR, WARNING, APPLICATION].includes(e.type)) {
 			this.errors.push({code:"ERR000", message:`addError() called with invalid type property (${e.type})`});
@@ -105,13 +105,25 @@ export default class ErrorList {
 		if (!argsOK)
 			return;
 
-		if (e.fragments) {
-			
+		if (e.multiElementError) {
+			/** 
+			 * this type of error involves multiple elements, for example when the cardinality exceeds a specified limit.
+			 * each element of multiElementError is an element that is marked up, but the error message is 
+			 * only reported once in the error list
+			 */
+			this.insertErrorData(e.type, e.key, {code:e.code, message:e.message});
+			e.multiElementFragments.forEach(fragment => {
+				if (typeof(fragment)!="string")
+					this.setError(e.code, e.message, fragment.line()-2);
+			});
+		}
+		else if (e.fragments) {
 			e.fragments.forEach(fragment => {
 				let newError={code:e.code, message:e.message};
 				newError.element=(typeof(fragment)=="string" || fragment instanceof String)?fragment:this.prettyPrint(fragment);
 
-				this.insertErrorData(e.type, e.key, newError);
+				if (e.reportInTable)
+					this.insertErrorData(e.type, e.key, newError);
 				if (typeof(fragment)!="string")
 					this.setError(e.code, e.message, fragment.line()-2);
 			});
@@ -120,7 +132,8 @@ export default class ErrorList {
 			let newError={code:e.code, message:e.message, 
 				element:((typeof(e.fragment)=="string" || e.fragment instanceof String)?e.fragment:this.prettyPrint(e.fragment))};
 
-			this.insertErrorData(e.type, e.key, newError);
+			if (e.reportInTable)
+				this.insertErrorData(e.type, e.key, newError);
 
 			if (!e.line && typeof(e.fragment)!="string")
 				e.line=e.fragment.line()-1;
@@ -130,7 +143,8 @@ export default class ErrorList {
 		else {
 			let newError={code:e.code, message:e.message, element:null};
 
-			this.insertErrorData(e.type, e.key, newError);
+			if (e.reportInTable)
+				this.insertErrorData(e.type, e.key, newError);
 			if (e.line)
 				this.setError(e.code, e.message, e.line-2);
 		}
