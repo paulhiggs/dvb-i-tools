@@ -5,11 +5,12 @@ const REPO_RAW="https://raw.githubusercontent.com/paulhiggs/dvb-i-tools/main/";
 const DVB_METADATA="https://dvb.org/metadata/";
 
 const pathDVBCS='dvb/cs/', pathDVBI="dvbi", pathISO="iso", pathMPEG7="mpeg7", pathTVA="tva",
-      path2007CS=`${pathDVBCS}2007`,
-      path2017CS=`${pathDVBCS}2017`,
-      path2020CS=`${pathDVBCS}2020`,
-      path2021CS=`${pathDVBCS}2021`;
+      path2007CS=`${pathDVBCS}2007`, url2007CS="cs/2007",
+      path2017CS=`${pathDVBCS}2017`, url2017CS="cs/2017",
+      path2020CS=`${pathDVBCS}2020`, url2020CS="cs/2020",
+      path2021CS=`${pathDVBCS}2021`, url2021CS="cs/2021";
 
+	
 // SLEPR == Service List Entry Point Registry
 const SLEPR_Dir="registries", SLEPR_File="slepr-main.xml";
 export const Default_SLEPR={file:join(SLEPR_Dir,SLEPR_File), url:`${REPO_RAW}${SLEPR_Dir}/${SLEPR_File}`};
@@ -31,14 +32,14 @@ export const DVBI_ServiceTypeCS={file:join(pathDVBI, idDVB_ServiceTypeCS), url:`
 
 const idDVB_AudioCodecCS="AudioCodecCS.xml";
 export const DVB_AudioCodecCS={
-    y2007:{file:join(path2007CS, idDVB_AudioCodecCS), url:`${DVB_METADATA}${path2007CS}/${idDVB_AudioCodecCS}`},
-    y2020:{file:join(path2020CS, idDVB_AudioCodecCS), url:`${DVB_METADATA}${path2020CS}/${idDVB_AudioCodecCS}`}
+    y2007:{file:join(path2007CS, idDVB_AudioCodecCS), url:`${DVB_METADATA}${url2007CS}/${idDVB_AudioCodecCS}`},
+    y2020:{file:join(path2020CS, idDVB_AudioCodecCS), url:`${DVB_METADATA}${url2020CS}/${idDVB_AudioCodecCS}`}
 };
 
 const idDVB_VideoCodecCS="VideoCodecCS.xml";
 export const DVB_VideoCodecCS={
-    y2007:{file:join(path2007CS, idDVB_VideoCodecCS), url:`${DVB_METADATA}${path2007CS}/${idDVB_VideoCodecCS}`},
-    y2021:{file:join(path2021CS, idDVB_VideoCodecCS), url:`${DVB_METADATA}${path2021CS}/${idDVB_VideoCodecCS}`}
+    y2007:{file:join(path2007CS, idDVB_VideoCodecCS), url:`${DVB_METADATA}${url2007CS}/${idDVB_VideoCodecCS}`},
+    y2021:{file:join(path2021CS, idDVB_VideoCodecCS), url:`${DVB_METADATA}${url2021CS}/${idDVB_VideoCodecCS}`}
 };
 
 const idMPEG_AudioCodingFormatCS="AudioCodingFormatCS.xml";
@@ -51,12 +52,12 @@ const idMPEG7_AudioPresentationCS="AudioPresentationCS.xml";
 export const MPEG7_AudioPresentationCS={file:join(pathMPEG7, idMPEG7_AudioPresentationCS), url:`${REPO_RAW}${pathMPEG7}/${idMPEG7_AudioPresentationCS}`};
 
 const idDVB_AudioConformanceCS="AudioConformancePointsCS.xml";
-export const DVB_AudioConformanceCS={file:join(path2017CS, idDVB_AudioConformanceCS), url:`${DVB_METADATA}${path2017CS}/${idDVB_AudioConformanceCS}`};
+export const DVB_AudioConformanceCS={file:join(path2017CS, idDVB_AudioConformanceCS), url:`${DVB_METADATA}${url2017CS}/${idDVB_AudioConformanceCS}`};
 
 const idDVB_VideoConformanceCS="VideoConformancePointsCS.xml";
 export const DVB_VideoConformanceCS={
-    y2017:{file:join(path2017CS, idDVB_VideoConformanceCS), url:`${DVB_METADATA}${path2017CS}/${idDVB_VideoConformanceCS}`},
-    y2021:{file:join(path2021CS, idDVB_VideoConformanceCS), url:`${DVB_METADATA}${path2021CS}/${idDVB_VideoConformanceCS}`}
+    y2017:{file:join(path2017CS, idDVB_VideoConformanceCS), url:`${DVB_METADATA}${url2017CS}/${idDVB_VideoConformanceCS}`},
+    y2021:{file:join(path2021CS, idDVB_VideoConformanceCS), url:`${DVB_METADATA}${url2021CS}/${idDVB_VideoConformanceCS}`}
 };
 
 const idISO3166="iso3166-countries.json";
