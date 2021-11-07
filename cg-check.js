@@ -2,9 +2,9 @@
 import { parseXmlString } from "libxmljs2";
 import format from 'xml-formatter';
 
-import { elementize, quote } from './phlib/phlib.js';
-
 import { readFileSync } from "fs";
+
+import { attribute, elementize, quote } from './phlib/phlib.js';
 
 import ErrorList, { ERROR, WARNING, APPLICATION } from "./ErrorList.js";
 import ClassificationScheme from "./ClassificationScheme.js";
@@ -680,7 +680,7 @@ export default class ContentGuideCheck {
 				if (foundPersonName.length>1)
 					errs.addError({code:`${errCode}-10`, message:singleElementError(tva.e_PersonName, tva.e_CreditsItem), multiElementError:foundPersonName});
 				if (foundCharacter.length>1)
-					errs.addError({code:e`${errCode}-11`, message:singleElementError(tva.e_Character, tva.e_CreditsItem), multiElementError:foundCharacter});
+					errs.addError({code:`${errCode}-11`, message:singleElementError(tva.e_Character, tva.e_CreditsItem), multiElementError:foundCharacter});
 				if (foundOrganizationName.length>1)
 					errs.addError({code:`${errCode}-12`, message:singleElementError(tva.e_OrganizationName, tva.e_CreditsItem), multiElementError:foundOrganizationName});
 				if (foundCharacter.length>0 && foundPersonName.length==0)
@@ -1345,7 +1345,7 @@ export default class ContentGuideCheck {
 	/* private */  ValidateGroupInformationBoxSets(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup, indexes, groupsFound) {
 
 		if (!GroupInformation) {
-			errs.addError({type:APPLIACTION, code:"GIB000", message:"ValidateGroupInformationBoxSets() called with GroupInformation==null"});
+			errs.addError({type:APPLICATION, code:"GIB000", message:"ValidateGroupInformationBoxSets() called with GroupInformation==null"});
 			return;
 		}
 		let isParentGroup=GroupInformation==categoryGroup;
@@ -1677,7 +1677,7 @@ export default class ContentGuideCheck {
 	 */
 	/* private */  ValidateGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, numEarlier, numNow, numLater, groupCRIDsFound) {
 
-		function validValues(errs, numOfItems, numAllowed, grp, elememt) {
+		function validValues(errs, numOfItems, numAllowed, grp, element) {
 			if (numOfItems<=0)
 				errs.addError({code:"VNN101", message:`${tva.a_numOfItems.attribute(tva.e_GroupInformation)} must be > 0 for ${grp.quote()}`, line:element.line()});		
 			if (numOfItems>numAllowed)

@@ -16,6 +16,8 @@ import { createServer } from 'https';
 import commandLineArgs from 'command-line-args';
 import commandLineUsage from 'command-line-usage';
 
+import process from "process";
+
 import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from './data-locations.js';
 
 import { HTTPPort } from './globals.js';
@@ -23,7 +25,7 @@ import { readmyfile } from './utils.js';
 
 // Extensible multi-core server manager -https://www.npmjs.com/package/cluster
 import { isMaster } from 'cluster';
-import clu from 'cluster';
+import { clu, workers } from 'cluster';
 const fork=clu.fork;
 
 import osu from 'node-os-utils';

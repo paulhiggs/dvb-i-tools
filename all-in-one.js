@@ -12,6 +12,8 @@ import fileupload from "express-fileupload";
 // favourite icon - https://www.npmjs.com/package/serve-favicon
 import favicon from "serve-favicon";
 
+import process from "process";
+
 import { join } from "path";
 const keyFilename=join(".","selfsigned.key"), certFilename=join(".","selfsigned.crt");
 
@@ -21,7 +23,7 @@ import { createServer } from "https";
 import commandLineArgs from 'command-line-args';
 
 // fetch API for node.js - https://www.npmjs.com/package/node-fetch
-/* jshint -W024*/ 
+/* jshint -W024*/
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args)); /* jshint +W024*/ 
 import { handleErrors } from "./fetch-err-handler.js";
 

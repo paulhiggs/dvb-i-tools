@@ -95,17 +95,6 @@ export function isHTTPURL(arg) {
 
 
 /**
- * checks of the specified argument matches URL according to RFC 3986 - https://tools.ietf.org/html/rfc3986
- *
- * @param {string} arg  The value whose format is to be checked
- * @returns {boolean} true if the argument is an HTTP URL
- */
-export function isURI(arg) {
-	return this.isURL(arg) || this.isURN(arg);
-}
-
-
-/**
  * isURL and isURN use the syntax from MPEG DASH - http://github.com/MPEGGroup/DASHSchema/
  * @param {*} arg 
  */
@@ -116,6 +105,17 @@ export function isURL(arg) {
 }
 export function isURN(arg) {
 	return arg ? URNregex.test(arg) : false;
+}
+
+
+/**
+ * checks of the specified argument matches URL according to RFC 3986 - https://tools.ietf.org/html/rfc3986
+ *
+ * @param {string} arg  The value whose format is to be checked
+ * @returns {boolean} true if the argument is an HTTP URL
+ */
+ export function isURI(arg) {
+	return isURL(arg) || isURN(arg);
 }
 
 
@@ -229,7 +229,7 @@ export function isRTSPURL(arg) {
  */
 const DaysListRegex=new RegExp(/^([1-7]\s+)*[1-7]$/); // list of values 1-7 separeted by spaces
  export function validServiceDaysList(daysList) {
-	return dayslist ? DaysListRegex.test(daysList.trim()) : false;
+	return daysList ? DaysListRegex.test(daysList.trim()) : false;
 }
 
 

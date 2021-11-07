@@ -1,4 +1,3 @@
-
 import { statSync, readFileSync } from "fs";
 
 /**

@@ -1,4 +1,5 @@
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+/* jshint -W024 */
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args)); /* jshint +W024 */
 import { handleErrors } from "./fetch-err-handler.js";
 
 import { readFile } from 'fs';

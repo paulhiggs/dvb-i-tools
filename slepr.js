@@ -6,7 +6,8 @@ import { readFile } from "fs";
 import { parseXmlString } from 'libxmljs2';
 
 // Fetch() API for node.js- https://www.npmjs.com/package/node-fetch
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+/* jshint -W024 */
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args)); /* jshint -W024 */
 import { handleErrors } from "./fetch-err-handler.js";
 
 import { xPath, isIn } from "./utils.js";
@@ -14,6 +15,7 @@ import { xPath, isIn } from "./utils.js";
 import { dvbi } from "./DVB-I_definitions.js";
 
 import { IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data-locations.js";
+import { hasChild } from "./schema_checks.js";
 
 var masterSLEPR="";
 const EMPTY_SLEPR="<ServiceListEntryPoints xmlns=\"urn:dvb:metadata:servicelistdiscovery:2021\"></ServiceListEntryPoints>";
@@ -90,18 +92,6 @@ export default class SLEPR {
 		});	
 	}
 
-	/**
-	 * check if the element contains the named child element
-	 *
-	 * @param {Object} elem the element to check
-	 * @param {string} childElementName the name of the child element to look for
-	 * @returns {boolean} true of the element contains the named child element(s) otherwise false
-	 */
-	hasChild(elem, childElementName) { 
-		if (elem)
-			return elem.childNodes().find(el => el.type()=='element' && el.name()==childElementName) != undefined;
-		return false;
-	}
 
 	/* private */ checkQuery(req) {
 

@@ -3,6 +3,8 @@
 import { dvbi } from "./DVB-I_definitions.js";
 import { tva } from "./TVA_definitions.js";
 
+import { APPLICATION } from "./ErrorList.js";
+
 import { NoChildElement, cg_InvalidHrefValue, sl_InvalidHrefValue } from "./CommonErrors.js";
 import { checkAttributes, checkTopElementsAndCardinality} from "./schema_checks.js";
 import { isJPEGmime, isPNGmime } from "./MIME_checks.js";

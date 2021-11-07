@@ -4,7 +4,6 @@ import { parseXmlString } from "libxmljs2";
 import format from 'xml-formatter';
 
 import { readFileSync } from "fs";
-//const path=require("path");
 
 import { elementize, quote } from './phlib/phlib.js';
 
@@ -496,7 +495,7 @@ export default class ServiceListCheck {
 		
 		if (!MediaLocator) 
 			errs.addError({code:"SA001", 
-					message:`${tva.e_MediaLocator.elementize()} not specified for application ${tva.e_RelatedMaterialr.elementize()} in ${loc}`, 
+					message:`${tva.e_MediaLocator.elementize()} not specified for application ${tva.e_RelatedMaterialr.elementize()} in ${Location}`, 
 					key:`no ${tva.e_MediaUri}`});
 		else {
 			let subElems=MediaLocator.childNodes(), hasMediaURI=false;
@@ -1110,11 +1109,12 @@ export default class ServiceListCheck {
 						else {
 							// no xxxxDeliveryParameters is signalled
 							// check for appropriate Service.RelatedMaterial or Service.ServiceInstance.RelatedMaterial
+							let service=ServiceInstance.parent();
 							if (!this.hasSignalledApplication(SL_SCHEMA, SCHEMA_PREFIX, service) && !this.hasSignalledApplication(SL_SCHEMA, SCHEMA_PREFIX, ServiceInstance)) {
 								errs.addError({code:"SI157a", message:`No Application is signalled for ${dvbi.e_SourceType}=${dvbi.DVBAPPLICATION_SOURCE_TYPE.quote()} in Service ${thisServiceId.quote()}`, 
-										line:service, key:"no application"});
-								errs.addError({code:"SI157b", message:`No Application is signalled for ${dvbi.e_SourceType}=${dvbi.DVBAPPLICATION_SOURCE_TYPE.quote()} in Service ${thisServiceId.quote()}`, 
-										line:ServiceInstance, key:"no application"});							}
+										line:service.line(), key:"no application"});
+								errs.addError({code:"SI157b", message:`No Application is signalled for ${dvbi.e_SourceType}=${dvbi.DVBAPPLICATION_SOURCE_TYPE.quote()} in ServiceInstance ${thisServiceId.quote()}`, 
+										line:ServiceInstance.line(), key:"no application"});							}
 						}
 					break;
 				default:
@@ -1149,7 +1149,7 @@ export default class ServiceListCheck {
 		while ((altSN=ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_AltServiceName, ++alt), SL_SCHEMA))!=null) {
 			if (alternateNames.includes(altSN.text())) 
 				errs.addError({type:WARNING, code:"SI165", fragment:altSN,
-								message:`${dvbi.e_AltServiceName}=${altSn.text().quote} already specificed in ${dvbi.e_ServiceInstance.elementize()} of service ${thisServiceId.quote()}`, 
+								message:`${dvbi.e_AltServiceName}=${altSN.text().quote} already specificed in ${dvbi.e_ServiceInstance.elementize()} of service ${thisServiceId.quote()}`, 
 								key:'duplicate name'});
 			else alternateNames.push(altSN.text());
 		}

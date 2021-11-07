@@ -1,6 +1,6 @@
 // CommonErrors.js
 import { dvbi } from "./DVB-I_definitions.js";
-import { elementize, attribute, quote } from './phlib/phlib.js';
+import { tva } from "./TVA_definitions.js";
 
 /**
  * Add an error message when the a required element is not present

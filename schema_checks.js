@@ -1,6 +1,7 @@
 // schema_checks.js
 
 import { elementize, attribute, quote } from './phlib/phlib.js';
+import { APPLICATION } from "./ErrorList.js";
 import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration } from "./utils.js";
 
 /**
@@ -105,4 +106,16 @@ export function checkTopElementsAndCardinality(parentElement, childElements, all
 	return rv;
 }
  
- 
+
+/**
+ * check if the element contains the named child element
+ *
+ * @param {Object} elem the element to check
+ * @param {string} childElementName the name of the child element to look for
+ * @returns {boolean} true of the element contains the named child element(s) otherwise false
+ */
+ export function hasChild(elem, childElementName) { 
+	if (elem)
+		return elem.childNodes().find(el => el.type()=='element' && el.name()==childElementName) != undefined;
+	return false;
+}

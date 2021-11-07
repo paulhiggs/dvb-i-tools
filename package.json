@@ -35,6 +35,7 @@
 		"url": "https://github.com/paulhiggs/dvb-i-tools"
 	},
 	"jshintConfig": {
-		"esversion": 11
+		"esversion": 11,
+		"module": "true"
 	}
 }

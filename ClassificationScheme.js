@@ -6,22 +6,15 @@
  */
 import { readFile } from 'fs';
 import { parseXmlString } from 'libxmljs2';
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+
+/* jshint -W024 */
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args)); /* jshint +W024 */
 import { handleErrors } from "./fetch-err-handler.js";
 
 import { AvlTree } from '@datastructures-js/binary-search-tree';
 
+import { hasChild } from "./schema_checks.js";
 
-/**
- * check if the element contains the named child element
- *
- * @param {Object} elem the element to check
- * @param {string} childElementName the name of the child element to look for
- *& @returns {boolean} true of the element contains the named child element(s) otherwise false
- */
-function hasChild(elem, childElementName) {
-	return elem ? elem.childNodes().find(el => el.type()=='element' && el.name()==childElementName) != undefined : false;
-}
 
 /**
  * Constructs a linear list of terms from a heirarical clssification schemes which are read from an XML document and parsed by libxmljs
