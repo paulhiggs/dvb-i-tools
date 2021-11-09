@@ -74,7 +74,8 @@ export function isRatioType(str) {
  * @param {string} str string contining the UTC time
  * @returns {boolean}  true if the argment is formatted according to UTC ("Zulu") time
  */
-const UTCregex=new RegExp(`^[${e_digit}]{4}-((0[1-9])|(1[0-2]))-((0[1-9])|1\\d|2\\d|(3[0-1]))T(([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?|(24:00:00(\\.0+)?))Z$`);
+//const UTCregex=new RegExp(`^[${e_digit}]{4}-((0[1-9])|(1[0-2]))-((0[1-9])|1\\d|2\\d|(3[0-1]))T(([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?|(24:00:00(\\.0+)?))Z$`);
+const UTCregex=new RegExp(/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\\.[0-9]+)?(Z)?$/);
 export function isUTCDateTime(str) {
 	return str ? UTCregex.test(str.trim()) : false;
 }
@@ -114,7 +115,7 @@ export function isURN(arg) {
  * @param {string} arg  The value whose format is to be checked
  * @returns {boolean} true if the argument is an HTTP URL
  */
- export function isURI(arg) {
+export function isURI(arg) {
 	return isURL(arg) || isURN(arg);
 }
 
@@ -228,7 +229,7 @@ export function isRTSPURL(arg) {
  * @returns {boolean} true if the value is properly formated
  */
 const DaysListRegex=new RegExp(/^([1-7]\s+)*[1-7]$/); // list of values 1-7 separeted by spaces
- export function validServiceDaysList(daysList) {
+export function validServiceDaysList(daysList) {
 	return daysList ? DaysListRegex.test(daysList.trim()) : false;
 }
 
