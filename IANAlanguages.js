@@ -7,8 +7,6 @@ import { readFile } from 'fs';
 import { isIn, isIni } from './utils.js';
 import { parse } from "path";
 
-import {tags} from 'language-tags';
-
 export default class IANAlanguages {
 
 	constructor() {
@@ -99,13 +97,6 @@ export default class IANAlanguages {
 		});
 	}
 
-	parseIANA(languageData) {
-		// parses the IANA language data
-	}
-
-	processLanguageData2(languageData) {
-		let langs=this.parseIANA(languageData);
-	}
 
 	/**
 	 * load the languages list into the knownLanguages global array from the specified file
