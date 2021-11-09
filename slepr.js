@@ -131,63 +131,67 @@ export default class SLEPR {
 			if (req.query.TargetCountry) {
 				if (typeof req.query.TargetCountry=="string" || req.query.TargetCountry instanceof String) {
  					if (!this.knownCountries.isISO3166code(req.query.TargetCountry,false)) 
-						req.parseErr.push(`invalid TargetCountry [${req.query.TargetCountry}]`);				
+						req.parseErr.push(`invalid ${dvbi.e_TargetCountry} [${req.query.TargetCountry}]`);				
 				}	
  				else if (Array.isArray(req.query.TargetCountry)) {
-					for (let i=0; i<req.query.TargetCountry.length; i++ ) 
-						if (!this.knownCountries.isISO3166code(req.query.TargetCountry[i], false)) 
-							req.parseErr.push(`invalid TargetCountry [${req.query.TargetCountry[i]}]`);
+					req.query.TargetCountry.forEach(country => {
+						if (!this.knownCountries.isISO3166code(country, false)) 
+							req.parseErr.push(`invalid ${dvbi.e_TargetCountry} [${country}]`);
+					});
 				}
 				else
-					req.parseErr.push(`invalid type [${typeof(req.query.Language)}] for TargetCountry`);	
+					req.parseErr.push(`invalid type [${typeof(req.query.Language)}] for ${dvbi.e_TargetCountry}`);	
 			}
 
 			//Language(s)
 			if (req.query.Language) {
 				if (typeof req.query.Language=="string" || req.query.Language instanceof String) {
 					if (!isTVAAudioLanguageType(req.query.Language, false)) 
-						req.parseErr.push(`invalid Language [${req.query.Language}]`);			
+						req.parseErr.push(`invalid ${dvbi.e_Language} [${req.query.Language}]`);			
 				}	
 				else if (Array.isArray(req.query.Language)) {
-					for (let i=0; i<req.query.Language.length; i++ ) 
-						if (!isTVAAudioLanguageType(req.query.Language[i], false)) 
-							req.parseErr.push(`invalid Language [${req.query.Language[i]}]`);
+					req.query.Language.forEach(language => {
+						if (!isTVAAudioLanguageType(language, false)) 
+							req.parseErr.push(`invalid ${dvbi.e_Language} [${language}]`);
+					});
 				}
 				else
-					req.parseErr.push(`invalid type [${typeof(req.query.Language)}] for Language`);
+					req.parseErr.push(`invalid type [${typeof(req.query.Language)}] for ${dvbi.e_Language}`);
 			}
 
 			//DeliverySystems(s)
 			if (req.query.Delivery) {
 				if (typeof req.query.Delivery=="string" || req.query.Delivery instanceof String) {
 					if (!!isValidDelivery(req.query.Delivery)) 
-						req.parseErr.push(`invalid Delivery system [${req.query.Delivery}]`);			
+						req.parseErr.push(`invalid ${dvbi.e_Delivery} system [${req.query.Delivery}]`);			
 				}	
 				else if (Array.isArray(req.query.Delivery)) {
-					for (let i=0; i<req.query.Delivery.length; i++ ) 
-						if (!isValidDelivery(req.query.Delivery[i])) 
-							req.parseErr.push(`ivalid Delivery system [${req.query.Delivery[i]}]`);
+					req.query.Delivery.forEach(delivery => {
+						if (!isValidDelivery(delivery)) 
+							req.parseErr.push(`ivalid ${dvbi.e_Delivery} system [${delivery}]`);
+					});
 				}
 				else 
-					req.parseErr.push(`invalid type [${typeof(req.query.Delivery)}] for Delivery`);
+					req.parseErr.push(`invalid type [${typeof(req.query.Delivery)}] for ${dvbi.e_Delivery}`);
 			}	
 
 			// Genre(s)
 			if (req.query.Genre) {
 				if (typeof req.query.Genre=="string" || req.query.Genre instanceof String) {
 					if (!this.knownGenres.isIn(req.query.Genre)) 
-						req.parseErr.push(`invalid Genre [${req.query.Genre}]`);			
+						req.parseErr.push(`invalid ${dvbi.e_Genre} [${req.query.Genre}]`);			
 				}	
 				else if (Array.isArray(req.query.Genre)) {
-					for (let i=0; i<req.query.Genre.length; i++ ) 
-						if (!this.knownGenres.isIn(req.query.Genre[i])) 
-							req.parseErr.push(`invalid Genre [${req.query.Genre[i]}]`);
+					req.query.Genre.forEach(genre => {
+						if (!this.knownGenres.isIn(genre)) 
+							req.parseErr.push(`invalid ${dvbi.e_Genre} [${genre}]`);
+					});
 				}
 				else 
-				req.parseErr.push(`invalid type [${typeof(req.query.Genre)}] for Genre`);
+				req.parseErr.push(`invalid type [${typeof(req.query.Genre)}] for ${dvbi.e_Genre}`);
 			}
 
-/* value space of these arguments is not checked
+/* value space of this argument is not checked 
 			//Provider Name(s)
 			if (req.query.ProviderName) {
 				if (typeof req.query.ProviderName=="string" || req.query.ProviderName instanceof String) {
@@ -195,9 +199,10 @@ export default class SLEPR {
 						req.parseErr.push(`invalid provider [${req.query.ProviderName}]`);
 				}	
 				else if (Array.isArray(req.query.ProviderName)) {
-					for (let i=0; i<req.query.ProviderName.length; i++ )
- 						if (!isProvider(req.query.ProviderName[i]))
-							req.parseErr.push(`invalid provider [${req.query.ProviderName[i]}]`);
+					req.query.ProviderName.forEach(provider => {
+						if (!isProvider(provider))
+							req.parseErr.push(`invalid provider [${provider}]`);
+					});
 				}
 				else 
 					req.parseErr.push(`invalid type [${typeof(req.query.ProviderName)}] for provider`);

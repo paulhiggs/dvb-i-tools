@@ -5,6 +5,9 @@ import { handleErrors } from "./fetch-err-handler.js";
 import { readFile } from 'fs';
 
 import { isIn, isIni } from './utils.js';
+import { parse } from "path";
+
+import {tags} from 'language-tags';
 
 export default class IANAlanguages {
 
@@ -94,6 +97,14 @@ export default class IANAlanguages {
 					this.redundantLanguagesList.push(red);
 			}
 		});
+	}
+
+	parseIANA(languageData) {
+		// parses the IANA language data
+	}
+
+	processLanguageData2(languageData) {
+		let langs=this.parseIANA(languageData);
 	}
 
 	/**

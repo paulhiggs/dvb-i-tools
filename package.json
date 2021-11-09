@@ -16,6 +16,7 @@
 		"cors": "^2.8.5",
 		"express": "4.x",
 		"express-fileupload": "^1.2.1",
+		"language-tags": "^1.0.5",
 		"libxmljs2": "^0.29.0",
 		"morgan": "^1.10.0",
 		"node-fetch": "^3.0.0",
@@ -36,6 +37,9 @@
 	},
 	"jshintConfig": {
 		"esversion": 11,
-		"module": "true"
+		"module": "true",
+		"globals": {
+			"console": false
+		}
 	}
 }
