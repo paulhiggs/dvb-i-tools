@@ -57,12 +57,12 @@ export default class IANAlanguages {
 				for (let i=0; i<items.length; i++) {
 					let signingLanguage=isSignLanguage(items);
 					if (items[i].startsWith("Subtag:")) {
- 						let val=items[i].split(":")[1].trim();
+ 						let subtag=items[i].split(":")[1].trim();
 						if (isIn(items,"Scope: private-use")) {
-							if (val.indexOf("..")<0) 
-								this.languagesList.push(val);
+							if (subtag.indexOf("..")<0) 
+								this.languagesList.push(subtag);
 							else {
-								let range=val.split("..");
+								let range=subtag.split("..");
 								if (range[0].length == range[1].length) {
 									if (range[0]<range[1]) 
 										this.languageRanges.push({"start":range[0], "end":range[1]});
@@ -72,17 +72,22 @@ export default class IANAlanguages {
 							}
 						}							
 						else {
-							this.languagesList.push(val);
+							this.languagesList.push(subtag);
 							if (signingLanguage) 
-								this.signLanguagesList.push(val);
+								this.signLanguagesList.push(subtag);
 						}
 					}
 				}
-			if (isIn(items, "Type: variant"))
-				for (let i=0; i<items.length; i++)
-				 if (items[i].startsWith("Prefix:")) {
-					// TODO: not sure if we use Prefix: or Subtag: values
-				 }
+			if (isIn(items, "Type: variant")) {
+				let subtag=null;
+				for (let i=0; i<items.length; i++) 
+					if (items[i].startsWith("Subtag:"))
+						subtag=items[i].split(":")[1].trim();
+				if (subtag) 
+					for (let i=0; i<items.length; i++)
+						if (items[i].startsWith("Prefix:")) 
+							this.languagesList.push(`${items[i].split(":")[1].trim()}-${subtag}`);
+			}
 			if (isIn(items, "Type: redundant")) {
 				let red={};
 				for (let i=0; i<items.length; i++) {
