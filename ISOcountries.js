@@ -3,7 +3,6 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 import { handleErrors } from "./fetch-err-handler.js";
 
 import { readFile } from "fs";
-import { console } from "console";
 
 /**
  * load the countries list into the allowedCountries global array from the specified text
