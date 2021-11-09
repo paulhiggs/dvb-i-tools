@@ -240,7 +240,7 @@ export function validServiceDaysList(daysList) {
  * @param {string} val the value to check, likely from an Interval@startTime or @endTime attributes
  * @returns {boolean} true if the value is properly formated
  */
-const ZuluRegex=new RegExp(/^(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))Z$/);
+const ZuluRegex=new RegExp(/^(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?)Z$/);
 export function validZuluTimeType(time) {
 	return time ? ZuluRegex.test(time.trim()) : false;
 }
