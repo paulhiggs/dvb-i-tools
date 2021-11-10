@@ -67,7 +67,7 @@ function validServiceIdentifier(identifier) {
  * determines if the identifer provided is unique against a list of known identifiers
  *
  * @param {String} identifier  The service identifier
- * @param {Array} identifiers  The list of known service identifiers
+ * @param {Array}  identifiers The list of known service identifiers
  * @returns {boolean} true if the service identifier is unique otherwise false
  */
 function uniqueServiceIdentifier(identifier, identifiers) {
@@ -281,31 +281,31 @@ export default class ServiceListCheck {
 	/**
 	 * check a language code and log its result
 	 *
-	 * @param {string} lang      the language to check
-	 * @param {string} loc       the 'location' of the element containing the language value
-	 * @param {Ojbect} element   the element containing the language value
-	 * @param {Object} errs      the class where errors and warnings relating to the service list processing are stored 
-	 * @param {String} errCode   the error code to be reported
+	 * @param {string}  lang      the language to check
+	 * @param {string}  loc       the 'location' of the element containing the language value
+	 * @param {XMLnode} element   the element containing the language value
+	 * @param {Object}  errs      the class where errors and warnings relating to the service list processing are stored 
+	 * @param {String}  errCode   the error code to be reported
 	 */
 	/*private*/ checkLanguage(lang, loc, element, errs, errCode) {
 		let validatorResp=this.knownLanguages.isKnown(lang);
 		switch (validatorResp.resp) {
 			case this.knownLanguages.languageUnknown:
-				errs.addError({type:WARNING, code:errCode?`${errCode}-1`:"CL001", 
+				errs.addError({type:WARNING, code:`${errCode}-1`, 
 								message:`${loc?loc:"language"} value ${lang.quote()} is invalid`, fragment:element, 
 								line:element.line(), key:"invalid language"});
 				break;
 			case this.knownLanguages.languageRedundant:
-				errs.addError({type:WARNING, code:errCode?`${errCode}-2`:"CL002", 
+				errs.addError({type:WARNING, code:`${errCode}-2`, 
 						message:`${loc?loc:"language"} value ${lang.quote()} is deprecated (use ${validatorResp.pref.quote()} instead)`, 
 						line:element.line(), key:"deprecated language"});
 				break;	
 			case this.knownLanguages.languageNotSpecified:
-				errs.addError({code:errCode?`${errCode}-3`:"CL003", message:`${loc?loc:"language"} value is not provided`, 
+				errs.addError({code:`${errCode}-3`, message:`${loc?loc:"language"} value is not provided`, 
 						line:element.line(),key:"unspecified language"});
 				break;
 			case this.knownLanguages.languageInvalidType:
-				errs.addError({code:errCode?`${errCode}-4`:"CL004", message:`language is not a String, its "${typeof(lang)}"`, 
+				errs.addError({code:`${errCode}-4`, message:`language is not a String, its "${typeof(lang)}"`, 
 					line:element.line(), key:"invalid language"});
 				break;
 		}
@@ -315,11 +315,11 @@ export default class ServiceListCheck {
 	/**
 	 * parses the region element, checks the values and adds it and its children (through recursion) to the linear list of region ids
 	 *
-	 * @param {String} SL_SCHEMA      Used when constructing Xpath queries
-	 * @param {String} SCHEMA_PREFIX  Used when constructing Xpath queries
-	 * @param {Object} Region         The <Region> element to process
+	 * @param {String}  SL_SCHEMA      Used when constructing Xpath queries
+	 * @param {String}  SCHEMA_PREFIX  Used when constructing Xpath queries
+	 * @param {XMLnode} Region         The <Region> element to process
 	 * @param {integer} depth         The current depth in the hierarchial structure of regions
-	 * @param {Array} knownRegionIDs  The list of region IDs that have been found
+	 * @param {Array}  knownRegionIDs  The list of region IDs that have been found
 	 * @param {Object} errs           The class where errors and warnings relating to the service list processing are stored 
 	 */
 	/*private*/  addRegion(SL_SCHEMA, SCHEMA_PREFIX, Region, depth, knownRegionIDs, errs) {
@@ -391,8 +391,8 @@ export default class ServiceListCheck {
 	/** 
 	 * determines if the identifer provided refers to a valid banner for out-of-servce-hours presentation
 	 *
-	 * @param {String} HowRelated  The banner identifier
-	 * @param {String} namespace   The namespace being used in the XML document
+	 * @param {XMLnode} HowRelated  The banner identifier
+	 * @param {String}  namespace   The namespace being used in the XML document
 	 * @returns {boolean} true if this is a valid banner for out-of-servce-hours presentation else false
 	 */
 	/*private*/  validOutScheduleHours(HowRelated, namespace) {
@@ -410,8 +410,8 @@ export default class ServiceListCheck {
 	 * determines if the identifer provided refers to a valid banner for content-finished presentation
 	 *
 	 * @since DVB A177v2
-	 * @param {String} HowRelated  The banner identifier
-	 * @param {String} namespace   The namespace being used in the XML document
+	 * @param {XMLnode} HowRelated  The banner identifier
+	 * @param {String}  namespace   The namespace being used in the XML document
 	 * @returns {boolean} true if this is a valid banner for content-finished presentation else false
 	 */
 	/*private*/  validContentFinishedBanner(HowRelated, namespace) {
@@ -427,8 +427,8 @@ export default class ServiceListCheck {
 	/** 
 	 * determines if the identifer provided refers to a valid service list logo
 	 *
-	 * @param {String} HowRelated  The logo identifier
-	 * @param {String} namespace   The namespace being used in the XML document
+	 * @param {XMLnode} HowRelated  The logo identifier
+	 * @param {String}  namespace   The namespace being used in the XML document
 	 * @returns {boolean} true if this is a valid logo for a service list else false
 	 */
 	/*private*/  validServiceListLogo(HowRelated, namespace) {
@@ -445,8 +445,8 @@ export default class ServiceListCheck {
 	/** 
 	 * determines if the identifer provided refers to a valid service logo
 	 *
-	 * @param {String} HowRelated  The logo identifier
-	 * @param {String} namespace   The namespace being used in the XML document
+	 * @param {XMLnode} HowRelated  The logo identifier
+	 * @param {String}  namespace   The namespace being used in the XML document
 	 * @returns {boolean} true if this is a valid logo for a service  else false
 	 */
 	/*private*/  validServiceLogo(HowRelated, namespace) {
@@ -463,8 +463,8 @@ export default class ServiceListCheck {
 	/** 
 	 * determines if the identifer provided refers to a valid content guide source logo
 	 *
-	 * @param {String} HowRelated  The logo identifier
-	 * @param {String} namespace   The namespace being used in the XML document
+	 * @param {XMLnode} HowRelated  The logo identifier
+	 * @param {String}  namespace   The namespace being used in the XML document
 	 * @returns {boolean} true if this is a valid logo for a content guide source else false
 	 */
 	/*private*/  validContentGuideSourceLogo(HowRelated, namespace) {
@@ -479,15 +479,12 @@ export default class ServiceListCheck {
 
 
 
-
-
-
 	/**
 	 * verifies if the specified application is valid according to specification
 	 *
-	 * @param {Object} MediaLocator  The <MediaLocator> subelement (a libxmls ojbect tree) of the <RelatedMaterial> element
-	 * @param {Object} errs          The class where errors and warnings relating to the service list processing are stored 
-	 * @param {string} Location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+	 * @param {XMLnode} MediaLocator  The <MediaLocator> subelement (a libxmls ojbect tree) of the <RelatedMaterial> element
+	 * @param {Object}  errs          The class where errors and warnings relating to the service list processing are stored 
+	 * @param {string}  Location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 */
 	/*private*/  checkSignalledApplication(MediaLocator, errs, Location) {
 		
@@ -522,7 +519,7 @@ export default class ServiceListCheck {
 	/** 
 	 * determines if the identifer provided refers to a valid application launching method
 	 *
-	 * @param {String} HowRelated  The service identifier
+	 * @param {XMLnode} HowRelated  The service identifier
 	 * @returns {boolean} true if this is a valid application launching method else false
 	 */
 	/*private*/  validServiceApplication(HowRelated) {
@@ -538,18 +535,18 @@ export default class ServiceListCheck {
 	/**
 	 * verifies if the specified RelatedMaterial element is valid according to specification (contents and location)
 	 *
-	 * @param {Object} RelatedMaterial   The <RelatedMaterial> element (a libxmls ojbect tree) to be checked
-	 * @param {Object} errs              The class where errors and warnings relating to the service list processing are stored 
-	 * @param {string} Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
-	 * @param {string} LocationType      The type of element containing the <RelatedMaterial> element. Different validation rules apply to different location types
-	 * @param {string} SCHEMA_NAMESPACE  The namespace of XML document
-	 * @param {string} errCode			 The prefix to use for any errors found
+	 * @param {XMLnode} RelatedMaterial   The <RelatedMaterial> element (a libxmls ojbect tree) to be checked
+	 * @param {Object}  errs              The class where errors and warnings relating to the service list processing are stored 
+	 * @param {string}  Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+	 * @param {string}  LocationType      The type of element containing the <RelatedMaterial> element. Different validation rules apply to different location types
+	 * @param {string}  SCHEMA_NAMESPACE  The namespace of XML document
+	 * @param {string}  errCode			  The prefix to use for any errors found
 	 * @returns {string} an href value if valid, else ""
 	 */
-	/*private*/  validateRelatedMaterial(RelatedMaterial, errs, Location, LocationType, SCHEMA_NAMESPACE, errCode=null) {
+	/*private*/  validateRelatedMaterial(RelatedMaterial, errs, Location, LocationType, SCHEMA_NAMESPACE, errCode) {
 		let rc="";
 		if (!RelatedMaterial) {
-			errs.addError({type:APPLICATION, code:errCode?`${errCode}-1`:"RM000", message:"validateRelatedMaterial() called with RelatedMaterial==null", key:"invalid args"});
+			errs.addError({type:APPLICATION, code:"RM000", message:"validateRelatedMaterial() called with RelatedMaterial==null", key:"invalid args"});
 			return rc;
 		}
 		
@@ -570,7 +567,7 @@ export default class ServiceListCheck {
 		});
 		
 		if (!HowRelated) {
-			errs.addError({code:errCode?`${errCode}-1`:"RM001", 
+			errs.addError({code:`${errCode}-1`, 
 							message:`${tva.e_HowRelated.elementize()} not specified for ${tva.e_RelatedMaterial.elementize()} in ${Location}`, 
 							line:RelatedMaterial.line(), key:`no ${tva.e_HowRelated}`});
 			return rc;
@@ -585,12 +582,12 @@ export default class ServiceListCheck {
 							checkValidLogo(HowRelated, Format, locator, RelatedMaterial, errs, Location));
 					}
 					else
-						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-11`:"RM011");
+						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, `${errCode}-11`);
 					break;
 				case SERVICE_RM:
 				case SERVICE_INSTANCE_RM:
 					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && (this.SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1)) 
-						errs.addError({code:errCode?`${errCode}-21`:"RM021", 
+						errs.addError({code:`${errCode}-21`,
 							message:`${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${SCHEMA_NAMESPACE.quote()} in ${Location}`, key:"invalid CS value", fragment:HowRelated});
 					
 					if (this.validOutScheduleHours(HowRelated, SCHEMA_NAMESPACE) || this.validContentFinishedBanner(HowRelated, SCHEMA_NAMESPACE) || 
@@ -604,7 +601,7 @@ export default class ServiceListCheck {
 								this.checkSignalledApplication(locator, errs, Location));
 					}
 					else 
-						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-22`:"RM022");  //!!
+						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, `${errCode}-22`);
 					break;
 				case CONTENT_GUIDE_RM:
 					if (this.validContentGuideSourceLogo(HowRelated, SCHEMA_NAMESPACE)) {
@@ -613,7 +610,7 @@ export default class ServiceListCheck {
 							checkValidLogo(HowRelated, Format, locator, RelatedMaterial, errs, Location));
 					}
 					else
-						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, errCode?`${errCode}-31`:"RM031");
+						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, `${errCode}-31`);
 					break;
 			}
 		}
@@ -624,15 +621,15 @@ export default class ServiceListCheck {
 	/**
 	 * checks that all the @xml:lang values for an element are unique and that only one instace of the element does not contain an xml:lang attribute
 	 *
-	 * @param {String} SL_SCHEMA        Used when constructing Xpath queries
-	 * @param {String} SCHEMA_PREFIX    Used when constructing Xpath queries
-	 * @param {String} elementName      The multilingual XML element to check
-	 * @param {String} elementLocation  The descriptive location of the element being checked (for reporting)
-	 * @param {Object} node             The XML tree node containing the element being checked
-	 * @param {Object} errs             The class where errors and warnings relating to the service list processing are stored 
-	 * @param {String} errCode          The error code to be reported
+	 * @param {String}  SL_SCHEMA        Used when constructing Xpath queries
+	 * @param {String}  SCHEMA_PREFIX    Used when constructing Xpath queries
+	 * @param {String}  elementName      The multilingual XML element to check
+	 * @param {String}  elementLocation  The descriptive location of the element being checked (for reporting)
+	 * @param {XMLnode} node             The XML tree node containing the element being checked
+	 * @param {Object}  errs             The class where errors and warnings relating to the service list processing are stored 
+	 * @param {String}  errCode          The error code to be reported
 	 */
-	/*private*/  checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, elementName, elementLocation, node, errs, errCode=null) {
+	/*private*/  checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, elementName, elementLocation, node, errs, errCode) {
 		if (!node) {
 			errs.addError({type:APPLICATION, code:"XL000", message:"checkXMLLangs() called with node==null"});
 			return;
@@ -658,14 +655,14 @@ export default class ServiceListCheck {
 		while ((elem=node.get(xPath(SCHEMA_PREFIX, elementName, ++i), SL_SCHEMA))!=null) {
 			let lang=elem.attr(dvbi.a_lang)?elem.attr(dvbi.a_lang).value():ancestorLanguage(elem.parent());
 			if (isIn(elementLanguages, lang)) 
-				errs.addError({code:errCode?`${errCode}-1`:"XL001", 
+				errs.addError({code:`${errCode}-1`, 
 					message:`${lang==NO_DOCUMENT_LANGUAGE?"default language":`xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} for ${elementLocation}`, 
 					fragment:elem, key:"duplicate @xml:lang"});
 			else elementLanguages.push(lang);
 
 			//if lang is specified, validate the format and value of the attribute against BCP47 (RFC 5646)
 			if (lang!=UNSPECIFIED_LANG) 
-				this.checkLanguage(lang, `xml:lang in ${elementName}`, elem, errs, errCode?`${errCode}-2`:"XL002");
+				this.checkLanguage(lang, `xml:lang in ${elementName}`, elem, errs, `${errCode}-2`);
 		}
 	}
 
@@ -673,11 +670,11 @@ export default class ServiceListCheck {
 	/**
 	 * Add an error message for missing <xxxDeliveryParameters>
 	 *
-	 * @param {String} source     The missing source type
-	 * @param {String} serviceId  The serviceId whose instance is missing delivery parameters
-	 * @param {Object} element    The <SourceType> element for which delivery parameters are not specified
-	 * @param {Object} errs       Errors buffer
-	 * @param {String} errCode    The error code to be reported
+	 * @param {String}  source     The missing source type
+	 * @param {String}  serviceId  The serviceId whose instance is missing delivery parameters
+	 * @param {XMLnode} element    The <SourceType> element for which delivery parameters are not specified
+	 * @param {Object}  errs       Errors buffer
+	 * @param {String}  errCode    The error code to be reported
 	 */
 	/*private*/  NoDeliveryParams(source, serviceId, element, errs, errCode) {
 		errs.addError({code:errCode, 
@@ -704,9 +701,9 @@ export default class ServiceListCheck {
 	/**
 	 * check if the node provided contains an RelatedMaterial element for a signalled application
 	 *
-	 * @param {string} SL_SCHEMA      Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX  Used when constructing Xpath queries
-	 * @param {Object} node           The XML tree node (either a <Service> or a <ServiceInstance>) to be checked
+	 * @param {string}  SL_SCHEMA      Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX  Used when constructing Xpath queries
+	 * @param {XMLnode} node           The XML tree node (either a <Service> or a <ServiceInstance>) to be checked
 	 * @returns {boolean} true if the node contains a <RelatedMaterial> element which signals an application else false
 	 */
 	/*private*/  hasSignalledApplication(SL_SCHEMA, SCHEMA_PREFIX, node) {
@@ -725,13 +722,13 @@ export default class ServiceListCheck {
 	/**
 	 * perform any validation on a ContentTypeSourceType element
 	 * 
-	 * @param {string} SL_SCHEMA         Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX     Used when constructing Xpath queries
-	 * @param {string} SCHEMA_NAMESPACE  The namespace of XML document
-	 * @param {object} source            The node of the element to check
-	 * @param {Class}  errs              Errors found in validaton
-	 * @param {object} loc			     The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
-	 * @param {string} errCode           Error code prefix to be used in reports
+	 * @param {string}  SL_SCHEMA         Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX     Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_NAMESPACE  The namespace of XML document
+	 * @param {XMLnode} source            The node of the element to check
+	 * @param {Class}   errs              Errors found in validaton
+	 * @param {object}  loc			      The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
+	 * @param {string}  errCode           Error code prefix to be used in reports
 	 */
 	/*private*/  validateAContentGuideSource(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, source, errs, loc, errCode) {
 
@@ -774,19 +771,19 @@ export default class ServiceListCheck {
 	/**
 	 * validate the language specified record any errors
 	 *
-	 * @param {object} validator  the validation class to use
-	 * @param {Class}  errs       errors found in validaton
-	 * @param {Object} node       the XML node whose @lang attribute should be checked
-	 * @param {string} parentLang the language of the XML element which is the parent of node
+	 * @param {object}  validator  the validation class to use
+	 * @param {Class}   errs       errors found in validaton
+	 * @param {XMLnode} node       the XML node whose @lang attribute should be checked
+	 * @param {string}  parentLang the language of the XML element which is the parent of node
 	 * @param {boolean} isRequired report an error if @lang is not explicitly stated
-	 * @param {string} errCode    (optional) error number to use instead of local values
+	 * @param {string}  errCode    error number to use instead of local values
 	 * @returns {string} the @lang attribute of the node element of the parentLang if it does not exist of is not specified
 	 */
-	/* private */  GetLanguage(validator, errs, node, parentLang, isRequired=false, errCode=null) {
+	/* private */  GetLanguage(validator, errs, node, parentLang, isRequired, errCode) {
 		if (!node) 
 			return parentLang;
 		if (!node.attr(tva.a_lang) && isRequired) {
-			errs.addError({code:errCode?errCode:"GL001", message:`${tva.a_lang.attribute()} is required for ${node.name().quote()}`, key:"unspecified language", line:node.line()});
+			errs.addError({code:errCode, message:`${tva.a_lang.attribute()} is required for ${node.name().quote()}`, key:"unspecified language", line:node.line()});
 			return parentLang;		
 		}
 
@@ -802,17 +799,17 @@ export default class ServiceListCheck {
 	/**
 	 * validate the SynopsisType elements 
 	 *
-	 * @param {string} SCHEMA              Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} Element             the element whose children should be checked
-	 * @param {string} ElementName		   the name of the child element to be checked
-	 * @param {array}  requiredLengths	   @length attributes that are required to be present
-	 * @param {array}  optionalLengths	   @length attributes that can optionally be present
-	 * @param {string} parentLanguage	   the xml:lang of the parent element
-	 * @param {Class}  errs                errors found in validaton
-	 * @param {string} errCode             error code prefix to be used in reports, if not present then use local codes
+	 * @param {string}  SCHEMA              Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} Element             the element whose children should be checked
+	 * @param {string}  ElementName		    the name of the child element to be checked
+	 * @param {array}   requiredLengths	    @length attributes that are required to be present
+	 * @param {array}   optionalLengths	    @length attributes that can optionally be present
+	 * @param {string}  parentLanguage	    the xml:lang of the parent element
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {string}  errCode             error code prefix to be used in reports
 	 */
-	/*private*/  ValidateSynopsisType(SCHEMA, SCHEMA_PREFIX, Element, ElementName, requiredLengths, optionalLengths, parentLanguage, errs, errCode=null) {
+	/*private*/  ValidateSynopsisType(SCHEMA, SCHEMA_PREFIX, Element, ElementName, requiredLengths, optionalLengths, parentLanguage, errs, errCode) {
 
 		function synopsisLengthError(elem, label, length) {
 			return `length of ${elementize(`${tva.a_length.attribute(elem)}=${label.quote()}`)} exceeds ${length} characters`; }
@@ -832,7 +829,7 @@ export default class ServiceListCheck {
 		let ERROR_KEY="synopsis";
 		while ((ste=Element.get(xPath(SCHEMA_PREFIX, ElementName, ++s), SCHEMA))!=null) {
 			
-			let synopsisLang=this.GetLanguage(this.knownLanguages, errs, ste, parentLanguage, false, errCode?`${errCode}-2`:"SY002");
+			let synopsisLang=this.GetLanguage(this.knownLanguages, errs, ste, parentLanguage, false, `${errCode}-2`);
 			let synopsisLength=ste.attr(tva.a_length)?ste.attr(tva.a_length).value():null;
 			
 			if (synopsisLength) {
@@ -841,38 +838,38 @@ export default class ServiceListCheck {
 					switch (synopsisLength) {
 						case tva.SYNOPSIS_BRIEF_LABEL:
 							if (cleanSynopsisLength > tva.SYNOPSIS_BRIEF_LENGTH)
-								errs.addError({code:errCode?`${errCode}-10`:"SY010", message:synopsisLengthError(ElementName, tva.SYNOPSIS_BRIEF_LABEL, tva.SYNOPSIS_BRIEF_LENGTH), 
+								errs.addError({code:`${errCode}-10`, message:synopsisLengthError(ElementName, tva.SYNOPSIS_BRIEF_LABEL, tva.SYNOPSIS_BRIEF_LENGTH), 
 										fragment:ste, key:ERROR_KEY});
 							hasBrief=true;
 							break;
 						case tva.SYNOPSIS_SHORT_LABEL:
 							if (cleanSynopsisLength > tva.SYNOPSIS_SHORT_LENGTH)
-								errs.addError({code:errCode?`${errCode}-11`:"SY011", message:synopsisLengthError(ElementName, tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_SHORT_LENGTH), 
+								errs.addError({code:`${errCode}-11`, message:synopsisLengthError(ElementName, tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_SHORT_LENGTH), 
 										fragment:ste, key:ERROR_KEY});
 							hasShort=true;
 							break;
 						case tva.SYNOPSIS_MEDIUM_LABEL:
 							if (cleanSynopsisLength > tva.SYNOPSIS_MEDIUM_LENGTH)
-								errs.addError({code:errCode?`${errCode}-12`:"SY012", message:synopsisLengthError(ElementName, tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_MEDIUM_LENGTH), 
+								errs.addError({code:`${errCode}-12`, message:synopsisLengthError(ElementName, tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_MEDIUM_LENGTH), 
 										fragment:ste, key:ERROR_KEY});
 							hasMedium=true;
 							break;
 						case tva.SYNOPSIS_LONG_LABEL:
 							if (cleanSynopsisLength > tva.SYNOPSIS_LONG_LENGTH)
-								errs.addError({code:errCode?`${errCode}-13`:"SY013", message:synopsisLengthError(ElementName, tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_LONG_LENGTH), 
+								errs.addError({code:`${errCode}-13`, message:synopsisLengthError(ElementName, tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_LONG_LENGTH), 
 										fragment:ste, key:ERROR_KEY});
 							hasLong=true;
 							break;						
 						case tva.SYNOPSIS_EXTENDED_LABEL:
 							if (cleanSynopsisLength < tva.SYNOPSIS_LONG_LENGTH)
-								errs.addError({code:errCode?`${errCode}-14`:"SY014", message:synopsisToShortError(ElementName, tva.SYNOPSIS_EXTENDED_LABEL, tva.SYNOPSIS_LONG_LENGTH), 
+								errs.addError({code:`${errCode}-14`, message:synopsisToShortError(ElementName, tva.SYNOPSIS_EXTENDED_LABEL, tva.SYNOPSIS_LONG_LENGTH), 
 										fragment:ste, key:ERROR_KEY});
 							hasExtended=true;
 							break;
 					}
 				}
 				else
-					errs.addError({code:errCode?`${errCode}-15`:"SY015", message:`${tva.a_length.attribute()}=${synopsisLength.quote()} is not permitted in ${ElementName.elementize()}`, 
+					errs.addError({code:`${errCode}-15`, message:`${tva.a_length.attribute()}=${synopsisLength.quote()} is not permitted in ${ElementName.elementize()}`, 
 									fragment:ste, key:ERROR_KEY});
 			}
 		
@@ -880,31 +877,31 @@ export default class ServiceListCheck {
 				switch (synopsisLength) {
 					case tva.SYNOPSIS_BRIEF_LABEL:
 						if (isIn(briefLangs, synopsisLang)) 
-							errs.addError({code:errCode?`${errCode}-21`:"SY021", message:singleLengthLangError(ElementName, synopsisLength, synopsisLang), 
+							errs.addError({code:`${errCode}-21`, message:singleLengthLangError(ElementName, synopsisLength, synopsisLang), 
 									fragment:ste, key:ERROR_KEY});
 						else briefLangs.push(synopsisLang);
 						break;
 					case tva.SYNOPSIS_SHORT_LABEL:
 						if (isIn(shortLangs, synopsisLang)) 
-							errs.addError({code:errCode?`${errCode}-22`:"SY022", message:singleLengthLangError(ElementName, synopsisLength, synopsisLang), 
+							errs.addError({code:`${errCode}-22`, message:singleLengthLangError(ElementName, synopsisLength, synopsisLang), 
 									fragment:ste, key:ERROR_KEY});
 						else shortLangs.push(synopsisLang);
 						break;
 					case tva.SYNOPSIS_MEDIUM_LABEL:
 						if (isIn(mediumLangs, synopsisLang)) 
-							errs.addError({code:errCode?`${errCode}-23`:"SY023", message:singleLengthLangError(ElementName, synopsisLength, synopsisLang), 
+							errs.addError({code:`${errCode}-23`, message:singleLengthLangError(ElementName, synopsisLength, synopsisLang), 
 									fragment:ste, key:ERROR_KEY});
 						else mediumLangs.push(synopsisLang);
 						break;
 					case tva.SYNOPSIS_LONG_LABEL:
 						if (isIn(longLangs, synopsisLang)) 
-							errs.addError({code:errCode?`${errCode}-24`:"SY024", message:singleLengthLangError(ElementName, synopsisLength, synopsisLang), 
+							errs.addError({code:`${errCode}-24`, message:singleLengthLangError(ElementName, synopsisLength, synopsisLang), 
 									fragment:ste, key:ERROR_KEY});
 						else longLangs.push(synopsisLang);
 						break;
 					case tva.SYNOPSIS_EXTENDED_LABEL:
 						if (isIn(extendedLangs, synopsisLang)) 
-							errs.addError({code:errCode?`${errCode}-25`:"SY025", message:singleLengthLangError(ElementName, synopsisLength, synopsisLang), 
+							errs.addError({code:`${errCode}-25`, message:singleLengthLangError(ElementName, synopsisLength, synopsisLang), 
 									fragment:ste, key:ERROR_KEY});
 						else extendedLangs.push(synopsisLang);
 						break;
@@ -912,27 +909,27 @@ export default class ServiceListCheck {
 		}
 		
 		if (isIn(requiredLengths, tva.SYNOPSIS_BRIEF_LABEL) && !hasBrief)
-			errs.addError({code:errCode?`${errCode}-31`:"SY031", message:requiredSynopsisError(tva.SYNOPSIS_BRIEF_LABEL), fragment:Element, key:ERROR_KEY});	
+			errs.addError({code:`${errCode}-31`, message:requiredSynopsisError(tva.SYNOPSIS_BRIEF_LABEL), fragment:Element, key:ERROR_KEY});	
 		if (isIn(requiredLengths, tva.SYNOPSIS_SHORT_LABEL) && !hasShort)
-			errs.addError({code:errCode?`${errCode}-32`:"SY032", message:requiredSynopsisError(tva.SYNOPSIS_SHORT_LABEL), fragment:Element, key:ERROR_KEY});	
+			errs.addError({code:`${errCode}-32`, message:requiredSynopsisError(tva.SYNOPSIS_SHORT_LABEL), fragment:Element, key:ERROR_KEY});	
 		if (isIn(requiredLengths, tva.SYNOPSIS_MEDIUM_LABEL) && !hasMedium)
-			errs.addError({code:errCode?`${errCode}-33`:"SY022", message:requiredSynopsisError(tva.SYNOPSIS_MEDIUM_LABEL), fragment:Element, key:ERROR_KEY});	
+			errs.addError({code:`${errCode}-33`, message:requiredSynopsisError(tva.SYNOPSIS_MEDIUM_LABEL), fragment:Element, key:ERROR_KEY});	
 		if (isIn(requiredLengths, tva.SYNOPSIS_LONG_LABEL) && !hasLong)
-			errs.addError({code:errCode?`${errCode}-34`:"SY034", message:requiredSynopsisError(tva.SYNOPSIS_LONG_LABEL), fragment:Element, key:ERROR_KEY});
+			errs.addError({code:`${errCode}-34`, message:requiredSynopsisError(tva.SYNOPSIS_LONG_LABEL), fragment:Element, key:ERROR_KEY});
 		if (isIn(requiredLengths, tva.SYNOPSIS_EXTENDED_LABEL) && !hasExtended)
-			errs.addError({code:errCode?`${errCode}-35`:"SY035", message:requiredSynopsisError(tva.SYNOPSIS_EXTENDED_LABEL), fragment:Element, key:ERROR_KEY});	
+			errs.addError({code:`${errCode}-35`, message:requiredSynopsisError(tva.SYNOPSIS_EXTENDED_LABEL), fragment:Element, key:ERROR_KEY});	
 	}
 
 
 	/**
 	 * validate a ServiceInstance element
 	 *
-	 * @param {string} SL_SCHEMA             Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX         Used when constructing Xpath queries
-	 * @param {string} SCHEMA_NAMESPACE      The namespace of XML document 
-	 * @param {object} ServiceInstance       the service instance element to check
-	 * @param {string} thisServiceId         the identifier of the service 
-	 * @param {Class}  errs                  errors found in validaton
+	 * @param {string}  SL_SCHEMA             Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX         Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_NAMESPACE      The namespace of XML document 
+	 * @param {XMLnode} ServiceInstance       the service instance element to check
+	 * @param {string}  thisServiceId         the identifier of the service 
+	 * @param {Class}   errs                  errors found in validaton
 	 */
 	/*private*/  validateServiceInstance(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, ServiceInstance, thisServiceId, errs) {
 		if (!ServiceInstance) {
@@ -1252,9 +1249,9 @@ export default class ServiceListCheck {
 	}
 
 
-	/*private*/ CheckExtension(extn, extLoc, errs, errCode=null) {
+	/*private*/ CheckExtension(extn, extLoc, errs, errCode) {
 		if (!extn) {
-			errs.addError({type:APPLICATION, code:errCode?`${errCode}-0`:"CE000", message:"CheckExtension() called with extn=null"});
+			errs.addError({type:APPLICATION, code:"CE000", message:"CheckExtension() called with extn=null"});
 			return;
 		}
 		// extension type is checked in schema validation
@@ -1263,7 +1260,7 @@ export default class ServiceListCheck {
 			switch (extn.attr(dvbi.a_extensionName).value()) {
 				case 'DVB-HB': 
 					if (extLoc != EXTENSION_LOCATION_SERVICE_LIST_REGISTRY)
-						errs.addError({code:errCode?`${errCode}-11`:"CE011", message:"DVB-HB Extension only permitted in Service List Registry", 
+						errs.addError({code:`${errCode}-1`, message:"DVB-HB Extension only permitted in Service List Registry", 
 							fragment:extn, key:'extensability'});
 					break;
 			}

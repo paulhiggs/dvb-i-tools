@@ -52,7 +52,7 @@ const supportedRequests=[
 /**
  * counts the number of named elements in the specificed node 
  * *
- * @param {Object} node the libxmljs node to check
+ * @param {XMLnode} node            the libxmljs node to check
  * @param {String} childElementName the name of the child element to count
  * @returns {integer} the number of named child elments 
  */
@@ -82,7 +82,7 @@ function CountChildElements(node, childElementName) {
 /** 
  * checks is the specified element (elem) has an attribute named attrName and that its value is on the given list)
  *
- * @param {Node}    elem       the XML element to be checked
+ * @param {XMLnode} elem       the XML element to be checked
  * @param {string}  attrName   the name of the attribute carrying the boolean value
  * @param {string}  errCode    the error number used as a prefix for reporting errors
  * @param {Class}   errs       errors found in validaton
@@ -111,7 +111,7 @@ function CountChildElements(node, childElementName) {
 /** 
  * checks is the specified element (elem) has an attribute named attrName and that its value is "true" or "false"
  *
- * @param {Node}    elem       the XML element to be checked
+ * @param {XMLnode} elem       the XML element to be checked
  * @param {string}  attrName   the name of the attribute carrying the boolean value
  * @param {string}  errCode    the error number used as a prefix for reporting errors
  * @param {Class}   errs       errors found in validaton
@@ -125,7 +125,7 @@ function BooleanValue(elem, attrName, errCode, errs, isRequired=true) {
 /** 
  * checks is the specified element (elem) has an attribute named attrName and that its value is "true"
  *
- * @param {Node}    elem       the XML element to be checked
+ * @param {XMLnode} elem       the XML element to be checked
  * @param {string}  attrName   the name of the attribute carrying the boolean value
  * @param {string}  errCode    the error number used as a prefix for reporting errors
  * @param {Class}   errs       errors found in validaton
@@ -138,7 +138,7 @@ function BooleanValue(elem, attrName, errCode, errs, isRequired=true) {
 /** 
  * checks is the specified element (elem) has an attribute named attrName and that its value is "false"
  *
- * @param {Node}    elem       the XML element to be checked
+ * @param {XMLnode} elem       the XML element to be checked
  * @param {string}  attrName   the name of the attribute carrying the boolean value
  * @param {string}  errCode    the error number used as a prefix for reporting errors
  * @param {Class}   errs       errors found in validaton
@@ -275,12 +275,12 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the language specified record any errors
 	 *
-	 * @param {object} validator  the validation class to use
-	 * @param {Class}  errs       errors found in validaton
-	 * @param {Object} node       the XML node whose @lang attribute should be checked
-	 * @param {string} parentLang the language of the XML element which is the parent of node
+	 * @param {object}  validator  the validation class to use
+	 * @param {Class}   errs       errors found in validaton
+	 * @param {XMLnode} node       the XML node whose @lang attribute should be checked
+	 * @param {string}  parentLang the language of the XML element which is the parent of node
 	 * @param {boolean} isRequired report an error if @lang is not explicitly stated
-	 * @param {string} errCode     error number to use
+	 * @param {string}  errCode    error number to use
 	 * @returns {string} the @lang attribute of the node element of the parentLang if it does not exist of is not specified
 	 */
 	/* private */  GetLanguage(validator, errs, node, parentLang, isRequired, errCode) {
@@ -303,10 +303,10 @@ export default class ContentGuideCheck {
 	/**
 	 * check if the specificed element has the named child elemeny
 	 * 
-	 * @param {string} CG_SCHEMA       Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX   Used when constructing Xpath queries
-	 * @param {object} node            the node to check
-	 * @param {string} elementName     the name of the child element
+	 * @param {string}  CG_SCHEMA       Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX   Used when constructing Xpath queries
+	 * @param {XMLnode} node            the node to check
+	 * @param {string}  elementName     the name of the child element
 	 * @returns {boolean} true if an element named node.elementName exists, else false
 	 */
 	/* private */  hasElement(CG_SCHEMA, SCHEMA_PREFIX,  node, elementName) {
@@ -318,9 +318,9 @@ export default class ContentGuideCheck {
 	/**
 	 * check that the serviceIdRef attribute is a TAG URI and report warnings
 	 * 
-	 * @param {Object} elem       the node containing the element being checked
-	 * @param {Class}  errs       errors found in validaton
-	 * @param {string} errCode    error code prefix to be used in reports
+	 * @param {XMLnode} elem       the node containing the element being checked
+	 * @param {Class}   errs       errors found in validaton
+	 * @param {string}  errCode    error code prefix to be used in reports
 	 * @returns {string} the serviceIdRef, whether it is valid of not
 	 */
 	/* private */  checkTAGUri(elem, errs, errCode) {
@@ -339,15 +339,15 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <Synopsis> elements 
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} BasicDescription    the element whose children should be checked
-	 * @param {array}  requiredLengths	   @length attributes that are required to be present
-	 * @param {array}  optionalLengths	   @length attributes that can optionally be present
-	 * @param {string} requestType         the type of content guide request being checked
-	 * @param {Class}  errs                errors found in validaton
-	 * @param {string} parentLanguage	   the xml:lang of the parent element to ProgramInformation
-	 * @param {string} errCode             error code prefix to be used in reports
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} BasicDescription    the element whose children should be checked
+	 * @param {array}   requiredLengths	    @length attributes that are required to be present
+	 * @param {array}   optionalLengths	    @length attributes that can optionally be present
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {string}  parentLanguage	    the xml:lang of the parent element to ProgramInformation
+	 * @param {string}  errCode             error code prefix to be used in reports
 	 */
 	/* private */  ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, requiredLengths, optionalLengths, requestType, errs, parentLanguage, errCode) {
 		
@@ -440,7 +440,7 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object}  BasicDescription    the element whose children should be checked
+	 * @param {XMLnode} BasicDescription    the element whose children should be checked
 	 * @param {integer} minKeywords         the minimum number of keywords
 	 * @param {integer} maxKeywords         the maximum number of keywords
 	 * @param {Class}   errs                errors found in validaton
@@ -486,7 +486,7 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object}  BasicDescription    the element whose children should be checked
+	 * @param {XMLnode} BasicDescription    the element whose children should be checked
 	 * @param {Class}   errs                errors found in validaton
 	 * @param {string}  errCode             error code prefix to be used in reports
 	 */
@@ -516,7 +516,7 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object}  BasicDescription    the element whose children should be checked
+	 * @param {XMLnode} BasicDescription    the element whose children should be checked
 	 * @param {Class}   errs                errors found in validaton
 	 * @param {string}  errCode             error code prefix to be used in reports
 	 */
@@ -580,7 +580,7 @@ export default class ContentGuideCheck {
 	/**
 	 * validate a name (either PersonName of Character) to ensure a single GivenName is present with a single optional FamilyName
 	 *
-	 * @param {Object}  elem             the element whose children should be checked
+	 * @param {XMLnode} elem             the element whose children should be checked
 	 * @param {Class}   errs             errors found in validaton
 	 * @param {string}  errCode          error code prefix to be used in reports
 	 */
@@ -624,7 +624,7 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object}  BasicDescription    the element whose children should be checked
+	 * @param {XMLnode} BasicDescription    the element whose children should be checked
 	 * @param {Class}   errs                errors found in validaton
 	 * @param {string}  errCode             error code prefix to be used in reports
 	 */
@@ -657,12 +657,12 @@ export default class ContentGuideCheck {
 						case tva.e_PersonName:
 							foundPersonName.push(elem);
 							// required to have a GivenName optionally have a FamilyName
-							vn(elem, errs, errCode?`${errCode}-3`:"CL003" );
+							vn(elem, errs, `${errCode}-3`);
 							break;
 						case tva.e_Character:
 							foundCharacter.push(elem);
 							// required to have a GivenName optionally have a FamilyName
-							vn(elem, errs, errCode?`${errCode}-4`:"CL004" );	
+							vn(elem, errs, `${errCode}-4`);
 							break;
 						case tva.e_OrganizationName:
 							foundOrganizationName.push(elem);
@@ -700,7 +700,7 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object}  BasicDescription    the element whose children should be checked
+	 * @param {XMLnode} BasicDescription    the element whose children should be checked
 	 * @param {Class}   errs                errors found in validaton
 	 */
 	/* private */  ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs) {
@@ -721,7 +721,7 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object}  BasicDescription    the element whose children should be checked
+	 * @param {XMLnode} BasicDescription    the element whose children should be checked
 	 * @param {Class}   errs                errors found in validaton
 	 * @param {string}  Location			The location of the Basic Description element
 	 */
@@ -809,7 +809,7 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object}  BasicDescription    the element whose children should be checked
+	 * @param {XMLnode} BasicDescription    the element whose children should be checked
 	 * @param {Class}   errs                errors found in validaton
 	 */
 	/* private */  ValidateRelatedMaterial_MoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs) {
@@ -832,9 +832,9 @@ export default class ContentGuideCheck {
 
 	/** TemplateAITPromotional Still Image
 	 *
-	 * @param {Object} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
-	 * @param {Object} errs              The class where errors and warnings relating to the serivce list processing are stored 
-	 * @param {string} Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+	 * @param {XMLnode} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
+	 * @param {Object}  errs              The class where errors and warnings relating to the serivce list processing are stored 
+	 * @param {string}  Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 */
 	/* private */  ValidateTemplateAIT(RelatedMaterial, errs, Location) {
 		
@@ -893,15 +893,13 @@ export default class ContentGuideCheck {
 	}
 
 
-
-
 	/**
 	 * validate the <RelatedMaterial> elements specified in a Box Set List
 	 *
-	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object}  BasicDescription    the element whose children should be checked
-	 * @param {Class}   errs                errors found in validaton
+	 * @param {string}   CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}   SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode}  BasicDescription    the element whose children should be checked
+	 * @param {Class}    errs                errors found in validaton
 	 */
 	/* private */  ValidateRelatedMaterial_BoxSetList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs) {
 		
@@ -961,14 +959,14 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <Title> elements specified
 	 *
-	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object}  BasicDescription    the element whose children should be checked
-	 * @param {boolean} allowSecondary      indicates if  Title with @type="secondary" is permitted
-	 * @param {Class}   errs                errors found in validaton
-	 * @param {string}  parentLanguage	    the xml:lang of the parent element to ProgramInformation
-	 * @param {string}  errCode             error code prefix to be used in reports
-	 * @param {boolean} TypeIsRequired      true is the @type is a required attribute in this use of <Title>
+	 * @param {string}   CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}   SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode}  BasicDescription    the element whose children should be checked
+	 * @param {boolean}  allowSecondary      indicates if  Title with @type="secondary" is permitted
+	 * @param {Class}    errs                errors found in validaton
+	 * @param {string}   parentLanguage	     the xml:lang of the parent element to ProgramInformation
+	 * @param {string}   errCode             error code prefix to be used in reports
+	 * @param {boolean}  TypeIsRequired      true is the @type is a required attribute in this use of <Title>
 	 */
 	/* private */  ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, allowSecondary, errs, parentLanguage, errCode, TypeIsRequired) {
 		
@@ -1034,13 +1032,13 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <BasicDescription> element against the profile for the given request/response type
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} parentElement  	   the element whose children should be checked
-	 * @param {string} requestType         the type of content guide request being checked
-	 * @param {Class}  errs                errors found in validaton
-	 * @param {string} parentLanguage	   the xml:lang of the parent element to parentElement
-	 * @param {object} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} parentElement  	    the element whose children should be checked
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {string}  parentLanguage	    the xml:lang of the parent element to parentElement
+	 * @param {XMLnode} categoryGroup       the GroupInformation element that others must refer to through <MemberOf>
 	 */
 	/* private */  ValidateBasicDescription(CG_SCHEMA, SCHEMA_PREFIX, parentElement, requestType, errs, parentLanguage, categoryGroup) {
 
@@ -1177,16 +1175,16 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <ProgramInformation> element against the profile for the given request/response type
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} ProgramInformation  the element whose children should be checked
-	 * @param {string} parentLanguage	   the xml:lang of the parent element to ProgramInformation
-	 * @param {array}  programCRIDs        array to record CRIDs for later use 
-	 * @param {array}  groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
-	 * @param {string} requestType         the type of content guide request being checked
-	 * @param {array}  indexes             array of @index values from other elements in the same table - for duplicate detection
-	 * @param {Class}  errs                errors found in validaton
-	 * @returns {String}				CRID if the current program, if this is it
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} ProgramInformation  the element whose children should be checked
+	 * @param {string}  parentLanguage	   the xml:lang of the parent element to ProgramInformation
+	 * @param {array}   programCRIDs        array to record CRIDs for later use 
+	 * @param {array}   groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {array}   indexes             array of @index values from other elements in the same table - for duplicate detection
+	 * @param {Class}   errs                errors found in validaton
+	 * @returns {String} CRID if the current program, if this is it
 	 */
 	/* private */  ValidateProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramInformation, parentLanguage, programCRIDs, groupCRIDs, requestType, indexes, errs) {
 		
@@ -1289,15 +1287,15 @@ export default class ContentGuideCheck {
 	/**
 	 * find and validate any <ProgramInformation> elements in the <ProgramInformationTable>
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {string} parentLang          XML language of the parent element (or its parent(s))
-	 * @param {array}  programCRIDs        array to record CRIDs for later use 
-	 * @param {array}  groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
-	 * @param {string} requestType         the type of content guide request being checked
-	 * @param {Class}  errs                errors found in validaton
-	 * @param {integer} o.childCount       the number of child elements to be present (to match GroupInformation@numOfItems)
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
+	 * @param {string}  parentLang          XML language of the parent element (or its parent(s))
+	 * @param {array}   programCRIDs        array to record CRIDs for later use 
+	 * @param {array}   groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {integer} o.childCount        the number of child elements to be present (to match GroupInformation@numOfItems)
 	 * @returns {string} the CRID of the currently airing program (that which is a member of the "now" structural crid)
 	 */
 	/* private */  CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, parentLang, programCRIDs, groupCRIDs, requestType, errs, o=null) { 
@@ -1334,15 +1332,15 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <GroupInformation> element for Box Set related requests
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} GroupInformation    the element whose children should be checked
-	 * @param {string} requestType         the type of content guide request being checked
-	 * @param {Class}  errs                errors found in validaton
-	 * @param {string} parentLanguage	   the xml:lang of the parent element to GroupInformation
-	 * @param {object} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
-	 * @param {array}  indexes			   an accumulation of the @index values found
-	 * @param {string} groupsFound         groupId values found (null if not needed)
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} GroupInformation    the element whose children should be checked
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {string}  parentLanguage	    the xml:lang of the parent element to GroupInformation
+	 * @param {object}  categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
+	 * @param {array}   indexes			    an accumulation of the @index values found
+	 * @param {array}   groupsFound         groupId values found (null if not needed)
 	 */
 	/* private */  ValidateGroupInformationBoxSets(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup, indexes, groupsFound) {
 
@@ -1463,13 +1461,13 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <GroupInformation> element for Schedules related requests
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} GroupInformation    the element whose children should be checked
-	 * @param {string} requestType         the type of content guide request being checked
-	 * @param {Class}  errs                errors found in validaton
-	 * @param {string} parentLanguage	   the xml:lang of the parent element to GroupInformation
-	 * @param {object} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} GroupInformation    the element whose children should be checked
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {string}  parentLanguage	   the xml:lang of the parent element to GroupInformation
+	 * @param {XMLnode} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
 	 */
 	/* private */  ValidateGroupInformationSchedules(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup) {
 
@@ -1500,14 +1498,14 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <GroupInformation> element for More Episodes requests
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} GroupInformation    the element whose children should be checked
-	 * @param {string} requestType         the type of content guide request being checked
-	 * @param {Class}  errs                errors found in validaton
-	 * @param {string} parentLanguage	   the xml:lang of the parent element to GroupInformation
-	 * @param {object} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
-	 * @param {string} groupsFound         groupId values found (null if not needed)
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} GroupInformation    the element whose children should be checked
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {string}  parentLanguage	   the xml:lang of the parent element to GroupInformation
+	 * @param {XMLnode} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
+	 * @param {array}   groupsFound         groupId values found (null if not needed)
 	 */
 	/* private */  ValidateGroupInformationMoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup, groupsFound) {
 		
@@ -1550,15 +1548,15 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <GroupInformation> element against the profile for the given request/response type
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} GroupInformation    the element whose children should be checked
-	 * @param {string} requestType         the type of content guide request being checked
-	 * @param {Class}  errs                errors found in validaton
-	 * @param {string} parentLanguage	   the xml:lang of the parent element to GroupInformation
-	 * @param {object} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
-	 * @param {array}  indexes			   an accumulation of the @index values found
-	 * @param {string} groupsFound         groupId values found (null if not needed)
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} GroupInformation    the element whose children should be checked
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {string}  parentLanguage	    the xml:lang of the parent element to GroupInformation
+	 * @param {XMLnode} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
+	 * @param {array}   indexes			    an accumulation of the @index values found
+	 * @param {array}   groupsFound         groupId values found (null if not needed)
 	 */
 	/* private */  ValidateGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup, indexes, groupsFound) {
 
@@ -1599,14 +1597,14 @@ export default class ContentGuideCheck {
 	/**
 	 * find and validate any <GroupInformation> elements in the <GroupInformationTable>
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {string} parentLang          XML language of the parent element (or its parent(s))
-	 * @param {string} requestType         the type of content guide request being checked
-	 * @param {array}  groupIds            buffer to recieve the group ids parsed (null if not needed)
-	 * @param {Class}  errs                errors found in validaton
-	 * @param {integer} o.childCount       the value from the @numItems attribute of the "category group"
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
+	 * @param {string}  parentLang          XML language of the parent element (or its parent(s))
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {array}   groupIds            buffer to recieve the group ids parsed (null if not needed)
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {integer} o.childCount        the value from the @numItems attribute of the "category group"
 	 */
 	/* private */  CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, parentLang, requestType, groupIds, errs, o) { 
 		
@@ -1666,16 +1664,16 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <GroupInformation> element against the profile for the given request/response type
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} GroupInformation    the element whose children should be checked
-	 * @param {string} requestType         the type of content guide request being checked
-	 * @param {Class}  errs                errors found in validaton
-	 * @param {string} parentLanguage	   the xml:lang of the parent element to GroupInformation
-	 * @param {int}    numEarlier		   maximum number of <GroupInformation> elements that are earlier
-	 * @param {int}    numNow			   maximum number of <GroupInformation> elements that are now
-	 * @param {int}    numLater			   maximum number of <GroupInformation> elements that are later
-	 * @param {array}  groupCRIDsFound     list of structural crids already found in this response
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} GroupInformation    the element whose children should be checked
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {string}  parentLanguage	    the xml:lang of the parent element to GroupInformation
+	 * @param {int}     numEarlier		    maximum number of <GroupInformation> elements that are earlier
+	 * @param {int}     numNow			    maximum number of <GroupInformation> elements that are now
+	 * @param {int}     numLater			maximum number of <GroupInformation> elements that are later
+	 * @param {array}   groupCRIDsFound     list of structural crids already found in this response
 	 */
 	/* private */  ValidateGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, numEarlier, numNow, numLater, groupCRIDsFound) {
 
@@ -1723,13 +1721,13 @@ export default class ContentGuideCheck {
 	/**
 	 * find and validate any <GroupInformation> elements used for now/next in the <GroupInformationTable>
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {string} parentLang          XML language of the parent element (or its parent(s))
-	 * @param {array}  groupIds            array of GroupInformation@CRID values found
-	 * @param {string} requestType         the type of content guide request being checked
-	 * @param {Class}  errs                errors found in validaton
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
+	 * @param {string}  parentLang          XML language of the parent element (or its parent(s))
+	 * @param {array}   groupIds            array of GroupInformation@CRID values found
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
 	 */
 	/* private */  CheckGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, parentLang, groupIds, requestType, errs) { 
 		
@@ -1764,10 +1762,10 @@ export default class ContentGuideCheck {
 	/**
 	 * validate any <AVAttributes> elements in <InstanceDescription> elements
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} AVAttributes        the <AVAttributes> node to be checked
-	 * @param {Class}  errs                errors found in validaton
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} AVAttributes        the <AVAttributes> node to be checked
+	 * @param {Class}   errs                errors found in validaton
 	 */
 	/* private */  ValidateAVAttributes(CG_SCHEMA, SCHEMA_PREFIX, AVAttributes, errs) {
 		
@@ -1863,10 +1861,10 @@ export default class ContentGuideCheck {
 	/**
 	 * validate a <RelatedMaterial> element iconforms to the Restart Application Linking rules (A177r1 clause 6.5.5)
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} RelatedMaterial     the <RelatedMaterial> node to be checked
-	 * @param {Class}  errs                errors found in validaton
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} RelatedMaterial     the <RelatedMaterial> node to be checked
+	 * @param {Class}   errs                errors found in validaton
 	 * @returns {boolean} true if this RelatedMaterial element contains a restart link (proper HowRelated@href and MediaLocator.MediaUri and MediaLocator.AuxiliaryURI)
 	 */
 	/* private */  ValidateRestartRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, errs) {
@@ -1909,12 +1907,12 @@ export default class ContentGuideCheck {
 	/**
 	 * validate any <InstanceDescription> elements in the <ScheduleEvent> and <OnDemandProgram> elements
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {string} VerifyType		   the type of verification to perform (OnDemandProgram | ScheduleEvent)
-	 * @param {Object} InstanceDescription the <InstanceDescription> node to be checked
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {string}  VerifyType		   the type of verification to perform (OnDemandProgram | ScheduleEvent)
+	 * @param {XMLnode} InstanceDescription the <InstanceDescription> node to be checked
 	 * @param {boolean} isCurrentProgram   indicates if this <InstanceDescription> element is for the currently airing program
-	 * @param {Class}  errs                errors found in validaton
+	 * @param {Class}   errs                errors found in validaton
 	 */
 	/* private */  ValidateInstanceDescription(CG_SCHEMA, SCHEMA_PREFIX, VerifyType, InstanceDescription, isCurrentProgram, errs) {
 
@@ -2075,10 +2073,10 @@ export default class ContentGuideCheck {
 	/**
 	 * validate a <ProgramURL> or <AuxiliaryURL> element to see if it signals a Template XML AIT
 	 *
-	 * @param {Object} node              the element node containing the an XML AIT reference
-	 * @param {Array}  allowedContentTypes the contentTypes that can be signalled in the node@contentType attribute
-	 * @param {Class}  errs              errors found in validaton
-	 * @param {string} errcode           error code to be used with any errors found
+	 * @param {XMLnode} node                the element node containing the an XML AIT reference
+	 * @param {Array}   allowedContentTypes the contentTypes that can be signalled in the node@contentType attribute
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {string}  errcode             error code to be used with any errors found
 	 */
 	/* private */  CheckPlayerApplication(node, allowedContentTypes, errs, errcode) {
 
@@ -2120,14 +2118,14 @@ export default class ContentGuideCheck {
 	/**
 	 * validate an <OnDemandProgram> elements in the <ProgramLocationTable>
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} OnDemandProgram     the node containing the <OnDemandProgram> being checked
-	 * @param {string} parentLang          XML language of the parent element (expliclt or implicit from its parent(s))
-	 * @param {array}  programCRIDs        array of program crids defined in <ProgramInformationTable> 
-	 * @param {array}  plCRIDs        	   array of program crids defined in <ProgramLocationTable>
-	 * @param {string} requestType         the type of content guide request being checked
-	 * @param {Class}  errs                errors found in validaton
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} OnDemandProgram     the node containing the <OnDemandProgram> being checked
+	 * @param {string}  parentLang          XML language of the parent element (expliclt or implicit from its parent(s))
+	 * @param {array}   programCRIDs        array of program crids defined in <ProgramInformationTable> 
+	 * @param {array}   plCRIDs        	    array of program crids defined in <ProgramLocationTable>
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
 	 */
 	/* private */  ValidateOnDemandProgram(CG_SCHEMA, SCHEMA_PREFIX, OnDemandProgram, parentLanguage, programCRIDs, plCRIDs, requestType, errs) {
 
@@ -2248,17 +2246,17 @@ export default class ContentGuideCheck {
 	/**
 	 * validate any <ScheduleEvent> elements in the <ProgramLocationTable.Schedule>
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} Schedule            the <Schedule> node containing the <ScheduleEvent> element to be checked
-	 * @param {string} parentLanguage      XML language of the parent element (expliclt or implicit from its parent(s))
-	 * @param {array}  programCRIDs        array of program crids defined in <ProgramInformationTable> 
-	 * @param {array}  plCRIDs             array of program crids defined in <ProgramLocationTable>
-	 * @param {string} currentProgramCRID  CRID of the currently airing program
-	 * @param {Date}   scheduleStart	   Date representation of Schedule@start
-	 * @param {Date}   scheduleEnd  	   Date representation of Schedule@end
-	 * @param {string} requestType         the type of content guide request being checked
-	 * @param {Class}  errs                errors found in validaton
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} Schedule            the <Schedule> node containing the <ScheduleEvent> element to be checked
+	 * @param {string}  parentLanguage      XML language of the parent element (expliclt or implicit from its parent(s))
+	 * @param {array}   programCRIDs        array of program crids defined in <ProgramInformationTable> 
+	 * @param {array}   plCRIDs             array of program crids defined in <ProgramLocationTable>
+	 * @param {string}  currentProgramCRID  CRID of the currently airing program
+	 * @param {Date}    scheduleStart	    Date representation of Schedule@start
+	 * @param {Date}    scheduleEnd  	    Date representation of Schedule@end
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
 	 */
 	/* private */  ValidateScheduleEvents(CG_SCHEMA, SCHEMA_PREFIX, Schedule, parentLanguage, programCRIDs, plCRIDs, currentProgramCRID, scheduleStart, scheduleEnd, requestType, errs) {
 		
@@ -2362,15 +2360,15 @@ export default class ContentGuideCheck {
 	/**
 	 * validate a <Schedule> elements in the <ProgramLocationTable>
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} Schedule            the node containing the <Schedule> being checked
-	 * @param {string} parentLanguage      XML language of the parent element (expliclt or implicit from its parent(s))
-	 * @param {array}  programCRIDs        array of program crids defined in <ProgramInformationTable> 
-	 * @param {array}  plCRIDs             array of program crids defined in <ProgramLocationTable>
-	 * @param {string} currentProgramCRID  CRID of the currently airing program
-	 * @param {string} requestType         the type of content guide request being checked
-	 * @param {Class}  errs                errors found in validaton
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} Schedule            the node containing the <Schedule> being checked
+	 * @param {string}  parentLanguage      XML language of the parent element (expliclt or implicit from its parent(s))
+	 * @param {array}   programCRIDs        array of program crids defined in <ProgramInformationTable> 
+	 * @param {array}   plCRIDs             array of program crids defined in <ProgramLocationTable>
+	 * @param {string}  currentProgramCRID  CRID of the currently airing program
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
 	 * @returns {string} the serviceIdRef for this <Schedule> element
 	 */
 	/* private */  ValidateSchedule(CG_SCHEMA, SCHEMA_PREFIX, Schedule, parentLanguage, programCRIDS, plCRIDs, currentProgramCRID, requestType, errs) {
@@ -2405,15 +2403,15 @@ export default class ContentGuideCheck {
 	/**
 	 * find and validate any <ProgramLocation> elements in the <ProgramLocationTable>
 	 *
-	 * @param {string} CG_SCHEMA           Used when constructing Xpath queries
-	 * @param {string} SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {Object} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {string} parentLang          XML language of the parent element (or its parent(s))
-	 * @param {array}  programCRIDs        array to record CRIDs for later use  
-	 * @param {string} currentProgramCRID  CRID of the currently airing program
-	 * @param {string} requestType         the type of content guide request being checked
-	 * @param {Class}  errs                errors found in validaton
-	 * @param {integer} o.childCount         the number of child elements to be present (to match GroupInformation@numOfItems)
+	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
+	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
+	 * @param {string}  parentLang          XML language of the parent element (or its parent(s))
+	 * @param {array}   programCRIDs        array to record CRIDs for later use  
+	 * @param {string}  currentProgramCRID  CRID of the currently airing program
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {integer} o.childCount        the number of child elements to be present (to match GroupInformation@numOfItems)
 	 */
 	/* private */  CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, parentLang, programCRIDs, currentProgramCRID, requestType, errs, o=null) {
 
@@ -2474,9 +2472,9 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the content guide and record any errors
 	 *
-	 * @param {String} CGtext the service list text to be validated
+	 * @param {String} CGtext      the service list text to be validated
 	 * @param {String} requestType the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
-	 * @param {Class} errs errors found in validaton
+	 * @param {Class} errs         errors found in validaton
 	 */
 	doValidateContentGuide(CGtext, requestType, errs) {
 		if (!CGtext) {
@@ -2620,7 +2618,7 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the content guide and record any errors
 	 *
-	 * @param {String} CGtext the service list text to be validated
+	 * @param {String} CGtext      the service list text to be validated
 	 * @param {String} requestType the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
 	 * @returns {Class} errs errors found in validaton
 	 */
