@@ -83,6 +83,7 @@ export default class ErrorList {
 	addError(e) {
 		let _INVALID_CALL='invalid addError call', argsOK=true;
 		if (!e.hasOwnProperty('type')) e.type=ERROR;
+		if (!e.hasOwnProperty('reportInTable')) e.reportInTable=true;
 
 		if (![ERROR, WARNING, APPLICATION].includes(e.type)) {
 			this.errors.push({code:"ERR000", message:`addError() called with invalid type property (${e.type})`});
