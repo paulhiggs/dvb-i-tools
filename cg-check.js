@@ -977,7 +977,7 @@ export default class ContentGuideCheck {
 			return;
 		}
 		
-		let mainSet=[], secondarySet=[];
+		let mainTitles=[], secondaryTitles=[];
 
 		let t=0, Title, requiredAttributes=[], optionalAttributes=[tva.a_lang];
 		if (TypeIsRequired) 
@@ -993,20 +993,20 @@ export default class ContentGuideCheck {
 			
 			if (titleStr.length > dvbi.MAX_TITLE_LENGTH)
 				errs.addError({code:`${errCode}-11`, message:`${tva.e_Title.elementize()} length exceeds ${dvbi.MAX_TITLE_LENGTH} characters`, fragment:Title});
-				
+/* jshint -W083*/				
 			switch (titleType) {
 				case mpeg7.TITLE_TYPE_MAIN:
-					if (isIn(mainSet, titleLang))
+					if (mainTitles.find(e => e.lang == titleLang)) 
 						errs.addError({code:`${errCode}-12`, 
 							message:`only a single language (${titleLang}) is permitted for ${tva.a_type.attribute(tva.e_Title)}=${mpeg7.TITLE_TYPE_MAIN.quote()}`});
-					else mainSet.push(titleLang);
+					else mainTitles.push({lang:titleLang, elem:Title});
 					break;
 				case mpeg7.TITLE_TYPE_SECONDARY:
 					if (allowSecondary) {
-						if (isIn(secondarySet, titleLang))
+						if (secondaryTitles.find(e => e.lang==titleLang))
 							errs.addError({code:`${errCode}-13`, 
 								message:`only a single language (${titleLang}) is permitted for ${tva.a_type.attribute(tva.e_Title)}=${mpeg7.TITLE_TYPE_SECONDARY.quote()}`});
-						else secondarySet.push(titleLang);
+						else secondaryTitles.push({lang:titleLang, elem:Title});						
 					}
 					else 
 						errs.addError({code:`${errCode}-14`, 
@@ -1017,13 +1017,15 @@ export default class ContentGuideCheck {
 					errs.addError({code:`${errCode}-15`, 
 						message:`${tva.a_type.attribute()} must be ${mpeg7.TITLE_TYPE_MAIN.quote()} or ${mpeg7.TITLE_TYPE_SECONDARY.quote()} for ${tva.e_Title.elementize()}`,
 						fragment:Title});
-			}	
+			}
+/* jshint +W083*/	
 		}
-		secondarySet.forEach(lang => {
-			if (!isIn(mainSet, lang)) {
-				let tLoc= lang!=DEFAULT_LANGUAGE ? ` for @xml:${tva.a_lang}=${lang.quote()}` : "";
+		secondaryTitles.forEach(item => {
+			if (!mainTitles.find(e => e.lang==item.lang)) {
+				let tLoc= item.lang!=DEFAULT_LANGUAGE ? ` for @xml:${tva.a_lang}=${item.lang.quote()}` : "";
 				errs.addError({code:`${errCode}-16`, 
-					message:`${tva.a_type.attribute()}=${mpeg7.TITLE_TYPE_SECONDARY.quote()} specified without ${tva.a_type.attribute()}=${mpeg7.TITLE_TYPE_MAIN.quote()}${tLoc}`}); // TODO: needs elements
+					message:`${tva.a_type.attribute()}=${mpeg7.TITLE_TYPE_SECONDARY.quote()} specified without ${tva.a_type.attribute()}=${mpeg7.TITLE_TYPE_MAIN.quote()}${tLoc}`,
+					fragment:item.elem});
 			}
 		});
 	}
@@ -1959,7 +1961,7 @@ export default class ContentGuideCheck {
 				errs.addError({type:APPLICATION, code:"ID003", message:`message:ValidateInstanceDescription() called with VerifyType=${VerifyType}`});
 		}
 
-		let restartGenre=null, restartRelatedMaterial=null; // TODO: do not seem to be looking for restart Related Material for VerifyType=e_ScheduleEvent
+		let restartGenre=null, restartRelatedMaterial=null; 
 		
 		// <Genre>
 		switch (VerifyType) {
@@ -2059,9 +2061,9 @@ export default class ContentGuideCheck {
 			case tva.e_ScheduleEvent:
 				// Genre and RelatedMaterial for restart capability should only be specified for the "current" (ie. 'now') program
 				if (!isCurrentProgram && restartGenre )
-					errs.addError({code:"ID061", message:`restart ${tva.e_Genre.elementize()} is only permitted for the current (${"now".quote()}) program`, fragment:restartGenre});
+					errs.addError({code:"ID061", message:`restart ${tva.e_Genre.elementize()} is only permitted for the current ("now") program`, fragment:restartGenre});
 				if (!isCurrentProgram && restartRelatedMaterial)
-					errs.addError({code:"ID062", message:`restart ${tva.e_RelatedMaterial.elementize()} is only permitted for the current (${"now".quote()}) program`, fragment:restartRelatedMaterial});
+					errs.addError({code:"ID062", message:`restart ${tva.e_RelatedMaterial.elementize()} is only permitted for the current ("now") program`, fragment:restartRelatedMaterial});
 				
 				if ((restartGenre && !restartRelatedMaterial) || (restartRelatedMaterial && !restartGenre))
 					errs.addError({code:"ID063", message:`both ${tva.e_Genre.elementize()} and ${tva.e_RelatedMaterial.elementize()} are required together for ${VerifyType}`});	
