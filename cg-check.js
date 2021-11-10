@@ -1322,7 +1322,7 @@ export default class ContentGuideCheck {
 		if (o && o.childCount!=0) {
 			if (o.childCount!=cnt)
 				errs.addError({code:"PI110", 
-					message:`number of items (${cnt}) in ${tva.e_ProgramInformationTable.elementize()} does match ${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${o.childCount})`,
+					message:`number of items (${cnt}) in the ${tva.e_ProgramInformationTable.elementize()} does not match ${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${o.childCount})`,
 					line:ProgramInformationTable.line()});
 		}
 		return currentProgramCRID;
@@ -2458,7 +2458,7 @@ export default class ContentGuideCheck {
 		if (o && o.childCount!=0) {
 			if (o.childCount!=cnt)
 				errs.addError({code:"PL021", 
-								message:`number of items (${cnt}) in the ${tva.e_ProgramLocationTable.elementize()} does match ${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${o.childCount})`});
+								message:`number of items (${cnt}) in the ${tva.e_ProgramLocationTable.elementize()} does not match ${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${o.childCount})`});
 		}
 
 		programCRIDs.forEach(programCRID => {
