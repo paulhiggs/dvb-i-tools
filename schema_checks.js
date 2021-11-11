@@ -40,9 +40,10 @@ export function checkAttributes(parentElement, requiredAttributes, optionalAttri
  /**
  * check that the specified child elements are in the parent element
  *
- * @param {Object}  parentElement         the element whose children should be checked
+ * @param {XMLNode} parentElement         the element whose children should be checked
  * @param {Array}   childElements		  the names of elements and their cardinality
- * @param {boolean} allowOtherElements    flag indicating if other (foreign defined) elements are permitted
+ * @param {boolean} allowOtherElements    flag indicating if other elements, i.e. those defined in the same schema and profiled 
+ *                                          out or those defined in other are permitted
  * @param {Class}   errs                  errors found in validaton
  * @param {string}  errCode               error code to be used for any error found 
  * @returns {boolean} true if no errors are found (all mandatory elements are present and no extra elements are specified)

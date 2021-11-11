@@ -26,6 +26,8 @@ import { ValidatePromotionalStillImage } from "./RelatedMaterialChecks.js";
 import { cg_InvalidHrefValue, NoChildElement } from "./CommonErrors.js";
 import { checkAttributes, checkTopElementsAndCardinality} from "./schema_checks.js";
 
+import { checkLanguage, GetNodeLanguage } from "./MultilingualElement.js";
+
 // convenience/readability values
 const DEFAULT_LANGUAGE="***";
 const CATEGORY_GROUP_NAME="\"category group\"";
@@ -157,7 +159,7 @@ function FalseValue(elem, attrName, errCode, errs, isRequired=true) {
  * @param {string} lang 	  that should be displayed in HTML
  * @param {string} loc        "location" of the language being checked
  * @param {string} errCode    error number to use instead of local values
- */
+ */ /*
 function CheckLanguage(validator, errs, lang, loc, errCode, documentLine ) {
 	if (!validator) {
 		errs.addError({type:APPLICATION, code:`${errCode}-1`, message:`cannot validate language ${lang.quote()}${loc?` for ${loc.elementize()}`:""}`, 
@@ -169,7 +171,7 @@ function CheckLanguage(validator, errs, lang, loc, errCode, documentLine ) {
 		return false;
 	}
 	return true;
-}
+} */
 
 
 if (!Array.prototype.forEachSubElement) {
@@ -283,7 +285,7 @@ export default class ContentGuideCheck {
 	 * @param {string}  errCode    error number to use
 	 * @returns {string} the @lang attribute of the node element of the parentLang if it does not exist of is not specified
 	 */
-	/* private */  GetLanguage(validator, errs, node, parentLang, isRequired, errCode) {
+	/* private */  /*GetLanguage(validator, errs, node, parentLang, isRequired, errCode) {
 		if (!node) 
 			return parentLang;
 		if (!node.attr(tva.a_lang) && isRequired) {
@@ -295,9 +297,9 @@ export default class ContentGuideCheck {
 			return parentLang;
 		
 		let localLang=node.attr(tva.a_lang).value();
-		CheckLanguage(validator, errs, localLang, node.name(), errCode, node.line());
+		checkLanguage(validator, localLang, node.name(), node, errs, errCode);
 		return localLang;
-	}
+	} */
 
 
 	/**
@@ -346,10 +348,9 @@ export default class ContentGuideCheck {
 	 * @param {array}   optionalLengths	    @length attributes that can optionally be present
 	 * @param {string}  requestType         the type of content guide request being checked
 	 * @param {Class}   errs                errors found in validaton
-	 * @param {string}  parentLanguage	    the xml:lang of the parent element to ProgramInformation
 	 * @param {string}  errCode             error code prefix to be used in reports
 	 */
-	/* private */  ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, requiredLengths, optionalLengths, requestType, errs, parentLanguage, errCode) {
+	/* private */  ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, requiredLengths, optionalLengths, requestType, errs, errCode) {
 		
 		function synopsisLengthError(label, length, actual) {
 			return `length of ${tva.a_length.attribute(tva.e_Synopsis)}=${label.quote()} exceeds ${length} characters, measured(${actual})`; }
@@ -368,7 +369,7 @@ export default class ContentGuideCheck {
 			
 			checkAttributes(Synopsis, [tva.a_length], [tva.a_lang], errs, `${errCode}-1`);
 
-			let synopsisLang=this.GetLanguage(this.knownLanguages, errs, Synopsis, parentLanguage, false, `${errCode}-2`);
+			let synopsisLang=GetNodeLanguage(Synopsis, false, errs, `${errCode}-2`, this.knownLanguages);
 			let synopsisLength=Synopsis.attr(tva.a_length)?Synopsis.attr(tva.a_length).value():null;
 			
 			if (synopsisLength) {
@@ -444,10 +445,9 @@ export default class ContentGuideCheck {
 	 * @param {integer} minKeywords         the minimum number of keywords
 	 * @param {integer} maxKeywords         the maximum number of keywords
 	 * @param {Class}   errs                errors found in validaton
-	 * @param {string}  parentLanguage	    the xml:lang of the parent element to ProgramInformation
 	 * @param {string}  errCode             error code prefix to be used in reports
 	 */
-	/* private */  ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, minKeywords, maxKeywords, errs, parentLanguage, errCode) {
+	/* private */  ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, minKeywords, maxKeywords, errs, errCode) {
 
 		if (!BasicDescription) {
 			errs.addError({type:APPLICATION, code:"KW000", message:"ValidateKeyword() called with BasicDescription=null"});
@@ -459,7 +459,7 @@ export default class ContentGuideCheck {
 			checkAttributes(Keyword, [], [tva.a_lang, tva.a_type], errs, `${errCode}-1`);
 
 			let keywordType=Keyword.attr(tva.a_type)?Keyword.attr(tva.a_type).value():tva.DEFAULT_KEYWORD_TYPE;
-			let keywordLang=this.GetLanguage(this.knownLanguages, errs, Keyword, parentLanguage, false, `${errCode}-2`);
+			let keywordLang=GetNodeLanguage(Keyword, false, errs, `${errCode}-2`, this.knownLanguages);
 	
 			if (counts[keywordLang]===undefined)
 				counts[keywordLang]=[Keyword];
@@ -961,17 +961,16 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {string}   CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}   SCHEMA_PREFIX       Used when constructing Xpath queries
-	 * @param {XMLnode}  BasicDescription    the element whose children should be checked
+	 * @param {XMLnode}  containingNode     the element whose children should be checked
 	 * @param {boolean}  allowSecondary      indicates if  Title with @type="secondary" is permitted
 	 * @param {Class}    errs                errors found in validaton
-	 * @param {string}   parentLanguage	     the xml:lang of the parent element to ProgramInformation
 	 * @param {string}   errCode             error code prefix to be used in reports
 	 * @param {boolean}  TypeIsRequired      true is the @type is a required attribute in this use of <Title>
 	 */
-	/* private */  ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, allowSecondary, errs, parentLanguage, errCode, TypeIsRequired) {
+	/* private */  ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, containingNode, allowSecondary, errs, errCode, TypeIsRequired) {
 		
-		if (!BasicDescription) {
-			errs.addError({type:APPLICATION, code:"VT000", message:"ValidateTitle() called with BasicDescription==null"});
+		if (!containingNode) {
+			errs.addError({type:APPLICATION, code:"VT000", message:"ValidateTitle() called with containingNode==null"});
 			return;
 		}
 		
@@ -981,12 +980,12 @@ export default class ContentGuideCheck {
 		if (TypeIsRequired) 
 			requiredAttributes.push(tva.a_type);
 		else optionalAttributes.push(tva.a_type);
-		while ((Title=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_Title, ++t), CG_SCHEMA))!=null) {
+		while ((Title=containingNode.get(xPath(SCHEMA_PREFIX, tva.e_Title, ++t), CG_SCHEMA))!=null) {
 
 			checkAttributes(Title, requiredAttributes, optionalAttributes, errs, `${errCode}-1`);
 			
 			let titleType=Title.attr(tva.a_type) ? Title.attr(tva.a_type).value() : mpeg7.DEFAULT_TITLE_TYPE;
-			let titleLang=this.GetLanguage(this.knownLanguages, errs, Title, parentLanguage, false, `${errCode}-2`);
+			let titleLang=GetNodeLanguage(Title, false, errs, `${errCode}-2`, this.knownLanguages);
 			let titleStr=unEntity(Title.text());
 			
 			if (titleStr.length > dvbi.MAX_TITLE_LENGTH)
@@ -1008,7 +1007,7 @@ export default class ContentGuideCheck {
 					}
 					else 
 						errs.addError({code:`${errCode}-14`, 
-							message:`${tva.a_type.attribute(tva.e_Title)}=${mpeg7.TITLE_TYPE_SECONDARY.quote()} is not permitted for this ${BasicDescription.name().elementize()}`, 
+							message:`${tva.a_type.attribute(tva.e_Title)}=${mpeg7.TITLE_TYPE_SECONDARY.quote()} is not permitted for this ${containingNode.name().elementize()}`, 
 							fragment:Title});
 					break;
 				default:	
@@ -1037,10 +1036,9 @@ export default class ContentGuideCheck {
 	 * @param {XMLnode} parentElement  	    the element whose children should be checked
 	 * @param {string}  requestType         the type of content guide request being checked
 	 * @param {Class}   errs                errors found in validaton
-	 * @param {string}  parentLanguage	    the xml:lang of the parent element to parentElement
 	 * @param {XMLnode} categoryGroup       the GroupInformation element that others must refer to through <MemberOf>
 	 */
-	/* private */  ValidateBasicDescription(CG_SCHEMA, SCHEMA_PREFIX, parentElement, requestType, errs, parentLanguage, categoryGroup) {
+	/* private */  ValidateBasicDescription(CG_SCHEMA, SCHEMA_PREFIX, parentElement, requestType, errs, categoryGroup) {
 
 		if (!parentElement) {
 			errs.addError({type:APPLICATION, code:"BD000", message:"ValidateBasicDescription() called with parentElement==null"});
@@ -1067,8 +1065,8 @@ export default class ContentGuideCheck {
 							 {name:tva.e_ParentalGuidance, minOccurs:0, maxOccurs:2},
 							 {name:tva.e_RelatedMaterial, minOccurs:0, }],
 							false, errs, "BD010");
-						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, parentLanguage, "BD011", true);
-						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL], requestType, errs, parentLanguage, "BD012");
+						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, "BD011", true);
+						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL], requestType, errs, "BD012");
 						this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD013");
 						this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD014");
 						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs);
@@ -1083,9 +1081,9 @@ export default class ContentGuideCheck {
 							 {name:tva.e_CreditsList, minOccurs:0},
 							 {name:tva.e_RelatedMaterial, minOccurs:0}],
 							false, errs, "BD020");
-						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, parentLanguage, "BD021", true);
-						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_LONG_LABEL], requestType, errs, parentLanguage, "BD022");
-						this.ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 20, errs, parentLanguage, "BD023");
+						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, "BD021", true);
+						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_LONG_LABEL], requestType, errs, "BD022");
+						this.ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 20, errs, "BD023");
 						this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD024");
 						this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD025");	
 						this.ValidateCreditsList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs, "BD026");	
@@ -1098,8 +1096,8 @@ export default class ContentGuideCheck {
 							 {name:tva.e_ParentalGuidance, minOccurs:0, maxOccurs:2},
 							 {name:tva.e_RelatedMaterial, minOccurs:0}],
 							false, errs, "BD030");
-						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, parentLanguage, "BD031", true);
-						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [], [tva.SYNOPSIS_MEDIUM_LABEL], requestType, errs, parentLanguage, "BD032");
+						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, "BD031", true);
+						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [], [tva.SYNOPSIS_MEDIUM_LABEL], requestType, errs, "BD032");
 						this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD033");
 						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs);
 						break;
@@ -1108,7 +1106,7 @@ export default class ContentGuideCheck {
 							[{name:tva.e_Title, maxOccurs:Infinity},
 							 {name:tva.e_RelatedMaterial, minOccurs:0}],
 							false, errs, "BD040");
-						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, parentLanguage, "BD041", true);
+						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, "BD041", true);
 						this.ValidateRelatedMaterial_MoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs);
 						break;
 					default:
@@ -1136,10 +1134,10 @@ export default class ContentGuideCheck {
 									 {name:tva.e_RelatedMaterial, minOccurs:0, maxOccurs:Infinity}],
 									false, errs, "BD062");
 						
-						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, false, errs, parentLanguage, "BD063", false);						
+						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, false, errs, "BD063", false);
 						if (!isParentGroup) {
-							this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [], requestType, errs, parentLanguage, "BD064");
-							this.ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 20, errs, parentLanguage, "BD065");
+							this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [], requestType, errs, "BD064");
+							this.ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 20, errs, "BD065");
 							this.ValidateRelatedMaterial_BoxSetList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs);
 						}
 					break;
@@ -1156,9 +1154,9 @@ export default class ContentGuideCheck {
 										 {name:tva.e_Genre, minOccurs:0},
 										 {name:tva.e_RelatedMaterial, minOccurs:0}],
 										false, errs, "BD081");
-						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, false, errs, parentLanguage, "BD082", false);
+						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, false, errs, "BD082", false);
 						if (!isParentGroup)
-							this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_SHORT_LABEL], [], requestType, errs, parentLanguage, "BD083");
+							this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_SHORT_LABEL], [], requestType, errs, "BD083");
 						this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD084");
 						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs);
 						break;
@@ -1178,7 +1176,6 @@ export default class ContentGuideCheck {
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {XMLnode} ProgramInformation  the element whose children should be checked
-	 * @param {string}  parentLanguage	   the xml:lang of the parent element to ProgramInformation
 	 * @param {array}   programCRIDs        array to record CRIDs for later use 
 	 * @param {array}   groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
 	 * @param {string}  requestType         the type of content guide request being checked
@@ -1186,7 +1183,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                errors found in validaton
 	 * @returns {String} CRID if the current program, if this is it
 	 */
-	/* private */  ValidateProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramInformation, parentLanguage, programCRIDs, groupCRIDs, requestType, indexes, errs) {
+	/* private */  ValidateProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs) {
 		
 		if (!ProgramInformation) {
 			errs.addError({type:APPLICATION, code:"PI000", message:"ValidateProgramInformation() called with ProgramInformation==null"});
@@ -1201,7 +1198,7 @@ export default class ContentGuideCheck {
 				false, errs, "PI001");		
 		checkAttributes(ProgramInformation, [tva.a_programId], [tva.a_lang], errs, "PI002");
 
-		let piLang=this.GetLanguage(this.knownLanguages, errs, ProgramInformation, parentLanguage, false, "PI010");
+		let piLang=GetNodeLanguage(ProgramInformation, false, errs,  "PI010", this.knownLanguages);
 		let isCurrentProgram=false, programCRID=null;
 		
 		if (ProgramInformation.attr(tva.a_programId)) {
@@ -1214,7 +1211,7 @@ export default class ContentGuideCheck {
 		}
 
 		// <ProgramInformation><BasicDescription>
-		this.ValidateBasicDescription(CG_SCHEMA, SCHEMA_PREFIX, ProgramInformation, requestType, errs, piLang, null);
+		this.ValidateBasicDescription(CG_SCHEMA, SCHEMA_PREFIX, ProgramInformation, requestType, errs, null);
 
 		let children=ProgramInformation.childNodes();
 		if (children) children.forEachSubElement(child => {
@@ -1290,7 +1287,6 @@ export default class ContentGuideCheck {
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {string}  parentLang          XML language of the parent element (or its parent(s))
 	 * @param {array}   programCRIDs        array to record CRIDs for later use 
 	 * @param {array}   groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
 	 * @param {string}  requestType         the type of content guide request being checked
@@ -1298,7 +1294,7 @@ export default class ContentGuideCheck {
 	 * @param {integer} o.childCount        the number of child elements to be present (to match GroupInformation@numOfItems)
 	 * @returns {string} the CRID of the currently airing program (that which is a member of the "now" structural crid)
 	 */
-	/* private */  CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, parentLang, programCRIDs, groupCRIDs, requestType, errs, o=null) { 
+	/* private */  CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, groupCRIDs, requestType, errs, o=null) { 
 		if (!ProgramDescription) {
 			errs.addError({type:APPLICATION, code:"PI100", message:"CheckProgramInformation() called with ProgramDescription==null"});
 			return null;
@@ -1310,11 +1306,11 @@ export default class ContentGuideCheck {
 			return null;
 		}
 		checkAttributes(ProgramInformationTable, [], [tva.a_lang], errs, "PI102");
-		let pitLang=this.GetLanguage(this.knownLanguages, errs, ProgramInformationTable, parentLang, false, "PI103");
+		let pitLang=GetNodeLanguage(ProgramInformationTable, false, errs, "PI103", this.knownLanguages);
 
 		let pi=0, ProgramInformation, cnt=0, indexes=[], currentProgramCRID=null;
 		while ((ProgramInformation=ProgramInformationTable.get(xPath(SCHEMA_PREFIX, tva.e_ProgramInformation, ++pi), CG_SCHEMA))!=null) {
-			let t=this.ValidateProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramInformation, pitLang, programCRIDs, groupCRIDs, requestType, indexes, errs);
+			let t=this.ValidateProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs);
 			if (t) currentProgramCRID=t;
 			cnt++; 
 		}
@@ -1337,12 +1333,11 @@ export default class ContentGuideCheck {
 	 * @param {XMLnode} GroupInformation    the element whose children should be checked
 	 * @param {string}  requestType         the type of content guide request being checked
 	 * @param {Class}   errs                errors found in validaton
-	 * @param {string}  parentLanguage	    the xml:lang of the parent element to GroupInformation
 	 * @param {object}  categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
 	 * @param {array}   indexes			    an accumulation of the @index values found
 	 * @param {array}   groupsFound         groupId values found (null if not needed)
 	 */
-	/* private */  ValidateGroupInformationBoxSets(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup, indexes, groupsFound) {
+	/* private */  ValidateGroupInformationBoxSets(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, categoryGroup, indexes, groupsFound) {
 
 		if (!GroupInformation) {
 			errs.addError({type:APPLICATION, code:"GIB000", message:"ValidateGroupInformationBoxSets() called with GroupInformation==null"});
@@ -1454,7 +1449,7 @@ export default class ContentGuideCheck {
 		this.checkTAGUri(GroupInformation, errs, "GIB51");	
 		
 		// <GroupInformation><BasicDescription>
-		this.ValidateBasicDescription(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup);
+		this.ValidateBasicDescription(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, categoryGroup);
 	}
 
 
@@ -1466,10 +1461,9 @@ export default class ContentGuideCheck {
 	 * @param {XMLnode} GroupInformation    the element whose children should be checked
 	 * @param {string}  requestType         the type of content guide request being checked
 	 * @param {Class}   errs                errors found in validaton
-	 * @param {string}  parentLanguage	   the xml:lang of the parent element to GroupInformation
 	 * @param {XMLnode} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
 	 */
-	/* private */  ValidateGroupInformationSchedules(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup) {
+	/* private */  ValidateGroupInformationSchedules(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, categoryGroup) {
 
 		if (!GroupInformation) {
 			errs.addError({type:APPLICATION, code:"GIS000", message:"ValidateGroupInformationSchedules() called with GroupInformation==null"});
@@ -1491,7 +1485,7 @@ export default class ContentGuideCheck {
 		}
 
 		// <GroupInformation><BasicDescription>
-		this.ValidateBasicDescription(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup);	
+		this.ValidateBasicDescription(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, categoryGroup);	
 	}
 
 
@@ -1503,11 +1497,10 @@ export default class ContentGuideCheck {
 	 * @param {XMLnode} GroupInformation    the element whose children should be checked
 	 * @param {string}  requestType         the type of content guide request being checked
 	 * @param {Class}   errs                errors found in validaton
-	 * @param {string}  parentLanguage	   the xml:lang of the parent element to GroupInformation
 	 * @param {XMLnode} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
 	 * @param {array}   groupsFound         groupId values found (null if not needed)
 	 */
-	/* private */  ValidateGroupInformationMoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup, groupsFound) {
+	/* private */  ValidateGroupInformationMoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, categoryGroup, groupsFound) {
 		
 		if (!GroupInformation) {
 			errs.addError({type:APPLICATION, code:"GIM000", message:"ValidateGroupInformationMoreEpisodes() called with GroupInformation==null"});
@@ -1541,7 +1534,7 @@ export default class ContentGuideCheck {
 			errs.addError({code:"GIM014", message:`${tva.e_GroupType.elementize()} is required in ${GroupInformation.name().elementize()}`, line:GroupInformation.line()});
 
 		// <GroupInformation><BasicDescription>
-		this.ValidateBasicDescription(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup);
+		this.ValidateBasicDescription(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, categoryGroup);
 	}
 
 
@@ -1553,32 +1546,31 @@ export default class ContentGuideCheck {
 	 * @param {XMLnode} GroupInformation    the element whose children should be checked
 	 * @param {string}  requestType         the type of content guide request being checked
 	 * @param {Class}   errs                errors found in validaton
-	 * @param {string}  parentLanguage	    the xml:lang of the parent element to GroupInformation
 	 * @param {XMLnode} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
 	 * @param {array}   indexes			    an accumulation of the @index values found
 	 * @param {array}   groupsFound         groupId values found (null if not needed)
 	 */
-	/* private */  ValidateGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, categoryGroup, indexes, groupsFound) {
+	/* private */  ValidateGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, categoryGroup, indexes, groupsFound) {
 
 		if (!GroupInformation) {
 			errs.addError({type:APPLICATION, code:"GI000", message:"ValidateGroupInformation() called with GroupInformation==null"});
 			return;
 		}
 
-		let giLang=this.GetLanguage(this.knownLanguages, errs, GroupInformation, parentLanguage, false, "GI001");
+		let giLang=GetNodeLanguage(GroupInformation, false, errs, "GI001", this.knownLanguages);
 		
 		switch (requestType) {
 			case CG_REQUEST_SCHEDULE_NOWNEXT:
 			case CG_REQUEST_SCHEDULE_WINDOW:
-				this.ValidateGroupInformationSchedules(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, giLang, categoryGroup);
+				this.ValidateGroupInformationSchedules(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, categoryGroup);
 				break;
 			case CG_REQUEST_BS_CATEGORIES:
 			case CG_REQUEST_BS_LISTS:
 			case CG_REQUEST_BS_CONTENTS:
-				this.ValidateGroupInformationBoxSets(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, giLang, categoryGroup, indexes, groupsFound);
+				this.ValidateGroupInformationBoxSets(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, categoryGroup, indexes, groupsFound);
 				break;		
 			case CG_REQUEST_MORE_EPISODES:
-				this.ValidateGroupInformationMoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, giLang, categoryGroup, groupsFound);
+				this.ValidateGroupInformationMoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, categoryGroup, groupsFound);
 				break;				
 		}
 
@@ -1600,13 +1592,12 @@ export default class ContentGuideCheck {
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {string}  parentLang          XML language of the parent element (or its parent(s))
 	 * @param {string}  requestType         the type of content guide request being checked
 	 * @param {array}   groupIds            buffer to recieve the group ids parsed (null if not needed)
 	 * @param {Class}   errs                errors found in validaton
 	 * @param {integer} o.childCount        the value from the @numItems attribute of the "category group"
 	 */
-	/* private */  CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, parentLang, requestType, groupIds, errs, o) { 
+	/* private */  CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, requestType, groupIds, errs, o) { 
 		
 		if (!ProgramDescription) {
 			errs.addError({type:APPLICATION, code:"GI100", message:"CheckGroupInformation() called with ProgramDescription==null"});
@@ -1619,7 +1610,7 @@ export default class ContentGuideCheck {
 			//errs.addError({code:"GI101", message:`${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`, line:ProgramDescription.line()});
 			return;
 		}
-		let gitLang=this.GetLanguage(this.knownLanguages, errs, GroupInformationTable, parentLang, false, "GI102");
+		let gitLang=GetNodeLanguage(GroupInformationTable, false, errs, "GI102", this.knownLanguages);
 
 		// find which GroupInformation element is the "category group"
 		let categoryGroup=null;
@@ -1641,7 +1632,7 @@ export default class ContentGuideCheck {
 		let indexes=[], giCount=0;
 		gi=0;
 		while ((GroupInformation=GroupInformationTable.get(xPath(SCHEMA_PREFIX, tva.e_GroupInformation, ++gi), CG_SCHEMA))!=null) {
-			this.ValidateGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, gitLang, categoryGroup, indexes, groupIds);
+			this.ValidateGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, categoryGroup, indexes, groupIds);
 			if (GroupInformation!=categoryGroup) 
 				giCount++;
 		}
@@ -1669,13 +1660,12 @@ export default class ContentGuideCheck {
 	 * @param {XMLnode} GroupInformation    the element whose children should be checked
 	 * @param {string}  requestType         the type of content guide request being checked
 	 * @param {Class}   errs                errors found in validaton
-	 * @param {string}  parentLanguage	    the xml:lang of the parent element to GroupInformation
 	 * @param {int}     numEarlier		    maximum number of <GroupInformation> elements that are earlier
 	 * @param {int}     numNow			    maximum number of <GroupInformation> elements that are now
 	 * @param {int}     numLater			maximum number of <GroupInformation> elements that are later
 	 * @param {array}   groupCRIDsFound     list of structural crids already found in this response
 	 */
-	/* private */  ValidateGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, numEarlier, numNow, numLater, groupCRIDsFound) {
+	/* private */  ValidateGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, numEarlier, numNow, numLater, groupCRIDsFound) {
 
 		function validValues(errs, numOfItems, numAllowed, grp, element) {
 			if (numOfItems<=0)
@@ -1690,7 +1680,7 @@ export default class ContentGuideCheck {
 		}
 
 		// NOWNEXT and WINDOW GroupInformationElements contains the same syntax as other GroupInformationElements
-		this.ValidateGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, parentLanguage, null, null, null );
+		this.ValidateGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, null, null, null );
 		
 		if (GroupInformation.attr(tva.a_groupId)) {
 			let grp=GroupInformation.attr(tva.a_groupId).value();
@@ -1724,12 +1714,11 @@ export default class ContentGuideCheck {
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {string}  parentLang          XML language of the parent element (or its parent(s))
 	 * @param {array}   groupIds            array of GroupInformation@CRID values found
 	 * @param {string}  requestType         the type of content guide request being checked
 	 * @param {Class}   errs                errors found in validaton
 	 */
-	/* private */  CheckGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, parentLang, groupIds, requestType, errs) { 
+	/* private */  CheckGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, groupIds, requestType, errs) { 
 		
 		if (!ProgramDescription) {
 			errs.addError({type:APPLICATION, code:"NN000", message:"CheckGroupInformationNowNext() called with ProgramDescription==null"});
@@ -1741,16 +1730,16 @@ export default class ContentGuideCheck {
 			errs.addError({code:"NN001", message:`${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`, line:ProgramDescription.line()});
 			return;
 		}
-		let gitLang=this.GetLanguage(this.knownLanguages, errs, GroupInformationTable, parentLang, false, "NN002");
+		let gitLang=GetNodeLanguage(GroupInformationTable, false, errs, "NM002", this.knownLanguages);
 		
 		let gi=0, GroupInformation;
 		while ((GroupInformation=GroupInformationTable.get(xPath(SCHEMA_PREFIX, tva.e_GroupInformation, ++gi), CG_SCHEMA))!=null) {	
 			switch (requestType) {
 				case CG_REQUEST_SCHEDULE_NOWNEXT:
-					this.ValidateGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, gitLang, 0, 1, 1, groupIds);
+					this.ValidateGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, 0, 1, 1, groupIds);
 					break;
 				case CG_REQUEST_SCHEDULE_WINDOW:
-					this.ValidateGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, gitLang, 10, 1, 10, groupIds);
+					this.ValidateGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, GroupInformation, requestType, errs, 10, 1, 10, groupIds);
 					break;
 				default:
 					errs.addError({code:"NN003", message:`${tva.e_GroupInformation.elementize()} not processed for this request type`, line:GroupInformation.line()});
@@ -1807,7 +1796,7 @@ export default class ContentGuideCheck {
 						errs.addError({code:"AV014", message:`${tva.a_purpose.attribute(tva.e_AudioLanguage)} is not valid`, fragment:AudioLanguage});
 				}
 
-				validLanguage=CheckLanguage(this.knownLanguages, errs, audioLang, `${tva.e_AudioAttributes}.${tva.e_AudioLanguage}`, "AV015", AudioLanguage.line());
+				validLanguage=checkLanguage(this.knownLanguages, audioLang, `${tva.e_AudioAttributes}.${tva.e_AudioLanguage}`, AudioLanguage, errs, "AV015");
 				
 				if (validLanguage && validPurpose) {	
 					if (audioCounts[audioLang]===undefined)
@@ -1961,6 +1950,11 @@ export default class ContentGuideCheck {
 
 		let restartGenre=null, restartRelatedMaterial=null; 
 		
+		// TODO: <Title> is permitted by TV-Anytime but not included in the DVB-I profile for an InstanceDescription - check its validity anyway
+		this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, InstanceDescription, true, errs, "ID004", false);
+
+		// TODO: <Synopis> is permitted by TV-Anytime but not included in the DVB-I profile for an InstanceDescription- check its validity anyway
+		
 		// <Genre>
 		switch (VerifyType) {
 			case tva.e_OnDemandProgram:
@@ -2002,25 +1996,29 @@ export default class ContentGuideCheck {
 				}	
 				break;
 		}
+
+		// TODO: <PurchaseList is permitted by TV-Anytime but not included in the DVB-I profile for an InstanceDescription- check its validity anyway
 		
 		// <CaptionLanguage>
 		let CaptionLanguage=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_CaptionLanguage), CG_SCHEMA);
 		if (CaptionLanguage) {
-			CheckLanguage(this.knownLanguages, errs, CaptionLanguage.text(), `${InstanceDescription.name()}.${tva.e_CaptionLanguage}`, "ID021", CaptionLanguage.line());
+			checkLanguage(this.knownLanguages, CaptionLanguage.text(), `${InstanceDescription.name()}.${tva.e_CaptionLanguage}`, CaptionLanguage, errs, "ID021");
 			BooleanValue(CaptionLanguage, tva.a_closed, "ID022", errs);
 		}
 		
 		// <SignLanguage>
 		let SignLanguage=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_SignLanguage), CG_SCHEMA);
 		if (SignLanguage) {
-			CheckLanguage(this.knownLanguages, errs, SignLanguage.text(), `${InstanceDescription.name()}.${tva.e_SignLanguage}`, "ID-310", SignLanguage.line());
+			checkLanguage(this.knownLanguages, SignLanguage.text(), `${InstanceDescription.name()}.${tva.e_SignLanguage}`, SignLanguage, errs, "ID031");
 			FalseValue(SignLanguage, tva.a_closed, "ID032", errs);
 			// check value is "sgn" according to ISO 639-2 or a sign language listed in ISO 639-3
 			if (SignLanguage.text()!="sgn" && !this.knownLanguages.isKnownSignLanguage(SignLanguage.text())) 
 				errs.addError({code:"ID033", message:`invalid ${tva.e_SignLanguage.elementize()} ${SignLanguage.text().quote()} in ${InstanceDescription.name().elementize()}`,
 					fragment:SignLanguage});
 		}
-		
+
+		// TODO: <ParentalGuidance> is permitted by TV-Anytime but not included in the DVB-I profile for an InstanceDescription- check its validity anyway
+
 		// <AVAttributes>
 		let AVAttributes=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_AVAttributes), CG_SCHEMA);
 		if (AVAttributes)
@@ -2121,13 +2119,12 @@ export default class ContentGuideCheck {
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {XMLnode} OnDemandProgram     the node containing the <OnDemandProgram> being checked
-	 * @param {string}  parentLang          XML language of the parent element (expliclt or implicit from its parent(s))
 	 * @param {array}   programCRIDs        array of program crids defined in <ProgramInformationTable> 
 	 * @param {array}   plCRIDs        	    array of program crids defined in <ProgramLocationTable>
 	 * @param {string}  requestType         the type of content guide request being checked
 	 * @param {Class}   errs                errors found in validaton
 	 */
-	/* private */  ValidateOnDemandProgram(CG_SCHEMA, SCHEMA_PREFIX, OnDemandProgram, parentLanguage, programCRIDs, plCRIDs, requestType, errs) {
+	/* private */  ValidateOnDemandProgram(CG_SCHEMA, SCHEMA_PREFIX, OnDemandProgram, programCRIDs, plCRIDs, requestType, errs) {
 
 		if (!OnDemandProgram) {
 			errs.addError({type:APPLICATION, code:"OD000", message:"ValidateOnDemandProgram() called with OnDemandProgram==null"});
@@ -2180,7 +2177,7 @@ export default class ContentGuideCheck {
 		}
 			
 		checkAttributes(OnDemandProgram, [], [tva.a_serviceIDRef, tva.a_lang], errs, "OD005"); 
-		let odpLang=this.GetLanguage(this.knownLanguages, errs, OnDemandProgram, parentLanguage, false, "OD006");
+		GetNodeLanguage(OnDemandProgram, false, errs, "OD006", this.knownLanguages);
 		this.checkTAGUri(OnDemandProgram, errs, "OD007");	
 		
 		// <Program>
@@ -2249,7 +2246,6 @@ export default class ContentGuideCheck {
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {XMLnode} Schedule            the <Schedule> node containing the <ScheduleEvent> element to be checked
-	 * @param {string}  parentLanguage      XML language of the parent element (expliclt or implicit from its parent(s))
 	 * @param {array}   programCRIDs        array of program crids defined in <ProgramInformationTable> 
 	 * @param {array}   plCRIDs             array of program crids defined in <ProgramLocationTable>
 	 * @param {string}  currentProgramCRID  CRID of the currently airing program
@@ -2258,7 +2254,7 @@ export default class ContentGuideCheck {
 	 * @param {string}  requestType         the type of content guide request being checked
 	 * @param {Class}   errs                errors found in validaton
 	 */
-	/* private */  ValidateScheduleEvents(CG_SCHEMA, SCHEMA_PREFIX, Schedule, parentLanguage, programCRIDs, plCRIDs, currentProgramCRID, scheduleStart, scheduleEnd, requestType, errs) {
+	/* private */  ValidateScheduleEvents(CG_SCHEMA, SCHEMA_PREFIX, Schedule, programCRIDs, plCRIDs, currentProgramCRID, scheduleStart, scheduleEnd, requestType, errs) {
 		
 		if (!Schedule) {
 			errs.addError({type:APPLICATION, code:"SE000", message:"ValidateScheduleEvents() called with Schedule==null"});
@@ -2268,7 +2264,7 @@ export default class ContentGuideCheck {
 		let isCurrentProgram=false;
 		let se=0, ScheduleEvent;
 		while ((ScheduleEvent=Schedule.get(xPath(SCHEMA_PREFIX, tva.e_ScheduleEvent, ++se), CG_SCHEMA))!=null) {
-			let seLang=this.GetLanguage(this.knownLanguages, errs, ScheduleEvent, parentLanguage, false, "SE001");
+			GetNodeLanguage(ScheduleEvent, false, errs, "SE001", this.knownLanguages);
 			
 			checkTopElementsAndCardinality(ScheduleEvent, 
 				[{name:tva.e_Program}, 
@@ -2363,7 +2359,6 @@ export default class ContentGuideCheck {
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {XMLnode} Schedule            the node containing the <Schedule> being checked
-	 * @param {string}  parentLanguage      XML language of the parent element (expliclt or implicit from its parent(s))
 	 * @param {array}   programCRIDs        array of program crids defined in <ProgramInformationTable> 
 	 * @param {array}   plCRIDs             array of program crids defined in <ProgramLocationTable>
 	 * @param {string}  currentProgramCRID  CRID of the currently airing program
@@ -2371,7 +2366,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                errors found in validaton
 	 * @returns {string} the serviceIdRef for this <Schedule> element
 	 */
-	/* private */  ValidateSchedule(CG_SCHEMA, SCHEMA_PREFIX, Schedule, parentLanguage, programCRIDS, plCRIDs, currentProgramCRID, requestType, errs) {
+	/* private */  ValidateSchedule(CG_SCHEMA, SCHEMA_PREFIX, Schedule, programCRIDS, plCRIDs, currentProgramCRID, requestType, errs) {
 
 		if (!Schedule) {
 			errs.addError({type:APPLICATION, code:"VS000", message:"ValidateSchedule() called with Schedule==null"});
@@ -2381,7 +2376,7 @@ export default class ContentGuideCheck {
 		checkTopElementsAndCardinality(Schedule, [{name:tva.e_ScheduleEvent, minOccurs:0, maxOccurs:Infinity}], false, errs, "VS001");
 		checkAttributes(Schedule, [tva.a_serviceIDRef, tva.a_start, tva.a_end], [], errs, "VS002");
 		
-		let scheduleLang=this.GetLanguage(this.knownLanguages, errs, Schedule, parentLanguage, false, "VS003");	
+		GetNodeLanguage(Schedule, false, errs, "VS003", this.knownLanguages);	
 		let serviceIdRef=this.checkTAGUri(Schedule, errs, "VS004");
 		let startSchedule=Schedule.attr(tva.a_start), fr=null, endSchedule=Schedule.attr(tva.a_end), to=null;
 		if (startSchedule)
@@ -2394,7 +2389,7 @@ export default class ContentGuideCheck {
 			if (to.getTime() <= fr.getTime()) 
 				errs.addError({code:"VS012", message:`${tva.a_start.attribute(Schedule.name())} must be earlier than ${tva.a_end.attribute()}`, fragment:Schedule});
 		
-				this.ValidateScheduleEvents(CG_SCHEMA, SCHEMA_PREFIX, Schedule, scheduleLang, programCRIDS, plCRIDs, currentProgramCRID, fr, to, requestType, errs);
+				this.ValidateScheduleEvents(CG_SCHEMA, SCHEMA_PREFIX, Schedule, programCRIDS, plCRIDs, currentProgramCRID, fr, to, requestType, errs);
 		
 		return serviceIdRef;
 	}
@@ -2406,14 +2401,13 @@ export default class ContentGuideCheck {
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
 	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {string}  parentLang          XML language of the parent element (or its parent(s))
 	 * @param {array}   programCRIDs        array to record CRIDs for later use  
 	 * @param {string}  currentProgramCRID  CRID of the currently airing program
 	 * @param {string}  requestType         the type of content guide request being checked
 	 * @param {Class}   errs                errors found in validaton
 	 * @param {integer} o.childCount        the number of child elements to be present (to match GroupInformation@numOfItems)
 	 */
-	/* private */  CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, parentLang, programCRIDs, currentProgramCRID, requestType, errs, o=null) {
+	/* private */  CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, currentProgramCRID, requestType, errs, o=null) {
 
 		if (!ProgramDescription) {
 			errs.addError({type:APPLICATION, code:"PL000", message:"CheckProgramLocation() called with ProgramDescription==null"});
@@ -2431,7 +2425,7 @@ export default class ContentGuideCheck {
 			false, errs, "PL010");
 		checkAttributes(ProgramLocationTable, [], [tva.a_lang], errs, "PL011");
 		
-		let pltLang=this.GetLanguage(this.knownLanguages, errs, ProgramLocationTable, parentLang, false, "PL012");	
+		GetNodeLanguage(ProgramLocationTable, false, errs, "PL012", this.knownLanguages);
 		
 		let cnt=0, foundServiceIds=[], plCRIDs=[];
 
@@ -2439,11 +2433,11 @@ export default class ContentGuideCheck {
 		if (children) children.forEachSubElement(child => {
 			switch (child.name()) {
 				case tva.e_OnDemandProgram:
-					this.ValidateOnDemandProgram(CG_SCHEMA, SCHEMA_PREFIX, child, pltLang, programCRIDs, plCRIDs, requestType, errs);
+					this.ValidateOnDemandProgram(CG_SCHEMA, SCHEMA_PREFIX, child, programCRIDs, plCRIDs, requestType, errs);
 					cnt++;
 					break;
 				case tva.e_Schedule:
-					let thisServiceIdRef=this.ValidateSchedule(CG_SCHEMA, SCHEMA_PREFIX, child, pltLang, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
+					let thisServiceIdRef=this.ValidateSchedule(CG_SCHEMA, SCHEMA_PREFIX, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
 					if (thisServiceIdRef.length)
 						if (isIni(foundServiceIds, thisServiceIdRef))
 							errs.addError({code:"PL020", 
@@ -2518,7 +2512,7 @@ export default class ContentGuideCheck {
 			});
 		}
 
-		let tvaMainLang=this.GetLanguage(this.knownLanguages, errs, CG.root(), DEFAULT_LANGUAGE, true, "CG005");
+		let tvaMainLang=GetNodeLanguage(CG.root(), true, errs, "CG005", this.knownLanguages);
 		let ProgramDescription=CG.get(xPath(SCHEMA_PREFIX, tva.e_ProgramDescription), CG_SCHEMA);
 		if (!ProgramDescription) {
 			errs.addError({code:"CG006", message:`No ${tva.e_ProgramDescription.elementize()} element specified.`});
@@ -2535,8 +2529,8 @@ export default class ContentGuideCheck {
 					 {name:tva.e_ProgramInformationTable}],
 					false, errs, "CG011");
 				
-				this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, null, requestType, errs);
-				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, null, requestType, errs);
+				this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, null, requestType, errs);
+				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, null, requestType, errs);
 				break;
 			case CG_REQUEST_SCHEDULE_NOWNEXT:
 				// schedule response (6.5.4.1) has <ProgramLocationTable> and <ProgramInformationTable> elements 
@@ -2548,9 +2542,9 @@ export default class ContentGuideCheck {
 			
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
 				if (this.hasElement(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tva.e_GroupInformationTable))
-					this.CheckGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, groupIds, requestType, errs);
-				let currentProgramCRIDnn=this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, groupIds, requestType, errs);
-				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, currentProgramCRIDnn, requestType, errs);
+					this.CheckGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, groupIds, requestType, errs);
+				let currentProgramCRIDnn=this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, groupIds, requestType, errs);
+				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, currentProgramCRIDnn, requestType, errs);
 				break;
 			case CG_REQUEST_SCHEDULE_WINDOW:
 				checkTopElementsAndCardinality(ProgramDescription,
@@ -2561,9 +2555,9 @@ export default class ContentGuideCheck {
 
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
 				if (this.hasElement(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tva.e_GroupInformationTable))
-					this.CheckGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, groupIds, requestType, errs);
+					this.CheckGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, groupIds, requestType, errs);
 				let currentProgramCRIDsw=this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, groupIds, requestType, errs);
-				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, currentProgramCRIDsw, requestType, errs);
+				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, currentProgramCRIDsw, requestType, errs);
 				break;
 			case CG_REQUEST_PROGRAM:
 				// program information response (6.6.2) has <ProgramLocationTable> and <ProgramInformationTable> elements
@@ -2572,8 +2566,8 @@ export default class ContentGuideCheck {
 					 {name:tva.e_ProgramInformationTable}],
 					false, errs, "CG041");	
 			
-				this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, null, requestType, errs);
-				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, null, requestType, errs);
+				this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, null, requestType, errs);
+				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, null, requestType, errs);
 				break;
 			case CG_REQUEST_MORE_EPISODES:
 				// more episodes response (6.7.3) has <ProgramInformationTable>, <GroupInformationTable> and <ProgramLocationTable> elements 
@@ -2583,21 +2577,21 @@ export default class ContentGuideCheck {
 					 {name:tva.e_GroupInformationTable}],
 					false, errs, "CG051");
 
-				this.CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, requestType, groupIds, errs, o);
-				this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, groupIds, requestType, errs, o);
-				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, null, requestType, errs, o);
+				this.CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, requestType, groupIds, errs, o);
+				this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, groupIds, requestType, errs, o);
+				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, null, requestType, errs, o);
 				break;
 			case CG_REQUEST_BS_CATEGORIES:
 				// box set categories response (6.8.2.3) has <GroupInformationTable> element
 				checkTopElementsAndCardinality(ProgramDescription, [{name:tva.e_GroupInformationTable}], false, errs, "CG061"); 
 
-				this.CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, requestType, null, errs, null);
+				this.CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, requestType, null, errs, null);
 				break;
 			case CG_REQUEST_BS_LISTS:
 				// box set lists response (6.8.3.3) has <GroupInformationTable> element
 				checkTopElementsAndCardinality(ProgramDescription, [{name:tva.e_GroupInformationTable}], false, errs, "CG071"); 
 				
-				this.CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, requestType, null, errs, null);
+				this.CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, requestType, null, errs, null);
 				break;
 			case CG_REQUEST_BS_CONTENTS:
 				// box set contents response (6.8.4.3) has <ProgramInformationTable>, <GroupInformationTable> and <ProgramLocationTable> elements 
@@ -2607,9 +2601,9 @@ export default class ContentGuideCheck {
 					 {name:tva.e_GroupInformationTable}],
 					false, errs, "CG081");
 				
-				this.CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, requestType, groupIds, errs, o);
-				this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, groupIds, requestType, errs, o);
-				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, null, requestType, errs, o);
+				this.CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, requestType, groupIds, errs, o);
+				this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, groupIds, requestType, errs, o);
+				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, null, requestType, errs, o);
 				break;
 		}
 	}

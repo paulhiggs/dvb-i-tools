@@ -28,6 +28,8 @@ import IANAlanguages from "./IANAlanguages.js";
 import { checkValidLogo } from "./RelatedMaterialChecks.js";
 import { sl_InvalidHrefValue } from "./CommonErrors.js";
 
+import { checkLanguage, checkXMLLangs } from "./MultilingualElement.js";
+
 /* TODO:
 
  - also look for TODO in the code itself
@@ -287,7 +289,7 @@ export default class ServiceListCheck {
 	 * @param {Object}  errs      the class where errors and warnings relating to the service list processing are stored 
 	 * @param {String}  errCode   the error code to be reported
 	 */
-	/*private*/ checkLanguage(lang, loc, element, errs, errCode) {
+	/*private*/ /* checkLanguage(lang, loc, element, errs, errCode) {
 		let validatorResp=this.knownLanguages.isKnown(lang);
 		switch (validatorResp.resp) {
 			case this.knownLanguages.languageUnknown:
@@ -309,7 +311,7 @@ export default class ServiceListCheck {
 					line:element.line(), key:"invalid language"});
 				break;
 		}
-	}
+	} */
 
 
 	/**
@@ -350,7 +352,7 @@ export default class ServiceListCheck {
 				});
 		}
 
-		this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_RegionName, `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${regionID.quote()}`, Region, errs, "AR006");
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_RegionName, `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${regionID.quote()}`, Region, errs, "AR006", this.knownLanguages);
 		
 		// <Region><Postcode>
 		let pc=0, Postcode, PostcodeErrorMessage="invalid postcode";
@@ -629,7 +631,7 @@ export default class ServiceListCheck {
 	 * @param {Object}  errs             The class where errors and warnings relating to the service list processing are stored 
 	 * @param {String}  errCode          The error code to be reported
 	 */
-	/*private*/  checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, elementName, elementLocation, node, errs, errCode) {
+	/*private*/  /* checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, elementName, elementLocation, node, errs, errCode) {
 		if (!node) {
 			errs.addError({type:APPLICATION, code:"XL000", message:"checkXMLLangs() called with node==null"});
 			return;
@@ -639,7 +641,7 @@ export default class ServiceListCheck {
 		 * Recurse up the XML element hierarchy until we find an element with an @xml:lang attribute or return a ficticouus 
 		 * value of topmost level element does not contain @xml:lang
 		 * @param {Element} node 
-		 */
+		 */ /*
 		 function ancestorLanguage(node) {
 			if (node.type() != 'element')
 				return NO_DOCUMENT_LANGUAGE;
@@ -650,7 +652,6 @@ export default class ServiceListCheck {
 			return ancestorLanguage(node.parent());
 		}
 
-		const UNSPECIFIED_LANG=NO_DOCUMENT_LANGUAGE;
 		let elementLanguages=[], i=0, elem;
 		while ((elem=node.get(xPath(SCHEMA_PREFIX, elementName, ++i), SL_SCHEMA))!=null) {
 			let lang=elem.attr(dvbi.a_lang)?elem.attr(dvbi.a_lang).value():ancestorLanguage(elem.parent());
@@ -661,10 +662,10 @@ export default class ServiceListCheck {
 			else elementLanguages.push(lang);
 
 			//if lang is specified, validate the format and value of the attribute against BCP47 (RFC 5646)
-			if (lang!=UNSPECIFIED_LANG) 
-				this.checkLanguage(lang, `xml:lang in ${elementName}`, elem, errs, `${errCode}-2`);
+			if (lang!=NO_DOCUMENT_LANGUAGE) 
+				checkLanguage(this.knownLanguages, lang, `xml:lang in ${elementName}`, elem, errs, `${errCode}-2`);
 		}
-	}
+	} */
 
 
 	/**
@@ -738,8 +739,8 @@ export default class ServiceListCheck {
 		}
 		loc=loc?loc:source.parent().name().elementize();
 		
-		this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_Name, loc, source, errs, `${errCode}-1`);
-		this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ProviderName, loc, source, errs, `${errCode}-2`);
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_Name, loc, source, errs, `${errCode}-1`, this.knownLanguages);
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ProviderName, loc, source, errs, `${errCode}-2`, this.knownLanguages);
 		
 		let rm=0, RelatedMaterial;
 		while ((RelatedMaterial=source.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), SL_SCHEMA))!=null) 
@@ -792,7 +793,7 @@ export default class ServiceListCheck {
 		
 		let localLang=node.attr(tva.a_lang).value();
 		if (validator && localLang)
-			this.checkLanguage(localLang, node.name(), node, errs, errCode);
+			checkLanguage(validator, localLang, node.name(), node, errs, errCode);
 		return localLang;	
 	}
 
@@ -948,7 +949,7 @@ export default class ServiceListCheck {
 		}
 
 		//<ServiceInstance><DisplayName>
-		this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010");
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010", this.knownLanguages);
 
 		// check @href of <ServiceInstance><RelatedMaterial>
 		let rm=0, controlApps=[], RelatedMaterial;
@@ -1031,12 +1032,12 @@ export default class ServiceListCheck {
 			// Check ContentAttributes/CaptionLanguage
 			cp=0;
 			while ((conf=ContentAttributes.get(xPath(SCHEMA_PREFIX, tva.e_CaptionLanguage, ++cp), SL_SCHEMA))!=null) 
-				this.checkLanguage(conf.text(), tva.e_CaptionLanguage.elementize(), conf, errs, "SI101");
+				checkLanguage(this.knownLanguages, conf.text(), tva.e_CaptionLanguage.elementize(), conf, errs, "SI101");
 
 			// Check ContentAttributes/SignLanguage
 			cp=0;
 			while ((conf=ContentAttributes.get(xPath(SCHEMA_PREFIX, tva.e_SignLanguage, ++cp), SL_SCHEMA))!=null)
-				this.checkLanguage(conf.text(), tva.e_SignLanguage.elementize(), conf, errs, "SI111");
+				checkLanguage(this.knownLanguages, conf.text(), tva.e_SignLanguage.elementize(), conf, errs, "SI111");
 		}
 
 		// <ServiceInstance><Availability>
@@ -1055,7 +1056,7 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><SubscriptionPackage>
-		this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ServiceInstance.name().elementize(), ServiceInstance, errs, "SI131");
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ServiceInstance.name().elementize(), ServiceInstance, errs, "SI131", this.knownLanguages);
 
 		// <ServiceInstance><FTAContentManagement>
 
@@ -1339,10 +1340,10 @@ export default class ServiceListCheck {
 		}
 
 		//check <ServiceList><Name>
-		this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_Name, dvbi.e_ServiceList, SL, errs, "SL020");
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_Name, dvbi.e_ServiceList, SL, errs, "SL020", this.knownLanguages);
 
 		//check <ServiceList><ProviderName>
-		this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ProviderName, dvbi.e_ServiceList, SL, errs, "SL030");
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ProviderName, dvbi.e_ServiceList, SL, errs, "SL030", this.knownLanguages);
 
 		//check <ServiceList><RelatedMaterial>
 		let rm=0, countControlApps=0, RelatedMaterial;
@@ -1433,10 +1434,10 @@ export default class ServiceListCheck {
 					this.UnspecifiedTargetRegion(TargetRegion.text(), `service ${thisServiceId.quote()}`, errs, "SL130");
 
 			//check <Service><ServiceName>
-			this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ServiceName, `service ${thisServiceId.quote()}`, service, errs, "SL140");
+			checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ServiceName, `service ${thisServiceId.quote()}`, service, errs, "SL140", this.knownLanguages);
 
 			//check <Service><ProviderName>
-			this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ProviderName, `service ${thisServiceId.quote()}`, service, errs, "SL141");
+			checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ProviderName, `service ${thisServiceId.quote()}`, service, errs, "SL141", this.knownLanguages);
 
 			//check <Service><RelatedMaterial>
 			let rm=0, RelatedMaterial;
@@ -1513,7 +1514,7 @@ export default class ServiceListCheck {
 				}
 				
 				// <LCNTable><SubscriptionPackage>
-				// this.checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, dvbi.e_LCNTable, LCNTable, errs, "SL250");
+				// checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, dvbi.e_LCNTable, LCNTable, errs, "SL250", this.knownLanguages);
 
 	/*			// start Bug2938
 				let sp=0, SubscriptionPackage, hasPackage=false;

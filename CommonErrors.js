@@ -7,7 +7,7 @@ import { tva } from "./TVA_definitions.js";
  *
  * @param {Object} errs            Errors buffer
  * @param {string} missingElement  Name of the missing element
- * @param {XMLnode} parentElement  Name of the element which should contain the missingElement
+ * @param {XMLnode} parentElement  The element which should contain the missingElement
  * @param {string} schemaLoctation The location in the schema of the element
  * @param {string} errCode         The error number to show in the log
  */
