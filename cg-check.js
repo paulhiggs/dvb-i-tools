@@ -151,29 +151,6 @@ function FalseValue(elem, attrName, errCode, errs, isRequired=true) {
 }
 
 
-/** 
- * verify the language using a validation class
- *
- * @param {object} validator  the validation class to use
- * @param {Class}  errs       errors found in validaton
- * @param {string} lang 	  that should be displayed in HTML
- * @param {string} loc        "location" of the language being checked
- * @param {string} errCode    error number to use instead of local values
- */ /*
-function CheckLanguage(validator, errs, lang, loc, errCode, documentLine ) {
-	if (!validator) {
-		errs.addError({type:APPLICATION, code:`${errCode}-1`, message:`cannot validate language ${lang.quote()}${loc?` for ${loc.elementize()}`:""}`, 
-						key:"no language validator"});
-		return false;
-	}
-	if (!validator.isKnown(lang))  {
-		errs.addError({code:`${errCode}-2`, message:`language ${lang.quote()} specified${loc?` for ${loc.elementize()}`:""} is invalid`, key:"invalid language", line:documentLine});
-		return false;
-	}
-	return true;
-} */
-
-
 if (!Array.prototype.forEachSubElement) {
 	// based on the polyfill at https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach 
 	/*
@@ -273,47 +250,17 @@ export default class ContentGuideCheck {
 		this.supportedRequests=supportedRequests;
 	}
 
-
-	/**
-	 * validate the language specified record any errors
-	 *
-	 * @param {object}  validator  the validation class to use
-	 * @param {Class}   errs       errors found in validaton
-	 * @param {XMLnode} node       the XML node whose @lang attribute should be checked
-	 * @param {string}  parentLang the language of the XML element which is the parent of node
-	 * @param {boolean} isRequired report an error if @lang is not explicitly stated
-	 * @param {string}  errCode    error number to use
-	 * @returns {string} the @lang attribute of the node element of the parentLang if it does not exist of is not specified
-	 */
-	/* private */  /*GetLanguage(validator, errs, node, parentLang, isRequired, errCode) {
-		if (!node) 
-			return parentLang;
-		if (!node.attr(tva.a_lang) && isRequired) {
-			errs.addError({code:errCode, message:`${tva.a_lang.attribute()} is required for ${node.name().quote()}`, key:"unspecified language", line:node.line()});
-			return parentLang;		
-		}
-
-		if (!node.attr(tva.a_lang))
-			return parentLang;
-		
-		let localLang=node.attr(tva.a_lang).value();
-		checkLanguage(validator, localLang, node.name(), node, errs, errCode);
-		return localLang;
-	} */
-
-
 	/**
 	 * check if the specificed element has the named child elemeny
 	 * 
-	 * @param {string}  CG_SCHEMA       Used when constructing Xpath queries
-	 * @param {string}  SCHEMA_PREFIX   Used when constructing Xpath queries
 	 * @param {XMLnode} node            the node to check
 	 * @param {string}  elementName     the name of the child element
 	 * @returns {boolean} true if an element named node.elementName exists, else false
 	 */
-	/* private */  hasElement(CG_SCHEMA, SCHEMA_PREFIX,  node, elementName) {
+	/* private */  hasElement( node, elementName) {
 		if (!node) return false;
-		return (node.get(xPath(SCHEMA_PREFIX, elementName), CG_SCHEMA)!=null);
+
+		return node.childNodes().find(c => ( c.type()=="element" && c.name()==elementName) );
 	}
 
 
@@ -2541,7 +2488,7 @@ export default class ContentGuideCheck {
 					false, errs, "CG021");
 			
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
-				if (this.hasElement(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tva.e_GroupInformationTable))
+				if (this.hasElement(ProgramDescription, tva.e_GroupInformationTable))
 					this.CheckGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, groupIds, requestType, errs);
 				let currentProgramCRIDnn=this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, groupIds, requestType, errs);
 				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, currentProgramCRIDnn, requestType, errs);
@@ -2554,9 +2501,9 @@ export default class ContentGuideCheck {
 					false, errs, "CG031");
 
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
-				if (this.hasElement(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tva.e_GroupInformationTable))
+				if (this.hasElement(ProgramDescription, tva.e_GroupInformationTable))
 					this.CheckGroupInformationNowNext(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, groupIds, requestType, errs);
-				let currentProgramCRIDsw=this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, tvaMainLang, programCRIDs, groupIds, requestType, errs);
+				let currentProgramCRIDsw=this.CheckProgramInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, groupIds, requestType, errs);
 				this.CheckProgramLocation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, programCRIDs, currentProgramCRIDsw, requestType, errs);
 				break;
 			case CG_REQUEST_PROGRAM:
