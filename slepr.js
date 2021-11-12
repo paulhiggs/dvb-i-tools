@@ -17,6 +17,8 @@ import { dvbi } from "./DVB-I_definitions.js";
 import { IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data-locations.js";
 import { hasChild } from "./schema_checks.js";
 
+import { dataType } from "./phlib/phlib.js";
+
 var masterSLEPR="";
 const EMPTY_SLEPR="<ServiceListEntryPoints xmlns=\"urn:dvb:metadata:servicelistdiscovery:2021\"></ServiceListEntryPoints>";
 
@@ -128,68 +130,77 @@ export default class SLEPR {
 			}
 
 			//TargetCountry(s)
-			if (req.query.TargetCountry) {
-				if (typeof req.query.TargetCountry=="string" || req.query.TargetCountry instanceof String) {
- 					if (!this.knownCountries.isISO3166code(req.query.TargetCountry,false)) 
-						req.parseErr.push(`invalid ${dvbi.e_TargetCountry} [${req.query.TargetCountry}]`);				
-				}	
- 				else if (Array.isArray(req.query.TargetCountry)) {
-					req.query.TargetCountry.forEach(country => {
-						if (!this.knownCountries.isISO3166code(country, false)) 
-							req.parseErr.push(`invalid ${dvbi.e_TargetCountry} [${country}]`);
-					});
+			if (req.query.TargetCountry)
+				switch (dataType(req.query.TargetCountry)) {
+					case 'string':
+						if (!this.knownCountries.isISO3166code(req.query.TargetCountry,false)) 
+							req.parseErr.push(`invalid ${dvbi.e_TargetCountry} [${req.query.TargetCountry}]`);				
+						break;
+					case 'array':
+						req.query.TargetCountry.forEach(country => {
+							if (!this.knownCountries.isISO3166code(country, false)) 
+								req.parseErr.push(`invalid ${dvbi.e_TargetCountry} [${country}]`);
+						});
+						break;
+					default:
+						req.parseErr.push(`invalid type [${typeof(req.query.Language)}] for ${dvbi.e_TargetCountry}`);	
+						break;
 				}
-				else
-					req.parseErr.push(`invalid type [${typeof(req.query.Language)}] for ${dvbi.e_TargetCountry}`);	
-			}
 
 			//Language(s)
-			if (req.query.Language) {
-				if (typeof req.query.Language=="string" || req.query.Language instanceof String) {
-					if (!isTVAAudioLanguageType(req.query.Language, false)) 
-						req.parseErr.push(`invalid ${dvbi.e_Language} [${req.query.Language}]`);			
-				}	
-				else if (Array.isArray(req.query.Language)) {
-					req.query.Language.forEach(language => {
-						if (!isTVAAudioLanguageType(language, false)) 
-							req.parseErr.push(`invalid ${dvbi.e_Language} [${language}]`);
-					});
+			if (req.query.Language) 
+				switch (dataType(req.query.Language)) {
+					case 'string':
+						if (!isTVAAudioLanguageType(req.query.Language, false)) 
+							req.parseErr.push(`invalid ${dvbi.e_Language} [${req.query.Language}]`);
+						break;
+					case 'array':
+						req.query.Language.forEach(language => {
+							if (!isTVAAudioLanguageType(language, false)) 
+								req.parseErr.push(`invalid ${dvbi.e_Language} [${language}]`);
+						});
+						break;
+					default:
+						req.parseErr.push(`invalid type [${typeof(req.query.Language)}] for ${dvbi.e_Language}`);
+						break;
 				}
-				else
-					req.parseErr.push(`invalid type [${typeof(req.query.Language)}] for ${dvbi.e_Language}`);
-			}
 
 			//DeliverySystems(s)
-			if (req.query.Delivery) {
-				if (typeof req.query.Delivery=="string" || req.query.Delivery instanceof String) {
-					if (!!isValidDelivery(req.query.Delivery)) 
-						req.parseErr.push(`invalid ${dvbi.e_Delivery} system [${req.query.Delivery}]`);			
-				}	
-				else if (Array.isArray(req.query.Delivery)) {
-					req.query.Delivery.forEach(delivery => {
-						if (!isValidDelivery(delivery)) 
-							req.parseErr.push(`ivalid ${dvbi.e_Delivery} system [${delivery}]`);
-					});
+			if (req.query.Delivery)
+				switch (dataType(req.query.Delivery)) {
+					case 'string':
+						if (!!isValidDelivery(req.query.Delivery)) 
+							req.parseErr.push(`invalid ${dvbi.e_Delivery} system [${req.query.Delivery}]`);	
+						break;
+					case 'array':
+						req.query.Delivery.forEach(delivery => {
+							if (!isValidDelivery(delivery)) 
+								req.parseErr.push(`ivalid ${dvbi.e_Delivery} system [${delivery}]`);
+						});
+						break;
+					default:
+						req.parseErr.push(`invalid type [${typeof(req.query.Delivery)}] for ${dvbi.e_Delivery}`);
+						break;
 				}
-				else 
-					req.parseErr.push(`invalid type [${typeof(req.query.Delivery)}] for ${dvbi.e_Delivery}`);
-			}	
+
 
 			// Genre(s)
-			if (req.query.Genre) {
-				if (typeof req.query.Genre=="string" || req.query.Genre instanceof String) {
-					if (!this.knownGenres.isIn(req.query.Genre)) 
-						req.parseErr.push(`invalid ${dvbi.e_Genre} [${req.query.Genre}]`);			
-				}	
-				else if (Array.isArray(req.query.Genre)) {
-					req.query.Genre.forEach(genre => {
-						if (!this.knownGenres.isIn(genre)) 
-							req.parseErr.push(`invalid ${dvbi.e_Genre} [${genre}]`);
-					});
+			if (req.query.Genre) 
+				switch (dataType(Genre)) {
+					case 'string':
+						if (!this.knownGenres.isIn(req.query.Genre)) 
+							req.parseErr.push(`invalid ${dvbi.e_Genre} [${req.query.Genre}]`);	
+						break;
+					case 'array':
+						req.query.Genre.forEach(genre => {
+							if (!this.knownGenres.isIn(genre)) 
+								req.parseErr.push(`invalid ${dvbi.e_Genre} [${genre}]`);
+						});
+						break;
+					default:
+						req.parseErr.push(`invalid type [${typeof(req.query.Genre)}] for ${dvbi.e_Genre}`);
+						break;
 				}
-				else 
-				req.parseErr.push(`invalid type [${typeof(req.query.Genre)}] for ${dvbi.e_Genre}`);
-			}
 
 /* value space of this argument is not checked 
 			//Provider Name(s)
@@ -214,10 +225,6 @@ export default class SLEPR {
 
 
 	/* public */ processServiceListRequest(req, res) {
-
-		function prettyPrintArray(arr) {
-			return `[${arr.join(',\n\t')}]`;
-		}
 
 		if (!this.checkQuery(req)) {
 			if (req.parseErr) 
