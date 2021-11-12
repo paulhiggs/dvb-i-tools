@@ -1,5 +1,6 @@
 
 import { HTMLize } from './phlib/phlib.js';
+import { ERROR } from './ErrorList.js';
 
 function PAGE_TOP(label) {
 	const TABLE_STYLE="<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
@@ -62,10 +63,13 @@ function tabulateResults(res, error, errs) {
 
 		if (errs.markupXML.length>0) {
 			res.write("<hr/>EXPERIMENTAL - not all errors are indicated<hr/>");
-			res.write("<style>.errs {position:relative; cursor:pointer; color:red;} .errs[title]:hover:after {opacity:1; transition-delay:.1s; }</style>");
-			res.write("<pre>");
+			const ERR="errors", WARN="warnings", 
+				  style=(name,colour) => `<style>.${name} {position:relative; cursor:pointer; color:${colour};} .${name}[title]:hover:after {opacity:1; transition-delay:.1s; }</style>`;
+			res.write(`${style(ERR, "red")}${style(WARN, "blue")}<pre>`);
 			errs.markupXML.forEach(line => {
-				let qualifier=line.validationErrors?` class="errs" title="${line.validationErrors.map(err=>HTMLize(err)).join('&#10;')}"`:"";
+				let tip=line.validationErrors?line.validationErrors.map(err=>HTMLize(err)).join('&#10;'):null;
+				let cla=tip?(tip.includes(ERROR)?ERR:WARN):"";
+				let qualifier=tip?` class="${cla}" title="${tip}"`:"";
 				res.write(`<span${qualifier}>${HTMLize(line.value)}</span><br/>`);
 			});
 			res.write("</pre><hr/>");
@@ -142,25 +146,6 @@ export function drawSLForm (URLmode, res, lastInput=null, error=null, errs=null)
 
 	tabulateResults(res, error, errs);
 
-	//PH experimental stuff
-/*	if (errs && errs.markupXML) {
-		res.write("<hr><table class=\"markedup\">");
-		errs.markupXML.forEach(line => {
-			res.write(`<tr><td>${line.ix}</td>`);
-			let indent=0;
-			while (line.value.charAt(indent)==' ')
-				indent++;
-			res.write(`<td style="padding-left:${indent*10}px;"><span class=\"xmlfont\">${phlib.HTMLize(line.value)}</span>`);
-			if (line.validationErrors) {
-				line.validationErrors.forEach(error => {
-					res.write(`<br/>${phlib.HTMLize(error)}`);
-				});
-			}
-			res.write("</tr>");
-
-		})
-		res.write("</table><hr>");
-	} */
 	res.write(PAGE_BOTTOM);
 
 	return new Promise(function (resolve, reject) {

@@ -74,7 +74,7 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, location) {
 									isPNG=true;
 									break;
 								default:
-									cg_InvalidHrefValue(errs, href, `${RelatedMaterial.name()}.${tva.e_Format}.${tva.e_StillPictureFormat}`, location, "PS022");
+									cg_InvalidHrefValue(href, child, `${RelatedMaterial.name()}.${tva.e_Format}.${tva.e_StillPictureFormat}`, location, errs, "PS022");
 							}
 						}
 					}

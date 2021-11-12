@@ -7,7 +7,7 @@
 
 import { parseXmlString } from "libxmljs2";
 
-export const ERROR=1, WARNING=2, APPLICATION=3;
+export const ERROR='(E)', WARNING='(W)', APPLICATION='(A)';
 
 export default class ErrorList {
 
@@ -22,12 +22,12 @@ export default class ErrorList {
 		let lines=parseXmlString(doc).toString({declaration:false, format:true}).split('\n');
 		this.markupXML=lines.map((str, index) => ({ value: str, ix: index }));
 	}
-	/* private */ setError(code, message, lineNo) {
+	/* private */ setError(type, code, message, lineNo) {
 		let found=this.markupXML.find(line => (line.ix==lineNo));
 		if (found) {
 			if (!found.validationErrors)
 				found.validationErrors=[];
-			found.validationErrors.push(`${code}: ${message}`);
+			found.validationErrors.push(`${type} ${code}: ${message}`);
 		}
 	}
 	/* private */ increment(key) {
@@ -115,7 +115,7 @@ export default class ErrorList {
 			this.insertErrorData(e.type, e.key, {code:e.code, message:e.message});
 			e.multiElementFragments.forEach(fragment => {
 				if (typeof(fragment)!="string")
-					this.setError(e.code, e.message, fragment.line()-2);
+					this.setError(e.type, e.code, e.message, fragment.line()-2);
 			});
 		}
 		else if (e.fragments) {
@@ -126,7 +126,7 @@ export default class ErrorList {
 				if (e.reportInTable)
 					this.insertErrorData(e.type, e.key, newError);
 				if (typeof(fragment)!="string")
-					this.setError(e.code, e.message, fragment.line()-2);
+					this.setError(e.type, e.code, e.message, fragment.line()-2);
 			});
 		} 
 		else if (e.fragment) {
@@ -139,7 +139,7 @@ export default class ErrorList {
 			if (!e.line && typeof(e.fragment)!="string")
 				e.line=e.fragment.line()-1;
 			if (e.line)
-				this.setError(e.code, e.message, e.line-1);
+				this.setError(e.type, e.code, e.message, e.line-1);
 		} 
 		else {
 			let newError={code:e.code, message:e.message, element:null};
@@ -147,7 +147,7 @@ export default class ErrorList {
 			if (e.reportInTable)
 				this.insertErrorData(e.type, e.key, newError);
 			if (e.line)
-				this.setError(e.code, e.message, e.line-2);
+				this.setError(e.type, e.code, e.message, e.line-2);
 		}
 
 	}

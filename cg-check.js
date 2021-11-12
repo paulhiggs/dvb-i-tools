@@ -417,7 +417,7 @@ export default class ContentGuideCheck {
 								message:`${tva.a_type.attribute()}=${keywordType.quote()} not permitted for ${tva.e_Keyword.elementize()}`, fragment:Keyword});
 			if (unEntity(Keyword.text()).length > dvbi.MAX_KEYWORD_LENGTH)
 				errs.addError({code:`${errCode}-12`, message:`length of ${tva.e_Keyword.elementize()} is greater than ${dvbi.MAX_KEYWORD_LENGTH}`, fragment:Keyword});
-	}
+		}
 		
 		for (let i in counts) {
 			if (counts[i].length!=0 && counts[i].length>maxKeywords) 
@@ -881,7 +881,7 @@ export default class ContentGuideCheck {
 							ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name().elementize());
 							break;
 						default:
-							cg_InvalidHrefValue(errs, hrHref, tva.e_HowRelated.elementize(), `${tva.e_RelatedMaterial.elementize()} in Box Set List`, "MB011");
+							cg_InvalidHrefValue(hrHref, HowRelated, tva.e_HowRelated.elementize(), `${tva.e_RelatedMaterial.elementize()} in Box Set List`, errs, "MB011");
 					}	
 				}
 			}

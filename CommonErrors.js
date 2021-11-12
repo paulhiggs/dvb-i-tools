@@ -21,14 +21,14 @@ export function NoChildElement(errs, missingElement, parentElement, schemaLocati
 /**
 * Add an error message when the @href contains an invalid value
 *
-* @param {Object} errs    Errors buffer
 * @param {string} value   The invalid value for the href attribute
 * @param {string} src     The element missing the @href
 * @param {string} loc     The location of the element
+* @param {Object} errs    Errors buffer
 * @param {string} errCode The error number to show in the log
 */
-export function cg_InvalidHrefValue(errs, value, src, loc, errCode) {
-	errs.addError({code:errCode, message:`invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`});
+export function cg_InvalidHrefValue(value, element, src, loc, errs,  errCode) {
+	errs.addError({code:errCode, message:`invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`, line:element.line()});
 }
 
 export function sl_InvalidHrefValue(value, element, src, loc, errs, errCode) {
