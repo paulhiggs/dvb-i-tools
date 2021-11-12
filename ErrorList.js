@@ -7,15 +7,17 @@
 
 import { parseXmlString } from "libxmljs2";
 
-export const ERROR='(E)', WARNING='(W)', APPLICATION='(A)';
+export const ERROR='(E)', WARNING='(W)', INFORMATION='(I)', APPLICATION='(A)';
 
 export default class ErrorList {
 
 	constructor() {
 		this.countsErr=[]; this.numCountsE=0;   // keep these counters as arrays constructed by 
 		this.countsWarn=[]; this.numCountsW=0;   // direct insertion do not maintain them
+		this.countsInfo=[]; this.numCountsI=0;   
 		this.errors=[];
 		this.warnings=[];
+		this.informationals=[];
 		this.markupXML=[];
 	}
 	loadDocument(doc) {
@@ -48,7 +50,15 @@ export default class ErrorList {
 		this.countsWarn[key]=value;
 		this.numCountsW++;
 	}
-
+	/* private */ incrementI(key) {
+		if (this.countsInfo[key]===undefined)
+			this.setI(key);
+		else this.countsInfo[key]++;
+	}
+	setI(key,value=1) {
+		this.countsInfo[key]=value;
+		this.numCountsI++;
+	}
 
 	/**
 	 * 
@@ -77,6 +87,10 @@ export default class ErrorList {
 				this.warnings.push(err);
 				if (key) this.incrementW(key);
 				break;
+			case INFORMATION:
+				this.informationals.push(err);
+				if (key) this.incrementI(key);
+				break;
 		}
 	}
 
@@ -85,7 +99,7 @@ export default class ErrorList {
 		if (!e.hasOwnProperty('type')) e.type=ERROR;
 		if (!e.hasOwnProperty('reportInTable')) e.reportInTable=true;
 
-		if (![ERROR, WARNING, APPLICATION].includes(e.type)) {
+		if (![ERROR, WARNING, INFORMATION, APPLICATION].includes(e.type)) {
 			this.errors.push({code:"ERR000", message:`addError() called with invalid type property (${e.type})`});
 			this.increment(_INVALID_CALL);
 			argsOK=false;
@@ -154,7 +168,9 @@ export default class ErrorList {
 	
 	numErrors() { return this.errors.length; }
 	numWarnings() { return this.warnings.length; }
+	numInformationals() { return this.informationals.length; }
 
 	numCountsErr() { return this.numCountsE; }
 	numCountsWarn() { return this.numCountsW; }
+	numCountsInfo() { return this.numCountsI; }
  }

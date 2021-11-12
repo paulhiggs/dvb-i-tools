@@ -1,7 +1,6 @@
-
 import { HTMLize } from './phlib/phlib.js';
 import { ERROR } from './ErrorList.js';
-
+ 
 function PAGE_TOP(label) {
 	const TABLE_STYLE="<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
 	const XML_STYLE="<style>.xmlfont {font-family: Arial, Helvetica, sans-serif; font-size:90%;}</style>";
@@ -57,6 +56,13 @@ function tabulateResults(res, error, errs) {
 		if (errs.numWarnings()>0) {
 			res.write(DETAIL_FORM_HEADER("warnings"));
 			errs.warnings.forEach(tabluateMessage);
+			resultsShown=true;
+			res.write("</table><br/>");
+		}
+
+		if (errs.numInformationals()>0) {
+			res.write(DETAIL_FORM_HEADER("informationals"));
+			errs.informationals.forEach(tabluateMessage);
 			resultsShown=true;
 			res.write("</table><br/>");
 		}
