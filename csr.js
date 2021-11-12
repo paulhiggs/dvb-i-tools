@@ -23,13 +23,8 @@ import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_Format
 import { HTTPPort } from './globals.js';
 import { readmyfile } from './utils.js';
 
-// Extensible multi-core server manager -https://www.npmjs.com/package/cluster
-import { isMaster } from 'cluster';
-import { clu, workers } from 'cluster';
-const fork=clu.fork;
-
-import osu from 'node-os-utils';
-const totalCPUs = osu.cpu.count();
+import { cpus } from 'os';
+const totalCPUs = cpus().length;
 
 import cors from 'cors';
 
@@ -137,53 +132,18 @@ const RELOAD='RELOAD', UPDATE='UPDATE',
 	  INCR_REQUESTS='REQUESTS++', INCR_FAILURES='FAILURES++',
 	  STATS='STATS';
 
-if (isMaster) {
 
 	var metrics={
 		numRequests:0,
 		numFailed:0,
 		reloadRequests:0
 	};
-	
+
 	console.log(`Number of CPUs is ${totalCPUs}`);
 	console.log(`Master ${process.pid} is running`);
 
-	// Fork workers.
-	for (let i=0; i<totalCPUs; i++) {
-		fork();
-	}
-  
-	process.on('exit', (worker, code, signal) => {
-		console.log(`worker ${worker.process.pid} died`);
-		console.log("Let's fork another worker!");
-		fork();
-	});
 
-	process.on('message', (worker, msg, handle) => {
-		if (msg.topic)
-			switch (msg.topic) {
-				case RELOAD: 
-					metrics.reloadRequests++;
-					for (const id in workers) {
-						// Here we notify each worker of the updated value
-						workers[id].send({topic: UPDATE});
-					}
-					break;
-				case INCR_REQUESTS:
-					metrics.numRequests++;
-					break;
-				case INCR_FAILURES:
-					metrics.numFailed++;
-					break;
-				case STATS:
-					console.log(`knownLanguages.length=${knownLanguages.languagesList.length}`);
-					console.log(`knownCountries.length=${knownCountries.count()}`);
-					console.log(`requests=${metrics.numRequests} failed=${metrics.numFailed} reloads=${metrics.reloadRequests}`);
-					console.log(`SLEPR file=${options.file}`);
-					break;
-			}
-	});
-  } else {
+
 	var app=express();
 	app.use(cors());
 
@@ -232,20 +192,30 @@ if (isMaster) {
 		app.options(SLEPR_query_route, manualCORS); 
 
 	app.get(SLEPR_query_route, function(req,res) {
-		process.send({ topic: INCR_REQUESTS });
+		metrics.numRequests++;
 
 		if (!csr.processServiceListRequest(req, res))
-			process.send({ topic: INCR_FAILURES });
+			metrics.numFailed++;
 		res.end();
 	});
 
 	app.get(SLEPR_reload_route, function(req,res) {
-		process.send({ topic: RELOAD });
+		metrics.reloadRequests++;
+		knownCountries.loadCountries(options.urls?{url:ISO3166.url}:{file:ISO3166.filee});
+		knownLanguages.loadLanguages(options.urls?{url:IANA_Subtag_Registry.url}:{file:IANA_Subtag_Registry.file});
+		knownGenres.loadCS(options.urls?
+			{urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
+			{files:[TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file]});		
+		csr.loadDataFiles(options.urls, knownLanguages, knownCountries, knownGenres);
+		csr.loadServiceListRegistry(options.file);
 		res.status(404).end();
 	});
 
 	app.get(SLEPR_stats_route, function(req,res) {
-		process.send({ topic: STATS });
+		console.log(`knownLanguages.length=${knownLanguages.languagesList.length}`);
+		console.log(`knownCountries.length=${knownCountries.count()}`);
+		console.log(`requests=${metrics.numRequests} failed=${metrics.numFailed} reloads=${metrics.reloadRequests}`);
+		console.log(`SLEPR file=${options.file}`);
 		res.status(404).end();
 	});
 	
@@ -253,24 +223,9 @@ if (isMaster) {
 		res.status(404).end();
 	});
 	
-	process.on('message', (msg) => {
-		if (msg.topic)
-			switch (msg.topic) {
-				case UPDATE:
-					knownCountries.loadCountries(options.urls?{url:ISO3166.url}:{file:ISO3166.filee});
-					knownLanguages.loadLanguages(options.urls?{url:IANA_Subtag_Registry.url}:{file:IANA_Subtag_Registry.file});
-					knownGenres.loadCS(options.urls?
-						{urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
-						{files:[TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file]});		
-					csr.loadDataFiles(options.urls, knownLanguages, knownCountries, knownGenres);
-					csr.loadServiceListRegistry(options.file);
-					break;
-			}
-	});
-
 	// start the HTTP server
 	var http_server=app.listen(options.port, function() {
-		console.log(`HTTP listening on port number ${http_server.address().port}, PID=${process.pid}`);
+		console.log(`HTTP listening on port number ${http_server.address().port}`);
 	});
 
 	// start the HTTPS server
@@ -290,4 +245,3 @@ if (isMaster) {
 			console.log(`HTTPS listening on port number ${https_server.address().port}`);
 		});
 	}
- }
