@@ -16,6 +16,9 @@ import { createServer } from 'https';
 import commandLineArgs from 'command-line-args';
 import commandLineUsage from 'command-line-usage';
 
+import cluster from 'cluster';
+import { cpus } from 'os';
+import cors from 'cors';
 import process from "process";
 
 import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from './data-locations.js';
@@ -23,10 +26,7 @@ import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_Format
 import { HTTPPort } from './globals.js';
 import { readmyfile } from './utils.js';
 
-import { cpus } from 'os';
-const totalCPUs = cpus().length;
-
-import cors from 'cors';
+const numCPUs = cpus().length;
 
 // SLEPR == Service List Entry Point Registry
 import SLEPR from './slepr.js';
@@ -132,6 +132,10 @@ const RELOAD='RELOAD', UPDATE='UPDATE',
 	  INCR_REQUESTS='REQUESTS++', INCR_FAILURES='FAILURES++',
 	  STATS='STATS';
 
+if (cluster.isPrimary) {
+	console.log(`Number of CPUs is ${numCPUs}`);
+	console.log(`Primary ${process.pid} is running`);
+
 
 	var metrics={
 		numRequests:0,
@@ -139,14 +143,44 @@ const RELOAD='RELOAD', UPDATE='UPDATE',
 		reloadRequests:0
 	};
 
-	console.log(`Number of CPUs is ${totalCPUs}`);
-	console.log(`Master ${process.pid} is running`);
+	// Fork workers.
+	for (let i = 0; i < numCPUs; i++) {
+		cluster.fork();
+	}
 
-
-
+	cluster.on('exit', (worker, code, signal) => {
+		console.log(`worker ${worker.process.pid} died`);
+		console.log("Let's fork another worker!");
+		cluster.fork();
+	});
+	cluster.on('message', (worker, msg, handle) => {
+		if (msg.topic)
+			switch (msg.topic) {
+				case RELOAD: 
+					metrics.reloadRequests++;
+					for (const id in cluster.workers) {
+						// Here we notify each worker of the updated value
+						cluster.workers[id].send({topic: UPDATE});
+					}
+					break;
+				case INCR_REQUESTS:
+					metrics.numRequests++;
+					break;
+				case INCR_FAILURES:
+					metrics.numFailed++;
+					break;
+				case STATS:
+					console.log(`knownLanguages.length=${knownLanguages.languagesList.length}`);
+					console.log(`knownCountries.length=${knownCountries.count()}`);
+					console.log(`requests=${metrics.numRequests} failed=${metrics.numFailed} reloads=${metrics.reloadRequests}`);
+					console.log(`SLEPR file=${options.file}`);
+					break;
+			}
+	});
+}
+else {
 	var app=express();
 	app.use(cors());
-
 	token('pid', function getPID(req) {
 		return process.pid;
 	});
@@ -162,7 +196,6 @@ const RELOAD='RELOAD', UPDATE='UPDATE',
 	});
 	
 	const SLEPR_query_route='/query', SLEPR_reload_route='/reload', SLEPR_stats_route='/stats';
-
 	let manualCORS=function(res, req, next) {next();};
 	if (options.CORSmode=="library") {
 		app.options("*", cors());
@@ -179,43 +212,26 @@ const RELOAD='RELOAD', UPDATE='UPDATE',
 			next();
 		};
 	}
-
 	var csr=new SLEPR(options.urls);
 	csr.loadServiceListRegistry(options.file, knownLanguages, knownCountries, knownGenres);
-
 	app.use(morgan(':pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr'));
 	app.use(favicon(join('phlib','ph-icon.ico')));
-
 	if (options.CORSmode=="library")
 		app.options(SLEPR_query_route, cors());
 	else if (options.CORSmode=="manual")
 		app.options(SLEPR_query_route, manualCORS); 
-
 	app.get(SLEPR_query_route, function(req,res) {
-		metrics.numRequests++;
-
+		process.send({ topic: INCR_REQUESTS });
 		if (!csr.processServiceListRequest(req, res))
-			metrics.numFailed++;
+			process.send({ topic: INCR_FAILURES });
 		res.end();
 	});
-
 	app.get(SLEPR_reload_route, function(req,res) {
-		metrics.reloadRequests++;
-		knownCountries.loadCountries(options.urls?{url:ISO3166.url}:{file:ISO3166.filee});
-		knownLanguages.loadLanguages(options.urls?{url:IANA_Subtag_Registry.url}:{file:IANA_Subtag_Registry.file});
-		knownGenres.loadCS(options.urls?
-			{urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
-			{files:[TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file]});		
-		csr.loadDataFiles(options.urls, knownLanguages, knownCountries, knownGenres);
-		csr.loadServiceListRegistry(options.file);
+		process.send({ topic: RELOAD });
 		res.status(404).end();
 	});
-
 	app.get(SLEPR_stats_route, function(req,res) {
-		console.log(`knownLanguages.length=${knownLanguages.languagesList.length}`);
-		console.log(`knownCountries.length=${knownCountries.count()}`);
-		console.log(`requests=${metrics.numRequests} failed=${metrics.numFailed} reloads=${metrics.reloadRequests}`);
-		console.log(`SLEPR file=${options.file}`);
+		process.send({ topic: STATS });
 		res.status(404).end();
 	});
 	
@@ -223,25 +239,37 @@ const RELOAD='RELOAD', UPDATE='UPDATE',
 		res.status(404).end();
 	});
 	
+	process.on('message', (msg) => {
+		if (msg.topic)
+			switch (msg.topic) {
+				case UPDATE:
+					knownCountries.loadCountries(options.urls?{url:ISO3166.url}:{file:ISO3166.filee});
+					knownLanguages.loadLanguages(options.urls?{url:IANA_Subtag_Registry.url}:{file:IANA_Subtag_Registry.file});
+					knownGenres.loadCS(options.urls?
+						{urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
+						{files:[TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file]});		
+					csr.loadDataFiles(options.urls, knownLanguages, knownCountries, knownGenres);
+					csr.loadServiceListRegistry(options.file);
+					break;
+			}
+	});
 	// start the HTTP server
 	var http_server=app.listen(options.port, function() {
-		console.log(`HTTP listening on port number ${http_server.address().port}`);
+		console.log(`HTTP listening on port number ${http_server.address().port}, PID=${process.pid}`);
 	});
-
 	// start the HTTPS server
 	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
-
 	var https_options = {
 		key:readmyfile(keyFilename),
 		cert:readmyfile(certFilename)
 	};
-
 	if (https_options.key && https_options.cert) {
 		if (options.sport==options.port)
 			options.sport=options.port+1;
 			
 		var https_server=createServer(https_options, app);
 		https_server.listen(options.sport, function() {
-			console.log(`HTTPS listening on port number ${https_server.address().port}`);
+			console.log(`HTTPS listening on port number ${https_server.address().port}, PID=${process.pid}`);
 		});
 	}
+}
