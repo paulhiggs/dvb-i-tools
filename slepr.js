@@ -186,7 +186,7 @@ export default class SLEPR {
 
 			// Genre(s)
 			if (req.query.Genre) 
-				switch (dataType(Genre)) {
+				switch (dataType(req.query.Genre)) {
 					case 'string':
 						if (!this.knownGenres.isIn(req.query.Genre)) 
 							req.parseErr.push(`invalid ${dvbi.e_Genre} [${req.query.Genre}]`);	

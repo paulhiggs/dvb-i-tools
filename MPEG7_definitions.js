@@ -17,5 +17,12 @@ export const mpeg7 = {
 	TITLE_TYPE_SERIES: "seriesTitle",
 	TITLE_TYPE_EPISOIDE: "episodeTitle",
 
-	DEFAULT_TITLE_TYPE: "main"
+	DEFAULT_TITLE_TYPE: "main",
+
+	a_authority: "authority",
+	a_encoding: "encoding",
+	a_organization: "organization",
+	a_lang: "lang",
+	a_supplemental: "supplemental",
+	a_type: "type",
 };

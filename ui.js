@@ -1,5 +1,5 @@
 import { HTMLize } from './phlib/phlib.js';
-import { ERROR } from './ErrorList.js';
+import { ERROR, WARNING, INFORMATION } from './ErrorList.js';
  
 function PAGE_TOP(label) {
 	const TABLE_STYLE="<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
@@ -69,12 +69,16 @@ function tabulateResults(res, error, errs) {
 
 		if (errs.markupXML.length>0) {
 			res.write("<hr/>EXPERIMENTAL - not all errors are indicated<hr/>");
-			const ERR="errors", WARN="warnings", 
+			const ERR="errors", WARN="warnings", INFO="info",
 				  style=(name,colour) => `<style>.${name} {position:relative; cursor:pointer; color:${colour};} .${name}[title]:hover:after {opacity:1; transition-delay:.1s; }</style>`;
-			res.write(`${style(ERR, "red")}${style(WARN, "blue")}<pre>`);
+			res.write(`${style(ERR, "red")}${style(WARN, "blue")}${style(INFO, "green")}<pre>`);
 			errs.markupXML.forEach(line => {
-				let tip=line.validationErrors?line.validationErrors.map(err=>HTMLize(err)).join('&#10;'):null;
-				let cla=tip?(tip.includes(ERROR)?ERR:WARN):"";
+				let cla="", tip=line.validationErrors?line.validationErrors.map(err=>HTMLize(err)).join('&#10;'):null;
+				if (tip) {
+					if (tip.includes(ERROR)) cla=ERR;
+					else if (tip.includes(WARNING)) cla=WARN;
+					else cla=INFO;
+				}
 				let qualifier=tip?` class="${cla}" title="${tip}"`:"";
 				res.write(`<span${qualifier}>${HTMLize(line.value)}</span><br/>`);
 			});

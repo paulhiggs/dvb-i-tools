@@ -1,8 +1,8 @@
 // schema_checks.js
 
-import { elementize, attribute, quote } from './phlib/phlib.js';
-import { APPLICATION } from "./ErrorList.js";
-import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration } from "./utils.js";
+import { elementize } from './phlib/phlib.js';
+import { APPLICATION, INFORMATION } from "./ErrorList.js";
+import { isIn } from "./utils.js";
 
 /**
  * check that the specified child elements are in the parent element
@@ -10,10 +10,11 @@ import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration } from "./utils.
  * @param {Object} parentElement      the element whose attributes should be checked
  * @param {Array}  requiredAttributes the element names permitted within the parent
  * @param {Array}  optionalAttributes the element names permitted within the parent
+ * @param {Array}  definedAttributes  attributes that defined in the schema, whether requited, optional or profiled out 
  * @param {Class}  errs               errors found in validaton
  * @param {string} errCode            error code to be used in reports,
  */
-export function checkAttributes(parentElement, requiredAttributes, optionalAttributes, errs, errCode) {
+export function checkAttributes(parentElement, requiredAttributes, optionalAttributes, definedAttributes, errs, errCode) {
 	if (!requiredAttributes || !parentElement) {
 		errs.addError({type:APPLICATION, code:"AT000", message:"checkAttributes() called with parentElement==null or requiredAttributes==null"});
 		return;
@@ -22,18 +23,25 @@ export function checkAttributes(parentElement, requiredAttributes, optionalAttri
 	requiredAttributes.forEach(attributeName => {
 		if (!parentElement.attr(attributeName)) {
 			let p=`${(parentElement.parent()?`${parentElement.parent().name()}.`:"")}${parentElement.name()}`;
-			errs.addError({code:errCode, message:`${attributeName.attribute(`${p}`)} is a required attribute`, 
+			errs.addError({code:`${errCode}-1`, message:`${attributeName.attribute(`${p}`)} is a required attribute`, 
 					key:'missing attribute',line:parentElement.line()});
 		}
 	});
 	 
 	parentElement.attrs().forEach(attr => {
-		if (!isIn(requiredAttributes, attr.name()) && !isIn(optionalAttributes, attr.name())) {
+		if (!isIn(requiredAttributes, attr.name()) && !isIn(optionalAttributes, attr.name()) && !isIn(definedAttributes, attr.name())) {
 			let p=`${elementize(`${parentElement.parent()?`${parentElement.parent().name()}.`:""}${parentElement.name()}`)}`;
-			errs.addError({code:errCode, message:`${attr.name().attribute()} is not permitted in ${p}`,
+			errs.addError({code:`${errCode}-2`, message:`${attr.name().attribute()} is not permitted in ${p}`,
 					key:'unexpected attribute', line:parentElement.line()});
 		}
 	});
+
+	definedAttributes.forEach(attribute => {
+		if (!isIn(requiredAttributes, attribute) && !isIn(optionalAttributes, attribute))
+			if (parentElement.attr(attribute))
+				errs.addError({type:INFORMATION, code:`${errCode}-3`, message:`${attribute.attribute()} is profiled out of  ${parentElement.name().elementize()}`,
+						key:'unused attribute', line:parentElement.line()});
+	} );
 }
 
 
@@ -42,8 +50,9 @@ export function checkAttributes(parentElement, requiredAttributes, optionalAttri
  *
  * @param {XMLNode} parentElement         the element whose children should be checked
  * @param {Array}   childElements		  the names of elements and their cardinality
- * @param {boolean} allowOtherElements    flag indicating if other elements, i.e. those defined in the same schema and profiled 
- *                                          out or those defined in other are permitted
+ * @param {Array}   definedChildElements  the names of all child elements of parentElement that are defined in the schema, including
+ *                                          those which are profiled out of DVB-I
+ * @param {boolean} allowOtherElements    flag indicating if other elements, i.e. those defined in the another are permitted
  * @param {Class}   errs                  errors found in validaton
  * @param {string}  errCode               error code to be used for any error found 
  * @returns {boolean} true if no errors are found (all mandatory elements are present and no extra elements are specified)
@@ -51,7 +60,7 @@ export function checkAttributes(parentElement, requiredAttributes, optionalAttri
  * NOTE: elements are described as an object containing "name", "minOccurs", "maxOccurs".
  *   Default values for minOccurs and maxOccurs are 1
  */
-export function checkTopElementsAndCardinality(parentElement, childElements, allowOtherElements, errs, errCode )
+export function checkTopElementsAndCardinality(parentElement, childElements, definedChildElements, allowOtherElements, errs, errCode )
 {
 	function findElementIn(elementList, elementName) {
 		if (elementList instanceof Array)
@@ -94,14 +103,27 @@ export function checkTopElementsAndCardinality(parentElement, childElements, all
 	});
  
 	// check that no additional child elements existance if the "Other Child Elements are OK" flag is not set
-	if (!allowOtherElements) {
-		let children=parentElement.childNodes();
-		if (children) children.forEachSubElement(child => {
-			if (!findElementIn(childElements, child.name())) {	
-				errs.addError({code:`${errCode}-3`, line:child.line(),
-								message:`Element ${child.name().elementize()} is not permitted in ${thisElem}`});
+	let children=parentElement.childNodes();
+	if (children) {
+
+		// create a set of child elements that are in the schema but not in DVB-I
+		let excludedChildren=[];
+		definedChildElements.forEach(child => {
+			if (!findElementIn(childElements, child))
+			excludedChildren.push(child);
+		});
+		
+		children.forEachSubElement(child => {
+		let childName=child.name();
+		if (!findElementIn(childElements, childName)) {	
+			if (isIn(excludedChildren, child.name()))
+				errs.addError({type:INFORMATION, code:`${errCode}-10`, message:`Element ${childName.elementize()} is not included in DVB-I`});
+			else if (!allowOtherElements) {
+				errs.addError({code:`${errCode}-11`, line:child.line(),
+							message:`Element ${child.name().elementize()} is not permitted in ${thisElem}`});
 				rv=false;
 			}
+		}
 		});
 	}
 	return rv;

@@ -1,7 +1,7 @@
 // RelatedMaterialChecks.js
 
 import { dvbi } from "./DVB-I_definitions.js";
-import { tva } from "./TVA_definitions.js";
+import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
 
 import { APPLICATION } from "./ErrorList.js";
 
@@ -45,7 +45,7 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, location) {
 		return;
 	}
 
-	checkAttributes(HowRelated, [tva.a_href], [], errs, "PS002");
+	checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "PS002");
 	if (HowRelated.attr(tva.a_href)) {
 		if (HowRelated.attr(tva.a_href).value()!=dvbi.PROMOTIONAL_STILL_IMAGE_URI) 
 			errs.addError({code:"PS010", message:`${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} does not designate a Promotional Still Image`,
@@ -55,6 +55,7 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, location) {
 			if (Format) {
 				checkTopElementsAndCardinality(Format, 
 					[{name:tva.e_StillPictureFormat}],
+					tvaEC.Format, 
 					false, errs, "PS023");
 				
 				let subElems=Format.childNodes();
@@ -62,7 +63,7 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, location) {
 					if (child.name()==tva.e_StillPictureFormat) {
 						StillPictureFormat=child;
 
-						checkAttributes(child, [tva.a_horizontalSize, tva.a_verticalSize, tva.a_href], [], errs, "PS021");
+						checkAttributes(child, [tva.a_horizontalSize, tva.a_verticalSize, tva.a_href], [], tvaEA.SillPictureFormat, errs, "PS021");
 						
 						if (child.attr(tva.a_href)) {
 							let href=child.attr(tva.a_href).value();
@@ -87,7 +88,7 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, location) {
 					if (subElems) subElems.forEachSubElement(child => {
 						if (child.name()==tva.e_MediaUri) {
 							hasMediaURI=true;
-							checkAttributes(child, [tva.a_contentType], [], errs, "PS031");
+							checkAttributes(child, [tva.a_contentType], [], tvaEA.MediaUri, errs, "PS031");
 							if (child.attr(tva.a_contentType)) {
 								let contentType=child.attr(tva.a_contentType).value();
 								if (!isJPEGmime(contentType) && !isPNGmime(contentType)) 
