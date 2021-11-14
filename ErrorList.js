@@ -136,32 +136,37 @@ export default class ErrorList {
 			e.fragments.forEach(fragment => {
 				let newError={code:e.code, message:e.message};
 				newError.element=(typeof(fragment)=="string" || fragment instanceof String)?fragment:this.prettyPrint(fragment);
-
+				
+				if (typeof(fragment)!="string") {
+					this.setError(e.type, e.code, e.message, fragment.line()-2);
+					newError.line=fragment.line()-2;
+				}
 				if (e.reportInTable)
 					this.insertErrorData(e.type, e.key, newError);
-				if (typeof(fragment)!="string")
-					this.setError(e.type, e.code, e.message, fragment.line()-2);
 			});
 		} 
 		else if (e.fragment) {
 			let newError={code:e.code, message:e.message, 
 				element:((typeof(e.fragment)=="string" || e.fragment instanceof String)?e.fragment:this.prettyPrint(e.fragment))};
 
-			if (e.reportInTable)
-				this.insertErrorData(e.type, e.key, newError);
-
 			if (!e.line && typeof(e.fragment)!="string")
 				e.line=e.fragment.line()-1;
-			if (e.line)
+			if (e.line) {
 				this.setError(e.type, e.code, e.message, e.line-1);
+				newError.line=e.line-1;
+			}
+			if (e.reportInTable)
+				this.insertErrorData(e.type, e.key, newError);
 		} 
 		else {
 			let newError={code:e.code, message:e.message, element:null};
-
+			if (e.line) {
+				this.setError(e.type, e.code, e.message, e.line-2);
+				newError.line=e.line-2;
+			}
 			if (e.reportInTable)
 				this.insertErrorData(e.type, e.key, newError);
-			if (e.line)
-				this.setError(e.type, e.code, e.message, e.line-2);
+
 		}
 
 	}

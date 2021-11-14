@@ -21,12 +21,14 @@ function tabulateResults(res, error, errs) {
 
 	const RESULT_WITH_INSTRUCTION="<br><p><i>Results:</i></p>";
 	const SUMMARY_FORM_HEADER="<table><tr><th>item</th><th>count</th></tr>";
+	const Dodger_Blue="#1E90FF", link_css="jump";
 	
 	function DETAIL_FORM_HEADER(mode) { return `<table><tr><th>code</th><th>${mode}</th></tr>`; }
 
 	function tabluateMessage(value) {
 		res.write('<tr>');
-		res.write(`<td>${value.code?HTMLize(value.code):""}</td>`);
+		let anchor=value.hasOwnProperty('line')?`line-${value.line}`:null;
+		res.write(`<td>${anchor?`<a class="${link_css}" href="#${anchor}">`:""}${value.code?HTMLize(value.code):""}${anchor?"</a>":""}</td>`);
 		res.write(`<td>${value.message?HTMLize(value.message):""}`);
 		res.write(`${value.element?`<br/><span class=\"xmlfont\"><pre>${HTMLize(value.element)}</pre></span>`:""}</td>`);
 		res.write('</tr>');
@@ -37,6 +39,7 @@ function tabulateResults(res, error, errs) {
 		res.write(`<p>${error}</p>`);
 	let resultsShown=false;
 	if (errs) {
+		res.write(`<style>a.${link_css} {} a.${link_css}:link {color: ${Dodger_Blue}; text-decoration: none;} a.${link_css}:hover {text-decoration:underline; text-decoration-style: dashed} a.${link_css}:visited {color: ${Dodger_Blue};}</style>`);
 
 		if (errs.numCountsErr()>0 || errs.numCountsWarn()>0 ) {		
 			res.write(SUMMARY_FORM_HEADER);
@@ -80,7 +83,7 @@ function tabulateResults(res, error, errs) {
 					else cla=INFO;
 				}
 				let qualifier=tip?` class="${cla}" title="${tip}"`:"";
-				res.write(`<span${qualifier}>${HTMLize(line.value)}</span><br/>`);
+				res.write(`<span id="line-${line.ix}"${qualifier}>${HTMLize(line.value)}</span><br/>`);
 			});
 			res.write("</pre><hr/>");
 		} 

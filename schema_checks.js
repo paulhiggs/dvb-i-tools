@@ -117,7 +117,7 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 		let childName=child.name();
 		if (!findElementIn(childElements, childName)) {	
 			if (isIn(excludedChildren, child.name()))
-				errs.addError({type:INFORMATION, code:`${errCode}-10`, message:`Element ${childName.elementize()} in ${thisElem} is not included in DVB-I`});
+				errs.addError({type:INFORMATION, code:`${errCode}-10`, message:`Element ${childName.elementize()} in ${thisElem} is not included in DVB-I`, line:child.line()});
 			else if (!allowOtherElements) {
 				errs.addError({code:`${errCode}-11`, line:child.line(),
 							message:`Element ${child.name().elementize()} is not permitted in ${thisElem}`});
