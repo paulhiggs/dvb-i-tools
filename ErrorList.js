@@ -127,7 +127,7 @@ export default class ErrorList {
 			 * only reported once in the error list
 			 */
 			this.insertErrorData(e.type, e.key, {code:e.code, message:e.message});
-			e.multiElementFragments.forEach(fragment => {
+			e.multiElementError.forEach(fragment => {
 				if (typeof(fragment)!="string")
 					this.setError(e.type, e.code, e.message, fragment.line()-2);
 			});
