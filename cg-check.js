@@ -1716,6 +1716,7 @@ export default class ContentGuideCheck {
 			[{name:tva.e_AudioAttributes, minOccurs:0, maxOccurs:Infinity},
 			 {name:tva.e_VideoAttributes, minOccurs:0, maxOccurs:Infinity},
 			 {name:tva.e_CaptioningAttributes, minOccurs:0, maxOccurs:Infinity}],
+			tvaEC.AVAttributes,
 			false, errs, "AV001");
 
 		// <AudioAttributes>
@@ -1771,7 +1772,7 @@ export default class ContentGuideCheck {
 				[{name:tva.e_HorizontalSize, minOccurs:0},
 				 {name:tva.e_VerticalSize, minOccurs:0},
 				 {name:tva.e_AspectRatio, minOccurs:0}],
-				tvaEC.VideoAttribites,
+				tvaEC.VideoAttributes,
 				false, errs, "AV030");
 		}
 
@@ -1835,7 +1836,7 @@ export default class ContentGuideCheck {
 			if (!checkTopElementsAndCardinality(MediaLocator,
 					[{name:tva.e_MediaUri},
 					 {name:tva.e_AuxiliaryURI}], 
-					tvaEC.Medialocator,
+					tvaEC.MediaLocator,
 					true, errs, "RR003"))
 				isRestart=false;
 		
@@ -2538,7 +2539,7 @@ export default class ContentGuideCheck {
 				break;
 			case CG_REQUEST_BS_CATEGORIES:
 				// box set categories response (6.8.2.3) has <GroupInformationTable> element
-				checkTopElementsAndCardinality(ProgramDescription, [{name:tva.e_GroupInformationTable}], false, errs, "CG061"); 
+				checkTopElementsAndCardinality(ProgramDescription, [{name:tva.e_GroupInformationTable}], tvaEC.ProgramDescription, false, errs, "CG061"); 
 
 				this.CheckGroupInformation(CG_SCHEMA, SCHEMA_PREFIX, ProgramDescription, requestType, null, errs, null);
 				break;
