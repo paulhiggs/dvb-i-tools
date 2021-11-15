@@ -1900,13 +1900,7 @@ export default class ContentGuideCheck {
 				errs.addError({type:APPLICATION, code:"ID003", message:`message:ValidateInstanceDescription() called with VerifyType=${VerifyType}`});
 		}
 
-		let restartGenre=null, restartRelatedMaterial=null; 
-		
-		// TODO: <Title> is permitted by TV-Anytime but not included in the DVB-I profile for an InstanceDescription - check its validity anyway
-		this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, InstanceDescription, true, errs, "ID004", false);
-
-		// TODO: <Synopis> is permitted by TV-Anytime but not included in the DVB-I profile for an InstanceDescription- check its validity anyway
-		
+		let restartGenre=null, restartRelatedMaterial=null; 	
 		// <Genre>
 		switch (VerifyType) {
 			case tva.e_OnDemandProgram:
@@ -1949,8 +1943,6 @@ export default class ContentGuideCheck {
 				break;
 		}
 
-		// TODO: <PurchaseList is permitted by TV-Anytime but not included in the DVB-I profile for an InstanceDescription- check its validity anyway
-		
 		// <CaptionLanguage>
 		let CaptionLanguage=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_CaptionLanguage), CG_SCHEMA);
 		if (CaptionLanguage) {
@@ -1968,8 +1960,6 @@ export default class ContentGuideCheck {
 				errs.addError({code:"ID033", message:`invalid ${tva.e_SignLanguage.elementize()} ${SignLanguage.text().quote()} in ${InstanceDescription.name().elementize()}`,
 					fragment:SignLanguage});
 		}
-
-		// TODO: <ParentalGuidance> is permitted by TV-Anytime but not included in the DVB-I profile for an InstanceDescription- check its validity anyway
 
 		// <AVAttributes>
 		let AVAttributes=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_AVAttributes), CG_SCHEMA);
