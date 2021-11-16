@@ -675,13 +675,6 @@ export default class ContentGuideCheck {
 	 */
 	/* private */  ValidatePagination(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, Location) {
 		
-		function checkLinkCount(errs, count, label, errCode) {
-			if (count>1) {
-				errs.addError({code:errCode, message:`more than 1 ${quote(`${label} pagination`)} link is specified`});
-				return true;
-			}
-			return false;
-		}
 		function checkLinkCounts(errs, elements, label, errCode) {
 			if (elements.length>1) {
 				errs.addError({code:errCode, message:`more than 1 ${quote(`${label} pagination`)} link is specified`, multiElementError:elements});
@@ -694,7 +687,7 @@ export default class ContentGuideCheck {
 			errs.addError({type:APPLICATION, code:"VP000", message:"ValidatePagination() called with BasicDescription==null"});
 			return;
 		}
-		let countPaginationFirst=[], countPaginationPrev=[], countPaginationNext=0, countPaginationLast=[];
+		let countPaginationFirst=[], countPaginationPrev=[], countPaginationNext=[], countPaginationLast=[];
 		let rm=0, RelatedMaterial;
 		while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) {
 			let HowRelated=RelatedMaterial.get(xPath(SCHEMA_PREFIX, tva.e_HowRelated), CG_SCHEMA);
@@ -731,13 +724,13 @@ export default class ContentGuideCheck {
 
 		let linkCountErrs=false;
 		if (checkLinkCounts(errs, countPaginationFirst, "first", "VP011")) linkCountErrs=true;
-		if (checkLinkCounts(errs, countPaginationPrev, "previous", "	VP012")) linkCountErrs=true;
+		if (checkLinkCounts(errs, countPaginationPrev, "previous", "VP012")) linkCountErrs=true;
 		if (checkLinkCounts(errs, countPaginationNext, "next", "VP013")) linkCountErrs=true;
 		if (checkLinkCounts(errs, countPaginationLast, "last", "VP014")) linkCountErrs=true;
 
 		if (!linkCountErrs) {
 			let numPaginations=countPaginationFirst.length + countPaginationPrev.length + countPaginationNext.length + countPaginationLast.length;
-			if (numPaginations!=0 && numPaginations!=2 && numPaginations!=4)
+			if (numPaginations!=0 && numPaginations!=2 && numPaginations!=4) 
 				errs.addError({code:"VP020", message:`only 0, 2 or 4 paginations links may be signalled in ${tva.e_RelatedMaterial.elementize()} elements for ${Location}`,
 					multiElementError:countPaginationFirst.concat(countPaginationPrev).concat(countPaginationNext).concat(countPaginationLast)});
 			else if (numPaginations==2) {
