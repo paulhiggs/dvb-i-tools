@@ -2,7 +2,7 @@
 
 import {e_IPv6Address, e_IPv4Address, 
 		isDVBLocator, isPostcode, isWildcardPostcode, validExtensionName, validFrameRate, isISODuration,
-	    isURL, isURN, isHTTPURL} from '../pattern_checks.js';
+	    isURL, isURN, isHTTPURL, validZuluTimeType} from '../pattern_checks.js';
 
 const ConsoleColours={
 		Reset: "\x1b[0m",
@@ -153,12 +153,21 @@ const tests0=[
 	{item:"dur-08", fn:isISODuration, evaluate:"P+3Y6M4DT12H30M5S", expect:true},
 	{item:"dur-09", fn:isISODuration, evaluate:"P-3Y6M4DT12H30M5S", expect:true},
 
-	{item:"dur-31", fn:isISODuration, evaluate:"P3MT", expect:false},
-
-	
+	{item:"dur-30", fn:isISODuration, evaluate:"P3MT", expect:false},
 	{item:"dur-31", fn:isISODuration, evaluate:"PT", expect:false},
 	{item:"dur-32", fn:isISODuration, evaluate:"P", expect:false},
 	{item:"dur-33", fn:isISODuration, evaluate:"P3MT", expect:false},
+
+	
+	{item:"ztime-01", fn:validZuluTimeType, evaluate:"09:30Z", expect:false},  // seconds are required in DVB-I
+	{item:"ztime-02", fn:validZuluTimeType, evaluate:"14:55:15Z", expect:true},
+	{item:"ztime-03", fn:validZuluTimeType, evaluate:"14:55:15.124Z", expect:true},
+
+	{item:"ztime-51", fn:validZuluTimeType, evaluate:"24:00:00Z", expect:false},
+	{item:"ztime-52", fn:validZuluTimeType, evaluate:"09:30-05:00", expect:false},
+	{item:"ztime-53", fn:validZuluTimeType, evaluate:"09:30+08:30", expect:false},
+	{item:"ztime-54", fn:validZuluTimeType, evaluate:"09:30+12", expect:false},
+
 
 ];
 
