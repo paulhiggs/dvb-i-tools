@@ -1304,10 +1304,9 @@ export default class ServiceListCheck {
 			return;
 		}
 
-		let SL=null, prettyXML=format(SLtext.replace(/(\n\t)/gm,"\n"), {collapseContent:true, lineSeparator:'\n'});
-		
+		let SL=null;
 		try {
-			SL=parseXmlString(prettyXML);
+			SL=parseXmlString(SLtext);
 		} catch (err) {
 			errs.addError({code:"SL001", message:`XML parsing failed: ${err.message}`, key:"malformed XML"});
 			return;
@@ -1322,6 +1321,8 @@ export default class ServiceListCheck {
 			return;
 		}
 
+		let prettyXML=format(SLtext.replace(/(\n\t)/gm,"\n"), {collapseContent:true, lineSeparator:'\n'});
+		SL=parseXmlString(prettyXML);
 		errs.loadDocument(prettyXML);
 
 		if (SL.root().name() !== dvbi.e_ServiceList) {

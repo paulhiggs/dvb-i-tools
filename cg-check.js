@@ -2420,10 +2420,9 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		let CG=null, prettyXML=format(CGtext.replace(/(\n\t)/gm,"\n"), {collapseContent:true, lineSeparator:'\n'});
-
+		let CG=null;
 		try {
-			CG=parseXmlString(prettyXML);
+			CG=parseXmlString(CGtext);
 		} catch (err) {
 			errs.addError({type:APPLICATION, code:"CG001", message:`XML parsing failed: ${err.message}`});
 			return;
@@ -2433,6 +2432,8 @@ export default class ContentGuideCheck {
 			return;
 		}
 
+		let prettyXML=format(CGtext.replace(/(\n\t)/gm,"\n"), {collapseContent:true, lineSeparator:'\n'});
+		CG=parseXmlString(prettyXML);
 		errs.loadDocument(prettyXML);
 
 		if (CG.root().name()!=tva.e_TVAMain) {

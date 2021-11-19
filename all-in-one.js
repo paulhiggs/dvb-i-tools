@@ -246,7 +246,6 @@ if (!["none", "library", "manual"].includes(options.CORSmode)) {
 if (options.urls && (options.CSRfile==Default_SLEPR.file))
 	options.CSRfile=Default_SLEPR.url;
 
-
 let knownLanguages=new IANAlanguages();
 knownLanguages.loadLanguages(options.urls?{url:IANA_Subtag_Registry.url}:{file:IANA_Subtag_Registry.file});
 
