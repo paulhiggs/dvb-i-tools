@@ -118,8 +118,6 @@ function processSLFile(req, res) {
 
 
 
-
-
 /**
  * Process the content guide specificed for errors and display them
  *
@@ -134,7 +132,7 @@ function processSLFile(req, res) {
 	else if (req && req.query && req.query.CGurl) {
 		fetch(req.query.CGurl)
 			.then(handleErrors)
-			.then(function (response) {return response.text();})
+			.then(function (response) {return response?response.text():null;})
 			.then(function (res) {return cgcheck.validateContentGuide(res, req.body.requestType);})
 			.then(function (errs) {return drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, null, errs);})
 			.then(function (res) {res.end();})

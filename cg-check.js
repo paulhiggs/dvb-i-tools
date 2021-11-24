@@ -27,7 +27,7 @@ import { ValidatePromotionalStillImage } from "./RelatedMaterialChecks.js";
 import { cg_InvalidHrefValue, NoChildElement } from "./CommonErrors.js";
 import { checkAttributes, checkTopElementsAndCardinality} from "./schema_checks.js";
 
-import { checkLanguage, GetNodeLanguage } from "./MultilingualElement.js";
+import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./MultilingualElement.js";
 
 // convenience/readability values
 const DEFAULT_LANGUAGE="***";
@@ -477,50 +477,50 @@ export default class ContentGuideCheck {
 		}
 
 		let countParentalGuidance=0, countExplanatoryText=[];
-		function checkPGchild(pgChild, index, array) {
-			switch (pgChild.name()) {
-				case tva.e_MinimumAge:
-					if (countParentalGuidance!=1)
-						errs.addError({code:`${errCode}-1`, 
-									message:`${tva.e_MinimumAge.elementize()} must be in the first ${tva.e_ParentalGuidance.elementize()} element`, fragment:pgChild});
 
-					break;
-				case tva.e_ParentalRating:
-					if (countParentalGuidance==1)
-						errs.addError({code:`${errCode}-2`, 
-										message:`first ${tva.e_ParentalGuidance.elementize()} element must contain ${elementize("mpeg7:"+tva.e_MinimumAge)}`, fragment:pgChild});
-					
-					
-					checkAttributes(pgChild, [tva.a_href], [], tvaEA.ParentalRating, errs, `${errCode}-3`);
-					break;		
-				case tva.e_ExplanatoryText:
-					countExplanatoryText.push(pgChild);
-					checkAttributes(pgChild, [tva.a_length], [tva.a_lang], tvaEA.ExplanatoryText, errs, `${errCode}-4`);
-					if (pgChild.attr(tva.a_length)) {
-						if (pgChild.attr(tva.a_length).value()!=tva.v_lengthLong)
-							errs.addError({code:`${errCode}-5`, 
-											message:`${tva.a_length.attribute()}=${pgChild.attr(tva.a_length).value().quote()} is not allowed for ${tva.e_ExplanatoryText.elementize()}`,
-											fragment:pgChild});
-					}
-					
-					if (unEntity(pgChild.text()).length > dvbi.MAX_EXPLANATORY_TEXT_LENGTH)
-						errs.addError({code:`${errCode}-6`, 
-										message:`length of ${tva._ExplanatoryText.elementize()} cannot exceed ${dvbi.MAX_EXPLANATORY_TEXT_LENGTH} characters`,
-										fragment:pgChild});
-					break;
-			}
-		}
 		let pg=0, ParentalGuidance;
 		while ((ParentalGuidance=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_ParentalGuidance, ++pg), CG_SCHEMA))!=null) {
 			countParentalGuidance++;
 			countExplanatoryText=[];
+/* jshint -W083 */
+			if (ParentalGuidance.childNodes()) 
+				ParentalGuidance.childNodes().forEachSubElement( pgChild => {
+					switch (pgChild.name()) {
+						case tva.e_MinimumAge:
+							if (countParentalGuidance!=1)
+								errs.addError({code:`${errCode}-1`, 
+											message:`${tva.e_MinimumAge.elementize()} must be in the first ${tva.e_ParentalGuidance.elementize()} element`, fragment:pgChild});
 
-			if (ParentalGuidance.childNodes()) ParentalGuidance.childNodes().forEachSubElement(checkPGchild);
+							break;
+						case tva.e_ParentalRating:
+							if (countParentalGuidance==1)
+								errs.addError({code:`${errCode}-2`, 
+												message:`first ${tva.e_ParentalGuidance.elementize()} element must contain ${elementize("mpeg7:"+tva.e_MinimumAge)}`, fragment:pgChild});
+							
+							
+							checkAttributes(pgChild, [tva.a_href], [], tvaEA.ParentalRating, errs, `${errCode}-3`);
+							break;		
+						case tva.e_ExplanatoryText:
+							
+							checkAttributes(pgChild, [tva.a_length], [tva.a_lang], tvaEA.ExplanatoryText, errs, `${errCode}-4`);
+							if (pgChild.attr(tva.a_length)) {
+								if (pgChild.attr(tva.a_length).value()!=tva.v_lengthLong)
+									errs.addError({code:`${errCode}-5`, 
+													message:`${tva.a_length.attribute()}=${pgChild.attr(tva.a_length).value().quote()} is not allowed for ${tva.e_ExplanatoryText.elementize()}`,
+													fragment:pgChild});
+							}
+							
+							if (unEntity(pgChild.text()).length > dvbi.MAX_EXPLANATORY_TEXT_LENGTH)
+								errs.addError({code:`${errCode}-6`, 
+												message:`length of ${tva._ExplanatoryText.elementize()} cannot exceed ${dvbi.MAX_EXPLANATORY_TEXT_LENGTH} characters`,
+												fragment:pgChild});
 
-			if (countExplanatoryText.length > 1)
-				errs.addError({code:`${errCode}-7`, 
-					message:`only a single ${tva.e_ExplanatoryText.elementize()} element is premitted in ${tva.e_ParentalGuidance.elementize()}`, 
-					multiElementError:countExplanatoryText});
+							countExplanatoryText.push(pgChild);
+							break;
+					}
+				});
+/* jshint +W083 */
+			checkXMLLangs(CG_SCHEMA, SCHEMA_PREFIX, tva.e_ExplanatoryText, `${BasicDescription.name()}.${tva.e_ParentalGuidance}`, ParentalGuidance, errs, `${errCode}-8`, this.knownLanguages);
 		}
 	}
 
@@ -2000,7 +2000,8 @@ export default class ContentGuideCheck {
 					errs.addError({code:"ID062", message:`restart ${tva.e_RelatedMaterial.elementize()} is only permitted for the current ("now") program`, fragment:restartRelatedMaterial});
 				
 				if ((restartGenre && !restartRelatedMaterial) || (restartRelatedMaterial && !restartGenre))
-					errs.addError({code:"ID063", message:`both ${tva.e_Genre.elementize()} and ${tva.e_RelatedMaterial.elementize()} are required together for ${VerifyType}`});	
+					errs.addError({code:"ID063", message:`both ${tva.e_Genre.elementize()} and ${tva.e_RelatedMaterial.elementize()} are required together for ${VerifyType}`, 
+									fragments:[restartGenre, restartRelatedMaterial]});	
 				break;
 		}
 	}

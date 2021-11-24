@@ -128,21 +128,23 @@ export default class ErrorList {
 			 */
 			this.insertErrorData(e.type, e.key, {code:e.code, message:e.message});
 			e.multiElementError.forEach(fragment => {
-				if (typeof(fragment)!="string")
+				if (fragment && typeof(fragment)!="string")
 					this.setError(e.type, e.code, e.message, fragment.line()-2);
 			});
 		}
 		else if (e.fragments) {
 			e.fragments.forEach(fragment => {
 				let newError={code:e.code, message:e.message};
-				newError.element=(typeof(fragment)=="string" || fragment instanceof String)?fragment:this.prettyPrint(fragment);
-				
-				if (typeof(fragment)!="string") {
-					this.setError(e.type, e.code, e.message, fragment.line()-2);
-					newError.line=fragment.line()-2;
-				}
-				if (e.reportInTable)
-					this.insertErrorData(e.type, e.key, newError);
+				if (fragment) {
+					newError.element=(typeof(fragment)=="string" || fragment instanceof String)?fragment:this.prettyPrint(fragment);
+					
+					if (typeof(fragment)!="string") {
+						this.setError(e.type, e.code, e.message, fragment.line()-2);
+						newError.line=fragment.line()-2;
+					}
+					if (e.reportInTable)
+						this.insertErrorData(e.type, e.key, newError);
+				}	
 			});
 		} 
 		else if (e.fragment) {
