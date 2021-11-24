@@ -119,11 +119,9 @@ export function GetNodeLanguage(node, isRequired, errs, errCode, validator=null)
 	if (isRequired && !node.attr(tva.a_lang))
 		errs.addError({code:errCode, message:`${tva.a_lang.attribute()} is required for ${node.name().quote()}`, key:"unspecified language", line:node.line()});
 
-	if (!node.attr(tva.a_lang))
-		return ancestorLanguage(node.parent());
-	
-	let localLang=node.attr(tva.a_lang).value();
-	if (validator)
+	let localLang=node.attr(tva.a_lang)?node.attr(tva.a_lang).value():ancestorLanguage(node.parent());
+
+	if (validator && localLang!=NO_DOCUMENT_LANGUAGE)
 		checkLanguage(validator, localLang, node.name(), node, errs, errCode);
 	return localLang;
 }
