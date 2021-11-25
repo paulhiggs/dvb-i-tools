@@ -1998,30 +1998,7 @@ export default class ContentGuideCheck {
 		
 		if ((restartGenre && !restartRelatedMaterial) || (restartRelatedMaterial && !restartGenre))
 			errs.addError({code:"ID063", message:`both ${tva.e_Genre.elementize()} and ${tva.e_RelatedMaterial.elementize()} are required together for ${VerifyType}`, 
-							fragments:[restartGenre, restartRelatedMaterial]});	
-
-/*
-		switch (VerifyType) {
-			case tva.e_OnDemandProgram:
-				let RelatedMaterial=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial), CG_SCHEMA);
-				if (RelatedMaterial) {
-					if (this.ValidateRestartRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, errs))
-						restartRelatedMaterial=RelatedMaterial; 		
-				}
-				break;
-			case tva.e_ScheduleEvent:
-				// Genre and RelatedMaterial for restart capability should only be specified for the "current" (ie. 'now') program
-				if (!isCurrentProgram && restartGenre )
-					errs.addError({code:"ID061", message:`restart ${tva.e_Genre.elementize()} is only permitted for the current ("now") program`, fragment:restartGenre});
-				if (!isCurrentProgram && restartRelatedMaterial)
-					errs.addError({code:"ID062", message:`restart ${tva.e_RelatedMaterial.elementize()} is only permitted for the current ("now") program`, fragment:restartRelatedMaterial});
-				
-				if ((restartGenre && !restartRelatedMaterial) || (restartRelatedMaterial && !restartGenre))
-					errs.addError({code:"ID063", message:`both ${tva.e_Genre.elementize()} and ${tva.e_RelatedMaterial.elementize()} are required together for ${VerifyType}`, 
-									fragments:[restartGenre, restartRelatedMaterial]});	
-				break;
-		}
-	*/
+								multiElementError:[restartGenre, restartRelatedMaterial]});	
 	}
 
 
@@ -2136,7 +2113,7 @@ export default class ContentGuideCheck {
 				validRequest=false;
 		}
 			
-		checkAttributes(OnDemandProgram, [], [tva.a_serviceIDRef, tva.a_lang], tvaEA.OnDemandProgram, errs, "OD005"); 
+		checkAttributes(OnDemandProgram, [tva.a_serviceIDRef], [tva.a_lang], tvaEA.OnDemandProgram, errs, "OD005"); 
 		GetNodeLanguage(OnDemandProgram, false, errs, "OD006", this.knownLanguages);
 		this.checkTAGUri(OnDemandProgram, errs, "OD007");	
 		
@@ -2170,7 +2147,7 @@ export default class ContentGuideCheck {
 
 		// <InstanceDescription>
 		let id=0, InstanceDescription;
-		if (validRequest && [CG_REQUEST_BS_CONTENTS, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType))
+		if (validRequest && [CG_REQUEST_BS_CONTENTS, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType))
 			while ((InstanceDescription=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_InstanceDescription, ++id), CG_SCHEMA))!=null)
 				this.ValidateInstanceDescription(CG_SCHEMA, SCHEMA_PREFIX, OnDemandProgram.name(), InstanceDescription, false, errs);
 		
