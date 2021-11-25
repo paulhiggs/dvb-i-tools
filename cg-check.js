@@ -1984,6 +1984,23 @@ export default class ContentGuideCheck {
 		}
 		
 		// <RelatedMaterial>
+		let RelatedMaterial=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial), CG_SCHEMA);
+		if (RelatedMaterial) {
+			if (this.ValidateRestartRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, errs))
+				restartRelatedMaterial=RelatedMaterial; 		
+		}
+
+		// Genre and RelatedMaterial for restart capability should only be specified for the "current" (ie. 'now') program
+		if (!isCurrentProgram && restartGenre )
+			errs.addError({code:"ID061", message:`restart ${tva.e_Genre.elementize()} is only permitted for the current ("now") program`, fragment:restartGenre});
+		if (!isCurrentProgram && restartRelatedMaterial)
+			errs.addError({code:"ID062", message:`restart ${tva.e_RelatedMaterial.elementize()} is only permitted for the current ("now") program`, fragment:restartRelatedMaterial});
+		
+		if ((restartGenre && !restartRelatedMaterial) || (restartRelatedMaterial && !restartGenre))
+			errs.addError({code:"ID063", message:`both ${tva.e_Genre.elementize()} and ${tva.e_RelatedMaterial.elementize()} are required together for ${VerifyType}`, 
+							fragments:[restartGenre, restartRelatedMaterial]});	
+
+/*
 		switch (VerifyType) {
 			case tva.e_OnDemandProgram:
 				let RelatedMaterial=InstanceDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial), CG_SCHEMA);
@@ -2004,6 +2021,7 @@ export default class ContentGuideCheck {
 									fragments:[restartGenre, restartRelatedMaterial]});	
 				break;
 		}
+	*/
 	}
 
 
