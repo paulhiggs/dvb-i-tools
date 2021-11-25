@@ -2118,8 +2118,8 @@ export default class ContentGuideCheck {
 		this.checkTAGUri(OnDemandProgram, errs, "OD007");	
 		
 		// <Program>
-		let prog=0, Program;
-		while ((Program=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_Program, ++prog), CG_SCHEMA))!=null) {
+		let Program=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_Program, CG_SCHEMA));
+		if (Program) {
 			checkAttributes(Program, [tva.a_crid], [], tvaEA.Program, errs, "OD012");
 			if (Program.attr(tva.a_crid)) {
 				let programCRID=Program.attr(tva.a_crid).value();
@@ -2136,21 +2136,21 @@ export default class ContentGuideCheck {
 		}
 
 		// <ProgramURL>
-		let pUrl=0, ProgramURL;
-		while ((ProgramURL=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_ProgramURL, ++pUrl), CG_SCHEMA))!=null) 
+		let ProgramURL=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_ProgramURL), CG_SCHEMA);
+		if (ProgramURL)
 			this.CheckPlayerApplication(ProgramURL, [dvbi.XML_AIT_CONTENT_TYPE], errs, "OD020");
 
 		// <AuxiliaryURL>
-		let aux=0, AuxiliaryURL;
-		while ((AuxiliaryURL=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_AuxiliaryURL, ++aux), CG_SCHEMA))!=null) 
+		let AuxiliaryURL=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_AuxiliaryURL), CG_SCHEMA);
+		if (AuxiliaryURL)
 			this.CheckPlayerApplication(AuxiliaryURL, [dvbi.XML_AIT_CONTENT_TYPE /*, dvbi.HTML5_APP, dvbi.XHTML_APP, dvbi.iOS_APP, dvbi.ANDROID_APP*/], errs, "OD030");
 
 		// <InstanceDescription>
-		let id=0, InstanceDescription;
-		if (validRequest && [CG_REQUEST_BS_CONTENTS, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType))
-			while ((InstanceDescription=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_InstanceDescription, ++id), CG_SCHEMA))!=null)
+		if (validRequest && [CG_REQUEST_BS_CONTENTS, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType)) {
+			let InstanceDescription=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_InstanceDescription), CG_SCHEMA);
+			if (InstanceDescription)
 				this.ValidateInstanceDescription(CG_SCHEMA, SCHEMA_PREFIX, OnDemandProgram.name(), InstanceDescription, false, errs);
-		
+		}
 		// <PublishedDuration>
 
 		// <StartOfAvailability> and <EndOfAvailability>
@@ -2164,12 +2164,12 @@ export default class ContentGuideCheck {
 		}
 		
 		// <DeliveryMode>
-		let dm=0, DeliveryMode;
-		if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType))
-			while ((DeliveryMode=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_DeliveryMode, ++dm), CG_SCHEMA))!=null)
-				if (DeliveryMode.text()!=tva.DELIVERY_MODE_STREAMING)
-					errs.addError({code:"OD070", message:`${OnDemandProgram.name()}.${tva.e_DeliveryMode} must be ${tva.DELIVERY_MODE_STREAMING.quote()}`, fragment:DeliveryMode});
-		
+		if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType)) {
+			let DeliveryMode=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_DeliveryMode), CG_SCHEMA);
+			if (DeliveryMode && DeliveryMode.text()!=tva.DELIVERY_MODE_STREAMING)
+				errs.addError({code:"OD070", message:`${OnDemandProgram.name()}.${tva.e_DeliveryMode} must be ${tva.DELIVERY_MODE_STREAMING.quote()}`, fragment:DeliveryMode});
+		}
+
 		// <Free>
 		let fr=0, Free;
 		while ((Free=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_Free, ++fr), CG_SCHEMA))!=null)
