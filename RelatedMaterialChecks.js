@@ -48,7 +48,7 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, location) {
 
 	checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "PS002");
 	if (HowRelated.attr(tva.a_href)) {
-		if (HowRelated.attr(tva.a_href).value()!=dvbi.PROMOTIONAL_STILL_IMAGE_URI) 
+		if (HowRelated.attr(tva.a_href).value()!=tva.cs_PromotionalStillImage) 
 			errs.addError({code:"PS010", message:`${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} does not designate a Promotional Still Image`,
 							fragment:HowRelated});
 		else {

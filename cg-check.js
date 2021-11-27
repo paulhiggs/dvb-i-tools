@@ -870,7 +870,7 @@ export default class ContentGuideCheck {
 							// pagination links are allowed, but checked in ValidatePagination()
 							hasPagination=true;
 							break;
-						case dvbi.PROMOTIONAL_STILL_IMAGE_URI:  // promotional still image
+						case tva.cs_PromotionalStillImage:  
 							countImage.push(HowRelated);
 							ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name().elementize());
 							break;
@@ -1790,7 +1790,7 @@ export default class ContentGuideCheck {
 
 
 	/**
-	 * validate a <RelatedMaterial> element iconforms to the Restart Application Linking rules (A177r1 clause 6.5.5)
+	 * validate a <RelatedMaterial> element conforms to the Restart Application Linking rules (A177r1 clause 6.5.5)
 	 *
 	 * @param {string}  CG_SCHEMA           Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX       Used when constructing Xpath queries
