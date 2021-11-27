@@ -1,13 +1,20 @@
-const PAGINATION_PREFIX = "urn:fvc:metadata:cs:HowRelatedCS:2015-12:pagination:";
-const CRID_NOW_NEXT_PREFIX = "crid://dvb.org/metadata/schedules/now-next/";
+const PaginationPrefix="urn:fvc:metadata:cs:HowRelatedCS:2015-12:pagination",
+	  NowNextCRIDPrefix="crid://dvb.org/metadata/schedules/now-next";
 
 const DVB_SOURCE_PREFIX = "urn:dvb:metadata:source";
 const LINKED_APLICATION_CS = "urn:dvb:metadata:cs:LinkedApplicationCS:2019";
-const DVB_RELATED_CS_v1 = "urn:dvb:metadata:cs:HowRelatedCS:2019";
-const DVB_RELATED_CS_v2 = "urn:dvb:metadata:cs:HowRelatedCS:2020";
+
+const DVB_HowRelatedCS="urn:dvb:metadata:cs:HowRelatedCS",
+	  DVB_RELATED_CS_v1 = `${DVB_HowRelatedCS}:2019`,
+	  DVB_RELATED_CS_v2 = `${DVB_HowRelatedCS}:2020`;
+const FVC_HowRelatedCS="urn:fvc:metadata:cs:HowRelatedCS:2018";
 
 const CaptionCodingFormatCS="urn:tva:metadata:cs:CaptionCodingFormatCS:2015",
-	  ColorimetryCS="urn:dvb:metadata:cs:ColorimetryCS:2020";
+	  ColorimetryCS="urn:dvb:metadata:cs:ColorimetryCS:2020",
+	  AudioPurposeCS="urn:tva:metadata:cs:AudioPurposeCS:2007",
+	  MediaAvailabilityCS="urn:fvc:metadata:cs:MediaAvailabilityCS:2014-07",
+	  ForwardEPGAvailabilityCS="urn:fvc:metadata:cs:FEPGAvailabilityCS:2014-10",
+	  RestartAvailabilityCS="urn:fvc:metadata:cs:RestartAvailabilityCS:2018";
 
 import {tva} from './TVA_definitions.js';
 
@@ -28,18 +35,16 @@ export const dvbi = {
 	XHTML_APP: "application/xhtml+xml",
 //	iOS_APP: "application/vnd.dvb.app.ios",
 //	ANDROID_APP: "application/vnd.dvb.app.android",
-	TEMPLATE_AIT_URI: "urn:fvc:metadata:cs:HowRelatedCS:2018:templateAIT",
+	TEMPLATE_AIT_URI: `${FVC_HowRelatedCS}:templateAIT`,
 
-	PAGINATION_FIRST_URI: PAGINATION_PREFIX+"first",
-	PAGINATION_PREV_URI: PAGINATION_PREFIX+"prev",
-	PAGINATION_NEXT_URI: PAGINATION_PREFIX+"next",
-	PAGINATION_LAST_URI : PAGINATION_PREFIX+"last",
+	PAGINATION_FIRST_URI: `${PaginationPrefix}:first`,
+	PAGINATION_PREV_URI: `${PaginationPrefix}:prev`,
+	PAGINATION_NEXT_URI: `${PaginationPrefix}:next`,
+	PAGINATION_LAST_URI : `${PaginationPrefix}:last`,
 
-	CRID_NOW: CRID_NOW_NEXT_PREFIX+"now",
-	CRID_LATER: CRID_NOW_NEXT_PREFIX+"later",
-	CRID_EARLIER: CRID_NOW_NEXT_PREFIX+"earlier", 
-
-	PROMOTIONAL_STILL_IMAGE_URI: tva.cs_PromotionalStillImage,
+	CRID_NOW: `${NowNextCRIDPrefix}/now`,
+	CRID_LATER: `${NowNextCRIDPrefix}/later`,
+	CRID_EARLIER: `${NowNextCRIDPrefix}/earlier`, 
 
 	MAX_SUBREGION_LEVELS: 3, // definied for <RegionElement> in Table 33 of A177
 	
@@ -47,12 +52,12 @@ export const dvbi = {
 	EIT_SERIES_CRID_TYPE: "eit-series-crid",
 
 // A177v1 only table 15 - deprecated in A177v2
-	DVBT_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":dvb-t",
-	DVBS_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":dvb-s",
-	DVBC_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":dvb-c",
-	DVBIPTV_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":dvb-iptv",
-	DVBDASH_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":dvb-dash",
-	DVBAPPLICATION_SOURCE_TYPE: DVB_SOURCE_PREFIX + ":application",
+	DVBT_SOURCE_TYPE: `${DVB_SOURCE_PREFIX}:dvb-t`,
+	DVBS_SOURCE_TYPE: `${DVB_SOURCE_PREFIX}:dvb-s`,
+	DVBC_SOURCE_TYPE: `${DVB_SOURCE_PREFIX}:dvb-c`,
+	DVBIPTV_SOURCE_TYPE: `${DVB_SOURCE_PREFIX}:dvb-iptv`,
+	DVBDASH_SOURCE_TYPE: `${DVB_SOURCE_PREFIX}:dvb-dash`,
+	DVBAPPLICATION_SOURCE_TYPE: `${DVB_SOURCE_PREFIX}:application`,
 
 // A177 5.2.7.2
 	CONTENT_TYPE_DASH_MPD: "application/dash+xml",    // MPD of linear service
@@ -66,8 +71,8 @@ export const dvbi = {
 	ALLOWED_COLORIMETRY: [`${ColorimetryCS}:1`, `${ColorimetryCS}:2.1`, `${ColorimetryCS}:3.1`],
 
 // A177 6.11.2 - Audio Purpose
-	AUDIO_PURPOSE_MAIN: "urn:tva:metadata:cs:AudioPurposeCS:2007:1",
-	AUDIO_PURPOSE_DESCRIPTION: "urn:tva:metadata:cs:AudioPurposeCS:2007:6",
+	AUDIO_PURPOSE_MAIN: `${AudioPurposeCS}:1`,
+	AUDIO_PURPOSE_DESCRIPTION: `${AudioPurposeCS}:6`,
 
 // A177 6.11.3 - Caption Coding Format
 	DVB_BITMAP_SUBTITLES: `${CaptionCodingFormatCS}:2.1`,
@@ -75,38 +80,38 @@ export const dvbi = {
 	EBU_TT_D: `${CaptionCodingFormatCS}:3.2`,
 
 // A177 6.11.6 - Media Availability
-	MEDIA_AVAILABLE: "urn:fvc:metadata:cs:MediaAvailabilityCS:2014-07:media_available",
-	MEDIA_UNAVAILABLE: "urn:fvc:metadata:cs:MediaAvailabilityCS:2014-07:media_unavailable",
+	MEDIA_AVAILABLE: `${MediaAvailabilityCS}:media_available`,
+	MEDIA_UNAVAILABLE: `${MediaAvailabilityCS}:media_unavailable`,
 
 // A177 6.11.7 - Forward EPG Availability
-	FORWARD_EPG_AVAILABLE: "urn:fvc:metadata:cs:FEPGAvailabilityCS:2014-10:fepg_available",
-	FORWARD_EPG_UNAVAILABLE: "urn:fvc:metadata:cs:FEPGAvailabilityCS:2014-10:fepg_unavailable",
+	FORWARD_EPG_AVAILABLE: `${ForwardEPGAvailabilityCS}:fepg_available`,
+	FORWARD_EPG_UNAVAILABLE: `${ForwardEPGAvailabilityCS}:fepg_unavailable`,
 
 //A177r1 6.5.5 - Restart Link
-	RESTART_LINK: "urn:fvc:metadata:cs:HowRelatedCS:2018:restart",
+	RESTART_LINK: `${FVC_HowRelatedCS}:restart`,
 
 // A177 6.11.11 - Restart Availability
-	RESTART_AVAILABLE: "urn:fvc:metadata:cs:RestartAvailabilityCS:2018:restart_available",
-	RESTART_CHECK: "urn:fvc:metadata:cs:RestartAvailabilityCS:2018:restart_check",
-	RESTART_PENDING: "urn:fvc:metadata:cs:RestartAvailabilityCS:2018:restart_pending",
+	RESTART_AVAILABLE: `${RestartAvailabilityCS}:restart_available`,
+	RESTART_CHECK: `${RestartAvailabilityCS}:restart_check`,
+	RESTART_PENDING: `${RestartAvailabilityCS}:restart_pending`,
 
 // A177v1 7.3.1
-	BANNER_OUTSIDE_AVAILABILITY_v1: DVB_RELATED_CS_v1+":1000.1",
-	LOGO_SERVICE_LIST_v1: DVB_RELATED_CS_v1+":1001.1",
-	LOGO_SERVICE_v1: DVB_RELATED_CS_v1+":1001.2",
-	LOGO_CG_PROVIDER_v1: DVB_RELATED_CS_v1+":1002.1",
+	BANNER_OUTSIDE_AVAILABILITY_v1: `${DVB_RELATED_CS_v1}:1000.1`,
+	LOGO_SERVICE_LIST_v1: `${DVB_RELATED_CS_v1}:1001.1`,
+	LOGO_SERVICE_v1: `${DVB_RELATED_CS_v1}:1001.2`,
+	LOGO_CG_PROVIDER_v1: `${DVB_RELATED_CS_v1}:1002.1`,
 
 // A177v2 7.3.1
-	BANNER_OUTSIDE_AVAILABILITY_v2: DVB_RELATED_CS_v2+":1000.1",
-	BANNER_CONTENT_FINISHED_v2: DVB_RELATED_CS_v2+":1000.2",	// added in A177v2
-	LOGO_SERVICE_LIST_v2: DVB_RELATED_CS_v2+":1001.1",
-	LOGO_SERVICE_v2: DVB_RELATED_CS_v2+":1001.2",
-	LOGO_CG_PROVIDER_v2: DVB_RELATED_CS_v2+":1002.1",
+	BANNER_OUTSIDE_AVAILABILITY_v2: `${DVB_RELATED_CS_v2}:1000.1`,
+	BANNER_CONTENT_FINISHED_v2: `${DVB_RELATED_CS_v2}:1000.2`,	// added in A177v2
+	LOGO_SERVICE_LIST_v2: `${DVB_RELATED_CS_v2}:1001.1`,
+	LOGO_SERVICE_v2: `${DVB_RELATED_CS_v2}:1001.2`,
+	LOGO_CG_PROVIDER_v2: `${DVB_RELATED_CS_v2}:1002.1`,
 
 // A177 7.3.2
-	APP_IN_PARALLEL: LINKED_APLICATION_CS+":1.1",
-	APP_IN_CONTROL: LINKED_APLICATION_CS+":1.2",
-	APP_OUTSIDE_AVAILABILITY: LINKED_APLICATION_CS+":2",
+	APP_IN_PARALLEL: `${LINKED_APLICATION_CS}:1.1`,
+	APP_IN_CONTROL: `${LINKED_APLICATION_CS}:1.2`,
+	APP_OUTSIDE_AVAILABILITY: `${LINKED_APLICATION_CS}:2`,
 
 // possible values for DVB-S polarization
 	DVBS_POLARIZATION_VALUES: ["horizontal", "vertical", "left circular", "right circular"],
