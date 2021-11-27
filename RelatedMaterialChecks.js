@@ -1,5 +1,6 @@
 // RelatedMaterialChecks.js
 
+import { mpeg7 } from "./MPEG7_definitions.js";
 import { dvbi } from "./DVB-I_definitions.js";
 import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
 
@@ -68,10 +69,10 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, location) {
 						if (child.attr(tva.a_href)) {
 							let href=child.attr(tva.a_href).value();
 							switch (href) {
-								case dvbi.JPEG_IMAGE_CS_VALUE:
+								case mpeg7.JPEG_IMAGE_CS_VALUE:
 									isJPEG=true;
 									break;
-								case dvbi.PNG_IMAGE_CS_VALUE:
+								case mpeg7.PNG_IMAGE_CS_VALUE:
 									isPNG=true;
 									break;
 								default:
@@ -151,10 +152,10 @@ export function  checkValidLogo(HowRelated, Format, MediaLocator, RelatedMateria
 				if (child.attr(dvbi.a_href)) {
 					let href=child.attr(dvbi.a_href).value();
 					switch (href) {
-						case dvbi.JPEG_IMAGE_CS_VALUE:
+						case mpeg7.JPEG_IMAGE_CS_VALUE:
 							isJPEG=true;
 							break;
-						case dvbi.PNG_IMAGE_CS_VALUE:
+						case mpeg7.PNG_IMAGE_CS_VALUE:
 							isPNG=true;
 							break;
 						default:

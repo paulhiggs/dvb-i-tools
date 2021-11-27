@@ -1,8 +1,6 @@
 const PAGINATION_PREFIX = "urn:fvc:metadata:cs:HowRelatedCS:2015-12:pagination:";
 const CRID_NOW_NEXT_PREFIX = "crid://dvb.org/metadata/schedules/now-next/";
 
-const FILE_FORMAT_CS = "urn:mpeg:mpeg7:cs:FileFormatCS:2001";
-
 const DVB_SOURCE_PREFIX = "urn:dvb:metadata:source";
 const LINKED_APLICATION_CS = "urn:dvb:metadata:cs:LinkedApplicationCS:2019";
 const DVB_RELATED_CS_v1 = "urn:dvb:metadata:cs:HowRelatedCS:2019";
@@ -44,9 +42,6 @@ export const dvbi = {
 	PROMOTIONAL_STILL_IMAGE_URI: tva.cs_PromotionalStillImage,
 
 	MAX_SUBREGION_LEVELS: 3, // definied for <RegionElement> in Table 33 of A177
-
-	JPEG_IMAGE_CS_VALUE: FILE_FORMAT_CS+":1",
-	PNG_IMAGE_CS_VALUE: FILE_FORMAT_CS+":15",	
 	
 	EIT_PROGRAMME_CRID_TYPE: "eit-programme-crid",
 	EIT_SERIES_CRID_TYPE: "eit-series-crid",

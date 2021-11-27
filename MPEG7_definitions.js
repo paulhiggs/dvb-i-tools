@@ -1,3 +1,4 @@
+const FILE_FORMAT_CS = "urn:mpeg:mpeg7:cs:FileFormatCS:2001";
 
 export const mpeg7 = {
 
@@ -5,6 +6,9 @@ export const mpeg7 = {
 	AUDIO_MIX_MONO: "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:2",
 	AUDIO_MIX_STEREO: "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3",
 	AUDIO_MIX_5_1: "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:5",
+
+	JPEG_IMAGE_CS_VALUE: FILE_FORMAT_CS+":1",
+	PNG_IMAGE_CS_VALUE: FILE_FORMAT_CS+":15",
 
 	TITLE_TYPE_MAIN: "main",
 	TITLE_TYPE_SECONDARY: "secondary",
