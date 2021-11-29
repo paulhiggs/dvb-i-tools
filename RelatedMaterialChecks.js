@@ -8,7 +8,7 @@ import { APPLICATION } from "./ErrorList.js";
 
 import { NoChildElement, cg_InvalidHrefValue, sl_InvalidHrefValue } from "./CommonErrors.js";
 import { checkAttributes, checkTopElementsAndCardinality} from "./schema_checks.js";
-import { isJPEGmime, isPNGmime } from "./MIME_checks.js";
+import { isJPEGmime, isPNGmime, isWebPmime } from "./MIME_checks.js";
 import { isHTTPURL } from "./pattern_checks.js";
 
 // orginally from cg-check.js
@@ -177,7 +177,7 @@ export function  checkValidLogo(HowRelated, Format, MediaLocator, RelatedMateria
 				
 				if (child.attr(tva.a_contentType)) {
 					let contentType=child.attr(tva.a_contentType).value();
-					if (!isJPEGmime(contentType) && !isPNGmime(contentType))
+					if (!isJPEGmime(contentType) && !isPNGmime(contentType) && !isWebPmime(contentType))
 						errs.addError({code:"VL022", 
 							message:`invalid ${tva.a_contentType.attribute()} ${contentType.quote()} specified for ${tva.e_RelatedMaterial.elementize()}${tva.e_MediaLocator.elementize()} in ${location}`, 
 							key:`invalid ${tva.a_contentType.attribute(tva.e_MediaUri)}`,

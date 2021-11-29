@@ -2,6 +2,7 @@
 const JPEG_MIME = "image/jpeg", 
       PNG_MIME =  "image/png",
 	  WebP_MIME = "image/WebP"; // BUG2937 - https://bugzilla.dvb.org/show_bug.cgi?id=2937
+	  
 const allowedImageTypes=[JPEG_MIME, PNG_MIME, WebP_MIME];
 /**
  * determines if the value is a valid JPEG MIME type

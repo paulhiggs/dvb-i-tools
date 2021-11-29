@@ -6,7 +6,8 @@ const LINKED_APLICATION_CS = "urn:dvb:metadata:cs:LinkedApplicationCS:2019";
 
 const DVB_HowRelatedCS="urn:dvb:metadata:cs:HowRelatedCS",
 	  DVB_RELATED_CS_v1 = `${DVB_HowRelatedCS}:2019`,
-	  DVB_RELATED_CS_v2 = `${DVB_HowRelatedCS}:2020`;
+	  DVB_RELATED_CS_v2 = `${DVB_HowRelatedCS}:2020`,
+	  DVB_RELATED_CS_v3 = `${DVB_HowRelatedCS}:2021`;
 const FVC_HowRelatedCS="urn:fvc:metadata:cs:HowRelatedCS:2018";
 
 const CaptionCodingFormatCS="urn:tva:metadata:cs:CaptionCodingFormatCS:2015",
@@ -103,10 +104,18 @@ export const dvbi = {
 
 // A177v2 7.3.1
 	BANNER_OUTSIDE_AVAILABILITY_v2: `${DVB_RELATED_CS_v2}:1000.1`,
-	BANNER_CONTENT_FINISHED_v2: `${DVB_RELATED_CS_v2}:1000.2`,	// added in A177v2
+	BANNER_CONTENT_FINISHED_v2: `${DVB_RELATED_CS_v2}:1000.2`,	// added in A17732
 	LOGO_SERVICE_LIST_v2: `${DVB_RELATED_CS_v2}:1001.1`,
 	LOGO_SERVICE_v2: `${DVB_RELATED_CS_v2}:1001.2`,
 	LOGO_CG_PROVIDER_v2: `${DVB_RELATED_CS_v2}:1002.1`,
+
+// A177v2 7.3.1
+	BANNER_OUTSIDE_AVAILABILITY_v3: `${DVB_RELATED_CS_v3}:1000.1`,
+	BANNER_CONTENT_FINISHED_v3: `${DVB_RELATED_CS_v3}:1000.2`,	
+	LOGO_SERVICE_LIST_v3: `${DVB_RELATED_CS_v3}:1001.1`,
+	LOGO_SERVICE_v3: `${DVB_RELATED_CS_v3}:1001.2`,
+	SERVICE_BANNER_v3: `${DVB_RELATED_CS_v3}:1001.3`,	// added in A177r3
+	LOGO_CG_PROVIDER_v3: `${DVB_RELATED_CS_v3}:1002.1`,
 
 // A177 7.3.2
 	APP_IN_PARALLEL: `${LINKED_APLICATION_CS}:1.1`,
