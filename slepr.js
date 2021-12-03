@@ -17,7 +17,7 @@ import { dvbi } from "./DVB-I_definitions.js";
 import { IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data-locations.js";
 import { hasChild } from "./schema_checks.js";
 
-import { dataType } from "./phlib/phlib.js";
+import { datatypeIs } from "./phlib/phlib.js";
 
 var masterSLEPR="";
 const EMPTY_SLEPR="<ServiceListEntryPoints xmlns=\"urn:dvb:metadata:servicelistdiscovery:2021\"></ServiceListEntryPoints>";
@@ -129,7 +129,7 @@ export default class SLEPR {
 
 			//TargetCountry(s)
 			if (req.query.TargetCountry)
-				switch (dataType(req.query.TargetCountry)) {
+				switch (datatypeIs(req.query.TargetCountry)) {
 					case 'string':
 						if (!this.knownCountries.isISO3166code(req.query.TargetCountry,false)) 
 							req.parseErr.push(`invalid ${dvbi.e_TargetCountry} [${req.query.TargetCountry}]`);				
@@ -147,7 +147,7 @@ export default class SLEPR {
 
 			//Language(s)
 			if (req.query.Language) 
-				switch (dataType(req.query.Language)) {
+				switch (datatypeIs(req.query.Language)) {
 					case 'string':
 						if (!isTVAAudioLanguageType(req.query.Language, false)) 
 							req.parseErr.push(`invalid ${dvbi.e_Language} [${req.query.Language}]`);
@@ -165,7 +165,7 @@ export default class SLEPR {
 
 			//DeliverySystems(s)
 			if (req.query.Delivery)
-				switch (dataType(req.query.Delivery)) {
+				switch (datatypeIs(req.query.Delivery)) {
 					case 'string':
 						if (!!isValidDelivery(req.query.Delivery)) 
 							req.parseErr.push(`invalid ${dvbi.e_Delivery} system [${req.query.Delivery}]`);	
@@ -184,7 +184,7 @@ export default class SLEPR {
 
 			// Genre(s)
 			if (req.query.Genre) 
-				switch (dataType(req.query.Genre)) {
+				switch (datatypeIs(req.query.Genre)) {
 					case 'string':
 						if (!this.knownGenres.isIn(req.query.Genre)) 
 							req.parseErr.push(`invalid ${dvbi.e_Genre} [${req.query.Genre}]`);	
