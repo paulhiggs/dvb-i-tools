@@ -660,7 +660,7 @@ export default class ContentGuideCheck {
 		
 		let rm=0, RelatedMaterial;
 		while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) 
-			ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name().elementize());
+			ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name().elementize(), this.knownLanguages);
 	}
 
 
@@ -763,7 +763,7 @@ export default class ContentGuideCheck {
 			case tva.e_ProgramInformation:
 				let rm=0, RelatedMaterial;
 				while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) 
-					ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name());
+					ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name(), this.knownLanguages);
 				break;
 			case tva.e_GroupInformation:
 				this.ValidatePagination(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "More Episodes");
@@ -872,7 +872,7 @@ export default class ContentGuideCheck {
 							break;
 						case tva.cs_PromotionalStillImage:  
 							countImage.push(HowRelated);
-							ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name().elementize());
+							ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name().elementize(), this.knownLanguages);
 							break;
 						default:
 							cg_InvalidHrefValue(hrHref, HowRelated, tva.e_HowRelated.elementize(), `${tva.e_RelatedMaterial.elementize()} in Box Set List`, errs, "MB011");

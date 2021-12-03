@@ -403,7 +403,7 @@ export default class ServiceListCheck {
 			{ver: SCHEMA_v1, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v1 },
 			{ver: SCHEMA_v2, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
 			{ver: SCHEMA_v3, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
-			{ver: SCHEMA_v4, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 }
+			{ver: SCHEMA_v4, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 }
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null) ;
 	}
 
@@ -421,7 +421,7 @@ export default class ServiceListCheck {
 		return this.match([ 
 			{ver: SCHEMA_v2, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
 			{ver: SCHEMA_v3, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
-			{ver: SCHEMA_v4, val: dvbi.BANNER_CONTENT_FINISHED_v2 }
+			{ver: SCHEMA_v4, val: dvbi.BANNER_CONTENT_FINISHED_v3 }
 			], namespace==ANY_NAMESPACE?namespace:this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -436,10 +436,10 @@ export default class ServiceListCheck {
 	/*private*/  validServiceListLogo(HowRelated, namespace) {
 		// return true if HowRelated@href is a valid CS value Service List Logo (A177 5.2.6.1)
 		return this.match([ 
-			{ver: SCHEMA_v1, val: dvbi.LOGO_SERVICE_LIST_v1 },
-			{ver: SCHEMA_v2, val: dvbi.LOGO_SERVICE_LIST_v2 },
-			{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_LIST_v2 },
-			{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_LIST_v2 }
+			{ver: SCHEMA_v1, val: dvbi.LOGO_SERVICE_LIST_v1},
+			{ver: SCHEMA_v2, val: dvbi.LOGO_SERVICE_LIST_v2},
+			{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_LIST_v2},
+			{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_LIST_v3}
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -457,7 +457,22 @@ export default class ServiceListCheck {
 			{ver: SCHEMA_v1, val: dvbi.LOGO_SERVICE_v1},
 			{ver: SCHEMA_v2, val: dvbi.LOGO_SERVICE_v2},
 			{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_v2},
-			{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_v2}
+			{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_v3}
+			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
+	}
+
+
+	/** 
+	 * determines if the identifer provided refers to a valid service banner
+	 *
+	 * @param {XMLnode} HowRelated  The logo identifier
+	 * @param {String}  namespace   The namespace being used in the XML document
+	 * @returns {boolean} true if this is a valid banner for a service  else false
+	 */
+	/*private*/  validServiceBanner(HowRelated, namespace) {
+		// return true if val is a valid CS value Service Banner (A177 5.2.6.x)
+		return this.match([
+			{ver: SCHEMA_v4, val: dvbi.SERVICE_BANNER_v3}
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -475,7 +490,7 @@ export default class ServiceListCheck {
 			{ver: SCHEMA_v1, val: dvbi.LOGO_CG_PROVIDER_v1},
 			{ver: SCHEMA_v2, val: dvbi.LOGO_CG_PROVIDER_v2},
 			{ver: SCHEMA_v3, val: dvbi.LOGO_CG_PROVIDER_v2},
-			{ver: SCHEMA_v4, val: dvbi.LOGO_CG_PROVIDER_v2}
+			{ver: SCHEMA_v4, val: dvbi.LOGO_CG_PROVIDER_v3}
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -581,7 +596,7 @@ export default class ServiceListCheck {
 					if (this.validServiceListLogo(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
 						MediaLocator.forEach(locator => 
-							checkValidLogo(HowRelated, Format, locator, RelatedMaterial, errs, Location));
+							checkValidLogo(locator, RelatedMaterial, errs, Location, this.knownLanguages));
 					}
 					else
 						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, `${errCode}-11`);
@@ -593,13 +608,14 @@ export default class ServiceListCheck {
 							message:`${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${SCHEMA_NAMESPACE.quote()} in ${Location}`, key:"invalid CS value", fragment:HowRelated});
 					
 					if (this.validOutScheduleHours(HowRelated, SCHEMA_NAMESPACE) || this.validContentFinishedBanner(HowRelated, SCHEMA_NAMESPACE) || 
-					      this.validServiceApplication(HowRelated) || this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE)) {
+					     this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE) || this.validServiceBanner(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
-						if (this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE) || this.validOutScheduleHours(HowRelated, SCHEMA_NAMESPACE))
-							MediaLocator.forEach(locator =>
-								checkValidLogo(HowRelated, Format, locator, RelatedMaterial, errs, Location));
-						if (this.validServiceApplication(HowRelated))
-							MediaLocator.forEach(locator =>
+						MediaLocator.forEach(locator =>
+							checkValidLogo(locator, RelatedMaterial, errs, Location, this.knownLanguages));
+					}
+					else if (this.validServiceApplication(HowRelated)) {
+						rc=HowRelated.attr(dvbi.a_href).value();
+						MediaLocator.forEach(locator =>
 								this.checkSignalledApplication(locator, errs, Location));
 					}
 					else 
@@ -609,7 +625,7 @@ export default class ServiceListCheck {
 					if (this.validContentGuideSourceLogo(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
 						MediaLocator.forEach(locator =>
-							checkValidLogo(HowRelated, Format, locator, RelatedMaterial, errs, Location));
+							checkValidLogo(locator, RelatedMaterial, errs, Location, this.knownLanguages));
 					}
 					else
 						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, `${errCode}-31`);
