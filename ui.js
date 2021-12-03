@@ -23,7 +23,7 @@ function tabulateResults(res, error, errs) {
 	const SUMMARY_FORM_HEADER="<table><tr><th>item</th><th>count</th></tr>";
 	const Dodger_Blue="#1E90FF", link_css="jump";
 	
-	function DETAIL_FORM_HEADER(mode) { return `<table><tr><th>code</th><th>${mode}</th></tr>`; }
+	let DETAIL_FORM_HEADER = (mode) => `<table><tr><th>code</th><th>${mode}</th></tr>`;
 
 	function tabluateMessage(value) {
 		res.write('<tr>');

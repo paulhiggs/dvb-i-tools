@@ -300,17 +300,15 @@ export default class ContentGuideCheck {
 	 */
 	/* private */  ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, requiredLengths, optionalLengths, requestType, errs, errCode) {
 		
-		function synopsisLengthError(label, length, actual) {
-			return `length of ${tva.a_length.attribute(tva.e_Synopsis)}=${label.quote()} exceeds ${length} characters, measured(${actual})`; }
-		function singleLengthLangError(length, lang) {
-			return `only a single ${tva.e_Synopsis.elementize()} is permitted per length (${length}) and language (${lang})`; }
-		function requiredSynopsisError(length) {
-			return `a ${tva.e_Synopsis.elementize()} with ${tva.a_length.attribute()}=${length.quote()} is required`; }
-		
 		if (!BasicDescription) {
 			errs.addError({type:APPLICATION, code:"SY000", message:"ValidateSynopsis() called with BasicDescription==null"});
 			return;
 		}
+
+		let synopsisLengthError = (label, length, actual) => `length of ${tva.a_length.attribute(tva.e_Synopsis)}=${label.quote()} exceeds ${length} characters, measured(${actual})`; 
+		let singleLengthLangError = (length, lang) => `only a single ${tva.e_Synopsis.elementize()} is permitted per length (${length}) and language (${lang})`; 
+		let requiredSynopsisError = (length) => `a ${tva.e_Synopsis.elementize()} with ${tva.a_length.attribute()}=${length.quote()} is required`;
+
 		let s=0, Synopsis, hasShort=false, hasMedium=false, hasLong=false;
 		let shortLangs=[], mediumLangs=[], longLangs=[];
 		while ((Synopsis=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_Synopsis, ++s), CG_SCHEMA))!=null) {
@@ -578,13 +576,11 @@ export default class ContentGuideCheck {
 	 */
 	/* private */  ValidateCreditsList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, errCode) {
 		
-		function singleElementError(elementName, parentElementName) {
-			return `only a single ${elementName.elementize()} is permitted in ${parentElementName.elementize()}`;
-		}
 		if (!BasicDescription) {
 			errs.addError({type:APPLICATION, code:"CL000", message:"ValidateCreditsList() called with BasicDescription==null"});
 			return;
 		}
+		let singleElementError = (elementName, parentElementName) => `only a single ${elementName.elementize()} is permitted in ${parentElementName.elementize()}`;
 		let CreditsList=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_CreditsList), CG_SCHEMA);
 		if (CreditsList) {
 			let ci=0, CreditsItem;
@@ -1696,15 +1692,15 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                errors found in validaton
 	 */
 	/* private */  ValidateAVAttributes(CG_SCHEMA, SCHEMA_PREFIX, AVAttributes, errs) {
-		
-		function isValidAudioMixType(mixType) { return [mpeg7.AUDIO_MIX_MONO, mpeg7.AUDIO_MIX_STEREO, mpeg7.AUDIO_MIX_5_1].includes(mixType); }
-		function isValidAudioLanguagePurpose(purpose) {	return [dvbi.AUDIO_PURPOSE_MAIN, dvbi.AUDIO_PURPOSE_DESCRIPTION].includes(purpose);	}
-		
+				
 		if (!AVAttributes) {
 			errs.addError({type:APPLICATION, code:"AV000", message:"ValidateAVAttributes() called with AVAttributes==null"});
 			return;
 		}
-		
+
+		let isValidAudioMixType = (mixType) => [mpeg7.AUDIO_MIX_MONO, mpeg7.AUDIO_MIX_STEREO, mpeg7.AUDIO_MIX_5_1].includes(mixType);
+		let isValidAudioLanguagePurpose = (purpose) => [dvbi.AUDIO_PURPOSE_MAIN, dvbi.AUDIO_PURPOSE_DESCRIPTION].includes(purpose);
+
 		checkTopElementsAndCardinality(AVAttributes,
 			[{name:tva.e_AudioAttributes, minOccurs:0, maxOccurs:Infinity},
 			 {name:tva.e_VideoAttributes, minOccurs:0, maxOccurs:Infinity},
@@ -1800,12 +1796,12 @@ export default class ContentGuideCheck {
 	 */
 	/* private */  ValidateRestartRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, RelatedMaterial, errs) {
 		
-		function isRestartLink(str) { return str==dvbi.RESTART_LINK; }
-
 		if (!RelatedMaterial) {
 			errs.addError({type:APPLICATION, code:"RR000", message:"ValidateRestartRelatedMaterial() called with RelatedMaterial==null"});
 			return false;
 		}
+
+		let isRestartLink = (str) => str==dvbi.RESTART_LINK;
 
 		let isRestart=checkTopElementsAndCardinality(RelatedMaterial, 
 			[{name:tva.e_HowRelated},
@@ -1848,11 +1844,6 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                errors found in validaton
 	 */
 	/* private */  ValidateInstanceDescription(CG_SCHEMA, SCHEMA_PREFIX, VerifyType, InstanceDescription, isCurrentProgram, errs) {
-
-		function isRestartAvailability(str) { return [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(str); }
-		function isMediaAvailability(str) { return [dvbi.MEDIA_AVAILABLE, dvbi.MEDIA_UNAVAILABLE].includes(str); }
-		function isEPGAvailability(str) { return [dvbi.FORWARD_EPG_AVAILABLE, dvbi.FORWARD_EPG_UNAVAILABLE].includes(str); }
-		function isAvailability(str) { return isMediaAvailability(str) || isEPGAvailability(str); }
 		
 		function checkGenre(genre, errs, errcode) {
 			if (!genre) return null;
@@ -1868,6 +1859,12 @@ export default class ContentGuideCheck {
 			errs.addError({type:APPLICATION, code:"ID000", message:"ValidateInstanceDescription() called with InstanceDescription==null"});
 			return;
 		}
+		
+		let isRestartAvailability = (str) => [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(str);
+		let isMediaAvailability = (str) => [dvbi.MEDIA_AVAILABLE, dvbi.MEDIA_UNAVAILABLE].includes(str);
+		let isEPGAvailability = (str) => [dvbi.FORWARD_EPG_AVAILABLE, dvbi.FORWARD_EPG_UNAVAILABLE].includes(str);
+		let isAvailability = (str) => isMediaAvailability(str) || isEPGAvailability(str);
+
 		switch (VerifyType) {
 			case tva.e_OnDemandProgram:
 				checkTopElementsAndCardinality(InstanceDescription, 

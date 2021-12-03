@@ -8,9 +8,7 @@ import { statSync, readFileSync } from "fs";
  * @param {int} index              The instance of the named element to be searched for (if specified)
  * @returns {string} the XPath selector
  */
-export function xPath(SCHEMA_PREFIX, elementName, index=null) {  
-	return `${SCHEMA_PREFIX}:${elementName}${index?`[${index}]`:""}`;  
-}
+export var xPath = (SCHEMA_PREFIX, elementName, index=null) => `${SCHEMA_PREFIX}:${elementName}${index?`[${index}]`:""}`; 
 
 
 /**
@@ -51,7 +49,7 @@ export function xPathM(SCHEMA_PREFIX, elementNames) {
  * @param {String} value The value to check for existance
  * @return {boolean} if value is in the set of values
  */
-export function isIn(values, value, caseSensitive=true) { return findInSet(values, value, caseSensitive); }
+export var isIn = (values, value, caseSensitive=true) => findInSet(values, value, caseSensitive); 
 
 
 /**
@@ -61,7 +59,7 @@ export function isIn(values, value, caseSensitive=true) { return findInSet(value
  * @param {String} value The value to check for existance
  * @return {boolean} if value is in the set of values
  */
-export function isIni(values, value) { return findInSet(values, value, false); }
+export var isIni = (values, value) => findInSet(values, value, false);
 
 
 /**
@@ -70,7 +68,7 @@ export function isIni(values, value) { return findInSet(values, value, false); }
  * @param {string} str string containing HTML or XML entities (starts with & ends with ;)
  * @return {string} the string with entities replaced with a single character '*'
  */
-export function unEntity(str) { return str.replace(/(&.+;)/ig, "*"); }
+export var unEntity = (str) => str.replace(/(&.+;)/ig, "*");
 
 
 /**

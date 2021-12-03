@@ -102,10 +102,8 @@ export default class SLEPR {
 		 * @param {string} DeliverySystem the query value provided
 		 * @returns {Boolean} true if DeliverySystem is valid, otherwise false
 		 */
-		function isValidDelivery(DeliverySystem) {
-			return [DVB_DASH_DELIVERY, DVB_T_DELIVERY, DVB_S_DELIVERY, DVB_C_DELIVERY, 
+		let isValidDelivery = (DeliverySystem) =>[DVB_DASH_DELIVERY, DVB_T_DELIVERY, DVB_S_DELIVERY, DVB_C_DELIVERY, 
 				DVB_IPTV_DELIVERY, DVB_APPLICATION_DELIVERY].includes(DeliverySystem);
-		}
     
 		/* function isProvider(provider) {
 			return true;

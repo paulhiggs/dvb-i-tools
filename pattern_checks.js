@@ -89,9 +89,7 @@ export function isUTCDateTime(str) {
  * see RFC 3986 - https://tools.ietf.org/html/rfc3986
  */
 const HTTPURLregex=new RegExp(`^https?:(//${e_AuthorityAndPath}|${e_PathNoAuthority})${e_Query}?${e_Fragment}?$`,'i');
-export function isHTTPURL(arg) {
-	return arg ? HTTPURLregex.test(arg.trim()) : false;
-}
+export var isHTTPURL = (arg) => arg ? HTTPURLregex.test(arg.trim()) : false;
 
 
 /**
@@ -100,12 +98,8 @@ export function isHTTPURL(arg) {
  */
 const URNregex=new RegExp(`^${e_URN}$`,'i'),
       URLregex=new RegExp(`^${e_URL}$`,'i');
-export function isURL(arg) {
-	return arg ? URLregex.test(arg) : false;
-}
-export function isURN(arg) {
-	return arg ? URNregex.test(arg) : false;
-}
+export var isURL = (arg) => arg ? URLregex.test(arg) : false;
+export var isURN = (arg) => arg ? URNregex.test(arg) : false;
 
 
 /**
@@ -114,9 +108,7 @@ export function isURN(arg) {
  * @param {string} arg  The value whose format is to be checked
  * @returns {boolean} true if the argument is an HTTP URL
  */
-export function isURI(arg) {
-	return isURL(arg) || isURN(arg);
-}
+export var isURI = (arg) => isURL(arg) || isURN(arg);
 
 
 /**
@@ -127,9 +119,7 @@ export function isURI(arg) {
  */
 // based on https://stackoverflow.com/questions/32044846/regex-for-iso-8601-durations
 const isoRegex=new RegExp(/^[-+]?P(?!$)(([-+]?\d+Y)|([-+]?\d+\.\d+Y$))?(([-+]?\d+M)|([-+]?\d+\.\d+M$))?(([-+]?\d+W)|([-+]?\d+\.\d+W$))?(([-+]?\d+D)|([-+]?\d+\.\d+D$))?(T(?=[\d+-])(([-+]?\d+H)|([-+]?\d+\.\d+H$))?(([-+]?\d+M)|([-+]?\d+\.\d+M$))?([-+]?\d+(\.\d+)?S)?)??$/);
-export function isISODuration(duration) {
-	return duration ? isoRegex.test(duration.trim()) : false;
-}
+export var isISODuration = (duration) => duration ? isoRegex.test(duration.trim()) : false;
  
  
 /**
@@ -140,9 +130,7 @@ export function isISODuration(duration) {
  * @returns {boolean}  true is the argment is formatted as a DVB locator
  */
 const locatorRegex=new RegExp(`^dvb://[${e_digit}${e_hexChar}]+.[${e_digit}${e_hexChar}]*.[${e_digit}${e_hexChar}]+;[${e_digit}${e_hexChar}]+$`);
-export function isDVBLocator(locator) {
-	return locator ? locatorRegex.test(locator.trim()) : false;
-}
+export var isDVBLocator = (locator) => locator ? locatorRegex.test(locator.trim()) : false;
 
 
 /**
@@ -151,9 +139,7 @@ export function isDVBLocator(locator) {
  * @returns {boolean} true if the postcode argument is a valid postcode, otherwise false 
  */
 const postcodeRegex=new RegExp(`[${e_digit}${e_lowalpha}]+([- ][${e_digit}${e_lowalpha}]+)?$`, 'i');
-export function isPostcode(postcode) {
-	return postcode ? postcodeRegex.test(postcode.trim()) : false;
-}
+export var isPostcode = (postcode) => postcode ? postcodeRegex.test(postcode.trim()) : false;
 
 
 /**
@@ -164,9 +150,7 @@ export function isPostcode(postcode) {
 const WildcardFirstRegex=new RegExp(`^(\\*[${e_digit}${e_lowalpha}]*[\\- ]?[${e_digit}${e_lowalpha}]+)`, 'i'),
 	  WildcardMiddleRegex=new RegExp(`^(([${e_digit}${e_lowalpha}]+\\*[\\- ]?[${e_digit}${e_lowalpha}]+)|([${e_digit}${e_lowalpha}]+[\\- ]?\\*[${e_digit}${e_lowalpha}]+))$`, 'i'),
 	  WildcardEndRegex=new RegExp(`^([${e_digit}${e_lowalpha}]+[\\- ]?[${e_digit}${e_lowalpha}]*\\*)$`, 'i');
-export function isWildcardPostcode(postcode) {
-	return postcode ? WildcardEndRegex.test(postcode.trim()) || WildcardMiddleRegex.test(postcode.trim()) || WildcardFirstRegex.test(postcode.trim()) : false;
-}
+export var isWildcardPostcode = (postcode) => postcode ? WildcardEndRegex.test(postcode.trim()) || WildcardMiddleRegex.test(postcode.trim()) || WildcardFirstRegex.test(postcode.trim()) : false;
 
 
 /**
@@ -176,9 +160,7 @@ export function isWildcardPostcode(postcode) {
  * @returns {boolean} true if the signalled extensionName is in the specification defined format, else false
  */
 const ExtensionRegex=new RegExp(`^[${e_digit}${e_lowalpha}][${e_digit}${e_lowalpha}:\\-/\\.]*[${e_digit}${e_lowalpha}]$`,'i');
-export function validExtensionName(ext) {	
-	return ext ? ExtensionRegex.test(ext.trim()) : false;
-}
+export var validExtensionName = (ext) => ext ? ExtensionRegex.test(ext.trim()) : false;
 
 
 /**
@@ -190,10 +172,7 @@ export function validExtensionName(ext) {
  */
 const FrameRateRegex1=new RegExp(`^[${e_digit}]{1,3}(\\.[${e_digit}]{1,3})?$`);
 const FrameRateRegex2=new RegExp(`^[${e_digit}]{1,3}\\/1\\.001$`);
-export function validFrameRate(rate) {
-	return rate ? FrameRateRegex1.test(rate.trim()) || FrameRateRegex2.test(rate.trim()) : false;
-}
-
+export var validFrameRate = (rate) => rate ? FrameRateRegex1.test(rate.trim()) || FrameRateRegex2.test(rate.trim()) : false;
 
 
 /**
@@ -203,9 +182,7 @@ export function validFrameRate(rate) {
  * @returns {boolean} true if the argument is a domain name
  */
 const DomainNameRegex=new RegExp(/^[a-z\d]+([\-\.]{1}[a-z\d]+)*\.[a-z]{2,5}(:[\d]{1,5})?(\/.*)?$/, 'i');
-export function isDomainName(domain) {
-    return domain ? DomainNameRegex.test(domain.trim()) : false;
-}
+export var isDomainName = (domain) => domain ? DomainNameRegex.test(domain.trim()) : false;
 
 
 /**
@@ -216,9 +193,7 @@ export function isDomainName(domain) {
  * @returns {boolean} true if the argument is an RTSP URL
  */
 const RTSPRegex=new RegExp(/^rtsp:\/\/.*$/, 'i');
-export function isRTSPURL(arg) {
-	return arg ? isURL(arg) && RTSPRegex.test(arg.trim()) : false;
-}
+export var isRTSPURL = (arg) => arg ? isURL(arg) && RTSPRegex.test(arg.trim()) : false;
 
 
 /**
@@ -228,9 +203,7 @@ export function isRTSPURL(arg) {
  * @returns {boolean} true if the value is properly formated
  */
 const DaysListRegex=new RegExp(/^([1-7]\s+)*[1-7]$/); // list of values 1-7 separeted by spaces
-export function validServiceDaysList(daysList) {
-	return daysList ? DaysListRegex.test(daysList.trim()) : false;
-}
+export var validServiceDaysList = (daysList) => daysList ? DaysListRegex.test(daysList.trim()) : false;
 
 
 /**
@@ -240,9 +213,7 @@ export function validServiceDaysList(daysList) {
  * @returns {boolean} true if the value is properly formated
  */
 const ZuluRegex=new RegExp(/^(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?)Z$/);
-export function validZuluTimeType(time) {
-	return time ? ZuluRegex.test(time.trim()) : false;
-}
+export var validZuluTimeType = (time) => time ? ZuluRegex.test(time.trim()) : false;
 
 
 /**

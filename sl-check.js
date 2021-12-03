@@ -61,9 +61,7 @@ const EXTENSION_LOCATION_SERVICE_LIST_REGISTRY=101,
  * @param {String} identifier  The service identifier
  * @returns {boolean} true if the service identifier complies with the specification otherwise false
  */ 
-function validServiceIdentifier(identifier) {
-	return isTAGURI(identifier);
-}
+let validServiceIdentifier = (identifier) => isTAGURI(identifier);
 
 /** 
  * determines if the identifer provided is unique against a list of known identifiers
@@ -72,9 +70,7 @@ function validServiceIdentifier(identifier) {
  * @param {Array}  identifiers The list of known service identifiers
  * @returns {boolean} true if the service identifier is unique otherwise false
  */
-function uniqueServiceIdentifier(identifier, identifiers) {
-	return !isIn(identifiers, identifier);
-}
+let uniqueServiceIdentifier = (identifier, identifiers) => !isIn(identifiers, identifier);
 
 /** 
  * determines if the identifer provided refers to a valid application being used with the service
@@ -82,9 +78,7 @@ function uniqueServiceIdentifier(identifier, identifiers) {
  * @param {String} hrefType  The type of the service application
  * @returns {boolean} true if this is a valid application being used with the service else false
  */
-function validServiceControlApplication(hrefType) {
-	return [dvbi.APP_IN_PARALLEL, dvbi.APP_IN_CONTROL].includes(hrefType);
-}
+let validServiceControlApplication = (hrefType) => [dvbi.APP_IN_PARALLEL, dvbi.APP_IN_CONTROL].includes(hrefType);
 
 /** 
  * determines if the identifer provided refers to a valid application to be launched when a service is unavailable
@@ -92,9 +86,7 @@ function validServiceControlApplication(hrefType) {
  * @param {String} hrefType  The type of the service application
  * @returns {boolean} true if this is a valid application to be launched when a service is unavailable else false
  */
-function validServiceUnavailableApplication(hrefType) {
-	return hrefType==dvbi.APP_OUTSIDE_AVAILABILITY;
-}
+let validServiceUnavailableApplication = (hrefType) => hrefType==dvbi.APP_OUTSIDE_AVAILABILITY;
 
 /** 
  * determines if the identifer provided refers to a valid DASH media type (single MPD or MPD playlist)
@@ -103,10 +95,7 @@ function validServiceUnavailableApplication(hrefType) {
  * @param {String} contentType  The contentType for the file
  * @returns {boolean} true if this is a valid MPD or playlist identifier
  */
-function validDASHcontentType(contentType) {
-	return [dvbi.CONTENT_TYPE_DASH_MPD, dvbi.CONTENT_TYPE_DVB_PLAYLIST].includes(contentType);
-}
-
+let validDASHcontentType = (contentType) => [dvbi.CONTENT_TYPE_DASH_MPD, dvbi.CONTENT_TYPE_DVB_PLAYLIST].includes(contentType);
 
 /**
  * Add an error message an incorrect country code is specified in transmission parameters
@@ -115,9 +104,7 @@ function validDASHcontentType(contentType) {
  * @param {String} src      The transmission mechanism
  * @param {String} loc      The location of the element
  */
-function InvalidCountryCode(value, src, loc) {
-	return `invalid country code ${value.quote()} for ${src} parameters in ${loc}`;
-}
+let  InvalidCountryCode = (value, src, loc) => `invalid country code ${value.quote()} for ${src} parameters in ${loc}`;
 
 
 if (!Array.prototype.forEachSubElement) {
@@ -637,54 +624,6 @@ export default class ServiceListCheck {
 
 
 	/**
-	 * checks that all the @xml:lang values for an element are unique and that only one instace of the element does not contain an xml:lang attribute
-	 *
-	 * @param {String}  SL_SCHEMA        Used when constructing Xpath queries
-	 * @param {String}  SCHEMA_PREFIX    Used when constructing Xpath queries
-	 * @param {String}  elementName      The multilingual XML element to check
-	 * @param {String}  elementLocation  The descriptive location of the element being checked (for reporting)
-	 * @param {XMLnode} node             The XML tree node containing the element being checked
-	 * @param {Object}  errs             The class where errors and warnings relating to the service list processing are stored 
-	 * @param {String}  errCode          The error code to be reported
-	 */
-	/*private*/  /* checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, elementName, elementLocation, node, errs, errCode) {
-		if (!node) {
-			errs.addError({type:APPLICATION, code:"XL000", message:"checkXMLLangs() called with node==null"});
-			return;
-		}
-		const NO_DOCUMENT_LANGUAGE='**'; // this should not be needed as @xml:lang is required in <ServiceList>
-		/**
-		 * Recurse up the XML element hierarchy until we find an element with an @xml:lang attribute or return a ficticouus 
-		 * value of topmost level element does not contain @xml:lang
-		 * @param {Element} node 
-		 */ /*
-		 function ancestorLanguage(node) {
-			if (node.type() != 'element')
-				return NO_DOCUMENT_LANGUAGE;
-
-			if (node.attr(dvbi.a_lang))
-				return (node.attr(dvbi.a_lang).value());
-
-			return ancestorLanguage(node.parent());
-		}
-
-		let elementLanguages=[], i=0, elem;
-		while ((elem=node.get(xPath(SCHEMA_PREFIX, elementName, ++i), SL_SCHEMA))!=null) {
-			let lang=elem.attr(dvbi.a_lang)?elem.attr(dvbi.a_lang).value():ancestorLanguage(elem.parent());
-			if (isIn(elementLanguages, lang)) 
-				errs.addError({code:`${errCode}-1`, 
-					message:`${lang==NO_DOCUMENT_LANGUAGE?"default language":`xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} for ${elementLocation}`, 
-					fragment:elem, key:"duplicate @xml:lang"});
-			else elementLanguages.push(lang);
-
-			//if lang is specified, validate the format and value of the attribute against BCP47 (RFC 5646)
-			if (lang!=NO_DOCUMENT_LANGUAGE) 
-				checkLanguage(this.knownLanguages, lang, `xml:lang in ${elementName}`, elem, errs, `${errCode}-2`);
-		}
-	} */
-
-
-	/**
 	 * Add an error message for missing <xxxDeliveryParameters>
 	 *
 	 * @param {String}  source     The missing source type
@@ -828,19 +767,16 @@ export default class ServiceListCheck {
 	 */
 	/*private*/  ValidateSynopsisType(SCHEMA, SCHEMA_PREFIX, Element, ElementName, requiredLengths, optionalLengths, parentLanguage, errs, errCode) {
 
-		function synopsisLengthError(elem, label, length) {
-			return `length of ${elementize(`${tva.a_length.attribute(elem)}=${label.quote()}`)} exceeds ${length} characters`; }
-		function synopsisToShortError(elem, label, length) {
-			return `length of ${elementize(`${tva.a_length.attribute(elem)}=${label.quote()}`)} is less than ${length} characters`; }
-		function singleLengthLangError(elem, length, lang) {
-			return `only a single ${elem.elementize()} is permitted per length (${length}) and language (${lang})`; }
-		function requiredSynopsisError(elem, length) {
-			return `a ${elem.elementize()} element with ${tva.a_length.attribute()}=${quote(length)} is required`; }
-
 		if (!Element) {
 			errs.addError({type:APPLICATION, code:"SY000", message:"ValidateSynopsisType() called with Element==null"});
 			return;
 		}
+
+		let synopsisLengthError = (elem, label, length) => `length of ${elementize(`${tva.a_length.attribute(elem)}=${label.quote()}`)} exceeds ${length} characters`; 
+		let synopsisToShortError = (elem, label, length) => `length of ${elementize(`${tva.a_length.attribute(elem)}=${label.quote()}`)} is less than ${length} characters`; 
+		let singleLengthLangError = (elem, length, lang) => `only a single ${elem.elementize()} is permitted per length (${length}) and language (${lang})`; 
+		let requiredSynopsisError = (elem, length) => `a ${elem.elementize()} element with ${tva.a_length.attribute()}=${quote(length)} is required`; 
+
 		let s=0, ste, hasBrief=false, hasShort=false, hasMedium=false, hasLong=false, hasExtended=false;
 		let briefLangs=[], shortLangs=[], mediumLangs=[], longLangs=[], extendedLangs=[];
 		let ERROR_KEY="synopsis";

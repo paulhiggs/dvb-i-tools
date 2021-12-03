@@ -10,9 +10,7 @@ const allowedImageTypes=[JPEG_MIME, PNG_MIME, WebP_MIME];
  * @param {String} val the MIME type
  * @return {boolean} true if the MIME type represents a JPEG image, otherwise false
  */
-export function isJPEGmime(val) { 
-	return val ? val==JPEG_MIME : false;
-}
+export var isJPEGmime = (val) => val ? val==JPEG_MIME : false;
 
 
 /**
@@ -21,9 +19,7 @@ export function isJPEGmime(val) {
  * @param {String} val the MIME type
  * @return {boolean} true if the MIME type represents a PNG image, otherwise false
  */
-export function isPNGmime(val) { 
-	return val ? val==PNG_MIME : false;
-}
+export var isPNGmime = (val) => val ? val==PNG_MIME : false;
 
 
 /** BUG2937 - https://bugzilla.dvb.org/show_bug.cgi?id=2937
@@ -32,10 +28,6 @@ export function isPNGmime(val) {
  * @param {String} val the MIME type
  * @return {boolean} true if the MIME type represents a WebP image, otherwise false
  */
-export function isWebPmime(val) { 
-	return val ? val==WebP_MIME : false;
-}
+export let isWebPmime = (val) => val ? val==WebP_MIME : false;
 
-export function isAllowedImageMime(val) {
-	return val ? allowedImageTypes.includes(val) : false;
-}
+export let  isAllowedImageMime = (val) => val ? allowedImageTypes.includes(val) : false;
