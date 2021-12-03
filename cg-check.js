@@ -2118,7 +2118,7 @@ export default class ContentGuideCheck {
 		this.checkTAGUri(OnDemandProgram, errs, "OD007");	
 		
 		// <Program>
-		let Program=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_Program, CG_SCHEMA));
+		let Program=OnDemandProgram.get(xPath(SCHEMA_PREFIX, tva.e_Program), CG_SCHEMA);
 		if (Program) {
 			checkAttributes(Program, [tva.a_crid], [], tvaEA.Program, errs, "OD012");
 			if (Program.attr(tva.a_crid)) {

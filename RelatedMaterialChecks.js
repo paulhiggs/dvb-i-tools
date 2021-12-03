@@ -41,7 +41,7 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, location, l
 	checkTopElementsAndCardinality(RelatedMaterial, 
 		[{name:tva.e_HowRelated},
 		 {name:tva.e_MediaLocator, maxOccurs:Infinity}],
-		tvaEC.RelatedMaterial, errs, "PS001");
+		tvaEC.RelatedMaterial, false, errs, "PS001");
 	checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "PS002");
 
 	if (HowRelated.attr(tva.a_href)) {
@@ -72,7 +72,7 @@ export function  checkValidLogo(MediaLocator, RelatedMaterial, errs, location, l
 		return;
 	
 	if (MediaLocator) {
-		checkTopElementsAndCardinality(MediaLocator, [{name:tva.e_MediaLocator}], tvaEC.MediaLocator, errs, "VL020");
+		checkTopElementsAndCardinality(MediaLocator, [{name:tva.e_MediaUri}], tvaEC.MediaLocator, false, errs, "VL020");
 
 		if (languageValidator && MediaLocator.attr(dvbi.a_contentLanguage)) 
 			checkLanguage(languageValidator, MediaLocator.attr(dvbi.a_contentLanguage).value(), location, MediaLocator, errs, "VL021");
