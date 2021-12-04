@@ -97,18 +97,6 @@ export default class SLEPR {
 
 	/* private */ checkQuery(req) {
 
-		/**
-		 * checks the possible values used in the &Delivery query parameter
-		 * @param {string} DeliverySystem the query value provided
-		 * @returns {Boolean} true if DeliverySystem is valid, otherwise false
-		 */
-		let isValidDelivery = (DeliverySystem) =>[DVB_DASH_DELIVERY, DVB_T_DELIVERY, DVB_S_DELIVERY, DVB_C_DELIVERY, 
-				DVB_IPTV_DELIVERY, DVB_APPLICATION_DELIVERY].includes(DeliverySystem);
-    
-		/* function isProvider(provider) {
-			return true;
-		} */
-
 		req.parseErr=[];
 
 		if (req.query) {
@@ -155,7 +143,7 @@ export default class SLEPR {
 			checkIt(req.query.Language, dvbi.e_Language, checkLanguage);
 
 			//DeliverySystems(s)
-			var checkDelivery = (system) => isValidDelivery(system);
+			var checkDelivery = (system) => [DVB_DASH_DELIVERY, DVB_T_DELIVERY, DVB_S_DELIVERY, DVB_C_DELIVERY, DVB_IPTV_DELIVERY, DVB_APPLICATION_DELIVERY].includes(system);
 			checkIt(req.query.Delivery, dvbi.e_Delivery, checkDelivery);
 
 			// Genre(s)
@@ -163,22 +151,10 @@ export default class SLEPR {
 			checkIt(req.query.Genre, dvbi.e_Genre, checkGenre);
 
 
-/* value space of this argument is not checked 
+/* value space of this argument is not checked
 			//Provider Name(s)
-			if (req.query.ProviderName) {
-				if (typeof req.query.ProviderName=="string" || req.query.ProviderName instanceof String) {
-					if (!isProvider(req.query.ProviderName)) 
-						req.parseErr.push(`invalid provider [${req.query.ProviderName}]`);
-				}	
-				else if (Array.isArray(req.query.ProviderName)) {
-					req.query.ProviderName.forEach(provider => {
-						if (!isProvider(provider))
-							req.parseErr.push(`invalid provider [${provider}]`);
-					});
-				}
-				else 
-					req.parseErr.push(`invalid type [${typeof(req.query.ProviderName)}] for provider`);
-			}			
+			var checkProvider = (provider) => true;
+			checkIt(req.query.ProviderName, dvbi.e_ProviderName, checkProvider) 
 */
 		}	
 		return req.parseErr.length==0;
