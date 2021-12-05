@@ -28,14 +28,15 @@ import IANAlanguages from "./IANAlanguages.js";
 import { checkValidLogo } from "./RelatedMaterialChecks.js";
 import { sl_InvalidHrefValue } from "./CommonErrors.js";
 
-import { checkLanguage, checkXMLLangs } from "./MultilingualElement.js";
+import { checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
 
 /* TODO:
 
  - also look for TODO in the code itself
 */
 
-const ANY_NAMESPACE="$%$!!", DEFAULT_SUBSCRIPTION_OPAQUE_NAME="-D_E_F_A_U_L_T-P_A_C_K_A_G_E-N_A_M_E-";
+const ANY_NAMESPACE="$%$!!";
+const LCN_TABLE_NO_TARGETREGION='unspecifiedRegion', LCN_TABLE_NO_SUBSCRIPTION='unspecifiedPackage';
 
 const SERVICE_LIST_RM="service list";
 const SERVICE_RM="service";
@@ -1455,36 +1456,58 @@ export default class ServiceListCheck {
 		// check <ServiceList><LCNTableList>
 		let LCNtableList=SL.get("//"+xPath(SCHEMA_PREFIX, dvbi.e_LCNTableList), SL_SCHEMA);
 		if (LCNtableList) {
-			let l=0, LCNTable, subscriptionPackages=[];
+			let l=0, LCNTable, tableQualifiers=[];
 			while ((LCNTable=LCNtableList.get(xPath(SCHEMA_PREFIX, dvbi.e_LCNTable, ++l), SL_SCHEMA))!=null) {
 				// <LCNTable><TargetRegion>
-				let tr=0, TargetRegion, lastTargetRegion="";
+				let tr=0, TargetRegion, TargetRegions=[];
 				while ((TargetRegion=LCNTable.get(xPath(SCHEMA_PREFIX, dvbi.e_TargetRegion, ++tr), SL_SCHEMA))!=null) {
 					if (!isIn(knownRegionIDs, TargetRegion.text())) 
-						errs.addError({code:"SL240", message:`${dvbi.e_TargetRegion.elementize()} ${TargetRegion.text()} in ${dvbi.e_LCNTable.elementize()} is not defined`, 
+						errs.addError({code:"SL241", message:`${dvbi.e_TargetRegion.elementize()} ${TargetRegion.text()} in ${dvbi.e_LCNTable.elementize()} is not defined`, 
 										fragment:TargetRegion, key:"undefined region"});
-					lastTargetRegion=TargetRegion.text();
-				}
+					if (TargetRegions.includes(TargetRegion.text()))
+						errs.addError({code:"SL242", message:`respecification of ${dvbi.e_TargetRegion.elementize()}=${TargetRegion.text()}`,
+								fragment:TargetRegion, key:'duplicate region'});
+					else TargetRegions.push(TargetRegion.text());
+				} 
 				
 				// <LCNTable><SubscriptionPackage>
-				// checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, dvbi.e_LCNTable, LCNTable, errs, "SL250", this.knownLanguages);
-
-	/*			// start Bug2938
-				let sp=0, SubscriptionPackage, hasPackage=false;
+				let sp=0, SubscriptionPackage, SubscriptionPackages=[];
 				while ((SubscriptionPackage=LCNTable.get(xPath(SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ++sp), SL_SCHEMA))!=null) {
-					hasPackage=true;
-					if (subscriptionPackages.includes(SubscriptionPackage.text())) 
-						errs.addError({code:"SL251", message:`duplicated ${dvbi.e_SubscriptionPackage.elementize()}`, 
+					let packageLanguage=null;
+					if (SubscriptionPackage.attr(tva.a_lang)) {
+						packageLanguage=SubscriptionPackage.attr(tva.a_lang).value();
+						checkLanguage(this.knownLanguages, packageLanguage, `${dvbi.e_SubscriptionPackage} in ${dvbi.e_LCNTable}`,
+							SubscriptionPackage, errs, "SL245");
+					}
+					else if (this.SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v4) {
+						packageLanguage=GetNodeLanguage(SubscriptionPackage, false, errs, "SL246", null); // with false and null, no errors should be logged
+					}
+					let localSubscriptionPackage=`${packageLanguage?`(${packageLanguage})`:""}${SubscriptionPackage.text()}`;
+					if (SubscriptionPackages.includes(localSubscriptionPackage)) 
+						errs.addError({code:"SL247", message:`duplicated ${dvbi.e_SubscriptionPackage.elementize()}`, 
 										fragment:SubscriptionPackage, key:'duplicate package name'});
-					else subscriptionPackages.push(SubscriptionPackage.text());
+					else SubscriptionPackages.push(localSubscriptionPackage);
 				}
-				if (!hasPackage) {
-					if (subscriptionPackages.includes(DEFAULT_SUBSCRIPTION_OPAQUE_NAME))
-						errs.addError({code:"SL252", message:`a default ${dvbi.e_LCNTable.elementize()} (one without ${dvbi.e_SubscriptionPackage.elementize()}) is already defined`,
-										fragment:LCNTable, key:'ambiguous package name');
-					else subscriptionPackages.push(DEFAULT_SUBSCRIPTION_OPAQUE_NAME);
-				}
-	*/			// end Bug2938
+
+				if (TargetRegions.length==0) TargetRegions.push(LCN_TABLE_NO_TARGETREGION);
+				if (SubscriptionPackages==0) SubscriptionPackages.push(LCN_TABLE_NO_SUBSCRIPTION);
+
+/* jshint -W083*/
+				TargetRegions.forEach( region => {
+					let displayRegion=(region==LCN_TABLE_NO_TARGETREGION) ? `unspecified ${dvbi.e_TargetRegion.elementize()}` : `${dvbi.e_TargetRegion.elementize()}="${region}"`;
+					SubscriptionPackages.forEach( sPackage => {
+						let key=`${region}::${sPackage}`,
+							displayPackage=(sPackage==LCN_TABLE_NO_SUBSCRIPTION) ? `unspecified ${dvbi.e_SubscriptionPackage.elementize()}` : `${dvbi.e_SubscriptionPackage.elementize()}="${sPackage}"`;
+						if (tableQualifiers.includes(key))
+							errs.addError({code:"SL251", message:`combination of ${displayRegion} and ${displayPackage} already used`,
+									key:'reused region/package', line:LCNTable.line()});
+						else tableQualifiers.push(key);
+					});
+				});
+/* jshint +W083*/
+
+				tableQualifiers.forEach(q => console.log(`qual=${q}`));
+
 
 				// <LCNTable><LCN>
 				let LCNNumbers=[], e=0, LCN;
@@ -1494,7 +1517,7 @@ export default class ServiceListCheck {
 						let _chanNum=LCN.attr(dvbi.a_channelNumber).value();
 
 						if (isIn(LCNNumbers, _chanNum)) 
-							errs.addError({code:"SL262", message:`duplicated channel number ${_chanNum} for ${dvbi.e_TargetRegion.elementize()} ${lastTargetRegion}`, 
+							errs.addError({code:"SL262", message:`duplicated channel number ${_chanNum} for ${dvbi.e_LCNTable.elementize()}`, 
 											key:"duplicate channel number", fragment:LCN});
 						else LCNNumbers.push(_chanNum);
 					}
