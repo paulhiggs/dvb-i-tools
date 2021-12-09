@@ -168,9 +168,7 @@ export default class ErrorList {
 			}
 			if (e.reportInTable)
 				this.insertErrorData(e.type, e.key, newError);
-
 		}
-
 	}
 	
 	numErrors() { return this.errors.length; }
