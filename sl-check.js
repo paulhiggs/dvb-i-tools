@@ -1506,9 +1506,6 @@ export default class ServiceListCheck {
 				});
 /* jshint +W083*/
 
-				tableQualifiers.forEach(q => console.log(`qual=${q}`));
-
-
 				// <LCNTable><LCN>
 				let LCNNumbers=[], e=0, LCN;
 				while ((LCN=LCNTable.get(xPath(SCHEMA_PREFIX, dvbi.e_LCN, ++e), SL_SCHEMA))!=null) {
