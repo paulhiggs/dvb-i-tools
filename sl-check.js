@@ -1087,7 +1087,7 @@ export default class ServiceListCheck {
 			if (v1Params && this.SchemaVersion(SCHEMA_NAMESPACE)>=SCHEMA_v2)
 				errs.addError({type:WARNING, code:"SI160", 
 								message:`${dvbi.e_SourceType.elementize()} is deprecated in this version (service ${thisServiceId.quote()})`, 
-								fragment:ServiceInstance, line:SourceType.line(), key:'deprecated feature'});
+								fragment:SourceType, key:'deprecated feature'});
 		}
 		else {
 			if (this.SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1) 
