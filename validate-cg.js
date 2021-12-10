@@ -18,14 +18,6 @@ import { createServer } from "https";
 // command line arguments - https://github.com/75lb/command-line-args
 import commandLineArgs from 'command-line-args';
 
-// fetch API for node - https://www.npmjs.com/package/node-fetch
-import fetch from 'node-fetch';
-import { handleErrors } from "./fetch-err-handler.js";
-
-import { drawCGForm } from './ui.js';
-
-import ErrorList from "./ErrorList.js";
-
 import { IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data-locations.js";
 
 import { HTTPPort } from "./globals.js";
@@ -35,69 +27,7 @@ import { isEmpty, readmyfile } from './utils.js';
 import ContentGuideCheck from './cg-check.js';
 var cgcheck=null;
 
-
-/**
- * Process the content guide specificed for errors and display them
- *
- * @param {Object} req The request from Express
- * @param {Object} res The HTTP response to be sent to the client
- */ 
-function processQuery(req, res) {
-	if (isEmpty(req.query)) {
-		drawCGForm(true, cgcheck.supportedRequests, res);
-		res.end();
-	}  
-    else if (req && req.query && req.query.CGurl) {
-		fetch(req.query.CGurl)
-			.then(handleErrors)
-			.then(function (response) {return response.text();})
-			.then(function (res) {return cgcheck.validateContentGuide(res, req.body.requestType);})
-			.then(function (errs) {return drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, null, errs);})
-			.then(function (res) {res.end();})
-			.catch(function (error) {
-				console.log(error);
-				drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, `error (${error}) handling ${req.query.CGurl}`);
-				res.status(400);
-				res.end();
-			});
-	}
-	else {
-		drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, "URL not specified");
-		res.status(400);
-		res.end();
-	}
-}
-
-
-/**
- * Process the content guide specificed by a file name for errors and display them
- *
- * @param {Object} req The request from Express
- * @param {Object} res The HTTP response to be sent to the client
- */ 
-function processFile(req, res) {
-	if (isEmpty(req.query)) 
-		drawCGForm(false, cgcheck.supportedRequests, res);    
-	else if (req && req.files && req.files.CGfile) {
-		let CGxml=null, errs=new ErrorList(), fname="***";
-		if (req && req.files && req.files.CGfile) fname=req.files.CGfile.name;
-		try {
-			CGxml=req.files.CGfile.data;
-		}
-		catch (err) {
-			errs.addError({code:"PF001", message:`retrieval of FILE ${fname} failed`});
-		}
-		if (CGxml) {
-			cgcheck.doValidateContentGuide(CGxml.toString(), req.body.requestType, errs);
-		}
-		drawCGForm(false, res, fname, req.body.requestType, null, errs);
-	}
-	else {
-		drawCGForm(false, cgcheck.supportedRequests, cgcheck.supportedRequests, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
-		res.status(400);
-	}
-	res.end();
-}
+import { DVB_I_check, MODE_SL, MODE_CG, MODE_FILE, MODE_URL } from './Validator.js';
 
 
 // command line options
@@ -153,28 +83,41 @@ app.use(fileUpload());
 // initialize Express
 app.use(express.urlencoded({ extended: true }));
 
+app.set('trust proxy', 1);
+import session from 'express-session';
+app.use(session({
+	secret:'keyboard car',
+	resave: false,
+	saveUninitialized: true,
+	cookie: { maxAge:60000}
+}));
+
 app.use(favicon(join('phlib', 'ph-icon.ico')));
 
 // handle HTTP POST requests to /check
 app.post("/check", function(req, res) {
-	req.query.CGurl=req.body.CGurl;
-	processQuery(req, res);
+	//req.query.CGurl=req.body.CGurl;
+	//processQuery(req, res);
+	DVB_I_check(false, req, res, null, cgcheck, false, true, MODE_CG, MODE_URL);
 });
 
 // handle HTTP GET requests to /check
 app.get("/check", function(req, res) {
-	processQuery(req, res);
+	//processQuery(req, res);
+	DVB_I_check(false, req, res, null, cgcheck, false, true, MODE_CG, MODE_URL);
 });
 
 // handle HTTP POST requests to /checkFile
 app.post("/checkFile", function(req, res) {
-	req.query.CGfile=req.body.CGfile;
-	processFile(req, res);
+	//req.query.CGfile=req.body.CGfile;
+	//processFile(req, res);
+	DVB_I_check(false, req, res, null, cgcheck, false, true, MODE_CG, MODE_FILE);
 });
 
 // handle HTTP GET requests to /checkFile
 app.get("/checkFile", function(req, res) {
-	processFile(req, res);
+	//processFile(req, res);
+	DVB_I_check(false, req, res, null, cgcheck, false, true, MODE_CG, MODE_FILE);
 });
 
 // dont handle any other requests

@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools",
-	"version": "0.4.0",
+	"version": "0.5.0",
 	"description": "DVB-I V&V Tools",
 	"main": "all-in-one.js",
 	"type": "module",
@@ -15,10 +15,12 @@
 		"cors": "^2.8.5",
 		"express": "4.x",
 		"express-fileupload": "^1.2.1",
+		"express-session": "^1.17.2",
 		"libxmljs2": "^0.29.0",
 		"morgan": "^1.10.0",
 		"node-fetch": "^3.0.0",
 		"serve-favicon": "^2.5.0",
+		"sync-fetch": "^0.3.1",
 		"xml-formatter": "^2.5.1"
 	},
 	"engines": {

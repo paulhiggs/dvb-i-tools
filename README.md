@@ -145,12 +145,7 @@ Implements csr.js, validate-cg.js and validate-sl.js in a single node
 Same as for the individual applications
 
 ### Use
-#### URL based validation  
-&lt;server&gt;/checkSL gives a basic/primitive UI. Enter the URL to your service list and press "Submit" button. Await results!
-&lt;server&gt;/checkCG gives a basic/primitive UI. Enter the URL for a content guide query and the type of query/response from the endpoint. Press "Submit" button and await results!
-#### File based validation
-&lt;server&gt;/checkSLFile gives a basic/primitive UI. Select the service list file and press "Submit" button. Await results!
-&lt;server&gt;/checkCGFile gives a basic/primitive UI. Select the file containing a DVB-I content guide metadata fragment and the type of response from the endpoint. Press "Submit" button and await results!
+&lt;server&gt;/check gives a basic/primitive UI. Select the valildation type (service list or Content Guide) and provide either a URL or local file. Press "Validate!" button. Await results!  
 
 ### Installation
 1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`

@@ -1543,28 +1543,4 @@ export default class ServiceListCheck {
 			resolve(errs);
 		});
 	}
-
-
-	/**
-	 * validate the service list and record any errors
-	 *
-	 * @returns {Array} list of statistics messages
-	 */
-	/*public*/ getStats() {
-		let x=[];
-		x.push(`num allowedGenres=${this.allowedGenres.count()}`);
-		x.push(`num allowedPictureFormats=${this.allowedPictureFormats.count()}`);
-		//this.allowedPictureFormats.values.traverseInOrder((node) => console.log(node.getKey()))
-		x.push(`num allowedServiceTypes=${this.allowedServiceTypes.count()}`);
-		x.push(`num allowedAudioSchemes=${this.allowedAudioSchemes.count()}`);
-		x.push(`num allowedAudioConformancePoints=${this.allowedAudioConformancePoints.count()}`);
-		x.push(`num allowedVideoSchemes=${this.allowedVideoSchemes.count()}`);
-		x.push(`num allowedVideoConformancePoints=${this.allowedVideoConformancePoints.count()}`);
-		x.push(`num AudioPresentationCSvalues=${this.AudioPresentationCSvalues.count()}`);
-		x.push(`num RecordingInfoCSvalues=${this.RecordingInfoCSvalues.count()}`);
-		x.push(`num knownLanguages=${this.knownLanguages.languagesList.length}`);
-		x.push(`num knownCountries=${this.knownCountries.count()}`);
-		return x;
-	}
-
 }

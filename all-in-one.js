@@ -22,27 +22,16 @@ import { createServer } from "https";
 // command line arguments - https://github.com/75lb/command-line-args
 import commandLineArgs from 'command-line-args';
 
-// fetch API for node.js - https://www.npmjs.com/package/node-fetch
-/* jshint -W024*/
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args)); /* jshint +W024*/ 
-import { handleErrors } from "./fetch-err-handler.js";
-
-import { drawSLForm, drawCGForm } from "./ui.js";
-
-import ErrorList from "./ErrorList.js";
-
 import { Default_SLEPR, IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, ISO3166 } from "./data-locations.js";
 
 import { HTTPPort } from "./globals.js";
-import { isEmpty, readmyfile } from "./utils.js";
+import { readmyfile } from "./utils.js";
 
 // the service list validation
 import ServiceListCheck from './sl-check.js';
-var slcheck=null;
 
 // the content guide validation
 import ContentGuideCheck from './cg-check.js';
-var cgcheck=null;
 
 // the service list registrt
 import SLEPR from './slepr.js';
@@ -52,135 +41,7 @@ import IANAlanguages from "./IANAlanguages.js";
 import ISOcountries from "./ISOcountries.js";
 import ClassificationScheme from "./ClassificationScheme.js";
 
-
-/**
- * Process the service list specificed for errors and display them
- *
- * @param {Object} req  The request from Express
- * @param {Object} res  The HTTP response to be sent to the client
- */ 
-function processSLQuery(req, res) {
-	if (isEmpty(req.query)) {
-		drawSLForm(true, res);
-		res.end();
-	}
-	else if (req && req.query && req.query.SLurl) {
-		fetch(req.query.SLurl)
-			.then(handleErrors)
-			.then(response => response.text())
-			.then(res=>slcheck.validateServiceList(res))
-			.then(errs=>drawSLForm(true, res, req.query.SLurl, null, errs))
-			.then(res=>res.end())
-			.catch(error => {
-				console.log(error);
-				console.log(`error (${error}) handling ${req.query.SLurl}`) ;
-				drawSLForm(true, res, req.query.SLurl, `error (${error}) handling ${req.query.SLurl}`, null);
-				res.end();
-			});
-	}
-	else {
-		drawSLForm(true, res, req.query.SLurl, "URL not specified");
-		res.status(400);
-		res.end();
-    }
-}
-
-
-/**
- * Process the service list specificed by a file name for errors and display them
- *
- * @param {Object} req  The request from Express
- * @param {Object} res  The HTTP response to be sent to the client
- */ 
-function processSLFile(req, res) {
-	if (isEmpty(req.query)) 
-		drawSLForm(false, res);    
-	else if (req && req.files && req.files.SLfile) {
-		let SLxml=null;
-		let errs=new ErrorList();
-		try {
-			SLxml=req.files.SLfile.data;
-		}
-		catch (err) {
-			errs.addError({code:"PR101", message:`reading of FILE (${req.files.SLfile.name}) failed`});
-		}
-		if (SLxml)
-			slcheck.doValidateServiceList(SLxml.toString(), errs);
-
-		drawSLForm(false, res, req.files.SLfile.name, null, errs);
-	}
-	else {
-		drawSLForm(false, res, req.files.SLfile.name, "File not specified");
-		res.status(400);
-	}
-	res.end();
-}
-
-
-
-/**
- * Process the content guide specificed for errors and display them
- *
- * @param {Object} req The request from Express
- * @param {Object} res The HTTP response to be sent to the client
- */ 
- function processCGQuery(req, res) {
- 	if (isEmpty(req.query)) {
-		drawCGForm(true, cgcheck.supportedRequests, res);
-		res.end();
-	}
-	else if (req && req.query && req.query.CGurl) {
-		fetch(req.query.CGurl)
-			.then(handleErrors)
-			.then(function (response) {return response?response.text():null;})
-			.then(function (res) {return cgcheck.validateContentGuide(res, req.body.requestType);})
-			.then(function (errs) {return drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, null, errs);})
-			.then(function (res) {res.end();})
-			.catch(function (error) {
-				console.log(error);
-				drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, `error (${error}) handling ${req.query.CGurl}`);
-				res.status(400);
-				res.end();
-			});
-	}
-	else {
-		drawCGForm(true, cgcheck.supportedRequests, res, req.query.CGurl, req.body.requestType, "URL not specified");
-		res.status(400);
-		res.end();
-	}
-}
-
-
-/**
- * Process the content guide specificed by a file name for errors and display them
- *
- * @param {Object} req The request from Express
- * @param {Object} res The HTTP response to be sent to the client
- */ 
-function processCGFile(req, res) {
-	if (isEmpty(req.query)) 
-		drawCGForm(false, cgcheck.supportedRequests, res);    
-	else if (req && req.files && req.files.CGfile) {
-		let CGxml=null, errs=new ErrorList(), fname="***";
-		if (req && req.files && req.files.CGfile) fname=req.files.CGfile.name;
-		try {
-			CGxml=req.files.CGfile.data;
-		}
-		catch (err) {
-			errs.addError({code:"PF001", message:`retrieval of FILE ${fname} failed`});
-		}
-		if (CGxml) 
-			cgcheck.doValidateContentGuide(CGxml.toString(), req.body.requestType, errs);
-		
-		drawCGForm(false, cgcheck.supportedRequests, res, fname, req.body.requestType, null, errs);
-    }
-	else {
-		drawCGForm(false, cgcheck.supportedRequests, res, (req.files && req.files.CGfile)?req.files.CGfile.name:null, req.body.requestType, "File not specified");
-		res.status(400);
-	}
-	res.end();
-}
-
+import { DVB_I_check, MODE_SL, MODE_CG, MODE_FILE, MODE_URL } from './Validator.js';
 
 
 // initialize Express
@@ -221,6 +82,14 @@ app.use(morgan(":remote-addr :protocol :method :url :status :res[content-length]
 
 app.use(express.urlencoded({ extended: true }));
 
+app.set('trust proxy', 1);
+import session from 'express-session';
+app.use(session({
+	secret:'keyboard car',
+	resave: false,
+	saveUninitialized: true,
+	cookie: { maxAge:60000}
+}));
 
 // parse command line options
 const optionDefinitions=[
@@ -257,40 +126,32 @@ isoCountries.loadCountries(options.urls?{url:ISO3166.url}:{file:ISO3166.file});
 
 let hasFunctions=false;
 
+let slcheck=new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoCountries),
+    cgcheck=new ContentGuideCheck(options.urls, knownLanguages, knownGenres);	
+    
+
 if (!options.nosl) {
-	slcheck=new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoCountries);
+	
 	hasFunctions=true;
 
 	// handle HTTP POST requests to /checkSL
 	app.post("/checkSL", function(req, res) {
-		req.query.SLurl=req.body.SLurl;
-		processSLQuery(req, res);
+		DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_SL, MODE_URL);
 	});
 
 	// handle HTTP GET requests to /checkSL
 	app.get("/checkSL", function(req,res) {
-		processSLQuery(req, res);
+		DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_SL, MODE_URL);
 	});
 
 	// handle HTTP POST requests to /checkSLFile
 	app.post("/checkSLFile", function(req,res) {
-		req.query.SLfile=req.body.SLfile;
-		processSLFile(req, res);
+		DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_SL, MODE_FILE);
 	});
 
 	// handle HTTP GET requests to /checkSLFile
 	app.get("/checkSLFile", function(req,res) {
-		processSLFile(req, res);
-	});
-
-	app.get('/SLstats', function(req,res) {
-		res.write("<html><head><title>Service List Verifier (stats)</title></head>");
-		res.write("<body>");
-		slcheck.getStats().forEach(e => {
-			res.write(`${e}<BR/>`);
-		});
-		res.write("</body></html>");
-		res.end();
+		DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_SL, MODE_FILE);
 	});
 }
 
@@ -314,32 +175,37 @@ else if (options.CORSmode=="manual") {
 }
 
 if (!options.nocg) {
-	cgcheck=new ContentGuideCheck(options.urls, knownLanguages, knownGenres);
 	hasFunctions=true;
 
 	// handle HTTP POST requests to /checkCG
 	app.post("/checkCG", function(req, res) {
-		req.query.CGurl=req.body.CGurl;
-		processCGQuery(req, res);
+		DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_CG, MODE_URL);
 	});
 
 	// handle HTTP GET requests to /checkCG
 	app.get("/checkCG", function(req, res) {
-		processCGQuery(req, res);
+		DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_CG, MODE_URL);
 	});
 
 	// handle HTTP POST requests to /checkCGFile
 	app.post("/checkCGFile", function(req, res) {
-		req.query.CGfile=req.body.CGfile;
-		processCGFile(req, res);
+		DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_CG, MODE_FILE);
 	});
 
 	// handle HTTP GET requests to /checkCGFile
 	app.get("/checkCGFile", function(req, res) {
-		processCGFile(req, res);
+		DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_CG, MODE_FILE);
 	});
 }
 
+if (!options.nosl || !options.nocg) {
+	app.get("/check", function (req,res) {
+		DVB_I_check(false, req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
+	});
+	app.post("/check", function (req,res) {
+		DVB_I_check(false, req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
+	});
+}
 
 if (!options.nocsr) {
 	csr=new SLEPR(options.urls, knownLanguages, isoCountries, knownGenres);

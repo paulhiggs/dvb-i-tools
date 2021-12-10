@@ -92,76 +92,45 @@ function tabulateResults(res, error, errs) {
 		res.write("no errors or warnings");
 }
 
-/**
- * constructs HTML output of the errors found in the service list analysis
- *
- * @param {boolean} URLmode    If true ask for a URL to a service list, if false ask for a file
- * @param {Object}  res        The Express result 
- * @param {string}  lastInput  The url of the service list - used to keep the form intact
- * @param {string}  error      a single error message to display on the form, genrrally related to loading the content to validate
- * @param {Object}  errors     the errors and warnings found during the content guide validation
- * @returns {Promise} the output stream (res) for further async processing
- */
-export function drawSLForm (URLmode, res, lastInput=null, error=null, errs=null) {
-	
-	const ENTRY_FORM_URL=`<form method=\"post\"><p><i>URL:</i></p><input type=\"url\" name=\"SLurl\" value=\"${lastInput?lastInput:""}\"><input type=\"submit\" value=\"submit\"></form>`;
-	const ENTRY_FORM_FILE=`<form method=\"post\" encType=\"multipart/form-data\"><p><i>FILE:</i></p><input type=\"file\" name=\"SLfile\" value=\"${lastInput?lastInput:""}\"><input type=\"submit\" value=\"submit\"></form>`;
 
-	res.write(PAGE_TOP('DVB-I Service List Validator'));    
-
-	res.write(URLmode?ENTRY_FORM_URL:ENTRY_FORM_FILE);
-
-	tabulateResults(res, error, errs);
-
-	res.write(PAGE_BOTTOM);
-	
-	return new Promise((resolve, reject) => {
-		resolve(res);
-	});
-}
-
-
-
-/**
- * constructs HTML output of the errors found in the content guide analysis
- *
- * @param {boolean} URLmode   if true ask for a URL to a content guide, if false ask for a file
- * @param {Array}   supportedRequests the content guide request types
- * @param {Object}  res       the Express result 
- * @param {string}  lastInput the url or file name previously used - used to keep the form intact
- * @param {string}  lastType  the previously request type - used to keep the form intact
- * @param {string}  error     a single error message to display on the form, generally related to loading the content to validate
- * @param {ErrorList}  errors    the errors and warnings found during the content guide validation
- */
- export function drawCGForm(URLmode, supportedRequests, res, lastInput=null, lastType=null, error=null, errs=null) {
-	const ENTRY_FORM_URL=`<form method=\"post\"><p><i>URL:</i></p><input type=\"url\" name=\"CGurl\" value=\"${lastInput?lastInput:""}\"/><input type=\"submit\" value=\"submit\"/>`;
-	const ENTRY_FORM_FILE=`<form method=\"post\" encType=\"multipart/form-data\"><p><i>FILE:</i></p><input type=\"file\" name=\"CGfile\" value=\"${lastInput ? lastInput : ""}\"/><input type=\"submit\" value=\"submit\"/>`;
-	const ENTRY_FORM_END="</form>";
-
-	const ENTRY_FORM_REQUEST_TYPE_HEADER="<p><i>REQUEST TYPE:</i></p>";
+export function drawForm(deprecateTo, req, res, modes, supportedRequests, error=null, errs=null) {
 
 	const ENTRY_FORM_REQUEST_TYPE_ID="requestType";
 
-	res.write(PAGE_TOP('DVB-I Content Guide Validator'));
-	res.write(URLmode?ENTRY_FORM_URL:ENTRY_FORM_FILE);
+	res.setHeader('Content-Type','text/html');
+	res.write(PAGE_TOP('DVB-I Validator'));
+	if (deprecateTo)
+		res.write(`<p style="color:orange;">This endpoint is deprecated, use ${deprecateTo} instead</p><br>`);
+	res.write(`
+	<script>
+	function redrawForm() {
+		document.getElementById("entryURL").hidden=!document.getElementById("radURL").checked
+		document.getElementById("entryFile").hidden=!document.getElementById("radFile").checked
+		document.getElementById("entryCGtype").hidden=!document.getElementById("radCG").checked
+	}
+	</script>
+	<form method="post" encType="multipart/form-data">
+		${modes.hasSL?`<input id="radSL" type="radio" name="testtype" value="${modes.sl}" ${req.session.data.mode==modes.sl?"checked":""} onclick="redrawForm()">Service List</input>`:""}
+		${modes.hasCG?`<input id="radCG" type="radio" name="testtype" value="${modes.cg}" ${req.session.data.mode==modes.cg?"checked":""} onclick="redrawForm()">Content Guide</input>`:""}
+		<br><br>
+		<input id="radURL" type="radio" name="doclocation" value="${modes.url}" ${req.session.data.entry==modes.url?"checked":""} onclick="redrawForm()">URL</input>
+		<input id="radFile" type="radio" name="doclocation" value="${modes.file}" ${req.session.data.entry==modes.file?"checked":""} onclick="redrawForm()">File</input>
+		<hr>
+		<div id="entryURL" ${req.session.data.entry==modes.url?"":"hidden"}><p><i>URL:</i><input type="url" name="XMLurl" value="${req.session.data.url?req.session.data.url:""}"></p></div>
+		<div id="entryFile" ${req.session.data.entry==modes.file?"":"hidden"}><p><i>FILE:</i><input type="file" name="XMLfile" value=""></p></div>
+		<div id="entryCGtype" ${req.session.data.mode==modes.cg?"":"hidden"}><p>Query type:</p>`);
 
-	res.write(ENTRY_FORM_REQUEST_TYPE_HEADER);
-
-	if (!lastType) 
-		lastType=supportedRequests[0].value;
-	supportedRequests.forEach(function (choice) {
-		res.write(`<input type=\"radio\" name=${ENTRY_FORM_REQUEST_TYPE_ID.quote()} value=${choice.value.quote()}`);
-		if (lastType==choice.value)
-			res.write(" checked");
-		res.write(`>${choice.label}</input>`);
-	});
-	res.write(ENTRY_FORM_END);
-
+	if (supportedRequests) supportedRequests.forEach(choice => {
+		res.write(`<input type="radio" name=${ENTRY_FORM_REQUEST_TYPE_ID.quote()} value=${choice.value.quote()} ${choice.value==req.session.data.cgmode?"checked":""}>${choice.label}</input>`);
+	});	
+	res.write(`</div>
+		<br><input type="submit" value="Validate!"><br>	
+	</form>
+	`);
 	tabulateResults(res, error, errs);
-
 	res.write(PAGE_BOTTOM);
 
-	return new Promise(function (resolve, reject) {
+	return new Promise((resolve, reject) => {
 		resolve(res);
 	});
 }
