@@ -7,8 +7,7 @@
 import { readFile } from 'fs';
 import { parseXmlString } from 'libxmljs2';
 
-/* jshint -W024 */
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args)); /* jshint +W024 */
+import fetch from 'node-fetch';
 import { handleErrors } from "./fetch-err-handler.js";
 
 import { AvlTree } from '@datastructures-js/binary-search-tree';

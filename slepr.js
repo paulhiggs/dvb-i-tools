@@ -6,8 +6,7 @@ import { readFile } from "fs";
 import { parseXmlString } from 'libxmljs2';
 
 // Fetch() API for node.js- https://www.npmjs.com/package/node-fetch
-/* jshint -W024 */
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args)); /* jshint -W024 */
+import fetch from 'node-fetch';
 import { handleErrors } from "./fetch-err-handler.js";
 
 import { xPath, isIn } from "./utils.js";
