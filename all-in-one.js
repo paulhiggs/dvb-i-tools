@@ -71,11 +71,7 @@ token("parseErr", function getParseErr(req) {
 	return "";
 });
 token("location", function getCheckedLocation(req) {
-	if (req.files && req.files.SLfile) return `[${req.files.SLfile.name}]`;
-	if (req.query && req.query.SLurl) return `[${req.query.SLurl}]`;
-	if (req.files && req.files.CGfile) return `[(${req.body.requestType})${req.files.CGfile.name}]`;
-	if (req.query && req.query.CGurl) return `[(${req.body.requestType})${req.query.CGurl}]`;
-	return "[*]";
+	return `${req.body.testtype}::[${req.body.testtype==MODE_CG?`(${req.body.requestType})`:""}${req.body.doclocation==MODE_FILE?req.files.XMLfile.name:req.body.XMLurl}]`
 });
 
 app.use(morgan(":remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr :location"));
@@ -124,16 +120,15 @@ knownGenres.loadCS(options.urls?
 let isoCountries=new ISOcountries(false, true);
 isoCountries.loadCountries(options.urls?{url:ISO3166.url}:{file:ISO3166.file});
 
-let hasFunctions=false;
-
 let slcheck=new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoCountries),
     cgcheck=new ContentGuideCheck(options.urls, knownLanguages, knownGenres);	
     
+if (options.nocsr && options.nosl && options.nocg) {
+	console.log("nothing to do... exiting");
+	process.exit(1);
+}
 
 if (!options.nosl) {
-	
-	hasFunctions=true;
-
 	// handle HTTP POST requests to /checkSL
 	app.post("/checkSL", function(req, res) {
 		DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_SL, MODE_URL);
@@ -175,8 +170,6 @@ else if (options.CORSmode=="manual") {
 }
 
 if (!options.nocg) {
-	hasFunctions=true;
-
 	// handle HTTP POST requests to /checkCG
 	app.post("/checkCG", function(req, res) {
 		DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_CG, MODE_URL);
@@ -210,7 +203,6 @@ if (!options.nosl || !options.nocg) {
 if (!options.nocsr) {
 	csr=new SLEPR(options.urls, knownLanguages, isoCountries, knownGenres);
 	csr.loadServiceListRegistry(options.CSRfile);
-	hasFunctions=true;
 
 	if (options.CORSmode=="manual") {
 		app.options(SLEPR_query_route, manualCORS); 
@@ -228,11 +220,6 @@ if (!options.nocsr) {
 	app.get(SLEPR_stats_route, function(req, res) {
 		res.status(404).end();
 	});
-}
-
-if (!hasFunctions) {
-	console.log("nothing to do... exiting");
-	process.exit(1);
 }
 
 
