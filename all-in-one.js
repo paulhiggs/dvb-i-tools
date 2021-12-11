@@ -67,11 +67,13 @@ token("agent", function getAgent(req) {
 	return `(${req.headers["user-agent"]})`;
 });
 token("parseErr", function getParseErr(req) {
-	if (req.parseErr && req.parseErr.length>0) return `(query errors=${req.parseErr.length})`;
+	if (req.parseErr) return `(${req.parseErr})`;
 	return "";
 });
 token("location", function getCheckedLocation(req) {
-	return `${req.body.testtype}::[${req.body.testtype==MODE_CG?`(${req.body.requestType})`:""}${req.body.doclocation==MODE_FILE?req.files.XMLfile.name:req.body.XMLurl}]`
+	if (req.body.testtype)
+		return `${req.body.testtype}::[${req.body.testtype==MODE_CG?`(${req.body.requestType})`:""}${req.body.doclocation==MODE_FILE?req.files.XMLfile.name:req.body.XMLurl}]`;
+	return "[*]";
 });
 
 app.use(morgan(":remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr :location"));

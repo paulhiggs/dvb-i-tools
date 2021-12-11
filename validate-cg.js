@@ -21,7 +21,7 @@ import commandLineArgs from 'command-line-args';
 import { IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data-locations.js";
 
 import { HTTPPort } from "./globals.js";
-import { isEmpty, readmyfile } from './utils.js';
+import { readmyfile } from './utils.js';
 
 // the content guide validation
 import ContentGuideCheck from './cg-check.js';
@@ -64,8 +64,8 @@ token("agent", function getAgent(req) {
 	return `(${req.headers["user-agent"]})`;
 });
 token("cgLoc", function getCheckedLocation(req) {
-	if (req.files && req.files.CGfile) return `[${req.files.CGfile.name}]`;
-	if (req.query.CGurl) return `[${req.query.CGurl}]`;
+	if (req.files && req.files.XMLfile) return `[${req.files.XMLfile.name}]`;
+	if (req.query.XMLurl) return `[${req.query.XMLurl}]`;
 	return "[*]";
 });
 
