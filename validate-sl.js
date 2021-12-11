@@ -66,8 +66,8 @@ token("agent", function getAgent(req) {
 	return `(${req.headers["user-agent"]})`;
 });
 token("slLoc", function getCheckedLocation(req) {
-	if (req.files && req.files.SLfile) return `[${req.files.SLfile.name}]`;
-	if (req.query && req.query.SLurl) return `[${req.query.SLurl}]`;
+	if (req.files && req.files.XMLfile) return `[${req.files.XMLfile.name}]`;
+	if (req.query && req.query.XMLurl) return `[${req.query.XMLurl}]`;
 	return "[*]";
 });
 

@@ -27,22 +27,22 @@ export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasS
 		drawForm(deprecationWarning?'/check':null, req, res, FormArguments, cgcheck?cgcheck.supportedRequests:null, null, null);
 	} 
 	else {
-		let formError=null, VVxml=null;
+		let VVxml=null;
+		req.parseErr=null;
 		if (req.body.testtype==MODE_CG && req.body.requestType.length==0) 
-			formError="request type not specified";
+			req.parseErr="request type not specified";
 		else if (req.body.doclocation==MODE_URL && req.body.XMLurl.length==0)
-			formError="URL not specified";
+			req.parseErr="URL not specified";
 		else if (req.body.doclocation==MODE_FILE && !(req.files && req.files.XMLfile))
-			formError="File not provided";
+			req.parseErr="File not provided";
 
-		if (!formError)
+		if (!req.parseErr)
 			switch (req.body.doclocation) {
 				case MODE_URL:
 					let resp=fetchS(req.body.XMLurl);
-					if (resp.ok) {
+					if (resp.ok)
 						VVxml=resp.text();
-					}
-					else formError=`error (error) handling ${req.body.XMLurl}`;
+					else req.parseErr=`error (error) handling ${req.body.XMLurl}`;
 
 					req.session.data.url=req.body.XMLurl;
 					break;
@@ -51,15 +51,15 @@ export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasS
 						VVxml=req.files.XMLfile.data.toString();
 					}
 					catch (err) {
-						formError=`retrieval of FILE ${req.files.XMLfile.name} failed`;
+						req.parseErr=`retrieval of FILE ${req.files.XMLfile.name} failed`;
 					}	
 					req.session.data.url=null;			
 					break;
 				default:
-					formError=`method is not "${MODE_URL}" or "${MODE_FILE}"`;
+					req.parseErr=`method is not "${MODE_URL}" or "${MODE_FILE}"`;
 			}
 		let errs=new ErrorList();
-		if (!formError) 
+		if (!req.parseErr) 
 			switch (req.body.testtype) {
 				case MODE_CG:
 					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs);
@@ -68,7 +68,7 @@ export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasS
 					if (slcheck) slcheck.doValidateServiceList(VVxml, errs);
 					break;
 			}
-	
+
 		req.session.data.mode=req.body.testtype;
 		req.session.data.entry=req.body.doclocation;
 		if (req.body.requestType) req.session.data.cgmode=req.body.requestType;
