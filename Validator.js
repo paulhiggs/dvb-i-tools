@@ -11,9 +11,15 @@ export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasS
 	if (!req.session.data) {
 		// setup defaults
 		req.session.data={};
+		req.session.data.lastUrl="";
 		req.session.data.mode=(mode==MODE_UNSPECIFIED)?(hasSL?MODE_SL:MODE_CG):mode;
 		req.session.data.entry=(linktype==MODE_UNSPECIFIED)?MODE_URL:linktype;
 		if (cgcheck) req.session.data.cgmode=cgcheck.supportedRequests[0].value;
+	}
+	if (req.session.data.lastUrl!=req.url) {
+		req.session.data.mode=(mode==MODE_UNSPECIFIED)?(hasSL?MODE_SL:MODE_CG):mode;
+		req.session.data.entry=(linktype==MODE_UNSPECIFIED)?MODE_URL:linktype;
+		req.session.data.lastUrl=req.url;
 	}
 
 	let FormArguments={cg:MODE_CG, sl:MODE_SL, file:MODE_FILE, url:MODE_URL, hasSL:hasSL, hasCG:hasCG};
