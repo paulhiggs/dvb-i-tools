@@ -39,10 +39,11 @@ export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasS
 		if (!req.parseErr)
 			switch (req.body.doclocation) {
 				case MODE_URL:
+
 					let resp=fetchS(req.body.XMLurl);
 					if (resp.ok)
 						VVxml=resp.text();
-					else req.parseErr=`error (error) handling ${req.body.XMLurl}`;
+					else req.parseErr=`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
 
 					req.session.data.url=req.body.XMLurl;
 					break;
@@ -72,7 +73,7 @@ export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasS
 		req.session.data.mode=req.body.testtype;
 		req.session.data.entry=req.body.doclocation;
 		if (req.body.requestType) req.session.data.cgmode=req.body.requestType;
-		drawForm(deprecationWarning?'/check':null, req, res, FormArguments, cgcheck?cgcheck.supportedRequests:null, formError, errs);
+		drawForm(deprecationWarning?'/check':null, req, res, FormArguments, cgcheck?cgcheck.supportedRequests:null, req.parseErr, errs);
 	} 
 	res.end();
 }
