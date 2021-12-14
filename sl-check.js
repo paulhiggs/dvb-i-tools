@@ -553,7 +553,7 @@ export default class ServiceListCheck {
 					if (this.validServiceListLogo(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
 						MediaLocator.forEach(locator => 
-							checkValidLogo(locator, RelatedMaterial, errs, Location, this.knownLanguages));
+							checkValidLogo(locator, RelatedMaterial, errs, `${errCode}-10`, Location, this.knownLanguages));
 					}
 					else
 						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, `${errCode}-11`);
@@ -568,7 +568,7 @@ export default class ServiceListCheck {
 					     this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE) || this.validServiceBanner(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
 						MediaLocator.forEach(locator =>
-							checkValidLogo(locator, RelatedMaterial, errs, Location, this.knownLanguages));
+							checkValidLogo(locator, RelatedMaterial, errs, `${errCode}-22`, Location, this.knownLanguages));
 					}
 					else if (this.validServiceApplication(HowRelated)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
@@ -576,13 +576,13 @@ export default class ServiceListCheck {
 								this.checkSignalledApplication(locator, errs, Location));
 					}
 					else 
-						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, `${errCode}-22`);
+						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, `${errCode}-23`);
 					break;
 				case CONTENT_GUIDE_RM:
 					if (this.validContentGuideSourceLogo(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
 						MediaLocator.forEach(locator =>
-							checkValidLogo(locator, RelatedMaterial, errs, Location, this.knownLanguages));
+							checkValidLogo(locator, RelatedMaterial, errs, `${errCode}-30`, Location, this.knownLanguages));
 					}
 					else
 						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, `${errCode}-31`);
@@ -1311,7 +1311,6 @@ export default class ServiceListCheck {
 			checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, dvbi.e_SubscriptionPackageList, SubscriptionPackageList, errs, "SL063", this.knownLanguages);
 			let sp=0, SubscriptionPackage;
 			while ((SubscriptionPackage=SubscriptionPackageList.get(xPath(SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ++sp), SL_SCHEMA))!=null) {
-				console.log(`${dvbi.e_SubscriptionPackageList.elementize()}.${dvbi.e_SubscriptionPackage.elementize()}=${SubscriptionPackage}`)
 				let pkg=localizedSubscriptionPackage(SubscriptionPackage);
 				
 				if (!declaredSubscriptionPackages.includes(pkg))

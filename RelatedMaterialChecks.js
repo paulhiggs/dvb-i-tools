@@ -15,11 +15,12 @@ import { isHTTPURL } from "./pattern_checks.js";
  * verifies if the specified RelatedMaterial contains a Promotional Still Image
  *
  * @param {Object} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
- * @param {Object} errs              The class where errors and warnings relating to the serivce list processing are stored 
+ * @param {Object} errs              The class where errors and warnings relating to the serivce list processing are stored
+ * @param {String} errcode			 Error code prefix for reporting
  * @param {string} location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
  * @param {Object} languageValidator
  */
-export function ValidatePromotionalStillImage(RelatedMaterial, errs, location, languageValidator=null) {
+export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, location, languageValidator=null) {
 	
 	if (!RelatedMaterial) {
 		errs.addError({type:APPLICATION, code:"PS000", message:"ValidatePromotionalStillImage() called with RelatedMaterial==null"});
@@ -41,17 +42,17 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, location, l
 	checkTopElementsAndCardinality(RelatedMaterial, 
 		[{name:tva.e_HowRelated},
 		 {name:tva.e_MediaLocator, maxOccurs:Infinity}],
-		tvaEC.RelatedMaterial, false, errs, "PS001");
-	checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "PS002");
+		tvaEC.RelatedMaterial, false, errs, `${errCode}-1`);
+	checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, `${errCode}-2`);
 
 	if (HowRelated.attr(tva.a_href)) {
 		if (HowRelated.attr(tva.a_href).value()!=tva.cs_PromotionalStillImage) 
-			errs.addError({code:"PS010", message:`${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} does not designate a Promotional Still Image`,
+			errs.addError({code:`${errCode}-10`, message:`${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} does not designate a Promotional Still Image`,
 							fragment:HowRelated});
 	}
 	if (MediaLocator.length!=0) 
 		MediaLocator.forEach(ml => {
-			checkValidLogo(ml, RelatedMaterial, errs, location, languageValidator);
+			checkValidLogo(ml, RelatedMaterial, errs, `${errCode}-11`, location, languageValidator);
 		});
 }
 
@@ -63,19 +64,20 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, location, l
  * @param {Object} MediaLocator  The <MediaLocator> subelement (a libxmls ojbect tree) of the <RelatedMaterial> element
  * @param {Object} Element       The <RelatedMaterial> element
  * @param {Object} errs          The class where errors and warnings relating to the service list processing are stored 
+ * @param {String} errCode       Error code prefix for reporting
  * @param {string} location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
  * @param {Object} languageValidator
 */
-export function  checkValidLogo(MediaLocator, RelatedMaterial, errs, location, languageValidator=null) {
+export function  checkValidLogo(MediaLocator, RelatedMaterial, errs, errCode, location, languageValidator=null) {
 
 	if (!MediaLocator)
 		return;
 	
 	if (MediaLocator) {
-		checkTopElementsAndCardinality(MediaLocator, [{name:tva.e_MediaUri}], tvaEC.MediaLocator, false, errs, "VL020");
+		checkTopElementsAndCardinality(MediaLocator, [{name:tva.e_MediaUri}], tvaEC.MediaLocator, false, errs, `${errCode}-1`);
 
 		if (languageValidator && MediaLocator.attr(dvbi.a_contentLanguage)) 
-			checkLanguage(languageValidator, MediaLocator.attr(dvbi.a_contentLanguage).value(), location, MediaLocator, errs, "VL021");
+			checkLanguage(languageValidator, MediaLocator.attr(dvbi.a_contentLanguage).value(), location, MediaLocator, errs, `${errCode}-2`);
 
 		let subElems=MediaLocator.childNodes(), hasMediaURI=false;
 		if (subElems) subElems.forEachSubElement(child => {
@@ -85,18 +87,18 @@ export function  checkValidLogo(MediaLocator, RelatedMaterial, errs, location, l
 				if (child.attr(tva.a_contentType)) {
 					let contentType=child.attr(tva.a_contentType).value();
 					if (!isJPEGmime(contentType) && !isPNGmime(contentType) && !isWebPmime(contentType))
-						errs.addError({code:"VL022", type:WARNING,
+						errs.addError({code:`${errCode}-3`, type:WARNING,
 							message:`non-standard ${tva.a_contentType.attribute()} ${contentType.quote()} specified for ${tva.e_RelatedMaterial.elementize()}${tva.e_MediaLocator.elementize()} in ${location}`, 
 							key:`non-standard ${tva.a_contentType.attribute(tva.e_MediaUri)}`,
 							fragment:child});
 				}
 				if (!isHTTPURL(child.text())) 
-					errs.addError({code:"VL024", message:`invalid URL ${child.text().quote()} specified for ${child.name().elementize()}`, 
+					errs.addError({code:`${errCode}-4`, message:`invalid URL ${child.text().quote()} specified for ${child.name().elementize()}`, 
 									fragment:child, key:"invalid resource URL"});
 			}
 		});
 	}
 	else 
-		errs.addError({code:"VL026", message:`${tva.e_MediaLocator} not specified for ${tva.e_RelatedMaterial.elementize()} in ${location}`,
+		errs.addError({code:`${errCode}-6`, message:`${tva.e_MediaLocator} not specified for ${tva.e_RelatedMaterial.elementize()} in ${location}`,
 				fragment:RelatedMaterial, key:`no ${tva.e_MediaLocator}`});
 }

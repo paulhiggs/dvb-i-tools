@@ -466,11 +466,11 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                errors found in validaton
 	 * @param {string}  errCode             error code prefix to be used in reports
 	 */
-	/* private */  ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, errCode) {
+	/* private */  ValidateRelatedMaterial_ParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, errCode) {
 		// first <ParentalGuidance> element must contain an <mpeg7:MinimumAge> element
 
 		if (!BasicDescription) {
-			errs.addError({type:APPLICATION, code:"PG000", message:"ValidateParentalGuidance() called with BasicDescription=null"});
+			errs.addError({type:APPLICATION, code:"PG000", message:"ValidateRelatedMaterial_ParentalGuidance() called with BasicDescription=null"});
 			return;
 		}
 
@@ -647,16 +647,16 @@ export default class ContentGuideCheck {
 	 * @param {XMLnode} BasicDescription    the element whose children should be checked
 	 * @param {Class}   errs                errors found in validaton
 	 */
-	/* private */  ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs) {
+	/* private */  ValidateRelatedMaterial_PromotionalStillImage(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs) {
 		
 		if (!BasicDescription) {
-			errs.addError({type:APPLICATION, code:"RM000", message:"ValidateRelatedMaterial() called with BasicDescription==null"});
+			errs.addError({type:APPLICATION, code:"RMPSI000", message:"ValidateRelatedMaterial_PromotionalStillImage() called with BasicDescription==null"});
 			return;
 		}	
 		
 		let rm=0, RelatedMaterial;
 		while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) 
-			ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name().elementize(), this.knownLanguages);
+			ValidatePromotionalStillImage(RelatedMaterial, errs, "RMPSI001", BasicDescription.name().elementize(), this.knownLanguages);
 	}
 
 
@@ -669,7 +669,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                errors found in validaton
 	 * @param {string}  Location			The location of the Basic Description element
 	 */
-	/* private */  ValidatePagination(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, Location) {
+	/* private */  ValidateRelatedMaterial_Pagination(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs,  Location) {
 		
 		function checkLinkCounts(errs, elements, label, errCode) {
 			if (elements.length>1) {
@@ -680,7 +680,7 @@ export default class ContentGuideCheck {
 		}	
 
 		if (!BasicDescription) {
-			errs.addError({type:APPLICATION, code:"VP000", message:"ValidatePagination() called with BasicDescription==null"});
+			errs.addError({type:APPLICATION, code:"VP000", message:"ValidateRelatedMaterial_Pagination() called with BasicDescription==null"});
 			return;
 		}
 		let countPaginationFirst=[], countPaginationPrev=[], countPaginationNext=[], countPaginationLast=[];
@@ -759,10 +759,10 @@ export default class ContentGuideCheck {
 			case tva.e_ProgramInformation:
 				let rm=0, RelatedMaterial;
 				while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) 
-					ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name(), this.knownLanguages);
+					ValidatePromotionalStillImage(RelatedMaterial, errs, "RMME001", BasicDescription.name(), this.knownLanguages);
 				break;
 			case tva.e_GroupInformation:
-				this.ValidatePagination(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "More Episodes");
+				this.ValidateRelatedMaterial_Pagination(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "More Episodes");
 				break;
 		}
 	}
@@ -863,12 +863,12 @@ export default class ContentGuideCheck {
 						case dvbi.PAGINATION_PREV_URI:
 						case dvbi.PAGINATION_NEXT_URI:
 						case dvbi.PAGINATION_LAST_URI:
-							// pagination links are allowed, but checked in ValidatePagination()
+							// pagination links are allowed, but checked in ValidateRelatedMaterial_Pagination()
 							hasPagination=true;
 							break;
 						case tva.cs_PromotionalStillImage:  
 							countImage.push(HowRelated);
-							ValidatePromotionalStillImage(RelatedMaterial, errs, BasicDescription.name().elementize(), this.knownLanguages);
+							ValidatePromotionalStillImage(RelatedMaterial, errs, "MB012", BasicDescription.name().elementize(), this.knownLanguages);
 							break;
 						default:
 							cg_InvalidHrefValue(hrHref, HowRelated, tva.e_HowRelated.elementize(), `${tva.e_RelatedMaterial.elementize()} in Box Set List`, errs, "MB011");
@@ -889,7 +889,7 @@ export default class ContentGuideCheck {
 					multiElementError:countImage});
 		
 		if (hasPagination)
-			this.ValidatePagination(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "Box Set List");
+			this.ValidateRelatedMaterial_Pagination(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "Box Set List");
 	}
 
 
@@ -1006,8 +1006,8 @@ export default class ContentGuideCheck {
 						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, "BD011", true);
 						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL], requestType, errs, "BD012");
 						this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD013");
-						this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD014");
-						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs);
+						this.ValidateRelatedMaterial_ParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD014");
+						this.ValidateRelatedMaterial_PromotionalStillImage(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs);
 						break;
 					case CG_REQUEST_PROGRAM:	// 6.10.5.3
 						checkTopElementsAndCardinality(BasicDescription,
@@ -1024,9 +1024,9 @@ export default class ContentGuideCheck {
 						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_LONG_LABEL], requestType, errs, "BD022");
 						this.ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 20, errs, "BD023");
 						this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD024");
-						this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD025");	
+						this.ValidateRelatedMaterial_ParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD025");	
 						this.ValidateCreditsList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs, "BD026");	
-						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs);						
+						this.ValidateRelatedMaterial_PromotionalStillImage(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs);						
 						break;
 					case CG_REQUEST_BS_CONTENTS:  // 6.10.5.4					
 						checkTopElementsAndCardinality(BasicDescription,
@@ -1038,8 +1038,9 @@ export default class ContentGuideCheck {
 							false, errs, "BD030");
 						this.ValidateTitle(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, true, errs, "BD031", true);
 						this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [], [tva.SYNOPSIS_MEDIUM_LABEL], requestType, errs, "BD032");
-						this.ValidateParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD033");
-						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs);
+						this.ValidateRelatedMaterial_ParentalGuidance(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD033");
+						this.ValidateRelatedMaterial_PromotionalStillImage(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs);
+						this.ValidateRelatedMaterial_Pagination(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "Box Set Contents");
 						break;
 					case CG_REQUEST_MORE_EPISODES:
 						checkTopElementsAndCardinality(BasicDescription,
@@ -1080,6 +1081,7 @@ export default class ContentGuideCheck {
 							this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [], requestType, errs, "BD064");
 							this.ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 20, errs, "BD065");
 							this.ValidateRelatedMaterial_BoxSetList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs);
+							this.ValidateRelatedMaterial_PromotionalStillImage(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs);
 						}
 					break;
 					case CG_REQUEST_MORE_EPISODES: 
@@ -1100,7 +1102,8 @@ export default class ContentGuideCheck {
 						if (!isParentGroup)
 							this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_SHORT_LABEL], [], requestType, errs, "BD083");
 						this.ValidateGenre(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs, "BD084");
-						this.ValidateRelatedMaterial(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs);
+						this.ValidateRelatedMaterial_PromotionalStillImage(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs);
+						this.ValidateRelatedMaterial_Pagination(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs, "Box Set Categories");
 						break;
 					default:
 						errs.addError({type:APPLICATION, code:"BD100", message:`ValidateBasicDescription() called with invalid requestType/element (${requestType}/${parentElement.name()})`});
