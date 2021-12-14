@@ -14,7 +14,7 @@
 	<!ENTITY Hex16 "&HexDigit;{1,4}">
 	<!ENTITY Hex8 "&HexDigit;{1,2}">
 ]>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2021x" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2019" targetNamespace="urn:dvb:metadata:servicediscovery:2021x" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2022" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2019" targetNamespace="urn:dvb:metadata:servicediscovery:2022" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<import namespace="urn:tva:metadata:2019" schemaLocation="tva_metadata_3-1.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
 	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
@@ -26,6 +26,7 @@
 			<element name="ProviderName" type="mpeg7:TextualType" maxOccurs="unbounded"/>
 			<element name="RelatedMaterial" type="dvbisd:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="RegionList" type="dvbisd:RegionListType" minOccurs="0"/>
+			<element name="SubscriptionPackageList" type="dvbisd:SubscriptionPackageListType" minOccurs="0"/>
 			<element name="TargetRegion" type="dvbisd:RegionIdRefType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="LCNTableList" type="dvbisd:LCNTableListType" minOccurs="0"/>
 			<choice minOccurs="0">
@@ -366,6 +367,11 @@
 		<simpleContent>
 			<extension base="mpeg7:TextualType"/>
 		</simpleContent>
+	</complexType>
+	<complexType name="SubscriptionPackageListType">
+		<sequence>
+			<element name="SubscriptionPackage" type="dvbisd:SubscriptionPackageType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
 	</complexType>
 	<complexType name="DASHPlaylistType">
 		<sequence>

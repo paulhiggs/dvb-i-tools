@@ -28,7 +28,7 @@ import IANAlanguages from "./IANAlanguages.js";
 import { checkValidLogo } from "./RelatedMaterialChecks.js";
 import { sl_InvalidHrefValue } from "./CommonErrors.js";
 
-import { checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
+import { ancestorLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
 
 /* TODO:
 
@@ -168,6 +168,9 @@ if (!Array.prototype.forEachSubElement) {
 	};
 }
 
+const localizedSubscriptionPackage = (pkg, lang=null) => `${pkg.text()}/lang=${lang?lang:ancestorLanguage(pkg)}`; 
+
+
 export default class ServiceListCheck {
 
 	constructor(useURLs, preloadedLanguageValidator=null, preloadedGenres=null, preloadedCountries=null ) {
@@ -266,40 +269,6 @@ export default class ServiceListCheck {
 		
 		return SCHEMA_unknown;
 	}
-
-
-	/**
-	 * check a language code and log its result
-	 *
-	 * @param {string}  lang      the language to check
-	 * @param {string}  loc       the 'location' of the element containing the language value
-	 * @param {XMLnode} element   the element containing the language value
-	 * @param {Object}  errs      the class where errors and warnings relating to the service list processing are stored 
-	 * @param {String}  errCode   the error code to be reported
-	 */
-	/*private*/ /* checkLanguage(lang, loc, element, errs, errCode) {
-		let validatorResp=this.knownLanguages.isKnown(lang);
-		switch (validatorResp.resp) {
-			case this.knownLanguages.languageUnknown:
-				errs.addError({type:WARNING, code:`${errCode}-1`, 
-								message:`${loc?loc:"language"} value ${lang.quote()} is invalid`, fragment:element, 
-								line:element.line(), key:"invalid language"});
-				break;
-			case this.knownLanguages.languageRedundant:
-				errs.addError({type:WARNING, code:`${errCode}-2`, 
-						message:`${loc?loc:"language"} value ${lang.quote()} is deprecated (use ${validatorResp.pref.quote()} instead)`, 
-						line:element.line(), key:"deprecated language"});
-				break;	
-			case this.knownLanguages.languageNotSpecified:
-				errs.addError({code:`${errCode}-3`, message:`${loc?loc:"language"} value is not provided`, 
-						line:element.line(),key:"unspecified language"});
-				break;
-			case this.knownLanguages.languageInvalidType:
-				errs.addError({code:`${errCode}-4`, message:`language is not a String, its "${typeof(lang)}"`, 
-					line:element.line(), key:"invalid language"});
-				break;
-		}
-	} */
 
 
 	/**
@@ -460,7 +429,7 @@ export default class ServiceListCheck {
 	/*private*/  validServiceBanner(HowRelated, namespace) {
 		// return true if val is a valid CS value Service Banner (A177 5.2.6.x)
 		return this.match([
-			{ver: SCHEMA_v4, val: dvbi.SERVICE_BANNER_v3}
+			{ver: SCHEMA_v4, val: dvbi.SERVICE_BANNER_v4}
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -883,9 +852,10 @@ export default class ServiceListCheck {
 	 * @param {string}  SCHEMA_NAMESPACE      The namespace of XML document 
 	 * @param {XMLnode} ServiceInstance       the service instance element to check
 	 * @param {string}  thisServiceId         the identifier of the service 
+	 * @param {array}   subscriptionPackages  the subscription packages reported in the service list
 	 * @param {Class}   errs                  errors found in validaton
 	 */
-	/*private*/  validateServiceInstance(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, ServiceInstance, thisServiceId, errs) {
+	/*private*/  validateServiceInstance(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, ServiceInstance, thisServiceId, subscriptionPackages, errs) {
 		if (!ServiceInstance) {
 			errs.addError({type:APPLICATION, code:"SI000", key:"validateServiceInstance() called with ServiceInstance==null"});
 			return;
@@ -1010,6 +980,13 @@ export default class ServiceListCheck {
 
 		// <ServiceInstance><SubscriptionPackage>
 		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ServiceInstance.name().elementize(), ServiceInstance, errs, "SI131", this.knownLanguages);
+		let sp=0, SubscriptionPackage;
+		while ((SubscriptionPackage=ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ++sp), SL_SCHEMA))!=null) {
+			let pkg=localizedSubscriptionPackage(SubscriptionPackage);
+			if (!subscriptionPackages.includes(pkg))
+				errs.addError({code:"SI130", message:`${dvbi.e_SubscriptionPackage.elementize()}="${pkg}" is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
+					fragment:SubscriptionPackage, key:`undeclared ${dvbi.e_SubscriptionPackage}`});
+		}
 
 		// <ServiceInstance><FTAContentManagement>
 
@@ -1325,6 +1302,23 @@ export default class ServiceListCheck {
 			if (!isIn(knownRegionIDs, TargetRegion.text())) 
 				this.UnspecifiedTargetRegion(TargetRegion.text(), "service list", errs, "SL060");
 
+
+
+		// check <ServiceList><SubscriptionPackageList>
+		let declaredSubscriptionPackages=[];
+		let SubscriptionPackageList=SL.get(xPath(SCHEMA_PREFIX, dvbi.e_SubscriptionPackageList), SL_SCHEMA);
+		if (SubscriptionPackageList) {
+			checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, dvbi.e_SubscriptionPackageList, SubscriptionPackageList, errs, "SL063", this.knownLanguages);
+			let sp=0, SubscriptionPackage;
+			while ((SubscriptionPackage=SubscriptionPackageList.get(xPath(SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ++sp), SL_SCHEMA))!=null) {
+				console.log(`${dvbi.e_SubscriptionPackageList.elementize()}.${dvbi.e_SubscriptionPackage.elementize()}=${SubscriptionPackage}`)
+				let pkg=localizedSubscriptionPackage(SubscriptionPackage);
+				
+				if (!declaredSubscriptionPackages.includes(pkg))
+					declaredSubscriptionPackages.push(pkg);
+			}
+		}
+
 		// <ServiceList><LCNTableList> is checked below, after the services are enumerated
 
 		//check service list <ContentGuideSourceList>
@@ -1379,7 +1373,7 @@ export default class ServiceListCheck {
 			//check <Service><ServiceInstance>
 			let si=0, ServiceInstance;
 			while ((ServiceInstance=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceInstance, ++si), SL_SCHEMA))!=null)
-				this.validateServiceInstance(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, ServiceInstance, thisServiceId, errs);
+				this.validateServiceInstance(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, ServiceInstance, thisServiceId, declaredSubscriptionPackages, errs);
 
 			//check <Service><TargetRegion>
 			let tr=0, TargetRegion;
@@ -1480,13 +1474,18 @@ export default class ServiceListCheck {
 							SubscriptionPackage, errs, "SL245");
 					}
 					else if (this.SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v4) {
-						packageLanguage=GetNodeLanguage(SubscriptionPackage, false, errs, "SL246", null); // with false and null, no errors should be logged
+						packageLanguage=GetNodeLanguage(SubscriptionPackage, false, errs, "SL246", this.knownLanguages);
 					}
-					let localSubscriptionPackage=`${packageLanguage?`(${packageLanguage})`:""}${SubscriptionPackage.text()}`;
+
+					let localSubscriptionPackage=localizedSubscriptionPackage(SubscriptionPackage, packageLanguage);
 					if (SubscriptionPackages.includes(localSubscriptionPackage)) 
 						errs.addError({code:"SL247", message:`duplicated ${dvbi.e_SubscriptionPackage.elementize()}`, 
 										fragment:SubscriptionPackage, key:'duplicate package name'});
 					else SubscriptionPackages.push(localSubscriptionPackage);
+
+					if (!declaredSubscriptionPackages.includes(localSubscriptionPackage))
+						errs.addError({code:"SL248", message:`${dvbi.e_SubscriptionPackage.elementize()}="${localSubscriptionPackage}" is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
+							fragment:SubscriptionPackage, key:`undeclared ${dvbi.e_SubscriptionPackage}`});
 				}
 
 				if (TargetRegions.length==0) TargetRegions.push(LCN_TABLE_NO_TARGETREGION);

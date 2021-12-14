@@ -58,7 +58,7 @@ export function checkLanguage(validator, lang, loc, element, errs, errCode) {
  * value of topmost level element does not contain @xml:lang
  * @param {Element} node 
  */
-function ancestorLanguage(node) {
+export function ancestorLanguage(node) {
 	if (node.type() != 'element')
 		return NO_DOCUMENT_LANGUAGE;
 

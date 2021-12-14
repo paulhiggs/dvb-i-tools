@@ -23,7 +23,7 @@ export const dvbi = {
 	A177v1_Namespace: "urn:dvb:metadata:servicediscovery:2019",
 	A177v2_Namespace: "urn:dvb:metadata:servicediscovery:2020",
 	A177v3_Namespace: "urn:dvb:metadata:servicediscovery:2021",
-	A177v4_Namespace: "urn:dvb:metadata:servicediscovery:2021x",
+	A177v4_Namespace: "urn:dvb:metadata:servicediscovery:2022",
 
 	MAX_TITLE_LENGTH: 80,
 	MAX_KEYWORD_LENGTH: 32,
@@ -114,8 +114,10 @@ export const dvbi = {
 	BANNER_CONTENT_FINISHED_v3: `${DVB_RELATED_CS_v3}:1000.2`,	
 	LOGO_SERVICE_LIST_v3: `${DVB_RELATED_CS_v3}:1001.1`,
 	LOGO_SERVICE_v3: `${DVB_RELATED_CS_v3}:1001.2`,
-	SERVICE_BANNER_v3: `${DVB_RELATED_CS_v3}:1001.3`,	// added in A177r3
 	LOGO_CG_PROVIDER_v3: `${DVB_RELATED_CS_v3}:1002.1`,
+
+// A177v3
+	SERVICE_BANNER_v4: `${DVB_RELATED_CS_v3}:1001.3`,	// added in A177r3	
 
 // A177 7.3.2
 	APP_IN_PARALLEL: `${LINKED_APLICATION_CS}:1.1`,
@@ -288,6 +290,7 @@ export const dvbi = {
 	e_ssrc: "ssrc",
 	e_StillPictureFormat: "StillPictureFormat",
 	e_SubscriptionPackage: "SubscriptionPackage",
+	e_SubscriptionPackageList: "SubscriptionPackageList",
 	e_TargetCountry: "TargetCountry",
 	e_TargetRegion: "TargetRegion",
 	e_UnicastRET: "UnicastRET",
