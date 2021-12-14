@@ -121,7 +121,7 @@ export function drawForm(deprecateTo, req, res, modes, supportedRequests, error=
 		<div id="entryCGtype" ${req.session.data.mode==modes.cg?"":"hidden"}><p>Query type:</p>`);
 
 	if (supportedRequests) supportedRequests.forEach(choice => {
-		res.write(`<input type="radio" name=${ENTRY_FORM_REQUEST_TYPE_ID.quote()} value=${choice.value.quote()} ${choice.value==req.session.data.cgmode?"checked":""}>${choice.label}</input>`);
+		res.write(`<input type="radio" name="${ENTRY_FORM_REQUEST_TYPE_ID}" value="${choice.value}" ${choice.value==req.session.data.cgmode?"checked":""}>${choice.label}</input>`);
 	});	
 	res.write(`</div>
 		<br><input type="submit" value="Validate!"><br>	
