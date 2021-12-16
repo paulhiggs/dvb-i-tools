@@ -12,8 +12,7 @@ import ClassificationScheme from "./ClassificationScheme.js";
 
 import { dvbi } from "./DVB-I_definitions.js";
 
-import { tva } from "./TVA_definitions.js";
-import { isJPEGmime, isPNGmime, isWebPmime, isAllowedImageMime } from "./MIME_checks.js";
+import { tva, tvaEA } from "./TVA_definitions.js";
 import { isTAGURI } from "./URI_checks.js";
  
 import { xPath, xPathM, isIn, unEntity } from "./utils.js";
@@ -25,10 +24,11 @@ import { IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject,
 import ISOcountries from "./ISOcountries.js";
 import IANAlanguages from "./IANAlanguages.js";
 
-import { checkValidLogo } from "./RelatedMaterialChecks.js";
+import { checkValidLogos } from "./RelatedMaterialChecks.js";
 import { sl_InvalidHrefValue } from "./CommonErrors.js";
 
 import { ancestorLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
+import { checkAttributes } from "./schema_checks.js";
 
 /* TODO:
 
@@ -107,6 +107,15 @@ let validDASHcontentType = (contentType) => [dvbi.CONTENT_TYPE_DASH_MPD, dvbi.CO
  */
 let  InvalidCountryCode = (value, src, loc) => `invalid country code ${value.quote()} for ${src} parameters in ${loc}`;
 
+/**
+ * Create a label for the optional language and value provided 
+ * @param {XMLnode} pkg 
+ * @param {String} lang 
+ * @returns {String}
+ */
+let localizedSubscriptionPackage = (pkg, lang=null) => `${pkg.text()}/lang=${lang?lang:ancestorLanguage(pkg)}`; 
+
+
 
 if (!Array.prototype.forEachSubElement) {
 	// based on the polyfill at https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach 
@@ -167,8 +176,6 @@ if (!Array.prototype.forEachSubElement) {
 	// 8. return undefined
 	};
 }
-
-const localizedSubscriptionPackage = (pkg, lang=null) => `${pkg.text()}/lang=${lang?lang:ancestorLanguage(pkg)}`; 
 
 
 export default class ServiceListCheck {
@@ -547,16 +554,17 @@ export default class ServiceListCheck {
 			return rc;
 		}
 
+		checkAttributes(HowRelated, [dvbi.a_href], [], tvaEA.HowRelated, errs, `${errCode}-2`);
+
 		if (HowRelated.attr(dvbi.a_href)) {	
 			switch (LocationType) {
 				case SERVICE_LIST_RM:
 					if (this.validServiceListLogo(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
-						MediaLocator.forEach(locator => 
-							checkValidLogo(locator, RelatedMaterial, errs, `${errCode}-10`, Location, this.knownLanguages));
+						checkValidLogos(RelatedMaterial, errs, `${errCode}-10`, Location, this.knownLanguages);
 					}
 					else
-						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, `${errCode}-11`);
+						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-11`));
 					break;
 				case SERVICE_RM:
 				case SERVICE_INSTANCE_RM:
@@ -565,10 +573,14 @@ export default class ServiceListCheck {
 							message:`${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${SCHEMA_NAMESPACE.quote()} in ${Location}`, key:"invalid CS value", fragment:HowRelated});
 					
 					if (this.validOutScheduleHours(HowRelated, SCHEMA_NAMESPACE) || this.validContentFinishedBanner(HowRelated, SCHEMA_NAMESPACE) || 
-					     this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE) || this.validServiceBanner(HowRelated, SCHEMA_NAMESPACE)) {
+					     this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE) || (LocationType==SERVICE_RM && this.validServiceBanner(HowRelated, SCHEMA_NAMESPACE))) {
 						rc=HowRelated.attr(dvbi.a_href).value();
-						MediaLocator.forEach(locator =>
-							checkValidLogo(locator, RelatedMaterial, errs, `${errCode}-22`, Location, this.knownLanguages));
+
+						checkValidLogos(RelatedMaterial, errs, `${errCode}-22`, Location, this.knownLanguages);
+					}
+					else if (LocationType==SERVICE_RM && this.validServiceBanner(HowRelated, SCHEMA_NAMESPACE)) {
+						errs.addError({code:`${errCode}-23`,
+							message:'Service Banner is not permitted in a Service Instance', key:'misplaced image type', fragment:HowRelated});
 					}
 					else if (this.validServiceApplication(HowRelated)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
@@ -576,16 +588,15 @@ export default class ServiceListCheck {
 								this.checkSignalledApplication(locator, errs, Location));
 					}
 					else 
-						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, `${errCode}-23`);
+						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-24`));
 					break;
 				case CONTENT_GUIDE_RM:
 					if (this.validContentGuideSourceLogo(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
-						MediaLocator.forEach(locator =>
-							checkValidLogo(locator, RelatedMaterial, errs, `${errCode}-30`, Location, this.knownLanguages));
+						checkValidLogos(RelatedMaterial, errs, `${errCode}-30`, Location, this.knownLanguages);
 					}
 					else
-						sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, errs, `${errCode}-31`);
+						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-31`));
 					break;
 			}
 		}

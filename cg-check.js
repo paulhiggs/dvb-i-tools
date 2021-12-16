@@ -688,7 +688,7 @@ export default class ContentGuideCheck {
 		while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) {
 			let HowRelated=RelatedMaterial.get(xPath(SCHEMA_PREFIX, tva.e_HowRelated), CG_SCHEMA);
 			if (!HowRelated) 
-				NoChildElement(errs, tva.e_HowRelated.elementize(), RelatedMaterial, Location, "VP001");
+				errs.addError(NoChildElement(tva.e_HowRelated.elementize(), RelatedMaterial, Location, "VP001"));
 			else {	
 				checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "VP002"); 
 				if (HowRelated.attr(tva.a_href))
@@ -794,7 +794,7 @@ export default class ContentGuideCheck {
 		});
 
 		if (!HowRelated) {
-			NoChildElement(errs, tva.e_HowRelated.elementize(), RelatedMaterial, Location, "TA001");
+			errs.addError(NoChildElement(tva.e_HowRelated.elementize(), RelatedMaterial, Location, "TA001"));
 			return;
 		}
 		
@@ -821,10 +821,10 @@ export default class ContentGuideCheck {
 							}
 						});	
 						if (!hasAuxiliaryURI) 
-							NoChildElement(errs, tva.e_AuxiliaryURI.elementize(), MediaLocator, Location, "TA012");
+							errs.addError(NoChildElement(tva.e_AuxiliaryURI.elementize(), MediaLocator, Location, "TA012"));
 					});
 				else 
-					NoChildElement(errs, tva.e_MediaLocator.elementize(), RelatedMaterial, Location, "TA013");
+					errs.addError(NoChildElement(tva.e_MediaLocator.elementize(), RelatedMaterial, Location, "TA013"));
 			}
 		}
 	}
@@ -849,7 +849,7 @@ export default class ContentGuideCheck {
 		while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) {
 			let HowRelated=RelatedMaterial.get(xPath(SCHEMA_PREFIX, tva.e_HowRelated), CG_SCHEMA);
 			if (!HowRelated) 
-				NoChildElement(errs, tva.e_HowRelated.elementize(), RelatedMaterial, null, "MB009");
+				errs.addError(NoChildElement(tva.e_HowRelated.elementize(), RelatedMaterial, null, "MB009"));
 			else {		
 				checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "MB010");
 				if (HowRelated.attr(tva.a_href)) {
@@ -871,7 +871,7 @@ export default class ContentGuideCheck {
 							ValidatePromotionalStillImage(RelatedMaterial, errs, "MB012", BasicDescription.name().elementize(), this.knownLanguages);
 							break;
 						default:
-							cg_InvalidHrefValue(hrHref, HowRelated, tva.e_HowRelated.elementize(), `${tva.e_RelatedMaterial.elementize()} in Box Set List`, errs, "MB011");
+							errs.addError(cg_InvalidHrefValue(hrHref, HowRelated, `${tva.e_RelatedMaterial.elementize()} in Box Set List`, "MB011"));
 					}	
 				}
 			}
@@ -985,7 +985,7 @@ export default class ContentGuideCheck {
 		let isParentGroup=parentElement==categoryGroup;
 		let BasicDescription=parentElement.get(xPath(SCHEMA_PREFIX, tva.e_BasicDescription), CG_SCHEMA);
 		if (!BasicDescription) {
-			NoChildElement(errs, tva.e_BasicDescription.elementize(), parentElement, null, "BD010");
+			errs.addError(NoChildElement(tva.e_BasicDescription.elementize(), parentElement, null, "BD010"));
 			return;
 		}
 

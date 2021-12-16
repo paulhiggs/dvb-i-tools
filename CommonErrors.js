@@ -11,28 +11,39 @@ import { tva } from "./TVA_definitions.js";
  * @param {string} schemaLoctation The location in the schema of the element
  * @param {string} errCode         The error number to show in the log
  */
-export function NoChildElement(errs, missingElement, parentElement, schemaLocation, errCode) {
+export var NoChildElement = (missingElement, parentElement, schemaLocation, errCode) =>
+	({code:errCode, 
+		message:`${missingElement} element not specified for ${parentElement.name().elementize()}${schemaLocation?(" in "+schemaLocation):""}`,
+		line:parentElement.line()});
+/*export function NoChildElement_old(errs, missingElement, parentElement, schemaLocation, errCode) {
 	errs.addError({code:errCode, 
 		message:`${missingElement} element not specified for ${parentElement.name().elementize()}${schemaLocation?(" in "+schemaLocation):""}`,
 		line:parentElement.line()});
-}
+}*/
 
 
 /**
 * Add an error message when the @href contains an invalid value
 *
 * @param {string} value   The invalid value for the href attribute
-* @param {string} src     The element missing the @href
+* @param {XMLnode} element The element containing the @href attribute
 * @param {string} loc     The location of the element
 * @param {Object} errs    Errors buffer
 * @param {string} errCode The error number to show in the log
 */
-export function cg_InvalidHrefValue(value, element, src, loc, errs,  errCode) {
-	errs.addError({code:errCode, message:`invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`, line:element.line()});
-}
+export var cg_InvalidHrefValue = (value, element, loc,  errCode) => 
+	({code:errCode, 
+		message:`invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${element.name().elementize()} in ${loc}`, line:element.line()});
+/* export function cg_InvalidHrefValue_old(value, element, loc, errs,  errCode) {
+	errs.addError({code:errCode, message:`invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${element.name().elementize()} in ${loc}`, line:element.line()});
+} */
 
-export function sl_InvalidHrefValue(value, element, src, loc, errs, errCode) {
+export var sl_InvalidHrefValue = (value, element, src, loc, errCode) =>
+	({code:errCode, fragment:element, line:element.line(),
+		message:`invalid ${dvbi.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`, 
+		key:"invalid href"});
+/*export function sl_InvalidHrefValue(value, element, src, loc, errs, errCode) {
 		errs.addError({code:errCode, fragment:element, line:element.line(),
 			message:`invalid ${dvbi.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`, 
 			key:"invalid href"});
-}
+} */
