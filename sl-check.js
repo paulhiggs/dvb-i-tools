@@ -699,7 +699,7 @@ export default class ServiceListCheck {
 		// ContentGuideSourceType::MoreEpisodesEndpoint - should be a URL
 		let mee=source.get(xPath(SCHEMA_PREFIX, dvbi.e_MoreEpisodesEndpoint), SL_SCHEMA);
 		if (mee && !isHTTPURL(mee.text()))
-			errs.addError(NotURLMessgae(`${errCode}-7`, dvbi.e_MoreEpisodesEndpoint.elementize(), mee));
+			errs.addError(NotURLMessage(`${errCode}-7`, dvbi.e_MoreEpisodesEndpoint.elementize(), mee));
 	}	
 	
 
