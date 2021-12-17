@@ -252,7 +252,7 @@ export default class ContentGuideCheck {
 	}
 
 	/**
-	 * check if the specificed element has the named child elemeny
+	 * check if the specificed element has the named child element
 	 * 
 	 * @param {XMLnode} node            the node to check
 	 * @param {string}  elementName     the name of the child element
@@ -261,7 +261,7 @@ export default class ContentGuideCheck {
 	/* private */  hasElement( node, elementName) {
 		if (!node) return false;
 
-		return node.childNodes().find(c => ( c.type()=="element" && c.name()==elementName) );
+		return node.childNodes().find(c => (c.type()=="element" && c.name()==elementName));
 	}
 
 
@@ -276,10 +276,9 @@ export default class ContentGuideCheck {
 	/* private */  checkTAGUri(elem, errs, errCode) {
 		if (elem && elem.attr(tva.a_serviceIDRef)) {
 			let svcID=elem.attr(tva.a_serviceIDRef).value();
-			if (!isTAGURI(svcID)) {
-				errs.addError({type:WARNING, code:errCode, 
+			if (!isTAGURI(svcID))
+				errs.addError({type:WARNING, code:errCode, key:"invalid tag",
 								message:`${tva.a_serviceIDRef.attribute(elem.name())} ${svcID.quote()} is not a TAG URI`, line:elem.line()});
-			}
 			return svcID;
 		}
 		return "";
@@ -325,21 +324,21 @@ export default class ContentGuideCheck {
 					case tva.SYNOPSIS_SHORT_LABEL:
 						if (_len > tva.SYNOPSIS_SHORT_LENGTH)
 							errs.addError({code:`${errCode}-11`, message:synopsisLengthError(tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_SHORT_LENGTH, _len), 
-											fragment:Synopsis});
+											fragment:Synopsis, tag:'length error'});
 						hasShort=true;
 						break;
 					case tva.SYNOPSIS_MEDIUM_LABEL:
 						if (_len > tva.SYNOPSIS_MEDIUM_LENGTH)
 							errs.addError({code:`${errCode}-12`, 
 											message:synopsisLengthError(tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_MEDIUM_LENGTH, _len), 
-											fragment:Synopsis});
+											fragment:Synopsis, tag:'length error'});
 						hasMedium=true;
 						break;
 					case tva.SYNOPSIS_LONG_LABEL:
 						if (_len > tva.SYNOPSIS_LONG_LENGTH)
 							errs.addError({code:`${errCode}-13`, 
 											message:synopsisLengthError(tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_LONG_LENGTH, _len), 
-											fragment:Synopsis});
+											fragment:Synopsis, tag:'length error'});
 						hasLong=true;
 						break;						
 					}
@@ -347,26 +346,27 @@ export default class ContentGuideCheck {
 				else
 					errs.addError({code:`${errCode}-14`, 
 									message:`${tva.a_length.attribute()}=${synopsisLength.quote()} is not permitted for this request type`, 
-									fragment:Synopsis});
+									fragment:Synopsis, tag:'unexpected length'});
 			}
 		
 			if (synopsisLang && synopsisLength) {
 				switch (synopsisLength) {
 					case tva.SYNOPSIS_SHORT_LABEL:
 						if (isIn(shortLangs, synopsisLang)) 
-							errs.addError({code:`${errCode}-16`, 
-											message:singleLengthLangError(synopsisLength, synopsisLang), 
-											fragment:Synopsis});
+							errs.addError({code:`${errCode}-16`, message:singleLengthLangError(synopsisLength, synopsisLang), 
+									fragment:Synopsis, tag:'duplicted synopsis length'});
 						else shortLangs.push(synopsisLang);
 						break;
 					case tva.SYNOPSIS_MEDIUM_LABEL:
 						if (isIn(mediumLangs, synopsisLang)) 
-							errs.addError({code:`${errCode}-17`, message:singleLengthLangError(synopsisLength, synopsisLang), fragment:Synopsis});
+							errs.addError({code:`${errCode}-17`, message:singleLengthLangError(synopsisLength, synopsisLang), 
+									fragment:Synopsis, tag:'duplicted synopsis length'});
 						else mediumLangs.push(synopsisLang);
 						break;
 					case tva.SYNOPSIS_LONG_LABEL:
 						if (isIn(longLangs, synopsisLang)) 
-							errs.addError({code:`${errCode}-18`, message:singleLengthLangError(synopsisLength, synopsisLang), fragment:Synopsis});
+							errs.addError({code:`${errCode}-18`, message:singleLengthLangError(synopsisLength, synopsisLang), 
+									fragment:Synopsis, tag:'duplicted synopsis length'});
 						else longLangs.push(synopsisLang);
 						break;
 				}
@@ -374,11 +374,11 @@ export default class ContentGuideCheck {
 		}
 		
 		if (isIn(requiredLengths, tva.SYNOPSIS_SHORT_LABEL) && !hasShort)
-			errs.addError({code:`${errCode}-19`, message:requiredSynopsisError(tva.SYNOPSIS_SHORT_LABEL), line:BasicDescription.line()});
+			errs.addError({code:`${errCode}-19`, message:requiredSynopsisError(tva.SYNOPSIS_SHORT_LABEL), line:BasicDescription.line(), tag:'missing synopsis length'});
 		if (isIn(requiredLengths, tva.SYNOPSIS_MEDIUM_LABEL) && !hasMedium)
-			errs.addError({code:`${errCode}-20`, message:requiredSynopsisError(tva.SYNOPSIS_MEDIUM_LABEL), line:BasicDescription.line()});
+			errs.addError({code:`${errCode}-20`, message:requiredSynopsisError(tva.SYNOPSIS_MEDIUM_LABEL), line:BasicDescription.line(), tag:'missing synopsis length'});
 		if (isIn(requiredLengths, tva.SYNOPSIS_LONG_LABEL) && !hasLong)
-			errs.addError({code:`${errCode}-21`, message:requiredSynopsisError(tva.SYNOPSIS_LONG_LABEL), line:BasicDescription.line()});
+			errs.addError({code:`${errCode}-21`, message:requiredSynopsisError(tva.SYNOPSIS_LONG_LABEL), line:BasicDescription.line(), tag:'missing synopsis length'});
 	}
 
 
@@ -412,15 +412,16 @@ export default class ContentGuideCheck {
 			else counts[keywordLang].push(Keyword);	
 
 			if (keywordType!=tva.KEYWORD_TYPE_MAIN && keywordType!=tva.KEYWORD_TYPE_OTHER)
-				errs.addError({code:`${errCode}-11`, 
+				errs.addError({code:`${errCode}-11`, tag:'invalid keyword type',
 								message:`${tva.a_type.attribute()}=${keywordType.quote()} not permitted for ${tva.e_Keyword.elementize()}`, fragment:Keyword});
 			if (unEntity(Keyword.text()).length > dvbi.MAX_KEYWORD_LENGTH)
-				errs.addError({code:`${errCode}-12`, message:`length of ${tva.e_Keyword.elementize()} is greater than ${dvbi.MAX_KEYWORD_LENGTH}`, fragment:Keyword});
+				errs.addError({code:`${errCode}-12`, message:`length of ${tva.e_Keyword.elementize()} is greater than ${dvbi.MAX_KEYWORD_LENGTH}`, 
+								fragment:Keyword, key:'invalid keyword length'});
 		}
 		
 		for (let i in counts) {
 			if (counts[i].length!=0 && counts[i].length>maxKeywords) 
-				errs.addError({code:`${errCode}-13`, 
+				errs.addError({code:`${errCode}-13`, tag:'excess keywords',
 						message:`More than ${maxKeywords} ${tva.e_Keyword.elementize()} element${(maxKeywords>1?"s":"")} specified${(i==DEFAULT_LANGUAGE?"":" for language "+i.quote())}`, 
 						multiElementError:counts[i]});
 		}
@@ -447,12 +448,12 @@ export default class ContentGuideCheck {
 		while ((Genre=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_Genre, ++g), CG_SCHEMA))!=null) {
 			let genreType=Genre.attr(tva.a_type)?Genre.attr(tva.a_type).value():tva.DEFAULT_GENRE_TYPE;
 			if (genreType!=tva.GENRE_TYPE_MAIN)
-				errs.addError({code:`${errCode}-1`, 
+				errs.addError({code:`${errCode}-1`, tag:'disallowed genre type',
 								message:`${tva.a_type.attribute()}=${genreType.quote()} not permitted for ${tva.e_Genre.elementize()}`, fragment:Genre});
 			
 			let genreValue=Genre.attr(tva.a_href)?Genre.attr(tva.a_href).value():"";
 			if (!this.allowedGenres.isIn(genreValue))
-				errs.addError({code:`${errCode}-2`, 
+				errs.addError({code:`${errCode}-2`, tag:'invalid genre',
 								message:`invalid ${tva.a_href.attribute()} value ${genreValue.quote()} for ${tva.e_Genre.elementize()}`, fragment:Genre});
 		}
 	}
@@ -485,31 +486,27 @@ export default class ContentGuideCheck {
 				ParentalGuidance.childNodes().forEachSubElement( pgChild => {
 					switch (pgChild.name()) {
 						case tva.e_MinimumAge:
+							checkAttributes(pgChild, [], [], tvaEA.MinimumAge, errs, `${errCode}-1`);
 							if (countParentalGuidance!=1)
-								errs.addError({code:`${errCode}-1`, 
+								errs.addError({code:`${errCode}-2`, tag:'parental guidance',
 											message:`${tva.e_MinimumAge.elementize()} must be in the first ${tva.e_ParentalGuidance.elementize()} element`, fragment:pgChild});
-
 							break;
 						case tva.e_ParentalRating:
-							if (countParentalGuidance==1)
-								errs.addError({code:`${errCode}-2`, 
-												message:`first ${tva.e_ParentalGuidance.elementize()} element must contain ${elementize("mpeg7:"+tva.e_MinimumAge)}`, fragment:pgChild});
-							
-							
 							checkAttributes(pgChild, [tva.a_href], [], tvaEA.ParentalRating, errs, `${errCode}-3`);
+							if (countParentalGuidance==1)
+								errs.addError({code:`${errCode}-4`, tag:'parental guidance', 
+												message:`first ${tva.e_ParentalGuidance.elementize()} element must contain ${elementize("mpeg7:"+tva.e_MinimumAge)}`, fragment:pgChild});
 							break;		
-						case tva.e_ExplanatoryText:
-							
-							checkAttributes(pgChild, [tva.a_length], [tva.a_lang], tvaEA.ExplanatoryText, errs, `${errCode}-4`);
+						case tva.e_ExplanatoryText:		
+							checkAttributes(pgChild, [tva.a_length], [tva.a_lang], tvaEA.ExplanatoryText, errs, `${errCode}-5`);
 							if (pgChild.attr(tva.a_length)) {
 								if (pgChild.attr(tva.a_length).value()!=tva.v_lengthLong)
-									errs.addError({code:`${errCode}-5`, 
+									errs.addError({code:`${errCode}-6`, 
 													message:`${tva.a_length.attribute()}=${pgChild.attr(tva.a_length).value().quote()} is not allowed for ${tva.e_ExplanatoryText.elementize()}`,
 													fragment:pgChild});
 							}
-							
 							if (unEntity(pgChild.text()).length > dvbi.MAX_EXPLANATORY_TEXT_LENGTH)
-								errs.addError({code:`${errCode}-6`, 
+								errs.addError({code:`${errCode}-7`, 
 												message:`length of ${tva._ExplanatoryText.elementize()} cannot exceed ${dvbi.MAX_EXPLANATORY_TEXT_LENGTH} characters`,
 												fragment:pgChild});
 

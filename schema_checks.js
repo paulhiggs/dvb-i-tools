@@ -3,6 +3,7 @@
 import { elementize } from './phlib/phlib.js';
 import { APPLICATION, INFORMATION } from "./ErrorList.js";
 import { isIn } from "./utils.js";
+import { datatypeIs } from "./phlib/phlib.js";
 
 /**
  * check that the specified child elements are in the parent element
@@ -41,7 +42,7 @@ export function checkAttributes(parentElement, requiredAttributes, optionalAttri
 			if (parentElement.attr(attribute))
 				errs.addError({type:INFORMATION, code:`${errCode}-3`, message:`${attribute.attribute()} is profiled out of  ${parentElement.name().elementize()}`,
 						key:'unused attribute', line:parentElement.line()});
-	} );
+	});
 }
 
 
@@ -63,7 +64,7 @@ export function checkAttributes(parentElement, requiredAttributes, optionalAttri
 export function checkTopElementsAndCardinality(parentElement, childElements, definedChildElements, allowOtherElements, errs, errCode )
 {
 	function findElementIn(elementList, elementName) {
-		if (elementList instanceof Array)
+		if (datatypeIs(elementList, 'array'))
 			return elementList.find(element => element.name == elementName);
 		else return false;
 	}

@@ -116,6 +116,35 @@ let  InvalidCountryCode = (value, src, loc) => `invalid country code ${value.quo
 let localizedSubscriptionPackage = (pkg, lang=null) => `${pkg.text()}/lang=${lang?lang:ancestorLanguage(pkg)}`; 
 
 
+/**
+ * Construct	 an error message an unspecifed target region is used
+ *
+ * @param {String} region   The unspecified target region
+ * @param {String} loc      The location of the element
+ * @param {String} errCode  The error code to be reported
+ */
+let UnspecifiedTargetRegion = (region, loc, errCode) =>
+	({code:errCode, 
+		message:`${loc} has an unspecified ${dvbi.e_TargetRegion.elementize()} ${region.quote()}`, 
+		key:"target region"});
+
+
+
+/**
+ * Construct an error message for missing <xxxDeliveryParameters>
+ *
+ * @param {String}  source     The missing source type
+ * @param {String}  serviceId  The serviceId whose instance is missing delivery parameters
+ * @param {XMLnode} element    The <SourceType> element for which delivery parameters are not specified
+ * @param {String}  errCode    The error code to be reported
+ */
+let NoDeliveryParams = (source, serviceId, element, errCode) => 
+	({code:errCode, 
+		message:`${source} delivery parameters not specified for service instance in service ${serviceId.quote()}`,
+		fragment:element, key:"no delivery params"});
+
+
+
 
 if (!Array.prototype.forEachSubElement) {
 	// based on the polyfill at https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach 
@@ -605,37 +634,6 @@ export default class ServiceListCheck {
 
 
 	/**
-	 * Add an error message for missing <xxxDeliveryParameters>
-	 *
-	 * @param {String}  source     The missing source type
-	 * @param {String}  serviceId  The serviceId whose instance is missing delivery parameters
-	 * @param {XMLnode} element    The <SourceType> element for which delivery parameters are not specified
-	 * @param {Object}  errs       Errors buffer
-	 * @param {String}  errCode    The error code to be reported
-	 */
-	/*private*/  NoDeliveryParams(source, serviceId, element, errs, errCode) {
-		errs.addError({code:errCode, 
-						message:`${source} delivery parameters not specified for service instance in service ${serviceId.quote()}`,
-						fragment:element, key:"no delivery params"});
-	}
-
-
-	/**
-	 * Add an error message an unspecifed target region is used
-	 *
-	 * @param {String} region   The unspecified target region
-	 * @param {String} loc      The location of the element
-	 * @param {Object} errs     Errors buffer
-	 * @param {String} errCode  The error code to be reported
-	 */
-	/*private*/  UnspecifiedTargetRegion(region, loc, errs, errCode) {
-		errs.addError({code:errCode, 
-						message:`${loc} has an unspecified ${dvbi.e_TargetRegion.elementize()} ${region.quote()}`, 
-						key:"target region"});	
-	}
-
-
-	/**
 	 * check if the node provided contains an RelatedMaterial element for a signalled application
 	 *
 	 * @param {string}  SL_SCHEMA      Used when constructing Xpath queries
@@ -669,6 +667,7 @@ export default class ServiceListCheck {
 	 */
 	/*private*/  validateAContentGuideSource(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, source, errs, loc, errCode) {
 
+		let NotURLMessage = (errCode, elem, frag) => ({code:`${errCode}`, message:`${elem} is not a valid URL`, fragment:frag, key:"NOT_URL_KEY"});
 		if (!source) {
 			errs.addError({type:APPLICATION,code:"GS000", message:"validateAContentGuideSource() called with source==null"});
 			return;
@@ -682,26 +681,25 @@ export default class ServiceListCheck {
 		while ((RelatedMaterial=source.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), SL_SCHEMA))!=null) 
 			this.validateRelatedMaterial(RelatedMaterial, errs, loc, CONTENT_GUIDE_RM, SCHEMA_NAMESPACE, `${errCode}-3`);
 		
-		let NOT_URL_MESSAGE="is not a valid URL", NOT_URL_KEY="not URL";
 		// ContentGuideSourceType::ScheduleInfoEndpoint - should be a URL
 		let sie=source.get(xPath(SCHEMA_PREFIX, dvbi.e_ScheduleInfoEndpoint), SL_SCHEMA);
 		if (sie && !isHTTPURL(sie.text()))
-			errs.addError({code:`${errCode}-4`, message:`${dvbi.e_ScheduleInfoEndpoint.elementize()} ${NOT_URL_MESSAGE}`, fragment:sie, key:NOT_URL_KEY});
+			errs.addError(NotURLMessage(`${errCode}-4`,dvbi.e_ScheduleInfoEndpoint.elementize(), sie));
 		
 		// ContentGuideSourceType::ProgramInfoEndpoint - should be a URL
 		let pie=source.get(xPath(SCHEMA_PREFIX, dvbi.e_ProgramInfoEndpoint), SL_SCHEMA);
 		if (pie && !isHTTPURL(pie.text()))
-			errs.addError({code:`${errCode}-5`, message:`${dvbi.e_ProgramInfoEndpoint.elementize()} ${NOT_URL_MESSAGE}`, fragment:pie, key:NOT_URL_KEY});
+			errs.addError(NotURLMessage(`${errCode}-5`, dvbi.e_ProgramInfoEndpoint.elementize(), pie));
 		
 		// ContentGuideSourceType::GroupInfoEndpoint - should be a URL
 		let gie=source.get(xPath(SCHEMA_PREFIX, dvbi.e_GroupInfoEndpoint), SL_SCHEMA);
 		if (gie && !isHTTPURL(gie.text()))
-			errs.addError({code:`${errCode}-6`, message:`${dvbi.e_GroupInfoEndpoint.elementize()}  ${NOT_URL_MESSAGE}`, fragment:gie, key:NOT_URL_KEY});
+			errs.addError(NotURLMessage(`${errCode}-6`, dvbi.e_GroupInfoEndpoint.elementize(), gie));
 		
 		// ContentGuideSourceType::MoreEpisodesEndpoint - should be a URL
 		let mee=source.get(xPath(SCHEMA_PREFIX, dvbi.e_MoreEpisodesEndpoint), SL_SCHEMA);
 		if (mee && !isHTTPURL(mee.text()))
-			errs.addError({code:`${errCode}-7`, message:`${dvbi.e_MoreEpisodesEndpoint.elementize()}  ${NOT_URL_MESSAGE}`, fragment:mee, key:NOT_URL_KEY});
+			errs.addError(NotURLMessgae(`${errCode}-7`, dvbi.e_MoreEpisodesEndpoint.elementize(), mee));
 	}	
 	
 
@@ -1009,27 +1007,28 @@ export default class ServiceListCheck {
 			switch (SourceType.text()) {
 				case dvbi.DVBT_SOURCE_TYPE:
 					if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_DVBTDeliveryParameters), SL_SCHEMA) ) 
-						this.NoDeliveryParams("DVB-T", thisServiceId, SourceType, errs, "SI151"); 
+						errs.addError(NoDeliveryParams("DVB-T", thisServiceId, SourceType, "SI151")); 
 					v1Params=true;
 					break;
 				case dvbi.DVBS_SOURCE_TYPE:
 					if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_DVBSDeliveryParameters), SL_SCHEMA) ) 
-						this.NoDeliveryParams("DVB-S", thisServiceId, SourceType, errs, "SI152");
+						errs.addError(NoDeliveryParams("DVB-S", thisServiceId, SourceType, "SI152"));
 					v1Params=true;
 					break;
 				case dvbi.DVBC_SOURCE_TYPE:
 					if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_DVBCDeliveryParameters), SL_SCHEMA) ) 
-						this.NoDeliveryParams("DVB-C", thisServiceId, SourceType, errs, "SI153");
+						errs.addError(NoDeliveryParams("DVB-C", thisServiceId, SourceType, "SI153"));
 					v1Params=true;
 					break;
 				case dvbi.DVBDASH_SOURCE_TYPE:
 					if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_DASHDeliveryParameters), SL_SCHEMA) ) 
-						this.NoDeliveryParams("DVB-DASH", thisServiceId, SourceType, errs, "SI154");
+						errs.addError(NoDeliveryParams("DVB-DASH", thisServiceId, SourceType, "SI154"));
 					v1Params=true;
 					break;
 				case dvbi.DVBIPTV_SOURCE_TYPE:
-					if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_MulticastTSDeliveryParameters), SL_SCHEMA) && !ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_RTSPDeliveryParameters), SL_SCHEMA) ) 
-						this.NoDeliveryParams("Multicast or RTSP", thisServiceId, SourceType, errs, "SI155");
+					if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_MulticastTSDeliveryParameters), SL_SCHEMA) && 
+					    !ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_RTSPDeliveryParameters), SL_SCHEMA)) 
+						errs.addError(NoDeliveryParams("Multicast or RTSP", thisServiceId, SourceType, "SI155"));
 					v1Params=true;
 					break;
 				case dvbi.DVBAPPLICATION_SOURCE_TYPE:
@@ -1311,8 +1310,7 @@ export default class ServiceListCheck {
 		let tr=0, TargetRegion;
 		while ((TargetRegion=SL.get(xPath(SCHEMA_PREFIX, dvbi.e_TargetRegion, ++tr), SL_SCHEMA))!=null)
 			if (!isIn(knownRegionIDs, TargetRegion.text())) 
-				this.UnspecifiedTargetRegion(TargetRegion.text(), "service list", errs, "SL060");
-
+				errs.addError(UnspecifiedTargetRegion(TargetRegion.text(), "service list", "SL060"));
 
 
 		// check <ServiceList><SubscriptionPackageList>
@@ -1389,7 +1387,7 @@ export default class ServiceListCheck {
 			let tr=0, TargetRegion;
 			while ((TargetRegion=service.get(xPath(SCHEMA_PREFIX, dvbi.e_TargetRegion, ++tr), SL_SCHEMA))!=null) 
 				if (!isIn(knownRegionIDs, TargetRegion.text())) 
-					this.UnspecifiedTargetRegion(TargetRegion.text(), `service ${thisServiceId.quote()}`, errs, "SL130");
+					errs.addError(UnspecifiedTargetRegion(TargetRegion.text(), `service ${thisServiceId.quote()}`, "SL130"));
 
 			//check <Service><ServiceName>
 			checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ServiceName, `service ${thisServiceId.quote()}`, service, errs, "SL140", this.knownLanguages);

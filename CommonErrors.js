@@ -15,11 +15,6 @@ export var NoChildElement = (missingElement, parentElement, schemaLocation, errC
 	({code:errCode, 
 		message:`${missingElement} element not specified for ${parentElement.name().elementize()}${schemaLocation?(" in "+schemaLocation):""}`,
 		line:parentElement.line()});
-/*export function NoChildElement_old(errs, missingElement, parentElement, schemaLocation, errCode) {
-	errs.addError({code:errCode, 
-		message:`${missingElement} element not specified for ${parentElement.name().elementize()}${schemaLocation?(" in "+schemaLocation):""}`,
-		line:parentElement.line()});
-}*/
 
 
 /**
@@ -34,16 +29,9 @@ export var NoChildElement = (missingElement, parentElement, schemaLocation, errC
 export var cg_InvalidHrefValue = (value, element, loc,  errCode) => 
 	({code:errCode, 
 		message:`invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${element.name().elementize()} in ${loc}`, line:element.line()});
-/* export function cg_InvalidHrefValue_old(value, element, loc, errs,  errCode) {
-	errs.addError({code:errCode, message:`invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${element.name().elementize()} in ${loc}`, line:element.line()});
-} */
+
 
 export var sl_InvalidHrefValue = (value, element, src, loc, errCode) =>
 	({code:errCode, fragment:element, line:element.line(),
 		message:`invalid ${dvbi.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`, 
 		key:"invalid href"});
-/*export function sl_InvalidHrefValue(value, element, src, loc, errs, errCode) {
-		errs.addError({code:errCode, fragment:element, line:element.line(),
-			message:`invalid ${dvbi.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`, 
-			key:"invalid href"});
-} */

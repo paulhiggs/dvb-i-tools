@@ -215,6 +215,7 @@ export const tvaEA = {	// EA = Element-Attributes - the attributes that are defi
 	MediaLocator:		[],
 	MediaUri:			[tva.a_contentType, tva.a_uriType],
 	MemberOf:			tvaBaseMemberOfTypeAttributes,
+	MinimumAge:			[],
 	MixType:			tvaControlledTermTypeAttributes,
 	OnDemandProgram:	[tva.a_serviceIDRef, tva.a_lang, tva.a_metadataOriginIDRef].concat(tvafragmentIdentificationAttributes),
 	OtherIdentifier:	mpeg7UniqueIDTypeAttributes,

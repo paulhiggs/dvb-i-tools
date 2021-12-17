@@ -4,7 +4,6 @@ import { handleErrors } from "./fetch-err-handler.js";
 import { readFile } from 'fs';
 
 import { isIn, isIni } from './utils.js';
-import { parse } from "path";
 
 export default class IANAlanguages {
 

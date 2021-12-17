@@ -1,5 +1,7 @@
 import { statSync, readFileSync } from "fs";
 
+import { datatypeIs } from "./phlib/phlib.js";
+
 /**
  * constructs an XPath based on the provided arguments
  *
@@ -18,27 +20,20 @@ export var xPath = (SCHEMA_PREFIX, elementName, index=null) => `${SCHEMA_PREFIX}
  * @param {array} elementNames the name of the element to be searched for
  * @returns {string} the XPath selector
  */
-export function xPathM(SCHEMA_PREFIX, elementNames) {
-	let t="";
-	if (elementNames) elementNames.forEach(elementName => {
-		if (t.length!=0) t+="/";
-		t+=`${SCHEMA_PREFIX}:${elementName}`;
-	});
-	return t;
-}
+export var xPathM = (SCHEMA_PREFIX, elementNames) => elementNames.join(`/${SCHEMA_PREFIX}:`);
 
 
 /* local */ function findInSet(values, value, caseSensitive) {
-	if (!values || !value || (typeof(value)!="string"))
+	if (!values || !value || (!datatypeIs(value, "string")))
 		return false;
 
 	let vlc=value.toLowerCase();
-    if (typeof(values)=="string" || values instanceof String)
-        return caseSensitive ? values==value : values.toLowerCase()==vlc;
-
-    if (Array.isArray(values))
-		return caseSensitive ? values.includes(value) : (values.find(element => element.toLowerCase()==vlc) != undefined);
-
+	switch (datatypeIs(values)) {
+		case 'array':
+			return caseSensitive ? values.includes(value) : (values.find(element => element.toLowerCase()==vlc) != undefined);
+		case 'string':
+			return caseSensitive ? values==value : values.toLowerCase()==vlc;
+	}
     return false;
 }
 
