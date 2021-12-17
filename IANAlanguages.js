@@ -4,6 +4,7 @@ import { handleErrors } from "./fetch-err-handler.js";
 import { readFile } from 'fs';
 
 import { isIn, isIni } from './utils.js';
+import { datatypeIs } from "./phlib/phlib.js";
 
 export default class IANAlanguages {
 
@@ -158,8 +159,7 @@ export default class IANAlanguages {
 		if (value===null || value===undefined)
 			return {resp:this.languageNotSpecified};
 
-		if (typeof(value)=="string") {
-
+		if (datatypeIs(value, 'string')) {
 			if (this.languageRanges.find(range => range.start<=value && value<=range.end))
 				return {resp:this.languageKnown};
 

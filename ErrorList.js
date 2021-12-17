@@ -6,6 +6,7 @@
  */
 
 import { parseXmlString } from "libxmljs2";
+import { datatypeIs } from "./phlib/phlib.js";
 
 export const ERROR='(E)', WARNING='(W)', INFORMATION='(I)', APPLICATION='(A)';
 
@@ -128,7 +129,7 @@ export default class ErrorList {
 			 */
 			this.insertErrorData(e.type, e.key, {code:e.code, message:e.message});
 			e.multiElementError.forEach(fragment => {
-				if (fragment && typeof(fragment)!="string")
+				if (fragment && !datatypeIs(fragment, "string"))
 					this.setError(e.type, e.code, e.message, fragment.line()-2);
 			});
 		}
@@ -136,9 +137,9 @@ export default class ErrorList {
 			e.fragments.forEach(fragment => {
 				let newError={code:e.code, message:e.message};
 				if (fragment) {
-					newError.element=(typeof(fragment)=="string" || fragment instanceof String)?fragment:this.prettyPrint(fragment);
+					newError.element=datatypeIs(fragment, "string")?fragment:this.prettyPrint(fragment);
 					
-					if (typeof(fragment)!="string") {
+					if (!datatypeIs(fragment, "string")) {
 						this.setError(e.type, e.code, e.message, fragment.line()-2);
 						newError.line=fragment.line()-2;
 					}
@@ -149,9 +150,9 @@ export default class ErrorList {
 		} 
 		else if (e.fragment) {
 			let newError={code:e.code, message:e.message, 
-				element:((typeof(e.fragment)=="string" || e.fragment instanceof String)?e.fragment:this.prettyPrint(e.fragment))};
+				element:(datatypeIs(e.fragment, "string")?e.fragment:this.prettyPrint(e.fragment))};
 
-			if (!e.line && typeof(e.fragment)!="string")
+			if (!e.line && !datatypeIs(e.fragment, "string"))
 				e.line=e.fragment.line()-1;
 			if (e.line) {
 				this.setError(e.type, e.code, e.message, e.line-1);

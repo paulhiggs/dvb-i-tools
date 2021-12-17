@@ -126,7 +126,7 @@ export default class SLEPR {
             
 			//regulatorListFlag needs to be a boolean, "true" or "false" only
 			if (req.query.regulatorListFlag) {
-				if (!(typeof req.query.regulatorListFlag=="string" || req.query.regulatorListFlag instanceof String)) 
+				if (!datatypeIs(req.query.regulatorListFlag, "string")) 
 					req.parseErr.push(`invalid type for regulatorListFlag [${typeof(req.query.regulatorListFlag)}]`);
 
 				if (!["true","false"].includes(req.query.regulatorListFlag.toLowerCase())) 
