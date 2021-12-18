@@ -30,6 +30,8 @@ import { sl_InvalidHrefValue } from "./CommonErrors.js";
 import { ancestorLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
 import { checkAttributes } from "./schema_checks.js";
 
+import { isRestartAvailability } from "./cg-check.js";
+
 /* TODO:
 
  - also look for TODO in the code itself
@@ -1402,11 +1404,22 @@ export default class ServiceListCheck {
 
 			//check <Service><ServiceGenre>
 			let ServiceGenre=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceGenre), SL_SCHEMA);
-			if (ServiceGenre && ServiceGenre.attr(dvbi.a_href) && !this.allowedGenres.isIn(ServiceGenre.attr(dvbi.a_href).value()) && !isIn(tva.ALL_GENRE_TYPES, ServiceGenre.attr(tva.a_type).value())) 
-				errs.addError({code:"SL161", 
-					message:`service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} ${ServiceGenre.attr(dvbi.a_href).value().quote()}`, 
-					fragment:ServiceGenre, key:`invalid ${dvbi.e_ServiceGenre}`});
-
+			if (ServiceGenre) {
+				checkAttributes(ServiceGenre, [tva.a_href], []. tvaEA.Genre , errs, "SL160");
+				if (ServiceGenre.attr(tva.a_type)) 
+					if (!isIn(tva.ALL_GENRE_TYPES, ServiceGenre.attr(tva.a_type).value()))
+						errs.addError({code:"SL161", 
+							message:`service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} type ${ServiceGenre.attr(dvbi.a_href).value().quote()}`, 
+							fragment:ServiceGenre, key:`invalid ${dvbi.e_ServiceGenre} type`});
+			
+				if (ServiceGenre.attr(dvbi.a_href)) {
+					let genre=ServiceGenre.attr(dvbi.a_href).value();
+					if (!this.allowedGenres.isIn(genre) && !isRestartAvailability(genre)) 
+						errs.addError({code:"SL162", 
+							message:`service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} value ${genre} (must be content genre or restart indicator)`, 
+							fragment:ServiceGenre, key:`invalid ${dvbi.e_ServiceGenre}`});
+				}
+			}
 			//check <Service><ServiceType>                    
 			let ServiceType=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceType), SL_SCHEMA);
 			if (ServiceType && ServiceType.attr(dvbi.a_href) && !this.allowedServiceTypes.isIn(ServiceType.attr(dvbi.a_href).value())) 

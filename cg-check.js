@@ -213,6 +213,13 @@ if (!Array.prototype.forEachSubElement) {
 }
 
 
+/**
+ * @param {string} genre the value to check as being a restart availability genre
+ * @retuwns {boolean} trus id the value provided is a valid restart availability genre
+ */
+export var isRestartAvailability = (genre) => [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(genre);
+		
+
 export default class ContentGuideCheck {
 
 	constructor(useURLs, preloadedLanguageValidator=null,  preloadedGenres=null, preloadedCreditItemRoles=null) {
@@ -1860,7 +1867,6 @@ export default class ContentGuideCheck {
 			return;
 		}
 		
-		let isRestartAvailability = (str) => [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(str);
 		let isMediaAvailability = (str) => [dvbi.MEDIA_AVAILABLE, dvbi.MEDIA_UNAVAILABLE].includes(str);
 		let isEPGAvailability = (str) => [dvbi.FORWARD_EPG_AVAILABLE, dvbi.FORWARD_EPG_UNAVAILABLE].includes(str);
 		let isAvailability = (str) => isMediaAvailability(str) || isEPGAvailability(str);
