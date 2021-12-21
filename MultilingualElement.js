@@ -4,6 +4,7 @@ import { WARNING, APPLICATION } from "./ErrorList.js";
 import { dvbi } from "./DVB-I_definitions.js";
 import { tva } from "./TVA_definitions.js";
 import { xPath, isIn } from "./utils.js";
+import { datatypeIs } from "./phlib/phlib.js";
 
 const NO_DOCUMENT_LANGUAGE='**'; // this should not be needed as @xml:lang is required in <ServiceList> and <TVAMain> root elements
 
@@ -20,7 +21,7 @@ const NO_DOCUMENT_LANGUAGE='**'; // this should not be needed as @xml:lang is re
  */
 export function checkLanguage(validator, lang, loc, element, errs, errCode) {
 	if (!validator) {
-		errs.addError({type:APPLICATION, code:`cl000`, message:`cannot validate language ${lang.quote()}${loc?` for ${loc.elementize()}`:""}`, 
+		errs.addError({type:APPLICATION, code:'CL000', message:`cannot validate language ${lang.quote()}${loc?` for ${loc.elementize()}`:""}`, 
 						key:"no language validator"});
 		return false;
 	}
@@ -32,7 +33,7 @@ export function checkLanguage(validator, lang, loc, element, errs, errCode) {
 			break;
 		case validator.languageUnknown:
 			errs.addError({type:WARNING, code:`${errCode}-1`, 
-							message:`${loc?loc:"language"} value ${lang.quote()} is invalid`, fragment:element, 
+							message:`${loc?loc:"language"} value ${lang.quote()} is invalid`, fragment:element,
 							line:element?element.line():null, key:"invalid language"});
 			break;
 		case validator.languageRedundant:
@@ -45,7 +46,7 @@ export function checkLanguage(validator, lang, loc, element, errs, errCode) {
 							line:element?element.line():null, key:"unspecified language"});
 			break;
 		case validator.languageInvalidType:
-			errs.addError({code:`${errCode}-4`, message:`language is not a String, its "${typeof(lang)}"`, 
+			errs.addError({code:`${errCode}-4`, message:`language is not a String, its "${datatypeIs(lang)}"`, 
 							line:element?element.line():null, key:"invalid language"});
 			break;
 	}
@@ -122,7 +123,7 @@ export function GetNodeLanguage(node, isRequired, errs, errCode, validator=null)
 
 	let localLang=mlLanguage(node.parent());
 
-	if (validator && localLang!=NO_DOCUMENT_LANGUAGE)
+	if (validator && node.attr(tva.a_lang) && localLang!=NO_DOCUMENT_LANGUAGE)
 		checkLanguage(validator, localLang, node.name(), node, errs, errCode);
 	return localLang;
 }
