@@ -5,7 +5,7 @@ import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
 
 import { APPLICATION, WARNING } from "./ErrorList.js";
 
-import { checkLanguage, ancestorLanguage } from './MultilingualElement.js';
+import { checkLanguage, mlLanguage } from './MultilingualElement.js';
 import { checkAttributes, checkTopElementsAndCardinality} from "./schema_checks.js";
 import { isJPEGmime, isPNGmime, isWebPmime, validImageSet } from "./MIME_checks.js";
 import { isHTTPURL } from "./pattern_checks.js";
@@ -79,7 +79,7 @@ export function  checkValidLogos(RelatedMaterial, errs, errCode, location, langu
 			if (languageValidator && MediaLocator.attr(dvbi.a_contentLanguage)) 
 				checkLanguage(languageValidator, MediaLocator.attr(dvbi.a_contentLanguage).value(), location, MediaLocator, errs, `${errCode}-3`);
 
-			let MLlanguage=ancestorLanguage(MediaLocator);
+			let MLlanguage=mlLanguage(MediaLocator);
 
 			let subElems=MediaLocator.childNodes();
 			if (subElems) subElems.forEachSubElement(MediaUri => {

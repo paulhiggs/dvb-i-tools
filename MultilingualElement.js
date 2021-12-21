@@ -56,16 +56,17 @@ export function checkLanguage(validator, lang, loc, element, errs, errCode) {
 /**
  * Recurse up the XML element hierarchy until we find an element with an @xml:lang attribute or return a ficticouus 
  * value of topmost level element does not contain @xml:lang
- * @param {Element} node 
+ * @param {XMLNode} node  the multilingual element whose language is needed
+ * @returns {String} the value of the xml:lang attribute for the element, or the teh closest ancestor 
  */
-export function ancestorLanguage(node) {
+export function mlLanguage(node) {
 	if (node.type() != 'element')
 		return NO_DOCUMENT_LANGUAGE;
 
 	if (node.attr(dvbi.a_lang))
 		return (node.attr(dvbi.a_lang).value());
 
-	return ancestorLanguage(node.parent());
+	return mlLanguage(node.parent());
 }
 
 /**
@@ -88,7 +89,7 @@ export function checkXMLLangs(SCHEMA, PREFIX, elementName, elementLocation, node
 
 	let elementLanguages=[], i=0, elem;
 	while ((elem=node.get(xPath(PREFIX, elementName, ++i), SCHEMA))!=null) {
-		let lang=elem.attr(dvbi.a_lang)?elem.attr(dvbi.a_lang).value():ancestorLanguage(elem.parent());
+		let lang=mlLanguage(elem.parent());
 		if (isIn(elementLanguages, lang)) 
 			errs.addError({code:`${errCode}-1`, 
 				message:`${lang==NO_DOCUMENT_LANGUAGE?"default language":`xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} for ${elementLocation}`, 
@@ -119,7 +120,7 @@ export function GetNodeLanguage(node, isRequired, errs, errCode, validator=null)
 	if (isRequired && !node.attr(tva.a_lang))
 		errs.addError({code:errCode, message:`${tva.a_lang.attribute()} is required for ${node.name().quote()}`, key:"unspecified language", line:node.line()});
 
-	let localLang=node.attr(tva.a_lang)?node.attr(tva.a_lang).value():ancestorLanguage(node.parent());
+	let localLang=mlLanguage(node.parent());
 
 	if (validator && localLang!=NO_DOCUMENT_LANGUAGE)
 		checkLanguage(validator, localLang, node.name(), node, errs, errCode);

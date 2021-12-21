@@ -27,7 +27,7 @@ import IANAlanguages from "./IANAlanguages.js";
 import { checkValidLogos } from "./RelatedMaterialChecks.js";
 import { sl_InvalidHrefValue } from "./CommonErrors.js";
 
-import { ancestorLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
+import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
 import { checkAttributes } from "./schema_checks.js";
 
 import { isRestartAvailability } from "./cg-check.js";
@@ -115,7 +115,7 @@ let  InvalidCountryCode = (value, src, loc) => `invalid country code ${value.quo
  * @param {String} lang 
  * @returns {String}
  */
-let localizedSubscriptionPackage = (pkg, lang=null) => `${pkg.text()}/lang=${lang?lang:ancestorLanguage(pkg)}`; 
+let localizedSubscriptionPackage = (pkg, lang=null) => `${pkg.text()}/lang=${lang?lang:mlLanguage(pkg)}`; 
 
 
 /**
