@@ -10,6 +10,18 @@ import { datatypeIs } from "./phlib/phlib.js";
 
 export const ERROR='(E)', WARNING='(W)', INFORMATION='(I)', APPLICATION='(A)';
 
+const MAX_FRAGMENT_LINES = 6; // the maximum number of lines in an element to display when that element has an error
+
+
+var nthIndexOf = (str, pat, n) => {
+		let i = -1;
+		while (n-- && i++ < str.length) {
+			i = str.indexOf(pat, i);
+			if (i < 0) break;
+		}
+		return i;
+	};
+
 export default class ErrorList {
 
 	constructor() {
@@ -61,19 +73,14 @@ export default class ErrorList {
 		this.numCountsI++;
 	}
 
-	/**
-	 * 
-	 * @param {integer} e.type     (optional) ERROR(default) or WARNING
-	 * @param {sring} e.code       Error code
-	 * @param {string} e.message   The error message
-	 * @param {string} e.key       (optional)The category of the message
-	 * @param {string or libxmljs2:Node} e.fragment (optional) The XML fragment (or node in the XML document) triggering the error
-	 * @param {integer} e.line     (optional) the line number of the element in the XML document that triggered the error
-	 */
+
 	/* private method */ prettyPrint(node) {
 		// clean up and redo formatting 
-		return node.toString({declaration:false, format:true});
+		let tmp=node.toString({declaration:false, format:true});
+		let maxLen=nthIndexOf(tmp, '\n', MAX_FRAGMENT_LINES);
+		return maxLen==-1?tmp:`${tmp.slice(0,maxLen)}....\n`;
 	}
+
 	/* private method */ insertErrorData(type, key, err) {
 		switch (type) {
 			case ERROR: 
@@ -95,6 +102,15 @@ export default class ErrorList {
 		}
 	}
 
+	/**
+	 * 
+	 * @param {integer} e.type     (optional) ERROR(default) or WARNING
+	 * @param {sring} e.code       Error code
+	 * @param {string} e.message   The error message
+	 * @param {string} e.key       (optional)The category of the message
+	 * @param {string or libxmljs2:Node} e.fragment (optional) The XML fragment (or node in the XML document) triggering the error
+	 * @param {integer} e.line     (optional) the line number of the element in the XML document that triggered the error
+	 */
 	addError(e) {
 		let _INVALID_CALL='invalid addError call', argsOK=true;
 		if (!e.hasOwnProperty('type')) e.type=ERROR;
