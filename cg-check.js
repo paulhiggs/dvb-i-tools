@@ -331,21 +331,21 @@ export default class ContentGuideCheck {
 					case tva.SYNOPSIS_SHORT_LABEL:
 						if (_len > tva.SYNOPSIS_SHORT_LENGTH)
 							errs.addError({code:`${errCode}-11`, message:synopsisLengthError(tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_SHORT_LENGTH, _len), 
-											fragment:Synopsis, tag:'length error'});
+											fragment:Synopsis, key:'length error'});
 						hasShort=true;
 						break;
 					case tva.SYNOPSIS_MEDIUM_LABEL:
 						if (_len > tva.SYNOPSIS_MEDIUM_LENGTH)
 							errs.addError({code:`${errCode}-12`, 
 											message:synopsisLengthError(tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_MEDIUM_LENGTH, _len), 
-											fragment:Synopsis, tag:'length error'});
+											fragment:Synopsis, key:'length error'});
 						hasMedium=true;
 						break;
 					case tva.SYNOPSIS_LONG_LABEL:
 						if (_len > tva.SYNOPSIS_LONG_LENGTH)
 							errs.addError({code:`${errCode}-13`, 
 											message:synopsisLengthError(tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_LONG_LENGTH, _len), 
-											fragment:Synopsis, tag:'length error'});
+											fragment:Synopsis, key:'length error'});
 						hasLong=true;
 						break;						
 					}
@@ -353,7 +353,7 @@ export default class ContentGuideCheck {
 				else
 					errs.addError({code:`${errCode}-14`, 
 									message:`${tva.a_length.attribute()}=${synopsisLength.quote()} is not permitted for this request type`, 
-									fragment:Synopsis, tag:'unexpected length'});
+									fragment:Synopsis, key:'unexpected length'});
 			}
 		
 			if (synopsisLang && synopsisLength) {
@@ -361,19 +361,19 @@ export default class ContentGuideCheck {
 					case tva.SYNOPSIS_SHORT_LABEL:
 						if (isIn(shortLangs, synopsisLang)) 
 							errs.addError({code:`${errCode}-16`, message:singleLengthLangError(synopsisLength, synopsisLang), 
-									fragment:Synopsis, tag:'duplicted synopsis length'});
+									fragment:Synopsis, key:'duplicted synopsis length'});
 						else shortLangs.push(synopsisLang);
 						break;
 					case tva.SYNOPSIS_MEDIUM_LABEL:
 						if (isIn(mediumLangs, synopsisLang)) 
 							errs.addError({code:`${errCode}-17`, message:singleLengthLangError(synopsisLength, synopsisLang), 
-									fragment:Synopsis, tag:'duplicted synopsis length'});
+									fragment:Synopsis, key:'duplicted synopsis length'});
 						else mediumLangs.push(synopsisLang);
 						break;
 					case tva.SYNOPSIS_LONG_LABEL:
 						if (isIn(longLangs, synopsisLang)) 
 							errs.addError({code:`${errCode}-18`, message:singleLengthLangError(synopsisLength, synopsisLang), 
-									fragment:Synopsis, tag:'duplicted synopsis length'});
+									fragment:Synopsis, key:'duplicted synopsis length'});
 						else longLangs.push(synopsisLang);
 						break;
 				}
@@ -381,11 +381,11 @@ export default class ContentGuideCheck {
 		}
 		
 		if (isIn(requiredLengths, tva.SYNOPSIS_SHORT_LABEL) && !hasShort)
-			errs.addError({code:`${errCode}-19`, message:requiredSynopsisError(tva.SYNOPSIS_SHORT_LABEL), line:BasicDescription.line(), tag:'missing synopsis length'});
+			errs.addError({code:`${errCode}-19`, message:requiredSynopsisError(tva.SYNOPSIS_SHORT_LABEL), line:BasicDescription.line(), key:'missing synopsis length'});
 		if (isIn(requiredLengths, tva.SYNOPSIS_MEDIUM_LABEL) && !hasMedium)
-			errs.addError({code:`${errCode}-20`, message:requiredSynopsisError(tva.SYNOPSIS_MEDIUM_LABEL), line:BasicDescription.line(), tag:'missing synopsis length'});
+			errs.addError({code:`${errCode}-20`, message:requiredSynopsisError(tva.SYNOPSIS_MEDIUM_LABEL), line:BasicDescription.line(), key:'missing synopsis length'});
 		if (isIn(requiredLengths, tva.SYNOPSIS_LONG_LABEL) && !hasLong)
-			errs.addError({code:`${errCode}-21`, message:requiredSynopsisError(tva.SYNOPSIS_LONG_LABEL), line:BasicDescription.line(), tag:'missing synopsis length'});
+			errs.addError({code:`${errCode}-21`, message:requiredSynopsisError(tva.SYNOPSIS_LONG_LABEL), line:BasicDescription.line(), key:'missing synopsis length'});
 	}
 
 
@@ -419,7 +419,7 @@ export default class ContentGuideCheck {
 			else counts[keywordLang].push(Keyword);	
 
 			if (keywordType!=tva.KEYWORD_TYPE_MAIN && keywordType!=tva.KEYWORD_TYPE_OTHER)
-				errs.addError({code:`${errCode}-11`, tag:'invalid keyword type',
+				errs.addError({code:`${errCode}-11`, key:'invalid keyword type',
 								message:`${tva.a_type.attribute()}=${keywordType.quote()} not permitted for ${tva.e_Keyword.elementize()}`, fragment:Keyword});
 			if (unEntity(Keyword.text()).length > dvbi.MAX_KEYWORD_LENGTH)
 				errs.addError({code:`${errCode}-12`, message:`length of ${tva.e_Keyword.elementize()} is greater than ${dvbi.MAX_KEYWORD_LENGTH}`, 
@@ -428,7 +428,7 @@ export default class ContentGuideCheck {
 		
 		for (let i in counts) {
 			if (counts[i].length!=0 && counts[i].length>maxKeywords) 
-				errs.addError({code:`${errCode}-13`, tag:'excess keywords',
+				errs.addError({code:`${errCode}-13`, key:'excess keywords',
 						message:`More than ${maxKeywords} ${tva.e_Keyword.elementize()} element${(maxKeywords>1?"s":"")} specified${(i==DEFAULT_LANGUAGE?"":" for language "+i.quote())}`, 
 						multiElementError:counts[i]});
 		}
@@ -455,12 +455,12 @@ export default class ContentGuideCheck {
 		while ((Genre=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_Genre, ++g), CG_SCHEMA))!=null) {
 			let genreType=Genre.attr(tva.a_type)?Genre.attr(tva.a_type).value():tva.DEFAULT_GENRE_TYPE;
 			if (genreType!=tva.GENRE_TYPE_MAIN)
-				errs.addError({code:`${errCode}-1`, tag:'disallowed genre type',
+				errs.addError({code:`${errCode}-1`, key:'disallowed genre type',
 								message:`${tva.a_type.attribute()}=${genreType.quote()} not permitted for ${tva.e_Genre.elementize()}`, fragment:Genre});
 			
 			let genreValue=Genre.attr(tva.a_href)?Genre.attr(tva.a_href).value():"";
 			if (!this.allowedGenres.isIn(genreValue))
-				errs.addError({code:`${errCode}-2`, tag:'invalid genre',
+				errs.addError({code:`${errCode}-2`, key:'invalid genre',
 								message:`invalid ${tva.a_href.attribute()} value ${genreValue.quote()} for ${tva.e_Genre.elementize()}`, fragment:Genre});
 		}
 	}
@@ -495,13 +495,13 @@ export default class ContentGuideCheck {
 						case tva.e_MinimumAge:
 							checkAttributes(pgChild, [], [], tvaEA.MinimumAge, errs, `${errCode}-1`);
 							if (countParentalGuidance!=1)
-								errs.addError({code:`${errCode}-2`, tag:'parental guidance',
+								errs.addError({code:`${errCode}-2`, key:'parental guidance',
 											message:`${tva.e_MinimumAge.elementize()} must be in the first ${tva.e_ParentalGuidance.elementize()} element`, fragment:pgChild});
 							break;
 						case tva.e_ParentalRating:
 							checkAttributes(pgChild, [tva.a_href], [], tvaEA.ParentalRating, errs, `${errCode}-3`);
 							if (countParentalGuidance==1)
-								errs.addError({code:`${errCode}-4`, tag:'parental guidance', 
+								errs.addError({code:`${errCode}-4`, key:'parental guidance', 
 												message:`first ${tva.e_ParentalGuidance.elementize()} element must contain ${elementize("mpeg7:"+tva.e_MinimumAge)}`, fragment:pgChild});
 							break;		
 						case tva.e_ExplanatoryText:		
