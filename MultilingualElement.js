@@ -122,7 +122,7 @@ export function GetNodeLanguage(node, isRequired, errs, errCode, validator=null)
 		errs.addError({code:errCode, message:`${tva.a_lang.attribute()} is required for ${node.name().quote()}`, key:"unspecified language", line:node.line()});
 
 	let localLang=mlLanguage(node.parent());
-
+console.log(`${node.name()} xml.lang="${localLang}"`)
 	if (validator && node.attr(tva.a_lang) && localLang!=NO_DOCUMENT_LANGUAGE)
 		checkLanguage(validator, localLang, node.name(), node, errs, errCode);
 	return localLang;
