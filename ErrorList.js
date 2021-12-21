@@ -78,7 +78,7 @@ export default class ErrorList {
 		// clean up and redo formatting 
 		let tmp=node.toString({declaration:false, format:true});
 		let maxLen=nthIndexOf(tmp, '\n', MAX_FRAGMENT_LINES);
-		return maxLen==-1?tmp:`${tmp.slice(0,maxLen)}....\n`;
+		return maxLen==-1?tmp:`${tmp.slice(0,maxLen)}\n....\n`;
 	}
 
 	/* private method */ insertErrorData(type, key, err) {
