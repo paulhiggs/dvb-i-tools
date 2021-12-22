@@ -33,21 +33,21 @@ export function checkLanguage(validator, lang, loc, element, errs, errCode) {
 			break;
 		case validator.languageUnknown:
 			errs.addError({type:WARNING, code:`${errCode}-1`, 
-							message:`${loc?loc:"language"} value ${lang.quote()} is invalid`, fragment:element,
-							line:element?element.line():null, key:"invalid language"});
+							message:`${loc?loc:"language"} value ${lang.quote()} is invalid`, 
+							fragment:element, key:"invalid language"});
 			break;
 		case validator.languageRedundant:
 			errs.addError({type:WARNING, code:`${errCode}-2`, 
 							message:`${loc?loc:"language"} value ${lang.quote()} is deprecated (use ${validatorResp.pref.quote()} instead)`, 
-							line:element?element.line():null, key:"deprecated language"});
+							fragment:element, key:"deprecated language"});
 			break;	
 		case validator.languageNotSpecified:
 			errs.addError({code:`${errCode}-3`, message:`${loc?loc:"language"} value is not provided`, 
-							line:element?element.line():null, key:"unspecified language"});
+							fragment:element, key:"unspecified language"});
 			break;
 		case validator.languageInvalidType:
 			errs.addError({code:`${errCode}-4`, message:`language is not a String, its "${datatypeIs(lang)}"`, 
-							line:element?element.line():null, key:"invalid language"});
+							fragment:element, key:"invalid language"});
 			break;
 	}
 	return langOK;
@@ -119,11 +119,11 @@ export function GetNodeLanguage(node, isRequired, errs, errCode, validator=null)
 	if (!node) 
 		return NO_DOCUMENT_LANGUAGE;
 	if (isRequired && !node.attr(tva.a_lang))
-		errs.addError({code:errCode, message:`${tva.a_lang.attribute()} is required for ${node.name().quote()}`, key:"unspecified language", line:node.line()});
+		errs.addError({code:`${errCode}-1`, message:`${tva.a_lang.attribute()} is required for ${node.name().quote()}`, key:"unspecified language", line:node.line()});
 
 	let localLang=mlLanguage(node);
 
 	if (validator && node.attr(tva.a_lang) && localLang!=NO_DOCUMENT_LANGUAGE)
-		checkLanguage(validator, localLang, node.name(), node, errs, errCode);
+		checkLanguage(validator, localLang, node.name(), node, errs, `${errCode}-2`);
 	return localLang;
 }

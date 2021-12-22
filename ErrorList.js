@@ -150,6 +150,7 @@ export default class ErrorList {
 			});
 		}
 		else if (e.fragments) {
+			// note that the line of the error is derived from the fragment -- e.line is not used here
 			e.fragments.forEach(fragment => {
 				let newError={code:e.code, message:e.message};
 				if (fragment) {
@@ -165,14 +166,14 @@ export default class ErrorList {
 			});
 		} 
 		else if (e.fragment) {
-			let newError={code:e.code, message:e.message, 
-				element:(datatypeIs(e.fragment, "string")?e.fragment:this.prettyPrint(e.fragment))};
-
-			if (!e.line && !datatypeIs(e.fragment, "string"))
-				e.line=e.fragment.line()-1;
-			if (e.line) {
-				this.setError(e.type, e.code, e.message, e.line-1);
-				newError.line=e.line-1;
+			// note that the line of the error is derived from the fragment -- e.line is not used here
+			let newError={code:e.code, 
+							message:e.message, 
+							element:(datatypeIs(e.fragment, "string")?e.fragment:this.prettyPrint(e.fragment))};
+			
+			if (!datatypeIs(e.fragment, "string")) {
+				this.setError(e.type, e.code, e.message, e.fragment.line()-2);
+				newError.line=e.fragment.line()-2;
 			}
 			if (e.reportInTable)
 				this.insertErrorData(e.type, e.key, newError);
