@@ -150,13 +150,18 @@ export default class ErrorList {
 			});
 		}
 		else if (e.fragments) {
-			// note that the line of the error is derived from the fragment -- e.line is not used here
+			// note that the line of the error is derived from the fragment -- e.line is only used with the fragment is already a string
 			e.fragments.forEach(fragment => {
 				let newError={code:e.code, message:e.message};
 				if (fragment) {
 					newError.element=datatypeIs(fragment, "string")?fragment:this.prettyPrint(fragment);
 					
-					if (!datatypeIs(fragment, "string")) {
+					if (datatypeIs(fragment, "string")) {
+						if (e.hasOwnProperty('line')) {
+							this.setError(e.type, e.code, e.message, e.line-2);
+							newError.line=e.line-2;
+						}						
+					} else {
 						this.setError(e.type, e.code, e.message, fragment.line()-2);
 						newError.line=fragment.line()-2;
 					}
@@ -166,12 +171,18 @@ export default class ErrorList {
 			});
 		} 
 		else if (e.fragment) {
-			// note that the line of the error is derived from the fragment -- e.line is not used here
+			// note that the line of the error is derived from the fragment -- e.line is only used with the fragment is already a string
 			let newError={code:e.code, 
 							message:e.message, 
 							element:(datatypeIs(e.fragment, "string")?e.fragment:this.prettyPrint(e.fragment))};
 			
-			if (!datatypeIs(e.fragment, "string")) {
+			if (datatypeIs(e.fragment, "string")) {
+				if (e.hasOwnProperty('line')) {
+					this.setError(e.type, e.code, e.message, e.line-2);
+					newError.line=e.line-2;
+				}
+			}
+			else {
 				this.setError(e.type, e.code, e.message, e.fragment.line()-2);
 				newError.line=e.fragment.line()-2;
 			}
