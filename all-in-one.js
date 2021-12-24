@@ -72,7 +72,7 @@ token("parseErr", function getParseErr(req) {
 });
 token("location", function getCheckedLocation(req) {
 	if (req.body.testtype)
-		return `${req.body.testtype}::[${req.body.testtype==MODE_CG?`(${req.body.requestType})`:""}${req.body.doclocation==MODE_FILE?req.files.XMLfile.name:req.body.XMLurl}]`;
+		return `${req.body.testtype}::[${req.body.testtype==MODE_CG?`(${req.body.requestType})`:""}${req.body.doclocation==MODE_FILE?(req.files?.XMLfile?req.files.XMLfile.name:'unnamed'):req.body.XMLurl}]`;
 	return "[*]";
 });
 
