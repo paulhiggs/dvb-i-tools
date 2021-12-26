@@ -1203,9 +1203,17 @@ export default class ServiceListCheck {
 			switch (extn.attr(dvbi.a_extensionName).value()) {
 				case 'DVB-HB': 
 					if (extLoc != EXTENSION_LOCATION_SERVICE_LIST_REGISTRY)
-						errs.addError({code:`${errCode}-1`, message:"DVB-HB Extension only permitted in Service List Registry", 
+						errs.addError({code:`${errCode}-1`, message:"DVB-HB Extension only permitted in the Service List Registry", 
 							fragment:extn, key:'extensability'});
 					break;
+				case 'urn:hbbtv:dvbi:service:serviceIdentifierTriplet':
+					if (extLoc != EXTENSION_LOCATION_SERVICE_ELEMENT)
+						errs.addError({code:`${errCode}-2`, message:"HbbTV extension only permitted in Service List", 
+						fragment:extn, key:'extensability'});
+					break;
+				default:
+					errs.addError({type:WARNING, code:`${errCode}-100`, key:'unknown extension', fragment:extn,
+									message:`extenstion "${extn.attr(dvbi.a_extensionName).value()}" is not known to this tool`});
 			}
 		}
 	}
