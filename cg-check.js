@@ -2398,7 +2398,13 @@ export default class ContentGuideCheck {
 								message:`number of items (${(cntODP+cntSE)}) in the ${tva.e_ProgramLocationTable.elementize()} does not match ${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${o.childCount})`});
 		}
 
-		if (requestType != CG_REQUEST_PROGRAM)
+		if (requestType==CG_REQUEST_PROGRAM) {
+			if (cntODP>1 || cntSE!=0)
+				errs.addError({code:"PL023", 
+								message:`The ${tva.e_ProgramLocationTable.elementize()} may only contain a single OnDemandProgram element representing the current On Demand availability of this programme`});
+		} 
+		
+		if ((requestType==CG_REQUEST_PROGRAM && cntODP!=0) || (requestType!=CG_REQUEST_PROGRAM))
 			programCRIDs.forEach(programCRID => {
 				if (!isIni(plCRIDs, programCRID))
 					errs.addError({code:"PL022", 
