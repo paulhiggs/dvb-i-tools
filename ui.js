@@ -69,27 +69,28 @@ function tabulateResults(res, error, errs) {
 			resultsShown=true;
 			res.write("</table><br/>");
 		}
-
-		if (errs.markupXML.length>0) {
-			res.write("<hr/>EXPERIMENTAL - not all errors are indicated<hr/>");
-			const ERR="errors", WARN="warnings", INFO="info",
-				  style=(name,colour) => `<style>.${name} {position:relative; cursor:pointer; color:${colour};} .${name}[title]:hover:after {opacity:1; transition-delay:.1s; }</style>`;
-			res.write(`${style(ERR, "red")}${style(WARN, "blue")}${style(INFO, "green")}<pre>`);
-			errs.markupXML.forEach(line => {
-				let cla="", tip=line.validationErrors?line.validationErrors.map(err=>HTMLize(err)).join('&#10;'):null;
-				if (tip) {
-					if (tip.includes(ERROR)) cla=ERR;
-					else if (tip.includes(WARNING)) cla=WARN;
-					else cla=INFO;
-				}
-				let qualifier=tip?` class="${cla}" title="${tip}"`:"";
-				res.write(`<span id="line-${line.ix}"${qualifier}>${HTMLize(line.value)}</span><br/>`);
-			});
-			res.write("</pre><hr/>");
-		} 
 	}
+
 	if (!error && !resultsShown) 
 		res.write("no errors or warnings");
+
+	if (errs && errs.markupXML?.length>0) {
+		res.write("<hr/>");
+		const ERR="errors", WARN="warnings", INFO="info",
+			style=(name,colour) => `<style>.${name} {position:relative; cursor:pointer; color:${colour};} .${name}[title]:hover:after {opacity:1; transition-delay:.1s; }</style>`;
+		res.write(`${style(ERR, "red")}${style(WARN, "blue")}${style(INFO, "green")}<pre>`);
+		errs.markupXML.forEach(line => {
+			let cla="", tip=line.validationErrors?line.validationErrors.map(err=>HTMLize(err)).join('&#10;'):null;
+			if (tip) {
+				if (tip.includes(ERROR)) cla=ERR;
+				else if (tip.includes(WARNING)) cla=WARN;
+				else cla=INFO;
+			}
+			let qualifier=tip?` class="${cla}" title="${tip}"`:"";
+			res.write(`<span id="line-${line.ix}"${qualifier}>${HTMLize(line.value)}</span><br/>`);
+		});
+		res.write("</pre><hr/>");
+	} 
 }
 
 
