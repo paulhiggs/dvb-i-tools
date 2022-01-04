@@ -2370,14 +2370,14 @@ export default class ContentGuideCheck {
 		
 		GetNodeLanguage(ProgramLocationTable, false, errs, "PL012", this.knownLanguages);
 		
-		let cnt=0, foundServiceIds=[], plCRIDs=[];
+		let cntODP=0, cntSE=0, foundServiceIds=[], plCRIDs=[];
 
 		let children=ProgramLocationTable.childNodes();
 		if (children) children.forEachSubElement(child => {
 			switch (child.name()) {
 				case tva.e_OnDemandProgram:
 					this.ValidateOnDemandProgram(CG_SCHEMA, SCHEMA_PREFIX, child, programCRIDs, plCRIDs, requestType, errs);
-					cnt++;
+					cntODP++;
 					break;
 				case tva.e_Schedule:
 					let thisServiceIdRef=this.ValidateSchedule(CG_SCHEMA, SCHEMA_PREFIX, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
@@ -2387,22 +2387,23 @@ export default class ContentGuideCheck {
 											message:`A ${tva.e_Schedule.elementize()} element with ${tva.a_serviceIDRef.attribute()}=${thisServiceIdRef.quote()} is already specified`});
 						else 
 							foundServiceIds.push(thisServiceIdRef);
-					cnt++;
+					cntSE++;
 					break;
 			}
 		});
 
 		if (o && o.childCount!=0) {
-			if (o.childCount!=cnt)
+			if (o.childCount!=(cntODP+cntSE))
 				errs.addError({code:"PL021", 
-								message:`number of items (${cnt}) in the ${tva.e_ProgramLocationTable.elementize()} does not match ${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${o.childCount})`});
+								message:`number of items (${(cntODP+cntSE)}) in the ${tva.e_ProgramLocationTable.elementize()} does not match ${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${o.childCount})`});
 		}
 
-		programCRIDs.forEach(programCRID => {
-			if (!isIni(plCRIDs, programCRID))
-				errs.addError({code:"PL022", 
-								message:`CRID ${programCRID.quote()} specified in ${tva.e_ProgramInformationTable.elementize()} is not specified in ${tva.e_ProgramLocationTable.elementize()}`});
-		});
+		if (requestType != CG_REQUEST_PROGRAM)
+			programCRIDs.forEach(programCRID => {
+				if (!isIni(plCRIDs, programCRID))
+					errs.addError({code:"PL022", 
+									message:`CRID ${programCRID.quote()} specified in ${tva.e_ProgramInformationTable.elementize()} is not specified in ${tva.e_ProgramLocationTable.elementize()}`});
+			});
 	}
 
 
