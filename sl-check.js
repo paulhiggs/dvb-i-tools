@@ -593,19 +593,36 @@ export default class ServiceListCheck {
 						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-11`));
 					break;
 				case SERVICE_RM:
-				case SERVICE_INSTANCE_RM:
 					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && (this.SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1)) 
 						errs.addError({code:`${errCode}-21`,
 							message:`${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${SCHEMA_NAMESPACE.quote()} in ${Location}`, key:"invalid CS value", fragment:HowRelated});
-					
+			
 					if (this.validOutScheduleHours(HowRelated, SCHEMA_NAMESPACE) || this.validContentFinishedBanner(HowRelated, SCHEMA_NAMESPACE) || 
-					     this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE) || (LocationType==SERVICE_RM && this.validServiceBanner(HowRelated, SCHEMA_NAMESPACE))) {
+						this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE) || this.validServiceBanner(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
 
 						checkValidLogos(RelatedMaterial, errs, `${errCode}-22`, Location, this.knownLanguages);
 					}
-					else if (LocationType==SERVICE_RM && this.validServiceBanner(HowRelated, SCHEMA_NAMESPACE)) {
-						errs.addError({code:`${errCode}-23`,
+					else if (this.validServiceApplication(HowRelated)) {
+						rc=HowRelated.attr(dvbi.a_href).value();
+						MediaLocator.forEach(locator =>
+								this.checkSignalledApplication(locator, errs, Location));
+					}
+					else 
+						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-24`));
+				break;
+				case SERVICE_INSTANCE_RM:
+					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && (this.SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1)) 
+						errs.addError({code:`${errCode}-31`,
+							message:`${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${SCHEMA_NAMESPACE.quote()} in ${Location}`, key:"invalid CS value", fragment:HowRelated});
+					
+					if (this.validOutScheduleHours(HowRelated, SCHEMA_NAMESPACE) || this.validContentFinishedBanner(HowRelated, SCHEMA_NAMESPACE) ||  this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE)) {
+						rc=HowRelated.attr(dvbi.a_href).value();
+
+						checkValidLogos(RelatedMaterial, errs, `${errCode}-32`, Location, this.knownLanguages);
+					}
+					else if (this.validServiceBanner(HowRelated, SCHEMA_NAMESPACE)) {
+						errs.addError({code:`${errCode}-33`,
 							message:'Service Banner is not permitted in a Service Instance', key:'misplaced image type', fragment:HowRelated});
 					}
 					else if (this.validServiceApplication(HowRelated)) {
@@ -619,10 +636,10 @@ export default class ServiceListCheck {
 				case CONTENT_GUIDE_RM:
 					if (this.validContentGuideSourceLogo(HowRelated, SCHEMA_NAMESPACE)) {
 						rc=HowRelated.attr(dvbi.a_href).value();
-						checkValidLogos(RelatedMaterial, errs, `${errCode}-30`, Location, this.knownLanguages);
+						checkValidLogos(RelatedMaterial, errs, `${errCode}-41`, Location, this.knownLanguages);
 					}
 					else
-						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-31`));
+						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-42`));
 					break;
 			}
 		}
