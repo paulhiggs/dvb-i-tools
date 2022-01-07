@@ -560,15 +560,12 @@ export default class ServiceListCheck {
 			return rc;
 		}
 		
-		let HowRelated=null, Format=null, MediaLocator=[];
+		let HowRelated=null, MediaLocator=[];
 		let elems=RelatedMaterial.childNodes();
 		if (elems) elems.forEachSubElement(elem => {
 			switch (elem.name()) {
 				case tva.e_HowRelated:
 					HowRelated=elem;
-					break;
-				case tva.e_Format:
-					Format=elem;
 					break;
 				case tva.e_MediaLocator:
 					MediaLocator.push(elem);
