@@ -30,8 +30,6 @@ import { sl_InvalidHrefValue } from "./CommonErrors.js";
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
 import { checkAttributes } from "./schema_checks.js";
 
-import { isRestartAvailability } from "./cg-check.js";
-
 /* TODO:
 
  - also look for TODO in the code itself
@@ -1422,9 +1420,9 @@ export default class ServiceListCheck {
 			
 				if (ServiceGenre.attr(dvbi.a_href)) {
 					let genre=ServiceGenre.attr(dvbi.a_href).value();
-					if (!this.allowedGenres.isIn(genre) && !isRestartAvailability(genre)) 
+					if (!this.allowedGenres.isIn(genre)) 
 						errs.addError({code:"SL162", 
-							message:`service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} value ${genre} (must be content genre or restart indicator)`, 
+							message:`service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} value ${genre} (must be content genre)`, 
 							fragment:ServiceGenre, key:`invalid ${dvbi.e_ServiceGenre}`});
 				}
 			}
