@@ -1413,7 +1413,7 @@ export default class ServiceListCheck {
 			//check <Service><ServiceGenre>
 			let ServiceGenre=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceGenre), SL_SCHEMA);
 			if (ServiceGenre) {
-				checkAttributes(ServiceGenre, [tva.a_href], []. tvaEA.Genre , errs, "SL160");
+				checkAttributes(ServiceGenre, [tva.a_href], [tva.a_type], tvaEA.Genre, errs, "SL160");
 				if (ServiceGenre.attr(tva.a_type)) 
 					if (!isIn(tva.ALL_GENRE_TYPES, ServiceGenre.attr(tva.a_type).value()))
 						errs.addError({code:"SL161", 
