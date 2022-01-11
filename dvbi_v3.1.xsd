@@ -86,6 +86,7 @@
 		</sequence>
 		<attribute name="dynamic" type="boolean" default="false"/>
 		<attribute name="version" type="positiveInteger" use="required"/>
+		<attribute name="replayAvailable" type="boolean" default="false"/>
 		<attribute ref="xml:lang"/>
 	</complexType>
 	<complexType name="ServiceInstanceType">
