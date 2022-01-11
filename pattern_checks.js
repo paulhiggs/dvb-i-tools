@@ -91,6 +91,16 @@ export function isUTCDateTime(str) {
 const HTTPURLregex=new RegExp(`^https?:(//${e_AuthorityAndPath}|${e_PathNoAuthority})${e_Query}?${e_Fragment}?$`,'i');
 export var isHTTPURL = (arg) => arg ? HTTPURLregex.test(arg.trim()) : false;
 
+/**
+ * checks of the specified argument matches the scheme, authority and path syntax components of an HTTP(s) URL where the protocol is required to be provided
+ *
+ * @param {string} arg  The value whose format is to be checked
+ * @returns {boolean} true if the argument is an HTTP URL path (no query or fragment componenets)
+ * 
+ * see RFC 3986 - https://tools.ietf.org/html/rfc3986
+ */
+const HTTPPathURLregex=new RegExp(`^https?:(//${e_AuthorityAndPath}|${e_PathNoAuthority})$`,'i');
+export var isHTTPPathURL = (arg) => arg ? HTTPPathURLregex.test(arg.trim()) : false;
 
 /**
  * isURL and isURN use the syntax from MPEG DASH - http://github.com/MPEGGroup/DASHSchema/

@@ -17,7 +17,7 @@ import { isTAGURI } from "./URI_checks.js";
  
 import { xPath, xPathM, isIn, unEntity } from "./utils.js";
 
-import { isPostcode, isHTTPURL, isDomainName, isRTSPURL } from "./pattern_checks.js";
+import { isPostcode, isHTTPURL,isHTTPPathURL, isDomainName, isRTSPURL } from "./pattern_checks.js";
 
 import { IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, ISO3166, DVBI_ServiceListSchema, TVA_PictureFormatCS, DVBI_ServiceTypeCS, DVB_AudioCodecCS, MPEG7_AudioCodingFormatCS, DVB_AudioConformanceCS, DVB_VideoCodecCS, MPEG7_VisualCodingFormatCS, DVB_VideoConformanceCS, MPEG7_AudioPresentationCS, DVBI_RecordingInfoCS } from "./data-locations.js";
 
@@ -681,7 +681,7 @@ export default class ServiceListCheck {
 	 */
 	/*private*/  validateAContentGuideSource(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, source, errs, loc, errCode) {
 
-		let NotURLMessage = (errCode, elem, frag) => ({code:`${errCode}`, message:`${elem} is not a valid URL`, fragment:frag, key:"NOT_URL_KEY"});
+		let NotURLMessage = (errCode, elem, frag) => ({code:`${errCode}`, message:`${elem} is not a valid URL path`, fragment:frag, key:"not URL path"});
 		if (!source) {
 			errs.addError({type:APPLICATION,code:"GS000", message:"validateAContentGuideSource() called with source==null"});
 			return;
@@ -697,22 +697,22 @@ export default class ServiceListCheck {
 		
 		// ContentGuideSourceType::ScheduleInfoEndpoint - should be a URL
 		let sie=source.get(xPath(SCHEMA_PREFIX, dvbi.e_ScheduleInfoEndpoint), SL_SCHEMA);
-		if (sie && !isHTTPURL(sie.text()))
+		if (sie && !isHTTPPathURL(sie.text()))
 			errs.addError(NotURLMessage(`${errCode}-4`,dvbi.e_ScheduleInfoEndpoint.elementize(), sie));
 		
 		// ContentGuideSourceType::ProgramInfoEndpoint - should be a URL
 		let pie=source.get(xPath(SCHEMA_PREFIX, dvbi.e_ProgramInfoEndpoint), SL_SCHEMA);
-		if (pie && !isHTTPURL(pie.text()))
+		if (pie && !isHTTPPathURL(pie.text()))
 			errs.addError(NotURLMessage(`${errCode}-5`, dvbi.e_ProgramInfoEndpoint.elementize(), pie));
 		
 		// ContentGuideSourceType::GroupInfoEndpoint - should be a URL
 		let gie=source.get(xPath(SCHEMA_PREFIX, dvbi.e_GroupInfoEndpoint), SL_SCHEMA);
-		if (gie && !isHTTPURL(gie.text()))
+		if (gie && !isHTTPPathURL(gie.text()))
 			errs.addError(NotURLMessage(`${errCode}-6`, dvbi.e_GroupInfoEndpoint.elementize(), gie));
 		
 		// ContentGuideSourceType::MoreEpisodesEndpoint - should be a URL
 		let mee=source.get(xPath(SCHEMA_PREFIX, dvbi.e_MoreEpisodesEndpoint), SL_SCHEMA);
-		if (mee && !isHTTPURL(mee.text()))
+		if (mee && !isHTTPPathURL(mee.text()))
 			errs.addError(NotURLMessage(`${errCode}-7`, dvbi.e_MoreEpisodesEndpoint.elementize(), mee));
 	}	
 	
