@@ -373,6 +373,7 @@
 		<sequence>
 			<element name="SubscriptionPackage" type="dvbisd:SubscriptionPackageType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
+		<attribute name="allowNoPackage" type="boolean" default="true"/>
 	</complexType>
 	<complexType name="DASHPlaylistType">
 		<sequence>
