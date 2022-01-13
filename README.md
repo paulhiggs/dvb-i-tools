@@ -24,7 +24,7 @@ Note that these values are case sensitive, and a case sensitive matching is perf
 
 ### Operation
 1. Edit the Service List Entry Point Registry XML document (`slepr-master.xml`) as needed
-1. run it - `node csr.js [--port 3000] [--sport 3001] [--urls] [--file ./slepr-master.xml`]
+1. run it - `node csr.js [--port 3000] [--sport 3001] [--urls] [--file ./slepr-master.xml]  [--CORSmode library]`
 
 The server can be reloaded with an updated `slepr-master.xml` file by invoking it with /reload, i.e. `http://localhost:3000/reload`
 
@@ -51,7 +51,7 @@ Supports
 * the [:2019 schema](http://dvb.org/wp-content/uploads/2019/11/A177_DVB-I_Nov_2019.pdf) 
 * the [:2020 schema](https://dvb.org/wp-content/uploads/2019/11/A177r1_Service-Discovery-and-Programme-Metadata-for-DVB-I_July-2020.pdf) with its classification scheme updates
 * the [:2021 schema](https://dvb.org/wp-content/uploads/2020/11/A177r2_Service-Discovery-and-Programme-Metadata-for-DVB-I_ts_103-770-v120_June-2021.pdf) with its classification scheme updates
-* the :202x schema currently in development
+* the :2022 schema waiting publication
 
 Checks performed:
 * validation against the appropriate schema
@@ -150,7 +150,7 @@ Same as for the individual applications
 ### Installation
 1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
 1. Install necessary libraries (express, libxmljs, morgan)  `npm install`
-1. run it - `node all-in-one [--urls] [--port 3030] [--sport 3031]`
+1. run it - `node all-in-one [--urls] [--port 3030] [--sport 3031] [--CORSmode library]`
 
 If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
 
