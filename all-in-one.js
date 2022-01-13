@@ -24,7 +24,7 @@ import commandLineArgs from 'command-line-args';
 
 import { Default_SLEPR, IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, ISO3166 } from "./data-locations.js";
 
-import { HTTPPort } from "./globals.js";
+import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from './globals.js';
 import { readmyfile } from "./utils.js";
 
 // the service list validation
@@ -42,7 +42,6 @@ import ISOcountries from "./ISOcountries.js";
 import ClassificationScheme from "./ClassificationScheme.js";
 
 import { DVB_I_check, MODE_SL, MODE_CG, MODE_FILE, MODE_URL } from './Validator.js';
-
 
 // initialize Express
 let app=express();
@@ -98,13 +97,13 @@ const optionDefinitions=[
 	{name:'nosl', type:Boolean, defaultValue:false},
 	{name:'nocg', type:Boolean, defaultValue:false},
 	{name:'CSRfile', alias:'f', type:String, defaultValue:Default_SLEPR.file},
-	{name:'CORSmode', alias: 'c', type:String, defaultValue:"library"}
+	{name:'CORSmode', alias: 'c', type:String, defaultValue:CORSlibrary}
 ];
  
 const options=commandLineArgs(optionDefinitions);
 
-if (!["none", "library", "manual"].includes(options.CORSmode)) {
-	console.log('CORSmode must be "none", "library" to use the Express cors() handler, or "manual" to have headers inserted manually');
+if (!CORSoptions.includes(options.CORSmode)) {
+	console.log(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`);
 	process.exit(1); 
 }
 
@@ -155,10 +154,10 @@ if (!options.nosl) {
 const SLEPR_query_route='/query', SLEPR_reload_route='/reload', SLEPR_stats_route='/stats';
 
 let manualCORS=function(res, req, next) {next();};
-if (options.CORSmode=="library") {
+if (options.CORSmode==CORSlibrary) {
 	app.options("*", cors());
 }
-else if (options.CORSmode=="manual") {
+else if (options.CORSmode==CORSmanual) {
 	manualCORS=function (req, res, next) {
 		let opts=res.getHeader('X-Frame-Options');
 		if (opts) {

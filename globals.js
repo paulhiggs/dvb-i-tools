@@ -6,3 +6,6 @@ export const HTTPPort = {
 	all_in_one:3030
 };
 
+
+export const CORSmanual="manual", CORSlibrary="library", CORSnone="none";
+export const CORSoptions=[CORSmanual, CORSlibrary, CORSnone];

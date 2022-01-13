@@ -23,7 +23,7 @@ import process from "process";
 
 import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from './data-locations.js';
 
-import { HTTPPort } from './globals.js';
+import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from './globals.js';
 import { readmyfile } from './utils.js';
 
 const numCPUs = cpus().length;
@@ -51,7 +51,7 @@ const optionDefinitions=[
 	{ name:'CORSmode', alias:'c',
 		type:String, defaultValue:"library",
 		typeLabel:'{underline mode}',
-		description:'type of CORS habdling "library" (default), "manual" or "none"'},
+		description:`type of CORS habdling "${CORSlibrary}" (default), "${CORSmanual}" or "${CORSnone}"`},
 	{ name:'help', alias:'h', 
 		type:Boolean, defaultValue:false, 
 		description:'This help'}
@@ -101,8 +101,8 @@ catch (err) {
 	process.exit(1);
 }
 
-if (!["none", "library", "manual"].includes(options.CORSmode)) {
-	console.log('CORSmode must be "none", "library" to use the Express cors() handler, or "manual" to have headers inserted manually');
+if (!CORSoptions.includes(options.CORSmode)) {
+	console.log(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`);
 	process.exit(1); 
 }
 
@@ -197,10 +197,10 @@ else {
 	
 	const SLEPR_query_route='/query', SLEPR_reload_route='/reload', SLEPR_stats_route='/stats';
 	let manualCORS=function(res, req, next) {next();};
-	if (options.CORSmode=="library") {
+	if (options.CORSmode==CORSlibrary) {
 		app.options("*", cors());
 	}
-	else if (options.CORSmode=="manual") {
+	else if (options.CORSmode==CORSmanual) {
 		manualCORS=function (req, res, next) {
 			let opts=res.getHeader('X-Frame-Options');
 			if (opts) {
@@ -216,9 +216,9 @@ else {
 	csr.loadServiceListRegistry(options.file, knownLanguages, knownCountries, knownGenres);
 	app.use(morgan(':pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr'));
 	app.use(favicon(join('phlib','ph-icon.ico')));
-	if (options.CORSmode=="library")
+	if (options.CORSmode==CORSlibrary)
 		app.options(SLEPR_query_route, cors());
-	else if (options.CORSmode=="manual")
+	else if (options.CORSmode==CORSmanual)
 		app.options(SLEPR_query_route, manualCORS); 
 	app.get(SLEPR_query_route, function(req,res) {
 		process.send({ topic: INCR_REQUESTS });
