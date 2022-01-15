@@ -1,7 +1,4 @@
-
-// libxmljs2 - github.com/marudor/libxmljs2
 import { parseXmlString } from "libxmljs2";
-import format from 'xml-formatter';
 
 import { readFileSync } from "fs";
 
@@ -28,7 +25,7 @@ import { checkValidLogos } from "./RelatedMaterialChecks.js";
 import { sl_InvalidHrefValue } from "./CommonErrors.js";
 
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
-import { checkAttributes } from "./schema_checks.js";
+import { checkAttributes, SchemaCheck, SchemaLoad } from "./schema_checks.js";
 
 /* TODO:
 
@@ -1182,28 +1179,6 @@ export default class ServiceListCheck {
 		}
 	}
 
-
-	/**
-	 * validate a XML document gainst the specified schema (included schemas must be in the same directory)
-	 * 
-	 * @param {Document} XML the XML document to check
-	 * @param {Document} XSD the schema
-	 * @param {object} errs array to record any errors
-	 * @param {string} errCode the error code to report with each error 
-	 */
-	/*private*/ SchemaCheck(XML, XSD, errs, errCode) {
-	//	let s=parseXmlString(prettyXML);
-		if (!XML.validate(XSD)) {
-			let prettyXML=format(XML.toString(), {collapseContent:true, lineSeparator:'\n'});
-			let lines=prettyXML.split('\n');
-			XML.validationErrors.forEach(ve => {
-				let splt=ve.toString().split('\r');
-				splt.forEach(err => errs.addError({code:errCode, message:err, fragment:lines[ve.line-1], line:ve.line-1, key:'schema error'}));
-			});
-		}
-	}
-
-
 	/*private*/ CheckExtension(extn, extLoc, errs, errCode) {
 		if (!extn) {
 			errs.addError({type:APPLICATION, code:"CE000", message:"CheckExtension() called with extn=null"});
@@ -1235,16 +1210,16 @@ export default class ServiceListCheck {
 		let _rc=true;
 		switch (this.SchemaVersion(SCHEMA_NAMESPACE)) {
 			case SCHEMA_v1:
-				this.SchemaCheck(ServiceList, this.SLschema_v1, errs, `${errCode}-1`);
+				SchemaCheck(ServiceList, this.SLschema_v1, errs, `${errCode}-1`);
 				break;
 			case SCHEMA_v2:
-				this.SchemaCheck(ServiceList, this.SLschema_v2, errs, `${errCode}-2`);
+				SchemaCheck(ServiceList, this.SLschema_v2, errs, `${errCode}-2`);
 				break;
 			case SCHEMA_v3:
-				this.SchemaCheck(ServiceList, this.SLschema_v3, errs, `${errCode}-3`);
+				SchemaCheck(ServiceList, this.SLschema_v3, errs, `${errCode}-3`);
 				break;	
 			case SCHEMA_v4:
-				this.SchemaCheck(ServiceList, this.SLschema_v4, errs, `${errCode}-4`);
+				SchemaCheck(ServiceList, this.SLschema_v4, errs, `${errCode}-4`);
 				break;	
 			default:
 				_rc=false;
@@ -1266,26 +1241,14 @@ export default class ServiceListCheck {
 			return;
 		}
 
-		let SL=null;
-		try {
-			SL=parseXmlString(SLtext);
-		} catch (err) {
-			errs.addError({code:"SL001", message:`XML parsing failed: ${err.message}`, key:"malformed XML"});
+		let SL=SchemaLoad(SLtext, errs, "SL001");
+		if (!SL)
 			return;
-		}
-		if (!SL || !SL.root()) {
-			errs.addError({code:"SL002", message:"SL is empty"});
-			return;
-		}
-		
+
 		if (!SL.root().namespace()) {
 			errs.addError({code:"SL003", message:`namespace is not provided for ${dvbi.e_ServiceList.elementize()}`, key:'schema error'});
 			return;
 		}
-
-		let prettyXML=format(SLtext.replace(/(\n\t)/gm,"\n"), {collapseContent:true, lineSeparator:'\n'});
-		SL=parseXmlString(prettyXML);
-		errs.loadDocument(prettyXML);
 
 		if (SL.root().name() !== dvbi.e_ServiceList) {
 			errs.addError({code:"SL004", message:`Root element is not ${dvbi.e_ServiceList.elementize()}`, line:SL.root().line(), key:'schema error'});

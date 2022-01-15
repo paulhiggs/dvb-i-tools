@@ -1,5 +1,8 @@
 // schema_checks.js
 
+import { parseXmlString } from "libxmljs2";
+import format from 'xml-formatter';
+
 import { elementize } from './phlib/phlib.js';
 import { APPLICATION, INFORMATION } from "./ErrorList.js";
 import { isIn } from "./utils.js";
@@ -142,4 +145,51 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 	if (elem)
 		return elem.childNodes().find(el => el.type()=='element' && el.name()==childElementName) != undefined;
 	return false;
+}
+
+
+/**
+ * validate a XML document gainst the specified schema (included schemas must be in the same directory)
+ * 
+ * @param {Document} XML the XML document to check
+ * @param {Document} XSD the schema
+ * @param {object} errs array to record any errors
+ * @param {string} errCode the error code to report with each error 
+ */
+export function SchemaCheck(XML, XSD, errs, errCode) {
+	if (!XML.validate(XSD)) {
+		let prettyXML=format(XML.toString(), {collapseContent:true, lineSeparator:'\n'});
+		let lines=prettyXML.split('\n');
+		XML.validationErrors.forEach(ve => {
+			let splt=ve.toString().split('\r');
+			splt.forEach(err => errs.addError({code:errCode, message:err, fragment:lines[ve.line-1], line:ve.line, key:'schema error'}));
+		});
+	}
+}
+
+
+/**
+ * load the XML 
+ * @param {*} document 	XMLdocument
+ * @param {*} errs      error handler for any loading errors
+ * @param {*} errcode   error code prefix to use for any loading issues
+ * @returns {Document}  an XML document structure for use with libxmljs2
+ */
+export function SchemaLoad(document, errs, errcode) {
+	let tmp=null, prettyXML=format(document.replace(/(\n\t)/gm,"\n"), {collapseContent:true, lineSeparator:'\n'});
+
+	errs.loadDocument(prettyXML);
+	try {
+		tmp=parseXmlString(prettyXML);
+	}
+	catch (err) {
+		errs.addError({code:`${errcode}-1`, message:`XML parsing failed: ${err.message}`, key:"malformed XML"});
+		return null;
+	}
+	if (!tmp || !tmp.root()) {
+		errs.addError({code:`${errcode}-2`, message:"XML document is empty", key:"malformed XML"});
+		return null;
+	}
+	
+	return 	tmp; 
 }

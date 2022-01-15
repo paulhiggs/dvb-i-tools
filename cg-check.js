@@ -25,7 +25,7 @@ import { IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject,
 
 import { ValidatePromotionalStillImage } from "./RelatedMaterialChecks.js";
 import { cg_InvalidHrefValue, NoChildElement } from "./CommonErrors.js";
-import { checkAttributes, checkTopElementsAndCardinality} from "./schema_checks.js";
+import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaLoad } from "./schema_checks.js";
 
 import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./MultilingualElement.js";
 
@@ -2426,21 +2426,9 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		let CG=null;
-		try {
-			CG=parseXmlString(CGtext);
-		} catch (err) {
-			errs.addError({type:APPLICATION, code:"CG001", message:`XML parsing failed: ${err.message}`});
+		let CG=SchemaLoad(CGtext, errs, "CG001");
+		if (!CG)
 			return;
-		}
-		if (!CG || !CG.root()) {
-			errs.addError({code:"CG002", message:"CG is empty"});
-			return;
-		}
-
-		let prettyXML=format(CGtext.replace(/(\n\t)/gm,"\n"), {collapseContent:true, lineSeparator:'\n'});
-		CG=parseXmlString(prettyXML);
-		errs.loadDocument(prettyXML);
 
 		if (CG.root().name()!=tva.e_TVAMain) {
 			errs.addError({code:"CG004", message:`Root element is not ${tva.e_TVAMain.elementize()}`, key:"XSD validation"});
@@ -2452,16 +2440,8 @@ export default class ContentGuideCheck {
 			SCHEMA_NAMESPACE=CG.root().namespace()?CG.root().namespace().href():"";
 			CG_SCHEMA[SCHEMA_PREFIX]=SCHEMA_NAMESPACE;
 
-		if (!CG.validate(this.TVAschema)) {
-			let lines=prettyXML.split('\n');
-			CG.validationErrors.forEach(ve => {
-				let s=ve.toString().split('\r');
-				s.forEach(err => {
-					errs.addError({code:"CG003", message:err, fragment:lines[ve.line-1], line:ve.line-1, key:"XSD validation"});
-					errs.setError(err, ve.line-1);
-				}); 
-			});
-		}
+
+		SchemaCheck(CG, this.TVAschema, errs, "CG003");
 
 		let tvaMainLang=GetNodeLanguage(CG.root(), true, errs, "CG005", this.knownLanguages);
 		let ProgramDescription=CG.get(xPath(SCHEMA_PREFIX, tva.e_ProgramDescription), CG_SCHEMA);
