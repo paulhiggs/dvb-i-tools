@@ -1246,12 +1246,12 @@ export default class ServiceListCheck {
 			return;
 
 		if (!SL.root().namespace()) {
-			errs.addError({code:"SL003", message:`namespace is not provided for ${dvbi.e_ServiceList.elementize()}`, key:'schema error'});
+			errs.addError({code:"SL003", message:`namespace is not provided for ${dvbi.e_ServiceList.elementize()}`, key:"XSD validation"});
 			return;
 		}
 
 		if (SL.root().name() !== dvbi.e_ServiceList) {
-			errs.addError({code:"SL004", message:`Root element is not ${dvbi.e_ServiceList.elementize()}`, line:SL.root().line(), key:'schema error'});
+			errs.addError({code:"SL004", message:`Root element is not ${dvbi.e_ServiceList.elementize()}`, line:SL.root().line(), key:"XSD validation"});
 			return;
 		}
 
@@ -1261,7 +1261,7 @@ export default class ServiceListCheck {
 			SL_SCHEMA[SCHEMA_PREFIX]=SCHEMA_NAMESPACE;
 
 		if (!this.doSchemaVerification(SL, SCHEMA_NAMESPACE, errs, "SL005")) {
-			errs.addError({code:"SL010", message:`Unsupported namespace ${SCHEMA_NAMESPACE.quote()}`, key:'schema error'});
+			errs.addError({code:"SL010", message:`Unsupported namespace ${SCHEMA_NAMESPACE.quote()}`, key:"XSD validation"});
 			return;
 		}
 

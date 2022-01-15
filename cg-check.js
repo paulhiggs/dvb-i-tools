@@ -2431,7 +2431,7 @@ export default class ContentGuideCheck {
 			return;
 
 		if (CG.root().name()!=tva.e_TVAMain) {
-			errs.addError({code:"CG004", message:`Root element is not ${tva.e_TVAMain.elementize()}`, key:"XSD validation"});
+			errs.addError({code:"CG002", message:`Root element is not ${tva.e_TVAMain.elementize()}`, key:"XSD validation"});
 			return;
 		}
 
@@ -2439,7 +2439,6 @@ export default class ContentGuideCheck {
 			SCHEMA_PREFIX=CG.root().namespace()?CG.root().namespace().prefix():"", 
 			SCHEMA_NAMESPACE=CG.root().namespace()?CG.root().namespace().href():"";
 			CG_SCHEMA[SCHEMA_PREFIX]=SCHEMA_NAMESPACE;
-
 
 		SchemaCheck(CG, this.TVAschema, errs, "CG003");
 

@@ -1,5 +1,6 @@
 // RelatedMaterialChecks.js
 
+import { mpeg7 } from "./MPEG7_definitions.js";
 import { dvbi, dvbEA } from "./DVB-I_definitions.js";
 import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
 
@@ -9,10 +10,11 @@ import { checkLanguage, mlLanguage } from './MultilingualElement.js';
 import { checkAttributes, checkTopElementsAndCardinality} from "./schema_checks.js";
 import { isJPEGmime, isPNGmime, isWebPmime, validImageSet } from "./MIME_checks.js";
 import { isHTTPURL } from "./pattern_checks.js";
+import { cg_InvalidHrefValue } from "./CommonErrors.js";
 
-// orginally from cg-check.js
 /**
- * verifies if the specified RelatedMaterial contains a Promotional Still Image
+ * verifies if the specified RelatedMaterial contains a Promotional Still Image (per A177 clause 6.10.13). Only a single image is permitted and the format
+* specified in <MediaLocator><MediaURI> must match that specified in <Format>
  *
  * @param {Object} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
  * @param {Object} errs              The class where errors and warnings relating to the serivce list processing are stored
@@ -26,31 +28,100 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 		errs.addError({type:APPLICATION, code:"PS000", message:"ValidatePromotionalStillImage() called with RelatedMaterial==null"});
 		return;
 	}
-	let HowRelated=null, MediaLocator=[];
+
+	checkTopElementsAndCardinality(RelatedMaterial, 
+		[{name:tva.e_HowRelated},
+		 {name:tva.e_Format, minOccurs:0},
+		 {name:tva.e_MediaLocator}],
+		tvaEC.RelatedMaterial, false, errs, `${errCode}-1`);
+
+	let HowRelated=null, Format=null, MediaLocator=null;
+	// just use the first instance of any specified element
 	let children=RelatedMaterial.childNodes();
 	if (children) children.forEachSubElement(elem => {
 		switch (elem.name()) {
 			case tva.e_HowRelated:
-				HowRelated=elem;
+				if (!HowRelated) HowRelated=elem;
+				break;
+			case tva.e_Format:
+				if (!Format) Format=elem;
 				break;
 			case tva.e_MediaLocator:
-				MediaLocator.push(elem);
+				if (!MediaLocator) MediaLocator=elem;
 				break;
 		}
 	});
 
-	checkTopElementsAndCardinality(RelatedMaterial, 
-		[{name:tva.e_HowRelated},
-		 {name:tva.e_MediaLocator, maxOccurs:Infinity}],
-		tvaEC.RelatedMaterial, false, errs, `${errCode}-1`);
+	if (!HowRelated || !MediaLocator)
+		return;
 	checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, `${errCode}-2`);
 
-	if (HowRelated.attr(tva.a_href) && (HowRelated.attr(tva.a_href).value()!=tva.cs_PromotionalStillImage) )
+	if (HowRelated.attr(tva.a_href) && (HowRelated.attr(tva.a_href).value()!=tva.cs_PromotionalStillImage) ) {
 		errs.addError({code:`${errCode}-10`, message:`${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} does not designate a Promotional Still Image`,
 						fragment:HowRelated});
+		return;
+	}
 
-	checkValidLogos(RelatedMaterial, errs, `${errCode}-11`, location, languageValidator);
+	let isJPEG=false, isPNG=false, StillPictureFormat=null;
+	if (Format) {
+		checkTopElementsAndCardinality(Format,
+			[{name:tva.e_StillPictureFormat}],
+			tvaEC.Format, false, errs, `${errCode}-11`);
 
+		let subElems=Format.childNodes();
+		if (subElems) subElems.forEachSubElement(child => {
+			if (child.name()==tva.e_StillPictureFormat) {
+				StillPictureFormat=child;
+
+				checkAttributes(child, [tva.a_horizontalSize, tva.a_verticalSize, tva.a_href], [], tvaEA.SillPictureFormat, errs, `${errCode}-12`);
+
+				if (child.attr(tva.a_href)) {
+					let href=child.attr(tva.a_href).value();
+					switch (href) {
+						case mpeg7.JPEG_IMAGE_CS_VALUE:
+							isJPEG=true;
+							break;
+						case mpeg7.PNG_IMAGE_CS_VALUE:
+							isPNG=true;
+							break;
+						default:
+							cg_InvalidHrefValue(href, child, `${RelatedMaterial.name()}.${tva.e_Format}.${tva.e_StillPictureFormat}`, location, errs, `${errCode}-13`);
+					}
+				}
+			}
+		});
+
+	}
+
+	checkTopElementsAndCardinality(MediaLocator,
+		[{name:tva.MediaUri}],
+		tvaEC.MediaLocator, false, errs, `${errCode}-21`);
+
+	let subElems=MediaLocator.childNodes(), hasMediaURI=false;
+	if (subElems) subElems.forEachSubElement(child => {
+		if (child.name()==tva.e_MediaUri) {
+			hasMediaURI=true;
+			checkAttributes(child, [tva.a_contentType], [], tvaEA.MediaUri, errs, `${errCode}-22`);
+			if (child.attr(tva.a_contentType)) {
+				let contentType=child.attr(tva.a_contentType).value();
+				if (!isJPEGmime(contentType) && !isPNGmime(contentType)) 
+					errs.addError({code:`${errCode}-23`, 
+									message:`invalid ${tva.a_contentType.attribute(tva.e_MediaLocator)}=${contentType.quote()} specified for ${RelatedMaterial.name().elementize()} in ${location}`,
+									fragment:child});
+				if (StillPictureFormat && ((isJPEGmime(contentType) && !isJPEG) || (isPNGmime(contentType) && !isPNG))) {
+					errs.addError({code:`${errCode}-24`,
+									message:`conflicting media types in ${tva.e_StillPictureFormat.elementize()} and ${tva.e_MediaUri.elementize()} for ${location}`, 
+									fragments:[StillPictureFormat,child]});
+				}
+			}
+			if (!isHTTPURL(child.text()))
+				errs.addError({code:`${errCode}-25`, message:`${tva.e_MediaUri.elementize()}=${child.text().quote()} is not a valid Image URL`, key:"invalid URL", fragment:child});
+		}
+	});
+	if (!hasMediaURI)
+		errs.addError({code:`${errCode}-26`, 
+				message:`${tva.e_MediaUri.elementize()} not specified for ${tva.e_MediaLocator.elementize()} logo in ${location}`, 
+				fragment:MediaLocator, key:`no ${tva.e_MediaUri}`});
 }
 
 
@@ -109,7 +180,7 @@ export function  checkValidLogos(RelatedMaterial, errs, errCode, location, langu
 
 	if (specifiedMediaTypes.length!=0 && !validImageSet(specifiedMediaTypes)) {
 		errs.addError({code:`${errCode}-7`, message:'A PNG or JPG image must be specified with other MIME types are used', 
-			key:'invalif image set', line:RelatedMaterial.line()});
+			key:'invalid image set', line:RelatedMaterial.line()});
 	}
 }
 

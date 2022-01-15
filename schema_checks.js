@@ -162,7 +162,7 @@ export function SchemaCheck(XML, XSD, errs, errCode) {
 		let lines=prettyXML.split('\n');
 		XML.validationErrors.forEach(ve => {
 			let splt=ve.toString().split('\r');
-			splt.forEach(err => errs.addError({code:errCode, message:err, fragment:lines[ve.line-1], line:ve.line, key:'schema error'}));
+			splt.forEach(err => errs.addError({code:errCode, message:err, fragment:lines[ve.line-1], line:ve.line, key:"XSD validation"}));
 		});
 	}
 }
