@@ -1002,10 +1002,12 @@ export default class ServiceListCheck {
 		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ServiceInstance.name().elementize(), ServiceInstance, errs, "SI131", this.knownLanguages);
 		let sp=0, SubscriptionPackage;
 		while ((SubscriptionPackage=ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ++sp), SL_SCHEMA))!=null) {
-			let pkg=localizedSubscriptionPackage(SubscriptionPackage);
-			if (!subscriptionPackages.includes(pkg))
-				errs.addError({code:"SI130", message:`${dvbi.e_SubscriptionPackage.elementize()}="${pkg}" is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
-					fragment:SubscriptionPackage, key:`undeclared ${dvbi.e_SubscriptionPackage}`});
+			if (this.SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v4) {
+				let pkg=localizedSubscriptionPackage(SubscriptionPackage);
+				if (!subscriptionPackages.includes(pkg))
+					errs.addError({code:"SI130", message:`${dvbi.e_SubscriptionPackage.elementize()}="${pkg}" is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
+						fragment:SubscriptionPackage, key:`undeclared ${dvbi.e_SubscriptionPackage}`});
+			}
 		}
 
 		// <ServiceInstance><FTAContentManagement>
@@ -1487,9 +1489,10 @@ export default class ServiceListCheck {
 										fragment:SubscriptionPackage, key:'duplicate package name'});
 					else SubscriptionPackages.push(localSubscriptionPackage);
 
-					if (!declaredSubscriptionPackages.includes(localSubscriptionPackage))
-						errs.addError({code:"SL248", message:`${dvbi.e_SubscriptionPackage.elementize()}="${localSubscriptionPackage}" is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
-							fragment:SubscriptionPackage, key:`undeclared ${dvbi.e_SubscriptionPackage}`});
+					if (this.SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v4)
+						if (!declaredSubscriptionPackages.includes(localSubscriptionPackage))
+							errs.addError({code:"SL248", message:`${dvbi.e_SubscriptionPackage.elementize()}="${localSubscriptionPackage}" is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
+								fragment:SubscriptionPackage, key:`undeclared ${dvbi.e_SubscriptionPackage}`});
 				}
 
 				if (TargetRegions.length==0) TargetRegions.push(LCN_TABLE_NO_TARGETREGION);
