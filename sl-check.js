@@ -248,7 +248,7 @@ export default class ServiceListCheck {
 		this.SLschema_v1=parseXmlString(readFileSync(DVBI_ServiceListSchema.v1.file));
 		this.SLschema_v2=parseXmlString(readFileSync(DVBI_ServiceListSchema.v2.file));
 		this.SLschema_v3=parseXmlString(readFileSync(DVBI_ServiceListSchema.v3.file));
-		this.SLschema_v4=parseXmlString(readFileSync(DVBI_ServiceListSchema.v3x.file));
+		this.SLschema_v4=parseXmlString(readFileSync(DVBI_ServiceListSchema.v4.file));
 
 		this.loadDataFiles(useURLs);
 	}
