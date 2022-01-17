@@ -90,7 +90,7 @@ export function checkXMLLangs(SCHEMA, PREFIX, elementName, elementLocation, node
 
 	let elementLanguages=[], i=0, elem;
 	while ((elem=node.get(xPath(PREFIX, elementName, ++i), SCHEMA))!=null) {
-		let lang=mlLanguage(elem.parent());
+		let lang=mlLanguage(elem);
 		if (isIn(elementLanguages, lang)) 
 			errs.addError({code:`${errCode}-1`, 
 				message:`${lang==NO_DOCUMENT_LANGUAGE?"default language":`xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} for ${elementLocation}`, 
