@@ -1449,7 +1449,7 @@ export default class ServiceListCheck {
 				let uniqueID=service.get(xPath(SCHEMA_PREFIX, dvbi.e_UniqueIdentifier), SL_SCHEMA);
 				if (uniqueID && (CGSR.text()==uniqueID.text()))
 					errs.addError({type:WARNING, code:"SL230", message:`${dvbi.e_ContentGuideServiceRef.elementize()} is self`, 
-									fragment:uniqueID, key:`self ${dvbi.e_ContentGuideServiceRef.elementize()}`});
+								fragments:[uniqueID, CGSR], key:`self ${dvbi.e_ContentGuideServiceRef.elementize()}`});
 			}
 		}
 
