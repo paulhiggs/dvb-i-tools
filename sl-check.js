@@ -7,7 +7,7 @@ import { elementize, quote } from './phlib/phlib.js';
 import ErrorList, { ERROR, WARNING, APPLICATION } from "./ErrorList.js";
 import ClassificationScheme from "./ClassificationScheme.js";
 
-import { dvbi } from "./DVB-I_definitions.js";
+import { dvbi, dvbiEC } from "./DVB-I_definitions.js";
 
 import { tva, tvaEA } from "./TVA_definitions.js";
 import { isTAGURI } from "./URI_checks.js";
@@ -25,7 +25,7 @@ import { checkValidLogos } from "./RelatedMaterialChecks.js";
 import { sl_InvalidHrefValue } from "./CommonErrors.js";
 
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
-import { checkAttributes, SchemaCheck, SchemaLoad } from "./schema_checks.js";
+import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaLoad } from "./schema_checks.js";
 
 /* TODO:
 
@@ -557,6 +557,11 @@ export default class ServiceListCheck {
 			return rc;
 		}
 		
+		checkTopElementsAndCardinality(RelatedMaterial, 
+			[{name: dvbi.e_HowRelated},
+			 {name: dvbi.e_e_MediaLocator, maxOccurs:Infinity}], 
+			 dvbiEC.RelatedMaterial, false, errs, `${errCode}-1`);
+
 		let HowRelated=null, MediaLocator=[];
 		let elems=RelatedMaterial.childNodes();
 		if (elems) elems.forEachSubElement(elem => {
@@ -571,7 +576,7 @@ export default class ServiceListCheck {
 		});
 		
 		if (!HowRelated) {
-			errs.addError({code:`${errCode}-1`, 
+			errs.addError({code:`${errCode}-2`, 
 							message:`${tva.e_HowRelated.elementize()} not specified for ${tva.e_RelatedMaterial.elementize()} in ${Location}`, 
 							line:RelatedMaterial.line(), key:`no ${tva.e_HowRelated}`});
 			return rc;
@@ -607,7 +612,7 @@ export default class ServiceListCheck {
 					}
 					else 
 						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-24`));
-				break;
+					break;
 				case SERVICE_INSTANCE_RM:
 					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && (this.SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1)) 
 						errs.addError({code:`${errCode}-31`,

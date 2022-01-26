@@ -17,7 +17,7 @@ const CaptionCodingFormatCS="urn:tva:metadata:cs:CaptionCodingFormatCS:2015",
 	  ForwardEPGAvailabilityCS="urn:fvc:metadata:cs:FEPGAvailabilityCS:2014-10",
 	  RestartAvailabilityCS="urn:fvc:metadata:cs:RestartAvailabilityCS:2018";
 
-import {tva, tvaEA} from './TVA_definitions.js';
+import {tva, tvaEA, tvaEC} from './TVA_definitions.js';
 
 export const dvbi = {
 	A177v1_Namespace: "urn:dvb:metadata:servicediscovery:2019",
@@ -303,4 +303,8 @@ export const dvbi = {
 
 export const dvbEA = {	// EA = Element-Attributes - the attributes that are defiend for each element
 	MediaLocator: [dvbi.a_contentLanguage].concat(tvaEA.mediaLocator),
+};
+
+export const dvbiEC = { // EC = Element-Children - the child elements or each element
+	RelatedMaterial: tvaEC.RelatedMaterial,
 };
