@@ -37,8 +37,7 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 
 	let HowRelated=null, Format=null, MediaLocator=null;
 	// just use the first instance of any specified element
-	let children=RelatedMaterial.childNodes();
-	if (children) children.forEachSubElement(elem => {
+	if (RelatedMaterial.childNodes()) RelatedMaterial.childNodes().forEachSubElement(elem => {
 		switch (elem.name()) {
 			case tva.e_HowRelated:
 				if (!HowRelated) HowRelated=elem;
@@ -68,8 +67,7 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 			[{name:tva.e_StillPictureFormat}],
 			tvaEC.Format, false, errs, `${errCode}-11`);
 
-		let subElems=Format.childNodes();
-		if (subElems) subElems.forEachSubElement(child => {
+		if (Format.childNodes()) Format.childNodes().forEachSubElement(child => {
 			if (child.name()==tva.e_StillPictureFormat) {
 				StillPictureFormat=child;
 
@@ -97,8 +95,8 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 		[{name:tva.MediaUri}],
 		tvaEC.MediaLocator, false, errs, `${errCode}-21`);
 
-	let subElems=MediaLocator.childNodes(), hasMediaURI=false;
-	if (subElems) subElems.forEachSubElement(child => {
+	let hasMediaURI=false;
+	if (MediaLocator.childNodes()) MediaLocator.childNodes().forEachSubElement(child => {
 		if (child.name()==tva.e_MediaUri) {
 			hasMediaURI=true;
 			checkAttributes(child, [tva.a_contentType], [], tvaEA.MediaUri, errs, `${errCode}-22`);
@@ -140,8 +138,8 @@ export function  checkValidLogos(RelatedMaterial, errs, errCode, location, langu
 	if (!RelatedMaterial)
 		return;
 	
-	let RMchildren=RelatedMaterial.childNodes(), specifiedMediaTypes=[];
-	if (RMchildren) RMchildren.forEachSubElement(MediaLocator => {
+	let specifiedMediaTypes=[];
+	if (RelatedMaterial.childNodes()) RelatedMaterial.childNodes().forEachSubElement(MediaLocator => {
 		if (MediaLocator.name()==tva.e_MediaLocator) {
 
 			checkTopElementsAndCardinality(MediaLocator, [{name:tva.e_MediaUri}], tvaEC.MediaLocator, false, errs, `${errCode}-1`);
@@ -152,8 +150,7 @@ export function  checkValidLogos(RelatedMaterial, errs, errCode, location, langu
 
 			let MLlanguage=mlLanguage(MediaLocator);
 
-			let subElems=MediaLocator.childNodes();
-			if (subElems) subElems.forEachSubElement(MediaUri => {
+			if (MediaLocator.childNodes()) MediaLocator.childNodes().forEachSubElement(MediaUri => {
 				if (MediaUri.name()==tva.e_MediaUri) {
 
 					checkAttributes(MediaUri, [tva.a_contentType], [], tvaEA.MediaUri, errs, `${errCode}-4`);

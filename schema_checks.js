@@ -107,8 +107,7 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 	});
  
 	// check that no additional child elements existance if the "Other Child Elements are OK" flag is not set
-	let children=parentElement.childNodes();
-	if (children) {
+	if (parentElement.childNodes()) {
 
 		// create a set of child elements that are in the schema but not in DVB-I
 		let excludedChildren=[];
@@ -117,7 +116,7 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 			excludedChildren.push(child);
 		});
 		
-		children.forEachSubElement(child => {
+		parentElement.childNodes().forEachSubElement(child => {
 		let childName=child.name();
 		if (!findElementIn(childElements, childName)) {	
 			if (isIn(excludedChildren, child.name()))

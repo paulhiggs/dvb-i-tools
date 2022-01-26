@@ -502,8 +502,8 @@ export default class ServiceListCheck {
 					message:`${tva.e_MediaLocator.elementize()} not specified for application ${tva.e_RelatedMaterialr.elementize()} in ${Location}`, 
 					key:`no ${tva.e_MediaUri}`});
 		else {
-			let subElems=MediaLocator.childNodes(), hasMediaURI=false;
-			if (subElems) subElems.forEachSubElement(child => {
+			let hasMediaURI=false;
+			if (MediaLocator.childNodes()) MediaLocator.childNodes().forEachSubElement(child => {
 				if (child.name()==tva.e_MediaUri) {
 					hasMediaURI=true;
 					if (child.attr(tva.a_contentType) && !isIn(validApplicationTypes, child.attr(tva.a_contentType).value())) 
@@ -563,8 +563,7 @@ export default class ServiceListCheck {
 			 dvbiEC.RelatedMaterial, false, errs, `${errCode}-1`);
 
 		let HowRelated=null, MediaLocator=[];
-		let elems=RelatedMaterial.childNodes();
-		if (elems) elems.forEachSubElement(elem => {
+		if (RelatedMaterial.childNodes()) RelatedMaterial.childNodes().forEachSubElement(elem => {
 			switch (elem.name()) {
 				case tva.e_HowRelated:
 					HowRelated=elem;

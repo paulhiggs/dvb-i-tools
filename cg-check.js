@@ -546,8 +546,8 @@ export default class ContentGuideCheck {
 			errs.addError({type:APPLICATION, code:"VN000", message:"ValidateName() called with elem==null"});
 			return;
 		}
-		let familyNameCount=[], givenNameCount=0, children=elem.childNodes();
-		if (children) children.forEachSubElement(subElem => {
+		let familyNameCount=[], givenNameCount=0;
+		if (elem.childNodes()) elem.childNodes().forEachSubElement(subElem => {
 			switch (subElem.name()) {
 				case tva.e_GivenName:
 					givenNameCount++;
@@ -785,8 +785,7 @@ export default class ContentGuideCheck {
 		}
 		let HowRelated=null, MediaLocator=[];
 
-		let children=RelatedMaterial.childNodes();
-		if (children) children.forEachSubElement(elem => {
+		if (RelatedMaterial.childNodes()) RelatedMaterial.childNodes().forEachSubElement(elem => {
 			switch (elem.name()) {
 				case tva.e_HowRelated:
 					HowRelated=elem;
@@ -810,8 +809,8 @@ export default class ContentGuideCheck {
 			else {		
 				if (MediaLocator.length!=0) 
 					MediaLocator.forEach(ml => {
-						let subElems=ml.childNodes(), hasAuxiliaryURI=false;
-						if (subElems) subElems.forEachSubElement(child => {
+						let hasAuxiliaryURI=false;
+						if (ml.childNodes()) ml.childNodes().forEachSubElement(child => {
 							if (child.name()==tva.e_AuxiliaryURI) {
 								hasAuxiliaryURI=true;
 								checkAttributes(child, [tva.a_contentType], [], tvaEA.AuxiliaryURI, errs, "TA010");
@@ -1163,8 +1162,7 @@ export default class ContentGuideCheck {
 		// <ProgramInformation><BasicDescription>
 		this.ValidateBasicDescription(CG_SCHEMA, SCHEMA_PREFIX, ProgramInformation, requestType, errs, null);
 
-		let children=ProgramInformation.childNodes();
-		if (children) children.forEachSubElement(child => {
+		if (ProgramInformation.childNodes()) ProgramInformation.childNodes().forEachSubElement(child => {
 			switch (child.name()) {
 				case tva.e_OtherIdentifier:		// <ProgramInformation><OtherIdentifier>
 				checkAttributes(child, [], [], tvaEA.OtherIdentifier, errs, "PI021");
@@ -2372,8 +2370,7 @@ export default class ContentGuideCheck {
 		
 		let cntODP=0, cntSE=0, foundServiceIds=[], plCRIDs=[];
 
-		let children=ProgramLocationTable.childNodes();
-		if (children) children.forEachSubElement(child => {
+		if (ProgramLocationTable.childNodes()) ProgramLocationTable.childNodes().forEachSubElement(child => {
 			switch (child.name()) {
 				case tva.e_OnDemandProgram:
 					this.ValidateOnDemandProgram(CG_SCHEMA, SCHEMA_PREFIX, child, programCRIDs, plCRIDs, requestType, errs);
