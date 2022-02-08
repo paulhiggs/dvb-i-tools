@@ -92,14 +92,14 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
  
 		if (count==0 && _min!=0) {
 			errs.addError({code:`${errCode}-1`, line:parentElement.line(), 
-								message:`Mandatory element ${elem.name().elementize()} not specified in ${thisElem}`});
+								message:`Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`});
 			rv=false;
 		}
 		else {
 			if (count<_min || count>_max) {
 				namedChildren.forEach(child => 
 					errs.addError({code:`${errCode}-2`, line:child.line(),
-									message:`Cardinality of ${elem.name().elementize()} in ${thisElem} is not in the range ${_min}..${(_max==Infinity)?"unbounded":_max}`})
+									message:`Cardinality of ${elem.name.elementize()} in ${thisElem} is not in the range ${_min}..${(_max==Infinity)?"unbounded":_max}`})
 				);
 				rv=false;				
 			}
