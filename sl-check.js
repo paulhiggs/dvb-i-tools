@@ -558,8 +558,8 @@ export default class ServiceListCheck {
 		}
 		
 		checkTopElementsAndCardinality(RelatedMaterial, 
-			[{name: dvbi.e_HowRelated},
-			 {name: dvbi.e_MediaLocator, maxOccurs:Infinity}], 
+			[{name: tva.e_HowRelated},
+			 {name: tva.e_MediaLocator, maxOccurs:Infinity}], 
 			 dvbiEC.RelatedMaterial, false, errs, `${errCode}-1`);
 
 		let HowRelated=null, MediaLocator=[];
