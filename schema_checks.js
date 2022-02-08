@@ -92,7 +92,7 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
  
 		if (count==0 && _min!=0) {
 			errs.addError({code:`${errCode}-1`, line:parentElement.line(), 
-								message:`Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`});
+								message:`Mandatory element ${elem.name().elementize()} not specified in ${thisElem}`});
 			rv=false;
 		}
 		else {
