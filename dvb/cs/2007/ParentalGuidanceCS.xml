@@ -1,0 +1,795 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassificationScheme uri="urn:dvb:metadata:cs:ParentalGuidanceCS:2007" xmlns="urn:dvb:metadata:schema:dvbCSschema:2007" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:dvb:metadata:schema:dvbCSschema:2007 ../../schema/dvbCSschema.xsd">
+	<Term termID="1">
+		<Name xml:lang="en">Australia</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="1.1">
+			<Name xml:lang="en">Movies and Games</Name>
+			<Definition>Movies and Games ratings as defined by the Australian Office of Film and Literature Classification (http://www.oflc.gov.au)</Definition>
+			<Term termID="1.1.1">
+				<Name xml:lang="en">E</Name>
+				<Definition xml:lang="en">Exempt From Classification</Definition>
+			</Term>
+			<Term termID="1.1.2">
+				<Name xml:lang="en">P</Name>
+				<Definition xml:lang="en">Suitable for All Ages</Definition>
+			</Term>
+			<Term termID="1.1.3">
+				<Name xml:lang="en">PG</Name>
+				<Definition xml:lang="en">Parental Guidance is Recommended for Young Viewers</Definition>
+			</Term>
+			<Term termID="1.1.4">
+				<Name xml:lang="en">M</Name>
+				<Definition xml:lang="en">Suitable for Mature Audiences</Definition>
+			</Term>
+			<Term termID="1.1.5">
+				<Name xml:lang="en">MA15+</Name>
+				<Definition xml:lang="en">Suitable for Mature Audiences Only</Definition>
+			</Term>
+			<Term termID="1.1.6">
+				<Name xml:lang="en">R18+</Name>
+				<Definition xml:lang="en">Restricted to Adults 18 Years and Over</Definition>
+			</Term>
+			<Term termID="1.1.7">
+				<Name xml:lang="en">X18+</Name>
+				<Definition xml:lang="en">Restricted to Adults 18 Years and Over (ACT and NT Only) - Very Strong and Graphic Sex Scenes</Definition>
+			</Term>
+			<Term termID="1.1.8">
+				<Name xml:lang="en">RC</Name>
+				<Definition xml:lang="en">Refused Classification </Definition>
+			</Term>
+		</Term>
+		<Term termID="1.2">
+			<Name xml:lang="en">TV Programs</Name>
+			<Definition> Movies and Games ratings as defined by the Australian Office of Film and Literature Classification (http://www.oflc.gov.au) </Definition>
+			<Term termID="1.2.1">
+				<Name xml:lang="en">P</Name>
+				<Definition xml:lang="en">Programmes suited specifically for pre-school children</Definition>
+			</Term>
+			<Term termID="1.2.2">
+				<Name xml:lang="en">C</Name>
+				<Definition xml:lang="en">Programmes suited for children 5 to 11 years of age</Definition>
+			</Term>
+			<Term termID="1.2.3">
+				<Name xml:lang="en">G</Name>
+				<Definition xml:lang="en">General Exhibition - Programmes which are suitable for all ages, but are not specifically geared towards children</Definition>
+			</Term>
+			<Term termID="1.2.4">
+				<Name xml:lang="en">PG</Name>
+				<Definition xml:lang="en">Parental Guidance - Parental Guidance is recommended for young children. - Cannot be Shown between 4:00pm and 7:00pm on weekdays.</Definition>
+			</Term>
+			<Term termID="1.2.5">
+				<Name xml:lang="en">M</Name>
+				<Definition xml:lang="en">Mature - Recommended for Mature Audiences. - Can only be shown between 12:00pm - 3:00pm on School Days and 8:30pm - 5:00am any day</Definition>
+			</Term>
+			<Term termID="1.2.6">
+				<Name xml:lang="en">MA15+</Name>
+				<Definition xml:lang="en">Mature Audience Only - Not suitable for Persons Under the Age of 15. - Can only be shown between 9:00pm - 5:00am. A parental warning must be shown before the program starts</Definition>
+			</Term>
+			<Term termID="1.2.7">
+				<Name xml:lang="en">AV15+</Name>
+				<Definition xml:lang="en">Adult Violence - Not Suitable for Persons Under the Age of 15 - The AV 15+ signifies that the program contains significant violence</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="2">
+		<Name xml:lang="en">Belgium</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="2.1">
+			<Name xml:lang="en"></Name>
+			<Term termID="2.1.1">
+				<Name xml:lang="nl">KT</Name>
+				<Definition xml:lang="en">Suitable for all</Definition>
+			</Term>
+			<Term termID="2.1.2">
+				<Name xml:lang="nl">KNT</Name>
+				<Definition xml:lang="en">Unsuitable for children</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="3">
+		<Name xml:lang="en">Brazil</Name>
+		<Term termID="3.1">
+			<Name xml:lang="en">Movies and Games</Name>
+			<Definition xml:lang="en"> Movies and Games ratings as defined by the DJCTQ (http://www.mj.gov.br/classificacao) </Definition>
+			<Term termID="3.1.1">
+				<Name xml:lang="en">General</Name>
+				<Definition xml:lang="en">This rating means that the film/game can be watched/played by anyone and doesn't have any inappropriate content</Definition>
+			</Term>
+			<Term termID="3.1.2">
+				<Name xml:lang="en">12 years</Name>
+				<Definition xml:lang="en"> This film/game is recommended for persons with or over 12 years of age. May contain a little inappropriate language, sexual innuendo, or mild violence.</Definition>
+			</Term>
+			<Term termID="3.1.3">
+				<Name xml:lang="en">14 years</Name>
+				<Definition xml:lang="en"> This film/game is recommended for persons with or over 14 years of age. May contain inappropriate language, sexual innuendo and/or mild sex with no nudity or the act being explicit shown, violence, mention to drug use.</Definition>
+			</Term>
+			<Term termID="3.1.4">
+				<Name xml:lang="en">16 years</Name>
+				<Definition xml:lang="en"> This film/game is recommended for persons with or over 16 years of age. May contain strong language, sexual innuendo and/or mild sex with or without mild nudity, strong violence, drug use. </Definition>
+			</Term>
+			<Term termID="3.1.5">
+				<Name xml:lang="en">18 years</Name>
+				<Definition xml:lang="en"> This film/game is forbidden for people under 18 years of age. It may contain strong language, intense sex, strong nudity, strong violence, intense drug use. It is also used to rate pornographic films..</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="4">
+		<Name xml:lang="en">Canada</Name>
+		<Definition xml:lang="en"/>
+	</Term>
+	<Term termID="5">
+		<Name xml:lang="en">Chile</Name>
+		<Definition xml:lang="en"/>
+<Term termID="5.1">
+			<Name xml:lang="en">The Council of Cinematographic Classification</Name>
+			<Definition xml:lang="en"> Movie ratings as defined by the Consejo de Calificación Cinematográfica (http://w3app.mineduc.cl/Consejo/index)</Definition>
+			<Term termID="5.1.1">
+				<Name xml:lang="en">TE</Name>
+				<Definition xml:lang="en">All Audiences</Definition>
+			</Term>
+			<Term termID="5.1.2">
+				<Name xml:lang="en">14</Name>
+				<Definition xml:lang="en">Inappropriate for children under 14</Definition>
+			</Term>
+			<Term termID="5.1.3">
+				<Name xml:lang="en">18</Name>
+				<Definition xml:lang="en">Suitable for people aged 18 and over</Definition>
+				<Term termID="5.1.3.1">
+					<Name xml:lang="en">18/S</Name>
+					<Definition xml:lang="en">Suitable for people aged 18 and over with sexually explicit content</Definition>
+				</Term>
+				<Term termID="5.1.3.2">
+					<Name xml:lang="en">18/V</Name>
+					<Definition xml:lang="en">Suitable for people aged 18 and over with extreme violence content</Definition>
+				</Term>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="6">
+		<Name xml:lang="en">Colombia</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="6.1">
+			<Name xml:lang="en">The Ministry of Culture, Colombia</Name>
+			<Definition xml:lang="en"> Movie ratings as defined by the Colombian Ministry of Culture (http://www.mincultura.gov.co) </Definition>
+			<Term termID="6.1.1">
+				<Name xml:lang="es">T</Name>
+				<Definition xml:lang="en">All Audiences</Definition>
+			</Term>
+			<Term termID="6.1.2">
+				<Name xml:lang="en">7</Name>
+				<Definition xml:lang="en">Suitable for people aged 7 and over</Definition>
+			</Term>
+			<Term termID="6.1.3">
+				<Name xml:lang="en">12</Name>
+				<Definition xml:lang="en">Suitable for people aged 12 and over</Definition>
+			</Term>
+			<Term termID="6.1.4">
+				<Name xml:lang="en">14</Name>
+				<Definition xml:lang="en">Suitable for people aged 14 and over</Definition>
+			</Term>
+			<Term termID="6.1.5">
+				<Name xml:lang="en">18</Name>
+				<Definition xml:lang="en">Suitable for people aged 18 and over</Definition>
+			</Term>
+			<Term termID="6.1.6">
+				<Name xml:lang="en">X</Name>
+				<Definition xml:lang="en">Pornographic Content</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="7">
+		<Name xml:lang="en">Denmark</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="7.1">
+			<Name xml:lang="en">The Media Council for Children and Young People</Name>
+				<Definition xml:lang="en">Scheme as defined by the Danish Media Council for Children and Young People (http://www.medieraadet.dk/html/gb/gb.htm)</Definition>
+			<Term termID="7.1.1">
+				<Name xml:lang="en">A</Name>
+				<Definition xml:lang="en">Approval of the film for general admittance</Definition>
+			</Term>
+			<Term termID="7.1.2">
+				<Name xml:lang="en">7</Name>
+				<Definition xml:lang="en">Approval of the film for general admittance, but not recommended for children under the age of 7</Definition>
+			</Term>
+			<Term termID="7.1.3">
+				<Name xml:lang="en">11</Name>
+				<Definition xml:lang="en">Approval of the film for admittance of children from the age of 11</Definition>
+			</Term>
+			<Term termID="7.1.4">
+				<Name xml:lang="en">15</Name>
+				<Definition xml:lang="en">Approval of the film for admittance of children from the age of 15</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="8">
+		<Name xml:lang="en">Finland</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="8.1">
+			<Name xml:lang="en">Movies and Some Games</Name>
+				<Definition xml:lang="en">Scheme as defined by Finnish Board of Film Classification (http://www.vet.fi/english/board.html)</Definition>
+			<Term termID="8.1.1">
+				<Name xml:lang="en">S</Name>
+				<Definition xml:lang="en">For all ages</Definition>
+			</Term>
+			<Term termID="8.1.2">
+				<Name xml:lang="en">K-7</Name>
+				<Definition xml:lang="en">For people aged 7 years and above</Definition>
+			</Term>
+			<Term termID="8.1.3">
+				<Name xml:lang="en">K-11</Name>
+				<Definition xml:lang="en">For people aged 11 years and above</Definition>
+			</Term>
+			<Term termID="8.1.4">
+				<Name xml:lang="en">K-13</Name>
+				<Definition xml:lang="en">For people aged 13 years and above</Definition>
+			</Term>
+			<Term termID="8.1.5">
+				<Name xml:lang="en">K-15</Name>
+				<Definition xml:lang="en">For people aged 15 years and above</Definition>
+			</Term>
+			<Term termID="8.1.6">
+				<Name xml:lang="en">K-18</Name>
+				<Definition xml:lang="en">For people aged 18 years and above</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="9">
+		<Name xml:lang="en">France</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="9.1">
+			<Name xml:lang="en">Ministre of Culture</Name>
+			<Term termID="9.1.1">
+				<Name xml:lang="en">U</Name>
+				<Definition xml:lang="en">For all audiences</Definition>
+			</Term>
+			<Term termID="9.1.2">
+				<Name xml:lang="en">-10</Name>
+				<Definition xml:lang="en">Unsuitable for minors under 10 or forbidden in cinemas for under 10s</Definition>
+			</Term>
+			<Term termID="9.1.3">
+				<Name xml:lang="en">-12</Name>
+				<Definition xml:lang="en">Unsuitable for minors under 12 or forbidden in cinemas for under 12s</Definition>
+			</Term>
+			<Term termID="9.1.4">
+				<Name xml:lang="en">-16</Name>
+				<Definition xml:lang="en">Unsuitable for minors under 16 or forbidden in cinemas for under 16s</Definition>
+			</Term>
+			<Term termID="9.1.5">
+				<Name xml:lang="en">-18</Name>
+				<Definition xml:lang="en">Unsuitable for minors under 18 or forbidden in cinemas for under 18s</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="10">
+		<Name xml:lang="en">Germany</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="10.1">
+			<Name xml:lang="en">Voluntary Self-Control of the Film Business, FSK</Name>
+			<Definition xml:lang="en">Scheme as defined by the Freiwillige Selbstkontrolle der Filmwirtschaft (http://www.spio.de)</Definition>
+
+			<Term termID="10.1.1">
+				<Name xml:lang="de">FSK 0</Name>
+				<Definition xml:lang="en">For all ages</Definition>
+			</Term>
+			<Term termID="10.1.2">
+				<Name xml:lang="de">FSK 6</Name>
+				<Definition xml:lang="en">No one under 6 years admitted</Definition>
+			</Term>
+			<Term termID="10.1.3">
+				<Name xml:lang="de">FSK 12</Name>
+				<Definition xml:lang="en">People 12 or older admitted, children between 6 and 11 only when accompanied by parent or legal guardian</Definition>
+			</Term>
+			<Term termID="10.1.4">
+				<Name xml:lang="de">FSK 16</Name>
+				<Definition xml:lang="en">People 16 or older admitted</Definition>
+			</Term>
+			<Term termID="10.1.5">
+				<Name xml:lang="de">FSK 18</Name>
+				<Definition xml:lang="en">Only adults (18 or older) admitted. Replaced by Keine Jugendfreigabe</Definition>
+			</Term>
+			<Term termID="10.1.6">
+				<Name xml:lang="de">Keine Jugendfreigabe</Name>
+				<Definition xml:lang="en">"No youth admitted", only adults</Definition>
+			</Term>
+			<Term termID="10.1.7">
+				<Name xml:lang="de">SPIO/JK</Name>
+				<Definition xml:lang="en">Checked for possible violation against applicable law. Not rated by the FSK. It's legal to sell such a title to a person which is 18 or older</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="11">
+		<Name xml:lang="en">Ireland</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="11.1">
+			<Name xml:lang="en">Irish Film Censor's Office (Movies)</Name>
+				<Definition xml:lang="en">Scheme as defined by the Irish Film Censor"s Office (http://www.ifco.ie)</Definition>
+			<Term termID="11.1.1">
+				<Name xml:lang="en">G</Name>
+				<Definition xml:lang="en">'General' - Suitable for viewing by anyone</Definition>
+			</Term>
+			<Term termID="11.1.2">
+				<Name xml:lang="en">PG</Name>
+				<Definition xml:lang="en">'Parental Guidance' - Parental guidance is recommended for children under the age of 12</Definition>
+			</Term>
+			<Term termID="11.1.3">
+				<Name xml:lang="en">12A</Name>
+				<Definition xml:lang="en">Parent supervision required for children under 12</Definition>
+			</Term>
+			<Term termID="11.1.4">
+				<Name xml:lang="en">15A</Name>
+				<Definition xml:lang="en">Parent supervision required for children under 15</Definition>
+			</Term>
+			<Term termID="11.1.5">
+				<Name xml:lang="en">16</Name>
+				<Definition xml:lang="en">Films classified in this category are considered to be suitable for persons of 16 or over</Definition>
+			</Term>
+			<Term termID="11.1.6">
+				<Name xml:lang="en">18</Name>
+				<Definition xml:lang="en">Adults only</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="12">
+		<Name xml:lang="en">Italy</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="12.1">
+			<Name xml:lang="en"></Name>
+			<Term termID="12.1.1">
+				<Name xml:lang="en">T</Name>
+				<Definition xml:lang="en">All admitted</Definition>
+			</Term>
+			<Term termID="12.1.2">
+				<Name xml:lang="en">VM14</Name>
+				<Definition xml:lang="en">No one under the age of 14 admitted</Definition>
+			</Term>
+			<Term termID="12.1.3">
+				<Name xml:lang="en">VM18</Name>
+				<Definition xml:lang="en">No one under the age of 18 admitted</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="13">
+		<Name xml:lang="en">Netherlands</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="13.1">
+			<Name xml:lang="nl">Kijkwijzer</Name>
+			<Definition xml:lang="en">Scheme as defined by the Kijkwijzer system (http://www.Kijkwijzer.nl)</Definition>
+			<Term termID="13.1.1">
+				<Name xml:lang="en">AL</Name>
+				<Definition xml:lang="en">Suitable for all ages</Definition>
+			</Term>
+			<Term termID="13.1.2">
+				<Name xml:lang="en">6</Name>
+				<Definition xml:lang="en">Not recommended for viewers younger than 6 years</Definition>
+			</Term>
+			<Term termID="13.1.3">
+				<Name xml:lang="en">9</Name>
+				<Definition xml:lang="en">Not recommended for viewers younger than 9 years</Definition>
+			</Term>
+			<Term termID="13.1.4">
+				<Name xml:lang="en">12</Name>
+				<Definition xml:lang="en">Not recommended for viewers younger than 12 years</Definition>
+			</Term>
+			<Term termID="13.1.5">
+				<Name xml:lang="en">16</Name>
+				<Definition xml:lang="en">Movie shops/cinemas aren't allowed to show these movies to people younger than 16 years</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="14">
+		<Name xml:lang="en">Norway</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="14.1">
+			<Name xml:lang="en">The Norwegian Media Authority</Name>
+			<Definition xml:lang="en">Scheme as defined by the Medietilsynet (http://www.medietilsynet.no)</Definition>
+			<Term termID="14.1.1">
+				<Name xml:lang="no">Alle</Name>
+				<Definition xml:lang="en"></Definition>
+			</Term>
+			<Term termID="14.1.2">
+				<Name xml:lang="en">7</Name>
+				<Definition xml:lang="en"></Definition>
+			</Term>
+			<Term termID="14.1.3">
+				<Name xml:lang="en">11</Name>
+				<Definition xml:lang="en"></Definition>
+			</Term>
+			<Term termID="14.1.4">
+				<Name xml:lang="en">15</Name>
+				<Definition xml:lang="en"></Definition>
+			</Term>
+			<Term termID="14.1.5">
+				<Name xml:lang="en">18</Name>
+				<Definition xml:lang="en"></Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="15">
+		<Name xml:lang="en">Portugal</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="15.1">
+			<Name xml:lang="en">Ministre of Culture</Name>
+			<Definition xml:lang="en"> Scheme as defined by the Comissão de Classificação de Espectáculos (http://www.cce.org.pt)</Definition>
+			<Term termID="15.1.1">
+				<Name xml:lang="en">M/4</Name>
+				<Definition xml:lang="en">For persons of age 4 and above</Definition>
+			</Term>
+			<Term termID="15.1.2">
+				<Name xml:lang="en">M/6</Name>
+				<Definition xml:lang="en"> For persons of age 6 and above</Definition>
+			</Term>
+			<Term termID="15.1.3">
+				<Name xml:lang="en">M/12</Name>
+				<Definition xml:lang="en"> For persons of age 12 and above</Definition>
+			</Term>
+			<Term termID="15.1.4">
+				<Name xml:lang="en">M/16</Name>
+				<Definition xml:lang="en"> For persons of age 16 and above</Definition>
+			</Term>
+			<Term termID="15.1.5">
+				<Name xml:lang="en">M/18</Name>
+				<Definition xml:lang="en"> For persons of age 18 and above</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="16">
+		<Name xml:lang="en">South Korea</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="16.1">
+			<Name xml:lang="en">Korea Media Rating Board</Name>
+			<Definition xml:lang="en"> Scheme as defined by the Korea Media Rating Board (http://www.kmrb.or.kr/english/statistics_i.asp)</Definition>
+			<Term termID="16.1.1">
+				<Name xml:lang="en">All</Name>
+				<Definition xml:lang="en">Suitable for all ages</Definition>
+			</Term>
+			<Term termID="16.1.2">
+				<Name xml:lang="en">12+</Name>
+				<Definition xml:lang="en"> Suitable for those aged 12 and over</Definition>
+			</Term>
+			<Term termID="16.1.3">
+				<Name xml:lang="en">15+</Name>
+				<Definition xml:lang="en"> Suitable for those aged 15 and over</Definition>
+			</Term>
+			<Term termID="16.1.4">
+				<Name xml:lang="en">18+</Name>
+				<Definition xml:lang="en"> Suitable for those aged 18 and over</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="17">
+		<Name xml:lang="en">Spain</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="17.1">
+			<Name xml:lang="en">Ministre of Culture</Name>
+			<Term termID="17.1.1">
+				<Name xml:lang="en">TP</Name>
+				<Definition xml:lang="en">Suitable for the general public</Definition>
+			</Term>
+			<Term termID="17.1.2">
+				<Name xml:lang="en">7</Name>
+				<Definition xml:lang="en">Not recommended for people under 7</Definition>
+			</Term>
+			<Term termID="17.1.3">
+				<Name xml:lang="en">10</Name>
+				<Definition xml:lang="en"> Not recommended for people under 10</Definition>
+			</Term>
+			<Term termID="17.1.4">
+				<Name xml:lang="en">13</Name>
+				<Definition xml:lang="en"> Not recommended for people under 13</Definition>
+			</Term>
+			<Term termID="17.1.5">
+				<Name xml:lang="en">16</Name>
+				<Definition xml:lang="en"> Not recommended for people under 16</Definition>
+			</Term>
+			<Term termID="17.1.6">
+				<Name xml:lang="en">18</Name>
+				<Definition xml:lang="en"> Not recommended for people under 18</Definition>
+			</Term>
+			<Term termID="17.1.7">
+				<Name xml:lang="en">X</Name>
+				<Definition xml:lang="en">Strictly for adults</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="18">
+		<Name xml:lang="en">Sweden</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="18.1">
+			<Name xml:lang="en">Swedish National Board of Film Censors</Name>
+			<Definition xml:lang="en">Scheme as defined by Statens biografbyrå (http://www.statensbiografbyra.se)</Definition>
+			<Term termID="18.1.1">
+				<Name xml:lang="en">Btl</Name>
+				<Definition xml:lang="en">Suitable for all ages</Definition>
+			</Term>
+			<Term termID="18.1.2">
+				<Name xml:lang="en">7</Name>
+				<Definition xml:lang="en">Suitable for children of at least 7 years of age</Definition>
+			</Term>
+			<Term termID="18.1.3">
+				<Name xml:lang="en">11</Name>
+				<Definition xml:lang="en">Suitable for children of at least 11 years of age</Definition>
+			</Term>
+			<Term termID="18.1.4">
+				<Name xml:lang="en">15</Name>
+				<Definition xml:lang="en">No one under 15 years of age admitted</Definition>
+			</Term>
+			<Term termID="18.1.5">
+				<Name xml:lang="en">18</Name>
+				<Definition xml:lang="en">No one under 18 years of age admitted</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="19">
+		<Name xml:lang="en">United Kingdom</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="19.1">
+			<Name xml:lang="en">British Board of Film Classification</Name>
+			<Definition xml:lang="en">Scheme as defined by the British Board of Film Classification (http://www.bbfc.co.uk)</Definition>
+		<Term termID="19.1.1">
+				<Name xml:lang="en">Uc</Name>
+				<Definition xml:lang="en">Suitable for all but especially for young children</Definition>
+			</Term>
+			<Term termID="19.1.2">
+				<Name xml:lang="en">U</Name>
+				<Definition xml:lang="en"> Suitable for all</Definition>
+			</Term>
+			<Term termID="19.1.3">
+				<Name xml:lang="en">PG</Name>
+				<Definition xml:lang="en"> All ages admitted, but Parental Guidance is recommended</Definition>
+			</Term>
+			<Term termID="19.1.4">
+				<Name xml:lang="en">12A/12</Name>
+				<Definition xml:lang="en"> No one under 12 years of age may see a "12A" film (unless accompanied by an adult) in a cinema or rent or buy a "12" video</Definition>
+			</Term>
+			<Term termID="19.1.5">
+				<Name xml:lang="en">15</Name>
+				<Definition xml:lang="en"> No one under 15 years of age may see a "15" film or rent or buy a "15" video</Definition>
+			</Term>
+			<Term termID="19.1.6">
+				<Name xml:lang="en">18</Name>
+				<Definition xml:lang="en"> Suitable only for adults</Definition>
+			</Term>
+			<Term termID="19.1.7">
+				<Name xml:lang="en">R18</Name>
+				<Definition xml:lang="en"> To be supplied only in licensed sex shops or cinemas to adults of not less than 18 years of age</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="20">
+		<Name xml:lang="en">United States</Name>
+		<Definition xml:lang="en"/>
+		<Term termID="20.1">
+			<Name xml:lang="en">Motion Picture Association of America</Name>
+			<Definition xml:lang="en">Scheme for motion picture rating as defined by the Motion Picture Association of America (http://www.mpaa.org/FilmRatings.asp)</Definition>
+			<Term termID="20.1.1">
+				<Name xml:lang="en">G</Name>
+				<Definition xml:lang="en">General Audience - All ages admitted</Definition>
+			</Term>
+			<Term termID="20.1.2">
+				<Name xml:lang="en">PG</Name>
+				<Definition xml:lang="en"> Parental guidance suggested - Some material may not be suitable for young children</Definition>
+			</Term>
+			<Term termID="20.1.3">
+				<Name xml:lang="en">PG-13</Name>
+				<Definition xml:lang="en"> Parents strongly cautioned - Some material may be inappropriate for children under 13</Definition>
+			</Term>
+			<Term termID="20.1.4">
+				<Name xml:lang="en">R</Name>
+				<Definition xml:lang="en"> Restricted - Under 17 requires accompanying parent or adult guardian</Definition>
+			</Term>
+			<Term termID="20.1.5">
+				<Name xml:lang="en">NC-17</Name>
+				<Definition xml:lang="en"> No one 17 and under admitted</Definition>
+			</Term>
+			<Term termID="20.1.6">
+				<Name xml:lang="en">NR</Name>
+				<Definition xml:lang="en"> Not an MPAA rating</Definition>
+			</Term>
+		</Term>
+		<Term termID="20.2">
+			<Name xml:lang="en">Entertainment Software Rating Board</Name>
+			<Definition xml:lang="en">Scheme for game rating as defined by the Entertainment Software Rating Board (http://www.esrb.org/ratings/ratings_guide.jsp)</Definition>
+			<Term termID="20.2.1">
+				<Name xml:lang="en">ESRB Rating Symbols</Name>
+				<Definition xml:lang="en">Rating symbols suggest age appropriateness for the game</Definition>
+				<Term termID="20.2.1.1">
+					<Name xml:lang="en">EC</Name>
+					<Definition>Titles rated EC (Early Childhood) have content that may be suitable for ages 3 and older. Contains no material that parents would find inappropriate</Definition>
+				</Term>
+				<Term termID="20.2.1.2">
+					<Name xml:lang="en">E</Name>
+					<Definition>Titles rated E (Everyone) have content that may be suitable for ages 6 and older. Titles in this category may contain minimal cartoon, fantasy or mild violence and/or infrequent use of mild language</Definition>
+				</Term>
+				<Term termID="20.2.1.3">
+					<Name xml:lang="en">E10+</Name>
+					<Definition> Titles rated E10+ (Everyone 10 and older) have content that may be suitable for ages 10 and older. Titles in this category may contain more cartoon, fantasy or mild violence, mild language and/or minimal suggestive themes</Definition>
+				</Term>
+				<Term termID="20.2.1.4">
+					<Name xml:lang="en">T</Name>
+					<Definition> Titles rated T (Teen) have content that may be suitable for ages 13 and older. Titles in this category may contain violence, suggestive themes, crude humour, minimal blood, simulated gambling, and/or infrequent use of strong language</Definition>
+				</Term>
+				<Term termID="20.2.1.5">
+					<Name xml:lang="en">M</Name>
+					<Definition> Titles rated M (Mature) have content that may be suitable for persons ages 17 and older. Titles in this category may contain intense violence, blood and gore, sexual content and/or strong language</Definition>
+				</Term>
+				<Term termID="20.2.1.6">
+					<Name xml:lang="en">AO</Name>
+					<Definition> Titles rated AO (Adults Only) have content that should only be played by persons 18 years and older. Titles in this category may include prolonged scenes of intense violence and/or graphic sexual content and nudity</Definition>
+				</Term>
+				<Term termID="20.2.1.7">
+					<Name xml:lang="en">RP</Name>
+					<Definition> Titles listed as RP (Rating Pending) have been submitted to the ESRB and are awaiting final rating. (This symbol appears only in advertising prior to a game's release)</Definition>
+				</Term>
+			</Term>
+			<Term termID="20.2.2">
+				<Name xml:lang="en">ESRB Content Descriptors</Name>
+			<Definition xml:lang="en">Content descriptors indicate elements in a game that may have triggered a particular rating and/or may be of interest or concern</Definition>
+				<Term termID="20.2.2.1">
+					<Name xml:lang="en">Alcohol Reference</Name>
+					<Definition>Reference to and/or images of alcoholic beverages</Definition>
+				</Term>
+				<Term termID="20.2.2.2">
+					<Name xml:lang="en">Animated Blood</Name>
+					<Definition>Discoloured and/or unrealistic depictions of blood</Definition>
+				</Term>
+				<Term termID="20.2.2.3">
+					<Name xml:lang="en">Blood</Name>
+					<Definition>Depictions of blood</Definition>
+				</Term>
+				<Term termID="20.2.2.4">
+					<Name xml:lang="en">Blood and Gore</Name>
+					<Definition>Depictions of blood or the mutilation of body parts</Definition>
+				</Term>
+				<Term termID="20.2.2.5">
+					<Name xml:lang="en">Cartoon Violence</Name>
+					<Definition>Violent actions involving cartoon-like situations and characters. May include violence where a character is unharmed after the action has been inflicted</Definition>
+				</Term>
+				<Term termID="20.2.2.6">
+					<Name xml:lang="en">Comic Mischief</Name>
+					<Definition>Depictions or dialogue involving slapstick or suggestive humour</Definition>
+				</Term>
+				<Term termID="20.2.2.7">
+					<Name xml:lang="en">Crude Humour</Name>
+					<Definition>Depictions or dialogue involving vulgar antics, including 'bathroom" humour</Definition>
+				</Term>
+				<Term termID="20.2.2.8">
+					<Name xml:lang="en">Drug Reference</Name>
+					<Definition>Reference to and/or images of illegal drugs</Definition>
+				</Term>
+				<Term termID="20.2.2.9">
+					<Name xml:lang="en">Edutainment</Name>
+					<Definition>Content of product provides user with specific skills development or reinforcement learning within an entertainment setting. Skill development is an integral part of product</Definition>
+				</Term>
+				<Term termID="20.2.2.10">
+					<Name xml:lang="en">Fantasy Violence</Name>
+					<Definition>Violent actions of a fantasy nature, involving human or non-human characters in situations easily distinguishable from real life</Definition>
+				</Term>
+				<Term termID="20.2.2.11">
+					<Name xml:lang="en">Informational</Name>
+					<Definition>Overall content of product contains data, facts, resource information, reference materials or instructional text</Definition>
+				</Term>
+				<Term termID="20.2.2.12">
+					<Name xml:lang="en">Intense Violence</Name>
+					<Definition>Graphic and realistic-looking depictions of physical conflict. May involve extreme and/or realistic blood, gore, weapons and depictions of human injury and death</Definition>
+				</Term>
+				<Term termID="20.2.2.13">
+					<Name xml:lang="en">Language</Name>
+					<Definition>Mild to moderate use of profanity</Definition>
+				</Term>
+				<Term termID="20.2.2.14">
+					<Name xml:lang="en">Lyrics</Name>
+					<Definition>Mild references to profanity, sexuality, violence, alcohol or drug use in music</Definition>
+				</Term>
+				<Term termID="20.2.2.15">
+					<Name xml:lang="en">Mature Humour</Name>
+					<Definition>Depictions or dialogue involving "adult" humour, including sexual references</Definition>
+				</Term>
+				<Term termID="20.2.2.16">
+					<Name xml:lang="en">Mild Violence</Name>
+					<Definition>Mild scenes depicting characters in unsafe and/or violent situations</Definition>
+				</Term>
+				<Term termID="20.2.2.17">
+					<Name xml:lang="en">Nudity</Name>
+					<Definition>Graphic or prolonged depictions of nudity</Definition>
+				</Term>
+				<Term termID="20.2.2.18">
+					<Name xml:lang="en">Partial Nudity</Name>
+					<Definition>Brief and/or mild depictions of nudity</Definition>
+				</Term>
+				<Term termID="20.2.2.19">
+					<Name xml:lang="en">Real Gambling</Name>
+					<Definition>Player can gamble, including betting or wagering real cash or currency</Definition>
+				</Term>
+				<Term termID="20.2.2.20">
+					<Name xml:lang="en">Sexual Themes</Name>
+					<Definition>Mild to moderate sexual references and/or depictions. May include partial nudity</Definition>
+				</Term>
+				<Term termID="20.2.2.21">
+					<Name xml:lang="en">Sexual Violence</Name>
+					<Definition>Depictions of rape or other violent sexual acts</Definition>
+				</Term>
+				<Term termID="20.2.2.22">
+					<Name xml:lang="en">Simulated Gambling</Name>
+					<Definition>Player can gamble without betting or wagering real cash or currency</Definition>
+				</Term>
+				<Term termID="20.2.2.23">
+					<Name xml:lang="en">Some Adult Assistance May Be Needed</Name>
+					<Definition>Intended for very young ages</Definition>
+				</Term>
+				<Term termID="20.2.2.24">
+					<Name xml:lang="en">Strong Language</Name>
+					<Definition>Explicit and/or frequent use of profanity</Definition>
+				</Term>
+				<Term termID="20.2.2.25">
+					<Name xml:lang="en">Strong Lyrics</Name>
+					<Definition>Explicit and/or frequent references to profanity, sex, violence, alcohol or drug use in music</Definition>
+				</Term>
+				<Term termID="20.2.2.26">
+					<Name xml:lang="en">Strong Sexual Content</Name>
+					<Definition>Graphic references to and/or depictions of sexual behaviour, possibly including nudity</Definition>
+				</Term>
+				<Term termID="20.2.2.27">
+					<Name xml:lang="en">Suggestive Themes</Name>
+					<Definition>Mild provocative references or materials</Definition>
+				</Term>
+				<Term termID="20.2.2.28">
+					<Name xml:lang="en">Tobacco Reference</Name>
+					<Definition>Reference to and/or images of tobacco products</Definition>
+				</Term>
+				<Term termID="20.2.2.29">
+					<Name xml:lang="en">Use of Drugs</Name>
+					<Definition>The consumption or use of illegal drugs</Definition>
+				</Term>
+				<Term termID="20.2.2.30">
+					<Name xml:lang="en">Use of Alcohol</Name>
+					<Definition>The consumption of alcoholic beverages</Definition>
+				</Term>
+				<Term termID="20.2.2.31">
+					<Name xml:lang="en">Use of Tobacco</Name>
+					<Definition>The consumption of tobacco products</Definition>
+				</Term>
+				<Term termID="20.2.2.32">
+					<Name xml:lang="en">Violence</Name>
+					<Definition>Scenes involving aggressive conflict</Definition>
+				</Term>
+			</Term>
+		</Term>
+		<Term termID="20.3">
+			<Name xml:lang="en"> Recording Industry Association of America</Name>
+			<Definition>Scheme for music rating as defined by the Recording Industry Association of America (http://www.riaa.com/issues/parents/advisory.asp)</Definition>
+			<Term termID="20.3.1">
+				<Name xml:lang="en">Parental Advisory</Name>
+				<Definition>The Parental Advisory is a notice to consumers that recordings identified by this value may contain strong language or depiction of violence, sex or substance abuse. Parental discretion is advised</Definition>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="21">
+		<Name xml:lang="en">Europe</Name>
+		<Term termID="21.1">
+			<Name xml:lang="en">Pan European Game Information</Name>
+			<Definition xml:lang="en">Scheme as defined by the Pan European Game Information (http://www.pegi.info)</Definition>
+			<Term termID="21.1.1">
+				<Name xml:lang="en">3+</Name>
+				<Definition xml:lang="en">Recommended for age 3 or over</Definition>
+			</Term>
+			<Term termID="21.1.2">
+				<Name xml:lang="en">7+</Name>
+				<Definition xml:lang="en"> Recommended for age 7 or over </Definition>
+			</Term>
+			<Term termID="21.1.3">
+				<Name xml:lang="en">12+</Name>
+				<Definition xml:lang="en"> Recommended for age 12 or over </Definition>
+			</Term>
+			<Term termID="21.1.4">
+				<Name xml:lang="en">16+</Name>
+				<Definition xml:lang="en"> Recommended for age 16 or over </Definition>
+			</Term>
+			<Term termID="21.1.5">
+				<Name xml:lang="en">18+</Name>
+				<Definition xml:lang="en"> Recommended for age 18 or over </Definition>
+			</Term>
+		</Term>
+	</Term>
+</ClassificationScheme>

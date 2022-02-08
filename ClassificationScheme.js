@@ -14,6 +14,7 @@ import { AvlTree } from '@datastructures-js/binary-search-tree';
 
 import { hasChild } from "./schema_checks.js";
 
+const CS_URI_DELIMITER=':';
 
 /**
  * Constructs a linear list of terms from a heirarical clssification schemes which are read from an XML document and parsed by libxmljs
@@ -27,7 +28,7 @@ function addCSTerm(vals, CSuri, term, leafNodesOnly=false) {
 	if (term.name()==="Term") {
 		if (!leafNodesOnly || (leafNodesOnly && !hasChild(term, "Term")))
  			if (term.attr("termID")) 
-				vals.push(`${CSuri}:${term.attr("termID").value()}`);
+				vals.push(`${CSuri}${CS_URI_DELIMITER}${term.attr("termID").value()}`);
 		let st=0, subTerm;
 		while ((subTerm=term.child(st++))!=null)
 			addCSTerm(vals, CSuri, subTerm, leafNodesOnly);
@@ -40,17 +41,19 @@ function addCSTerm(vals, CSuri, term, leafNodesOnly=false) {
  *
  * @param {String} xmlCS the XML document  of the classification scheme
  * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded
- * @returns {Array} values parsed from the classification scheme 
+ * @returns {Object} values parsed from the classification scheme in .vals and uri of classification scheme in .uri
  */
 function loadClassificationScheme(xmlCS, leafNodesOnly=false) {
-	let vals=[];
-	if (!xmlCS) return vals;
+	let rc={uri:null, vals:[]};
+	if (!xmlCS) return rc;
+
 	let CSnamespace = xmlCS.root().attr("uri");
-	if (!CSnamespace) return vals;
+	if (!CSnamespace) return rc;
+	rc.uri=CSnamespace;
 	let t=0, term;
 	while ((term=xmlCS.root().child(t++))!=null)
-		addCSTerm(vals, CSnamespace.value(), term, leafNodesOnly);
-	return vals;
+		addCSTerm(rc.vals, CSnamespace.value(), term, leafNodesOnly);
+	return rc;
 }	
 
 
@@ -58,6 +61,7 @@ export default class ClassificationScheme {
 
 	constructor () {
 		this.values=new AvlTree();
+		this.schemes=[];
 		loadClassificationScheme.bind(this);
 	}
 
@@ -67,6 +71,7 @@ export default class ClassificationScheme {
 
 	empty() {
 		this.values.clear();
+		this.schemes=[];
 	}
 
 	insertValue(key, value) {
@@ -84,7 +89,11 @@ export default class ClassificationScheme {
 		fetch(csURL)
 			.then(handleErrors)
 			.then(response => response.text())
-			.then(strXML => loadClassificationScheme(parseXmlString(strXML), leafNodesOnly).forEach(e=>{this.insertValue(e, true);}))
+			.then(strXML => loadClassificationScheme(parseXmlString(strXML), leafNodesOnly))
+			.then(res => {
+				res.vals.forEach(e=>{this.insertValue(e, true);});
+				this.schemes.push(res.uri);
+			})
 			.catch(error => console.log(`error (${error}) retrieving ${csURL}`));
 	}
 
@@ -98,8 +107,11 @@ export default class ClassificationScheme {
 		console.log(`reading CS (${leafNodesOnly?"leaf":"all"} nodes) from ${classificationScheme}`);
 
  		readFile(classificationScheme, {encoding: "utf-8"}, (err,data)=> {
- 			if (!err) 
-				loadClassificationScheme(parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm,"")), leafNodesOnly).forEach(e=>{this.insertValue(e, true);});
+ 			if (!err) {
+				let res=loadClassificationScheme(parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm,"")), leafNodesOnly);
+				res.vals.forEach(e=>{this.insertValue(e, true);});
+				this.schemes.push(res.uri);
+			 }
 			else console.log(err);
 		});
 	}
@@ -127,5 +139,18 @@ export default class ClassificationScheme {
 	 */
 	isIn(value) {
 		return this.values.has(value);
+	}
+
+	/**
+	 * determines if the scheme used by the provided term is included 
+	 * @param {String} term 	The term whose scheme should bechecked
+	 * @returns {boolean}
+	 */
+	hasScheme(term) {
+		let pos=term.lastIndexOf(CS_URI_DELIMITER);
+		if (pos == -1)
+			return false;
+		let termURI=term.slice(0,pos);
+		return this.schemes.includes(termURI);
 	}
 }

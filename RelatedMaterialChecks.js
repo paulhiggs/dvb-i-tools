@@ -92,7 +92,7 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 	}
 
 	checkTopElementsAndCardinality(MediaLocator,
-		[{name:tva.MediaUri}],
+		[{name:tva.e_MediaUri}],
 		tvaEC.MediaLocator, false, errs, `${errCode}-21`);
 
 	let hasMediaURI=false;

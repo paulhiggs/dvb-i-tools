@@ -24,6 +24,9 @@ export const TVA_FormatCS={file:join(pathTVA, idTVA_FormatCS), url:`${REPO_RAW}$
 const idTVA_PictureCS="PictureFormatCS.xml";
 export const TVA_PictureFormatCS={file:join(pathTVA, idTVA_PictureCS), url:`${REPO_RAW}${pathTVA}/${idTVA_PictureCS}`};
 
+const idTVA_ContentAlertCS="ContentAlertCS.xml";
+export const TVA_ContentAlertCS={file:join(pathTVA, idTVA_ContentAlertCS), url:`${REPO_RAW}${pathTVA}/${idTVA_ContentAlertCS}`};
+
 const idDVB_ContentSubjectCS="DVBContentSubjectCS-2019.xml";
 export const DVBI_ContentSubject={file:join(pathDVBI, idDVB_ContentSubjectCS), url:`${REPO_RAW}${pathDVBI}/${idDVB_ContentSubjectCS}`};
 
@@ -71,6 +74,9 @@ export const DVBI_CreditsItemRoles={file:join(pathDVBI, v1Credits), url:`${REPO_
 
 const v2Credits="CreditsItem@role-values-v2.txt";
 export const DVBIv2_CreditsItemRoles={file:join(pathDVBI, v2Credits), url:`${REPO_RAW}${pathDVBI}/${v2Credits}`};
+
+const  idDVB_ParentalGuidanceCS="ParentalGuidanceCS.xml";
+export const DVBI_ParentalGuidanceCS={file:join(path2007CS, idDVB_ParentalGuidanceCS), url:`${DVB_METADATA}${url2007CS}/${idDVB_ParentalGuidanceCS}`};
 
 export const TVAschema={file:join(".", "tva_metadata_3-1.xsd")};
 

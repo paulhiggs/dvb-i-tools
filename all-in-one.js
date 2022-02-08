@@ -22,7 +22,7 @@ import { createServer } from "https";
 // command line arguments - https://github.com/75lb/command-line-args
 import commandLineArgs from 'command-line-args';
 
-import { Default_SLEPR, IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, ISO3166 } from "./data-locations.js";
+import { Default_SLEPR, IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, ISO3166, TVA_ContentAlertCS, DVBI_ParentalGuidanceCS } from "./data-locations.js";
 
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from './globals.js';
 import { readmyfile } from "./utils.js";
@@ -118,11 +118,16 @@ knownGenres.loadCS(options.urls?
 		{urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
 		{files:[TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file]});
 
+let knownRatings=new ClassificationScheme();
+knownRatings.loadCS(options.urls?
+	{urls:[TVA_ContentAlertCS.url, DVBI_ParentalGuidanceCS.url]}:
+	{files:[TVA_ContentAlertCS.file, DVBI_ParentalGuidanceCS.file]});
+
 let isoCountries=new ISOcountries(false, true);
 isoCountries.loadCountries(options.urls?{url:ISO3166.url}:{file:ISO3166.file});
 
 let slcheck=new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoCountries),
-    cgcheck=new ContentGuideCheck(options.urls, knownLanguages, knownGenres);	
+    cgcheck=new ContentGuideCheck(options.urls, knownLanguages, knownGenres, knownRatings);	
     
 if (options.nocsr && options.nosl && options.nocg) {
 	console.log("nothing to do... exiting");
