@@ -127,7 +127,7 @@ let isoCountries=new ISOcountries(false, true);
 isoCountries.loadCountries(options.urls?{url:ISO3166.url}:{file:ISO3166.file});
 
 let slcheck=new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoCountries),
-    cgcheck=new ContentGuideCheck(options.urls, knownLanguages, knownGenres, knownRatings);	
+    cgcheck=new ContentGuideCheck(options.urls, knownLanguages, knownGenres, null, knownRatings);	
     
 if (options.nocsr && options.nosl && options.nocg) {
 	console.log("nothing to do... exiting");
