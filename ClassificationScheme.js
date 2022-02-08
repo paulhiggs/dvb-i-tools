@@ -49,10 +49,10 @@ function loadClassificationScheme(xmlCS, leafNodesOnly=false) {
 
 	let CSnamespace = xmlCS.root().attr("uri");
 	if (!CSnamespace) return rc;
-	rc.uri=CSnamespace;
+	rc.uri=CSnamespace.value();
 	let t=0, term;
 	while ((term=xmlCS.root().child(t++))!=null)
-		addCSTerm(rc.vals, CSnamespace.value(), term, leafNodesOnly);
+		addCSTerm(rc.vals, rc.uri, term, leafNodesOnly);
 	return rc;
 }	
 
@@ -150,7 +150,6 @@ export default class ClassificationScheme {
 		let pos=term.lastIndexOf(CS_URI_DELIMITER);
 		if (pos == -1)
 			return false;
-		let termURI=term.slice(0,pos);
-		return this.schemes.includes(termURI);
+		return this.schemes.includes(term.slice(0,pos));
 	}
 }
