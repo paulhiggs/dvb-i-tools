@@ -25,7 +25,6 @@ import { readmyfile } from './utils.js';
 
 // the content guide validation
 import ContentGuideCheck from './cg-check.js';
-var cgcheck=null;
 
 import { DVB_I_check, MODE_SL, MODE_CG, MODE_FILE, MODE_URL } from './Validator.js';
 
@@ -38,19 +37,7 @@ const optionDefinitions=[
 ];
 const options=commandLineArgs(optionDefinitions);
 
-import IANAlanguages from "./IANAlanguages.js";
-let knownLanguages=new IANAlanguages();
-knownLanguages.loadLanguages(options.urls?{url:IANA_Subtag_Registry.url}:{file:IANA_Subtag_Registry.file});
-
-import ClassificationScheme from "./ClassificationScheme.js";
-
-let knownGenres=new ClassificationScheme();
-knownGenres.loadCS(options.urls?
-		{urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
-		{files:[TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file]});
-
-cgcheck=new ContentGuideCheck(options.urls, knownLanguages, knownGenres);
-
+var cgcheck=new ContentGuideCheck(options.urls,);
 
 //middleware
 token("protocol", function getProtocol(req) {

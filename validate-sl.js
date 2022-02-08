@@ -25,7 +25,6 @@ import { readmyfile } from './utils.js';
 
 // the service list validation
 import ServiceListCheck from './sl-check.js';
-var slcheck=null;
 
 import { DVB_I_check, MODE_SL, MODE_CG, MODE_FILE, MODE_URL } from './Validator.js';
 
@@ -83,21 +82,7 @@ const optionDefinitions=[
  
 const options=commandLineArgs(optionDefinitions);
 
-import IANAlanguages from "./IANAlanguages.js";
-let knownLanguages=new IANAlanguages();
-knownLanguages.loadLanguages(options.urls?{url:IANA_Subtag_Registry.url}:{file:IANA_Subtag_Registry.file});
-
-import ClassificationScheme from "./ClassificationScheme.js";
-let knownGenres=new ClassificationScheme();
-knownGenres.loadCS(options.urls?
-		{urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
-		{files:[TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file]});
-
-import ISOcountries from "./ISOcountries.js";
-let isoCountries=new ISOcountries(false, true);
-isoCountries.loadCountries(options.urls?{url:ISO3166.url}:{file:ISO3166.file});
-
-slcheck=new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoCountries);
+var slcheck=new ServiceListCheck(options.urls);
 
 // handle HTTP POST requests to /check
 app.post("/check", function(req,res) {
