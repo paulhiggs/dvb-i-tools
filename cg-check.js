@@ -614,9 +614,6 @@ export default class ContentGuideCheck {
 				checkAttributes(CreditsItem, [tva.a_role], [], tvaEA.CreditsItem, errs, `${errCode}-1`);
 				if (CreditsItem.attr(tva.a_role)) {
 					let CreditsItemRole=CreditsItem.attr(tva.a_role).value();
-		console.log(`--> num credits item roles=${this.allowedCreditItemRoles.count()}`)
-		
-
 					if (!this.allowedCreditItemRoles.isIn(CreditsItemRole))
 						errs.addError({code:`${errCode}-2`, 
 										message:`${CreditsItemRole.quote()} is not valid for ${tva.a_role.attribute(tva.e_CreditsItem)}`, fragment:CreditsItem});
