@@ -2,6 +2,7 @@ import fetchS from 'sync-fetch';
 
 import { drawForm } from "./ui.js";
 import ErrorList from "./ErrorList.js";
+import { isHTTPURL } from "./pattern_checks.js";
 
 
 export const MODE_UNSPECIFIED="none", MODE_SL="sl", MODE_CG="cg", MODE_URL="url", MODE_FILE="file";
@@ -39,13 +40,16 @@ export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasS
 		if (!req.parseErr)
 			switch (req.body.doclocation) {
 				case MODE_URL:
-
-					let resp=fetchS(req.body.XMLurl);
-					if (resp.ok)
-						VVxml=resp.text();
-					else req.parseErr=`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
-
+					if (isHTTPURL(req.body.XMLurl)) {
+						let resp=fetchS(req.body.XMLurl);
+						if (resp.ok)
+							VVxml=resp.text();
+						else req.parseErr=`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
+					}
+					else
+						req.parseErr=`${req.body.XMLurl} is not an HTTP(S) URL`;
 					req.session.data.url=req.body.XMLurl;
+
 					break;
 				case MODE_FILE:
 					try {

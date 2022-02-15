@@ -3,6 +3,8 @@ import { handleErrors } from "./fetch-err-handler.js";
 
 import { readFile } from "fs";
 
+import { isHTTPURL } from "./pattern_checks.js";
+
 /**
  * load the countries list into the allowedCountries global array from the specified text
  *
@@ -66,7 +68,10 @@ export default class ISOcountries {
 	 * @param {boolean} purge  erase the existing values before loading new
 	 */
 	loadCountriesFromURL(countriesURL, purge=false) {
-		console.log(`retrieving countries from ${countriesURL} using fetch()`);
+		let isHTTPurl=isHTTPURL(countriesURL);
+		console.log(`${isHTTPurl?"":"--> NOT "}retrieving countries from ${countriesURL} using fetch()`);
+		if (!isHTTPurl) return;
+
 		if (purge) this.reset();
 		fetch(countriesURL)
 			.then(handleErrors)

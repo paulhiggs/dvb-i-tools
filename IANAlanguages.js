@@ -4,6 +4,7 @@ import { handleErrors } from "./fetch-err-handler.js";
 import { readFile } from 'fs';
 
 import { isIn, isIni } from './utils.js';
+import { isHTTPURL } from "./pattern_checks.js";
 import { datatypeIs } from "./phlib/phlib.js";
 
 export default class IANAlanguages {
@@ -128,7 +129,10 @@ export default class IANAlanguages {
 	 * @param {boolean} purge  erase the existing values before loading new
 	 */
 	loadLanguagesFromURL(languagesURL, purge=false) {
-		console.log(`retrieving languages from ${languagesURL} using fetch()`);
+		let isHTTPurl=isHTTPURL(languagesURL);
+		console.log(`${isHTTPurl?"":"--> NOT "}retrieving languages from ${languagesURL} using fetch()`);
+		if (!isHTTPurl) return;
+
 		if (purge) this.empty();
 		fetch(languagesURL)
 			.then(handleErrors)

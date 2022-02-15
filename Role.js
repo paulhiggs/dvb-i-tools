@@ -8,6 +8,8 @@ import fetch from 'node-fetch';
 import { handleErrors } from "./fetch-err-handler.js";
 
 import ClassificationScheme from "./ClassificationScheme.js";
+import { isHTTPURL } from "./pattern_checks.js";
+
 
 export default class Role  extends ClassificationScheme {
 
@@ -17,7 +19,9 @@ export default class Role  extends ClassificationScheme {
 	 * @param {String} rolesURL URL to the classification scheme
 	 */
 	loadFromURL(rolesURL) {
-		console.log(`retrieving Roles from ${rolesURL} via fetch()`);
+		let isHTTPurl=isHTTPURL(rolesURL);
+		console.log(`${isHTTPurl?"":"--> NOT "}retrieving Roles from ${rolesURL} via fetch()`);
+		if (!isHTTPurl) return;
 
 		fetch(rolesURL)
 			.then(handleErrors)

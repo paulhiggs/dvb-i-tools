@@ -13,6 +13,7 @@ import { handleErrors } from "./fetch-err-handler.js";
 import { AvlTree } from '@datastructures-js/binary-search-tree';
 
 import { hasChild } from "./schema_checks.js";
+import { isHTTPURL } from "./pattern_checks.js";
 
 const CS_URI_DELIMITER=':';
 
@@ -85,7 +86,10 @@ export default class ClassificationScheme {
 	 * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded 
 	 */
 	loadFromURL(csURL, leafNodesOnly=false) {
-		console.log(`retrieving CS (${leafNodesOnly?"all":"leaf"} nodes) from ${csURL} via fetch()`); 
+		let isHTTPurl=isHTTPURL(csURL);
+		console.log(`${isHTTPurl?"":"--> NOT "}retrieving CS (${leafNodesOnly?"all":"leaf"} nodes) from ${csURL} via fetch()`); 
+		if (!isHTTPurl) return;
+
 		fetch(csURL)
 			.then(handleErrors)
 			.then(response => response.text())
