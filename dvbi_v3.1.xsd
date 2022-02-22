@@ -26,8 +26,8 @@
 			<element name="ProviderName" type="mpeg7:TextualType" maxOccurs="unbounded"/>
 			<element name="RelatedMaterial" type="dvbisd:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="RegionList" type="dvbisd:RegionListType" minOccurs="0"/>
-			<element name="SubscriptionPackageList" type="dvbisd:SubscriptionPackageListType" minOccurs="0"/>
 			<element name="TargetRegion" type="dvbisd:RegionIdRefType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="SubscriptionPackageList" type="dvbisd:SubscriptionPackageListType" minOccurs="0"/>
 			<element name="LCNTableList" type="dvbisd:LCNTableListType" minOccurs="0"/>
 			<choice minOccurs="0">
 				<element name="ContentGuideSourceList" type="dvbisd:ContentGuideSourceListType"/>
