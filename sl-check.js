@@ -1308,12 +1308,13 @@ export default class ServiceListCheck {
 		let declaredSubscriptionPackages=[];
 		let SubscriptionPackageList=SL.get(xPath(SCHEMA_PREFIX, dvbi.e_SubscriptionPackageList), SL_SCHEMA);
 		if (SubscriptionPackageList) {
-			checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, dvbi.e_SubscriptionPackageList, SubscriptionPackageList, errs, "SL063", this.knownLanguages);
 			let sp=0, SubscriptionPackage;
 			while ((SubscriptionPackage=SubscriptionPackageList.get(xPath(SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ++sp), SL_SCHEMA))!=null) {
 				let pkg=localizedSubscriptionPackage(SubscriptionPackage);
 				
-				if (!declaredSubscriptionPackages.includes(pkg))
+				if (declaredSubscriptionPackages.includes(pkg))
+					errs.addError({code:'SL063', message:`duplicate subscription package definition for "${pkg}"`, key:'duplicate subscription package', fragment:SubscriptionPackage});
+				else
 					declaredSubscriptionPackages.push(pkg);
 			}
 		}
@@ -1334,7 +1335,7 @@ export default class ServiceListCheck {
 					if (isIn(ContentGuideSourceIDs, CGSource.attr(dvbi.a_CGSID).value()))
 						errs.addError({code:"SL071", 
 							message:`duplicate ${dvbi.a_CGSID.attribute(dvbi.a_CGSID)} (${CGSource.attr(dvbi.a_CGSID).value()}) in service list`, 
-							key:`duplicate ${dvbi.a_CGSID.attribute()}`});
+							key:`duplicate ${dvbi.a_CGSID.attribute()}`, fragment:CGSource});
 					else ContentGuideSourceIDs.push(CGSource.attr(dvbi.a_CGSID).value());
 				}
 			}
