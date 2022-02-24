@@ -63,6 +63,7 @@ export default class ClassificationScheme {
 	constructor () {
 		this.values=new AvlTree();
 		this.schemes=[];
+		this.leafsOnly=false;
 		loadClassificationScheme.bind(this);
 	}
 
@@ -79,21 +80,25 @@ export default class ClassificationScheme {
 		this.values.insert(key, value);
 	}
 
+	valuesRange() {
+		return this.leafsOnly?"-only leaf nodes are used from the CS":"all nodes in the CS are used";
+	}
+
 	/**
 	 * read a classification scheme from a URL and load its hierarical values into a linear list 
 	 *
 	 * @param {String} csURL URL to the classification scheme
-	 * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded 
+
 	 */
-	loadFromURL(csURL, leafNodesOnly=false) {
+	loadFromURL(csURL) {
 		let isHTTPurl=isHTTPURL(csURL);
-		console.log(`${isHTTPurl?"":"--> NOT "}retrieving CS (${leafNodesOnly?"all":"leaf"} nodes) from ${csURL} via fetch()`); 
+		console.log(`${isHTTPurl?"":"--> NOT "}retrieving CS (${this.leafsOnly?"leaf":"all"} nodes) from ${csURL} via fetch()`); 
 		if (!isHTTPurl) return;
 
 		fetch(csURL)
 			.then(handleErrors)
 			.then(response => response.text())
-			.then(strXML => loadClassificationScheme(parseXmlString(strXML), leafNodesOnly))
+			.then(strXML => loadClassificationScheme(parseXmlString(strXML), this.leafsOnly))
 			.then(res => {
 				res.vals.forEach(e=>{this.insertValue(e, true);});
 				this.schemes.push(res.uri);
@@ -105,14 +110,13 @@ export default class ClassificationScheme {
 	 * read a classification scheme from a local file and load its hierarical values into a linear list 
 	 *
 	 * @param {String} classificationScheme the filename of the classification scheme
-	 * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded 
 	 */
-	loadFromFile(classificationScheme, leafNodesOnly=false) {
-		console.log(`reading CS (${leafNodesOnly?"leaf":"all"} nodes) from ${classificationScheme}`);
+	loadFromFile(classificationScheme, le) {
+		console.log(`reading CS (${this.leafsOnly?"leaf":"all"} nodes) from ${classificationScheme}`);
 
  		readFile(classificationScheme, {encoding: "utf-8"}, (err,data)=> {
  			if (!err) {
-				let res=loadClassificationScheme(parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm,"")), leafNodesOnly);
+				let res=loadClassificationScheme(parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm,"")), this.leafsOnly);
 				res.vals.forEach(e=>{this.insertValue(e, true);});
 				this.schemes.push(res.uri);
 			 }
@@ -124,15 +128,16 @@ export default class ClassificationScheme {
 	loadCS(options) {
 		if (!options) options={};
 		if (!options.leafNodesOnly) options.leafNodesOnly=false;
+		this.leafsOnly=options.leafNodesOnly;
 
 		if (options.file)
-			this.loadFromFile(options.file, options.leafNodesOnly);
+			this.loadFromFile(options.file);
 		if (options.files)
-			options.files.forEach(file => this.loadFromFile(file, options.leafNodesOnly));  
+			options.files.forEach(file => this.loadFromFile(file));  
 		if (options.url)
-			this.loadFromURL(options.url, options.leafNodesOnly);
+			this.loadFromURL(options.url);
 		if (options.urls)
-			options.urls.forEach(url => this.loadFromURL(url, options.leafNodesOnly));
+			options.urls.forEach(url => this.loadFromURL(url));
 	}
 
 	/**

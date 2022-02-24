@@ -924,13 +924,13 @@ export default class ServiceListCheck {
 					switch (child.name()) {
 						case tva.e_Coding:
 							if (child.attr(dvbi.a_href) && !this.allowedAudioSchemes.isIn(child.attr(dvbi.a_href).value())) 
-								errs.addError({code:"SI052", message:`invalid ${dvbi.a_href.attribute(child.name())} value for (${child.attr(dvbi.a_href).value()})`, 
+								errs.addError({code:"SI052", message:`invalid ${dvbi.a_href.attribute(child.name())} value for (${child.attr(dvbi.a_href).value()}) ${this.allowedAudioSchemes.valuesRange()}`, 
 										fragment:child, key:"audio codec"});
 							break;
 						case tva.e_MixType:
 							// taken from MPEG-7 AudioPresentationCS
 							if (child.attr(dvbi.a_href) && !this.AudioPresentationCSvalues.isIn(child.attr(dvbi.a_href).value())) 
-								errs.addError({code:"SI055", message:`invalid ${dvbi.a_href.attribute(child.name())} value for (${child.attr(dvbi.a_href).value()})`, 
+								errs.addError({code:"SI055", message:`invalid ${dvbi.a_href.attribute(child.name())} value for (${child.attr(dvbi.a_href).value()}) ${this.AudioPresentationCSvalues.valuesRange()}`, 
 										fragment:child, key:"audio codec"});
 							break;
 					}
@@ -941,7 +941,7 @@ export default class ServiceListCheck {
 			cp=0;
 			while ((conf=ContentAttributes.get(xPath(SCHEMA_PREFIX, dvbi.e_AudioConformancePoint, ++cp), SL_SCHEMA))!=null) 
 				if (conf.attr(dvbi.a_href) && !this.allowedAudioConformancePoints.isIn(conf.attr(dvbi.a_href).value())) 
-					errs.addError({code:"SI061", message:`invalid ${dvbi.a_href.attribute(dvbi.e_AudioConformancePoint)} (${conf.attr(dvbi.a_href).value()})`, 
+					errs.addError({code:"SI061", message:`invalid ${dvbi.a_href.attribute(dvbi.e_AudioConformancePoint)} (${conf.attr(dvbi.a_href).value()}) ${this.allowedAudioConformancePoints.valuesRange()}`, 
 							fragment:conf, key:"audio conf point"});
 
 			// Check ContentAttributes/VideoAttributes - other subelements are checked with schema based validation
@@ -952,12 +952,12 @@ export default class ServiceListCheck {
 					switch (child.name()) {
 						case tva.e_Coding:
 							if (child.attr(dvbi.a_href) && !this.allowedVideoSchemes.isIn(child.attr(dvbi.a_href).value())) 
-								errs.addError({code:"SI072", message:`invalid ${dvbi.a_href.attribute(tva.e_Coding)} (${child.attr(dvbi.a_href).value()})`, 
+								errs.addError({code:"SI072", message:`invalid ${dvbi.a_href.attribute(tva.e_Coding)} (${child.attr(dvbi.a_href).value()}) ${this.allowedVideoSchemes.valuesRange()}`, 
 											fragment:child, key:"video codec"});
 							break;
 						case tva.e_PictureFormat:
 							if (child.attr(dvbi.a_href) && !this.allowedPictureFormats.isIn(child.attr(dvbi.a_href).value())) 
-								errs.addError({code:"SI082", message:`invalid ${dvbi.a_href.attribute(tva.e_PictureFormat)} value (${child.attr(dvbi.a_href).value()})`, 
+								errs.addError({code:"SI082", message:`invalid ${dvbi.a_href.attribute(tva.e_PictureFormat)} value (${child.attr(dvbi.a_href).value()}) ${this.allowedPictureFormats.valuesRange()}`, 
 											fragment:child, key:tva.e_PictureFormat});
 							break;
 						case dvbi.e_Colorimetry:
@@ -973,7 +973,7 @@ export default class ServiceListCheck {
 			cp=0;
 			while ((conf=ContentAttributes.get(xPath(SCHEMA_PREFIX, dvbi.e_VideoConformancePoint, ++cp), SL_SCHEMA))!=null) 
 				if (conf.attr(dvbi.a_href) && !this.allowedVideoConformancePoints.isIn(conf.attr(dvbi.a_href).value())) 
-					errs.addError({code:"SI091", message:`invalid ${dvbi.a_href.attribute(dvbi.e_VideoConformancePoint)} value (${conf.attr(dvbi.a_href).value()})`, 
+					errs.addError({code:"SI091", message:`invalid ${dvbi.a_href.attribute(dvbi.e_VideoConformancePoint)} value (${conf.attr(dvbi.a_href).value()}) ${this.allowedVideoConformancePoints.valuesRange()}`, 
 									fragment:conf, key:"video conf point"});
 
 			// Check ContentAttributes/CaptionLanguage
@@ -1424,7 +1424,7 @@ export default class ServiceListCheck {
 			// check <Service><RecordingInfo>
 			let RecordingInfo=service.get(xPath(SCHEMA_PREFIX, dvbi.e_RecordingInfo), SL_SCHEMA);
 			if (RecordingInfo && RecordingInfo.attr(dvbi.a_href) && !this.RecordingInfoCSvalues.isIn(RecordingInfo.attr(dvbi.a_href).value())) 
-				errs.addError({code:"SL180", message:`invalid ${dvbi.e_RecordingInfo.elementize()} value ${RecordingInfo.attr(dvbi.a_href).value().quote()} for service ${thisServiceId}`, 
+				errs.addError({code:"SL180", message:`invalid ${dvbi.e_RecordingInfo.elementize()} value ${RecordingInfo.attr(dvbi.a_href).value().quote()} for service ${thisServiceId} ${this.RecordingInfoCSvalues.valuesRange()}`, 
 						fragment:RecordingInfo, key:`invalid ${dvbi.e_RecordingInfo}`});
 
 			// check <Service><ContentGuideSource>
