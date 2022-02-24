@@ -11,7 +11,6 @@ const DVB_HowRelatedCS="urn:dvb:metadata:cs:HowRelatedCS",
 const FVC_HowRelatedCS="urn:fvc:metadata:cs:HowRelatedCS:2018";
 
 const CaptionCodingFormatCS="urn:tva:metadata:cs:CaptionCodingFormatCS:2015",
-	  ColorimetryCS="urn:dvb:metadata:cs:ColorimetryCS:2020",
 	  AudioPurposeCS="urn:tva:metadata:cs:AudioPurposeCS:2007",
 	  MediaAvailabilityCS="urn:fvc:metadata:cs:MediaAvailabilityCS:2014-07",
 	  ForwardEPGAvailabilityCS="urn:fvc:metadata:cs:FEPGAvailabilityCS:2014-10",
@@ -63,13 +62,6 @@ export const dvbi = {
 // A177 5.2.7.2
 	CONTENT_TYPE_DASH_MPD: "application/dash+xml",    // MPD of linear service
 	CONTENT_TYPE_DVB_PLAYLIST: "application/xml",     // XML Playlist
-
-// A177 5.5.24  <VideoAttribites><Colorimetry>
-	COLORIMETRY_BT709: `${ColorimetryCS}:1`,
-	COLORIMETRY_BT2020_NCL: `${ColorimetryCS}:2.1`,
-	COLORIMETRY_BT2100_NCL: `${ColorimetryCS}:3.1`,
-
-	ALLOWED_COLORIMETRY: [`${ColorimetryCS}:1`, `${ColorimetryCS}:2.1`, `${ColorimetryCS}:3.1`],
 
 // A177 6.11.2 - Audio Purpose
 	AUDIO_PURPOSE_MAIN: `${AudioPurposeCS}:1`,

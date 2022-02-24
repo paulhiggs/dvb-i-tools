@@ -45,6 +45,11 @@ export const DVB_VideoCodecCS={
     y2021:{file:join(path2021CS, idDVB_VideoCodecCS), url:`${DVB_METADATA}${url2021CS}/${idDVB_VideoCodecCS}`}
 };
 
+const idDVB_ColorimetryCS="ColorimetryCS.xml";
+export const DVB_ColorimetryCS={
+    y2020:{file:join(path2020CS, idDVB_ColorimetryCS), url:`${DVB_METADATA}${url2020CS}/${idDVB_ColorimetryCS}`}
+};
+
 const idMPEG_AudioCodingFormatCS="AudioCodingFormatCS.xml";
 export const MPEG7_AudioCodingFormatCS={file:join(pathMPEG7, idMPEG_AudioCodingFormatCS), url:`${REPO_RAW}${pathMPEG7}/${idMPEG_AudioCodingFormatCS}`};
 

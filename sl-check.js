@@ -16,7 +16,9 @@ import { xPath, xPathM, isIn, unEntity } from "./utils.js";
 
 import { isPostcode, isHTTPURL,isHTTPPathURL, isDomainName, isRTSPURL } from "./pattern_checks.js";
 
-import { IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, ISO3166, DVBI_ServiceListSchema, TVA_PictureFormatCS, DVBI_ServiceTypeCS, DVB_AudioCodecCS, MPEG7_AudioCodingFormatCS, DVB_AudioConformanceCS, DVB_VideoCodecCS, MPEG7_VisualCodingFormatCS, DVB_VideoConformanceCS, MPEG7_AudioPresentationCS, DVBI_RecordingInfoCS } from "./data-locations.js";
+import { IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, ISO3166, DVBI_ServiceListSchema, TVA_PictureFormatCS, DVBI_ServiceTypeCS, 
+	     DVB_AudioCodecCS, MPEG7_AudioCodingFormatCS, DVB_AudioConformanceCS, DVB_VideoCodecCS, MPEG7_VisualCodingFormatCS, DVB_VideoConformanceCS, 
+		 MPEG7_AudioPresentationCS, DVBI_RecordingInfoCS, DVB_ColorimetryCS } from "./data-locations.js";
 
 import ISOcountries from "./ISOcountries.js";
 import IANAlanguages from "./IANAlanguages.js";
@@ -243,6 +245,7 @@ export default class ServiceListCheck {
 		this.RecordingInfoCSvalues=new ClassificationScheme();
 		this.allowedPictureFormats=new ClassificationScheme();
 		this.AudioPresentationCSvalues=new ClassificationScheme();
+		this.allowedColorimetry=new ClassificationScheme();
 
 		console.log("loading service list schemas...");
 		this.SLschema_v1=parseXmlString(readFileSync(DVBI_ServiceListSchema.v1.file));
@@ -262,7 +265,7 @@ export default class ServiceListCheck {
 	/*private*/ loadDataFiles(useURLs) {
 		console.log("loading classification schemes...");
 		this.allowedPictureFormats.loadCS(useURLs?{url:TVA_PictureFormatCS.url}:{file:TVA_PictureFormatCS.file});
-	
+		this.allowedColorimetry.loadCS(useURLs?{url:DVB_ColorimetryCS.y2020.url, leafNodesOnly:true}:{file:DVB_ColorimetryCS.y2020.file, leafNodesOnly:true});
 		this.allowedServiceTypes.loadCS(useURLs?{url:DVBI_ServiceTypeCS.url}:{file:DVBI_ServiceTypeCS.file} );
 
 		this.allowedAudioSchemes.loadCS(useURLs?
@@ -961,8 +964,8 @@ export default class ServiceListCheck {
 											fragment:child, key:tva.e_PictureFormat});
 							break;
 						case dvbi.e_Colorimetry:
-							if (child.attr(dvbi.a_href) && !isIn(dvbi.ALLOWED_COLORIMETRY, child.attr(dvbi.a_href).value())) 
-								errs.addError({code:"SI084", message:`invalid ${dvbi.a_href.attribute(dvbi.e_Colorimetry)} value (${child.attr(dvbi.a_href).value()})`, 
+							if (child.attr(dvbi.a_href) && !this.allowedColorimetry.isIn(child.attr(dvbi.a_href).value())) 
+								errs.addError({code:"SI084", message:`invalid ${dvbi.a_href.attribute(dvbi.e_Colorimetry)} value (${child.attr(dvbi.a_href).value()}) ${this.allowedColorimetry.valuesRange()}`, 
 											fragment:child, key:dvbi.e_Colorimetry});
 							break;
 					}

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassificationScheme uri="urn:dvb:metadata:cs:ColorimetryCS:2020" xmlns="urn:tva:mpeg7:2008" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:tva:mpeg7:2008 tva_mpeg7.xsd" xsi:type="ClassificationSchemeType">
+	<!-- ##################################################################### -->
+	<!-- Colorimetry                                                           -->
+	<!-- Definition: Different picture colorimetry standards                   -->
+	<!-- ##################################################################### -->
+	<Term termID="1">
+		<Name xml:lang="en">ITU BT.709 colorimetry</Name>
+	</Term>
+	<Term termID="2">
+		<Name xml:lang="en">BT.2020</Name>
+		<Definition xml:lang="en">ITU BT.2020 colorimetry</Definition>
+		<Term termID="2.1">
+			<Name xml:lang="en">BT.2020 NCL</Name>
+			<Definition xml:lang="en">ITU BT.2020 non-constant luminance colorimetry</Definition>
+		</Term>
+	</Term>
+	<Term termID="3">
+		<Name xml:lang="en">BT.2100</Name>
+		<Definition xml:lang="en">ITU BT.2100 colorimetry</Definition>
+		<Term termID="3.1">
+			<Name xml:lang="en">BT.2100 NCL</Name>
+			<Definition xml:lang="en">ITU BT.2100 non-constant luminance colorimetry</Definition>
+		</Term>
+	</Term>
+</ClassificationScheme>
