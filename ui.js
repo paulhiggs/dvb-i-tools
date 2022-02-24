@@ -23,12 +23,19 @@ function tabulateResults(res, error, errs) {
 	const SUMMARY_FORM_HEADER="<table><tr><th>item</th><th>count</th></tr>";
 	const Dodger_Blue="#1E90FF", link_css="jump";
 	
-	let DETAIL_FORM_HEADER = (mode) => `<table><tr><th>code</th><th>${mode}</th></tr>`;
+
+	let scrollFunc=`<script>function myScrollTo(item){
+		var itemPos = document.getElementById(item).getBoundingClientRect();
+		console.log('jump to ', item, itemPos.x, itemPos.y);
+		window.scrollTo(window.scrollX+itemPos.x, window.scrollY+itemPos.y);
+	}</script>`;
+	let DETAIL_FORM_HEADER = (mode) => `${scrollFunc}<table><tr><th>code</th><th>${mode}</th></tr>`;
+
 
 	function tabluateMessage(value) {
 		res.write('<tr>');
 		let anchor=value.hasOwnProperty('line')?`line-${value.line}`:null;
-		res.write(`<td>${anchor?`<a class="${link_css}" href="#${anchor}">`:""}${value.code?HTMLize(value.code):""}${anchor?"</a>":""}</td>`);
+		res.write(`<td>${anchor?`<span class="${link_css}" onclick="myScrollTo('${anchor}')">`:""}${value.code?HTMLize(value.code):""}${anchor?"</span>":""}</td>`);
 		res.write(`<td>${value.message?HTMLize(value.message):""}`);
 		res.write(`${value.element?`<br/><span class=\"xmlfont\"><pre>${HTMLize(value.element)}</pre></span>`:""}</td>`);
 		res.write('</tr>');
@@ -39,7 +46,7 @@ function tabulateResults(res, error, errs) {
 		res.write(`<p>${error}</p>`);
 	let resultsShown=false;
 	if (errs) {
-		res.write(`<style>a.${link_css} {} a.${link_css}:link {color: ${Dodger_Blue}; text-decoration: none;} a.${link_css}:hover {text-decoration:underline; text-decoration-style: dashed} a.${link_css}:visited {color: ${Dodger_Blue};}</style>`);
+		res.write(`<style>span.${link_css} {} span.${link_css} {color: ${Dodger_Blue}; text-decoration: underline;} </style>`);
 
 		if (errs.numCountsErr()>0 || errs.numCountsWarn()>0 ) {		
 			res.write(SUMMARY_FORM_HEADER);
