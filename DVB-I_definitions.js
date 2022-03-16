@@ -1,28 +1,34 @@
+const DVB_metadata="urn:dvb:metadata";
+const TVA_CSmetadata="urn:tva:metadata:cs:",
+      DVB_CSmetadata=`${DVB_metadata}:cs`,
+      FVC_CSmetadata="urn:fvc:metadata:cs";
+
 const PaginationPrefix="urn:fvc:metadata:cs:HowRelatedCS:2015-12:pagination",
 	  NowNextCRIDPrefix="crid://dvb.org/metadata/schedules/now-next";
 
-const DVB_SOURCE_PREFIX = "urn:dvb:metadata:source";
-const LINKED_APLICATION_CS = "urn:dvb:metadata:cs:LinkedApplicationCS:2019";
+const DVB_SOURCE_PREFIX = `${DVB_metadata}:source`;
+const LINKED_APLICATION_CS = `${DVB_CSmetadata}:LinkedApplicationCS:2019`;
 
-const DVB_HowRelatedCS="urn:dvb:metadata:cs:HowRelatedCS",
+const DVB_HowRelatedCS=`${DVB_CSmetadata}:HowRelatedCS`,
 	  DVB_RELATED_CS_v1 = `${DVB_HowRelatedCS}:2019`,
 	  DVB_RELATED_CS_v2 = `${DVB_HowRelatedCS}:2020`,
 	  DVB_RELATED_CS_v3 = `${DVB_HowRelatedCS}:2021`;
-const FVC_HowRelatedCS="urn:fvc:metadata:cs:HowRelatedCS:2018";
 
-const CaptionCodingFormatCS="urn:tva:metadata:cs:CaptionCodingFormatCS:2015",
-	  AudioPurposeCS="urn:tva:metadata:cs:AudioPurposeCS:2007",
-	  MediaAvailabilityCS="urn:fvc:metadata:cs:MediaAvailabilityCS:2014-07",
-	  ForwardEPGAvailabilityCS="urn:fvc:metadata:cs:FEPGAvailabilityCS:2014-10",
-	  RestartAvailabilityCS="urn:fvc:metadata:cs:RestartAvailabilityCS:2018";
+const FVC_HowRelatedCS=`${FVC_CSmetadata}:HowRelatedCS:2018`;
+
+const CaptionCodingFormatCS=`${TVA_CSmetadata}:CaptionCodingFormatCS:2015`,
+	  AudioPurposeCS=`${TVA_CSmetadata}:AudioPurposeCS:2007`,
+	  MediaAvailabilityCS=`${FVC_CSmetadata}:MediaAvailabilityCS:2014-07`,
+	  ForwardEPGAvailabilityCS=`${FVC_CSmetadata}:FEPGAvailabilityCS:2014-10`,
+	  RestartAvailabilityCS=`${FVC_CSmetadata}:RestartAvailabilityCS:2018`;
 
 import {tva, tvaEA, tvaEC} from './TVA_definitions.js';
 
 export const dvbi = {
-	A177v1_Namespace: "urn:dvb:metadata:servicediscovery:2019",
-	A177v2_Namespace: "urn:dvb:metadata:servicediscovery:2020",
-	A177v3_Namespace: "urn:dvb:metadata:servicediscovery:2021",
-	A177v4_Namespace: "urn:dvb:metadata:servicediscovery:2022",
+	A177v1_Namespace: `${DVB_metadata}:servicediscovery:2019`,
+	A177v2_Namespace: `${DVB_metadata}:servicediscovery:2020`,
+	A177v3_Namespace: `${DVB_metadata}:servicediscovery:2021`,
+	A177v4_Namespace: `${DVB_metadata}:servicediscovery:2022`,
 
 	MAX_TITLE_LENGTH: 80,
 	MAX_KEYWORD_LENGTH: 32,
