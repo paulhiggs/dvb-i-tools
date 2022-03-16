@@ -1,9 +1,10 @@
 const DVB_metadata="urn:dvb:metadata";
-const TVA_CSmetadata="urn:tva:metadata:cs:",
-      DVB_CSmetadata=`${DVB_metadata}:cs`,
+const DVB_CSmetadata=`${DVB_metadata}:cs`,
       FVC_CSmetadata="urn:fvc:metadata:cs";
 
-const PaginationPrefix="urn:fvc:metadata:cs:HowRelatedCS:2015-12:pagination",
+import {tva, tvaEA, tvaEC, TVA_CSmetadata} from './TVA_definitions.js';
+
+const PaginationPrefix=`${FVC_CSmetadata}:HowRelatedCS:2015-12:pagination`,
 	  NowNextCRIDPrefix="crid://dvb.org/metadata/schedules/now-next";
 
 const DVB_SOURCE_PREFIX = `${DVB_metadata}:source`;
@@ -21,8 +22,6 @@ const CaptionCodingFormatCS=`${TVA_CSmetadata}:CaptionCodingFormatCS:2015`,
 	  MediaAvailabilityCS=`${FVC_CSmetadata}:MediaAvailabilityCS:2014-07`,
 	  ForwardEPGAvailabilityCS=`${FVC_CSmetadata}:FEPGAvailabilityCS:2014-10`,
 	  RestartAvailabilityCS=`${FVC_CSmetadata}:RestartAvailabilityCS:2018`;
-
-import {tva, tvaEA, tvaEC} from './TVA_definitions.js';
 
 export const dvbi = {
 	A177v1_Namespace: `${DVB_metadata}:servicediscovery:2019`,

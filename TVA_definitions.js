@@ -1,5 +1,7 @@
 import { mpeg7 } from "./MPEG7_definitions.js";
 
+export const TVA_CSmetadata="urn:tva:metadata:cs";
+
 export const tva = {
 
 	SYNOPSIS_BRIEF_LABEL: "brief",
@@ -191,7 +193,7 @@ export const tva = {
 	t_MemberOfType: 		"MemberOfType",
 	t_ProgramGroupTypeType: "ProgramGroupTypeType",
 	
-	cs_PromotionalStillImage: "urn:tva:metadata:cs:HowRelatedCS:2012:19"
+	cs_PromotionalStillImage: `${TVA_CSmetadata}:HowRelatedCS:2012:19`
 };
 
 
