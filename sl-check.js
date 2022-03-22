@@ -42,11 +42,19 @@ const SERVICE_RM="service";
 const SERVICE_INSTANCE_RM="service instance";
 const CONTENT_GUIDE_RM="content guide";
 
-const SCHEMA_v1=1;
-const SCHEMA_v2=2;
-const SCHEMA_v3=3;
-const SCHEMA_v4=4;
-const SCHEMA_unknown= -1;
+const SCHEMA_v1=1, 
+	  SCHEMA_v2=2,
+	  SCHEMA_v3=3,
+	  SCHEMA_v4=4,
+	  SCHEMA_v5=5,
+	  SCHEMA_unknown= -1;
+
+var SchemaVersions=[ // schema property is loaded from specified filename
+		{namespace:dvbi.A177v5_Namespace, version:SCHEMA_v5, filename:DVBI_ServiceListSchema.v5.file, schema:null},
+		{namespace:dvbi.A177v4_Namespace, version:SCHEMA_v4, filename:DVBI_ServiceListSchema.v4.file, schema:null},
+		{namespace:dvbi.A177v3_Namespace, version:SCHEMA_v3, filename:DVBI_ServiceListSchema.v3.file, schema:null},
+		{namespace:dvbi.A177v2_Namespace, version:SCHEMA_v2, filename:DVBI_ServiceListSchema.v2.file, schema:null},
+		{namespace:dvbi.A177v1_Namespace, version:SCHEMA_v1, filename:DVBI_ServiceListSchema.v1.file, schema:null}];
 
 const EXTENSION_LOCATION_SERVICE_LIST_REGISTRY=101,
 	  EXTENSION_LOCATION_SERVICE_ELEMENT=201,
@@ -248,10 +256,10 @@ export default class ServiceListCheck {
 		this.allowedColorimetry=new ClassificationScheme();
 
 		console.log("loading service list schemas...");
-		this.SLschema_v1=parseXmlString(readFileSync(DVBI_ServiceListSchema.v1.file));
-		this.SLschema_v2=parseXmlString(readFileSync(DVBI_ServiceListSchema.v2.file));
-		this.SLschema_v3=parseXmlString(readFileSync(DVBI_ServiceListSchema.v3.file));
-		this.SLschema_v4=parseXmlString(readFileSync(DVBI_ServiceListSchema.v4.file));
+		SchemaVersions.forEach(version => {
+			version.schema=parseXmlString(readFileSync(version.filename));
+			console.log(`..loaded ${version.version} ${version.namespace} from ${version.filename} ${version.schema?"OK":"FAIL"}`);
+		});
 
 		this.loadDataFiles(useURLs);
 	}
@@ -287,6 +295,7 @@ export default class ServiceListCheck {
 		this.RecordingInfoCSvalues.loadCS(useURLs?{url:DVBI_RecordingInfoCS.url}:{file:DVBI_RecordingInfoCS.file});		
 	}
 
+
 	/**
 	 * determine the schema version (and hence the specificaion version) in use 
 	 *
@@ -294,16 +303,8 @@ export default class ServiceListCheck {
 	 * @returns {integer} Representation of the schema version or error code if unknown 
 	 */
 	/*private*/ SchemaVersion(namespace) {
-		if (namespace == dvbi.A177v4_Namespace)
-			return SCHEMA_v4;
-		if (namespace == dvbi.A177v3_Namespace)
-			return SCHEMA_v3;
-		if (namespace == dvbi.A177v2_Namespace)
-			return SCHEMA_v2;
-		if (namespace == dvbi.A177v1_Namespace)
-			return SCHEMA_v1;
-		
-		return SCHEMA_unknown;
+		let x=SchemaVersions.find(ver => ver.namespace==namespace);
+		return x?x.version:SCHEMA_unknown;
 	}
 
 
@@ -396,7 +397,8 @@ export default class ServiceListCheck {
 			{ver: SCHEMA_v1, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v1 },
 			{ver: SCHEMA_v2, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
 			{ver: SCHEMA_v3, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
-			{ver: SCHEMA_v4, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 }
+			{ver: SCHEMA_v4, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+			{ver: SCHEMA_v5, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null) ;
 	}
 
@@ -414,7 +416,8 @@ export default class ServiceListCheck {
 		return this.match([ 
 			{ver: SCHEMA_v2, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
 			{ver: SCHEMA_v3, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
-			{ver: SCHEMA_v4, val: dvbi.BANNER_CONTENT_FINISHED_v3 }
+			{ver: SCHEMA_v4, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+			{ver: SCHEMA_v5, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
 			], namespace==ANY_NAMESPACE?namespace:this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -432,7 +435,8 @@ export default class ServiceListCheck {
 			{ver: SCHEMA_v1, val: dvbi.LOGO_SERVICE_LIST_v1},
 			{ver: SCHEMA_v2, val: dvbi.LOGO_SERVICE_LIST_v2},
 			{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_LIST_v2},
-			{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_LIST_v3}
+			{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_LIST_v3},
+			{ver: SCHEMA_v5, val: dvbi.LOGO_SERVICE_LIST_v3},
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -450,7 +454,8 @@ export default class ServiceListCheck {
 			{ver: SCHEMA_v1, val: dvbi.LOGO_SERVICE_v1},
 			{ver: SCHEMA_v2, val: dvbi.LOGO_SERVICE_v2},
 			{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_v2},
-			{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_v3}
+			{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_v3},
+			{ver: SCHEMA_v5, val: dvbi.LOGO_SERVICE_v3},
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -465,7 +470,8 @@ export default class ServiceListCheck {
 	/*private*/  validServiceBanner(HowRelated, namespace) {
 		// return true if val is a valid CS value Service Banner (A177 5.2.6.x)
 		return this.match([
-			{ver: SCHEMA_v4, val: dvbi.SERVICE_BANNER_v4}
+			{ver: SCHEMA_v4, val: dvbi.SERVICE_BANNER_v4},
+			{ver: SCHEMA_v5, val: dvbi.SERVICE_BANNER_v4},
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -483,7 +489,8 @@ export default class ServiceListCheck {
 			{ver: SCHEMA_v1, val: dvbi.LOGO_CG_PROVIDER_v1},
 			{ver: SCHEMA_v2, val: dvbi.LOGO_CG_PROVIDER_v2},
 			{ver: SCHEMA_v3, val: dvbi.LOGO_CG_PROVIDER_v2},
-			{ver: SCHEMA_v4, val: dvbi.LOGO_CG_PROVIDER_v3}
+			{ver: SCHEMA_v4, val: dvbi.LOGO_CG_PROVIDER_v3},
+			{ver: SCHEMA_v5, val: dvbi.LOGO_CG_PROVIDER_v3},
 			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
@@ -1217,23 +1224,13 @@ export default class ServiceListCheck {
 
 	/*private*/ doSchemaVerification(ServiceList, SCHEMA_NAMESPACE, errs, errCode) {
 		let _rc=true;
-		switch (this.SchemaVersion(SCHEMA_NAMESPACE)) {
-			case SCHEMA_v1:
-				SchemaCheck(ServiceList, this.SLschema_v1, errs, `${errCode}-1`);
-				break;
-			case SCHEMA_v2:
-				SchemaCheck(ServiceList, this.SLschema_v2, errs, `${errCode}-2`);
-				break;
-			case SCHEMA_v3:
-				SchemaCheck(ServiceList, this.SLschema_v3, errs, `${errCode}-3`);
-				break;	
-			case SCHEMA_v4:
-				SchemaCheck(ServiceList, this.SLschema_v4, errs, `${errCode}-4`);
-				break;	
-			default:
-				_rc=false;
-				break;	
-		}
+
+		let x=SchemaVersions.find(s => s.namespace==SCHEMA_NAMESPACE);
+		if (x && x.schema)
+			SchemaCheck(ServiceList, x.schema, errs, `${errCode}:${this.SchemaVersion(SCHEMA_NAMESPACE)}`);
+		else
+			_rc=false;
+
 		return _rc;
 	}
 
