@@ -89,7 +89,8 @@ export const DVBI_ServiceListSchema={
 	v1:{file:join(".", "dvbi_v1.0.xsd")},
 	v2:{file:join(".", "dvbi_v2.0.xsd")},
 	v3:{file:join(".", "dvbi_v3.0.xsd")},
-	v4:{file:join(".", "dvbi_v3.1.xsd")}
+	v4:{file:join(".", "dvbi_v3.1.xsd")},
+	v5:{file:join(".", "dvbi_v4.0.xsd")}
 };
 
 const languagesFilename="language-subtag-registry";
