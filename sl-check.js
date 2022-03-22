@@ -27,7 +27,7 @@ import { checkValidLogos } from "./RelatedMaterialChecks.js";
 import { sl_InvalidHrefValue } from "./CommonErrors.js";
 
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
-import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaLoad } from "./schema_checks.js";
+import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaLoad } from "./schema_checks.js";
 
 /* TODO:
 
@@ -325,38 +325,44 @@ export default class ServiceListCheck {
 			return;
 		}
 		
-		let regionID=Region.attr(dvbi.a_regionID)?Region.attr(dvbi.a_regionID).value():"";
-		if (regionID=="")
-			regionID="unspecified";
-		else {
+		let regionID=Region.attr(dvbi.a_regionID)?Region.attr(dvbi.a_regionID).value():null;
+		let displayRegionID=regionID?regionID.quote():'"unidentified"';
+		if (regionID) {
 			if (isIn(knownRegionIDs, regionID)) 
-				errs.addError({code:"AR003", message:`Duplicate ${dvbi.a_regionID.attribute()} ${regionID.quote()}`, key:"duplicate regionID", line:Region.line()});
+				errs.addError({code:"AR001", message:`Duplicate ${dvbi.a_regionID.attribute()} ${displayRegionID}`, key:`duplicate ${dvbi.a_regionID}`, line:Region.line()});
 			else knownRegionIDs.push(regionID);
 		}
+
+		if ((depth==dvbi.MAX_SUBREGION_LEVELS) && !regionID)
+			errs.addError({code:"AR011", message:`${dvbi.a_regionID.attribute()} is required at Tertiary (leaf) subregion`, key:`no ${dvbi.a_regionID} at leaf`, line:Region.line()});
+
+		if (!hasChild(Region, dvbi.e_Region) && !regionID)
+			errs.addError({code:"AR012", message:`${dvbi.a_regionID.attribute()} is required at Tertiary (leaf) subregion`, key:`no ${dvbi.a_regionID} at leaf`, line:Region.line()});
+		
+			if (depth > dvbi.MAX_SUBREGION_LEVELS) 
+			errs.addError({code:"AR013", message:`${dvbi.e_Region.elementize()} depth exceeded (>${dvbi.MAX_SUBREGION_LEVELS}) for sub-region ${displayRegionID}`, key:"region depth exceeded", line:Region.line()});
+
 		let countryCodesSpecified=Region.attr(dvbi.a_countryCodes);
 		if ((depth!=0) && countryCodesSpecified) 
-			errs.addError({code:"AR004", message:`${dvbi.a_countryCodes.attribute(Region.name())} not permitted for sub-region ${regionID.quote()}`, key:"ccode in subRegion", line:Region.line()});
+			errs.addError({code:"AR021", message:`${dvbi.a_countryCodes.attribute(Region.name())} not permitted for sub-region ${displayRegionID}`, key:"ccode in subRegion", line:Region.line()});
 
 		if (countryCodesSpecified) {
 			let countries=countryCodesSpecified.value().split(",");
 			if (countries) 
 				countries.forEach(country => {
 					if (!this.knownCountries.isISO3166code(country)) 
-						errs.addError({code:"AR005", message:`invalid country code (${country}) for region ${regionID.quote()}`, key:"invalid country code", line:Region.line()});
+						errs.addError({code:"AR031", message:`invalid country code (${country}) for region ${displayRegionID}`, key:"invalid country code", line:Region.line()});
 				});
 		}
 
-		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_RegionName, `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${regionID.quote()}`, Region, errs, "AR006", this.knownLanguages);
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_RegionName, `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${displayRegionID}`, Region, errs, "AR006", this.knownLanguages);
 		
 		// <Region><Postcode>
 		let pc=0, Postcode, PostcodeErrorMessage="invalid postcode";
 		while ((Postcode=Region.get(xPath(SCHEMA_PREFIX, dvbi.e_Postcode, ++pc), SL_SCHEMA))!=null) 
 			if (!isPostcode(Postcode.text()))
-				errs.addError({code:"AR011", message:`${Postcode.text().quote()} is not a valid postcode`, key:PostcodeErrorMessage, fragment:Postcode});
+				errs.addError({code:"AR008", message:`${Postcode.text().quote()} is not a valid postcode`, key:PostcodeErrorMessage, fragment:Postcode});
 		
-		if (depth > dvbi.MAX_SUBREGION_LEVELS) 
-			errs.addError({code:"AR007", message:`${dvbi.e_Region.elementize()} depth exceeded (>${dvbi.MAX_SUBREGION_LEVELS}) for sub-region ${regionID.quote()}`, key:"region depth exceeded", line:Region.line()});
-
 		let rc=0, RegionChild;
 		while ((RegionChild=Region.get(xPath(SCHEMA_PREFIX, dvbi.e_Region, ++rc), SL_SCHEMA))!=null) 
 			this.addRegion(SL_SCHEMA, SCHEMA_PREFIX, RegionChild, depth+1, knownRegionIDs, errs);
