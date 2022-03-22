@@ -81,7 +81,7 @@
 				<element name="ContentGuideSource" type="dvbisd:ContentGuideSourceType"/>
 				<element name="ContentGuideSourceRef" type="dvbisd:ContentGuideProviderRefIdType"/>
 			</choice>
-			<element name="ContentGuideServiceRef" type="dvbisd:ServiceIdentifierType" minOccurs="0"/>
+			<element name="ContentGuideServiceRef" type="string" minOccurs="0"/>
 			<element name="AdditionalServiceParameters" type="dvbisd:ExtensionBaseType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 		<attribute name="dynamic" type="boolean" default="false"/>
