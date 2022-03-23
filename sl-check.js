@@ -56,6 +56,58 @@ var SchemaVersions=[ // schema property is loaded from specified filename
 		{namespace:dvbi.A177v2_Namespace, version:SCHEMA_v2, filename:DVBI_ServiceListSchema.v2.file, schema:null},
 		{namespace:dvbi.A177v1_Namespace, version:SCHEMA_v1, filename:DVBI_ServiceListSchema.v1.file, schema:null}];
 
+const OutOfScheduledHoursBanners=[ 
+	{ver: SCHEMA_v1, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v1 },
+	{ver: SCHEMA_v2, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
+	{ver: SCHEMA_v3, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
+	{ver: SCHEMA_v4, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	{ver: SCHEMA_v5, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	];
+const ContentFinishedBanners=[ 
+	{ver: SCHEMA_v2, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
+	{ver: SCHEMA_v3, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
+	{ver: SCHEMA_v4, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	{ver: SCHEMA_v5, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	];
+const ServiceListLogos=[ 
+	{ver: SCHEMA_v1, val: dvbi.LOGO_SERVICE_LIST_v1},
+	{ver: SCHEMA_v2, val: dvbi.LOGO_SERVICE_LIST_v2},
+	{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_LIST_v2},
+	{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_LIST_v3},
+	{ver: SCHEMA_v5, val: dvbi.LOGO_SERVICE_LIST_v3},
+	];
+const ServiceLogos=[
+	{ver: SCHEMA_v1, val: dvbi.LOGO_SERVICE_v1},
+	{ver: SCHEMA_v2, val: dvbi.LOGO_SERVICE_v2},
+	{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_v2},
+	{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_v3},
+	{ver: SCHEMA_v5, val: dvbi.LOGO_SERVICE_v3},
+	];
+const ServiceBanners=[
+	{ver: SCHEMA_v4, val: dvbi.SERVICE_BANNER_v4},
+	{ver: SCHEMA_v5, val: dvbi.SERVICE_BANNER_v4},
+	];
+const ContentGuideSourceLogos=[
+	{ver: SCHEMA_v1, val: dvbi.LOGO_CG_PROVIDER_v1},
+	{ver: SCHEMA_v2, val: dvbi.LOGO_CG_PROVIDER_v2},
+	{ver: SCHEMA_v3, val: dvbi.LOGO_CG_PROVIDER_v2},
+	{ver: SCHEMA_v4, val: dvbi.LOGO_CG_PROVIDER_v3},
+	{ver: SCHEMA_v5, val: dvbi.LOGO_CG_PROVIDER_v3},
+	];
+
+
+/**
+ * determine the schema version (and hence the specificaion version) in use 
+ *
+ * @param {String} namespace  The namespace used in defining the schema
+ * @returns {integer} Representation of the schema version or error code if unknown 
+ */
+let SchemaVersion = (namespace) => {
+	let x=SchemaVersions.find(ver => ver.namespace==namespace);
+	return x?x.version:SCHEMA_unknown;
+};
+
+
 const EXTENSION_LOCATION_SERVICE_LIST_REGISTRY=101,
 	  EXTENSION_LOCATION_SERVICE_ELEMENT=201,
 	  EXTENSION_LOCATION_DASH_INSTANCE=202,
@@ -136,8 +188,7 @@ let UnspecifiedTargetRegion = (region, loc, errCode) =>
 		key:"target region"});
 
 
-
-/**
+		/**
  * Construct an error message for missing <xxxDeliveryParameters>
  *
  * @param {String}  source     The missing source type
@@ -297,18 +348,6 @@ export default class ServiceListCheck {
 
 
 	/**
-	 * determine the schema version (and hence the specificaion version) in use 
-	 *
-	 * @param {String} namespace  The namespace used in defining the schema
-	 * @returns {integer} Representation of the schema version or error code if unknown 
-	 */
-	/*private*/ SchemaVersion(namespace) {
-		let x=SchemaVersions.find(ver => ver.namespace==namespace);
-		return x?x.version:SCHEMA_unknown;
-	}
-
-
-	/**
 	 * parses the region element, checks the values and adds it and its children (through recursion) to the linear list of region ids
 	 *
 	 * @param {String}  SL_SCHEMA      Used when constructing Xpath queries
@@ -399,13 +438,7 @@ export default class ServiceListCheck {
 	 */
 	/*private*/  validOutScheduleHours(HowRelated, namespace) {
 		// return true if val is a valid CS value for Out of Service Banners (A177 5.2.5.3)
-		return this.match([ 
-			{ver: SCHEMA_v1, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v1 },
-			{ver: SCHEMA_v2, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
-			{ver: SCHEMA_v3, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
-			{ver: SCHEMA_v4, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
-			{ver: SCHEMA_v5, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
-			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null) ;
+		return this.match(OutOfScheduledHoursBanners, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
 
@@ -419,12 +452,7 @@ export default class ServiceListCheck {
 	 */
 	/*private*/  validContentFinishedBanner(HowRelated, namespace) {
 		// return true if val is a valid CS value for Content Finished Banner (A177 5.2.7.3)
-		return this.match([ 
-			{ver: SCHEMA_v2, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
-			{ver: SCHEMA_v3, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
-			{ver: SCHEMA_v4, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
-			{ver: SCHEMA_v5, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
-			], namespace==ANY_NAMESPACE?namespace:this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
+		return this.match(ContentFinishedBanners, namespace==ANY_NAMESPACE?namespace:SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
 
@@ -437,13 +465,7 @@ export default class ServiceListCheck {
 	 */
 	/*private*/  validServiceListLogo(HowRelated, namespace) {
 		// return true if HowRelated@href is a valid CS value Service List Logo (A177 5.2.6.1)
-		return this.match([ 
-			{ver: SCHEMA_v1, val: dvbi.LOGO_SERVICE_LIST_v1},
-			{ver: SCHEMA_v2, val: dvbi.LOGO_SERVICE_LIST_v2},
-			{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_LIST_v2},
-			{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_LIST_v3},
-			{ver: SCHEMA_v5, val: dvbi.LOGO_SERVICE_LIST_v3},
-			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
+		return this.match(ServiceListLogos, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
 
@@ -456,13 +478,7 @@ export default class ServiceListCheck {
 	 */
 	/*private*/  validServiceLogo(HowRelated, namespace) {
 		// return true if val is a valid CS value Service Logo (A177 5.2.6.2)
-		return this.match([
-			{ver: SCHEMA_v1, val: dvbi.LOGO_SERVICE_v1},
-			{ver: SCHEMA_v2, val: dvbi.LOGO_SERVICE_v2},
-			{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_v2},
-			{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_v3},
-			{ver: SCHEMA_v5, val: dvbi.LOGO_SERVICE_v3},
-			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
+		return this.match(ServiceLogos, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
 
@@ -475,10 +491,7 @@ export default class ServiceListCheck {
 	 */
 	/*private*/  validServiceBanner(HowRelated, namespace) {
 		// return true if val is a valid CS value Service Banner (A177 5.2.6.x)
-		return this.match([
-			{ver: SCHEMA_v4, val: dvbi.SERVICE_BANNER_v4},
-			{ver: SCHEMA_v5, val: dvbi.SERVICE_BANNER_v4},
-			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
+		return this.match(ServiceBanners, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
 
 
@@ -491,15 +504,8 @@ export default class ServiceListCheck {
 	 */
 	/*private*/  validContentGuideSourceLogo(HowRelated, namespace) {
 		// return true if val is a valid CS value Service Logo (A177 5.2.6.3)
-		return this.match([
-			{ver: SCHEMA_v1, val: dvbi.LOGO_CG_PROVIDER_v1},
-			{ver: SCHEMA_v2, val: dvbi.LOGO_CG_PROVIDER_v2},
-			{ver: SCHEMA_v3, val: dvbi.LOGO_CG_PROVIDER_v2},
-			{ver: SCHEMA_v4, val: dvbi.LOGO_CG_PROVIDER_v3},
-			{ver: SCHEMA_v5, val: dvbi.LOGO_CG_PROVIDER_v3},
-			], this.SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
+		return this.match(ContentGuideSourceLogos, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href)?HowRelated.attr(dvbi.a_href).value():null);
 	}
-
 
 
 	/**
@@ -610,7 +616,7 @@ export default class ServiceListCheck {
 						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-11`));
 					break;
 				case SERVICE_RM:
-					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && (this.SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1)) 
+					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && (SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1)) 
 						errs.addError({code:`${errCode}-21`,
 							message:`${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${SCHEMA_NAMESPACE.quote()} in ${Location}`, key:"invalid CS value", fragment:HowRelated});
 			
@@ -629,7 +635,7 @@ export default class ServiceListCheck {
 						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-24`));
 					break;
 				case SERVICE_INSTANCE_RM:
-					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && (this.SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1)) 
+					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && (SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1)) 
 						errs.addError({code:`${errCode}-31`,
 							message:`${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${SCHEMA_NAMESPACE.quote()} in ${Location}`, key:"invalid CS value", fragment:HowRelated});
 					
@@ -1022,7 +1028,7 @@ export default class ServiceListCheck {
 		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ServiceInstance.name().elementize(), ServiceInstance, errs, "SI131", this.knownLanguages);
 		let sp=0, SubscriptionPackage;
 		while ((SubscriptionPackage=ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ++sp), SL_SCHEMA))!=null) {
-			if (this.SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v4) {
+			if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v4) {
 				let pkg=localizedSubscriptionPackage(SubscriptionPackage);
 				if (!subscriptionPackages.includes(pkg))
 					errs.addError({code:"SI130", message:`${dvbi.e_SubscriptionPackage.elementize()}="${pkg}" is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
@@ -1089,7 +1095,7 @@ export default class ServiceListCheck {
 						}
 					break;
 				default:
-					switch (this.SchemaVersion(SCHEMA_NAMESPACE)) {
+					switch (SchemaVersion(SCHEMA_NAMESPACE)) {
 						case SCHEMA_v1:
 							errs.addError({code:"SI158", message:`${dvbi.e_SourceType.elementize()} ${SourceType.text().quote()} is not valid in Service ${thisServiceId.quote()}`, 
 									fragment:SourceType, key:`invalid ${dvbi.e_SourceType}`});
@@ -1097,6 +1103,7 @@ export default class ServiceListCheck {
 						case SCHEMA_v2:
 						case SCHEMA_v3:
 						case SCHEMA_v4:
+						case SCHEMA_v5:
 							if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_OtherDeliveryParameters), SL_SCHEMA))
 								errs.addError({code:"SI159", 
 									message:`${dvbi.e_OtherDeliveryParameters.elementize()} must be specified with user-defined ${dvbi.e_SourceType} ${SourceType.text().quote()}`, 
@@ -1104,13 +1111,13 @@ export default class ServiceListCheck {
 							break;
 					}
 			}
-			if (v1Params && this.SchemaVersion(SCHEMA_NAMESPACE)>=SCHEMA_v2)
+			if (v1Params && SchemaVersion(SCHEMA_NAMESPACE)>=SCHEMA_v2)
 				errs.addError({type:WARNING, code:"SI160", 
 								message:`${dvbi.e_SourceType.elementize()} is deprecated in this version (service ${thisServiceId.quote()})`, 
 								fragment:SourceType, key:'deprecated feature'});
 		}
 		else {
-			if (this.SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1) 
+			if (SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1) 
 				errs.addError({code:"SI161", message:`${dvbi.e_SourceType.elementize()} not specified in ${dvbi.e_ServiceInstance.elementize()} of service ${thisServiceId.quote()}`, 
 								key:`no ${dvbi.e_SourceType}`});
 		}
@@ -1233,7 +1240,7 @@ export default class ServiceListCheck {
 
 		let x=SchemaVersions.find(s => s.namespace==SCHEMA_NAMESPACE);
 		if (x && x.schema)
-			SchemaCheck(ServiceList, x.schema, errs, `${errCode}:${this.SchemaVersion(SCHEMA_NAMESPACE)}`);
+			SchemaCheck(ServiceList, x.schema, errs, `${errCode}:${SchemaVersion(SCHEMA_NAMESPACE)}`);
 		else
 			_rc=false;
 
@@ -1366,7 +1373,7 @@ export default class ServiceListCheck {
 			thisServiceId=`service-${s}`;  // use a default value in case <UniqueIdentifier> is not specified
 			
 			let serviceOptionalElements=[dvbi.e_ServiceInstance, dvbi.e_TargetRegion, tva.e_RelatedMaterial, dvbi.e_ServiceGenre, dvbi.e_ServiceType, dvbi.e_RecordingInfo, dvbi.e_ContentGuideSource, dvbi.e_ContentGuideSourceRef, dvbi.e_ContentGuideServiceRef];
-			if (this.SchemaVersion(SCHEMA_NAMESPACE) > SCHEMA_v2)
+			if (SchemaVersion(SCHEMA_NAMESPACE) > SCHEMA_v2)
 				serviceOptionalElements.push(dvbi.e_ServiceDescription);
 			
 			// check <Service><UniqueIdentifier>
@@ -1505,7 +1512,7 @@ export default class ServiceListCheck {
 						checkLanguage(this.knownLanguages, packageLanguage, `${dvbi.e_SubscriptionPackage} in ${dvbi.e_LCNTable}`,
 							SubscriptionPackage, errs, "SL245");
 					}
-					else if (this.SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v4) {
+					else if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v4) {
 						packageLanguage=GetNodeLanguage(SubscriptionPackage, false, errs, "SL246", this.knownLanguages);
 					}
 
@@ -1515,7 +1522,7 @@ export default class ServiceListCheck {
 										fragment:SubscriptionPackage, key:'duplicate package name'});
 					else SubscriptionPackages.push(localSubscriptionPackage);
 
-					if (this.SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v4)
+					if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v4)
 						if (!declaredSubscriptionPackages.includes(localSubscriptionPackage))
 							errs.addError({code:"SL248", message:`${dvbi.e_SubscriptionPackage.elementize()}="${localSubscriptionPackage}" is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
 								fragment:SubscriptionPackage, key:`undeclared ${dvbi.e_SubscriptionPackage}`});
@@ -1560,7 +1567,7 @@ export default class ServiceListCheck {
 		}
 
 		// report any regionIDs that are defined but not used
-		if (this.SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v5) {
+		if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v5) {
 			knownRegionIDs.forEach(kr => {
 				if (!kr.used)
 					errs.addError({code:"SL281", message:`${dvbi.a_regionID.attribute(dvbi.e_Region)}="${kr.region}" is defined but not used`, key:`unused ${dvbi.a_regionID.attribute()}`, line:kr.line});
