@@ -328,9 +328,9 @@ export default class ServiceListCheck {
 		let regionID=Region.attr(dvbi.a_regionID)?Region.attr(dvbi.a_regionID).value():null;
 		let displayRegionID=regionID?regionID.quote():'"unidentified"';
 		if (regionID) {
-			if (isIn(knownRegionIDs, regionID)) 
+			if (knownRegionIDs.find(r => r.region == regionID) != undefined) 
 				errs.addError({code:"AR001", message:`Duplicate ${dvbi.a_regionID.attribute()} ${displayRegionID}`, key:`duplicate ${dvbi.a_regionID}`, line:Region.line()});
-			else knownRegionIDs.push(regionID);
+			else knownRegionIDs.push({region:regionID, used:false, line:Region.line()});
 		}
 
 		if ((depth==dvbi.MAX_SUBREGION_LEVELS) && !regionID)
@@ -1305,11 +1305,15 @@ export default class ServiceListCheck {
 
 		//check <ServiceList><TargetRegion>
 		let tr=0, TargetRegion;
-		while ((TargetRegion=SL.get(xPath(SCHEMA_PREFIX, dvbi.e_TargetRegion, ++tr), SL_SCHEMA))!=null)
-			if (!isIn(knownRegionIDs, TargetRegion.text())) 
-				errs.addError(UnspecifiedTargetRegion(TargetRegion.text(), "service list", "SL060"));
-
-
+		while ((TargetRegion=SL.get(xPath(SCHEMA_PREFIX, dvbi.e_TargetRegion, ++tr), SL_SCHEMA))!=null) {
+			let _targetRegionName=TargetRegion.text();
+/* jshint -W083*/
+			let found=knownRegionIDs.find(r => r.region==_targetRegionName);
+/* jshint +W083*/
+			if (found == undefined) 
+				errs.addError(UnspecifiedTargetRegion(_targetRegionName, "service list", "SL060"));
+			else found.used=true;
+		}
 		// check <ServiceList><SubscriptionPackageList>
 		let declaredSubscriptionPackages=[];
 		let SubscriptionPackageList=SL.get(xPath(SCHEMA_PREFIX, dvbi.e_SubscriptionPackageList), SL_SCHEMA);
@@ -1383,10 +1387,15 @@ export default class ServiceListCheck {
 
 			//check <Service><TargetRegion>
 			let tr=0, TargetRegion;
-			while ((TargetRegion=service.get(xPath(SCHEMA_PREFIX, dvbi.e_TargetRegion, ++tr), SL_SCHEMA))!=null) 
-				if (!isIn(knownRegionIDs, TargetRegion.text())) 
-					errs.addError(UnspecifiedTargetRegion(TargetRegion.text(), `service ${thisServiceId.quote()}`, "SL130"));
-
+			while ((TargetRegion=service.get(xPath(SCHEMA_PREFIX, dvbi.e_TargetRegion, ++tr), SL_SCHEMA))!=null) {
+				let _targetRegionName=TargetRegion.text();
+/* jshint -W083*/
+				let found = knownRegionIDs.find(r => r.region==_targetRegionName);
+/* jshint +W083*/
+				if (found == undefined) 
+					errs.addError(UnspecifiedTargetRegion(_targetRegionName, `service ${thisServiceId.quote()}`, "SL130"));
+				else found.used=true;
+			}
 			//check <Service><ServiceName>
 			checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ServiceName, `service ${thisServiceId.quote()}`, service, errs, "SL140", this.knownLanguages);
 
@@ -1472,13 +1481,19 @@ export default class ServiceListCheck {
 				// <LCNTable><TargetRegion>
 				let tr=0, TargetRegion, TargetRegions=[];
 				while ((TargetRegion=LCNTable.get(xPath(SCHEMA_PREFIX, dvbi.e_TargetRegion, ++tr), SL_SCHEMA))!=null) {
-					if (!isIn(knownRegionIDs, TargetRegion.text())) 
+					let _targetRegionName=TargetRegion.text();
+/* jshint -W083*/
+					let foundRegion=knownRegionIDs.find(r => r.region==_targetRegionName);
+/* jshint +W083*/
+					if (foundRegion==undefined) 
 						errs.addError({code:"SL241", message:`${dvbi.e_TargetRegion.elementize()} ${TargetRegion.text()} in ${dvbi.e_LCNTable.elementize()} is not defined`, 
 										fragment:TargetRegion, key:"undefined region"});
-					if (TargetRegions.includes(TargetRegion.text()))
+					else foundRegion.used=true;
+
+					if (TargetRegions.includes(_targetRegionName))
 						errs.addError({code:"SL242", message:`respecification of ${dvbi.e_TargetRegion.elementize()}=${TargetRegion.text()}`,
 								fragment:TargetRegion, key:'duplicate region'});
-					else TargetRegions.push(TargetRegion.text());
+					else TargetRegions.push(_targetRegionName);
 				} 
 				
 				// <LCNTable><SubscriptionPackage>
@@ -1542,6 +1557,14 @@ export default class ServiceListCheck {
 										key:"LCN unknown services", fragment:LCN});
 				}
 			}
+		}
+
+		// report any regionIDs that are defined but not used
+		if (this.SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v5) {
+			knownRegionIDs.forEach(kr => {
+				if (!kr.used)
+					errs.addError({code:"SL281", message:`${dvbi.a_regionID.attribute(dvbi.e_Region)}="${kr.region}" is defined but not used`, key:`unused ${dvbi.a_regionID.attribute()}`, line:kr.line});
+			});
 		}
 	}
 
