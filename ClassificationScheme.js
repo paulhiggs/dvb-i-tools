@@ -92,7 +92,7 @@ export default class ClassificationScheme {
 	 */
 	loadFromURL(csURL) {
 		let isHTTPurl=isHTTPURL(csURL);
-		console.log(`${isHTTPurl?"":"--> NOT "}retrieving CS (${this.leafsOnly?"leaf":"all"} nodes) from ${csURL} via fetch()`); 
+		console.log(`${isHTTPurl?"":"--> NOT "}retrieving CS (${this.leafsOnly?"leaf":"all"} nodes) from ${csURL} via fetch()`.yellow); 
 		if (!isHTTPurl) return;
 
 		fetch(csURL)
@@ -103,7 +103,7 @@ export default class ClassificationScheme {
 				res.vals.forEach(e=>{this.insertValue(e, true);});
 				this.schemes.push(res.uri);
 			})
-			.catch(error => console.log(`error (${error}) retrieving ${csURL}`));
+			.catch(error => console.log(`error (${error}) retrieving ${csURL}`.red));
 	}
 
 	/**
@@ -112,7 +112,7 @@ export default class ClassificationScheme {
 	 * @param {String} classificationScheme the filename of the classification scheme
 	 */
 	loadFromFile(classificationScheme, le) {
-		console.log(`reading CS (${this.leafsOnly?"leaf":"all"} nodes) from ${classificationScheme}`);
+		console.log(`reading CS (${this.leafsOnly?"leaf":"all"} nodes) from ${classificationScheme}`.yellow);
 
  		readFile(classificationScheme, {encoding: "utf-8"}, (err,data)=> {
  			if (!err) {
@@ -120,7 +120,7 @@ export default class ClassificationScheme {
 				res.vals.forEach(e=>{this.insertValue(e, true);});
 				this.schemes.push(res.uri);
 			 }
-			else console.log(err);
+			else console.log(err.red);
 		});
 	}
 

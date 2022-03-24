@@ -102,7 +102,7 @@ catch (err) {
 }
 
 if (!CORSoptions.includes(options.CORSmode)) {
-	console.log(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`);
+	console.log(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`.red);
 	process.exit(1); 
 }
 
@@ -133,8 +133,8 @@ const RELOAD='RELOAD', UPDATE='UPDATE',
 	  STATS='STATS';
 
 if (cluster.isPrimary) {
-	console.log(`Number of CPUs is ${numCPUs}`);
-	console.log(`Primary ${process.pid} is running`);
+	console.log(`Number of CPUs is ${numCPUs}`.orange);
+	console.log(`Primary ${process.pid} is running`.orange);
 
 
 	var metrics={
@@ -149,8 +149,8 @@ if (cluster.isPrimary) {
 	}
 
 	cluster.on('exit', (worker, code, signal) => {
-		console.log(`worker ${worker.process.pid} died`);
-		console.log("Let's fork another worker!");
+		console.log(`worker ${worker.process.pid} died`.red);
+		console.log("Let's fork another worker!".red);
 		cluster.fork();
 	});
 	cluster.on('message', (worker, msg, handle) => {
@@ -255,7 +255,7 @@ else {
 	});
 	// start the HTTP server
 	var http_server=app.listen(options.port, function() {
-		console.log(`HTTP listening on port number ${http_server.address().port}, PID=${process.pid}`);
+		console.log(`HTTP listening on port number ${http_server.address().port}, PID=${process.pid}`.cyan);
 	});
 	// start the HTTPS server
 	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
@@ -269,7 +269,7 @@ else {
 			
 		var https_server=createServer(https_options, app);
 		https_server.listen(options.sport, function() {
-			console.log(`HTTPS listening on port number ${https_server.address().port}, PID=${process.pid}`);
+			console.log(`HTTPS listening on port number ${https_server.address().port}, PID=${process.pid}`.cyan);
 		});
 	}
 }

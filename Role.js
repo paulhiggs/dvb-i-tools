@@ -20,14 +20,14 @@ export default class Role  extends ClassificationScheme {
 	 */
 	loadFromURL(rolesURL) {
 		let isHTTPurl=isHTTPURL(rolesURL);
-		console.log(`${isHTTPurl?"":"--> NOT "}retrieving Roles from ${rolesURL} via fetch()`);
+		console.log(`${isHTTPurl?"":"--> NOT "}retrieving Roles from ${rolesURL} via fetch()`.yellow);
 		if (!isHTTPurl) return;
 
 		fetch(rolesURL)
 			.then(handleErrors)
 			.then(response => response.text())
 			.then(roles => roles.split('\n').forEach(e=>{this.insertValue(e.trim(), true);}))
-			.catch(error => console.log(`error (${error}) retrieving ${rolesURL}`));
+			.catch(error => console.log(`error (${error}) retrieving ${rolesURL}`.red));
 	}
 
 	/**
@@ -36,12 +36,12 @@ export default class Role  extends ClassificationScheme {
 	 * @param {String} rolesFile the filename of the classification scheme
 	 */
 	loadFromFile(rolesFile) {
-		console.log(`reading Roles from ${rolesFile}`);
+		console.log(`reading Roles from ${rolesFile}`.yellow);
 
 		readFile(rolesFile, {encoding: "utf-8"}, (err, data)=> {
 			if (!err) 
 				data.split('\n').forEach(e=>{this.insertValue(e.trim(), true);});
-			else console.log(err);
+			else console.log(err.red);
 		});
 	}
 

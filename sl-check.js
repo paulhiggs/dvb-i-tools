@@ -1,6 +1,8 @@
+import 'colors';
 import { parseXmlString } from "libxmljs2";
 
 import { readFileSync } from "fs";
+import process from "process";
 
 import { elementize, quote } from './phlib/phlib.js';
 
@@ -28,6 +30,8 @@ import { sl_InvalidHrefValue } from "./CommonErrors.js";
 
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaLoad } from "./schema_checks.js";
+
+import 'colors';
 
 /* TODO:
 
@@ -273,7 +277,7 @@ export default class ServiceListCheck {
 			this.knownLanguages=preloadedLanguageValidator;
 		else {
 			this.knownLanguages=new IANAlanguages();
-			console.log("loading languages...");
+			console.log("loading languages...".yellow.underline);
 			if (useURLs) 
 				this.knownLanguages.loadLanguages({url: IANA_Subtag_Registry.url, purge: true});
 			else this.knownLanguages.loadLanguages({file: IANA_Subtag_Registry.file, purge: true});
@@ -283,7 +287,7 @@ export default class ServiceListCheck {
 			this.allowedGenres=preloadedGenres;
 		else {
 			this.allowedGenres=new ClassificationScheme();
-			console.log("loading Genre classification schemes...");
+			console.log("loading Genre classification schemes...".yellow.underline);
 			this.allowedGenres.loadCS(useURLs?
 					{urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
 					{files:[TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file]});
@@ -306,10 +310,11 @@ export default class ServiceListCheck {
 		this.AudioPresentationCSvalues=new ClassificationScheme();
 		this.allowedColorimetry=new ClassificationScheme();
 
-		console.log("loading service list schemas...");
+		console.log("loading service list schemas...".yellow.underline);
 		SchemaVersions.forEach(version => {
+			process.stdout.write(`..loading ${version.version} ${version.namespace} from ${version.filename} `.yellow);
 			version.schema=parseXmlString(readFileSync(version.filename));
-			console.log(`..loaded ${version.version} ${version.namespace} from ${version.filename} ${version.schema?"OK":"FAIL"}`);
+			console.log(version.schema?"OK".green:"FAIL".red);
 		});
 
 		this.loadDataFiles(useURLs);
@@ -322,7 +327,7 @@ export default class ServiceListCheck {
 	 * @param {boolean} useURLs if true then configuration data should be loaded from network locations otherwise, load from local files 
 	 */
 	/*private*/ loadDataFiles(useURLs) {
-		console.log("loading classification schemes...");
+		console.log("loading classification schemes...".yellow.underline);
 		this.allowedPictureFormats.loadCS(useURLs?{url:TVA_PictureFormatCS.url}:{file:TVA_PictureFormatCS.file});
 		this.allowedColorimetry.loadCS(useURLs?{url:DVB_ColorimetryCS.y2020.url, leafNodesOnly:true}:{file:DVB_ColorimetryCS.y2020.file, leafNodesOnly:true});
 		this.allowedServiceTypes.loadCS(useURLs?{url:DVBI_ServiceTypeCS.url}:{file:DVBI_ServiceTypeCS.file} );

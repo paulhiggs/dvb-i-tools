@@ -50,13 +50,13 @@ export default class ISOcountries {
 	 * @param {boolean} purge  erase the existing values before loading new
 	 */
 	loadCountriesFromFile(countriesFile, purge=false) {
-		console.log(`reading countries from ${countriesFile}`);
+		console.log(`reading countries from ${countriesFile}`.yellow);
 		if (purge) this.reset();
 		readFile(countriesFile, {encoding: "utf-8"}, function(err,data) {
 			if (!err) {
 				this.countriesList=loadCountryData(data);
 			} else {
-				console.log(err);
+				console.log(err.error);
 			}
 		}.bind(this));
 	}
@@ -69,7 +69,7 @@ export default class ISOcountries {
 	 */
 	loadCountriesFromURL(countriesURL, purge=false) {
 		let isHTTPurl=isHTTPURL(countriesURL);
-		console.log(`${isHTTPurl?"":"--> NOT "}retrieving countries from ${countriesURL} using fetch()`);
+		console.log(`${isHTTPurl?"":"--> NOT "}retrieving countries from ${countriesURL} using fetch()`.yellow);
 		if (!isHTTPurl) return;
 
 		if (purge) this.reset();
@@ -77,7 +77,7 @@ export default class ISOcountries {
 			.then(handleErrors)
 			.then(response => response.text())
 			.then(responseText => this.countriesList=loadCountryData(responseText))
-			.catch(error => console.log(`error (${error}) retrieving ${countriesURL}`));
+			.catch(error => console.log(`error (${error}) retrieving ${countriesURL}`.red));
 	}
 
 	loadCountries(options) {

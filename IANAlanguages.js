@@ -111,14 +111,14 @@ export default class IANAlanguages {
 	 * @param {boolean} purge  erase the existing values before loading new
 	 */
 	loadLanguagesFromFile(languagesFile, purge=false) {
-		console.log(`reading languages from ${languagesFile}`);
+		console.log(`reading languages from ${languagesFile}`.yellow);
 		if (purge) this.empty();
 
 		readFile(languagesFile, {encoding: "utf-8"}, function(err,data) {
 			if (!err) {
 				this.processLanguageData(data);		
 			}
-			else console.log(`error loading languages ${err}`);
+			else console.log(`error loading languages ${err}`.red);
 		}.bind(this));
 	}
 
@@ -130,7 +130,7 @@ export default class IANAlanguages {
 	 */
 	loadLanguagesFromURL(languagesURL, purge=false) {
 		let isHTTPurl=isHTTPURL(languagesURL);
-		console.log(`${isHTTPurl?"":"--> NOT "}retrieving languages from ${languagesURL} using fetch()`);
+		console.log(`${isHTTPurl?"":"--> NOT "}retrieving languages from ${languagesURL} using fetch()`.yellow);
 		if (!isHTTPurl) return;
 
 		if (purge) this.empty();
@@ -138,7 +138,7 @@ export default class IANAlanguages {
 			.then(handleErrors)
 			.then(response => response.text())
 			.then(responseText => this.processLanguageData(responseText))
-			.catch(error => console.log("error ("+error+") retrieving "+languagesURL));
+			.catch(error => console.log(`error (${error}) retrieving ${languagesURL}`.red));
 	}
 
 

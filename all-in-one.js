@@ -2,6 +2,7 @@
 import express from "express";
 
 import cors from "cors";
+import 'colors';
 
 // morgan - https://github.com/expressjs/morgan
 import morgan, { token } from "morgan";
@@ -103,7 +104,7 @@ const optionDefinitions=[
 const options=commandLineArgs(optionDefinitions);
 
 if (!CORSoptions.includes(options.CORSmode)) {
-	console.log(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`);
+	console.log(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`.red);
 	process.exit(1); 
 }
 
@@ -130,7 +131,7 @@ let slcheck=new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoC
     cgcheck=new ContentGuideCheck(options.urls, knownLanguages, knownGenres, null, knownRatings);	
     
 if (options.nocsr && options.nosl && options.nocg) {
-	console.log("nothing to do... exiting");
+	console.log("nothing to do... exiting".red);
 	process.exit(1);
 }
 
@@ -237,7 +238,7 @@ app.get("*", function(req,res) {
 
 // start the HTTP server
 var http_server=app.listen(options.port, function() {
-	console.log(`HTTP listening on port number ${http_server.address().port}`);
+	console.log(`HTTP listening on port number ${http_server.address().port}`.cyan);
 });
 
 
@@ -255,6 +256,6 @@ if (https_options.key && https_options.cert) {
 	
 	var https_server=createServer(https_options, app);
 	https_server.listen(options.sport, function() {
-		console.log(`HTTPS listening on port number ${https_server.address().port}`);
+		console.log(`HTTPS listening on port number ${https_server.address().port}`.cyan);
 	});
 }

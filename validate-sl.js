@@ -112,7 +112,7 @@ app.get("*", function(req,res) {
 
 // start the HTTP server
 var http_server=app.listen(options.port, function() {
-	console.log(`HTTP listening on port number ${http_server.address().port}`);
+	console.log(`HTTP listening on port number ${http_server.address().port}`.cyan);
 });
 
 
@@ -129,7 +129,7 @@ if (https_options.key && https_options.cert) {
 	
 	var https_server=createServer(https_options, app);
 	https_server.listen(options.sport, function() {
-		console.log(`HTTPS listening on port number ${https_server.address().port}`);
+		console.log(`HTTPS listening on port number ${https_server.address().port}`.cyan);
 	});
 }
 

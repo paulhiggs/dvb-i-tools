@@ -1,4 +1,4 @@
-// libxmljs2 - github.com/marudor/libxmljs2
+import 'colors';
 import { parseXmlString } from "libxmljs2";
 import format from 'xml-formatter';
 
@@ -227,7 +227,7 @@ export default class ContentGuideCheck {
 		if (preloadedLanguageValidator) 
 			this.knownLanguages=preloadedLanguageValidator;
 		else {
-			console.log("loading languages...");
+			console.log("loading languages...".yellow.underline);
 			this.knownLanguages=new IANAlanguages();
 			this.knownLanguages.loadLanguages(useURLs?{url: IANA_Subtag_Registry.url, purge: true}:{file: IANA_Subtag_Registry.file, purge: true});
 		}
@@ -235,7 +235,7 @@ export default class ContentGuideCheck {
 		if (preloadedGenres) 
 			this.allowedGenres=preloadedGenres;
 		else {
-			console.log("loading classification schemes...");
+			console.log("loading classification schemes...".yellow.underline);
 			this.allowedGenres=new ClassificationScheme();
 			this.allowedGenres.loadCS(useURLs?
 						{urls:[TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url]}:
@@ -245,7 +245,7 @@ export default class ContentGuideCheck {
 		if (preloadedCreditItemRoles)
 			this.allowedCreditItemRoles=preloadedCreditItemRoles;
 		else {
-			console.log("loading CreditItem roles...");
+			console.log("loading CreditItem roles...".yellow.underline);
 			this.allowedCreditItemRoles=new Role();
 			this.allowedCreditItemRoles.loadRoles(useURLs?
 						{urls:[DVBI_CreditsItemRoles.url, DVBIv2_CreditsItemRoles.url]}:
@@ -255,14 +255,14 @@ export default class ContentGuideCheck {
 		if (preloadedRatings)
 			this.allowedRatings=preloadedRatings;
 		else {
-			console.log('loading Ratings...');
+			console.log('loading Ratings...'.yellow.underline);
 			this.allowedRatings=new ClassificationScheme();
 			this.allowedRatings.loadCS(useURLs?
 				{urls:[TVA_ContentAlertCS.url, DVBI_ParentalGuidanceCS.url]}:
 				{files:[TVA_ContentAlertCS.file, DVBI_ParentalGuidanceCS.file]});
 		}
 
-		console.log("loading Schemas...");
+		console.log("loading Schemas...".yellow.underline);
 		this.TVAschema=parseXmlString(readFileSync(TVAschema.file));
 
 		this.supportedRequests=supportedRequests;

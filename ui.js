@@ -26,7 +26,6 @@ function tabulateResults(res, error, errs) {
 
 	let scrollFunc=`<script>function myScrollTo(item){
 		var itemPos = document.getElementById(item).getBoundingClientRect();
-		console.log('jump to ', item, itemPos.x, itemPos.y);
 		window.scrollTo(window.scrollX+itemPos.x, window.scrollY+itemPos.y);
 	}</script>`;
 	let DETAIL_FORM_HEADER = (mode) => `${scrollFunc}<table><tr><th>code</th><th>${mode}</th></tr>`;
