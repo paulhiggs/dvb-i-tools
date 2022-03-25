@@ -192,7 +192,7 @@ let UnspecifiedTargetRegion = (region, loc, errCode) =>
 		key:"target region"});
 
 
-		/**
+/**
  * Construct an error message for missing <xxxDeliveryParameters>
  *
  * @param {String}  source     The missing source type

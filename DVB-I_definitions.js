@@ -164,9 +164,7 @@ export const dvbi = {
 	a_FECOTI: "FECOTI",
 	a_from: "from",
 	a_GroupAddress: "GroupAddress",
-	a_horizontalSize: tva.a_horizontalSize,
 	a_href: tva.a_href,
-	a_lang: tva.a_lang,
 	a_MaxBitrate: "MaxBitrate",
 	a_minimumMetadataUpdatePeriod: "minimumMetadataUpdatePeriod",
 	a_origNetId: "origNetId",
@@ -200,7 +198,6 @@ export const dvbi = {
 	a_validFrom: "validFrom",
 	a_validTo: "validTo",
 	a_version: "version",
-	a_verticalSize: tva.a_verticalSize,
 	a_visible: "visible",
 
 	e_AdditionalServiceParameters: "AdditionalServiceParameters",

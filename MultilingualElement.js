@@ -1,7 +1,6 @@
 // MultilingualElement.js
 
 import { WARNING, APPLICATION } from "./ErrorList.js";
-import { dvbi } from "./DVB-I_definitions.js";
 import { tva } from "./TVA_definitions.js";
 import { xPath, isIn } from "./utils.js";
 import { datatypeIs } from "./phlib/phlib.js";
@@ -64,8 +63,8 @@ export function mlLanguage(node) {
 	if (node.type() != 'element')
 		return NO_DOCUMENT_LANGUAGE;
 
-	if (node.attr(dvbi.a_lang))
-		return (node.attr(dvbi.a_lang).value());
+	if (node.attr(tva.a_lang))
+		return (node.attr(tva.a_lang).value());
 
 	return mlLanguage(node.parent());
 }
