@@ -127,7 +127,7 @@ export default class ClassificationScheme {
 
 	loadCS(options) {
 		if (!options) options={};
-		if (!options.leafNodesOnly) options.leafNodesOnly=false;
+		if (!options.hasOwnProperty('leafNodesOnly')) options.leafNodesOnly=false;
 		this.leafsOnly=options.leafNodesOnly;
 
 		if (options.file)
