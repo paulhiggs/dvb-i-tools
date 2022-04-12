@@ -1,0 +1,669 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+      Classification scheme now conforms to the draft guidelines on classification schemes.
+-->
+<!-- revision information
+2020:  add H262 (3), H264 Scalable High Profile (1.8), H264 Stereo High Profile (1.9), H265 (4) according to ETSI TS 101 154 v2.6.1 (2019-09)
+2021:  add HEVC 8K
+2022:  add AVS3 (5) and VVC (6)
+-->
+<ClassificationScheme xml:lang="en"
+                      uri="urn:dvb:metadata:cs:VideoCodecCS:2022"
+                      xmlns="urn:dvb:metadata:schema:dvbCSschema:2007"
+                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<Term termID="1">
+		<Name>H264</Name>
+		<Definition>
+                 ISO/IEC 14496-10 Video Codec. Also known as H.264
+           </Definition>
+		<Term termID="1.1">
+			<Name>H264 BaseLine Profile</Name>
+			<Term termID="1.1.1">
+				<Name>H264 BaseLine Profile @ Level 1</Name>
+			</Term>
+			<Term termID="1.1.2">
+				<Name>H264 BaseLine Profile @ Level 1b</Name>
+				<Definition>DVB AVC Capability A - ISO/IEC 14496-10 Video Codec. BaseLine Profile Level 1b with constraint_set1_flag = 1</Definition>
+			</Term>
+			<Term termID="1.1.3">
+				<Name>H264 BaseLine Profile @ Level 1.1</Name>
+			</Term>
+			<Term termID="1.1.4">
+				<Name>H264 BaseLine Profile @ Level 1.2</Name>
+				<Definition>DVB AVC Capability B - ISO/IEC 14496-10 Video Codec. BaseLine Profile Level 1.2 with constraint_set1_flag = 1</Definition>
+			</Term>
+			<Term termID="1.1.5">
+				<Name>H264 BaseLine Profile @ Level 1.3</Name>
+			</Term>
+			<Term termID="1.1.6">
+				<Name>H264 BaseLine Profile @ Level 2</Name>
+				<Definition>DVB AVC Capability C - ISO/IEC 14496-10 Video Codec. BaseLine Profile Level 2 with constraint_set1_flag = 1</Definition>
+			</Term>
+			<Term termID="1.1.7">
+				<Name>H264 BaseLine Profile @ Level 2.1</Name>
+			</Term>
+			<Term termID="1.1.8">
+				<Name>H264 BaseLine Profile @ Level 2.2</Name>
+			</Term>
+			<Term termID="1.1.9">
+				<Name>H264 BaseLine Profile @ Level 3</Name>
+			</Term>
+			<Term termID="1.1.10">
+				<Name>H264 BaseLine Profile @ Level 3.1</Name>
+			</Term>
+			<Term termID="1.1.11">
+				<Name>H264 BaseLine Profile @ Level 3.2</Name>
+			</Term>
+			<Term termID="1.1.12">
+				<Name>H264 BaseLine Profile @ Level 4</Name>
+			</Term>
+			<Term termID="1.1.13">
+				<Name>H264 BaseLine Profile @ Level 4.1</Name>
+			</Term>
+			<Term termID="1.1.14">
+				<Name>H264 BaseLine Profile @ Level 4.2</Name>
+			</Term>
+			<Term termID="1.1.15">
+				<Name>H264 BaseLine Profile @ Level 5</Name>
+			</Term>
+			<Term termID="1.1.16">
+				<Name>H264 BaseLine Profile @ Level 5.1</Name>
+			</Term>
+		</Term>
+		<Term termID="1.2">
+			<Name>H264 Main Profile</Name>
+			<Term termID="1.2.1">
+				<Name>H264 Main Profile @ Level 1</Name>
+			</Term>
+			<Term termID="1.2.2">
+				<Name>H264 Main Profile @ Level 1b</Name>
+			</Term>
+			<Term termID="1.2.3">
+				<Name>H264 Main Profile @ Level 1.1</Name>
+			</Term>
+			<Term termID="1.2.4">
+				<Name>H264 Main Profile @ Level 1.2</Name>
+			</Term>
+			<Term termID="1.2.5">
+				<Name>H264 Main Profile @ Level 1.3</Name>
+			</Term>
+			<Term termID="1.2.6">
+				<Name>H264 Main Profile @ Level 2</Name>
+			</Term>
+			<Term termID="1.2.7">
+				<Name>H264 Main Profile @ Level 2.1</Name>
+			</Term>
+			<Term termID="1.2.8">
+				<Name>H264 Main Profile @ Level 2.2</Name>
+			</Term>
+			<Term termID="1.2.9">
+				<Name>H264 Main Profile @ Level 3</Name>
+				<Definition>DVB AVC Capability D - ISO/IEC 14496-10 Video Codec. Main Profile Level 3</Definition>
+			</Term>
+			<Term termID="1.2.10">
+				<Name>H264 Main Profile @ Level 3.1</Name>
+			</Term>
+			<Term termID="1.2.11">
+				<Name>H264 Main Profile @ Level 3.2</Name>
+			</Term>
+			<Term termID="1.2.12">
+				<Name>H264 Main Profile @ Level 4</Name>
+			</Term>
+			<Term termID="1.2.13">
+				<Name>H264 Main Profile @ Level 4.1</Name>
+			</Term>
+			<Term termID="1.2.14">
+				<Name>H264 Main Profile @ Level 4.2</Name>
+			</Term>
+			<Term termID="1.2.15">
+				<Name>H264 Main Profile @ Level 5</Name>
+			</Term>
+			<Term termID="1.2.16">
+				<Name>H264 Main Profile @ Level 5.1</Name>
+			</Term>
+		</Term>
+		<Term termID="1.3">
+			<Name>H264 Extended Profile</Name>
+			<Term termID="1.3.1">
+				<Name>H264 Extended Profile @ Level 1</Name>
+			</Term>
+			<Term termID="1.3.2">
+				<Name>H264 Extended Profile @ Level 1b</Name>
+			</Term>
+			<Term termID="1.3.3">
+				<Name>H264 Extended Profile @ Level 1.1</Name>
+			</Term>
+			<Term termID="1.3.4">
+				<Name>H264 Extended Profile @ Level 1.2</Name>
+			</Term>
+			<Term termID="1.3.5">
+				<Name>H264 Extended Profile @ Level 1.3</Name>
+			</Term>
+			<Term termID="1.3.6">
+				<Name>H264 Extended Profile @ Level 2</Name>
+			</Term>
+			<Term termID="1.3.7">
+				<Name>H264 Extended Profile @ Level 2.1</Name>
+			</Term>
+			<Term termID="1.3.8">
+				<Name>H264 Extended Profile @ Level 2.2</Name>
+			</Term>
+			<Term termID="1.3.9">
+				<Name>H264 Extended Profile @ Level 3</Name>
+			</Term>
+			<Term termID="1.3.10">
+				<Name>H264 Extended Profile @ Level 3.1</Name>
+			</Term>
+			<Term termID="1.3.11">
+				<Name>H264 Extended Profile @ Level 3.2</Name>
+			</Term>
+			<Term termID="1.3.12">
+				<Name>H264 Extended Profile @ Level 4</Name>
+			</Term>
+			<Term termID="1.3.13">
+				<Name>H264 Extended Profile @ Level 4.1</Name>
+			</Term>
+			<Term termID="1.3.14">
+				<Name>H264 Extended Profile @ Level 4.2</Name>
+			</Term>
+			<Term termID="1.3.15">
+				<Name>H264 Extended Profile @ Level 5</Name>
+			</Term>
+			<Term termID="1.3.16">
+				<Name>H264 Extended Profile @ Level 5.1</Name>
+			</Term>
+		</Term>
+		<Term termID="1.4">
+			<Name>H264 High Profile</Name>
+			<Term termID="1.4.1">
+				<Name>H264 High Profile @ Level 1</Name>
+			</Term>
+			<Term termID="1.4.2">
+				<Name>H264 High Profile @ Level 1b</Name>
+			</Term>
+			<Term termID="1.4.3">
+				<Name>H264 High Profile @ Level 1.1</Name>
+			</Term>
+			<Term termID="1.4.4">
+				<Name>H264 High Profile @ Level 1.2</Name>
+			</Term>
+			<Term termID="1.4.5">
+				<Name>H264 High Profile @ Level 1.3</Name>
+			</Term>
+			<Term termID="1.4.6">
+				<Name>H264 High Profile @ Level 2</Name>
+			</Term>
+			<Term termID="1.4.7">
+				<Name>H264 High Profile @ Level 2.1</Name>
+			</Term>
+			<Term termID="1.4.8">
+				<Name>H264 High Profile @ Level 2.2</Name>
+			</Term>
+			<Term termID="1.4.9">
+				<Name>H264 High Profile @ Level 3</Name>
+			</Term>
+			<Term termID="1.4.10">
+				<Name>H264 High Profile @ Level 3.1</Name>
+			</Term>
+			<Term termID="1.4.11">
+				<Name>H264 High Profile @ Level 3.2</Name>
+			</Term>
+			<Term termID="1.4.12">
+				<Name>H264 High Profile @ Level 4.0</Name>
+				<Definition>DVB AVC Capability E - ISO/IEC 14496-10 Video Codec. High Profile Level 4</Definition>
+			</Term>
+			<Term termID="1.4.13">
+				<Name>H264 High Profile @ Level 4.1</Name>
+			</Term>
+			<Term termID="1.4.14">
+				<Name>H264 High Profile @ Level 4.2</Name>
+			</Term>
+			<Term termID="1.4.15">
+				<Name>H264 High Profile @ Level 5</Name>
+			</Term>
+			<Term termID="1.4.16">
+				<Name>H264 High Profile @ Level 5.1</Name>
+			</Term>
+		</Term>
+		<Term termID="1.5">
+			<Name>H264 High 10 Profile</Name>
+			<Term termID="1.5.1">
+				<Name>H264 High 10 Profile @ Level 1</Name>
+			</Term>
+			<Term termID="1.5.2">
+				<Name>H264 High 10 Profile @ Level 1b</Name>
+			</Term>
+			<Term termID="1.5.3">
+				<Name>H264 High 10 Profile @ Level 1.1</Name>
+			</Term>
+			<Term termID="1.5.4">
+				<Name>H264 High 10 Profile @ Level 1.2</Name>
+			</Term>
+			<Term termID="1.5.5">
+				<Name>H264 High 10 Profile @ Level 1.3</Name>
+			</Term>
+			<Term termID="1.5.6">
+				<Name>H264 High 10 Profile @ Level 2</Name>
+			</Term>
+			<Term termID="1.5.7">
+				<Name>H264 High 10 Profile @ Level 2.1</Name>
+			</Term>
+			<Term termID="1.5.8">
+				<Name>H264 High 10 Profile @ Level 2.2</Name>
+			</Term>
+			<Term termID="1.5.9">
+				<Name>H264 High 10 Profile @ Level 3</Name>
+			</Term>
+			<Term termID="1.5.10">
+				<Name>H264 High 10 Profile @ Level 3.1</Name>
+			</Term>
+			<Term termID="1.5.11">
+				<Name>H264 High 10 Profile @ Level 3.2</Name>
+			</Term>
+			<Term termID="1.5.12">
+				<Name>H264 High 10 Profile @ Level 4</Name>
+			</Term>
+			<Term termID="1.5.13">
+				<Name>H264 High 10 Profile @ Level 4.1</Name>
+			</Term>
+			<Term termID="1.5.14">
+				<Name>H264 High 10 Profile @ Level 4.2</Name>
+			</Term>
+			<Term termID="1.5.15">
+				<Name>H264 High 10 Profile @ Level 5</Name>
+			</Term>
+			<Term termID="1.5.16">
+				<Name>H264 High 10 Profile @ Level 5.1</Name>
+			</Term>
+		</Term>
+		<Term termID="1.6">
+			<Name>H264 High 4:2:2 Profile</Name>
+			<Term termID="1.6.1">
+				<Name>H264 High 4:2:2 Profile @ Level 1</Name>
+			</Term>
+			<Term termID="1.6.2">
+				<Name>H264 High 4:2:2 Profile @ Level 1b</Name>
+			</Term>
+			<Term termID="1.6.3">
+				<Name>H264 High 4:2:2 Profile @ Level 1.1</Name>
+			</Term>
+			<Term termID="1.6.4">
+				<Name>H264 High 4:2:2 Profile @ Level 1.2</Name>
+			</Term>
+			<Term termID="1.6.5">
+				<Name>H264 High 4:2:2 Profile @ Level 1.3</Name>
+			</Term>
+			<Term termID="1.6.6">
+				<Name>H264 High 4:2:2 Profile @ Level 2</Name>
+			</Term>
+			<Term termID="1.6.7">
+				<Name>H264 High 4:2:2 Profile @ Level 2.1</Name>
+			</Term>
+			<Term termID="1.6.8">
+				<Name>H264 High 4:2:2 Profile @ Level 2.2</Name>
+			</Term>
+			<Term termID="1.6.9">
+				<Name>H264 High 4:2:2 Profile @ Level 3</Name>
+			</Term>
+			<Term termID="1.6.10">
+				<Name>H264 High 4:2:2 Profile @ Level 3.1</Name>
+			</Term>
+			<Term termID="1.6.11">
+				<Name>H264 High 4:2:2 Profile @ Level 3.2</Name>
+			</Term>
+			<Term termID="1.6.12">
+				<Name>H264 High 4:2:2 Profile @ Level 4</Name>
+			</Term>
+			<Term termID="1.6.13">
+				<Name>H264 High 4:2:2 Profile @ Level 4.1</Name>
+			</Term>
+			<Term termID="1.6.14">
+				<Name>H264 High 4:2:2 Profile @ Level 4.2</Name>
+			</Term>
+			<Term termID="1.6.15">
+				<Name>H264 High 4:2:2 Profile @ Level 5</Name>
+			</Term>
+			<Term termID="1.6.16">
+				<Name>H264 High 4:2:2 Profile @ Level 5.1</Name>
+			</Term>
+		</Term>
+		<Term termID="1.7">
+			<Name>H264 High 4:4:4 Profile</Name>
+			<Term termID="1.7.1">
+				<Name>H264 High 4:4:4 Profile @ Level 1</Name>
+			</Term>
+			<Term termID="1.7.2">
+				<Name>H264 High 4:4:4 Profile @ Level 1b</Name>
+			</Term>
+			<Term termID="1.7.3">
+				<Name>H264 High 4:4:4 Profile @ Level 1.1</Name>
+			</Term>
+			<Term termID="1.7.4">
+				<Name>H264 High 4:4:4 Profile @ Level 1.2</Name>
+			</Term>
+			<Term termID="1.7.5">
+				<Name>H264 High 4:4:4 Profile @ Level 1.3</Name>
+			</Term>
+			<Term termID="1.7.6">
+				<Name>H264 High 4:4:4 Profile @ Level 2</Name>
+			</Term>
+			<Term termID="1.7.7">
+				<Name>H264 High 4:4:4 Profile @ Level 2.1</Name>
+			</Term>
+			<Term termID="1.7.8">
+				<Name>H264 High 4:4:4 Profile @ Level 2.2</Name>
+			</Term>
+			<Term termID="1.7.9">
+				<Name>H264 High 4:4:4 Profile @ Level 3</Name>
+			</Term>
+			<Term termID="1.7.10">
+				<Name>H264 High 4:4:4 Profile @ Level 3.1</Name>
+			</Term>
+			<Term termID="1.7.11">
+				<Name>H264 High 4:4:4 Profile @ Level 3.2</Name>
+			</Term>
+			<Term termID="1.7.12">
+				<Name>H264 High 4:4:4 Profile @ Level 4</Name>
+			</Term>
+			<Term termID="1.7.13">
+				<Name>H264 High 4:4:4 Profile @ Level 4.1</Name>
+			</Term>
+			<Term termID="1.7.14">
+				<Name>H264 High 4:4:4 Profile @ Level 4.2</Name>
+			</Term>
+			<Term termID="1.7.15">
+				<Name>H264 High 4:4:4 Profile @ Level 5</Name>
+			</Term>
+			<Term termID="1.7.16">
+				<Name>H264 High 4:4:4 Profile @ Level 5.1</Name>
+			</Term>
+		</Term>
+		<Term termID="1.8">
+			<Name>H264 Scalable High Profile</Name>
+			<Term termID="1.8.9">
+				<Name>H264 Scalable High Profile @ Level 3</Name>
+			</Term>
+			<Term termID="1.8.10">
+				<Name>H264 Scalable High Profile @ Level 3.1</Name>
+			</Term>
+			<Term termID="1.8.11">
+				<Name>H264 Scalable High Profile @ Level 3.2</Name>
+			</Term>
+			<Term termID="1.8.12">
+				<Name>H264 Scalable High Profile @ Level 4</Name>
+			</Term>
+			<Term termID="1.8.13">
+				<Name>H264 Scalable High Profile @ Level 4.1</Name>
+			</Term>
+			<Term termID="1.8.14">
+				<Name>H264 Scalable High Profile @ Level 4.2</Name>
+			</Term>
+		</Term>
+		<Term termID="1.9">
+			<Name>H264 Stereo High Profile</Name>
+			<Term termID="1.9.9">
+				<Name>H264 Stereo High Profile @ Level 3</Name>
+			</Term>
+			<Term termID="1.9.10">
+				<Name>H264 Stereo High Profile @ Level 3.1</Name>
+			</Term>
+			<Term termID="1.9.11">
+				<Name>H264 Stereo High Profile @ Level 3.2</Name>
+			</Term>
+			<Term termID="1.9.12">
+				<Name>H264 Stereo High Profile @ Level 4</Name>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="2">
+		<Name>VC1</Name>
+		<Definition>SMPTE 421M - VC1 Video Codec.</Definition>
+		<Term termID="2.1">
+			<Name>VC1 Simple Profile</Name>
+			<Term termID="2.1.1">
+				<Name>VC1 Simple Profile @ Level LL</Name>
+				<Definition>DVB AVC Capability A - SMPTE 421M - VC1 Video Codec.</Definition>
+			</Term>
+			<Term termID="2.1.2">
+				<Name>VC1 Simple Profile @ Level ML</Name>
+				<Definition>DVB AVC Capability B - SMPTE 421M - VC1 Video Codec.</Definition>
+			</Term>
+		</Term>
+		<Term termID="2.2">
+			<Name>VC1 Main Profile</Name>
+			<Term termID="2.2.1">
+				<Name>VC1 Main Profile @ Level LL</Name>
+				<Definition>DVB AVC Capability A - SMPTE 421M - VC1 Video Codec.</Definition>
+			</Term>
+			<Term termID="2.2.2">
+				<Name>VC1 Main Profile @ Level ML</Name>
+				<Definition>DVB AVC Capability B - SMPTE 421M - VC1 Video Codec.</Definition>
+			</Term>
+			<Term termID="2.2.3">
+				<Name>VC1 Main Profile @ Level HL</Name>
+			</Term>
+		</Term>
+		<Term termID="2.3">
+			<Name>VC1 Advanced Profile</Name>
+			<Term termID="2.3.1">
+				<Name>VC1 Advanced Profile @ Level L0</Name>
+				<Definition>DVB AVC Capability C - SMPTE 421M - VC1 Video Codec.</Definition>
+			</Term>
+			<Term termID="2.3.2">
+				<Name>VC1 Advanced Profile @ Level L1</Name>
+				<Definition>DVB AVC Capability D - SMPTE 421M - VC1 Video Codec.</Definition>
+			</Term>
+			<Term termID="2.3.3">
+				<Name>VC1 Advanced Profile @ Level L2</Name>
+			</Term>
+			<Term termID="2.3.4">
+				<Name>VC1 Advanced Profile @ Level L3</Name>
+				<Definition>DVB AVC Capability E - SMPTE 421M - VC1 Video Codec.</Definition>
+			</Term>
+			<Term termID="2.3.5">
+				<Name>VC1 Advanced Profile @ Level L4</Name>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="3">
+		<Name>H262</Name>
+		<Definition>
+                 ISO/IEC 13818-2 Video Codec. Also known as H.262
+           </Definition>
+		<Term termID="3.1">
+			<Name>H262 Main Profile</Name>
+			<Term termID="3.1.1">
+				<Name>H262 Main Profile @ Main Level</Name>
+			</Term>
+			<Term termID="3.1.2">
+				<Name>H262 Main Profile @ High Level</Name>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="4">
+		<Name>H265</Name>
+		<Definition>
+                 ISO/IEC 23008-2 Video Codec. Also known as H.265
+           </Definition>
+		<Term termID="4.1">
+			<Name>H265 Main Profile Main Tier </Name>
+			<Term termID="4.1.1">
+				<Name>H265 Main Profile Main Tier @ Level 1</Name>
+			</Term>
+			<Term termID="4.1.6">
+				<Name>H265 Main Profile Main Tier @ Level 2</Name>
+			</Term>
+			<Term termID="4.1.7">
+				<Name>H265 Main Profile Main Tier @ Level 2.1</Name>
+			</Term>
+			<Term termID="4.1.9">
+				<Name>H265 Main Profile Main Tier @ Level 3</Name>
+			</Term>
+			<Term termID="4.1.10">
+				<Name>H265 Main Profile Main Tier @ Level 3.1</Name>
+			</Term>
+			<Term termID="4.1.12">
+				<Name>H265 Main Profile Main Tier @ Level 4</Name>
+			</Term>
+			<Term termID="4.1.13">
+				<Name>H265 Main Profile Main Tier @ Level 4.1</Name>
+			</Term>
+		</Term>
+		<Term termID="4.2">
+			<Name>H265 Main 10 Profile Main Tier</Name>
+			<Term termID="4.2.1">
+				<Name>H265 Main 10 Profile Main Tier @ Level 1</Name>
+			</Term>
+			<Term termID="4.2.6">
+				<Name>H265 Main 10 Profile Main Tier @ Level 2</Name>
+			</Term>
+			<Term termID="4.2.7">
+				<Name>H265 Main 10 Profile Main Tier @ Level 2.1</Name>
+			</Term>
+			<Term termID="4.2.9">
+				<Name>H265 Main 10 Profile Main Tier @ Level 3</Name>
+			</Term>
+			<Term termID="4.2.10">
+				<Name>H265 Main 10 Profile Main Tier @ Level 3.1</Name>
+			</Term>
+			<Term termID="4.2.12">
+				<Name>H265 Main 10 Profile Main Tier @ Level 4</Name>
+			</Term>
+			<Term termID="4.2.13">
+				<Name>H265 Main 10 Profile Main Tier @ Level 4.1</Name>
+			</Term>
+			<Term termID="4.2.15">
+				<Name>H265 Main 10 Profile Main Tier @ Level 5</Name>
+			</Term>
+			<Term termID="4.2.16">
+				<Name>H265 Main 10 Profile Main Tier @ Level 5.1</Name>
+			</Term>
+			<Term termID="4.2.17">
+				<Name>H265 Main 10 Profile Main Tier @ Level 5.2</Name>
+			</Term>
+			<Term termID="4.2.18">
+				<Name>H265 Main 10 Profile Main Tier @ Level 6</Name>
+			</Term>
+			<Term termID="4.2.19">
+			  <Name>H265 Main 10 Profile Main Tier @ Level 6.1</Name>
+			</Term>
+		</Term>
+	</Term>
+		<Term termID="5">
+		<Name>AVS3</Name>
+		<Definition>
+			AVS3 Part 2 Video Codec.
+		</Definition>
+		<Term termID="5.1">
+			<Name>AVS3 High 10-bit Profile</Name>
+			<Term termId="5.1.1">
+				<Name>AVS3 High 10-bit Profile, level 2.0.15</Name>
+			</Term>
+			<Term termId="5.1.2">
+				<Name>AVS3 High 10-bit Profile, level 2.0.30</Name>
+			</Term>
+			<Term termId="5.1.3">
+				<Name>AVS3 High 10-bit Profile, level 2.0.60</Name>
+			</Term>
+			<Term termId="5.1.4">
+				<Name>AVS3 High 10-bit Profile, level 4.0.30</Name>
+			</Term>
+			<Term termId="5.1.5">
+				<Name>AVS3 High 10-bit Profile, level 4.0.60</Name>
+			</Term>
+			<Term termId="5.1.6">
+				<Name>AVS3 High 10-bit Profile, level 6.0.30</Name>
+			</Term>
+			<Term termId="5.1.7">
+				<Name>AVS3 High 10-bit Profile, level 6.4.30</Name>
+			</Term>
+			<Term termId="5.1.8">
+				<Name>AVS3 High 10-bit Profile, level 6.0.60</Name>
+			</Term>
+			<Term termId="5.1.9">
+				<Name>AVS3 High 10-bit Profile, level 6.4.60</Name>
+			</Term>
+			<Term termId="5.1.10">
+				<Name>AVS3 High 10-bit Profile, level 6.0.120</Name>
+			</Term>
+			<Term termId="5.1.11">
+				<Name>AVS3 High 10-bit Profile, level 6.4.120</Name>
+			</Term>
+			<Term termId="5.1.12">
+				<Name>AVS3 High 10-bit Profile, level 8.0.30</Name>
+			</Term>
+			<Term termId="5.1.13">
+				<Name>AVS3 High 10-bit Profile, level 8.4.30</Name>
+			</Term>
+			<Term termId="5.1.14">
+				<Name>AVS3 High 10-bit Profile, level 8.0.60</Name>
+			</Term>
+			<Term termId="5.1.15">
+				<Name>AVS3 High 10-bit Profile, level 8.4.60</Name>
+			</Term>
+			<Term termId="5.1.16">
+				<Name>AVS3 High 10-bit Profile, level 8.0.120</Name>
+			</Term>
+			<Term termId="5.1.17">
+				<Name>AVS3 High 10-bit Profile, level 8.4.120</Name>
+			</Term>
+			<Term termId="5.1.18">
+				<Name>AVS3 High 10-bit Profile, level 10.0.30</Name>
+			</Term>
+			<Term termId="5.1.19">
+				<Name>AVS3 High 10-bit Profile, level 10.4.30</Name>
+			</Term>
+			<Term termId="5.1.20">
+				<Name>AVS3 High 10-bit Profile, level 10.0.60</Name>
+			</Term>
+			<Term termId="5.1.21">
+				<Name>AVS3 High 10-bit Profile, level 10.4.60</Name>
+			</Term>
+			<Term termId="5.1.22">
+				<Name>AVS3 High 10-bit Profile, level 10.0.120</Name>
+			</Term>
+			<Term termId="5.1.23">
+				<Name>AVS3 High 10-bit Profile, level 10.4.120</Name>
+			</Term>
+		</Term>
+	</Term>
+	<Term termID="6">
+		<Name>VVC</Name>
+		<Definition>
+			ISO/IEC 23090-3 / ITU-T H.266 Video Codec. Also known as VVC.
+		</Definition>
+		<Term termID="6.1">
+			<Name>VVC Main 10 Profile Main Tier</Name>
+			<Term termId="6.1.1">
+				<Name>VVC Main 10 Profile Main Tier @ Level 3.0</Name>
+			</Term>
+			<Term termId="6.1.2">
+				<Name>VVC Main 10 Profile Main Tier @ Level 3.1</Name>
+			</Term>
+			<Term termId="6.1.3">
+				<Name>VVC Main 10 Profile Main Tier @ Level 4.0</Name>
+			</Term>
+			<Term termId="6.1.4">
+				<Name>VVC Main 10 Profile Main Tier @ Level 4.1</Name>
+			</Term>
+			<Term termId="6.1.5">
+				<Name>VVC Main 10 Profile Main Tier @ Level 5.0</Name>
+			</Term>
+			<Term termId="6.1.6">
+				<Name>VVC Main 10 Profile Main Tier @ Level 5.1</Name>
+			</Term>
+			<Term termId="6.1.7">
+				<Name>VVC Main 10 Profile Main Tier @ Level 5.2</Name>
+			</Term>
+			<Term termId="6.1.8">
+				<Name>VVC Main 10 Profile Main Tier @ Level 6.0</Name>
+			</Term>
+			<Term termId="6.1.9">
+				<Name>VVC Main 10 Profile Main Tier @ Level 6.1</Name>
+			</Term>
+			<Term termId="6.1.10">
+				<Name>VVC Main 10 Profile Main Tier @ Level 6.2</Name>
+			</Term>
+		</Term>
+	</Term>
+</ClassificationScheme>

@@ -339,8 +339,8 @@ export default class ServiceListCheck {
 		this.allowedAudioConformancePoints.loadCS(useURLs?{url:DVB_AudioConformanceCS.url, leafNodesOnly:true}:{file:DVB_AudioConformanceCS.file, leafNodesOnly:true});
 		
 		this.allowedVideoSchemes.loadCS(useURLs?
-			{urls:[DVB_VideoCodecCS.y2007.url, DVB_VideoCodecCS.y2021.url, MPEG7_VisualCodingFormatCS.url], leafNodesOnly:true} :
-			{files:[DVB_VideoCodecCS.y2007.file, DVB_VideoCodecCS.y2021.file, MPEG7_VisualCodingFormatCS.file], leafNodesOnly:true});
+			{urls:[DVB_VideoCodecCS.y2007.url, DVB_VideoCodecCS.y2021.url, DVB_VideoCodecCS.y2022.url, MPEG7_VisualCodingFormatCS.url], leafNodesOnly:true} :
+			{files:[DVB_VideoCodecCS.y2007.file, DVB_VideoCodecCS.y2021.file, DVB_VideoCodecCS.y2022.file, MPEG7_VisualCodingFormatCS.file], leafNodesOnly:true});
 
 		this.allowedVideoConformancePoints.loadCS(useURLs?
 			{urls:[DVB_VideoConformanceCS.y2017.url, DVB_VideoConformanceCS.y2017.url], leafNodesOnly:true} :

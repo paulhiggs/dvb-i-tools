@@ -8,7 +8,8 @@ const pathDVBCS='dvb/cs/', pathDVBI="dvbi", pathISO="iso", pathMPEG7="mpeg7", pa
       path2007CS=`${pathDVBCS}2007`, url2007CS="cs/2007",
       path2017CS=`${pathDVBCS}2017`, url2017CS="cs/2017",
       path2020CS=`${pathDVBCS}2020`, url2020CS="cs/2020",
-      path2021CS=`${pathDVBCS}2021`, url2021CS="cs/2021";
+      path2021CS=`${pathDVBCS}2021`, url2021CS="cs/2021",
+	  path2022CS=`${pathDVBCS}2022`, url2022CS="cs/2022";
 
 	
 // SLEPR == Service List Entry Point Registry
@@ -42,7 +43,8 @@ export const DVB_AudioCodecCS={
 const idDVB_VideoCodecCS="VideoCodecCS.xml";
 export const DVB_VideoCodecCS={
     y2007:{file:join(path2007CS, idDVB_VideoCodecCS), url:`${DVB_METADATA}${url2007CS}/${idDVB_VideoCodecCS}`},
-    y2021:{file:join(path2021CS, idDVB_VideoCodecCS), url:`${DVB_METADATA}${url2021CS}/${idDVB_VideoCodecCS}`}
+    y2021:{file:join(path2021CS, idDVB_VideoCodecCS), url:`${DVB_METADATA}${url2021CS}/${idDVB_VideoCodecCS}`},
+    y2022:{file:join(path2022CS, idDVB_VideoCodecCS), url:`${REPO_RAW}dvb/${url2022CS}/${idDVB_VideoCodecCS}`} // TODO: update to `${DVB_METADATA}${url2022CS}/${idDVB_VideoCodecCS}` once published on dvb.org/metadata
 };
 
 const idDVB_ColorimetryCS="ColorimetryCS.xml";
