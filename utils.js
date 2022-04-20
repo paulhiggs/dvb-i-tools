@@ -22,8 +22,11 @@ export var xPath = (SCHEMA_PREFIX, elementName, index=null) => `${SCHEMA_PREFIX}
  * @param {array} elementNames the name of the element to be searched for
  * @returns {string} the XPath selector
  */
-export var xPathM = (SCHEMA_PREFIX, elementNames) => elementNames.join(`/${SCHEMA_PREFIX}:`);
+export var xPathM = (SCHEMA_PREFIX, elementNames) => `${SCHEMA_PREFIX}:${elementNames.join(`/${SCHEMA_PREFIX}:`)}`;
+export function xPathM_new(SCHEMA_PREFIX, elementNames) {
+	let s='';
 
+}
 
 /* local */ function findInSet(values, value, caseSensitive) {
 	if (!values || !value || (!datatypeIs(value, "string")))
