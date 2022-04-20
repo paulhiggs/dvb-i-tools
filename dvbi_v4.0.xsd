@@ -83,6 +83,7 @@
 			</choice>
 			<element name="ContentGuideServiceRef" type="string" minOccurs="0"/>
 			<element name="AdditionalServiceParameters" type="dvbisd:ExtensionBaseType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="NVOD" type="dvbisd:NVODType" minOccurs="0"/>
 		</sequence>
 		<attribute name="dynamic" type="boolean" default="false"/>
 		<attribute name="version" type="positiveInteger" use="required"/>
@@ -385,6 +386,24 @@
 			<simpleType>
 				<restriction base="string">
 					<pattern value="[A-Za-z0-9][A-Za-z0-9:\-/\.]*[A-Za-z0-9]"/>
+				</restriction>
+			</simpleType>
+		</attribute>
+	</complexType>
+	<complexType name="NVODType">
+		<attribute name="mode" use="required">
+			<simpleType>
+				<restriction base="string">
+					<enumeration value="reference"/>
+					<enumeration value="timeshifted"/>
+				</restriction>
+			</simpleType>
+		</attribute>
+		<attribute name="reference" type="dvbisd:ServiceIdentifierType"/>
+		<attribute name="offset" default="PT0S">
+			<simpleType>
+				<restriction base="duration">
+					<minInclusive value="PT0S"/>
 				</restriction>
 			</simpleType>
 		</attribute>

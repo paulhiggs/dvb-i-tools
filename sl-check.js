@@ -9,7 +9,7 @@ import { elementize, quote } from './phlib/phlib.js';
 import ErrorList, { ERROR, WARNING, APPLICATION } from "./ErrorList.js";
 import ClassificationScheme from "./ClassificationScheme.js";
 
-import { dvbi, dvbiEC } from "./DVB-I_definitions.js";
+import { dvbi, dvbiEC, dvbEA } from "./DVB-I_definitions.js";
 
 import { tva, tvaEA } from "./TVA_definitions.js";
 import { isTAGURI } from "./URI_checks.js";
@@ -1469,6 +1469,50 @@ export default class ServiceListCheck {
 			let _ap=0, AdditionalParams;
 			while ((AdditionalParams=service.get(xPath(SCHEMA_PREFIX, dvbi.e_AdditionalServiceParameters, ++_ap), SL_SCHEMA))!=null) {
 				this.CheckExtension(AdditionalParams, EXTENSION_LOCATION_SERVICE_ELEMENT, errs, "SL211");
+			}
+
+			// check <Service><NVOD>
+			let NVOD=service.get(xPath(SCHEMA_PREFIX, dvbi.e_NVOD), SL_SCHEMA);
+			if (NVOD) {
+				if (NVOD.attr(dvbi.a_mode) && NVOD.attr(dvbi.a_mode).value()==dvbi.NVOD_MODE_REFERENCE) {
+					if (NVOD.attr(dvbi.a_reference))
+						errs.addError({code:"SL221", message:`${dvbi.a_reference.attribute()} is not permitted for ${dvbi.a_mode.attribute(dvbi.e_NVOD)}="${dvbi.NVOD_MODE_REFERENCE}"`,
+							fragment:NVOD, key: 'unallowed attribute'});
+					if (NVOD.attr(dvbi.a_offset))
+						errs.addError({code:"SL222", message:`${dvbi.a_offset.attribute()} is not permitted for ${dvbi.a_mode.attribute(dvbi.e_NVOD)}="${dvbi.NVOD_MODE_REFERENCE}"`,
+							fragment:NVOD, key: 'unallowed attribute'});				
+				}
+				if (NVOD.attr(dvbi.a_mode) && NVOD.attr(dvbi.a_mode).value()==dvbi.NVOD_MODE_TIMESHIFTED) {
+					checkAttributes(NVOD, [dvbi.a_mode, dvbi.a_reference], [dvbi.a_offset], dvbEA.NVOD, errs, "SL223");
+
+					if (NVOD.attr(dvbi.a_reference)) {
+						// check to see if there is a service whose <UniqueIdentifier> equals NVOD@reference and has a NVOD@mode==reference
+						let _s2=0, service2, referredService=null;
+
+						while ((service2=SL.get(xPath(SCHEMA_PREFIX, dvbi.e_Service, ++_s2), SL_SCHEMA))!=null && !referredService) {
+							let ui=service2.get(xPath(SCHEMA_PREFIX, dvbi.e_UniqueIdentifier), SL_SCHEMA);
+							if (ui && ui.text()==NVOD.attr(dvbi.a_reference).value())
+								referredService=service2;
+						}
+						if (!referredService)
+							errs.addError({code:"SL224", message:`no service found with ${dvbi.e_UniqueIdentifier.elementize()}="${NVOD.attr(dvbi.a_reference).value()}"`, 
+								fragment:NVOD, key:"NVOD timeshift"});
+						else {
+							let refNVOD=referredService.get(xPath(SCHEMA_PREFIX, dvbi.e_NVOD), SL_SCHEMA);
+							if (!refNVOD)
+								errs.addError({code:"SL225", message:`service ${NVOD.attr(dvbi.a_reference).value()} has no ${dvbi.e_NVOD.elementize()} information`, fragment:NVOD, key:"not NVOD"});
+							else {
+								if (refNVOD.attr(dvbi.a_mode) && refNVOD.attr(dvbi.a_mode).value() != dvbi.NVOD_MODE_REFERENCE)
+									errs.addError({code:"SL226", message:`service ${NVOD.attr(dvbi.a_reference).value()} is not defined as an NVOD reference`, fragment:NVOD, key:"not NVOD"});
+							}
+						}	
+					}
+				}
+				let _svcType=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceType), SL_SCHEMA);
+				if (_svcType && _svcType.attr(dvbi.a_href) && !_svcType.attr(dvbi.a_href).value().endsWith('linear'))  // this is a biut of a hack, but sufficient to determine linear service type 
+					errs.addError({code:"SL227", 
+						message:`${dvbi.a_href.attribute(dvbi.e_ServiceType)} must be linear for NVOD reference or timeshifted services`,
+						fragments:[NVOD, ServiceType], key:`invalid ${dvbi.e_ServiceType}`});
 			}
 		}
 

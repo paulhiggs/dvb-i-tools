@@ -122,6 +122,9 @@ export const dvbi = {
 	APP_IN_CONTROL: `${LINKED_APLICATION_CS}:1.2`,
 	APP_OUTSIDE_AVAILABILITY: `${LINKED_APLICATION_CS}:2`,
 
+	NVOD_MODE_REFERENCE: 'reference',
+	NVOD_MODE_TIMESHIFTED: 'timeshifted',
+
 // possible values for DVB-S polarization
 	DVBS_POLARIZATION_VALUES: ["horizontal", "vertical", "left circular", "right circular"],
 
@@ -166,12 +169,15 @@ export const dvbi = {
 	a_GroupAddress: "GroupAddress",
 	a_href: tva.a_href,
 	a_MaxBitrate: "MaxBitrate",
+	a_mode: "mode",
 	a_minimumMetadataUpdatePeriod: "minimumMetadataUpdatePeriod",
+	a_offset: "offset",
 	a_origNetId: "origNetId",
 	a_PayloadTypeNumber: "PayloadTypeNumber",
 	a_Port: "Port",
 	a_priority: "priority", 
 	a_recurrence: "recurrence",
+	a_reference: "reference",
 	a_referenceType: "referenceType",
 	a_regionID: "regionID",
 	a_regulatorListFlag: "regulatorListFlag",
@@ -243,7 +249,8 @@ export const dvbi = {
 	e_MulticastRET: "MulticastRET",
 	e_MulticastTSDeliveryParameters: "MulticastTSDeliveryParameters",
 	e_Name: "Name",
-	e_NetworkID: "NetworkID", 
+	e_NetworkID: "NetworkID",
+	e_NVOD: "NVOD", 
 	e_OrbitalPosition: "OrbitalPosition",
 	e_OtherDeliveryParameters: "OtherDeliveryParameters",
 	e_Period: "Period",
@@ -298,6 +305,7 @@ export const dvbi = {
 
 export const dvbEA = {	// EA = Element-Attributes - the attributes that are defiend for each element
 	MediaLocator: [dvbi.a_contentLanguage].concat(tvaEA.mediaLocator),
+	NVOD: [dvbi.a_mode, dvbi.a_reference, dvbi.a_offset],
 };
 
 export const dvbiEC = { // EC = Element-Children - the child elements or each element
