@@ -66,11 +66,8 @@ export function checkAttributes(parentElement, requiredAttributes, optionalAttri
  */
 export function checkTopElementsAndCardinality(parentElement, childElements, definedChildElements, allowOtherElements, errs, errCode )
 {
-	function findElementIn(elementList, elementName) {
-		if (datatypeIs(elementList, 'array'))
-			return elementList.find(element => element.name == elementName);
-		else return false;
-	}
+	var findElementIn = (elementList, elementName) => datatypeIs(elementList, 'array') ? elementList.find(element => element.name == elementName) : false;
+
 	function getNamedChildElements(node, childElementName) {
 		let res=[], childElems=node?node.childNodes():null;
 		if (childElems) childElems.forEachSubElement(elem => {
@@ -140,11 +137,7 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
  * @param {string} childElementName the name of the child element to look for
  * @returns {boolean} true of the element contains the named child element(s) otherwise false
  */
- export function hasChild(elem, childElementName) { 
-	if (elem)
-		return elem.childNodes().find(el => el.type()=='element' && el.name()==childElementName) != undefined;
-	return false;
-}
+export var hasChild = (elem, childElementName) => (elem) ?elem.childNodes().find(el => el.type()=='element' && el.name()==childElementName) != undefined : false;
 
 
 /**

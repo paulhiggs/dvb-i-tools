@@ -28,7 +28,8 @@ export var NoChildElement = (missingElement, parentElement, schemaLocation, errC
 */
 export var cg_InvalidHrefValue = (value, element, loc,  errCode) => 
 	({code:errCode, 
-		message:`invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${element.name().elementize()} in ${loc}`, line:element.line()});
+		message:`invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${element.name().elementize()} in ${loc}`, line:element.line(),
+		key:"invalid href"});
 
 
 export var sl_InvalidHrefValue = (value, element, src, loc, errCode) =>
