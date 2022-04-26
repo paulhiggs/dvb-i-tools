@@ -146,7 +146,7 @@ export function  checkValidLogos(RelatedMaterial, errs, errCode, location, langu
 			checkAttributes(MediaLocator, [], [dvbi.a_contentLanguage], dvbEA.MediaLocator, errs, `${errCode}-2`);
 
 			if (languageValidator && MediaLocator.attr(dvbi.a_contentLanguage)) 
-				checkLanguage(languageValidator, MediaLocator.attr(dvbi.a_contentLanguage).value(), location, MediaLocator, errs, `${errCode}-3`);
+				checkLanguage(languageValidator, MediaLocator.attr(dvbi.a_contentLanguage).value(), location, MediaLocator, errs, `${errCode}-3`);		
 
 			if (MediaLocator.childNodes()) MediaLocator.childNodes().forEachSubElement(MediaUri => {
 				if (MediaUri.name()==tva.e_MediaUri) {

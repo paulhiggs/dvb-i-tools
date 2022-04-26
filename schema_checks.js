@@ -170,18 +170,20 @@ export function SchemaCheck(XML, XSD, errs, errCode) {
 export function SchemaLoad(document, errs, errcode) {
 	let tmp=null, prettyXML=format(document.replace(/(\n\t)/gm,"\n"), {collapseContent:true, lineSeparator:'\n'});
 
-	errs.loadDocument(prettyXML);
 	try {
 		tmp=parseXmlString(prettyXML);
 	}
 	catch (err) {
 		errs.addError({code:`${errcode}-1`, message:`XML parsing failed: ${err.message}`, key:"malformed XML"});
+		errs.loadResponse(prettyXML);
 		return null;
 	}
 	if (!tmp || !tmp.root()) {
 		errs.addError({code:`${errcode}-2`, message:"XML document is empty", key:"malformed XML"});
+		errs.loadResponse(prettyXML);
 		return null;
 	}
-	
+
+	errs.loadDocument(prettyXML);	
 	return 	tmp; 
 }

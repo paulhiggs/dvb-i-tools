@@ -1489,8 +1489,8 @@ export default class ContentGuideCheck {
 			
 			if (GroupType.attr(tva.a_type) && GroupType.attr(tva.a_type).value()!=tva.t_ProgramGroupTypeType) 
 				errs.addError({code:"GIM012", message:`${tva.e_GroupType}@xsi:${tva.a_type} must be ${tva.t_ProgramGroupTypeType.quote()}`, fragment:GroupType});
-			if (GroupType.attr(tva.a_value) && GroupType.attr(tva.a_value).value()!="otherCollection") 
-				errs.addError({code:"GIM013", message:`${tva.a_value.attribute(tva.e_GroupType)} must be ${"otherCollection".quote()}`, fragment:GroupType});
+			if (GroupType.attr(tva.a_value) && GroupType.attr(tva.a_value).value()!=tva.v_otherCollection) 
+				errs.addError({code:"GIM013", message:`${tva.a_value.attribute(tva.e_GroupType)} must be ${tva.v_otherCollection.quote()}`, fragment:GroupType});
 		}
 		else
 			errs.addError({code:"GIM014", message:`${tva.e_GroupType.elementize()} is required in ${GroupInformation.name().elementize()}`, line:GroupInformation.line()});
@@ -1540,8 +1540,8 @@ export default class ContentGuideCheck {
 		if (GroupType) {
 			if (!(GroupType.attr(tva.a_type) && GroupType.attr(tva.a_type).value()==tva.t_ProgramGroupTypeType)) 
 				errs.addError({code:"GI011", message:`${tva.e_GroupType}@xsi:${tva.a_type}=${tva.t_ProgramGroupTypeType.quote()} is required`, fragment:GroupType});
-			if (!(GroupType.attr(tva.a_value) && GroupType.attr(tva.a_value).value()=="otherCollection")) 
-				errs.addError({code:"GI022", message:`${tva.a_value.attribute(tva.e_GroupType)}=${"otherCollection".quote()} is required`, fragment:GroupType});
+			if (!(GroupType.attr(tva.a_value) && GroupType.attr(tva.a_value).value()==tva.v_otherCollection)) 
+				errs.addError({code:"GI022", message:`${tva.a_value.attribute(tva.e_GroupType)}=${tva.v_otherCollection.quote()} is required`, fragment:GroupType});
 		}
 		else
 			errs.addError({code:"GI014", message:`${tva.e_GroupType.elementize()} is required in ${GroupInformation.name().elementize()}`, line:GroupInformation.line()});

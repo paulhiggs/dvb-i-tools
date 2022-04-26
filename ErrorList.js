@@ -37,6 +37,11 @@ export default class ErrorList {
 		let lines=parseXmlString(doc).toString({declaration:false, format:true}).split('\n');
 		this.markupXML=lines.map((str, index) => ({ value: str, ix: index }));
 	}
+	loadResponse(doc) {
+		// do this when the loaded content is not XML (fails XML validation)
+		let lines=doc.split('\n');
+		this.markupXML=lines.map((str, index) => ({ value: str, ix: index }));
+	}
 	/* private */ setError(type, code, message, lineNo) {
 		let found=this.markupXML.find(line => (line.ix==lineNo));
 		if (found) {

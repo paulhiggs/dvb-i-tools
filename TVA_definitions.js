@@ -189,6 +189,7 @@ export const tva = {
 	a_verticalSize: 		"verticalSize",
 
 	v_lengthLong: 		"long",
+	v_otherCollection:	"otherCollection",
 	
 	t_MemberOfType: 		"MemberOfType",
 	t_ProgramGroupTypeType: "ProgramGroupTypeType",
