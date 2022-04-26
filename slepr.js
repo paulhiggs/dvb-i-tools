@@ -96,11 +96,8 @@ export default class SLEPR {
 
 
 	/* private */ checkQuery(req) {
-
 		req.parseErr=[];
-
 		if (req.query) {
-
 			let checkIt = (argument, argName, checkFunction) => {
 				if (argument)
 					switch (datatypeIs(argument)) {
@@ -115,7 +112,7 @@ export default class SLEPR {
 							});
 							break;
 						default:
-							req.parseErr.push(`invalid type [${typeof(argument)}] for ${argName}`);	
+							req.parseErr.push(`invalid type [${datatypeIs(argument)}] for ${argName}`);	
 							break;
 					}				
 				};

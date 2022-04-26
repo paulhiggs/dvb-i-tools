@@ -148,8 +148,6 @@ export function  checkValidLogos(RelatedMaterial, errs, errCode, location, langu
 			if (languageValidator && MediaLocator.attr(dvbi.a_contentLanguage)) 
 				checkLanguage(languageValidator, MediaLocator.attr(dvbi.a_contentLanguage).value(), location, MediaLocator, errs, `${errCode}-3`);
 
-			let MLlanguage=mlLanguage(MediaLocator);
-
 			if (MediaLocator.childNodes()) MediaLocator.childNodes().forEachSubElement(MediaUri => {
 				if (MediaUri.name()==tva.e_MediaUri) {
 

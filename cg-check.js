@@ -4,7 +4,7 @@ import format from 'xml-formatter';
 
 import { readFileSync } from "fs";
 
-import { attribute, elementize, quote } from './phlib/phlib.js';
+import { attribute, datatypeIs, elementize, quote } from './phlib/phlib.js';
 
 import ErrorList, { ERROR, WARNING, APPLICATION } from "./ErrorList.js";
 import ClassificationScheme from "./ClassificationScheme.js";
