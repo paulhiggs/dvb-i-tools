@@ -33,15 +33,22 @@ export default class ErrorList {
 		this.informationals=[];
 		this.markupXML=[];
 	}
-	loadDocument(doc) {
-		let lines=parseXmlString(doc).toString({declaration:false, format:true}).split('\n');
+	/**
+	 * loads the text that can be marked up with any validation errors/warnings etc
+	 * @param {string} doc   The document received for validation
+	 * @param {boolean} isXML true is the document was parsed as XML, else false
+	 */
+	loadDocument(doc, isXML) {
+		let lines= isXML ? parseXmlString(doc).toString({declaration:false, format:true}).split('\n') : doc.split('\n');
 		this.markupXML=lines.map((str, index) => ({ value: str, ix: index }));
 	}
-	loadResponse(doc) {
-		// do this when the loaded content is not XML (fails XML validation)
-		let lines=doc.split('\n');
-		this.markupXML=lines.map((str, index) => ({ value: str, ix: index }));
-	}
+	/**
+	 * attach an error message to a particular line in the received text
+	 * @param {*} type    the type of error message, e.g. APPLICATION, ERROR, WARNING...
+	 * @param {*} code    the short code of the error
+	 * @param {*} message the verbose error message
+	 * @param {*} lineNo  the line number in the received text to attach the error to
+	 */
 	/* private */ setError(type, code, message, lineNo) {
 		let found=this.markupXML.find(line => (line.ix==lineNo));
 		if (found) {
