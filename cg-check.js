@@ -1187,12 +1187,12 @@ export default class ContentGuideCheck {
 		if (ProgramInformation.childNodes()) ProgramInformation.childNodes().forEachSubElement(child => {
 			switch (child.name()) {
 				case tva.e_OtherIdentifier:		// <ProgramInformation><OtherIdentifier>
-				checkAttributes(child, [], [], tvaEA.OtherIdentifier, errs, "PI021");
-				if (requestType==CG_REQUEST_MORE_EPISODES)
+					checkAttributes(child, [], [], tvaEA.OtherIdentifier, errs, "PI021");
+					if (requestType==CG_REQUEST_MORE_EPISODES)
 						errs.addError({code:"PI022", message:`${tva.e_OtherIdentifier.elementize()} is not permitted in this request type`, fragment:child});
 					break;
 				case tva.e_EpisodeOf:			// <ProgramInformation><EpisodeOf>
-					checkAttributes(child, [tva.a_crid], [], [tva.a_index], errs, "PI031");
+					checkAttributes(child, [tva.a_crid], [tva.a_index], tvaEA.EpisodeOf, errs, "PI031");
 					
 					// <ProgramInformation><EpisodeOf>@crid
 					if (child.attr(tva.a_crid)) {

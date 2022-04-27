@@ -161,7 +161,7 @@ export function SchemaCheck(XML, XSD, errs, errCode) {
 
 
 /**
- * load the XML 
+ * load the XML data
  * @param {*} document 	XMLdocument
  * @param {*} errs      error handler for any loading errors
  * @param {*} errcode   error code prefix to use for any loading issues
