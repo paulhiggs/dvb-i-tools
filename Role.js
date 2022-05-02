@@ -4,7 +4,6 @@
  */
 import { readFile } from 'fs';
 
-import fetch from 'node-fetch';
 import { handleErrors } from "./fetch-err-handler.js";
 
 import ClassificationScheme from "./ClassificationScheme.js";

@@ -1,9 +1,14 @@
-import fetchS from 'sync-fetch';
+//
 
 import { drawForm } from "./ui.js";
 import ErrorList from "./ErrorList.js";
 import { isHTTPURL } from "./pattern_checks.js";
 
+
+async function fetchS(url) {
+	const res= await fetch(url).then();
+	return res;
+}
 
 export const MODE_UNSPECIFIED="none", MODE_SL="sl", MODE_CG="cg", MODE_URL="url", MODE_FILE="file";
 
