@@ -7,7 +7,7 @@
 import { readFile } from 'fs';
 import { parseXmlString } from 'libxmljs2';
 
-
+import fetch from 'node-fetch';
 import { handleErrors } from "./fetch-err-handler.js";
 
 import { AvlTree } from '@datastructures-js/binary-search-tree';
