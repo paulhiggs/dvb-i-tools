@@ -255,7 +255,7 @@ export const tvaEC = { // EC = Element-Children - the child elements or each ele
 							tva.e_CreditsInformationTable, tva.e_ProgramReviewTable, tva.e_SegmentInformationTable, tva.e_PurchaseInformationTable, tva.e_RightsInformationTable],
 	ProgramInformation: [tva.e_BasicDescription, tva.e_OtherIdentifier, tva.e_AVAttributes, tva.e_MemberOf, tva.e_DerivedFrom, tva.e_EpisodeOf, 
 						tva.e_PartOfAggregateProgram, tva.e_AggregationOf],
-	ProgramLocationTable: [tva.e_Schedule, tva.e_BroadcastEvent, tva.e_OnDemandProgram, tva.e_OnDemandSerivce, tva.e_PushDownloadProgram],
+	ProgramLocationTable: [tva.e_Schedule, tva.e_BroadcastEvent, tva.e_OnDemandProgram, tva.e_OnDemandService, tva.e_PushDownloadProgram],
 	RelatedMaterial: [tva.e_HowRelated, tva.e_Format, tva.e_MediaLocator, tva.e_SegmentReference, tva.e_PromotionalText, tva.e_PromotionalMedia, tva.e_SocialMediaReference, tva.e_SourceMediaLocator],
 	Schedule: [tva.e_ScheduleEvent],
 	ScheduleEvent: [tva.e_PublishedStartTime, tva.e_PublishedEndTime, tva.e_PublishedDuration, tva.e_ActualStartTime, tva.e_ActualEndTime, tva.e_ActualDuration,

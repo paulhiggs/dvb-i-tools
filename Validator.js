@@ -24,9 +24,8 @@ export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasS
 	}
 
 	let FormArguments={cg:MODE_CG, sl:MODE_SL, file:MODE_FILE, url:MODE_URL, hasSL:hasSL, hasCG:hasCG};
-	if (!req.body.testtype) {
+	if (!req.body.testtype) 
 		drawForm(deprecationWarning?'/check':null, req, res, FormArguments, cgcheck?cgcheck.supportedRequests:null, null, null);
-	} 
 	else {
 		let VVxml=null;
 		req.parseErr=null;

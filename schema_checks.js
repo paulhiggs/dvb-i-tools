@@ -64,8 +64,8 @@ export function checkAttributes(parentElement, requiredAttributes, optionalAttri
  * NOTE: elements are described as an object containing "name", "minOccurs", "maxOccurs".
  *   Default values for minOccurs and maxOccurs are 1
  */
-export function checkTopElementsAndCardinality(parentElement, childElements, definedChildElements, allowOtherElements, errs, errCode )
-{
+export function checkTopElementsAndCardinality(parentElement, childElements, definedChildElements, allowOtherElements, errs, errCode ) {
+
 	var findElementIn = (elementList, elementName) => datatypeIs(elementList, 'array') ? elementList.find(element => element.name == elementName) : false;
 
 	function getNamedChildElements(node, childElementName) {

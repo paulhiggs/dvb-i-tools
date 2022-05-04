@@ -1,7 +1,7 @@
 
 const JPEG_MIME = "image/jpeg", 
       PNG_MIME =  "image/png",
-	  WebP_MIME = "image/WebP"; // BUG2937 - https://bugzilla.dvb.org/show_bug.cgi?id=2937
+      WebP_MIME = "image/WebP"; // BUG2937 - https://bugzilla.dvb.org/show_bug.cgi?id=2937
 
 const REQUIRED_MIMES=[JPEG_MIME, PNG_MIME];
 

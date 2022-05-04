@@ -14,7 +14,7 @@ import { cg_InvalidHrefValue } from "./CommonErrors.js";
 
 /**
  * verifies if the specified RelatedMaterial contains a Promotional Still Image (per A177 clause 6.10.13). Only a single image is permitted and the format
-* specified in <MediaLocator><MediaURI> must match that specified in <Format>
+ * specified in <MediaLocator><MediaURI> must match that specified in <Format>
  *
  * @param {Object} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
  * @param {Object} errs              The class where errors and warnings relating to the serivce list processing are stored
@@ -132,7 +132,7 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
  * @param {String} errCode       Error code prefix for reporting
  * @param {string} location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
  * @param {Object} languageValidator
-*/
+ */
 export function  checkValidLogos(RelatedMaterial, errs, errCode, location, languageValidator=null) {
 
 	if (!RelatedMaterial)

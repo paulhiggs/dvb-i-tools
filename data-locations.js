@@ -11,7 +11,7 @@ const pathDVBCS='dvb/cs/', pathDVBI="dvbi", pathISO="iso", pathMPEG7="mpeg7", pa
       path2021CS=`${pathDVBCS}2021`, url2021CS="cs/2021",
 	  path2022CS=`${pathDVBCS}2022`, url2022CS="cs/2022";
 
-	
+
 // SLEPR == Service List Entry Point Registry
 const SLEPR_Dir="registries", SLEPR_File="slepr-main.xml";
 export const Default_SLEPR={file:join(SLEPR_Dir,SLEPR_File), url:`${REPO_RAW}${SLEPR_Dir}/${SLEPR_File}`};

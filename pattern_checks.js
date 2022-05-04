@@ -61,7 +61,7 @@ const e_IPvFutureHost=`\\[v[a-f${e_digit}][${e_unreserved}${e_pct}&amp;~;=:]+\]`
 /**
  * checks if the argument complies to the TV Anytime defintion of RatioType
  *
- * @param {string}     str string contining value to check
+ * @param {string} str string contining value to check
  * @returns {boolean} true if the argment is compliant to a tva:RatioType
  */
 const ratioRegex=new RegExp(`^[${e_digit}]+:[${e_digit}]+$`);

@@ -40,7 +40,7 @@ function tabulateResults(res, error, errs) {
 		res.write('</tr>');
 	}
 
-    res.write(RESULT_WITH_INSTRUCTION);
+    	res.write(RESULT_WITH_INSTRUCTION);
 	if (error) 
 		res.write(`<p>${error}</p>`);
 	let resultsShown=false;

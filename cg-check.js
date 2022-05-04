@@ -1,6 +1,5 @@
 import 'colors';
 import { parseXmlString } from "libxmljs2";
-import format from 'xml-formatter';
 
 import { readFileSync } from "fs";
 
@@ -134,7 +133,7 @@ function BooleanValue(elem, attrName, errCode, errs, isRequired=true) {
  * @param {Class}   errs       errors found in validaton
  * @param {boolean} isRequired true if the specificed attribued is required to be specified for the element
  */
- function TrueValue(elem, attrName, errCode, errs, isRequired=true) {
+function TrueValue(elem, attrName, errCode, errs, isRequired=true) {
 	AllowedValue(elem, attrName, errCode, errs, ["true"], isRequired);
 }
 
@@ -277,7 +276,6 @@ export default class ContentGuideCheck {
 	 */
 	/* private */  hasElement( node, elementName) {
 		if (!node) return false;
-
 		return node.childNodes().find(c => (c.type()=="element" && c.name()==elementName));
 	}
 
@@ -620,7 +618,7 @@ export default class ContentGuideCheck {
 				}
 				
 				let foundPersonName=[], foundCharacter=[], foundOrganizationName=[];
-				/* jshint -W083 */
+/* jshint -W083 */
 				let vn=this.ValidateName;  // since this. is not allowed in a function declared within a loop
 				if (CreditsItem.childNodes()) CreditsItem.childNodes().forEachSubElement(elem => {
 					switch (elem.name()) {
@@ -646,7 +644,7 @@ export default class ContentGuideCheck {
 								errs.addError({code:`${errCode}-6`, message:`extra element ${elem.name().elementize()} found in ${tva.e_CreditsItem.elementize()}`, fragment:elem});
 					}
 				});
-				/* jshint +W083 */
+/* jshint +W083 */
 				if (foundPersonName.length>1)
 					errs.addError({code:`${errCode}-10`, message:singleElementError(tva.e_PersonName, tva.e_CreditsItem), multiElementError:foundPersonName});
 				if (foundCharacter.length>1)
@@ -674,12 +672,10 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                errors found in validaton
 	 */
 	/* private */  ValidateRelatedMaterial_PromotionalStillImage(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs) {
-		
 		if (!BasicDescription) {
 			errs.addError({type:APPLICATION, code:"RMPSI000", message:"ValidateRelatedMaterial_PromotionalStillImage() called with BasicDescription==null"});
 			return;
 		}	
-		
 		let rm=0, RelatedMaterial;
 		while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) 
 			ValidatePromotionalStillImage(RelatedMaterial, errs, "RMPSI001", BasicDescription.name().elementize(), this.knownLanguages);
@@ -696,7 +692,11 @@ export default class ContentGuideCheck {
 	 * @param {string}  Location			The location of the Basic Description element
 	 */
 	/* private */  ValidateRelatedMaterial_Pagination(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs,  Location) {
-		
+		if (!BasicDescription) {
+			errs.addError({type:APPLICATION, code:"VP000", message:"ValidateRelatedMaterial_Pagination() called with BasicDescription==null"});
+			return;
+		}
+				
 		function checkLinkCounts(errs, elements, label, errCode) {
 			if (elements.length>1) {
 				errs.addError({code:errCode, message:`more than 1 ${quote(`${label} pagination`)} link is specified`, multiElementError:elements});
@@ -705,10 +705,6 @@ export default class ContentGuideCheck {
 			return false;
 		}	
 
-		if (!BasicDescription) {
-			errs.addError({type:APPLICATION, code:"VP000", message:"ValidateRelatedMaterial_Pagination() called with BasicDescription==null"});
-			return;
-		}
 		let countPaginationFirst=[], countPaginationPrev=[], countPaginationNext=[], countPaginationLast=[];
 		let rm=0, RelatedMaterial;
 		while ((RelatedMaterial=BasicDescription.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), CG_SCHEMA))!=null) {
@@ -776,7 +772,6 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                errors found in validaton
 	 */
 	/* private */  ValidateRelatedMaterial_MoreEpisodes(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs) {
-		
 		if (!BasicDescription) {
 			errs.addError({type:APPLICATION, code:"RMME000", message:"ValidateRelatedMaterial_MoreEpisodes() called with BasicDescription==null"});
 			return;
@@ -793,6 +788,7 @@ export default class ContentGuideCheck {
 		}
 	}
 
+	
 	/** TemplateAITPromotional Still Image
 	 *
 	 * @param {XMLnode} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
