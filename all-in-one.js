@@ -67,16 +67,18 @@ token("agent", function getAgent(req) {
 	return `(${req.headers["user-agent"]})`;
 });
 token("parseErr", function getParseErr(req) {
-	if (req.parseErr) return `(${req.parseErr})`;
-	return "";
+	return (req.parseErr) ? `(${req.parseErr})` : "";
 });
 token("location", function getCheckedLocation(req) {
-	if (req.body.testtype)
-		return `${req.body.testtype}::[${req.body.testtype==MODE_CG?`(${req.body.requestType})`:""}${req.body.doclocation==MODE_FILE?(req.files?.XMLfile?req.files.XMLfile.name:'unnamed'):req.body.XMLurl}]`;
-	return "[*]";
+	return (req.body.testtype) ?
+		`${req.body.testtype}::[${req.body.testtype==MODE_CG?`(${req.body.requestType})`:""}${req.body.doclocation==MODE_FILE?(req.files?.XMLfile?req.files.XMLfile.name:'unnamed'):req.body.XMLurl}]` :
+		"[*]";
+});
+token("counts", function getCounts(req) {
+	return (req.diags) ? `(${req.diags.countErrs},${req.diags.countWarns},${req.diags.countInfos})` : '[no log]';
 });
 
-app.use(morgan(":remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr :location"));
+app.use(morgan(":remote-addr :protocol :method :url :status :res[content-length] :counts - :response-time ms :agent :parseErr :location"));
 
 app.use(express.urlencoded({ extended: true }));
 

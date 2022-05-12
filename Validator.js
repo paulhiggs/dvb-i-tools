@@ -4,8 +4,55 @@ import { drawForm } from "./ui.js";
 import ErrorList from "./ErrorList.js";
 import { isHTTPURL } from "./pattern_checks.js";
 
+import { existsSync, writeFileSync } from 'fs';
+import { join, sep } from 'path';
+
+import 'colors';
+
 
 export const MODE_UNSPECIFIED="none", MODE_SL="sl", MODE_CG="cg", MODE_URL="url", MODE_FILE="file";
+
+function archiveRequestInfo(req, errs) {
+
+	function writeOut(errs, filename, markup) {
+		if (errs.markupXML?.length==0) 
+			return;
+
+		let outputLines=[];
+		errs.markupXML.forEach( line => {
+			outputLines.push(line.value);
+			if (markup && line.validationErrors)
+				line.validationErrors.forEach(error => {
+					outputLines.push(error);
+				});
+		});
+
+		writeFileSync(filename, outputLines.join('\n'));
+	}
+
+	const logDir=join(".","arch");
+
+	if (!existsSync(logDir))
+		return;
+
+
+	const getDate = (d) => {
+		const fillZero = (t) =>  t < 10 ? `0${t}` : t; 
+		return `${d.getFullYear()}-${fillZero(d.getMonth() + 1)}-${fillZero(d.getDate())} ${fillZero(d.getHours())}.${fillZero(d.getMinutes())}.${fillZero(d.getSeconds())}`;
+	      };
+
+	let fname=req.body.doclocation==MODE_URL ?
+			req.body.XMLurl.substr(req.body.XMLurl.lastIndexOf(sep)):
+			req?.files?.XMLfile?.name;
+	if (!fname)
+	      return;
+
+	let nowStr=getDate(new Date());
+	let filebase=`${logDir}${sep}${nowStr} (${req.body.testtype==MODE_SL?"SL":req.body.requestType}) ${fname}`;
+
+	writeOut(errs, `${filebase}.raw.txt`, false);
+	writeOut(errs, `${filebase}.mkup.txt`, true);
+}
 
 export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasCG, mode=MODE_UNSPECIFIED, linktype=MODE_UNSPECIFIED) {
 
@@ -75,8 +122,16 @@ export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasS
 
 		req.session.data.mode=req.body.testtype;
 		req.session.data.entry=req.body.doclocation;
-		if (req.body.requestType) req.session.data.cgmode=req.body.requestType;
+		if (req.body.requestType) 
+			req.session.data.cgmode=req.body.requestType;
 		drawForm(deprecationWarning?'/check':null, req, res, FormArguments, cgcheck?cgcheck.supportedRequests:null, req.parseErr, errs);
+
+		req.diags={};
+		req.diags.countErrs=errs.numErrors();
+		req.diags.countWarnings=errs.numWarnings();
+		req.diags.countInfos=errs.numInformationals();
+	
+		archiveRequestInfo(req, errs);
 	} 
 	res.end();
 }
