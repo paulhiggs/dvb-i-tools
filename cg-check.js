@@ -1102,7 +1102,6 @@ export default class ContentGuideCheck {
 							this.ValidateSynopsis(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [], requestType, errs, "BD064");
 							this.ValidateKeyword(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, 0, 20, errs, "BD065");
 							this.ValidateRelatedMaterial_BoxSetList(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription, errs);
-							this.ValidateRelatedMaterial_PromotionalStillImage(CG_SCHEMA, SCHEMA_PREFIX, BasicDescription,  errs);
 						}
 					break;
 					case CG_REQUEST_MORE_EPISODES: 
