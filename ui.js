@@ -1,5 +1,6 @@
 import { HTMLize } from './phlib/phlib.js';
 import { ERROR, WARNING, INFORMATION } from './ErrorList.js';
+import { MODE_URL, MODE_FILE } from './Validator.js'; 
  
 function PAGE_TOP(label) {
 	const TABLE_STYLE="<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
@@ -17,9 +18,9 @@ function PAGE_TOP(label) {
 const PAGE_BOTTOM="<br/><hr><p><i>Submit issues at </i><a href=\"https://github.com/paulhiggs/dvb-i-tools/issues\">https://github.com/paulhiggs/dvb-i-tools/issues</a></p></body></html>";
 
 
-function tabulateResults(res, error, errs) {
+function tabulateResults(source, res, error, errs) {
 
-	const RESULT_WITH_INSTRUCTION="<br><p><i>Results:</i></p>";
+	const RESULT_WITH_INSTRUCTION=`<br><p><i>Results:</i> ${source}</p>`;
 	const SUMMARY_FORM_HEADER="<table><tr><th>item</th><th>count</th></tr>";
 	const Dodger_Blue="#1E90FF", link_css="jump";
 	
@@ -134,7 +135,16 @@ export function drawForm(deprecateTo, req, res, modes, supportedRequests, error=
 		<br><input type="submit" value="Validate!"><br>	
 	</form>
 	`);
-	tabulateResults(res, error, errs);
+	let source='';
+	switch (req.body.doclocation) {
+		case MODE_URL:
+			source=req.body.XMLurl;
+			break;
+		case MODE_FILE:
+			source=req.files.XMLfile.name;
+			break;
+	}
+	tabulateResults(source, res, error, errs);
 	res.write(PAGE_BOTTOM);
 
 	return new Promise((resolve, reject) => {
