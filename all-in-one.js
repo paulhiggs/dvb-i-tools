@@ -75,7 +75,7 @@ token("location", function getCheckedLocation(req) {
 		"[*]";
 });
 token("counts", function getCounts(req) {
-	return (req.diags) ? `(${req.diags.countErrs},${req.diags.countWarns},${req.diags.countInfos})` : '[no log]';
+	return (req.diags) ? `(${req.diags.countErrors},${req.diags.countWarnings},${req.diags.countInforms})` : '[no log]';
 });
 
 app.use(morgan(":remote-addr :protocol :method :url :status :res[content-length] :counts - :response-time ms :agent :parseErr :location"));

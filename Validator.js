@@ -127,9 +127,9 @@ export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasS
 		drawForm(deprecationWarning?'/check':null, req, res, FormArguments, cgcheck?cgcheck.supportedRequests:null, req.parseErr, errs);
 
 		req.diags={};
-		req.diags.countErrs=errs.numErrors();
+		req.diags.countErrors=errs.numErrors();
 		req.diags.countWarnings=errs.numWarnings();
-		req.diags.countInfos=errs.numInformationals();
+		req.diags.countInforms=errs.numInformationals();
 	
 		archiveRequestInfo(req, errs);
 	} 
