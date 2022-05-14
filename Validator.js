@@ -42,13 +42,13 @@ function archiveRequestInfo(req, errs) {
 	      };
 
 	let fname=req.body.doclocation==MODE_URL ?
-			req.body.XMLurl.substr(req.body.XMLurl.lastIndexOf(sep)):
+			req.body.XMLurl.substr(req.body.XMLurl.lastIndexOf('/')+1):
 			req?.files?.XMLfile?.name;
 	if (!fname)
 	      return;
 
 	let nowStr=getDate(new Date());
-	let filebase=`${logDir}${sep}${nowStr} (${req.body.testtype==MODE_SL?"SL":req.body.requestType}) ${fname}`;
+	let filebase=`${logDir}${sep}${nowStr} (${req.body.testtype==MODE_SL?"SL":req.body.requestType}) ${fname.replace(/[/\\?%*:|"<>]/g, '-')}`;
 
 	writeOut(errs, `${filebase}.raw.txt`, false);
 	writeOut(errs, `${filebase}.mkup.txt`, true);
