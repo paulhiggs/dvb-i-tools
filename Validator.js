@@ -23,7 +23,7 @@ function archiveRequestInfo(req, errs) {
 			outputLines.push(line.value);
 			if (markup && line.validationErrors)
 				line.validationErrors.forEach(error => {
-					outputLines.push(error);
+					outputLines.push(error.replace(/[\j\m\n]/g,''));
 				});
 		});
 
