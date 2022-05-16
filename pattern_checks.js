@@ -120,6 +120,16 @@ export var isURI = (arg) => isURL(arg) || isURN(arg);
 
 
 /**
+ * Checks the URI conforms to RFC 2397.
+ * dataurl := "data:" [ mediatype ] [ ";base64" ] "," data mediatype := [ type "/" subtype ] *( ";" parameter ) data := *urlchar parameter := attribute "=" value
+ * 
+ * Thanks to https://gist.github.com/khanzadimahdi/bab8a3416bdb764b9eda5b38b35735b8 
+ */
+const dataRegexp=new RegExp(`^data:((?:\w+\/(?:(?!;).)+)?)((?:;[\w\W]*?[^;])*),(.+)$`, 'i');
+export var isDataURI = (arg) => datatypeIs(arg, 'string') ? dataRegexp.test(arg) : false;
+
+
+/**
  * checks if the argument complies to an XML representation of UTC time (i.e. ISO 8601-2:2019)
  *
  * @param {string} duration string contining the UTC time
