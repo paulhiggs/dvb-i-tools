@@ -3,7 +3,7 @@ import { ERROR, WARNING, INFORMATION } from './ErrorList.js';
 import { MODE_URL, MODE_FILE } from './Validator.js'; 
  
 
-const MESSAGES_IN_ORDER=false;  // when true outputs the errors, warnings and informations in the 'document order'. false==ouotput in order found 
+const MESSAGES_IN_ORDER=true;  // when true outputs the errors, warnings and informations in the 'document order'. false==ouotput in order found 
 
 function PAGE_TOP(label) {
 	const TABLE_STYLE="<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #f2f2f2;}	</style>";

@@ -32,6 +32,7 @@ import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./Mul
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaLoad } from "./schema_checks.js";
 
 import 'colors';
+import { writeOut } from './Validator.js';
 
 /* TODO:
 
@@ -1258,8 +1259,9 @@ export default class ServiceListCheck {
 	 *
 	 * @param {String} SLtext  The service list text to be validated
 	 * @param {Class} errs     Errors found in validaton
+	 * @param {String} log_prefix  the first part of the logging location (of null if no logging)
 	 */
-	/*public*/ doValidateServiceList(SLtext, errs) {
+	/*public*/ doValidateServiceList(SLtext, errs, log_prefix) {
 		if (!SLtext) {
 			errs.addError({type:APPLICATION, code:"SL000", message:'doValidateServiceList() called with SLtext==null'});
 			return;
@@ -1268,6 +1270,7 @@ export default class ServiceListCheck {
 		let SL=SchemaLoad(SLtext, errs, "SL001");
 		if (!SL)
 			return;
+		writeOut(errs, log_prefix, false);
 
 		if (!SL.root().namespace()) {
 			errs.addError({code:"SL003", message:`namespace is not provided for ${dvbi.e_ServiceList.elementize()}`, key:"XSD validation"});

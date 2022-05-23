@@ -12,29 +12,29 @@ import 'colors';
 
 export const MODE_UNSPECIFIED="none", MODE_SL="sl", MODE_CG="cg", MODE_URL="url", MODE_FILE="file";
 
-function archiveRequestInfo(req, errs) {
 
-	function writeOut(errs, filename, markup) {
-		if (errs.markupXML?.length==0) 
-			return;
+export function writeOut(errs, filebase, markup) {
+	if (!filebase || errs.markupXML?.length==0) 
+		return;
 
-		let outputLines=[];
-		errs.markupXML.forEach( line => {
-			outputLines.push(line.value);
-			if (markup && line.validationErrors)
-				line.validationErrors.forEach(error => {
-					outputLines.push(error.replace(/[\j\m\n]/g,''));
-				});
-		});
+	let outputLines=[];
+	errs.markupXML.forEach( line => {
+		outputLines.push(line.value);
+		if (markup && line.validationErrors)
+			line.validationErrors.forEach(error => {
+				outputLines.push(error.replace(/[\j\m\n]/g,''));
+			});
+	});
 
-		writeFileSync(filename, outputLines.join('\n'));
-	}
+	writeFileSync(markup?`${filebase}.mkup.txt`:`${filebase}.raw.txt`, outputLines.join('\n'));
+}
 
+
+function createPrefix(req) {
 	const logDir=join(".","arch");
 
 	if (!existsSync(logDir))
-		return;
-
+		return null;
 
 	const getDate = (d) => {
 		const fillZero = (t) =>  t < 10 ? `0${t}` : t; 
@@ -45,13 +45,9 @@ function archiveRequestInfo(req, errs) {
 			req.body.XMLurl.substr(req.body.XMLurl.lastIndexOf('/')+1):
 			req?.files?.XMLfile?.name;
 	if (!fname)
-	      return;
+	      return null;
 
-	let nowStr=getDate(new Date());
-	let filebase=`${logDir}${sep}${nowStr} (${req.body.testtype==MODE_SL?"SL":req.body.requestType}) ${fname.replace(/[/\\?%*:|"<>]/g, '-')}`;
-
-	writeOut(errs, `${filebase}.raw.txt`, false);
-	writeOut(errs, `${filebase}.mkup.txt`, true);
+	return `${logDir}${sep}${getDate(new Date())} (${req.body.testtype==MODE_SL?"SL":req.body.requestType}) ${fname.replace(/[/\\?%*:|"<>]/g, '-')}`;
 }
 
 export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasCG, mode=MODE_UNSPECIFIED, linktype=MODE_UNSPECIFIED) {
@@ -76,6 +72,7 @@ export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasS
 	else {
 		let VVxml=null;
 		req.parseErr=null;
+
 		if (req.body.testtype==MODE_CG && req.body.requestType.length==0) 
 			req.parseErr="request type not specified";
 		else if (req.body.doclocation==MODE_URL && req.body.XMLurl.length==0)
@@ -83,6 +80,7 @@ export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasS
 		else if (req.body.doclocation==MODE_FILE && !(req.files && req.files.XMLfile))
 			req.parseErr="File not provided";
 
+		let log_prefix=createPrefix(req, res);
 		if (!req.parseErr)
 			switch (req.body.doclocation) {
 				case MODE_URL:
@@ -113,10 +111,10 @@ export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasS
 		if (!req.parseErr) 
 			switch (req.body.testtype) {
 				case MODE_CG:
-					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs);
+					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, log_prefix);
 					break;
 				case MODE_SL:
-					if (slcheck) slcheck.doValidateServiceList(VVxml, errs);
+					if (slcheck) slcheck.doValidateServiceList(VVxml, errs, log_prefix);
 					break;
 			}
 
@@ -131,7 +129,7 @@ export function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasS
 		req.diags.countWarnings=errs.numWarnings();
 		req.diags.countInforms=errs.numInformationals();
 	
-		archiveRequestInfo(req, errs);
+		writeOut(errs, log_prefix, true);
 	} 
 	res.end();
 }

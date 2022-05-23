@@ -175,15 +175,15 @@ export function SchemaLoad(document, errs, errcode) {
 	}
 	catch (err) {
 		errs.addError({code:`${errcode}-1`, message:`XML parsing failed: ${err.message}`, key:"malformed XML"});
-		errs.loadDocument(prettyXML, false);
+		errs.loadDocument(prettyXML);
 		return null;
 	}
 	if (!tmp || !tmp.root()) {
 		errs.addError({code:`${errcode}-2`, message:"XML document is empty", key:"malformed XML"});
-		errs.loadDocument(prettyXML, false);
+		errs.loadDocument(prettyXML);
 		return null;
 	}
 
-	errs.loadDocument(prettyXML, true);	
+	errs.loadDocument(prettyXML);	
 	return 	tmp; 
 }

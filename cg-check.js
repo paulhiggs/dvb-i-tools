@@ -27,6 +27,7 @@ import { cg_InvalidHrefValue, NoChildElement } from "./CommonErrors.js";
 import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaLoad } from "./schema_checks.js";
 
 import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./MultilingualElement.js";
+import { writeOut } from './Validator.js';
 
 // convenience/readability values
 const DEFAULT_LANGUAGE="***";
@@ -2433,8 +2434,9 @@ export default class ContentGuideCheck {
 	 * @param {String} CGtext      the service list text to be validated
 	 * @param {String} requestType the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
 	 * @param {Class} errs         errors found in validaton
+	 * @param {String} log_prefix  the first part of the logging location (of null if no logging)
 	 */
-	doValidateContentGuide(CGtext, requestType, errs) {
+	doValidateContentGuide(CGtext, requestType, errs, log_prefix) {
 		if (!CGtext) {
 			errs.addError({type:APPLICATION, code:"CG000", message:'doValidateContentGuide() called with CGtext==null'});
 			return;
@@ -2443,6 +2445,8 @@ export default class ContentGuideCheck {
 		let CG=SchemaLoad(CGtext, errs, "CG001");
 		if (!CG)
 			return;
+
+		writeOut(errs, log_prefix, false);
 
 		if (CG.root().name()!=tva.e_TVAMain) {
 			errs.addError({code:"CG002", message:`Root element is not ${tva.e_TVAMain.elementize()}`, key:"XSD validation"});
