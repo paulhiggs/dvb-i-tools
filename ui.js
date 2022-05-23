@@ -2,6 +2,9 @@ import { HTMLize } from './phlib/phlib.js';
 import { ERROR, WARNING, INFORMATION } from './ErrorList.js';
 import { MODE_URL, MODE_FILE } from './Validator.js'; 
  
+
+const MESSAGES_IN_ORDER=false;  // when true outputs the errors, warnings and informations in the 'document order'. false==ouotput in order found 
+
 function PAGE_TOP(label) {
 	const TABLE_STYLE="<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
 	const XML_STYLE="<style>.xmlfont {font-family: Arial, Helvetica, sans-serif; font-size:90%;}</style>";
@@ -58,28 +61,31 @@ function tabulateResults(source, res, error, errs) {
 
 		if (errs.numErrors() > 0) {
 			res.write(DETAIL_FORM_HEADER("errors"));
-			errs.errors.forEach(tabluateMessage);
+			let oErrors=MESSAGES_IN_ORDER ? errs.errors.sort(function(a, b){return a?.line > b?.line;}) : errs.errors;
+			oErrors.forEach(tabluateMessage);
 			resultsShown=true;
 			res.write("</table><br/>");
 		} 
 
 		if (errs.numWarnings()>0) {
 			res.write(DETAIL_FORM_HEADER("warnings"));
-			errs.warnings.forEach(tabluateMessage);
+			let oWarnings=MESSAGES_IN_ORDER ? errs.warnings.sort(function(a, b){return a?.line > b?.line;}) : errs.warnings;
+			oWarnings.forEach(tabluateMessage);
 			resultsShown=true;
 			res.write("</table><br/>");
 		}
 
 		if (errs.numInformationals()>0) {
 			res.write(DETAIL_FORM_HEADER("informationals"));
-			errs.informationals.forEach(tabluateMessage);
+			let oInforms=MESSAGES_IN_ORDER ? errs.informationals.sort(function(a, b){return a?.line > b?.line;}) : errs.informationals;
+			oInforms.forEach(tabluateMessage);
 			resultsShown=true;
 			res.write("</table><br/>");
 		}
 	}
 
 	if (!error && !resultsShown) 
-		res.write("no errors or warnings");
+		res.write("no errors, warnings or informationals");
 
 	if (errs && errs.markupXML?.length>0) {
 		res.write("<hr/>");
