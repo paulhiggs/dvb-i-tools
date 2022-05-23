@@ -5,7 +5,6 @@
  * 
  */
 
-import { parseXmlString } from "libxmljs2";
 import { datatypeIs } from "./phlib/phlib.js";
 
 export const ERROR='(E)', WARNING='(W)', INFORMATION='(I)', APPLICATION='(A)';
@@ -36,11 +35,9 @@ export default class ErrorList {
 	/**
 	 * loads the text that can be marked up with any validation errors/warnings etc
 	 * @param {string} doc   The document received for validation
-	 * @param {boolean} isXML true is the document was parsed as XML, else false
 	 */
-	loadDocument(doc, isXML) {
-		let lines= isXML ? parseXmlString(doc).toString({declaration:false, format:true}).split('\n') : doc.split('\n');
-		this.markupXML=lines.map((str, index) => ({ value: str, ix: index }));
+	loadDocument(doc) {
+		this.markupXML=doc.split('\n').map((str, index) => ({ value:str, ix:index+1 }));
 	}
 	/**
 	 * attach an error message to a particular line in the received text
@@ -158,7 +155,7 @@ export default class ErrorList {
 			this.insertErrorData(e.type, e.key, {code:e.code, message:e.message});
 			e.multiElementError.forEach(fragment => {
 				if (fragment && !datatypeIs(fragment, "string"))
-					this.setError(e.type, e.code, e.message, fragment.line()-2);
+					this.setError(e.type, e.code, e.message, fragment.line());
 			});
 		}
 		else if (e.fragments) {
@@ -170,11 +167,11 @@ export default class ErrorList {
 					
 					if (datatypeIs(fragment, "string")) {
 						if (e.hasOwnProperty('line')) {
-							this.setError(e.type, e.code, e.message, e.line-2);
+							this.setError(e.type, e.code, e.message, e.line);
 							newError.line=e.line-2;
 						}						
 					} else {
-						this.setError(e.type, e.code, e.message, fragment.line()-2);
+						this.setError(e.type, e.code, e.message, fragment.line());
 						newError.line=fragment.line()-2;
 					}
 					if (e.reportInTable)
@@ -190,12 +187,12 @@ export default class ErrorList {
 			
 			if (datatypeIs(e.fragment, "string")) {
 				if (e.hasOwnProperty('line')) {
-					this.setError(e.type, e.code, e.message, e.line-2);
+					this.setError(e.type, e.code, e.message, e.line);
 					newError.line=e.line-2;
 				}
 			}
 			else {
-				this.setError(e.type, e.code, e.message, e.fragment.line()-2);
+				this.setError(e.type, e.code, e.message, e.fragment.line());
 				newError.line=e.fragment.line()-2;
 			}
 			if (e.reportInTable)
@@ -204,7 +201,7 @@ export default class ErrorList {
 		else {
 			let newError={code:e.code, message:e.message, element:null};
 			if (e.line) {
-				this.setError(e.type, e.code, e.message, e.line-2);
+				this.setError(e.type, e.code, e.message, e.line);
 				newError.line=e.line-2;
 			}
 			if (e.reportInTable)
