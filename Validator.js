@@ -4,7 +4,7 @@ import { drawForm } from "./ui.js";
 import ErrorList from "./ErrorList.js";
 import { isHTTPURL } from "./pattern_checks.js";
 
-import { existsSync, writeFileSync } from 'fs';
+import { existsSync, writeFile } from 'fs';
 import { join, sep } from 'path';
 
 import 'colors';
@@ -25,8 +25,11 @@ export function writeOut(errs, filebase, markup) {
 				outputLines.push(error.replace(/[\j\m\n]/g,''));
 			});
 	});
-
-	writeFileSync(markup?`${filebase}.mkup.txt`:`${filebase}.raw.txt`, outputLines.join('\n'));
+	let filename=markup?`${filebase}.mkup.txt`:`${filebase}.raw.txt`;
+	writeFile(filename, outputLines.join('\n'),
+		(err)=>{
+			console.log(`${err}`.red);
+		});
 }
 
 
