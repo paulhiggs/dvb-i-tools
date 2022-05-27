@@ -26,10 +26,10 @@ export function writeOut(errs, filebase, markup) {
 			});
 	});
 	let filename=markup?`${filebase}.mkup.txt`:`${filebase}.raw.txt`;
-	writeFile(filename, outputLines.join('\n'),
-		(err)=>{
+	writeFile(filename, outputLines.join('\n'), (err)=>{
+		if (err) 
 			console.log(`${err}`.red);
-		});
+	});
 }
 
 
