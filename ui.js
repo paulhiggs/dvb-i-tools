@@ -144,10 +144,10 @@ export function drawForm(deprecateTo, req, res, modes, supportedRequests, error=
 	let source='';
 	switch (req.body.doclocation) {
 		case MODE_URL:
-			source=req.body.XMLurl;
+			source=req.body?.XMLurl ?req.body?.XMLurl : '';
 			break;
 		case MODE_FILE:
-			source=req.files.XMLfile.name;
+			source=req.files?.XMLfile?.name ? req.files?.XMLfile?.name : '';
 			break;
 	}
 	tabulateResults(source, res, error, errs);
