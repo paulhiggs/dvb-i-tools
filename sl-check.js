@@ -208,7 +208,6 @@ let NoDeliveryParams = (source, serviceId, element, errCode) =>
 
 
 
-
 if (!Array.prototype.forEachSubElement) {
 	// based on the polyfill at https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach 
 	/*
@@ -684,13 +683,14 @@ export default class ServiceListCheck {
 	 * @param {XMLnode} node           The XML tree node (either a <Service> or a <ServiceInstance>) to be checked
 	 * @returns {boolean} true if the node contains a <RelatedMaterial> element which signals an application else false
 	 */
+
 	/*private*/  hasSignalledApplication(SL_SCHEMA, SCHEMA_PREFIX, node) {
 		if (node) {
 			let i=0, elem;
 			while ((elem=node.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++i), SL_SCHEMA))!=null) {
 				let hr=elem.get(xPath(SCHEMA_PREFIX, tva.e_HowRelated), SL_SCHEMA);
-				if (hr && this.validServiceApplication(hr)) 
-					return true;			
+				if (hr && this.validServiceApplication(hr))
+					return true;
 			}
 		}
 		return false;

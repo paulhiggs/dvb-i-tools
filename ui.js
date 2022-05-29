@@ -107,7 +107,7 @@ function tabulateResults(source, res, error, errs) {
 }
 
 
-export function drawForm(deprecateTo, req, res, modes, supportedRequests, error=null, errs=null) {
+export default function drawForm(deprecateTo, req, res, modes, supportedRequests, error=null, errs=null) {
 
 	const ENTRY_FORM_REQUEST_TYPE_ID="requestType";
 
