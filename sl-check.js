@@ -1231,11 +1231,16 @@ export default class ServiceListCheck {
 				case 'urn:hbbtv:dvbi:service:serviceIdentifierTriplet':
 					if (extLoc != EXTENSION_LOCATION_SERVICE_ELEMENT)
 						errs.addError({code:`${errCode}-2`, message:"HbbTV extension only permitted in Service List", 
-						fragment:extn, key:'extensability'});
+							fragment:extn, key:'extensability'});
+					break;
+				case 'vnd.apple.mpegurl':
+					if (extLoc != EXTENSION_LOCATION_SERVICE_ELEMENT)
+						errs.addError({code:`${errCode}-3`, message:"HLS extension only permitted in Service List", 
+							fragment:extn, key:'extensability'});
 					break;
 				default:
 					errs.addError({type:WARNING, code:`${errCode}-100`, key:'unknown extension', fragment:extn,
-									message:`extenstion "${extn.attr(dvbi.a_extensionName).value()}" is not known to this tool`});
+						message:`extenstion "${extn.attr(dvbi.a_extensionName).value()}" is not known to this tool`});
 			}
 		}
 	}
