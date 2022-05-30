@@ -37,7 +37,7 @@ import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from './globals.js';
 import IANAlanguages from "./IANAlanguages.js";
 import ISOcountries from "./ISOcountries.js";
 import ClassificationScheme from "./ClassificationScheme.js";
-const MODE_UNSPECIFIED="none", MODE_SL="sl", MODE_CG="cg", MODE_URL="url", MODE_FILE="file";
+export const MODE_UNSPECIFIED="none", MODE_SL="sl", MODE_CG="cg", MODE_URL="url", MODE_FILE="file";
 
 // the service list validation
 import ServiceListCheck from './sl-check.js';
@@ -184,7 +184,7 @@ export default function validator(options) {
 		process.exit(1);
 	}
 
-	if (!options.nocsr && !options.hasOwnProperty()) {
+	if (!options.nocsr && !options.hasOwnProperty('CSRfile')) {
 		console.log("SLEPR file not specified... exiting".red);
 		process.exit(1);
 	}
