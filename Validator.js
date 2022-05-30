@@ -37,7 +37,7 @@ import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from './globals.js';
 import IANAlanguages from "./IANAlanguages.js";
 import ISOcountries from "./ISOcountries.js";
 import ClassificationScheme from "./ClassificationScheme.js";
-export const MODE_UNSPECIFIED="none", MODE_SL="sl", MODE_CG="cg", MODE_URL="url", MODE_FILE="file";
+const MODE_UNSPECIFIED="none", MODE_SL="sl", MODE_CG="cg", MODE_URL="url", MODE_FILE="file";
 
 // the service list validation
 import ServiceListCheck from './sl-check.js';
