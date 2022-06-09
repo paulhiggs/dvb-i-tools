@@ -1222,20 +1222,21 @@ export default class ServiceListCheck {
 		// extension type is checked in schema validation
 
 		if (extn.attr(dvbi.a_extensionName)) {
+			let where = (extension, location) => `${extension} extension only premitted in ${location}`;
 			switch (extn.attr(dvbi.a_extensionName).value()) {
 				case 'DVB-HB': 
 					if (extLoc != EXTENSION_LOCATION_SERVICE_LIST_REGISTRY)
-						errs.addError({code:`${errCode}-1`, message:"DVB-HB Extension only permitted in the Service List Registry", 
+						errs.addError({code:`${errCode}-1`, message:where("DVB-HB", "Service List Registry"), 
 							fragment:extn, key:'extensability'});
 					break;
 				case 'urn:hbbtv:dvbi:service:serviceIdentifierTriplet':
 					if (extLoc != EXTENSION_LOCATION_SERVICE_ELEMENT)
-						errs.addError({code:`${errCode}-2`, message:"HbbTV extension only permitted in Service List", 
+						errs.addError({code:`${errCode}-2`, message:where("HbbTV", "Service List"), 
 							fragment:extn, key:'extensability'});
 					break;
 				case 'vnd.apple.mpegurl':
 					if (extLoc != EXTENSION_LOCATION_SERVICE_ELEMENT)
-						errs.addError({code:`${errCode}-3`, message:"HLS extension only permitted in Service List", 
+						errs.addError({code:`${errCode}-3`, message:where("HLS", "Service List"), 
 							fragment:extn, key:'extensability'});
 					break;
 				default:
