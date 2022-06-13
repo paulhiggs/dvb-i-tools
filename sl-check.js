@@ -34,10 +34,6 @@ import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck,
 import 'colors';
 import { writeOut } from './Validator.js';
 
-/* TODO:
-
- - also look for TODO in the code itself
-*/
 
 const ANY_NAMESPACE="$%$!!";
 const LCN_TABLE_NO_TARGETREGION='unspecifiedRegion', LCN_TABLE_NO_SUBSCRIPTION='unspecifiedPackage';
@@ -343,8 +339,8 @@ export default class ServiceListCheck {
 			{files:[DVB_VideoCodecCS.y2007.file, DVB_VideoCodecCS.y2021.file, DVB_VideoCodecCS.y2022.file, MPEG7_VisualCodingFormatCS.file], leafNodesOnly:true});
 
 		this.allowedVideoConformancePoints.loadCS(useURLs?
-			{urls:[DVB_VideoConformanceCS.y2017.url, DVB_VideoConformanceCS.y2017.url], leafNodesOnly:true} :
-			{files:[DVB_VideoConformanceCS.y2017.file, DVB_VideoConformanceCS.y2021.file], leafNodesOnly:true});
+			{urls:[DVB_VideoConformanceCS.y2017.url, DVB_VideoConformanceCS.y2021.url, DVB_VideoConformanceCS.y2022.url], leafNodesOnly:true} :
+			{files:[DVB_VideoConformanceCS.y2017.file, DVB_VideoConformanceCS.y2021.file, DVB_VideoConformanceCS.y2022.file], leafNodesOnly:true});
 
 		this.AudioPresentationCSvalues.loadCS(useURLs?{url:MPEG7_AudioPresentationCS.url} :  {file:MPEG7_AudioPresentationCS.file} );
 
@@ -1222,7 +1218,7 @@ export default class ServiceListCheck {
 		// extension type is checked in schema validation
 
 		if (extn.attr(dvbi.a_extensionName)) {
-			let where = (extension, location) => `${extension} extension only premitted in ${location}`;
+			const where = (extension, location) => `${extension} extension only premitted in ${location}`;
 			switch (extn.attr(dvbi.a_extensionName).value()) {
 				case 'DVB-HB': 
 					if (extLoc != EXTENSION_LOCATION_SERVICE_LIST_REGISTRY)
