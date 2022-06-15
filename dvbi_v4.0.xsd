@@ -37,6 +37,19 @@
 			<any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 		<attribute name="version" type="positiveInteger" use="required"/>
+		<attribute name="responseStatus" use="optional">
+			<simpleType>
+				<restriction base="string">
+					<enumeration value="OK"/>
+					<enumeration value="ERROR_INVALID_MUX_INFO"/>
+					<enumeration value="ERROR_INVALID_REQUEST"/>
+					<enumeration value="ERROR_BUSY"/>
+					<enumeration value="ERROR_GENERIC_FAILURE"/>
+					<enumeration value="ERROR_INVALID_POSTCODE"/>
+					<enumeration value="ERROR_INVALID_REGION_ID"/>
+				</restriction>
+			</simpleType>
+		</attribute>
 		<attribute ref="xml:lang" use="required"/>
 	</complexType>
 	<complexType name="ContentGuideSourceListType">
@@ -298,7 +311,8 @@
 			</choice>
 			<element name="Region" type="dvbisd:RegionType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
-		<attribute name="regionID" type="dvbisd:RegionIdType" use="optional"/>
+		<attribute name="regionID" type="dvbisd:RegionIdType" use="required"/>
+		<attribute name="selectable" type="boolean" default="true"/>
 		<attribute name="countryCodes" type="dvbisd:ISO-3166-List" use="optional"/>
 		<attribute ref="xml:lang"/>
 	</complexType>

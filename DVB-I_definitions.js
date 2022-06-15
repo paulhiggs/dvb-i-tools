@@ -300,7 +300,9 @@ export const dvbi = {
 	e_URI: "URI",
 	e_UriBasedLocation: "UriBasedLocation",
 	e_VideoConformancePoint: "VideoConformancePoint",
-	e_WildcardPostcode: "WildcardPostcode"
+	e_WildcardPostcode: "WildcardPostcode",
+
+	q_inlineImages: "inlineImages"
 };
 
 export const dvbEA = {	// EA = Element-Attributes - the attributes that are defiend for each element

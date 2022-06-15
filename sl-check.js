@@ -353,12 +353,13 @@ export default class ServiceListCheck {
 	 *
 	 * @param {String}  SL_SCHEMA      Used when constructing Xpath queries
 	 * @param {String}  SCHEMA_PREFIX  Used when constructing Xpath queries
+	 * @param {integer} schemaVersion  the schema version of the service list being validated
 	 * @param {XMLnode} Region         The <Region> element to process
 	 * @param {integer} depth         The current depth in the hierarchial structure of regions
 	 * @param {Array}  knownRegionIDs  The list of region IDs that have been found
 	 * @param {Object} errs           The class where errors and warnings relating to the service list processing are stored 
 	 */
-	/*private*/  addRegion(SL_SCHEMA, SCHEMA_PREFIX, Region, depth, knownRegionIDs, errs) {
+	/*private*/  addRegion(SL_SCHEMA, SCHEMA_PREFIX, schemaVersion, Region, depth, knownRegionIDs, errs) {
 		
 		if (!Region) {
 			errs.addError({type:APPLICATION, code:"AR000", message:"addRegion() called with Region==null"});
@@ -366,46 +367,63 @@ export default class ServiceListCheck {
 		}
 		
 		let regionID=Region.attr(dvbi.a_regionID)?Region.attr(dvbi.a_regionID).value():null;
-		let displayRegionID=regionID?regionID.quote():'"unidentified"';
-		if (regionID) {
-			if (knownRegionIDs.find(r => r.region == regionID) != undefined) 
-				errs.addError({code:"AR001", message:`Duplicate ${dvbi.a_regionID.attribute()} ${displayRegionID}`, key:`duplicate ${dvbi.a_regionID}`, line:Region.line()});
-			else knownRegionIDs.push({region:regionID, used:false, line:Region.line()});
+		let displayRegionID=regionID?regionID.quote():'"noID"';
+
+		if (schemaVersion >= SCHEMA_v5) {
+			let selectable=Region.attr(dvbi.a_selectable)?Region.attr(dvbi.a_selectable).value()=="true":true;
+
+			if (!selectable && (depth==dvbi.MAX_SUBREGION_LEVELS))
+				errs.addError({code:"AR010", message:`Tertiary (leaf) subregion must be selectable`, key:`not selectable`, line:Region.line()});
+
+			if (!selectable && !hasChild(Region, dvbi.e_Region))
+				errs.addError({code:"AR011", message:`leaf subregion must be selectable`, key:`not selectable`, line:Region.line()});
+
+			if (selectable) {
+				if (regionID) {
+					if (knownRegionIDs.find(r => r.region == regionID) != undefined) 
+						errs.addError({code:"AR012", message:`Duplicate ${dvbi.a_regionID.attribute()} ${displayRegionID}`, key:`duplicate ${dvbi.a_regionID}`, line:Region.line()});
+					else knownRegionIDs.push({region:regionID, used:false, line:Region.line()});
+				}
+				else errs.addError({code:"AR013", message:`${dvbi.a_regionID.attribute()} is required`, key:`no ${dvbi.a_regionID}`, line:Region.line()});
+			}
+
 		}
-
-		if ((depth==dvbi.MAX_SUBREGION_LEVELS) && !regionID)
-			errs.addError({code:"AR011", message:`${dvbi.a_regionID.attribute()} is required at Tertiary (leaf) subregion`, key:`no ${dvbi.a_regionID} at leaf`, line:Region.line()});
-
-		if (!hasChild(Region, dvbi.e_Region) && !regionID)
-			errs.addError({code:"AR012", message:`${dvbi.a_regionID.attribute()} is required at Tertiary (leaf) subregion`, key:`no ${dvbi.a_regionID} at leaf`, line:Region.line()});
+		else {
+			if (regionID) {
+				if (knownRegionIDs.find(r => r.region == regionID) != undefined) 
+					errs.addError({code:"AR021", message:`Duplicate ${dvbi.a_regionID.attribute()} ${displayRegionID}`, key:`duplicate ${dvbi.a_regionID}`, line:Region.line()});
+				else knownRegionIDs.push({region:regionID, used:false, line:Region.line()});
+			}
+			else errs.addError({code:"AR020", message:`${dvbi.a_regionID.attribute()} is required`, key:`no ${dvbi.a_regionID}`, line:Region.line()});
+		} 
 		
-			if (depth > dvbi.MAX_SUBREGION_LEVELS) 
-			errs.addError({code:"AR013", message:`${dvbi.e_Region.elementize()} depth exceeded (>${dvbi.MAX_SUBREGION_LEVELS}) for sub-region ${displayRegionID}`, key:"region depth exceeded", line:Region.line()});
+		if (depth > dvbi.MAX_SUBREGION_LEVELS) 
+			errs.addError({code:"AR031", message:`${dvbi.e_Region.elementize()} depth exceeded (>${dvbi.MAX_SUBREGION_LEVELS}) for sub-region ${displayRegionID}`, key:"region depth exceeded", line:Region.line()});
 
 		let countryCodesSpecified=Region.attr(dvbi.a_countryCodes);
 		if ((depth!=0) && countryCodesSpecified) 
-			errs.addError({code:"AR021", message:`${dvbi.a_countryCodes.attribute(Region.name())} not permitted for sub-region ${displayRegionID}`, key:"ccode in subRegion", line:Region.line()});
+			errs.addError({code:"AR032", message:`${dvbi.a_countryCodes.attribute(Region.name())} not permitted for sub-region ${displayRegionID}`, key:"ccode in subRegion", line:Region.line()});
 
 		if (countryCodesSpecified) {
 			let countries=countryCodesSpecified.value().split(",");
 			if (countries) 
 				countries.forEach(country => {
 					if (!this.knownCountries.isISO3166code(country)) 
-						errs.addError({code:"AR031", message:`invalid country code (${country}) for region ${displayRegionID}`, key:"invalid country code", line:Region.line()});
+						errs.addError({code:"AR033", message:`invalid country code (${country}) for region ${displayRegionID}`, key:"invalid country code", line:Region.line()});
 				});
 		}
 
-		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_RegionName, `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${displayRegionID}`, Region, errs, "AR006", this.knownLanguages);
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_RegionName, `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${displayRegionID}`, Region, errs, "AR041", this.knownLanguages);
 		
 		// <Region><Postcode>
 		let pc=0, Postcode, PostcodeErrorMessage="invalid postcode";
 		while ((Postcode=Region.get(xPath(SCHEMA_PREFIX, dvbi.e_Postcode, ++pc), SL_SCHEMA))!=null) 
 			if (!isPostcode(Postcode.text()))
-				errs.addError({code:"AR008", message:`${Postcode.text().quote()} is not a valid postcode`, key:PostcodeErrorMessage, fragment:Postcode});
+				errs.addError({code:"AR051", message:`${Postcode.text().quote()} is not a valid postcode`, key:PostcodeErrorMessage, fragment:Postcode});
 		
 		let rc=0, RegionChild;
 		while ((RegionChild=Region.get(xPath(SCHEMA_PREFIX, dvbi.e_Region, ++rc), SL_SCHEMA))!=null) 
-			this.addRegion(SL_SCHEMA, SCHEMA_PREFIX, RegionChild, depth+1, knownRegionIDs, errs);
+			this.addRegion(SL_SCHEMA, SCHEMA_PREFIX, schemaVersion,RegionChild, depth+1, knownRegionIDs, errs);
 	}
 
 
@@ -599,8 +617,8 @@ export default class ServiceListCheck {
 		
 		if (!HowRelated) {
 			errs.addError({code:`${errCode}-2`, 
-							message:`${tva.e_HowRelated.elementize()} not specified for ${tva.e_RelatedMaterial.elementize()} in ${Location}`, 
-							line:RelatedMaterial.line(), key:`no ${tva.e_HowRelated}`});
+				message:`${tva.e_HowRelated.elementize()} not specified for ${tva.e_RelatedMaterial.elementize()} in ${Location}`, 
+				line:RelatedMaterial.line(), key:`no ${tva.e_HowRelated}`});
 			return rc;
 		}
 
@@ -1231,7 +1249,7 @@ export default class ServiceListCheck {
 							fragment:extn, key:'extensability'});
 					break;
 				case 'vnd.apple.mpegurl':
-					if (extLoc != EXTENSION_LOCATION_SERVICE_ELEMENT)
+					if (extLoc != EXTENSION_LOCATION_OTHER_DELIVERY)
 						errs.addError({code:`${errCode}-3`, message:where("HLS", "Service List"), 
 							fragment:extn, key:'extensability'});
 					break;
@@ -1317,7 +1335,7 @@ export default class ServiceListCheck {
 			// recurse the regionlist - Regions can be nested in Regions
 			let r=0, Region;
 			while ((Region=RegionList.get(xPath(SCHEMA_PREFIX, dvbi.e_Region, ++r), SL_SCHEMA))!=null)
-				this.addRegion(SL_SCHEMA, SCHEMA_PREFIX, Region, 0, knownRegionIDs, errs);
+				this.addRegion(SL_SCHEMA, SCHEMA_PREFIX, SchemaVersion(SCHEMA_NAMESPACE), Region, 0, knownRegionIDs, errs);
 		}
 
 		//check <ServiceList><TargetRegion>
