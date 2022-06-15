@@ -13,6 +13,7 @@ import { handleErrors } from "./fetch-err-handler.js";
 import { xPath, isIn } from "./utils.js";
 
 import { dvbi } from "./DVB-I_definitions.js";
+import { tva } from "./TVA_definitions.js";
 
 import { IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data-locations.js";
 import { hasChild } from "./schema_checks.js";
@@ -22,9 +23,10 @@ import { datatypeIs } from "./phlib/phlib.js";
 var masterSLEPR="";
 const EMPTY_SLEPR="<ServiceListEntryPoints xmlns=\"urn:dvb:metadata:servicelistdiscovery:2021\"></ServiceListEntryPoints>";
 
+const RFC2397_PREFIX='data:';
 
 // permitted query parameters
-const allowed_arguments=[dvbi.e_ProviderName, dvbi.a_regulatorListFlag, dvbi.e_Language, dvbi.e_TargetCountry, dvbi.e_Genre, dvbi.e_Delivery];
+const allowed_arguments=[dvbi.e_ProviderName, dvbi.a_regulatorListFlag, dvbi.e_Language, dvbi.e_TargetCountry, dvbi.e_Genre, dvbi.e_Delivery, dvbi.q_inlineImages];
 
 import { isHTTPURL, isTVAAudioLanguageType } from "./pattern_checks.js";
 
@@ -38,7 +40,23 @@ const DVB_DASH_DELIVERY="dvb-dash",
       DVB_C_DELIVERY="dvb-c",
       DVB_IPTV_DELIVERY="dvb-iptv",
       DVB_APPLICATION_DELIVERY="application";
-      
+  
+
+
+function GetChild(element, childName, index) {
+	let rc=null, i=0;
+
+	element.childNodes().forEachSubElement(e => {
+		if (e.name().endsWith(childName)) {
+			i++;
+			if (index == i)
+				rc=e;
+		}
+	});
+
+	return rc;
+}
+
 export default class SLEPR {
 
 	constructor(useURLs, preloadedLanguageValidator=null, preloadedCountries=null, preloadedGenres=null) {
@@ -125,10 +143,10 @@ export default class SLEPR {
 			//regulatorListFlag needs to be a boolean, "true" or "false" only
 			if (req.query.regulatorListFlag) {
 				if (!datatypeIs(req.query.regulatorListFlag, "string")) 
-					req.parseErr.push(`invalid type for regulatorListFlag [${typeof(req.query.regulatorListFlag)}]`);
+					req.parseErr.push(`invalid type for ${dvbi.a_regulatorListFlag} [${typeof(req.query.regulatorListFlag)}]`);
 
 				if (!["true","false"].includes(req.query.regulatorListFlag.toLowerCase())) 
-					req.parseErr.push(`invalid value for regulatorListFlag [${req.query.regulatorListFlag}]`);
+					req.parseErr.push(`invalid value for ${dvbi.a_regulatorListFlag} [${req.query.regulatorListFlag}]`);
 			}
 
 			//TargetCountry(s)
@@ -147,7 +165,13 @@ export default class SLEPR {
 			var checkGenre = (genre) => this.knownGenres.isIn(genre);
 			checkIt(req.query.Genre, dvbi.e_Genre, checkGenre);
 
+			if (req.query.inlineImages) {
+				if (!datatypeIs(req.query.inlineImages, "string")) 
+					req.parseErr.push(`invalid type for ${dvbi.q_inlineImages} [${typeof(req.query.inlineImages)}]`);
 
+				if (!["true","false"].includes(req.query.inlineImages.toLowerCase())) 
+					req.parseErr.push(`invalid value for  ${dvbi.q_inlineImages} [${req.query.inlineImages}]`);				
+			}
 /* value space of this argument is not checked
 			//Provider Name(s)
 			var checkProvider = (provider) => true;
@@ -273,6 +297,42 @@ export default class SLEPR {
 				providersToRemove.push(prov);
 		}
 		providersToRemove.forEach(provider => provider.remove());
+
+		let removeImages=req.query?.inlineImages?.toLowerCase()=="true"?true:false;
+		if (!removeImages) { 
+			// remove any 'data:' URLs from RelatedMaterial elements. if there are no remaining MediaLocator elements, then remove the RelatedMaterial
+			let prov, p=0;
+			while ((prov=slepr.get('//'+xPath(SCHEMA_PREFIX, dvbi.e_ProviderOffering, ++p), SLEPR_SCHEMA))!=null) {
+				let serv, s=0;
+				while ((serv=prov.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceListOffering, ++s), SLEPR_SCHEMA))!=null) {
+					let relatedMaterial, rm=0;
+					let discardRelatedMaterial=[];
+					while ((relatedMaterial=serv.get(xPath(SCHEMA_PREFIX, dvbi.e_RelatedMaterial, ++rm), SLEPR_SCHEMA))!=null) {
+						let mediaLocator, ml=0;
+						let discardLocators=[];
+						while ((mediaLocator=GetChild(relatedMaterial, tva.e_MediaLocator, ++ml))!=null) {
+							let mediaUri, mu=0;
+							let discardURIs=[];
+							while ((mediaUri=GetChild(mediaLocator, tva.e_MediaUri, ++mu))!=null) {
+								if (mediaUri.text().toLowerCase().startsWith(RFC2397_PREFIX.toLowerCase())) {
+									discardURIs.push(mediaUri);
+								}
+							}
+							discardURIs.forEach(uri => uri.remove());
+							
+							if (!hasChild(mediaLocator, tva.e_MediaUri)) {
+								discardLocators.push(mediaLocator);
+							}
+						}
+						discardLocators.forEach(locator => locator.remove());
+						if (!hasChild(relatedMaterial, tva.e_MediaLocator)) {
+							discardRelatedMaterial.push(relatedMaterial);
+						}
+					}
+					discardRelatedMaterial.forEach(rm => rm.remove());
+				}
+			}	 
+		}
 
 		res.type('text/xml');
 		res.send(slepr.toString());
