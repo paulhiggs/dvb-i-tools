@@ -61,7 +61,7 @@ export function writeOut(errs, filebase, markup) {
 		outputLines.push(line.value);
 		if (markup && line.validationErrors)
 			line.validationErrors.forEach(error => {
-				outputLines.push(error.replace(/[\n]/g,''));
+				outputLines.push(`<!--${error.replace(/[\n]/g,'')}-->`);
 			});
 	});
 	let filename=markup?`${filebase}.mkup.txt`:`${filebase}.raw.txt`;
