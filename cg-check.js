@@ -543,7 +543,7 @@ export default class ContentGuideCheck {
 					}
 				});
 /* jshint +W083 */
-			checkXMLLangs(CG_SCHEMA, SCHEMA_PREFIX, tva.e_ExplanatoryText, `${BasicDescription.name()}.${tva.e_ParentalGuidance}`, ParentalGuidance, errs, `${errCode}-8`, this.knownLanguages);
+			checkXMLLangs(CG_SCHEMA, SCHEMA_PREFIX, tva.e_ExplanatoryText, `${BasicDescription.name()}.${tva.e_ParentalGuidance}`, ParentalGuidance, errs, `${errCode}-8`, false, this.knownLanguages);
 		}
 	}
 

@@ -79,9 +79,10 @@ export function mlLanguage(node) {
  * @param {XMLnode} node             The XML tree node containing the element being checked
  * @param {Object}  errs             The class where errors and warnings relating to the service list processing are stored 
  * @param {String}  errCode          The error code to be reported
+ * @param {Boolean} allowEmpty	     Allow the element value to be empty, i.e. ""
  * @param {Object}  validator 		 The validation class for check the value of the language, or null if no check is to be performed
  */
-export function checkXMLLangs(SCHEMA, PREFIX, elementName, elementLocation, node, errs, errCode, validator=null) {
+export function checkXMLLangs(SCHEMA, PREFIX, elementName, elementLocation, node, errs, errCode, allowEmpty, validator=null) {
 	if (!node) {
 		errs.addError({type:APPLICATION, code:"XL000", message:"checkXMLLangs() called with node==null"});
 		return;
@@ -95,6 +96,11 @@ export function checkXMLLangs(SCHEMA, PREFIX, elementName, elementLocation, node
 				message:`${lang==NO_DOCUMENT_LANGUAGE?"default language":`xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} for ${elementLocation}`, 
 				fragment:elem, key:"duplicate @xml:lang"});
 		else elementLanguages.push(lang);
+
+		if (!allowEmpty && (elem.text().length==0))
+			errs.addError({code:`${errCode}-3`,
+				message:`value must be specified for ${elem.parent().name().elementize()}${elem.name().elementize()}`,
+				fragment:elem, key:'empty value'});
 
 		//if lang is specified, validate the format and value of the attribute against BCP47 (RFC 5646)
 		if (validator && lang!=NO_DOCUMENT_LANGUAGE) 

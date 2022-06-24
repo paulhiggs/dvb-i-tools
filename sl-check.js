@@ -413,7 +413,7 @@ export default class ServiceListCheck {
 				});
 		}
 
-		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_RegionName, `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${displayRegionID}`, Region, errs, "AR041", this.knownLanguages);
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_RegionName, `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${displayRegionID}`, Region, errs, "AR041", false, this.knownLanguages);
 		
 		// <Region><Postcode>
 		let pc=0, Postcode, PostcodeErrorMessage="invalid postcode";
@@ -731,8 +731,8 @@ export default class ServiceListCheck {
 		}
 		loc=loc?loc:source.parent().name().elementize();
 		
-		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_Name, loc, source, errs, `${errCode}-1`, this.knownLanguages);
-		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ProviderName, loc, source, errs, `${errCode}-2`, this.knownLanguages);
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_Name, loc, source, errs, `${errCode}-1`, false, this.knownLanguages);
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ProviderName, loc, source, errs, `${errCode}-2`, false, this.knownLanguages);
 		
 		let rm=0, RelatedMaterial;
 		while ((RelatedMaterial=source.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), SL_SCHEMA))!=null) 
@@ -938,7 +938,7 @@ export default class ServiceListCheck {
 		}
 
 		//<ServiceInstance><DisplayName>
-		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010", this.knownLanguages);
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010", false, this.knownLanguages);
 
 		// check @href of <ServiceInstance><RelatedMaterial>
 		let rm=0, controlApps=[], RelatedMaterial;
@@ -1045,7 +1045,7 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><SubscriptionPackage>
-		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ServiceInstance.name().elementize(), ServiceInstance, errs, "SI131", this.knownLanguages);
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ServiceInstance.name().elementize(), ServiceInstance, errs, "SI131", false, this.knownLanguages);
 		let sp=0, SubscriptionPackage;
 		while ((SubscriptionPackage=ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ++sp), SL_SCHEMA))!=null) {
 			if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v4) {
@@ -1313,10 +1313,10 @@ export default class ServiceListCheck {
 		}
 
 		//check <ServiceList><Name>
-		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_Name, dvbi.e_ServiceList, SL, errs, "SL020", this.knownLanguages);
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_Name, dvbi.e_ServiceList, SL, errs, "SL020", false, this.knownLanguages);
 
 		//check <ServiceList><ProviderName>
-		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ProviderName, dvbi.e_ServiceList, SL, errs, "SL030", this.knownLanguages);
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ProviderName, dvbi.e_ServiceList, SL, errs, "SL030", false, this.knownLanguages);
 
 		//check <ServiceList><RelatedMaterial>
 		let rm=0, countControlApps=0, RelatedMaterial;
@@ -1432,10 +1432,10 @@ export default class ServiceListCheck {
 				else found.used=true;
 			}
 			//check <Service><ServiceName>
-			checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ServiceName, `service ${thisServiceId.quote()}`, service, errs, "SL140", this.knownLanguages);
+			checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ServiceName, `service ${thisServiceId.quote()}`, service, errs, "SL140", false, this.knownLanguages);
 
 			//check <Service><ProviderName>
-			checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ProviderName, `service ${thisServiceId.quote()}`, service, errs, "SL141", this.knownLanguages);
+			checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ProviderName, `service ${thisServiceId.quote()}`, service, errs, "SL141", false, this.knownLanguages);
 
 			//check <Service><RelatedMaterial>
 			let rm=0, RelatedMaterial;
