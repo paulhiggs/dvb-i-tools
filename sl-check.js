@@ -1379,7 +1379,7 @@ export default class ServiceListCheck {
 				if (CGSource.attr(dvbi.a_CGSID)) {
 					if (isIn(ContentGuideSourceIDs, CGSource.attr(dvbi.a_CGSID).value()))
 						errs.addError({code:"SL071", 
-							message:`duplicate ${dvbi.a_CGSID.attribute(dvbi.a_CGSID)} (${CGSource.attr(dvbi.a_CGSID).value()}) in service list`, 
+							message:`duplicate ${dvbi.a_CGSID.attribute(dvbi.e_ContentGuideSource)} (${CGSource.attr(dvbi.a_CGSID).value()}) in service list`, 
 							key:`duplicate ${dvbi.a_CGSID.attribute()}`, fragment:CGSource});
 					else ContentGuideSourceIDs.push(CGSource.attr(dvbi.a_CGSID).value());
 				}
@@ -1394,15 +1394,11 @@ export default class ServiceListCheck {
 		errs.setW("num services", 0);
 
 		// check <Service>
-		let s=0, service, knownServices=[], thisServiceId;
+		let s=0, service, knownServices=[];
 		while ((service=SL.get(xPath(SCHEMA_PREFIX, dvbi.e_Service, ++s), SL_SCHEMA))!=null) {
 			// for each service
 			errs.setW("num services", s);
-			thisServiceId=`service-${s}`;  // use a default value in case <UniqueIdentifier> is not specified
-			
-			let serviceOptionalElements=[dvbi.e_ServiceInstance, dvbi.e_TargetRegion, tva.e_RelatedMaterial, dvbi.e_ServiceGenre, dvbi.e_ServiceType, dvbi.e_RecordingInfo, dvbi.e_ContentGuideSource, dvbi.e_ContentGuideSourceRef, dvbi.e_ContentGuideServiceRef];
-			if (SchemaVersion(SCHEMA_NAMESPACE) > SCHEMA_v2)
-				serviceOptionalElements.push(dvbi.e_ServiceDescription);
+			let thisServiceId=`service-${s}`;  // use a default value in case <UniqueIdentifier> is not specified
 			
 			// check <Service><UniqueIdentifier>
 			let uID=service.get(xPath(SCHEMA_PREFIX, dvbi.e_UniqueIdentifier), SL_SCHEMA);
