@@ -15,7 +15,7 @@ import { AvlTree } from '@datastructures-js/binary-search-tree';
 import { hasChild } from "./schema_checks.js";
 import { isHTTPURL } from "./pattern_checks.js";
 
-import { dvb } from "DVB_defintions.js";
+import { dvb } from "./DVB_definitions.js";
 
 const CS_URI_DELIMITER=':';
 
