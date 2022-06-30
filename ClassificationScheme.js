@@ -15,6 +15,8 @@ import { AvlTree } from '@datastructures-js/binary-search-tree';
 import { hasChild } from "./schema_checks.js";
 import { isHTTPURL } from "./pattern_checks.js";
 
+import { dvb } from "DVB_defintions.js";
+
 const CS_URI_DELIMITER=':';
 
 /**
@@ -26,10 +28,10 @@ const CS_URI_DELIMITER=':';
  */
 function addCSTerm(vals, CSuri, term, leafNodesOnly=false) {
 	if (term.type()!="element") return;
-	if (term.name()==="Term") {
-		if (!leafNodesOnly || (leafNodesOnly && !hasChild(term, "Term")))
- 			if (term.attr("termID")) 
-				vals.push(`${CSuri}${CS_URI_DELIMITER}${term.attr("termID").value()}`);
+	if (term.name()===dvb.e_Term) {
+		if (!leafNodesOnly || (leafNodesOnly && !hasChild(term, dvb.e_Term)))
+ 			if (term.attr(dvb.a_termID)) 
+				vals.push(`${CSuri}${CS_URI_DELIMITER}${term.attr(dvb.a_termID).value()}`);
 		let st=0, subTerm;
 		while ((subTerm=term.child(st++))!=null)
 			addCSTerm(vals, CSuri, subTerm, leafNodesOnly);
@@ -48,7 +50,7 @@ function loadClassificationScheme(xmlCS, leafNodesOnly=false) {
 	let rc={uri:null, vals:[]};
 	if (!xmlCS) return rc;
 
-	let CSnamespace = xmlCS.root().attr("uri");
+	let CSnamespace = xmlCS.root().attr(dvb.a_uri);
 	if (!CSnamespace) return rc;
 	rc.uri=CSnamespace.value();
 	let t=0, term;

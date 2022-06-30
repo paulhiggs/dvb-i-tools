@@ -556,73 +556,73 @@
 		</Definition>
 		<Term termID="5.1">
 			<Name>AVS3 High 10-bit Profile</Name>
-			<Term termId="5.1.1">
+			<Term termID="5.1.1">
 				<Name>AVS3 High 10-bit Profile, level 2.0.15</Name>
 			</Term>
-			<Term termId="5.1.2">
+			<Term termID="5.1.2">
 				<Name>AVS3 High 10-bit Profile, level 2.0.30</Name>
 			</Term>
-			<Term termId="5.1.3">
+			<Term termID="5.1.3">
 				<Name>AVS3 High 10-bit Profile, level 2.0.60</Name>
 			</Term>
-			<Term termId="5.1.4">
+			<Term termID="5.1.4">
 				<Name>AVS3 High 10-bit Profile, level 4.0.30</Name>
 			</Term>
-			<Term termId="5.1.5">
+			<Term termID="5.1.5">
 				<Name>AVS3 High 10-bit Profile, level 4.0.60</Name>
 			</Term>
-			<Term termId="5.1.6">
+			<Term termID="5.1.6">
 				<Name>AVS3 High 10-bit Profile, level 6.0.30</Name>
 			</Term>
-			<Term termId="5.1.7">
+			<Term termID="5.1.7">
 				<Name>AVS3 High 10-bit Profile, level 6.4.30</Name>
 			</Term>
-			<Term termId="5.1.8">
+			<Term termID="5.1.8">
 				<Name>AVS3 High 10-bit Profile, level 6.0.60</Name>
 			</Term>
-			<Term termId="5.1.9">
+			<Term termID="5.1.9">
 				<Name>AVS3 High 10-bit Profile, level 6.4.60</Name>
 			</Term>
-			<Term termId="5.1.10">
+			<Term termID="5.1.10">
 				<Name>AVS3 High 10-bit Profile, level 6.0.120</Name>
 			</Term>
-			<Term termId="5.1.11">
+			<Term termID="5.1.11">
 				<Name>AVS3 High 10-bit Profile, level 6.4.120</Name>
 			</Term>
-			<Term termId="5.1.12">
+			<Term termID="5.1.12">
 				<Name>AVS3 High 10-bit Profile, level 8.0.30</Name>
 			</Term>
-			<Term termId="5.1.13">
+			<Term termID="5.1.13">
 				<Name>AVS3 High 10-bit Profile, level 8.4.30</Name>
 			</Term>
-			<Term termId="5.1.14">
+			<Term termID="5.1.14">
 				<Name>AVS3 High 10-bit Profile, level 8.0.60</Name>
 			</Term>
-			<Term termId="5.1.15">
+			<Term termID="5.1.15">
 				<Name>AVS3 High 10-bit Profile, level 8.4.60</Name>
 			</Term>
-			<Term termId="5.1.16">
+			<Term termID="5.1.16">
 				<Name>AVS3 High 10-bit Profile, level 8.0.120</Name>
 			</Term>
-			<Term termId="5.1.17">
+			<Term termID="5.1.17">
 				<Name>AVS3 High 10-bit Profile, level 8.4.120</Name>
 			</Term>
-			<Term termId="5.1.18">
+			<Term termID="5.1.18">
 				<Name>AVS3 High 10-bit Profile, level 10.0.30</Name>
 			</Term>
-			<Term termId="5.1.19">
+			<Term termID="5.1.19">
 				<Name>AVS3 High 10-bit Profile, level 10.4.30</Name>
 			</Term>
-			<Term termId="5.1.20">
+			<Term termID="5.1.20">
 				<Name>AVS3 High 10-bit Profile, level 10.0.60</Name>
 			</Term>
-			<Term termId="5.1.21">
+			<Term termID="5.1.21">
 				<Name>AVS3 High 10-bit Profile, level 10.4.60</Name>
 			</Term>
-			<Term termId="5.1.22">
+			<Term termID="5.1.22">
 				<Name>AVS3 High 10-bit Profile, level 10.0.120</Name>
 			</Term>
-			<Term termId="5.1.23">
+			<Term termID="5.1.23">
 				<Name>AVS3 High 10-bit Profile, level 10.4.120</Name>
 			</Term>
 		</Term>
@@ -634,34 +634,34 @@
 		</Definition>
 		<Term termID="6.1">
 			<Name>VVC Main 10 Profile Main Tier</Name>
-			<Term termId="6.1.1">
+			<Term termID="6.1.1">
 				<Name>VVC Main 10 Profile Main Tier @ Level 3.0</Name>
 			</Term>
-			<Term termId="6.1.2">
+			<Term termID="6.1.2">
 				<Name>VVC Main 10 Profile Main Tier @ Level 3.1</Name>
 			</Term>
-			<Term termId="6.1.3">
+			<Term termID="6.1.3">
 				<Name>VVC Main 10 Profile Main Tier @ Level 4.0</Name>
 			</Term>
-			<Term termId="6.1.4">
+			<Term termID="6.1.4">
 				<Name>VVC Main 10 Profile Main Tier @ Level 4.1</Name>
 			</Term>
-			<Term termId="6.1.5">
+			<Term termID="6.1.5">
 				<Name>VVC Main 10 Profile Main Tier @ Level 5.0</Name>
 			</Term>
-			<Term termId="6.1.6">
+			<Term termID="6.1.6">
 				<Name>VVC Main 10 Profile Main Tier @ Level 5.1</Name>
 			</Term>
-			<Term termId="6.1.7">
+			<Term termID="6.1.7">
 				<Name>VVC Main 10 Profile Main Tier @ Level 5.2</Name>
 			</Term>
-			<Term termId="6.1.8">
+			<Term termID="6.1.8">
 				<Name>VVC Main 10 Profile Main Tier @ Level 6.0</Name>
 			</Term>
-			<Term termId="6.1.9">
+			<Term termID="6.1.9">
 				<Name>VVC Main 10 Profile Main Tier @ Level 6.1</Name>
 			</Term>
-			<Term termId="6.1.10">
+			<Term termID="6.1.10">
 				<Name>VVC Main 10 Profile Main Tier @ Level 6.2</Name>
 			</Term>
 		</Term>
