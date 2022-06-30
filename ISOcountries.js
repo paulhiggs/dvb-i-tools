@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import { handleErrors } from "./fetch-err-handler.js";
 
 import { readFile } from "fs";

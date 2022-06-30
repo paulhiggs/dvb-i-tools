@@ -92,6 +92,7 @@ function createPrefix(req) {
 	return `${logDir}${sep}${getDate(new Date())} (${req.body.testtype==MODE_SL?"SL":req.body.requestType}) ${fname.replace(/[/\\?%*:|"<>]/g, '-')}`;
 }
 
+
 function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasCG, mode=MODE_UNSPECIFIED, linktype=MODE_UNSPECIFIED) {
 
 	if (!req.session.data) {
