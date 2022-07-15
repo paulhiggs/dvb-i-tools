@@ -1292,13 +1292,13 @@ export default class ServiceListCheck {
 			return;
 		writeOut(errs, log_prefix, false);
 
-		if (!SL.root().namespace()) {
-			errs.addError({code:"SL003", message:`namespace is not provided for ${dvbi.e_ServiceList.elementize()}`, key:"XSD validation"});
+		if (SL.root().name() !== dvbi.e_ServiceList) {
+			errs.addError({code:"SL004", message:`Root element is not ${dvbi.e_ServiceList.elementize()}`, line:SL.root().line(), key:"XSD validation"});
 			return;
 		}
 
-		if (SL.root().name() !== dvbi.e_ServiceList) {
-			errs.addError({code:"SL004", message:`Root element is not ${dvbi.e_ServiceList.elementize()}`, line:SL.root().line(), key:"XSD validation"});
+		if (!SL.root().namespace()) {
+			errs.addError({code:"SL003", message:`namespace is not provided for ${dvbi.e_ServiceList.elementize()}`, line:SL.root().line(), key:"XSD validation"});
 			return;
 		}
 
