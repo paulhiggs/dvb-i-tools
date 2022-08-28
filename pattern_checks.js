@@ -78,6 +78,53 @@ const UTCregex=new RegExp(/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|
 export var isUTCDateTime = (str) => datatypeIs(str, 'string') ? UTCregex.test(str.trim()) : false;
 
 
+/*
+function isValidUrl(str) {
+  try {
+    new URL(str);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+function isValidUrl(str) {
+  const pattern = new RegExp(
+    '^([a-zA-Z]+:\\/\\/)?' + // protocol
+      '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
+      '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+      '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+      '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+      '(\\#[-a-z\\d_]*)?$', // fragment locator
+    'i'
+  );
+  return pattern.test(str);
+}
+
+function isValidHttpUrl(str) {
+  try {
+    const url = new URL(str);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch (err) {
+    return false;
+  }
+}
+
+function isValidHttpUrl(str) {
+  const pattern = new RegExp(
+    '^(https?:\\/\\/)?' + // protocol
+      '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
+      '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+      '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+      '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+      '(\\#[-a-z\\d_]*)?$', // fragment locator
+    'i'
+  );
+  return pattern.test(str);
+}
+
+*/
+
 /**
  * checks of the specified argument matches an HTTP(s) URL where the protocol is required to be provided
  *

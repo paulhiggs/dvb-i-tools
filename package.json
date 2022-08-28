@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools",
-	"version": "0.5.7",
+	"version": "0.5.8",
 	"description": "DVB-I V&V Tools",
 	"main": "all-in-one.js",
 	"type": "module",
@@ -9,7 +9,7 @@
 		"url": "https://github.com/paulhiggs/dvb-i-tools/issues"
 	},
 	"dependencies": {
-		"@datastructures-js/binary-search-tree": "^4.3.1",
+		"@datastructures-js/binary-search-tree": "^5.0.2",
 		"colors": "^1.4.0",
 		"command-line-args": "^5.2.1",
 		"command-line-usage": "^6.1.3",
