@@ -50,12 +50,14 @@ const SCHEMA_v1=1,
 	  SCHEMA_v5=5,
 	  SCHEMA_unknown= -1;
 
+export const OLD=1, CURRENT=2, ETSI=3, DRAFT=4;
+
 var SchemaVersions=[ // schema property is loaded from specified filename
-		{namespace:dvbi.A177v5_Namespace, version:SCHEMA_v5, filename:DVBI_ServiceListSchema.v5.file, schema:null},
-		{namespace:dvbi.A177v4_Namespace, version:SCHEMA_v4, filename:DVBI_ServiceListSchema.v4.file, schema:null},
-		{namespace:dvbi.A177v3_Namespace, version:SCHEMA_v3, filename:DVBI_ServiceListSchema.v3.file, schema:null},
-		{namespace:dvbi.A177v2_Namespace, version:SCHEMA_v2, filename:DVBI_ServiceListSchema.v2.file, schema:null},
-		{namespace:dvbi.A177v1_Namespace, version:SCHEMA_v1, filename:DVBI_ServiceListSchema.v1.file, schema:null}];
+		{namespace:dvbi.A177v5_Namespace, version:SCHEMA_v5, filename:DVBI_ServiceListSchema.v5.file, schema:null, status:DRAFT},
+		{namespace:dvbi.A177v4_Namespace, version:SCHEMA_v4, filename:DVBI_ServiceListSchema.v4.file, schema:null, status:CURRENT}, 
+		{namespace:dvbi.A177v3_Namespace, version:SCHEMA_v3, filename:DVBI_ServiceListSchema.v3.file, schema:null, status:OLD},
+		{namespace:dvbi.A177v2_Namespace, version:SCHEMA_v2, filename:DVBI_ServiceListSchema.v2.file, schema:null, status:ETSI},
+		{namespace:dvbi.A177v1_Namespace, version:SCHEMA_v1, filename:DVBI_ServiceListSchema.v1.file, schema:null, status:OLD}];
 
 const OutOfScheduledHoursBanners=[ 
 	{ver: SCHEMA_v1, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v1 },
@@ -1266,7 +1268,7 @@ export default class ServiceListCheck {
 
 		let x=SchemaVersions.find(s => s.namespace==SCHEMA_NAMESPACE);
 		if (x && x.schema)
-			SchemaCheck(ServiceList, x.schema, errs, `${errCode}:${SchemaVersion(SCHEMA_NAMESPACE)}`);
+			SchemaCheck(ServiceList, x.schema, x.status, errs, `${errCode}:${SchemaVersion(SCHEMA_NAMESPACE)}`);
 		else
 			_rc=false;
 

@@ -4,7 +4,9 @@ import { parseXmlString } from "libxmljs2";
 import format from 'xml-formatter';
 
 import { elementize } from './phlib/phlib.js';
-import { APPLICATION, INFORMATION } from "./ErrorList.js";
+import { APPLICATION, INFORMATION, WARNING } from "./ErrorList.js";
+import { OLD, DRAFT } from "./sl-check.js";
+
 import { isIn } from "./utils.js";
 import { datatypeIs } from "./phlib/phlib.js";
 
@@ -145,10 +147,19 @@ export var hasChild = (elem, childElementName) => (elem) ? elem.childNodes().fin
  * 
  * @param {Document} XML the XML document to check
  * @param {Document} XSD the schema
+ * @param {enum} publication_state the publication status of the schema
  * @param {object} errs array to record any errors
  * @param {string} errCode the error code to report with each error 
  */
-export function SchemaCheck(XML, XSD, errs, errCode) {
+export function SchemaCheck(XML, XSD, publication_state, errs, errCode) {
+	switch (publication_state) {
+		case OLD:
+			errs.addError({code:`${errCode}a`, message:'schema version is out of date', key:"schema version"});
+			break;
+		case DRAFT:
+			errs.addError({type:WARNING, code:`${errCode}b`, message:'schema is in draft state', key:"schema version"});
+			break;
+	}
 	if (!XML.validate(XSD)) {
 		let prettyXML=format(XML.toString(), {collapseContent:true, lineSeparator:'\n'});
 		let lines=prettyXML.split('\n');

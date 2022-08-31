@@ -6,6 +6,8 @@ import { readFileSync } from "fs";
 import { attribute, datatypeIs, elementize, quote } from './phlib/phlib.js';
 
 import ErrorList, { ERROR, WARNING, APPLICATION } from "./ErrorList.js";
+import { ETSI } from "./sl-check.js";
+
 import ClassificationScheme from "./ClassificationScheme.js";
 import Role from "./Role.js";
 import IANAlanguages from "./IANAlanguages.js";
@@ -2458,7 +2460,7 @@ export default class ContentGuideCheck {
 			SCHEMA_NAMESPACE=CG.root().namespace()?CG.root().namespace().href():"";
 			CG_SCHEMA[SCHEMA_PREFIX]=SCHEMA_NAMESPACE;
 
-		SchemaCheck(CG, this.TVAschema, errs, "CG003");
+		SchemaCheck(CG, this.TVAschema, ETSI, errs, "CG003");
 
 		let tvaMainLang=GetNodeLanguage(CG.root(), true, errs, "CG005", this.knownLanguages);
 		let ProgramDescription=CG.get(xPath(SCHEMA_PREFIX, tva.e_ProgramDescription), CG_SCHEMA);
