@@ -44,7 +44,7 @@ const idDVB_VideoCodecCS="VideoCodecCS.xml";
 export const DVB_VideoCodecCS={
     y2007:{file:join(path2007CS, idDVB_VideoCodecCS), url:`${DVB_METADATA}${url2007CS}/${idDVB_VideoCodecCS}`},
     y2021:{file:join(path2021CS, idDVB_VideoCodecCS), url:`${DVB_METADATA}${url2021CS}/${idDVB_VideoCodecCS}`},
-    y2022:{file:join(path2022CS, idDVB_VideoCodecCS), url:`${REPO_RAW}dvb/${url2022CS}/${idDVB_VideoCodecCS}`} // TODO: update to `${DVB_METADATA}${url2022CS}/${idDVB_VideoCodecCS}` once published on dvb.org/metadata
+    y2022:{file:join(path2022CS, idDVB_VideoCodecCS), url:`${DVB_METADATA}${url2022CS}/${idDVB_VideoCodecCS}`} 
 };
 
 const idDVB_ColorimetryCS="ColorimetryCS.xml";
@@ -68,7 +68,7 @@ const idDVB_VideoConformanceCS="VideoConformancePointsCS.xml";
 export const DVB_VideoConformanceCS={
     y2017:{file:join(path2017CS, idDVB_VideoConformanceCS), url:`${DVB_METADATA}${url2017CS}/${idDVB_VideoConformanceCS}`},
     y2021:{file:join(path2021CS, idDVB_VideoConformanceCS), url:`${DVB_METADATA}${url2021CS}/${idDVB_VideoConformanceCS}`},
-    y2022:{file:join(path2022CS, idDVB_VideoConformanceCS), url:`${REPO_RAW}dvb/${url2022CS}/${idDVB_VideoConformanceCS}`} // TODO: update to `${DVB_METADATA}${url2022CS}/${idDVB_VideoConformanceCS}` once published on dvb.org/metadata
+    y2022:{file:join(path2022CS, idDVB_VideoConformanceCS), url:`${DVB_METADATA}${url2022CS}/${idDVB_VideoConformanceCS}`} 
 };
 
 const idISO3166="iso3166-countries.json";
