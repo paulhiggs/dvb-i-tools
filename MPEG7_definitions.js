@@ -1,14 +1,15 @@
 const FILE_FORMAT_CS = "urn:mpeg:mpeg7:cs:FileFormatCS:2001";
+const AUDIO_PRESENTATION_CS = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001";
 
 export const mpeg7 = {
 
 // A177 6.11.1 - Audio Mix Type
-	AUDIO_MIX_MONO: "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:2",
-	AUDIO_MIX_STEREO: "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3",
-	AUDIO_MIX_5_1: "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:5",
+	AUDIO_MIX_MONO: `${AUDIO_PRESENTATION_CS}:2`,
+	AUDIO_MIX_STEREO: `${AUDIO_PRESENTATION_CS}:3`,
+	AUDIO_MIX_5_1: `${AUDIO_PRESENTATION_CS}:5`,
 
-	JPEG_IMAGE_CS_VALUE: FILE_FORMAT_CS+":1",
-	PNG_IMAGE_CS_VALUE: FILE_FORMAT_CS+":15",
+	JPEG_IMAGE_CS_VALUE: `${FILE_FORMAT_CS}:1`,
+	PNG_IMAGE_CS_VALUE: `${FILE_FORMAT_CS}:15`,
 
 	TITLE_TYPE_MAIN: "main",
 	TITLE_TYPE_SECONDARY: "secondary",
