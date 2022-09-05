@@ -4,10 +4,11 @@ import { parseXmlString } from "libxmljs2";
 import format from 'xml-formatter';
 
 import { elementize } from './phlib/phlib.js';
+import { dvbi } from './DVB-I_definitions.js';
 import { APPLICATION, INFORMATION, WARNING } from "./ErrorList.js";
 import { OLD, DRAFT } from "./sl-check.js";
 
-import { isIn } from "./utils.js";
+import { isIn, xPath } from "./utils.js";
 import { datatypeIs } from "./phlib/phlib.js";
 
 /**
@@ -147,19 +148,11 @@ export var hasChild = (elem, childElementName) => (elem) ? elem.childNodes().fin
  * 
  * @param {Document} XML the XML document to check
  * @param {Document} XSD the schema
- * @param {enum} publication_state the publication status of the schema
  * @param {object} errs array to record any errors
  * @param {string} errCode the error code to report with each error 
  */
-export function SchemaCheck(XML, XSD, publication_state, errs, errCode) {
-	switch (publication_state) {
-		case OLD:
-			errs.addError({code:`${errCode}a`, message:'schema version is out of date', key:"schema version"});
-			break;
-		case DRAFT:
-			errs.addError({type:WARNING, code:`${errCode}b`, message:'schema is in draft state', key:"schema version"});
-			break;
-	}
+export function SchemaCheck(XML, XSD, errs, errCode) {
+
 	if (!XML.validate(XSD)) {
 		let prettyXML=format(XML.toString(), {collapseContent:true, lineSeparator:'\n'});
 		let lines=prettyXML.split('\n');
@@ -167,6 +160,35 @@ export function SchemaCheck(XML, XSD, publication_state, errs, errCode) {
 			let splt=ve.toString().split('\r');
 			splt.forEach(err => errs.addError({code:errCode, message:err, fragment:lines[ve.line-1], line:ve.line, key:"XSD validation"}));
 		});
+	}
+}
+
+
+/**
+ * report if the schema version being used is not 'formal'
+ * 
+ * @param {string}  SCHEMA             Used when constructing Xpath queries
+ * @param {string}  SCHEMA_PREFIX         Used when constructing Xpath queries
+ * @param {XMLdocument} document
+ * @param {enum} publication_state the publication status of the schema
+ * @param {object} errs array to record any errors
+ * @param {string} errCode the error code to report with each error 
+ */
+export function SchemaVersionCheck(SCHEMA, SCHEMA_PREFIX, document, publication_state, errs, errCode) {
+	let ServiceList = document.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceList), SCHEMA);
+	switch (publication_state) {
+		case OLD:
+			let err1={code:`${errCode}a`, message:'schema version is out of date', key:"schema version"};
+			if (ServiceList)
+				err1.line=ServiceList.line();
+			errs.addError(err1);
+			break;
+		case DRAFT:
+			let err2={type:WARNING, code:`${errCode}b`, message:'schema is in draft state', key:"schema version"};
+			if (ServiceList)
+				err2.line=ServiceList.line();
+			errs.addError(err2);
+			break;
 	}
 }
 

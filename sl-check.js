@@ -29,7 +29,7 @@ import { checkValidLogos } from "./RelatedMaterialChecks.js";
 import { sl_InvalidHrefValue } from "./CommonErrors.js";
 
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
-import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaLoad } from "./schema_checks.js";
+import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaVersionCheck,  SchemaLoad } from "./schema_checks.js";
 
 import 'colors';
 import { writeOut } from './Validator.js';
@@ -1263,14 +1263,16 @@ export default class ServiceListCheck {
 	}
 
 
-	/*private*/ doSchemaVerification(ServiceList, SCHEMA_NAMESPACE, errs, errCode) {
+	/*private*/ doSchemaVerification(ServiceList, SCHEMA_NAMESPACE, SL_SCHEMA, SCHEMA_PREFIX, errs, errCode) {
 		let _rc=true;
 
 		let x=SchemaVersions.find(s => s.namespace==SCHEMA_NAMESPACE);
-		if (x && x.schema)
-			SchemaCheck(ServiceList, x.schema, x.status, errs, `${errCode}:${SchemaVersion(SCHEMA_NAMESPACE)}`);
+		if (x && x.schema) {
+			SchemaCheck(ServiceList, x.schema, errs, `${errCode}:${SchemaVersion(SCHEMA_NAMESPACE)}`);
+			SchemaVersionCheck(SL_SCHEMA, SCHEMA_PREFIX, ServiceList, x.status, errs, `${errCode}a`);
+		}
 		else
-			_rc=false;
+			_rc=false; 
 
 		return _rc;
 	}
@@ -1309,7 +1311,7 @@ export default class ServiceListCheck {
 			SCHEMA_NAMESPACE=SL.root().namespace().href();
 			SL_SCHEMA[SCHEMA_PREFIX]=SCHEMA_NAMESPACE;
 
-		if (!this.doSchemaVerification(SL, SCHEMA_NAMESPACE, errs, "SL005")) {
+		if (!this.doSchemaVerification(SL, SCHEMA_NAMESPACE, SL_SCHEMA, SCHEMA_PREFIX, errs, "SL005")) {
 			errs.addError({code:"SL010", message:`Unsupported namespace ${SCHEMA_NAMESPACE.quote()}`, key:"XSD validation"});
 			return;
 		}
