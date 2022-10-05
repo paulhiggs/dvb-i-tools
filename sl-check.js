@@ -43,59 +43,67 @@ const SERVICE_RM="service";
 const SERVICE_INSTANCE_RM="service instance";
 const CONTENT_GUIDE_RM="content guide";
 
-const SCHEMA_v1=1, 
-	  SCHEMA_v2=2,
-	  SCHEMA_v3=3,
-	  SCHEMA_v4=4,
-	  SCHEMA_v5=5,
+const SCHEMA_r0=0, 
+	  SCHEMA_r1=1,
+	  SCHEMA_r2=2,
+	  SCHEMA_r3=3,
+	  SCHEMA_r4=4,
+	  SCHEMA_r5=5,
 	  SCHEMA_unknown= -1;
 
-export const OLD=1, CURRENT=2, ETSI=3, DRAFT=4;
+export const DRAFT=0x01, OLD=0x02, ETSI=0x04, CURRENT=0x08;
 
 var SchemaVersions=[ // schema property is loaded from specified filename
-		{namespace:dvbi.A177v5_Namespace, version:SCHEMA_v5, filename:DVBI_ServiceListSchema.v5.file, schema:null, status:DRAFT},
-		{namespace:dvbi.A177v4_Namespace, version:SCHEMA_v4, filename:DVBI_ServiceListSchema.v4.file, schema:null, status:CURRENT}, 
-		{namespace:dvbi.A177v3_Namespace, version:SCHEMA_v3, filename:DVBI_ServiceListSchema.v3.file, schema:null, status:OLD},
-		{namespace:dvbi.A177v2_Namespace, version:SCHEMA_v2, filename:DVBI_ServiceListSchema.v2.file, schema:null, status:ETSI},
-		{namespace:dvbi.A177v1_Namespace, version:SCHEMA_v1, filename:DVBI_ServiceListSchema.v1.file, schema:null, status:OLD}];
+		{namespace:dvbi.A177v6_Namespace, version:SCHEMA_r5, filename:DVBI_ServiceListSchema.r5.file, schema:null, status:DRAFT},
+		{namespace:dvbi.A177v5_Namespace, version:SCHEMA_r4, filename:DVBI_ServiceListSchema.r4.file, schema:null, status:CURRENT},
+		{namespace:dvbi.A177v4_Namespace, version:SCHEMA_r3, filename:DVBI_ServiceListSchema.r3.file, schema:null, status:OLD}, 
+		{namespace:dvbi.A177v3_Namespace, version:SCHEMA_r2, filename:DVBI_ServiceListSchema.r2.file, schema:null, status:OLD},
+		{namespace:dvbi.A177v2_Namespace, version:SCHEMA_r1, filename:DVBI_ServiceListSchema.r1.file, schema:null, status:ETSI},
+		{namespace:dvbi.A177v1_Namespace, version:SCHEMA_r0, filename:DVBI_ServiceListSchema.r0.file, schema:null, status:OLD}];
 
 const OutOfScheduledHoursBanners=[ 
-	{ver: SCHEMA_v1, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v1 },
-	{ver: SCHEMA_v2, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
-	{ver: SCHEMA_v3, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
-	{ver: SCHEMA_v4, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
-	{ver: SCHEMA_v5, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	{ver: SCHEMA_r0, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v1 },
+	{ver: SCHEMA_r1, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
+	{ver: SCHEMA_r2, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
+	{ver: SCHEMA_r3, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	{ver: SCHEMA_r4, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	{ver: SCHEMA_r5, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
 	];
 const ContentFinishedBanners=[ 
-	{ver: SCHEMA_v2, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
-	{ver: SCHEMA_v3, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
-	{ver: SCHEMA_v4, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
-	{ver: SCHEMA_v5, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	{ver: SCHEMA_r1, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
+	{ver: SCHEMA_r2, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
+	{ver: SCHEMA_r3, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	{ver: SCHEMA_r4, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	{ver: SCHEMA_r5, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
 	];
 const ServiceListLogos=[ 
-	{ver: SCHEMA_v1, val: dvbi.LOGO_SERVICE_LIST_v1},
-	{ver: SCHEMA_v2, val: dvbi.LOGO_SERVICE_LIST_v2},
-	{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_LIST_v2},
-	{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_LIST_v3},
-	{ver: SCHEMA_v5, val: dvbi.LOGO_SERVICE_LIST_v3},
+	{ver: SCHEMA_r0, val: dvbi.LOGO_SERVICE_LIST_v1},
+	{ver: SCHEMA_r1, val: dvbi.LOGO_SERVICE_LIST_v2},
+	{ver: SCHEMA_r2, val: dvbi.LOGO_SERVICE_LIST_v2},
+	{ver: SCHEMA_r3, val: dvbi.LOGO_SERVICE_LIST_v3},
+	{ver: SCHEMA_r4, val: dvbi.LOGO_SERVICE_LIST_v3},
+	{ver: SCHEMA_r5, val: dvbi.LOGO_SERVICE_LIST_v3},
 	];
 const ServiceLogos=[
-	{ver: SCHEMA_v1, val: dvbi.LOGO_SERVICE_v1},
-	{ver: SCHEMA_v2, val: dvbi.LOGO_SERVICE_v2},
-	{ver: SCHEMA_v3, val: dvbi.LOGO_SERVICE_v2},
-	{ver: SCHEMA_v4, val: dvbi.LOGO_SERVICE_v3},
-	{ver: SCHEMA_v5, val: dvbi.LOGO_SERVICE_v3},
+	{ver: SCHEMA_r0, val: dvbi.LOGO_SERVICE_v1},
+	{ver: SCHEMA_r1, val: dvbi.LOGO_SERVICE_v2},
+	{ver: SCHEMA_r2, val: dvbi.LOGO_SERVICE_v2},
+	{ver: SCHEMA_r3, val: dvbi.LOGO_SERVICE_v3},
+	{ver: SCHEMA_r4, val: dvbi.LOGO_SERVICE_v3},
+	{ver: SCHEMA_r5, val: dvbi.LOGO_SERVICE_v3},
 	];
 const ServiceBanners=[
-	{ver: SCHEMA_v4, val: dvbi.SERVICE_BANNER_v4},
-	{ver: SCHEMA_v5, val: dvbi.SERVICE_BANNER_v4},
+	{ver: SCHEMA_r2, val: dvbi.SERVICE_BANNER_v4},
+	{ver: SCHEMA_r3, val: dvbi.SERVICE_BANNER_v4},
+	{ver: SCHEMA_r4, val: dvbi.SERVICE_BANNER_v4},
 	];
 const ContentGuideSourceLogos=[
-	{ver: SCHEMA_v1, val: dvbi.LOGO_CG_PROVIDER_v1},
-	{ver: SCHEMA_v2, val: dvbi.LOGO_CG_PROVIDER_v2},
-	{ver: SCHEMA_v3, val: dvbi.LOGO_CG_PROVIDER_v2},
-	{ver: SCHEMA_v4, val: dvbi.LOGO_CG_PROVIDER_v3},
-	{ver: SCHEMA_v5, val: dvbi.LOGO_CG_PROVIDER_v3},
+	{ver: SCHEMA_r0, val: dvbi.LOGO_CG_PROVIDER_v1},
+	{ver: SCHEMA_r1, val: dvbi.LOGO_CG_PROVIDER_v2},
+	{ver: SCHEMA_r2, val: dvbi.LOGO_CG_PROVIDER_v2},
+	{ver: SCHEMA_r3, val: dvbi.LOGO_CG_PROVIDER_v3},
+	{ver: SCHEMA_r4, val: dvbi.LOGO_CG_PROVIDER_v3},
+	{ver: SCHEMA_r5, val: dvbi.LOGO_CG_PROVIDER_v3},
 	];
 
 
@@ -371,7 +379,7 @@ export default class ServiceListCheck {
 		let regionID=Region.attr(dvbi.a_regionID)?Region.attr(dvbi.a_regionID).value():null;
 		let displayRegionID=regionID?regionID.quote():'"noID"';
 
-		if (schemaVersion >= SCHEMA_v5) {
+		if (schemaVersion >= SCHEMA_r4) {
 			let selectable=Region.attr(dvbi.a_selectable)?Region.attr(dvbi.a_selectable).value()=="true":true;
 
 			if (!selectable && (depth==dvbi.MAX_SUBREGION_LEVELS))
@@ -637,7 +645,7 @@ export default class ServiceListCheck {
 						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-11`));
 					break;
 				case SERVICE_RM:
-					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && (SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1)) 
+					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && (SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_r0)) 
 						errs.addError({code:`${errCode}-21`,
 							message:`${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${SCHEMA_NAMESPACE.quote()} in ${Location}`, key:"invalid CS value", fragment:HowRelated});
 			
@@ -656,7 +664,7 @@ export default class ServiceListCheck {
 						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-24`));
 					break;
 				case SERVICE_INSTANCE_RM:
-					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && (SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1)) 
+					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && (SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_r0)) 
 						errs.addError({code:`${errCode}-31`,
 							message:`${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${SCHEMA_NAMESPACE.quote()} in ${Location}`, key:"invalid CS value", fragment:HowRelated});
 					
@@ -1050,7 +1058,7 @@ export default class ServiceListCheck {
 		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ServiceInstance.name().elementize(), ServiceInstance, errs, "SI131", false, this.knownLanguages);
 		let sp=0, SubscriptionPackage;
 		while ((SubscriptionPackage=ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_SubscriptionPackage, ++sp), SL_SCHEMA))!=null) {
-			if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v4) {
+			if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_r3) {
 				let pkg=localizedSubscriptionPackage(SubscriptionPackage);
 				if (!subscriptionPackages.includes(pkg))
 					errs.addError({code:"SI130", message:`${dvbi.e_SubscriptionPackage.elementize()}="${pkg}" is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
@@ -1118,14 +1126,15 @@ export default class ServiceListCheck {
 					break;
 				default:
 					switch (SchemaVersion(SCHEMA_NAMESPACE)) {
-						case SCHEMA_v1:
+						case SCHEMA_r0:
 							errs.addError({code:"SI158", message:`${dvbi.e_SourceType.elementize()} ${SourceType.text().quote()} is not valid in Service ${thisServiceId.quote()}`, 
 									fragment:SourceType, key:`invalid ${dvbi.e_SourceType}`});
 							break;
-						case SCHEMA_v2:
-						case SCHEMA_v3:
-						case SCHEMA_v4:
-						case SCHEMA_v5:
+						case SCHEMA_r1:
+						case SCHEMA_r2:
+						case SCHEMA_r3:
+						case SCHEMA_r4:
+						case SCHEMA_r5:
 							if (!ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_OtherDeliveryParameters), SL_SCHEMA))
 								errs.addError({code:"SI159", 
 									message:`${dvbi.e_OtherDeliveryParameters.elementize()} must be specified with user-defined ${dvbi.e_SourceType} ${SourceType.text().quote()}`, 
@@ -1133,13 +1142,13 @@ export default class ServiceListCheck {
 							break;
 					}
 			}
-			if (v1Params && SchemaVersion(SCHEMA_NAMESPACE)>=SCHEMA_v2)
+			if (v1Params && SchemaVersion(SCHEMA_NAMESPACE)>=SCHEMA_r1)
 				errs.addError({type:WARNING, code:"SI160", 
 								message:`${dvbi.e_SourceType.elementize()} is deprecated in this version (service ${thisServiceId.quote()})`, 
 								fragment:SourceType, key:'deprecated feature'});
 		}
 		else {
-			if (SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_v1) 
+			if (SchemaVersion(SCHEMA_NAMESPACE)==SCHEMA_r0) 
 				errs.addError({code:"SI161", message:`${dvbi.e_SourceType.elementize()} not specified in ${dvbi.e_ServiceInstance.elementize()} of service ${thisServiceId.quote()}`, 
 								key:`no ${dvbi.e_SourceType}`});
 		}
@@ -1584,7 +1593,7 @@ export default class ServiceListCheck {
 						checkLanguage(this.knownLanguages, packageLanguage, `${dvbi.e_SubscriptionPackage} in ${dvbi.e_LCNTable}`,
 							SubscriptionPackage, errs, "SL245");
 					}
-					else if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v4) {
+					else if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_r3) {
 						packageLanguage=GetNodeLanguage(SubscriptionPackage, false, errs, "SL246", this.knownLanguages);
 					}
 
@@ -1594,7 +1603,7 @@ export default class ServiceListCheck {
 										fragment:SubscriptionPackage, key:'duplicate package name'});
 					else SubscriptionPackages.push(localSubscriptionPackage);
 
-					if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v4)
+					if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_r3)
 						if (!declaredSubscriptionPackages.includes(localSubscriptionPackage))
 							errs.addError({code:"SL248", message:`${dvbi.e_SubscriptionPackage.elementize()}="${localSubscriptionPackage}" is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
 								fragment:SubscriptionPackage, key:`undeclared ${dvbi.e_SubscriptionPackage}`});
@@ -1639,7 +1648,7 @@ export default class ServiceListCheck {
 		}
 
 		// report any regionIDs that are defined but not used
-		if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_v5) {
+		if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_r4) {
 			knownRegionIDs.forEach(kr => {
 				if (!kr.used)
 					errs.addError({code:"SL281", message:`${dvbi.a_regionID.attribute(dvbi.e_Region)}="${kr.region}" is defined but not used`, key:`unused ${dvbi.a_regionID.attribute()}`, line:kr.line});

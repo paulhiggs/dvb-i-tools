@@ -176,19 +176,17 @@ export function SchemaCheck(XML, XSD, errs, errCode) {
  */
 export function SchemaVersionCheck(SCHEMA, SCHEMA_PREFIX, document, publication_state, errs, errCode) {
 	let ServiceList = document.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceList), SCHEMA);
-	switch (publication_state) {
-		case OLD:
-			let err1={code:`${errCode}a`, message:'schema version is out of date', key:"schema version"};
-			if (ServiceList)
-				err1.line=ServiceList.line();
-			errs.addError(err1);
-			break;
-		case DRAFT:
-			let err2={type:WARNING, code:`${errCode}b`, message:'schema is in draft state', key:"schema version"};
-			if (ServiceList)
-				err2.line=ServiceList.line();
-			errs.addError(err2);
-			break;
+	if (publication_state & OLD) {
+		let err1={code:`${errCode}a`, message:'schema version is out of date', key:"schema version"};
+		if (ServiceList)
+			err1.line=ServiceList.line();
+		errs.addError(err1);
+	}
+	if (publication_state & DRAFT) {
+		let err2={type:WARNING, code:`${errCode}b`, message:'schema is in draft state', key:"schema version"};
+		if (ServiceList)
+			err2.line=ServiceList.line();
+		errs.addError(err2);
 	}
 }
 

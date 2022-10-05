@@ -89,11 +89,12 @@ export const DVBI_ParentalGuidanceCS={file:join(path2007CS, idDVB_ParentalGuidan
 export const TVAschema={file:join(".", "tva_metadata_3-1.xsd")};
 
 export const DVBI_ServiceListSchema={
-	v1:{file:join(".", "dvbi_v1.0.xsd")},
-	v2:{file:join(".", "dvbi_v2.0.xsd")},
-	v3:{file:join(".", "dvbi_v3.0.xsd")},
-	v4:{file:join(".", "dvbi_v3.1.xsd")},
-	v5:{file:join(".", "dvbi_v4.0.xsd")}
+	r0:{file:join(".", "dvbi_v1.0.xsd")},
+	r1:{file:join(".", "dvbi_v2.0.xsd")},
+	r2:{file:join(".", "dvbi_v3.0.xsd")},
+	r3:{file:join(".", "dvbi_v3.1.xsd")},
+	r4:{file:join(".", "dvbi_v4.0.xsd")},
+	r5:{file:join(".", "dvbi_v5.0.xsd")}
 };
 
 const languagesFilename="language-subtag-registry";
