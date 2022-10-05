@@ -947,6 +947,13 @@ export default class ServiceListCheck {
 			}
 		}
 
+		//<ServiceInstance@priority>
+		if (SchemaVersion(SCHEMA_NAMESPACE) <= SCHEMA_r4) {
+			if (ServiceInstance.attr(dvbi.a_priority) && (ServiceInstance.attr(dvbi.a_priority).value()<0))
+				errs.addError({code:"SI011", message:`${dvbi.a_priority.attribute(dvbi.e_ServiceInstance)} should not be negative`, 
+						line:ServiceInstance.attr(dvbi.a_priority).line(), key:`negative ${dvbi.a_priority.attribute()}`});
+		}
+		
 		//<ServiceInstance><DisplayName>
 		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010", false, this.knownLanguages);
 
