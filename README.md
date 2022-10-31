@@ -68,7 +68,7 @@ Checks performed:
   * TV Anytime ContentCS
   * TV Anytime FormatCS
   * DVB ContentSubjectCS
-* AudioAttributes@href and AudioConformancePoints@href accorinding to 
+* AudioAttributes@href and AudioConformancePoints@href (deprecated in A177r5) accorinding to 
   * DVB AudioCodecCS and DVB AudioCodecCS:2020
   * MPEG7 AudioCodingFormatCS
   * DVB AudioConformancePointsCS

@@ -998,10 +998,15 @@ export default class ServiceListCheck {
 
 			// Check @href of ContentAttributes/AudioConformancePoints
 			cp=0;
-			while ((conf=ContentAttributes.get(xPath(SCHEMA_PREFIX, dvbi.e_AudioConformancePoint, ++cp), SL_SCHEMA))!=null) 
+			while ((conf=ContentAttributes.get(xPath(SCHEMA_PREFIX, dvbi.e_AudioConformancePoint, ++cp), SL_SCHEMA))!=null) {
+				if (SchemaVersion(SCHEMA_NAMESPACE) > SCHEMA_r4) // Issue #10
+					errs.addError({type:WARNING, code:"SI062", message:`use of ${dvbi.e_AudioConformancePoint.elementize()} is deprecated`,
+							fragment:conf, key:'deprecated feature'});  
+
 				if (conf.attr(dvbi.a_href) && !this.allowedAudioConformancePoints.isIn(conf.attr(dvbi.a_href).value())) 
 					errs.addError({code:"SI061", message:`invalid ${dvbi.a_href.attribute(dvbi.e_AudioConformancePoint)} (${conf.attr(dvbi.a_href).value()}) ${this.allowedAudioConformancePoints.valuesRange()}`, 
 							fragment:conf, key:"audio conf point"});
+			}
 
 			// Check ContentAttributes/VideoAttributes - other subelements are checked with schema based validation
 			cp=0;
