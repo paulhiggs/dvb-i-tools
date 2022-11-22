@@ -704,7 +704,7 @@ export default class ServiceListCheck {
 	 *
 	 * @param {string}  SL_SCHEMA      Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX  Used when constructing Xpath queries
-	 * @param {XMLnode} node           The XML tree node (either a <Service> or a <ServiceInstance>) to be checked
+	 * @param {XMLnode} node           The XML tree node (either a <Service>, <TestService> or a <ServiceInstance>) to be checked
 	 * @returns {boolean} true if the node contains a <RelatedMaterial> element which signals an application else false
 	 */
 
@@ -1283,6 +1283,157 @@ export default class ServiceListCheck {
 		}
 	}
 
+		/**
+	 * validate a Service or TestService element
+	 *
+	 * @param {string}  SL_SCHEMA                     Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_PREFIX                 Used when constructing Xpath queries
+	 * @param {string}  SCHEMA_NAMESPACE              The namespace of XML document 
+	 * @param {XMLnode} SL                            the <ServiceList> being checked
+	 * @param {XMLnode} service                       the service or testservice element to check
+	 * @param {string}  thisServiceId                 the identifier of the service
+	 * @param {array}   knownServices                 services found and checked thus far
+	 * @param {array}   knownRegionIDs                regions identifiers from the RegionList
+	 * @param {array}   declaredSubscriptionPackages  subscription packages that are declared in the service list
+	 * @param {array}   ContentGuideSourceIDs         identifiers of content guide sources found in the service list
+	 * @param {Class}   errs                          errors found in validaton
+	 */
+	/*private*/  validateService(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, SL, service, thisServiceId, knownServices, knownRegionIDs, declaredSubscriptionPackages, ContentGuideSourceIDs, errs) {
+
+		// check <UniqueIdentifier>
+		let uID=service.get(xPath(SCHEMA_PREFIX, dvbi.e_UniqueIdentifier), SL_SCHEMA);
+		if (uID) {
+			thisServiceId=uID.text();
+			if (!validServiceIdentifier(thisServiceId)) 
+				errs.addError({code:"SL110", message:`${thisServiceId.quote()} is not a valid service identifier`, fragment:uID, key:"invalid tag"});
+			if (!uniqueServiceIdentifier(thisServiceId, knownServices)) 
+				errs.addError({code:"SL111", message:`${thisServiceId.quote()} is not unique`, key:"non unique id", fragment:uID});
+			knownServices.push(thisServiceId);			
+		}
+
+		//check <ServiceInstance>
+		let si=0, ServiceInstance;
+		while ((ServiceInstance=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceInstance, ++si), SL_SCHEMA))!=null)
+			this.validateServiceInstance(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, ServiceInstance, thisServiceId, declaredSubscriptionPackages, errs);
+
+		//check <TargetRegion>
+		let tr=0, TargetRegion;
+		while ((TargetRegion=service.get(xPath(SCHEMA_PREFIX, dvbi.e_TargetRegion, ++tr), SL_SCHEMA))!=null) {
+			let _targetRegionName=TargetRegion.text();
+/* jshint -W083*/
+			let found = knownRegionIDs.find(r => r.region==_targetRegionName);
+/* jshint +W083*/
+			if (found == undefined) 
+				errs.addError(UnspecifiedTargetRegion(_targetRegionName, `service ${thisServiceId.quote()}`, "SL130"));
+			else found.used=true;
+		}
+		//check <ServiceName>
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ServiceName, `service ${thisServiceId.quote()}`, service, errs, "SL140", false, this.knownLanguages);
+
+		//check <ProviderName>
+		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ProviderName, `service ${thisServiceId.quote()}`, service, errs, "SL141", false, this.knownLanguages);
+
+		//check <RelatedMaterial>
+		let rm=0, RelatedMaterial;
+		while ((RelatedMaterial=service.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), SL_SCHEMA))!=null)
+			this.validateRelatedMaterial(RelatedMaterial, errs, `service ${thisServiceId.quote()}`, SERVICE_RM, SCHEMA_NAMESPACE, "SL150"); 
+
+		//check <ServiceGenre>
+		let ServiceGenre=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceGenre), SL_SCHEMA);
+		if (ServiceGenre) {
+			checkAttributes(ServiceGenre, [tva.a_href], [tva.a_type], tvaEA.Genre, errs, "SL160");
+			if (ServiceGenre.attr(tva.a_type)) 
+				if (!isIn(tva.ALL_GENRE_TYPES, ServiceGenre.attr(tva.a_type).value()))
+					errs.addError({code:"SL161", 
+						message:`service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} type ${ServiceGenre.attr(dvbi.a_href).value().quote()}`, 
+						fragment:ServiceGenre, key:`invalid ${dvbi.e_ServiceGenre} type`});
+		
+			if (ServiceGenre.attr(dvbi.a_href)) {
+				let genre=ServiceGenre.attr(dvbi.a_href).value();
+				if (!this.allowedGenres.isIn(genre)) 
+					errs.addError({code:"SL162", 
+						message:`service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} value ${genre} (must be content genre)`, 
+						fragment:ServiceGenre, key:`invalid ${dvbi.e_ServiceGenre}`});
+			}
+		}
+		//check <ServiceType>
+		let ServiceType=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceType), SL_SCHEMA);
+		if (ServiceType && ServiceType.attr(dvbi.a_href) && !this.allowedServiceTypes.isIn(ServiceType.attr(dvbi.a_href).value())) 
+			errs.addError({code:"SL164", 
+				message:`service ${thisServiceId.quote()} has an invalid ${dvbi.e_ServiceType.elementize()} (${ServiceType.attr(dvbi.a_href).value()})`, 
+				fragment:ServiceType, key:`invalid ${dvbi.e_ServiceType}`});
+
+		// check <ServiceDescription>
+		this.ValidateSynopsisType(SL_SCHEMA, SCHEMA_PREFIX, service, dvbi.e_ServiceDescription, 
+			[], [tva.SYNOPSIS_BRIEF_LABEL, tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_EXTENDED_LABEL], "***", errs, "SL170");
+
+		// check <RecordingInfo>
+		let RecordingInfo=service.get(xPath(SCHEMA_PREFIX, dvbi.e_RecordingInfo), SL_SCHEMA);
+		if (RecordingInfo && RecordingInfo.attr(dvbi.a_href) && !this.RecordingInfoCSvalues.isIn(RecordingInfo.attr(dvbi.a_href).value())) 
+			errs.addError({code:"SL180", message:`invalid ${dvbi.e_RecordingInfo.elementize()} value ${RecordingInfo.attr(dvbi.a_href).value().quote()} for service ${thisServiceId} ${this.RecordingInfoCSvalues.valuesRange()}`, 
+					fragment:RecordingInfo, key:`invalid ${dvbi.e_RecordingInfo}`});
+
+		// check <ContentGuideSource>
+		let sCG=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ContentGuideSource), SL_SCHEMA);
+		if (sCG) 
+			this.validateAContentGuideSource(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, sCG, errs, `${dvbi.e_ContentGuideSource.elementize()} in service ${thisServiceId}`, "SL190");
+
+		//check <ContentGuideSourceRef>
+		let sCGref=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ContentGuideSourceRef), SL_SCHEMA);
+		if (sCGref && !isIn(ContentGuideSourceIDs, sCGref.text())) 
+			errs.addError({code:"SL200", message:`content guide reference ${sCGref.text().quote()} for service ${thisServiceId.quote()} not specified`, 
+					fragment:sCGref, key:"unspecified content guide source"});
+
+		// check <AdditionalServiceParameters>
+		let _ap=0, AdditionalParams;
+		while ((AdditionalParams=service.get(xPath(SCHEMA_PREFIX, dvbi.e_AdditionalServiceParameters, ++_ap), SL_SCHEMA))!=null) {
+			this.CheckExtension(AdditionalParams, EXTENSION_LOCATION_SERVICE_ELEMENT, errs, "SL211");
+		}
+
+		// check <NVOD>
+		let NVOD=service.get(xPath(SCHEMA_PREFIX, dvbi.e_NVOD), SL_SCHEMA);
+		if (NVOD) {
+			if (NVOD.attr(dvbi.a_mode) && NVOD.attr(dvbi.a_mode).value()==dvbi.NVOD_MODE_REFERENCE) {
+				if (NVOD.attr(dvbi.a_reference))
+					errs.addError({code:"SL221", message:`${dvbi.a_reference.attribute()} is not permitted for ${dvbi.a_mode.attribute(dvbi.e_NVOD)}="${dvbi.NVOD_MODE_REFERENCE}"`,
+						fragment:NVOD, key: 'unallowed attribute'});
+				if (NVOD.attr(dvbi.a_offset))
+					errs.addError({code:"SL222", message:`${dvbi.a_offset.attribute()} is not permitted for ${dvbi.a_mode.attribute(dvbi.e_NVOD)}="${dvbi.NVOD_MODE_REFERENCE}"`,
+						fragment:NVOD, key: 'unallowed attribute'});				
+			}
+			if (NVOD.attr(dvbi.a_mode) && NVOD.attr(dvbi.a_mode).value()==dvbi.NVOD_MODE_TIMESHIFTED) {
+				checkAttributes(NVOD, [dvbi.a_mode, dvbi.a_reference], [dvbi.a_offset], dvbEA.NVOD, errs, "SL223");
+
+				if (NVOD.attr(dvbi.a_reference)) {
+					// check to see if there is a service whose <UniqueIdentifier> equals NVOD@reference and has a NVOD@mode==reference
+					let _s2=0, service2, referredService=null;
+
+					while ((service2=SL.get(xPath(SCHEMA_PREFIX, dvbi.e_Service, ++_s2), SL_SCHEMA))!=null && !referredService) {
+						let ui=service2.get(xPath(SCHEMA_PREFIX, dvbi.e_UniqueIdentifier), SL_SCHEMA);
+						if (ui && ui.text()==NVOD.attr(dvbi.a_reference).value())
+							referredService=service2;
+					}
+					if (!referredService)
+						errs.addError({code:"SL224", message:`no service found with ${dvbi.e_UniqueIdentifier.elementize()}="${NVOD.attr(dvbi.a_reference).value()}"`, 
+							fragment:NVOD, key:"NVOD timeshift"});
+					else {
+						let refNVOD=referredService.get(xPath(SCHEMA_PREFIX, dvbi.e_NVOD), SL_SCHEMA);
+						if (!refNVOD)
+							errs.addError({code:"SL225", message:`service ${NVOD.attr(dvbi.a_reference).value()} has no ${dvbi.e_NVOD.elementize()} information`, fragment:NVOD, key:"not NVOD"});
+						else {
+							if (refNVOD.attr(dvbi.a_mode) && refNVOD.attr(dvbi.a_mode).value() != dvbi.NVOD_MODE_REFERENCE)
+								errs.addError({code:"SL226", message:`service ${NVOD.attr(dvbi.a_reference).value()} is not defined as an NVOD reference`, fragment:NVOD, key:"not NVOD"});
+						}
+					}	
+				}
+			}
+			let _svcType=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceType), SL_SCHEMA);
+			if (_svcType && _svcType.attr(dvbi.a_href) && !_svcType.attr(dvbi.a_href).value().endsWith('linear'))  // this is a biut of a hack, but sufficient to determine linear service type 
+				errs.addError({code:"SL227", 
+					message:`${dvbi.a_href.attribute(dvbi.e_ServiceType)} must be linear for NVOD reference or timeshifted services`,
+					fragments:[NVOD, ServiceType], key:`invalid ${dvbi.e_ServiceType}`});
+		}
+	}
 
 	/*private*/ doSchemaVerification(ServiceList, SCHEMA_NAMESPACE, SL_SCHEMA, SCHEMA_PREFIX, errs, errCode) {
 		let _rc=true;
@@ -1424,142 +1575,23 @@ export default class ServiceListCheck {
 			// for each service
 			errs.setW("num services", s);
 			let thisServiceId=`service-${s}`;  // use a default value in case <UniqueIdentifier> is not specified
-			
-			// check <Service><UniqueIdentifier>
-			let uID=service.get(xPath(SCHEMA_PREFIX, dvbi.e_UniqueIdentifier), SL_SCHEMA);
-			if (uID) {
-				thisServiceId=uID.text();
-				if (!validServiceIdentifier(thisServiceId)) 
-					errs.addError({code:"SL110", message:`${thisServiceId.quote()} is not a valid service identifier`, fragment:uID, key:"invalid tag"});
-				if (!uniqueServiceIdentifier(thisServiceId, knownServices)) 
-					errs.addError({code:"SL111", message:`${thisServiceId.quote()} is not unique`, key:"non unique id", fragment:uID});
-				knownServices.push(thisServiceId);			
-			}
 
-			//check <Service><ServiceInstance>
-			let si=0, ServiceInstance;
-			while ((ServiceInstance=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceInstance, ++si), SL_SCHEMA))!=null)
-				this.validateServiceInstance(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, ServiceInstance, thisServiceId, declaredSubscriptionPackages, errs);
-
-			//check <Service><TargetRegion>
-			let tr=0, TargetRegion;
-			while ((TargetRegion=service.get(xPath(SCHEMA_PREFIX, dvbi.e_TargetRegion, ++tr), SL_SCHEMA))!=null) {
-				let _targetRegionName=TargetRegion.text();
-/* jshint -W083*/
-				let found = knownRegionIDs.find(r => r.region==_targetRegionName);
-/* jshint +W083*/
-				if (found == undefined) 
-					errs.addError(UnspecifiedTargetRegion(_targetRegionName, `service ${thisServiceId.quote()}`, "SL130"));
-				else found.used=true;
-			}
-			//check <Service><ServiceName>
-			checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ServiceName, `service ${thisServiceId.quote()}`, service, errs, "SL140", false, this.knownLanguages);
-
-			//check <Service><ProviderName>
-			checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ProviderName, `service ${thisServiceId.quote()}`, service, errs, "SL141", false, this.knownLanguages);
-
-			//check <Service><RelatedMaterial>
-			let rm=0, RelatedMaterial;
-			while ((RelatedMaterial=service.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), SL_SCHEMA))!=null)
-				this.validateRelatedMaterial(RelatedMaterial, errs, `service ${thisServiceId.quote()}`, SERVICE_RM, SCHEMA_NAMESPACE, "SL150"); 
-
-			//check <Service><ServiceGenre>
-			let ServiceGenre=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceGenre), SL_SCHEMA);
-			if (ServiceGenre) {
-				checkAttributes(ServiceGenre, [tva.a_href], [tva.a_type], tvaEA.Genre, errs, "SL160");
-				if (ServiceGenre.attr(tva.a_type)) 
-					if (!isIn(tva.ALL_GENRE_TYPES, ServiceGenre.attr(tva.a_type).value()))
-						errs.addError({code:"SL161", 
-							message:`service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} type ${ServiceGenre.attr(dvbi.a_href).value().quote()}`, 
-							fragment:ServiceGenre, key:`invalid ${dvbi.e_ServiceGenre} type`});
-			
-				if (ServiceGenre.attr(dvbi.a_href)) {
-					let genre=ServiceGenre.attr(dvbi.a_href).value();
-					if (!this.allowedGenres.isIn(genre)) 
-						errs.addError({code:"SL162", 
-							message:`service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} value ${genre} (must be content genre)`, 
-							fragment:ServiceGenre, key:`invalid ${dvbi.e_ServiceGenre}`});
-				}
-			}
-			//check <Service><ServiceType>                    
-			let ServiceType=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceType), SL_SCHEMA);
-			if (ServiceType && ServiceType.attr(dvbi.a_href) && !this.allowedServiceTypes.isIn(ServiceType.attr(dvbi.a_href).value())) 
-				errs.addError({code:"SL164", 
-					message:`service ${thisServiceId.quote()} has an invalid ${dvbi.e_ServiceType.elementize()} (${ServiceType.attr(dvbi.a_href).value()})`, 
-					fragment:ServiceType, key:`invalid ${dvbi.e_ServiceType}`});
-
-			// check <Service><ServiceDescription>
-			this.ValidateSynopsisType(SL_SCHEMA, SCHEMA_PREFIX, service, dvbi.e_ServiceDescription, 
-				[], [tva.SYNOPSIS_BRIEF_LABEL, tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_EXTENDED_LABEL], "***", errs, "SL170");
-
-			// check <Service><RecordingInfo>
-			let RecordingInfo=service.get(xPath(SCHEMA_PREFIX, dvbi.e_RecordingInfo), SL_SCHEMA);
-			if (RecordingInfo && RecordingInfo.attr(dvbi.a_href) && !this.RecordingInfoCSvalues.isIn(RecordingInfo.attr(dvbi.a_href).value())) 
-				errs.addError({code:"SL180", message:`invalid ${dvbi.e_RecordingInfo.elementize()} value ${RecordingInfo.attr(dvbi.a_href).value().quote()} for service ${thisServiceId} ${this.RecordingInfoCSvalues.valuesRange()}`, 
-						fragment:RecordingInfo, key:`invalid ${dvbi.e_RecordingInfo}`});
-
-			// check <Service><ContentGuideSource>
-			let sCG=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ContentGuideSource), SL_SCHEMA);
-			if (sCG) 
-				this.validateAContentGuideSource(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, sCG, errs, `${dvbi.e_ContentGuideSource.elementize()} in service ${thisServiceId}`, "SL190");
-
-			//check <Service><ContentGuideSourceRef>
-			let sCGref=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ContentGuideSourceRef), SL_SCHEMA);
-			if (sCGref && !isIn(ContentGuideSourceIDs, sCGref.text())) 
-				errs.addError({code:"SL200", message:`content guide reference ${sCGref.text().quote()} for service ${thisServiceId.quote()} not specified`, 
-						fragment:sCGref, key:"unspecified content guide source"});
-
-			// check <Service><AdditionalServiceParameters>
-			let _ap=0, AdditionalParams;
-			while ((AdditionalParams=service.get(xPath(SCHEMA_PREFIX, dvbi.e_AdditionalServiceParameters, ++_ap), SL_SCHEMA))!=null) {
-				this.CheckExtension(AdditionalParams, EXTENSION_LOCATION_SERVICE_ELEMENT, errs, "SL211");
-			}
-
-			// check <Service><NVOD>
-			let NVOD=service.get(xPath(SCHEMA_PREFIX, dvbi.e_NVOD), SL_SCHEMA);
-			if (NVOD) {
-				if (NVOD.attr(dvbi.a_mode) && NVOD.attr(dvbi.a_mode).value()==dvbi.NVOD_MODE_REFERENCE) {
-					if (NVOD.attr(dvbi.a_reference))
-						errs.addError({code:"SL221", message:`${dvbi.a_reference.attribute()} is not permitted for ${dvbi.a_mode.attribute(dvbi.e_NVOD)}="${dvbi.NVOD_MODE_REFERENCE}"`,
-							fragment:NVOD, key: 'unallowed attribute'});
-					if (NVOD.attr(dvbi.a_offset))
-						errs.addError({code:"SL222", message:`${dvbi.a_offset.attribute()} is not permitted for ${dvbi.a_mode.attribute(dvbi.e_NVOD)}="${dvbi.NVOD_MODE_REFERENCE}"`,
-							fragment:NVOD, key: 'unallowed attribute'});				
-				}
-				if (NVOD.attr(dvbi.a_mode) && NVOD.attr(dvbi.a_mode).value()==dvbi.NVOD_MODE_TIMESHIFTED) {
-					checkAttributes(NVOD, [dvbi.a_mode, dvbi.a_reference], [dvbi.a_offset], dvbEA.NVOD, errs, "SL223");
-
-					if (NVOD.attr(dvbi.a_reference)) {
-						// check to see if there is a service whose <UniqueIdentifier> equals NVOD@reference and has a NVOD@mode==reference
-						let _s2=0, service2, referredService=null;
-
-						while ((service2=SL.get(xPath(SCHEMA_PREFIX, dvbi.e_Service, ++_s2), SL_SCHEMA))!=null && !referredService) {
-							let ui=service2.get(xPath(SCHEMA_PREFIX, dvbi.e_UniqueIdentifier), SL_SCHEMA);
-							if (ui && ui.text()==NVOD.attr(dvbi.a_reference).value())
-								referredService=service2;
-						}
-						if (!referredService)
-							errs.addError({code:"SL224", message:`no service found with ${dvbi.e_UniqueIdentifier.elementize()}="${NVOD.attr(dvbi.a_reference).value()}"`, 
-								fragment:NVOD, key:"NVOD timeshift"});
-						else {
-							let refNVOD=referredService.get(xPath(SCHEMA_PREFIX, dvbi.e_NVOD), SL_SCHEMA);
-							if (!refNVOD)
-								errs.addError({code:"SL225", message:`service ${NVOD.attr(dvbi.a_reference).value()} has no ${dvbi.e_NVOD.elementize()} information`, fragment:NVOD, key:"not NVOD"});
-							else {
-								if (refNVOD.attr(dvbi.a_mode) && refNVOD.attr(dvbi.a_mode).value() != dvbi.NVOD_MODE_REFERENCE)
-									errs.addError({code:"SL226", message:`service ${NVOD.attr(dvbi.a_reference).value()} is not defined as an NVOD reference`, fragment:NVOD, key:"not NVOD"});
-							}
-						}	
-					}
-				}
-				let _svcType=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceType), SL_SCHEMA);
-				if (_svcType && _svcType.attr(dvbi.a_href) && !_svcType.attr(dvbi.a_href).value().endsWith('linear'))  // this is a biut of a hack, but sufficient to determine linear service type 
-					errs.addError({code:"SL227", 
-						message:`${dvbi.a_href.attribute(dvbi.e_ServiceType)} must be linear for NVOD reference or timeshifted services`,
-						fragments:[NVOD, ServiceType], key:`invalid ${dvbi.e_ServiceType}`});
-			}
+			this.validateService(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, SL, service, thisServiceId, knownServices, knownRegionIDs, declaredSubscriptionPackages, ContentGuideSourceIDs, errs);
 		}
 
+		if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_r5) {
+			errs.setW("num test services", 0);
+
+			// check <TestService>
+			let ts=0, testService;
+			while ((testService=SL.get(xPath(SCHEMA_PREFIX, dvbi.e_TestService, ++ts), SL_SCHEMA))!=null) {
+				// for each service
+				errs.setW("num test services", ts);
+				let thisServiceId=`testservice-${ts}`;  // use a default value in case <UniqueIdentifier> is not specified
+
+				this.validateService(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, SL, testService, thisServiceId, knownServices, knownRegionIDs, declaredSubscriptionPackages, ContentGuideSourceIDs, errs);
+			}
+		}
 		// check <Service><ContentGuideServiceRef>
 		// issues a warning if this is a reference to self
 		s=0;
@@ -1573,6 +1605,20 @@ export default class ServiceListCheck {
 			}
 		}
 
+		if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_r5) {
+			// check <TestService><ContentGuideServiceRef>
+			// issues a warning if this is a reference to self
+			let ts=0, testService;
+			while ((testService=SL.get("//"+xPath(SCHEMA_PREFIX, dvbi.e_TestService, ++ts), SL_SCHEMA))!=null) {
+				let CGSR=testService.get(xPath(SCHEMA_PREFIX, dvbi.e_ContentGuideServiceRef), SL_SCHEMA);
+				if (CGSR) {
+					let uniqueID=testService.get(xPath(SCHEMA_PREFIX, dvbi.e_UniqueIdentifier), SL_SCHEMA);
+					if (uniqueID && (CGSR.text()==uniqueID.text()))
+						errs.addError({type:WARNING, code:"SL231", message:`${dvbi.e_ContentGuideServiceRef.elementize()} is self`, 
+									fragments:[uniqueID, CGSR], key:`self ${dvbi.e_ContentGuideServiceRef.elementize()}`});
+				}
+			}
+		}
 		// check <ServiceList><LCNTableList>
 		let LCNtableList=SL.get("//"+xPath(SCHEMA_PREFIX, dvbi.e_LCNTableList), SL_SCHEMA);
 		if (LCNtableList) {

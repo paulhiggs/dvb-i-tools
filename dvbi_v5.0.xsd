@@ -33,7 +33,10 @@
 				<element name="ContentGuideSourceList" type="dvbisd:ContentGuideSourceListType"/>
 				<element name="ContentGuideSource" type="dvbisd:ContentGuideSourceType"/>
 			</choice>
-			<element name="Service" type="dvbisd:ServiceType" minOccurs="0" maxOccurs="unbounded"/>
+			<choice minOccurs="0" maxOccurs="unbounded">
+				<element name="Service" type="dvbisd:ServiceType"/>
+				<element name="TestService" type="dvbisd:ServiceType"/>
+			</choice>
 			<any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 		<attribute name="version" type="positiveInteger" use="required"/>
