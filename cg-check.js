@@ -2,6 +2,7 @@ import 'colors';
 import { parseXmlString } from "libxmljs2";
 
 import { readFileSync } from "fs";
+import process from "process";
 
 import { attribute, datatypeIs, elementize, quote } from './phlib/phlib.js';
 
@@ -26,10 +27,13 @@ import { IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject,
 
 import { ValidatePromotionalStillImage } from "./RelatedMaterialChecks.js";
 import { cg_InvalidHrefValue, NoChildElement } from "./CommonErrors.js";
-import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaLoad } from "./schema_checks.js";
+import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.js";
 
 import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./MultilingualElement.js";
 import { writeOut } from './Validator.js';
+
+import {DRAFT, CURRENT} from './sl-check.js';
+
 
 // convenience/readability values
 const DEFAULT_LANGUAGE="***";
@@ -53,6 +57,28 @@ const supportedRequests=[
 	{value:CG_REQUEST_BS_CATEGORIES, label:"Box Set Categories"},
 	{value:CG_REQUEST_BS_LISTS, label:"Box Set Lists"},
 	{value:CG_REQUEST_BS_CONTENTS, label:"Box Set Contents"}];
+
+	const SCHEMA_r0=0, 
+	  SCHEMA_r1=1,
+	  SCHEMA_unknown= -1;
+
+var SchemaVersions=[
+	{namespace:TVAschema.v2023.namespace, version:SCHEMA_r1, filename:TVAschema.v2023.file, schema:null, status:DRAFT},
+	{namespace:TVAschema.v2019.namespace, version:SCHEMA_r0, filename:TVAschema.v2019.file, schema:null, status:CURRENT},
+];
+
+
+/**
+ * determine the schema version (and hence the specificaion version) in use 
+ *
+ * @param {String} namespace  The namespace used in defining the schema
+ * @returns {integer} Representation of the schema version or error code if unknown 
+ */
+ let SchemaVersion = (namespace) => {
+	let x=SchemaVersions.find(ver => ver.namespace==namespace);
+	return x?x.version:SCHEMA_unknown;
+};
+
 
 /**
  * counts the number of named elements in the specificed node 
@@ -264,10 +290,29 @@ export default class ContentGuideCheck {
 				{files:[TVA_ContentAlertCS.file, DVBI_ParentalGuidanceCS.file]});
 		}
 
-		console.log("loading Schemas...".yellow.underline);
-		this.TVAschema=parseXmlString(readFileSync(TVAschema.file));
+		SchemaVersions.forEach(version => {
+			process.stdout.write(`..loading ${version.version} ${version.namespace} from ${version.filename} `.yellow);
+			version.schema=parseXmlString(readFileSync(version.filename));
+			console.log(version.schema?"OK".green:"FAIL".red);
+		});
+
 
 		this.supportedRequests=supportedRequests;
+	}
+
+
+	/*private*/ doSchemaVerification(TVAdoc, SCHEMA_NAMESPACE, CG_SCHEMA, SCHEMA_PREFIX, errs, errCode) {
+		let _rc=true;
+
+		let x=SchemaVersions.find(s => s.namespace==SCHEMA_NAMESPACE);
+		if (x && x.schema) {
+			SchemaCheck(TVAdoc, x.schema, errs, `${errCode}:${SchemaVersion(SCHEMA_NAMESPACE)}`);
+			SchemaVersionCheck(CG_SCHEMA, SCHEMA_PREFIX, TVAdoc, x.status, errs, `${errCode}a`);
+		}
+		else
+			_rc=false; 
+
+		return _rc;
 	}
 
 	/**
@@ -2460,7 +2505,7 @@ export default class ContentGuideCheck {
 			SCHEMA_NAMESPACE=CG.root().namespace()?CG.root().namespace().href():"";
 			CG_SCHEMA[SCHEMA_PREFIX]=SCHEMA_NAMESPACE;
 
-		SchemaCheck(CG, this.TVAschema, errs, "CG003");
+		this.doSchemaVerification(CG,SCHEMA_NAMESPACE, CG_SCHEMA, SCHEMA_PREFIX, errs, "CG003");
 
 		let tvaMainLang=GetNodeLanguage(CG.root(), true, errs, "CG005", this.knownLanguages);
 		let ProgramDescription=CG.get(xPath(SCHEMA_PREFIX, tva.e_ProgramDescription), CG_SCHEMA);

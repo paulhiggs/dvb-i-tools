@@ -86,7 +86,13 @@ export const DVBIv2_CreditsItemRoles={file:join(pathDVBI, v2Credits), url:`${REP
 const  idDVB_ParentalGuidanceCS="ParentalGuidanceCS.xml";
 export const DVBI_ParentalGuidanceCS={file:join(path2007CS, idDVB_ParentalGuidanceCS), url:`${DVB_METADATA}${url2007CS}/${idDVB_ParentalGuidanceCS}`};
 
-export const TVAschema={file:join(".", "tva_metadata_3-1.xsd")};
+const TVAnamespace="urn:tva:metadata";
+const TVAfileprefix="tva_metadata_3-1";
+
+export const TVAschema={
+	v2019:{namespace:`${TVAnamespace}:2019`, file:join(".", `${TVAfileprefix}_2019.xsd`)},
+	v2023:{namespace:`${TVAnamespace}:2023`, file:join(".", `${TVAfileprefix}_2023.xsd`)}
+};
 
 export const DVBI_ServiceListSchema={
 	r0:{file:join(".", "dvbi_v1.0.xsd")},

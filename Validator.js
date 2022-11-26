@@ -81,13 +81,13 @@ function createPrefix(req) {
 	const getDate = (d) => {
 		const fillZero = (t) =>  t < 10 ? `0${t}` : t; 
 		return `${d.getFullYear()}-${fillZero(d.getMonth() + 1)}-${fillZero(d.getDate())} ${fillZero(d.getHours())}.${fillZero(d.getMinutes())}.${fillZero(d.getSeconds())}`;
-	      };
+	};
 
 	let fname=req.body.doclocation==MODE_URL ?
 			req.body.XMLurl.substr(req.body.XMLurl.lastIndexOf('/')+1):
 			req?.files?.XMLfile?.name;
 	if (!fname)
-	      return null;
+		return null;
 
 	return `${logDir}${sep}${getDate(new Date())} (${req.body.testtype==MODE_SL?"SL":req.body.requestType}) ${fname.replace(/[/\\?%*:|"<>]/g, '-')}`;
 }
