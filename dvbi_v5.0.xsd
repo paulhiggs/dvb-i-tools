@@ -14,8 +14,8 @@
 	<!ENTITY Hex16 "&HexDigit;{1,4}">
 	<!ENTITY Hex8 "&HexDigit;{1,2}">
 ]>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2023" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2019" targetNamespace="urn:dvb:metadata:servicediscovery:2023" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<import namespace="urn:tva:metadata:2019" schemaLocation="tva_metadata_3-1.xsd"/>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2023" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2023" targetNamespace="urn:dvb:metadata:servicediscovery:2023" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<import namespace="urn:tva:metadata:2023" schemaLocation="tva_metadata_3-1_2023.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
 	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
 	<element name="ServiceList" type="dvbisd:ServiceListType"/>
@@ -24,7 +24,7 @@
 		<sequence>
 			<element name="Name" type="mpeg7:TextualType" maxOccurs="unbounded"/>
 			<element name="ProviderName" type="mpeg7:TextualType" maxOccurs="unbounded"/>
-			<element name="RelatedMaterial" type="dvbisd:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="RegionList" type="dvbisd:RegionListType" minOccurs="0"/>
 			<element name="TargetRegion" type="dvbisd:RegionIdRefType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="SubscriptionPackageList" type="dvbisd:SubscriptionPackageListType" minOccurs="0"/>
@@ -33,7 +33,10 @@
 				<element name="ContentGuideSourceList" type="dvbisd:ContentGuideSourceListType"/>
 				<element name="ContentGuideSource" type="dvbisd:ContentGuideSourceType"/>
 			</choice>
-			<element name="Service" type="dvbisd:ServiceType" minOccurs="0" maxOccurs="unbounded"/>
+			<choice minOccurs="0" maxOccurs="unbounded">
+				<element name="Service" type="dvbisd:ServiceType"/>
+				<element name="TestService" type="dvbisd:ServiceType"/>
+			</choice>
 			<any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 		<attribute name="version" type="positiveInteger" use="required"/>
@@ -62,7 +65,7 @@
 		<sequence>
 			<element name="Name" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="ProviderName" type="mpeg7:TextualType" maxOccurs="unbounded"/>
-			<element name="RelatedMaterial" type="dvbisd:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="ScheduleInfoEndpoint" type="dvbisd:ExtendedURIType"/>
 			<element name="ProgramInfoEndpoint" type="dvbisd:ExtendedURIType" minOccurs="0"/>
 			<element name="GroupInfoEndpoint" type="dvbisd:ExtendedURIType" minOccurs="0"/>
@@ -85,7 +88,7 @@
 			<element name="TargetRegion" type="dvbisd:RegionIdRefType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="ServiceName" type="mpeg7:TextualType" maxOccurs="unbounded"/>
 			<element name="ProviderName" type="mpeg7:TextualType" maxOccurs="unbounded"/>
-			<element name="RelatedMaterial" type="dvbisd:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="ServiceGenre" type="tva:GenreType" minOccurs="0"/>
 			<element name="ServiceType" type="tva:ControlledTermType" minOccurs="0"/>
 			<element name="ServiceDescription" type="tva:SynopsisType" minOccurs="0" maxOccurs="unbounded"/>
@@ -106,7 +109,7 @@
 	<complexType name="ServiceInstanceType">
 		<sequence>
 			<element name="DisplayName" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="RelatedMaterial" type="dvbisd:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="ContentProtection" type="dvbisd:ContentProtectionType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="ContentAttributes" type="dvbisd:ContentAttributesType" minOccurs="0"/>
 			<element name="Availability" type="dvbisd:ServiceAvailabilityType" minOccurs="0"/>
@@ -425,52 +428,6 @@
 	<!-- -->
 	<!--  TV-Anytime extended data types -->
 	<!-- -->
-	<complexType name="RelatedMaterialType">
-		<sequence>
-			<element name="HowRelated" type="tva:ControlledTermType" minOccurs="0"/>
-			<element name="Format" minOccurs="0">
-				<complexType>
-					<choice>
-						<element name="AVAttributes" type="tva:AVAttributesType"/>
-						<element name="StillPictureFormat">
-							<complexType>
-								<complexContent>
-									<extension base="tva:ControlledTermType">
-										<attribute name="horizontalSize" type="unsignedShort"/>
-										<attribute name="verticalSize" type="unsignedShort"/>
-									</extension>
-								</complexContent>
-							</complexType>
-						</element>
-					</choice>
-				</complexType>
-			</element>
-			<choice>
-				<element name="MediaLocator" type="dvbisd:ExtendedTVAMediaLocatorType" maxOccurs="unbounded"/>
-				<element name="SegmentReference" type="tva:SegmentReferenceType"/>
-			</choice>
-			<element name="PromotionalText" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="PromotionalMedia" type="mpeg7:TitleMediaType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="SocialMediaReference" minOccurs="0" maxOccurs="unbounded">
-				<complexType>
-					<simpleContent>
-						<extension base="anyURI">
-							<attribute name="referenceType" type="mpeg7:termReferenceType" use="required"/>
-						</extension>
-					</simpleContent>
-				</complexType>
-			</element>
-			<element name="SourceMediaLocator" type="mpeg7:MediaLocatorType" minOccurs="0"/>
-		</sequence>
-		<attribute ref="xml:lang"/>
-	</complexType>
-	<complexType name="ExtendedTVAMediaLocatorType">
-		<complexContent>
-			<extension base="tva:TVAMediaLocatorType">
-				<attribute name="contentLanguage" type="language" use="optional"/>
-			</extension>
-		</complexContent>
-	</complexType>
 	<complexType name="VideoAttributesType">
 		<complexContent>
 			<extension base="tva:VideoAttributesType">

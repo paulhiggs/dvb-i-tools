@@ -296,6 +296,7 @@ export const dvbi = {
 	e_SubscriptionPackageList: "SubscriptionPackageList",
 	e_TargetCountry: "TargetCountry",
 	e_TargetRegion: "TargetRegion",
+	e_TestService: "TestService",
 	e_UnicastRET: "UnicastRET",
 	e_UniqueIdentifier: "UniqueIdentifier",
 	e_URI: "URI",
