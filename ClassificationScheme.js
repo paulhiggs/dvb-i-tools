@@ -27,7 +27,7 @@ const CS_URI_DELIMITER=':';
  */
 function addCSTerm(vals, CSuri, term, leafNodesOnly=false) {
 	if (term.type()!="element") return;
-	if (term.name()===dvb.e_Term) {
+	if (term.name()==dvb.e_Term) {
 		if (!leafNodesOnly || (leafNodesOnly && !hasChild(term, dvb.e_Term)))
  			if (term.attr(dvb.a_termID)) 
 				vals.push(`${CSuri}${CS_URI_DELIMITER}${term.attr(dvb.a_termID).value()}`);
@@ -77,8 +77,9 @@ export default class ClassificationScheme {
 		this.schemes=[];
 	}
 
-	insertValue(key, value) {
-		this.values.insert(key, value);
+	insertValue(key, value=true) {
+		if (key!="")
+			this.values.insert(key, value);
 	}
 
 	valuesRange() {
@@ -118,7 +119,9 @@ export default class ClassificationScheme {
  		readFile(classificationScheme, {encoding: "utf-8"}, (err,data)=> {
  			if (!err) {
 				let res=loadClassificationScheme(parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm,"")), this.leafsOnly);
-				res.vals.forEach(e=>{this.insertValue(e, true);});
+				res.vals.forEach(e=>{
+					this.insertValue(e, true);
+				});
 				this.schemes.push(res.uri);
 			 }
 			else console.log(err.red);
@@ -161,5 +164,13 @@ export default class ClassificationScheme {
 		if (pos == -1)
 			return false;
 		return this.schemes.includes(term.slice(0,pos));
+	}
+
+	showMe(prefix="") {
+		console.log(`in showme("${prefix}"), count=${this.values.count()}`);
+		this.values.traverseInOrder((node) => {
+			if (prefix=="" || node.getValue().beginsWith(prefix)) 
+				console.log(node.getValue());
+		});
 	}
 }
