@@ -31,7 +31,7 @@ export function checkLanguage(validator, lang, loc, element, errs, errCode) {
 			langOK=true;
 			break;
 		case validator.languageUnknown:
-			errs.addError({type:WARNING, code:`${errCode}-1`, 
+			errs.addError({code:`${errCode}-1`, 
 							message:`${loc?loc:"language"} value ${lang.quote()} is invalid`, 
 							fragment:element, key:"invalid language"});
 			break;
@@ -48,7 +48,7 @@ export function checkLanguage(validator, lang, loc, element, errs, errCode) {
 			errs.addError({code:`${errCode}-4`, message:`language is not a String, its "${datatypeIs(lang)}"`, 
 							fragment:element, key:"invalid language"});
 			break;
-	}
+	}	
 	return langOK;
 }
 

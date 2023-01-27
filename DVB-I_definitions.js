@@ -182,6 +182,7 @@ export const dvbi = {
 	a_referenceType: "referenceType",
 	a_regionID: "regionID",
 	a_regulatorListFlag: "regulatorListFlag",
+	a_responseStatus: "responseStatus",
 	a_rtcp_bandwidth: "rtcp-bandwidth",
 	a_rtcp_mux: "rtcp-mux",
 	a_rtcp_rsize: "rtcp-rsize",
@@ -310,6 +311,7 @@ export const dvbi = {
 export const dvbEA = {	// EA = Element-Attributes - the attributes that are defiend for each element
 	MediaLocator: [dvbi.a_contentLanguage].concat(tvaEA.mediaLocator),
 	NVOD: [dvbi.a_mode, dvbi.a_reference, dvbi.a_offset],
+	ServiceList: [dvbi.a_version, tva.a_lang, dvbi.a_responseStatus]
 };
 
 export const dvbiEC = { // EC = Element-Children - the child elements or each element
