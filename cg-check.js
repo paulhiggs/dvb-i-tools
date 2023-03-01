@@ -1769,7 +1769,7 @@ export default class ContentGuideCheck {
 		}
 
 		let isValidAudioMixType = (mixType) => [mpeg7.AUDIO_MIX_MONO, mpeg7.AUDIO_MIX_STEREO, mpeg7.AUDIO_MIX_5_1].includes(mixType);
-		let isValidAudioLanguagePurpose = (purpose) => [dvbi.AUDIO_PURPOSE_MAIN, dvbi.AUDIO_PURPOSE_VISUAL_IMPAIRED, dvbi.AUDIO_PURPOSE_HEARING_IMPAIRED,].includes(purpose);
+		let isValidAudioLanguagePurpose = (purpose) => [dvbi.AUDIO_PURPOSE_MAIN, dvbi.AUDIO_PURPOSE_VISUAL_IMPAIRED, dvbi.AUDIO_PURPOSE_HEARING_IMPAIRED].includes(purpose);
 
 		checkTopElementsAndCardinality(AVAttributes,
 			[{name:tva.e_AudioAttributes, minOccurs:0, maxOccurs:Infinity},

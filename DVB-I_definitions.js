@@ -70,9 +70,10 @@ export const dvbi = {
 	CONTENT_TYPE_DASH_MPD: "application/dash+xml",    // MPD of linear service
 	CONTENT_TYPE_DVB_PLAYLIST: "application/xml",     // XML Playlist
 
-// A177 6.11.2 - Audio Purpose
-	AUDIO_PURPOSE_MAIN: `${AudioPurposeCS}:1`,
-	AUDIO_PURPOSE_DESCRIPTION: `${AudioPurposeCS}:6`,
+// A177 6.11.2 - Audio Purpose	
+	AUDIO_PURPOSE_VISUAL_IMPAIRED : `${AudioPurposeCS}:1`,
+	AUDIO_PURPOSE_HEARING_IMPAIRED : `${AudioPurposeCS}:2`,
+	AUDIO_PURPOSE_MAIN: `${AudioPurposeCS}:6`,
 
 // A177 6.11.3 - Caption Coding Format
 	DVB_BITMAP_SUBTITLES: `${CaptionCodingFormatCS}:2.1`,
