@@ -175,7 +175,7 @@ let validDASHcontentType = (contentType) => [dvbi.CONTENT_TYPE_DASH_MPD, dvbi.CO
  * @param {String} src      The transmission mechanism
  * @param {String} loc      The location of the element
  */
-let  InvalidCountryCode = (value, src, loc) => `invalid country code ${value.quote()} for ${src} parameters in ${loc}`;
+let  InvalidCountryCode = (value, src, loc) => `invalid country code ${value.quote()} ${src?`for ${src} parameters `:""}in ${loc}`;
 
 /**
  * Create a label for the optional language and value provided 
@@ -1439,7 +1439,7 @@ export default class ServiceListCheck {
 		let ProminenceList=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ProminenceList), SL_SCHEMA);
 		if (ProminenceList) {
 			let p=0, PE, known=[];
-			while ((PE=ProminenceList.get(xPath(SCHEMA_PREFIX, tva.e_Prominence, ++p), SL_SCHEMA))!=null) {
+			while ((PE=ProminenceList.get(xPath(SCHEMA_PREFIX, dvbi.e_Prominence, ++p), SL_SCHEMA))!=null) {
 				if (!PE.attr(dvbi.a_country) && !PE.attr(dvbi.a_region) && ! PE.attr(dvbi.a_ranking)) {
 					errs.addError({
 						code:"SL241",
@@ -1449,7 +1449,7 @@ export default class ServiceListCheck {
 					});
 				}
 				else {
-					// if region is used, it must be in the RegionList
+					// if @region is used, it must be in the RegionList
 					if (PE.attr(dvbi.a_region)) {
 						let _prominenceRegion=PE.attr(dvbi.a_region).value();
 						/* jshint -W083*/
@@ -1464,6 +1464,12 @@ export default class ServiceListCheck {
 							});
 					}
 
+					// if @country is specified, it must be valid 
+					if (PE.attr(dvbi.a_country) && !this.knownCountries.isISO3166code(PE.attr(dvbi.a_country).value())) {
+						errs.addError({code:"SL243", message:InvalidCountryCode(PE.attr(dvbi.a_country).value(), null, `service ${thisServiceId.quote()}`), 
+								fragment:PE, key:"invalid country code"});
+					}
+
 					// for exact match
 					let hash1=`c:${PE.attr(dvbi.a_country) ? PE.attr(dvbi.a_country).value() : '**'} re:${PE.attr(dvbi.a_region) ? PE.attr(dvbi.a_region).value() : '**'}  ra:${PE.attr(dvbi.a_ranking) ? PE.attr(dvbi.a_ranking).value() : '**'}`;
 					if (!isIn(known, hash1))
@@ -1473,13 +1479,13 @@ export default class ServiceListCheck {
 							region=`${PE.attr(dvbi.a_region) ? `region:${PE.attr(dvbi.a_region).value}`:''}`,
 							ranking=`${PE.attr(dvbi.a_ranking) ? `ranking:${PE.attr(dvbi.a_ranking).value}`:''}`;
 						errs.addError({
-							code:"SL243",
+							code:"SL244",
 							message:`duplicate ${dvbi.e_Prominence.elementize()} for ${country} ${region} ${ranking}`,
 							fragment:PE,
 							key:`duplicate ${dvbi.e_Prominence}`
 						});
 					}
-					// for multiple ranking in same country/region pair
+					// for multiple @ranking in same country/region pair
 					let hash2=`c:${PE.attr(dvbi.a_country) ? PE.attr(dvbi.a_country).value() : '**'} re:${PE.attr(dvbi.a_region) ? PE.attr(dvbi.a_region).value() : '**'}`;
 					if (!isIn(known, hash2))
 						known.push(hash2);
@@ -1487,8 +1493,8 @@ export default class ServiceListCheck {
 						let country=`${PE.attr(dvbi.a_country) ? `country:${PE.attr(dvbi.a_country).value}`:''}`,
 							region=`${PE.attr(dvbi.a_region) ? `region:${PE.attr(dvbi.a_region).value}`:''}`;
 						errs.addError({
-							code:"SL244",
-							message:`multiple ${dvbi.a_ranking.attribute()} for ${country} ${region}`,
+							code:"SL245",
+							message:`multiple ${dvbi.a_ranking.attribute()} ${(country||region)?"for":""} ${country} ${region}`,
 							fragment:PE,
 							key:`duplicate ${dvbi.e_Prominence}`
 						});
