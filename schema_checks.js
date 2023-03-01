@@ -14,40 +14,45 @@ import { datatypeIs } from "./phlib/phlib.js";
 /**
  * check that the specified child elements are in the parent element
  *
- * @param {Object} parentElement      the element whose attributes should be checked
+ * @param {Object} checkElement       the element whose attributes should be checked
  * @param {Array}  requiredAttributes the element names permitted within the parent
  * @param {Array}  optionalAttributes the element names permitted within the parent
  * @param {Array}  definedAttributes  attributes that defined in the schema, whether requited, optional or profiled out 
  * @param {Class}  errs               errors found in validaton
  * @param {string} errCode            error code to be used in reports,
  */
-export function checkAttributes(parentElement, requiredAttributes, optionalAttributes, definedAttributes, errs, errCode) {
-	if (!requiredAttributes || !parentElement) {
-		errs.addError({type:APPLICATION, code:"AT000", message:"checkAttributes() called with parentElement==null or requiredAttributes==null"});
+export function checkAttributes(checkElement, requiredAttributes, optionalAttributes, definedAttributes, errs, errCode) {
+	if (!checkElement || !requiredAttributes) {
+		errs.addError({type:APPLICATION, code:"AT000", message:"checkAttributes() called with checkElement==null or requiredAttributes==null"});
 		return;
 	}
-	 
+	let p="";
+	try {
+		p=`${checkElement.parent().name()}.${checkElement.name()}`;
+	}
+	catch (e) {
+		p=checkElement.name();
+	}
+
 	requiredAttributes.forEach(attributeName => {
-		if (!parentElement.attr(attributeName)) {
-			let p=`${(parentElement.parent()?`${parentElement.parent().name()}.`:"")}${parentElement.name()}`;
+		if (!checkElement.attr(attributeName)) {
 			errs.addError({code:`${errCode}-1`, message:`${attributeName.attribute(`${p}`)} is a required attribute`, 
-					key:'missing attribute',line:parentElement.line()});
+					key:'missing attribute',line:checkElement.line()});
 		}
 	});
 	 
-	parentElement.attrs().forEach(attr => {
+	checkElement.attrs().forEach(attr => {
 		if (!isIn(requiredAttributes, attr.name()) && !isIn(optionalAttributes, attr.name()) && !isIn(definedAttributes, attr.name())) {
-			let p=`${elementize(`${parentElement.parent()?`${parentElement.parent().name()}.`:""}${parentElement.name()}`)}`;
 			errs.addError({code:`${errCode}-2`, message:`${attr.name().attribute()} is not permitted in ${p}`,
-					key:'unexpected attribute', line:parentElement.line()});
+					key:'unexpected attribute', line:checkElement.line()});
 		}
 	});
 
 	definedAttributes.forEach(attribute => {
 		if (!isIn(requiredAttributes, attribute) && !isIn(optionalAttributes, attribute))
-			if (parentElement.attr(attribute))
-				errs.addError({type:INFORMATION, code:`${errCode}-3`, message:`${attribute.attribute()} is profiled out of  ${parentElement.name().elementize()}`,
-						key:'unused attribute', line:parentElement.line()});
+			if (checkElement.attr(attribute))
+				errs.addError({type:INFORMATION, code:`${errCode}-3`, message:`${attribute.attribute()} is profiled out of  ${checkElement.name().elementize()}`,
+						key:'unused attribute', line:checkElement.line()});
 	});
 }
 

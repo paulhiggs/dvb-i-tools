@@ -1551,38 +1551,40 @@ export default class ServiceListCheck {
 			return;
 		}
 
-		checkAttributes(SL, [dvbi.a_version, dvbi.a_lang], [dvbi.a_responseStatus], dvbEA.ServiceList, errs, "SL011");
+		checkAttributes(SL.root(), [dvbi.a_version, tva.a_lang], [dvbi.a_responseStatus], dvbEA.ServiceList, errs, "SL011");
+
+		// check ServiceList@version
+		// validated by schema
 
 		// check ServiceList@lang
-		if (SL.attr(tva.a_lang)) {
-			let serviceListLang=SL.attr(tva.a_lang).value();
+		if (SL.root().attr(tva.a_lang)) {
+			let serviceListLang=SL.root().attr(tva.a_lang).value();
 			if (this.knownLanguages) {
 				let validatorResp=this.knownLanguages.isKnown(serviceListLang);
 				if (validatorResp.resp != this.knownLanguages.languageKnown) {
 					switch (validatorResp.resp) {
 						case this.knownLanguages.languageUnknown: 
 							errs.addError({code:"SL012-1", message:`${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is invalid`, 
-										line:SL.line(), key:"invalid language"});
+										line:SL.root().line(), key:"invalid language"});
 							break;
 						case this.knownLanguages.languageRedundant:
 							errs.addError({code:"SL012-2",
 										message:`${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is deprecated (use ${validatorResp.pref.quote()} instead)`, 
-										line:SL.line(), key:"deprecated language"});
+										line:SL.root().line(), key:"deprecated language"});
 							break;
 						case this.knownLanguages.languageNotSpecified:
 							errs.addError({code:"SL012-3", message:`${dvbi.e_ServiceList} xml:${tva.a_lang} value is not provided`, 
-										line:SL.line(), key:"unspecified language"});
+										line:SL.root().line(), key:"unspecified language"});
 							break;
 						case this.knownLanguages.languageInvalidType: 
 							errs.addError({code:"SL012-4", message:`${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is invalid`, 
-										line:SL.line(), key:"invalid language"});
+										line:SL.root().line(), key:"invalid language"});
 							break;
 					}
 				}
-				checkLanguage(this.knownLanguages, SL.attr(tva.a_lang).value(), `xml:${tva.a_lang} in ${dvbi.e_ServiceList}`, SL, errs, "SL012");
+				// checkLanguage(this.knownLanguages, SL.root().attr(tva.a_lang).value(), `xml:${tva.a_lang} in ${dvbi.e_ServiceList}`, SL, errs, "SL012");
 			}
 		}
-		
 
 		// check ServiceList@responseStatus
 		// validated by schema

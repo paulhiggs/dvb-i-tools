@@ -103,7 +103,7 @@ export function checkXMLLangs(SCHEMA, PREFIX, elementName, elementLocation, node
 				fragment:elem, key:'empty value'});
 
 		//if lang is specified, validate the format and value of the attribute against BCP47 (RFC 5646)
-		if (validator && lang!=NO_DOCUMENT_LANGUAGE) 
+		if (elem.attr(tva.a_lang) && validator && lang!=NO_DOCUMENT_LANGUAGE) 
 			checkLanguage(validator, lang, `xml:lang in ${elementName}`, elem, errs, `${errCode}-2`);
 	}
 }
