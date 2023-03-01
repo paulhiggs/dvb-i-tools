@@ -27,7 +27,6 @@
 			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="RegionList" type="dvbisd:RegionListType" minOccurs="0"/>
 			<element name="TargetRegion" type="dvbisd:RegionIdRefType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="SubscriptionPackageList" type="dvbisd:SubscriptionPackageListType" minOccurs="0"/>
 			<element name="LCNTableList" type="dvbisd:LCNTableListType" minOccurs="0"/>
 			<choice minOccurs="0">
 				<element name="ContentGuideSourceList" type="dvbisd:ContentGuideSourceListType"/>
@@ -37,6 +36,7 @@
 				<element name="Service" type="dvbisd:ServiceType"/>
 				<element name="TestService" type="dvbisd:ServiceType"/>
 			</choice>
+			<element name="SubscriptionPackageList" type="dvbisd:SubscriptionPackageListType" minOccurs="0"/>
 			<any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 		<attribute name="version" type="positiveInteger" use="required"/>
@@ -100,6 +100,7 @@
 			<element name="ContentGuideServiceRef" type="string" minOccurs="0"/>
 			<element name="AdditionalServiceParameters" type="dvbisd:ExtensionBaseType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="NVOD" type="dvbisd:NVODType" minOccurs="0"/>
+			<element name="ProminenceList" type="dvbisd:ServiceProminenceListType" minOccurs="0"/>
 		</sequence>
 		<attribute name="dynamic" type="boolean" default="false"/>
 		<attribute name="version" type="positiveInteger" use="required"/>
@@ -183,6 +184,27 @@
 			</simpleType>
 		</attribute>
 		<attribute name="doNotApplyRevocation" type="boolean" use="required"/>
+	</complexType>
+		<complexType name="ServiceProminenceListType">
+		<sequence>
+			<element name="Prominence" type="dvbisd:ServiceProminenceEntryType" maxOccurs="unbounded"/>
+		</sequence>
+	</complexType>
+	<complexType name="ServiceProminenceEntryType">
+		<simpleContent>
+			<extension base="string">
+				<attribute name="country" type="dvbisd:ISO-3166-Code"/>
+				<attribute name="region" type="dvbisd:RegionIdRefType"/>
+				<attribute name="ranking">
+					<simpleType>
+						<restriction base="integer">
+							<minInclusive value="1"/>
+							<maxInclusive value="4095"/>
+						</restriction>
+					</simpleType>
+				</attribute> 
+			</extension>
+		</simpleContent>
 	</complexType>
 	<complexType name="DVBTDeliveryParametersType">
 		<sequence>

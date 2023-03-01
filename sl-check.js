@@ -1327,6 +1327,7 @@ export default class ServiceListCheck {
 				errs.addError(UnspecifiedTargetRegion(_targetRegionName, `service ${thisServiceId.quote()}`, "SL130"));
 			else found.used=true;
 		}
+
 		//check <ServiceName>
 		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_ServiceName, `service ${thisServiceId.quote()}`, service, errs, "SL140", false, this.knownLanguages);
 
@@ -1433,6 +1434,68 @@ export default class ServiceListCheck {
 					message:`${dvbi.a_href.attribute(dvbi.e_ServiceType)} must be linear for NVOD reference or timeshifted services`,
 					fragments:[NVOD, ServiceType], key:`invalid ${dvbi.e_ServiceType}`});
 		}
+
+		// check <Prominence>
+		let ProminenceList=service.get(xPath(SCHEMA_PREFIX, dvbi.e_ProminenceList), SL_SCHEMA);
+		if (ProminenceList) {
+			let p=0, PE, known=[];
+			while ((PE=ProminenceList.get(xPath(SCHEMA_PREFIX, tva.e_Prominence, ++p), SL_SCHEMA))!=null) {
+				if (!PE.attr(dvbi.a_country) && !PE.attr(dvbi.a_region) && ! PE.attr(dvbi.a_ranking)) {
+					errs.addError({
+						code:"SL241",
+						message:`one of ${dvbi.a_country.attribute()},  ${dvbi.a_region.attribute()} or ${dvbi.a_ranking.attribute()} must be provided`,
+						fragment:PE,
+						key:`missing value`
+					});
+				}
+				else {
+					// if region is used, it must be in the RegionList
+					if (PE.attr(dvbi.a_region)) {
+						let _prominenceRegion=PE.attr(dvbi.a_region).value();
+						/* jshint -W083*/
+						let found = knownRegionIDs.find(r => r.region==_prominenceRegion);
+						/* jshint +W083*/
+						if (found == undefined) 
+							errs.addError({
+								code:"SL242",
+								message:`regionID ${_prominenceRegion.quote()} not specified in ${dvbi.e_RegionList.elementize()}`,
+								fragment:PE,
+								key:"target region"
+							});
+					}
+
+					// for exact match
+					let hash1=`c:${PE.attr(dvbi.a_country) ? PE.attr(dvbi.a_country).value() : '**'} re:${PE.attr(dvbi.a_region) ? PE.attr(dvbi.a_region).value() : '**'}  ra:${PE.attr(dvbi.a_ranking) ? PE.attr(dvbi.a_ranking).value() : '**'}`;
+					if (!isIn(known, hash1))
+						known.push(hash1);
+					else {
+						let country=`${PE.attr(dvbi.a_country) ? `country:${PE.attr(dvbi.a_country).value}`:''}`,
+							region=`${PE.attr(dvbi.a_region) ? `region:${PE.attr(dvbi.a_region).value}`:''}`,
+							ranking=`${PE.attr(dvbi.a_ranking) ? `ranking:${PE.attr(dvbi.a_ranking).value}`:''}`;
+						errs.addError({
+							code:"SL243",
+							message:`duplicate ${dvbi.e_Prominence.elementize()} for ${country} ${region} ${ranking}`,
+							fragment:PE,
+							key:`duplicate ${dvbi.e_Prominence}`
+						});
+					}
+					// for multiple ranking in same country/region pair
+					let hash2=`c:${PE.attr(dvbi.a_country) ? PE.attr(dvbi.a_country).value() : '**'} re:${PE.attr(dvbi.a_region) ? PE.attr(dvbi.a_region).value() : '**'}`;
+					if (!isIn(known, hash2))
+						known.push(hash2);
+					else {
+						let country=`${PE.attr(dvbi.a_country) ? `country:${PE.attr(dvbi.a_country).value}`:''}`,
+							region=`${PE.attr(dvbi.a_region) ? `region:${PE.attr(dvbi.a_region).value}`:''}`;
+						errs.addError({
+							code:"SL244",
+							message:`multiple ${dvbi.a_ranking.attribute()} for ${country} ${region}`,
+							fragment:PE,
+							key:`duplicate ${dvbi.e_Prominence}`
+						});
+					}									
+				}
+			}
+		}
 	}
 
 	/*private*/ doSchemaVerification(ServiceList, SCHEMA_NAMESPACE, SL_SCHEMA, SCHEMA_PREFIX, errs, errCode) {
@@ -1487,6 +1550,42 @@ export default class ServiceListCheck {
 			errs.addError({code:"SL010", message:`Unsupported namespace ${SCHEMA_NAMESPACE.quote()}`, key:"XSD validation"});
 			return;
 		}
+
+		checkAttributes(SL, [dvbi.a_version, dvbi.a_lang], [dvbi.a_responseStatus], dvbEA.ServiceList, errs, "SL011");
+
+		// check ServiceList@lang
+		if (SL.attr(tva.a_lang)) {
+			let serviceListLang=SL.attr(tva.a_lang).value();
+			if (this.knownLanguages) {
+				let validatorResp=this.knownLanguages.isKnown(serviceListLang);
+				if (validatorResp.resp != this.knownLanguages.languageKnown) {
+					switch (validatorResp.resp) {
+						case this.knownLanguages.languageUnknown: 
+							errs.addError({code:"SL012-1", message:`${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is invalid`, 
+										line:SL.line(), key:"invalid language"});
+							break;
+						case this.knownLanguages.languageRedundant:
+							errs.addError({code:"SL012-2",
+										message:`${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is deprecated (use ${validatorResp.pref.quote()} instead)`, 
+										line:SL.line(), key:"deprecated language"});
+							break;
+						case this.knownLanguages.languageNotSpecified:
+							errs.addError({code:"SL012-3", message:`${dvbi.e_ServiceList} xml:${tva.a_lang} value is not provided`, 
+										line:SL.line(), key:"unspecified language"});
+							break;
+						case this.knownLanguages.languageInvalidType: 
+							errs.addError({code:"SL012-4", message:`${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is invalid`, 
+										line:SL.line(), key:"invalid language"});
+							break;
+					}
+				}
+				checkLanguage(this.knownLanguages, SL.attr(tva.a_lang).value(), `xml:${tva.a_lang} in ${dvbi.e_ServiceList}`, SL, errs, "SL012");
+			}
+		}
+		
+
+		// check ServiceList@responseStatus
+		// validated by schema
 
 		//check <ServiceList><Name>
 		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_Name, dvbi.e_ServiceList, SL, errs, "SL020", false, this.knownLanguages);

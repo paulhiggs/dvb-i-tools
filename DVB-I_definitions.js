@@ -142,6 +142,7 @@ export const dvbi = {
 	a_contentLanguage: "contentLanguage",
 	a_contentType: tva.a_contentType,
 	a_controlRemoteAccessOverInternet: "controlRemoteAccessOverInternet",
+	a_country: "country",
 	a_countryCodes: "countryCodes",
 	a_cpsIndex: "cpsIndex",
 	a_days: "days",
@@ -177,11 +178,14 @@ export const dvbi = {
 	a_PayloadTypeNumber: "PayloadTypeNumber",
 	a_Port: "Port",
 	a_priority: "priority", 
+	a_ranking: "ranking",
 	a_recurrence: "recurrence",
 	a_reference: "reference",
 	a_referenceType: "referenceType",
+	a_region: "region",
 	a_regionID: "regionID",
 	a_regulatorListFlag: "regulatorListFlag",
+	a_responseStatus: "responseStatus",
 	a_rtcp_bandwidth: "rtcp-bandwidth",
 	a_rtcp_mux: "rtcp-mux",
 	a_rtcp_rsize: "rtcp-rsize",
@@ -260,6 +264,8 @@ export const dvbi = {
 	e_Postcode: "Postcode",
 	e_PostcodeRange: "PostcodeRange",
 	e_ProgramInfoEndpoint: "ProgramInfoEndpoint",
+	e_Prominence: "Prominence",
+	e_ProminenceList: "ProminenceList",
 	e_PromotionalMedia: "PromotionalMedia",
 	e_PromotionalText: "PromotionalText",
 	e_Provider: "Provider",
@@ -310,6 +316,7 @@ export const dvbi = {
 export const dvbEA = {	// EA = Element-Attributes - the attributes that are defiend for each element
 	MediaLocator: [dvbi.a_contentLanguage].concat(tvaEA.mediaLocator),
 	NVOD: [dvbi.a_mode, dvbi.a_reference, dvbi.a_offset],
+	ServiceList: [dvbi.a_version, tva.a_lang, dvbi.a_responseStatus]
 };
 
 export const dvbiEC = { // EC = Element-Children - the child elements or each element
