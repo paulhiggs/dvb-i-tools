@@ -1551,7 +1551,7 @@ export default class ServiceListCheck {
 			return;
 		}
 
-		checkAttributes(SL.root(), [dvbi.a_version, tva.a_lang], [dvbi.a_responseStatus], dvbEA.ServiceList, errs, "SL011");
+		checkAttributes(SL.root(), [dvbi.a_version, tva.a_lang], [dvbi.a_responseStatus, "schemaLocation"], dvbEA.ServiceList, errs, "SL011");
 
 		// check ServiceList@version
 		// validated by schema
