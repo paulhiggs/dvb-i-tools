@@ -21,7 +21,7 @@
 		"morgan": "^1.10.0",
 		"serve-favicon": "^2.5.0",
 		"sync-fetch": "^0.4.2",
-		"xml-formatter": "^2.6.1"
+		"xml-formatter": "^3.3.0"
 	},
 	"engines": {
 		"node": ">= 17.8.0",
