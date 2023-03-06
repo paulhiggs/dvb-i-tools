@@ -2277,6 +2277,7 @@ export default class ContentGuideCheck {
 				 {name:tva.e_PublishedStartTime},
 				 {name:tva.e_PublishedDuration},
 				 {name:tva.e_ActualStartTime, minOccurs:0}, 
+				 {name:tva.e_ActualDuration, minOccurs:0}, 
 				 {name:tva.e_FirstShowing, minOccurs:0 }, 
 				 {name:tva.e_Free, minOccurs:0}], 
 				tvaEC.ScheduleEvent,
