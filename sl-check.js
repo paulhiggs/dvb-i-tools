@@ -1816,7 +1816,11 @@ export default class ServiceListCheck {
 		if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_r4) {
 			knownRegionIDs.forEach(kr => {
 				if (!kr.used)
-					errs.addError({code:"SL281", message:`${dvbi.a_regionID.attribute(dvbi.e_Region)}="${kr.region}" is defined but not used`, key:`unused ${dvbi.a_regionID.attribute()}`, line:kr.line});
+					errs.addError(
+						{code:"SL281", type:WARNING,
+						message:`${dvbi.a_regionID.attribute(dvbi.e_Region)}="${kr.region}" is defined but not used`, key:`unused ${dvbi.a_regionID.attribute()}`, 
+						line:kr.line}
+					);
 			});
 		}
 	}
