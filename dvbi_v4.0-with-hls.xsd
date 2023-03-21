@@ -18,7 +18,7 @@
 	<import namespace="urn:tva:metadata:2019" schemaLocation="tva_metadata_3-1_2019.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
 	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
-	<import namespace="vnd:apple:mpegurl" schemaLocation="hls-url.xsd"/>
+	<import namespace="vnd:apple:mpegurl" schemaLocation="hls-url-4.0.xsd"/>
 	<element name="ServiceList" type="dvbisd:ServiceListType"/>
 	<element name="Playlist" type="dvbisd:DASHPlaylistType"/>
 	<complexType name="ServiceListType">
