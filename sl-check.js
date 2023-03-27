@@ -367,9 +367,10 @@ export default class ServiceListCheck {
 	 * @param {XMLnode} Region         The <Region> element to process
 	 * @param {integer} depth         The current depth in the hierarchial structure of regions
 	 * @param {Array}  knownRegionIDs  The list of region IDs that have been found
+	 * @param {Array}  countries
 	 * @param {Object} errs           The class where errors and warnings relating to the service list processing are stored 
 	 */
-	/*private*/  addRegion(SL_SCHEMA, SCHEMA_PREFIX, schemaVersion, Region, depth, knownRegionIDs, errs) {
+	/*private*/  addRegion(SL_SCHEMA, SCHEMA_PREFIX, schemaVersion, Region, depth, knownRegionIDs, countries, errs) {
 		
 		if (!Region) {
 			errs.addError({type:APPLICATION, code:"AR000", message:"addRegion() called with Region==null"});
@@ -378,6 +379,22 @@ export default class ServiceListCheck {
 		
 		let regionID=Region.attr(dvbi.a_regionID)?Region.attr(dvbi.a_regionID).value():null;
 		let displayRegionID=regionID?regionID.quote():'"noID"';
+		let countriesSpecified=[], countryCodesSpecified=Region.attr(dvbi.a_countryCodes);
+
+		// this check should not happen with schema version 5 or greater, as this becomes part of the syntax
+		if ((depth!=0) && countryCodesSpecified) 
+			errs.addError({code:"AR032", message:`${dvbi.a_countryCodes.attribute(Region.name())} not permitted for sub-region ${displayRegionID}`, key:"ccode in subRegion", line:Region.line()});
+
+		if (countryCodesSpecified) {
+			countriesSpecified=countryCodesSpecified.value().split(",");
+			if (countriesSpecified) 
+				countriesSpecified.forEach(country => {
+					if (!this.knownCountries.isISO3166code(country)) 
+						errs.addError({code:"AR033", message:`invalid country code (${country}) for region ${displayRegionID}`, key:"invalid country code", line:Region.line()});
+				});
+		}
+		else
+			countriesSpecified = countries;
 
 		if (schemaVersion >= SCHEMA_r4) {
 			let selectable=Region.attr(dvbi.a_selectable)?Region.attr(dvbi.a_selectable).value()=="true":true;
@@ -392,36 +409,22 @@ export default class ServiceListCheck {
 				if (regionID) {
 					if (knownRegionIDs.find(r => r.region == regionID) != undefined) 
 						errs.addError({code:"AR012", message:`Duplicate ${dvbi.a_regionID.attribute()} ${displayRegionID}`, key:`duplicate ${dvbi.a_regionID}`, line:Region.line()});
-					else knownRegionIDs.push({region:regionID, used:false, line:Region.line()});
+					else knownRegionIDs.push({countries:countriesSpecified, region:regionID, used:false, line:Region.line()});
 				}
 				else errs.addError({code:"AR013", message:`${dvbi.a_regionID.attribute()} is required`, key:`no ${dvbi.a_regionID}`, line:Region.line()});
 			}
-
 		}
 		else {
 			if (regionID) {
 				if (knownRegionIDs.find(r => r.region == regionID) != undefined) 
 					errs.addError({code:"AR021", message:`Duplicate ${dvbi.a_regionID.attribute()} ${displayRegionID}`, key:`duplicate ${dvbi.a_regionID}`, line:Region.line()});
-				else knownRegionIDs.push({region:regionID, used:false, line:Region.line()});
+				else knownRegionIDs.push({countries:countriesSpecified, region:regionID, used:false, line:Region.line()});
 			}
 			else errs.addError({code:"AR020", message:`${dvbi.a_regionID.attribute()} is required`, key:`no ${dvbi.a_regionID}`, line:Region.line()});
 		} 
 		
 		if (depth > dvbi.MAX_SUBREGION_LEVELS) 
 			errs.addError({code:"AR031", message:`${dvbi.e_Region.elementize()} depth exceeded (>${dvbi.MAX_SUBREGION_LEVELS}) for sub-region ${displayRegionID}`, key:"region depth exceeded", line:Region.line()});
-
-		let countryCodesSpecified=Region.attr(dvbi.a_countryCodes);
-		if ((depth!=0) && countryCodesSpecified) 
-			errs.addError({code:"AR032", message:`${dvbi.a_countryCodes.attribute(Region.name())} not permitted for sub-region ${displayRegionID}`, key:"ccode in subRegion", line:Region.line()});
-
-		if (countryCodesSpecified) {
-			let countries=countryCodesSpecified.value().split(",");
-			if (countries) 
-				countries.forEach(country => {
-					if (!this.knownCountries.isISO3166code(country)) 
-						errs.addError({code:"AR033", message:`invalid country code (${country}) for region ${displayRegionID}`, key:"invalid country code", line:Region.line()});
-				});
-		}
 
 		checkXMLLangs(SL_SCHEMA, SCHEMA_PREFIX, dvbi.e_RegionName, `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${displayRegionID}`, Region, errs, "AR041", false, this.knownLanguages);
 		
@@ -433,7 +436,7 @@ export default class ServiceListCheck {
 		
 		let rc=0, RegionChild;
 		while ((RegionChild=Region.get(xPath(SCHEMA_PREFIX, dvbi.e_Region, ++rc), SL_SCHEMA))!=null) 
-			this.addRegion(SL_SCHEMA, SCHEMA_PREFIX, schemaVersion,RegionChild, depth+1, knownRegionIDs, errs);
+			this.addRegion(SL_SCHEMA, SCHEMA_PREFIX, schemaVersion, RegionChild, depth+1, knownRegionIDs, countriesSpecified, errs);
 	}
 
 
@@ -1455,18 +1458,42 @@ export default class ServiceListCheck {
 						/* jshint -W083*/
 						let found = knownRegionIDs.find(r => r.region==_prominenceRegion);
 						/* jshint +W083*/
-						if (found == undefined) 
+						if (found === undefined) 
 							errs.addError({
 								code:"SL242",
 								message:`regionID ${_prominenceRegion.quote()} not specified in ${dvbi.e_RegionList.elementize()}`,
 								fragment:PE,
-								key:"target region"
+								key:"invalid region"
 							});
+					}
+					// if @country and @region are used, they must be per the regin list
+					if (PE.attr(dvbi.a_country) && PE.attr(dvbi.a_region)) {
+						let _prominenceRegion=PE.attr(dvbi.a_region).value();
+						let _prominenceCountry=PE.attr(dvbi.a_country).value();
+						/* jshint -W083*/
+						let found = knownRegionIDs.find(r => r.region==_prominenceRegion);
+						/* jshint +W083*/
+						if (found !== undefined && found.hasOwnProperty("countries")) {
+							if (found.countries.length) {
+								/* jshint -W083*/
+								if (found.countries.find(c => c ==_prominenceCountry) === undefined) 
+								/* jshint +W083*/
+									errs.addError({
+										code:"SL243",
+										message:`regionID ${_prominenceRegion.quote()} not specified for country ${_prominenceCountry.quote()} in ${dvbi.e_RegionList.elementize()}`,
+										fragment:PE,
+										key:"invalid region"
+									});
+								else 
+									found.used=true;
+							}
+						}
+
 					}
 
 					// if @country is specified, it must be valid 
 					if (PE.attr(dvbi.a_country) && !this.knownCountries.isISO3166code(PE.attr(dvbi.a_country).value())) {
-						errs.addError({code:"SL243", message:InvalidCountryCode(PE.attr(dvbi.a_country).value(), null, `service ${thisServiceId.quote()}`), 
+						errs.addError({code:"SL244", message:InvalidCountryCode(PE.attr(dvbi.a_country).value(), null, `service ${thisServiceId.quote()}`), 
 								fragment:PE, key:"invalid country code"});
 					}
 
@@ -1479,7 +1506,7 @@ export default class ServiceListCheck {
 							region=`${PE.attr(dvbi.a_region) ? `region:${PE.attr(dvbi.a_region).value}`:''}`,
 							ranking=`${PE.attr(dvbi.a_ranking) ? `ranking:${PE.attr(dvbi.a_ranking).value}`:''}`;
 						errs.addError({
-							code:"SL244",
+							code:"SL245",
 							message:`duplicate ${dvbi.e_Prominence.elementize()} for ${country} ${region} ${ranking}`,
 							fragment:PE,
 							key:`duplicate ${dvbi.e_Prominence}`
@@ -1493,7 +1520,7 @@ export default class ServiceListCheck {
 						let country=`${PE.attr(dvbi.a_country) ? `country:${PE.attr(dvbi.a_country).value}`:''}`,
 							region=`${PE.attr(dvbi.a_region) ? `region:${PE.attr(dvbi.a_region).value}`:''}`;
 						errs.addError({
-							code:"SL245",
+							code:"SL246",
 							message:`multiple ${dvbi.a_ranking.attribute()} ${(country||region)?"for":""} ${country} ${region}`,
 							fragment:PE,
 							key:`duplicate ${dvbi.e_Prominence}`
@@ -1618,7 +1645,7 @@ export default class ServiceListCheck {
 			// recurse the regionlist - Regions can be nested in Regions
 			let r=0, Region;
 			while ((Region=RegionList.get(xPath(SCHEMA_PREFIX, dvbi.e_Region, ++r), SL_SCHEMA))!=null)
-				this.addRegion(SL_SCHEMA, SCHEMA_PREFIX, SchemaVersion(SCHEMA_NAMESPACE), Region, 0, knownRegionIDs, errs);
+				this.addRegion(SL_SCHEMA, SCHEMA_PREFIX, SchemaVersion(SCHEMA_NAMESPACE), Region, 0, knownRegionIDs, null, errs);
 		}
 
 		//check <ServiceList><TargetRegion>
