@@ -33,13 +33,5 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/paulhiggs/dvb-i-tools"
-	},
-	"jshintConfig": {
-		"esversion": 11,
-		"module": "true",
-		"globals": {
-			"console": true,
-			"fetch": true
-		}
 	}
 }

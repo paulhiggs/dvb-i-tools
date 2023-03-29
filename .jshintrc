@@ -1,0 +1,8 @@
+{
+	"esversion": 11,
+	"globals": {
+		"console": true,
+		"fetch": true
+	},
+	"-W014": true
+}
