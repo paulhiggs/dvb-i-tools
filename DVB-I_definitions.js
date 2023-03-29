@@ -1,27 +1,27 @@
-const DVB_metadata="urn:dvb:metadata";
-const DVB_CSmetadata=`${DVB_metadata}:cs`,
-      FVC_CSmetadata="urn:fvc:metadata:cs";
+const DVB_metadata = "urn:dvb:metadata";
+const DVB_CSmetadata = `${DVB_metadata}:cs`,
+	FVC_CSmetadata = "urn:fvc:metadata:cs";
 
-import {tva, tvaEA, tvaEC, TVA_CSmetadata} from './TVA_definitions.js';
+import { tva, tvaEA, tvaEC, TVA_CSmetadata } from "./TVA_definitions.js";
 
-const PaginationPrefix=`${FVC_CSmetadata}:HowRelatedCS:2015-12:pagination`,
-	  NowNextCRIDPrefix="crid://dvb.org/metadata/schedules/now-next";
+const PaginationPrefix = `${FVC_CSmetadata}:HowRelatedCS:2015-12:pagination`,
+	NowNextCRIDPrefix = "crid://dvb.org/metadata/schedules/now-next";
 
 const DVB_SOURCE_PREFIX = `${DVB_metadata}:source`;
 const LINKED_APLICATION_CS = `${DVB_CSmetadata}:LinkedApplicationCS:2019`;
 
-const DVB_HowRelatedCS=`${DVB_CSmetadata}:HowRelatedCS`,
-	  DVB_RELATED_CS_v1 = `${DVB_HowRelatedCS}:2019`,
-	  DVB_RELATED_CS_v2 = `${DVB_HowRelatedCS}:2020`,
-	  DVB_RELATED_CS_v3 = `${DVB_HowRelatedCS}:2021`;
+const DVB_HowRelatedCS = `${DVB_CSmetadata}:HowRelatedCS`,
+	DVB_RELATED_CS_v1 = `${DVB_HowRelatedCS}:2019`,
+	DVB_RELATED_CS_v2 = `${DVB_HowRelatedCS}:2020`,
+	DVB_RELATED_CS_v3 = `${DVB_HowRelatedCS}:2021`;
 
-const FVC_HowRelatedCS=`${FVC_CSmetadata}:HowRelatedCS:2018`;
+const FVC_HowRelatedCS = `${FVC_CSmetadata}:HowRelatedCS:2018`;
 
-const CaptionCodingFormatCS=`${TVA_CSmetadata}:CaptionCodingFormatCS:2015`,
-	  AudioPurposeCS=`${TVA_CSmetadata}:AudioPurposeCS:2007`,
-	  MediaAvailabilityCS=`${FVC_CSmetadata}:MediaAvailabilityCS:2014-07`,
-	  ForwardEPGAvailabilityCS=`${FVC_CSmetadata}:FEPGAvailabilityCS:2014-10`,
-	  RestartAvailabilityCS=`${FVC_CSmetadata}:RestartAvailabilityCS:2018`;
+const CaptionCodingFormatCS = `${TVA_CSmetadata}:CaptionCodingFormatCS:2015`,
+	AudioPurposeCS = `${TVA_CSmetadata}:AudioPurposeCS:2007`,
+	MediaAvailabilityCS = `${FVC_CSmetadata}:MediaAvailabilityCS:2014-07`,
+	ForwardEPGAvailabilityCS = `${FVC_CSmetadata}:FEPGAvailabilityCS:2014-10`,
+	RestartAvailabilityCS = `${FVC_CSmetadata}:RestartAvailabilityCS:2018`;
 
 export const dvbi = {
 	A177v1_Namespace: `${DVB_metadata}:servicediscovery:2019`,
@@ -40,25 +40,25 @@ export const dvbi = {
 	XML_AIT_CONTENT_TYPE: "application/vnd.dvb.ait+xml",
 	HTML5_APP: "text/html",
 	XHTML_APP: "application/xhtml+xml",
-//	iOS_APP: "application/vnd.dvb.app.ios",
-//	ANDROID_APP: "application/vnd.dvb.app.android",
+	//	iOS_APP: "application/vnd.dvb.app.ios",
+	//	ANDROID_APP: "application/vnd.dvb.app.android",
 	TEMPLATE_AIT_URI: `${FVC_HowRelatedCS}:templateAIT`,
 
 	PAGINATION_FIRST_URI: `${PaginationPrefix}:first`,
 	PAGINATION_PREV_URI: `${PaginationPrefix}:prev`,
 	PAGINATION_NEXT_URI: `${PaginationPrefix}:next`,
-	PAGINATION_LAST_URI : `${PaginationPrefix}:last`,
+	PAGINATION_LAST_URI: `${PaginationPrefix}:last`,
 
 	CRID_NOW: `${NowNextCRIDPrefix}/now`,
 	CRID_LATER: `${NowNextCRIDPrefix}/later`,
-	CRID_EARLIER: `${NowNextCRIDPrefix}/earlier`, 
+	CRID_EARLIER: `${NowNextCRIDPrefix}/earlier`,
 
 	MAX_SUBREGION_LEVELS: 3, // definied for <RegionElement> in Table 33 of A177
-	
+
 	EIT_PROGRAMME_CRID_TYPE: "eit-programme-crid",
 	EIT_SERIES_CRID_TYPE: "eit-series-crid",
 
-// A177v1 only table 15 - deprecated in A177v2
+	// A177v1 only table 15 - deprecated in A177v2
 	DVBT_SOURCE_TYPE: `${DVB_SOURCE_PREFIX}:dvb-t`,
 	DVBS_SOURCE_TYPE: `${DVB_SOURCE_PREFIX}:dvb-s`,
 	DVBC_SOURCE_TYPE: `${DVB_SOURCE_PREFIX}:dvb-c`,
@@ -66,78 +66,78 @@ export const dvbi = {
 	DVBDASH_SOURCE_TYPE: `${DVB_SOURCE_PREFIX}:dvb-dash`,
 	DVBAPPLICATION_SOURCE_TYPE: `${DVB_SOURCE_PREFIX}:application`,
 
-// A177 5.2.7.2
-	CONTENT_TYPE_DASH_MPD: "application/dash+xml",    // MPD of linear service
-	CONTENT_TYPE_DVB_PLAYLIST: "application/xml",     // XML Playlist
+	// A177 5.2.7.2
+	CONTENT_TYPE_DASH_MPD: "application/dash+xml", // MPD of linear service
+	CONTENT_TYPE_DVB_PLAYLIST: "application/xml", // XML Playlist
 
-// A177 6.11.2 - Audio Purpose	
-	AUDIO_PURPOSE_VISUAL_IMPAIRED : `${AudioPurposeCS}:1`,
-	AUDIO_PURPOSE_HEARING_IMPAIRED : `${AudioPurposeCS}:2`,
+	// A177 6.11.2 - Audio Purpose
+	AUDIO_PURPOSE_VISUAL_IMPAIRED: `${AudioPurposeCS}:1`,
+	AUDIO_PURPOSE_HEARING_IMPAIRED: `${AudioPurposeCS}:2`,
 	AUDIO_PURPOSE_MAIN: `${AudioPurposeCS}:6`,
 
-// A177 6.11.3 - Caption Coding Format
+	// A177 6.11.3 - Caption Coding Format
 	DVB_BITMAP_SUBTITLES: `${CaptionCodingFormatCS}:2.1`,
 	DVB_CHARACTER_SUBTITLES: `${CaptionCodingFormatCS}:2.2`,
 	EBU_TT_D: `${CaptionCodingFormatCS}:3.2`,
 
-// A177 6.11.6 - Media Availability
+	// A177 6.11.6 - Media Availability
 	MEDIA_AVAILABLE: `${MediaAvailabilityCS}:media_available`,
 	MEDIA_UNAVAILABLE: `${MediaAvailabilityCS}:media_unavailable`,
 
-// A177 6.11.7 - Forward EPG Availability
+	// A177 6.11.7 - Forward EPG Availability
 	FORWARD_EPG_AVAILABLE: `${ForwardEPGAvailabilityCS}:fepg_available`,
 	FORWARD_EPG_UNAVAILABLE: `${ForwardEPGAvailabilityCS}:fepg_unavailable`,
 
-//A177r1 6.5.5 - Restart Link
+	//A177r1 6.5.5 - Restart Link
 	RESTART_LINK: `${FVC_HowRelatedCS}:restart`,
 
-// A177 6.11.11 - Restart Availability
+	// A177 6.11.11 - Restart Availability
 	RESTART_AVAILABLE: `${RestartAvailabilityCS}:restart_available`,
 	RESTART_CHECK: `${RestartAvailabilityCS}:restart_check`,
 	RESTART_PENDING: `${RestartAvailabilityCS}:restart_pending`,
 
-// A177v1 7.3.1
+	// A177v1 7.3.1
 	BANNER_OUTSIDE_AVAILABILITY_v1: `${DVB_RELATED_CS_v1}:1000.1`,
 	LOGO_SERVICE_LIST_v1: `${DVB_RELATED_CS_v1}:1001.1`,
 	LOGO_SERVICE_v1: `${DVB_RELATED_CS_v1}:1001.2`,
 	LOGO_CG_PROVIDER_v1: `${DVB_RELATED_CS_v1}:1002.1`,
 
-// A177v2 7.3.1
+	// A177v2 7.3.1
 	BANNER_OUTSIDE_AVAILABILITY_v2: `${DVB_RELATED_CS_v2}:1000.1`,
-	BANNER_CONTENT_FINISHED_v2: `${DVB_RELATED_CS_v2}:1000.2`,	// added in A17732
+	BANNER_CONTENT_FINISHED_v2: `${DVB_RELATED_CS_v2}:1000.2`, // added in A17732
 	LOGO_SERVICE_LIST_v2: `${DVB_RELATED_CS_v2}:1001.1`,
 	LOGO_SERVICE_v2: `${DVB_RELATED_CS_v2}:1001.2`,
 	LOGO_CG_PROVIDER_v2: `${DVB_RELATED_CS_v2}:1002.1`,
 
-// A177v2 7.3.1
+	// A177v2 7.3.1
 	BANNER_OUTSIDE_AVAILABILITY_v3: `${DVB_RELATED_CS_v3}:1000.1`,
-	BANNER_CONTENT_FINISHED_v3: `${DVB_RELATED_CS_v3}:1000.2`,	
+	BANNER_CONTENT_FINISHED_v3: `${DVB_RELATED_CS_v3}:1000.2`,
 	LOGO_SERVICE_LIST_v3: `${DVB_RELATED_CS_v3}:1001.1`,
 	LOGO_SERVICE_v3: `${DVB_RELATED_CS_v3}:1001.2`,
 	LOGO_CG_PROVIDER_v3: `${DVB_RELATED_CS_v3}:1002.1`,
 
-// A177v3
-	SERVICE_BANNER_v4: `${DVB_RELATED_CS_v3}:1001.3`,	// added in A177r3	
+	// A177v3
+	SERVICE_BANNER_v4: `${DVB_RELATED_CS_v3}:1001.3`, // added in A177r3
 
-// A177 7.3.2
+	// A177 7.3.2
 	APP_IN_PARALLEL: `${LINKED_APLICATION_CS}:1.1`,
 	APP_IN_CONTROL: `${LINKED_APLICATION_CS}:1.2`,
 	APP_OUTSIDE_AVAILABILITY: `${LINKED_APLICATION_CS}:2`,
 
-	NVOD_MODE_REFERENCE: 'reference',
-	NVOD_MODE_TIMESHIFTED: 'timeshifted',
+	NVOD_MODE_REFERENCE: "reference",
+	NVOD_MODE_TIMESHIFTED: "timeshifted",
 
-// possible values for DVB-S polarization
+	// possible values for DVB-S polarization
 	DVBS_POLARIZATION_VALUES: ["horizontal", "vertical", "left circular", "right circular"],
 
-// @encryptionScheme values
+	// @encryptionScheme values
 	ENCRYPTION_VALID_TYPES: ["cenc", "cbcs", "cbcs-10"],
 
-// @TransportProtocol values
+	// @TransportProtocol values
 	ALLOWED_TRANSPORT_PROTOCOLS: ["RTP-AVP", "UDP-FEC"],
 
-// A177 defined elements and attributes	
-	a_Address: "Address", 
+	// A177 defined elements and attributes
+	a_Address: "Address",
 	a_CGSID: "CGSID",
 	a_channelNumber: "channelNumber",
 	a_contentLanguage: "contentLanguage",
@@ -154,7 +154,7 @@ export const dvbi = {
 	a_doNotApplyRevocation: "doNotApplyRevocation",
 	a_doNotScramble: "doNotScramble",
 	a_dvb_t_ret: "dvb-t-ret",
-	a_dynamic: "dynamic", 
+	a_dynamic: "dynamic",
 	a_dvb_enable_byte: "dvb-enable-byte",
 	a_dvb_original_copy_ret: "dvb-original-copy-ret",
 	a_dvb_rsi_mc_ret: "dvb-rsi-mc-ret",
@@ -178,7 +178,7 @@ export const dvbi = {
 	a_origNetId: "origNetId",
 	a_PayloadTypeNumber: "PayloadTypeNumber",
 	a_Port: "Port",
-	a_priority: "priority", 
+	a_priority: "priority",
 	a_ranking: "ranking",
 	a_recurrence: "recurrence",
 	a_reference: "reference",
@@ -213,7 +213,7 @@ export const dvbi = {
 	a_visible: "visible",
 
 	e_AdditionalServiceParameters: "AdditionalServiceParameters",
-	e_AltServiceName: "AltServiceName", 
+	e_AltServiceName: "AltServiceName",
 	e_AudioConformancePoint: "AudioConformancePoint",
 	e_Availability: "Availability",
 	e_CASystemId: "CASystemId",
@@ -256,7 +256,7 @@ export const dvbi = {
 	e_MulticastTSDeliveryParameters: "MulticastTSDeliveryParameters",
 	e_Name: "Name",
 	e_NetworkID: "NetworkID",
-	e_NVOD: "NVOD", 
+	e_NVOD: "NVOD",
 	e_OrbitalPosition: "OrbitalPosition",
 	e_OtherDeliveryParameters: "OtherDeliveryParameters",
 	e_Period: "Period",
@@ -311,15 +311,17 @@ export const dvbi = {
 	e_VideoConformancePoint: "VideoConformancePoint",
 	e_WildcardPostcode: "WildcardPostcode",
 
-	q_inlineImages: "inlineImages"
+	q_inlineImages: "inlineImages",
 };
 
-export const dvbEA = {	// EA = Element-Attributes - the attributes that are defiend for each element
+export const dvbEA = {
+	// EA = Element-Attributes - the attributes that are defiend for each element
 	MediaLocator: [dvbi.a_contentLanguage].concat(tvaEA.mediaLocator),
 	NVOD: [dvbi.a_mode, dvbi.a_reference, dvbi.a_offset],
-	ServiceList: [dvbi.a_version, tva.a_lang, dvbi.a_responseStatus]
+	ServiceList: [dvbi.a_version, tva.a_lang, dvbi.a_responseStatus],
 };
 
-export const dvbiEC = { // EC = Element-Children - the child elements or each element
+export const dvbiEC = {
+	// EC = Element-Children - the child elements or each element
 	RelatedMaterial: tvaEC.RelatedMaterial,
 };

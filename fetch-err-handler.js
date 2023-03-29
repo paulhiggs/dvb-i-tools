@@ -1,8 +1,8 @@
 /**
  * Throw a nice error is there is a problem fetching the information
- * 
- * @param {*} response 
- * @returns 
+ *
+ * @param {*} response
+ * @returns
  */
 export function handleErrors(response) {
 	if (response && !response.ok) {

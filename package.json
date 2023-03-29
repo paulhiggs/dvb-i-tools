@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools",
-	"version": "0.6.1",
+	"version": "0.6.2",
 	"description": "DVB-I V&V Tools",
 	"main": "all-in-one.js",
 	"type": "module",
@@ -9,10 +9,10 @@
 		"url": "https://github.com/paulhiggs/dvb-i-tools/issues"
 	},
 	"dependencies": {
-		"@datastructures-js/binary-search-tree": "^5.0.2",
+		"@datastructures-js/binary-search-tree": "^5.3.1",
 		"colors": "^1.4.0",
 		"command-line-args": "^5.2.1",
-		"command-line-usage": "^6.1.3",
+		"command-line-usage": "^7.0.1",
 		"cors": "^2.8.5",
 		"express": "^4.18.2",
 		"express-fileupload": "^1.4.0",
@@ -21,7 +21,7 @@
 		"morgan": "^1.10.0",
 		"serve-favicon": "^2.5.0",
 		"sync-fetch": "^0.4.2",
-		"xml-formatter": "^3.3.0"
+		"xml-formatter": "^3.3.2"
 	},
 	"engines": {
 		"node": ">= 17.8.0",
