@@ -23,6 +23,8 @@ const CaptionCodingFormatCS = `${TVA_CSmetadata}:CaptionCodingFormatCS:2015`,
 	ForwardEPGAvailabilityCS = `${FVC_CSmetadata}:FEPGAvailabilityCS:2014-10`,
 	RestartAvailabilityCS = `${FVC_CSmetadata}:RestartAvailabilityCS:2018`;
 
+export const XMLdocumentType = "application/xml";
+
 export const dvbi = {
 	A177v1_Namespace: `${DVB_metadata}:servicediscovery:2019`,
 	A177v2_Namespace: `${DVB_metadata}:servicediscovery:2020`,
@@ -68,7 +70,7 @@ export const dvbi = {
 
 	// A177 5.2.7.2
 	CONTENT_TYPE_DASH_MPD: "application/dash+xml", // MPD of linear service
-	CONTENT_TYPE_DVB_PLAYLIST: "application/xml", // XML Playlist
+	CONTENT_TYPE_DVB_PLAYLIST: XMLdocumentType, // XML Playlist
 
 	// A177 6.11.2 - Audio Purpose
 	AUDIO_PURPOSE_VISUAL_IMPAIRED: `${AudioPurposeCS}:1`,
