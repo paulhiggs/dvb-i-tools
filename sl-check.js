@@ -891,6 +891,7 @@ export default class ServiceListCheck {
 			key: "not URL path",
 		});
 		let InvalidContentType = (errCode, elem, expected, frag) => ({
+			type: WARNING,
 			code: `${errCode}`,
 			message: `${elem.elementize(dvbi.a_contentType)} should contain ${expected}`,
 			fragment: frag,
