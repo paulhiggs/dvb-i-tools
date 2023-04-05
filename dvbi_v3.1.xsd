@@ -119,7 +119,7 @@
 				<element name="OtherDeliveryParameters" type="dvbisd:ExtensionBaseType"/>
 			</choice>
 		</sequence>
-		<attribute name="priority" type="integer"/>
+		<attribute name="priority" type="integer" default="0"/>
 		<attribute ref="xml:lang"/>
 	</complexType>
 	<complexType name="ContentProtectionType">

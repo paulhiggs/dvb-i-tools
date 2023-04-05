@@ -94,7 +94,7 @@
 				<any namespace="##other" processContents="lax"/>
 			</choice>
 		</sequence>
-		<attribute name="priority" type="integer"/>
+		<attribute name="priority" type="integer" default="0"/>
 	</complexType>
 	<complexType name="ContentProtectionType">
 		<sequence>
