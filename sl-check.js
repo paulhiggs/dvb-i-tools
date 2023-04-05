@@ -664,6 +664,7 @@ export default class ServiceListCheck {
 	 */
 	/*private*/ checkSignalledApplication(MediaLocator, errs, Location) {
 		const validApplicationTypes = [dvbi.XML_AIT_CONTENT_TYPE, dvbi.HTML5_APP, dvbi.XHTML_APP];
+		let isValidApplicationType = (type) => validApplicationTypes.includes(type);
 
 		if (!MediaLocator)
 			errs.addError({
@@ -677,7 +678,7 @@ export default class ServiceListCheck {
 				MediaLocator.childNodes().forEachSubElement((child) => {
 					if (child.name() == tva.e_MediaUri) {
 						hasMediaURI = true;
-						if (child.attr(tva.a_contentType) && !isIn(validApplicationTypes, child.attr(tva.a_contentType).value()))
+						if (child.attr(tva.a_contentType) && !isValidApplicationType(child.attr(tva.a_contentType).value()))
 							errs.addError({
 								type: WARNING,
 								code: "SA003",
@@ -1210,6 +1211,15 @@ export default class ServiceListCheck {
 			}
 		}
 
+		let hasDeliveryParameters = (instance, PREFIX, SCHEMA) =>
+			instance.get(xPath(PREFIX, dvbi.e_DVBTDeliveryParameters), SCHEMA) ||
+			instance.get(xPath(PREFIX, dvbi.e_DVBSDeliveryParameters), SCHEMA) ||
+			instance.get(xPath(PREFIX, dvbi.e_DVBCDeliveryParameters), SCHEMA) ||
+			instance.get(xPath(PREFIX, dvbi.e_DASHDeliveryParameters), SCHEMA) ||
+			instance.get(xPath(PREFIX, dvbi.e_SATIPDeliveryParametersDeliveryParameters), SCHEMA) ||
+			instance.get(xPath(PREFIX, dvbi.e_MulticastTSDeliveryParameters), SCHEMA) ||
+			instance.get(xPath(PREFIX, dvbi.e_RTSPDeliveryParameters), SCHEMA);
+
 		//<ServiceInstance@priority>
 		if (SchemaVersion(SCHEMA_NAMESPACE) <= SCHEMA_r4) {
 			if (ServiceInstance.attr(dvbi.a_priority) && ServiceInstance.attr(dvbi.a_priority).value() < 0)
@@ -1231,6 +1241,18 @@ export default class ServiceListCheck {
 		while ((RelatedMaterial = ServiceInstance.get(xPath(SCHEMA_PREFIX, tva.e_RelatedMaterial, ++rm), SL_SCHEMA)) != null) {
 			let foundHref = this.validateRelatedMaterial(RelatedMaterial, errs, `service instance of ${thisServiceId.quote()}`, SERVICE_INSTANCE_RM, SCHEMA_NAMESPACE, "SI020");
 			if (foundHref != "" && validServiceControlApplication(foundHref)) controlApps.push(RelatedMaterial);
+			if (foundHref == dvbi.APP_IN_CONTROL) {
+				//Application controlling playback SHOULD NOT have any service delivery parameters
+				if (hasDeliveryParameters(ServiceInstance, SCHEMA_PREFIX, SL_SCHEMA)) {
+					errs.addError({
+						type: WARNING,
+						code: "SI022",
+						message: "Delivery parameters are ignored when application controls media playback",
+						fragment: RelatedMaterial,
+						key: "unnecessary delivery",
+					});
+				}
+			}
 		}
 		if (controlApps.length > 1)
 			controlApps.forEach((app) => {
@@ -1432,15 +1454,7 @@ export default class ServiceListCheck {
 					break;
 				case dvbi.DVBAPPLICATION_SOURCE_TYPE:
 					// there should not be any <xxxxDeliveryParameters> elements and there should be either a Service.RelatedMaterial or Service.ServiceInstance.RelatedMaterial signalling a service related application
-					if (
-						ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_DVBTDeliveryParameters), SL_SCHEMA) ||
-						ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_DVBSDeliveryParameters), SL_SCHEMA) ||
-						ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_DVBCDeliveryParameters), SL_SCHEMA) ||
-						ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_DASHDeliveryParameters), SL_SCHEMA) ||
-						ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_SATIPDeliveryParametersDeliveryParameters), SL_SCHEMA) ||
-						ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_MulticastTSDeliveryParameters), SL_SCHEMA) ||
-						ServiceInstance.get(xPath(SCHEMA_PREFIX, dvbi.e_RTSPDeliveryParameters), SL_SCHEMA)
-					) {
+					if (hasDeliveryParameters(ServiceInstance, SCHEMA_PREFIX, SL_SCHEMA)) {
 						errs.addError({
 							code: "SI156",
 							message: `Delivery parameters are not permitted for Application service instance in Service ${thisServiceId.quote()}`,
