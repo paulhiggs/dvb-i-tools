@@ -9,7 +9,7 @@ import { elementize, quote } from "./phlib/phlib.js";
 import ErrorList, { ERROR, WARNING, APPLICATION } from "./ErrorList.js";
 import ClassificationScheme from "./ClassificationScheme.js";
 
-import { dvbi, dvbiEC, dvbEA } from "./DVB-I_definitions.js";
+import { dvbi, dvbiEC, dvbEA, XMLdocumentType } from "./DVB-I_definitions.js";
 
 import { tva, tvaEA } from "./TVA_definitions.js";
 import { isTAGURI } from "./URI_checks.js";
@@ -827,7 +827,6 @@ export default class ServiceListCheck {
 						this.validServiceLogo(HowRelated, SCHEMA_NAMESPACE)
 					) {
 						rc = HowRelated.attr(dvbi.a_href).value();
-
 						checkValidLogos(RelatedMaterial, errs, `${errCode}-32`, Location, this.knownLanguages);
 					} else if (this.validServiceBanner(HowRelated, SCHEMA_NAMESPACE)) {
 						errs.addError({
@@ -920,32 +919,32 @@ export default class ServiceListCheck {
 		let sie = source.get(xPath(SCHEMA_PREFIX, dvbi.e_ScheduleInfoEndpoint), SL_SCHEMA);
 		if (sie) {
 			if (!isHTTPPathURL(sie.text())) errs.addError(NotURLMessage(`${errCode}-4`, dvbi.e_ScheduleInfoEndpoint, sie));
-			if (sie.attr(dvbi.a_contentType) && sie.attr(dvbi.a_contentType).value() != dvbi.XMLdocumentType)
-				errs.addError(InvalidContentType(`${errCode}-5`, dvbi.e_ScheduleInfoEndpoint, dvbi.XMLdocumentType, sie));
+			if (sie.attr(dvbi.a_contentType) && sie.attr(dvbi.a_contentType).value() != XMLdocumentType)
+				errs.addError(InvalidContentType(`${errCode}-5`, dvbi.e_ScheduleInfoEndpoint, XMLdocumentType, sie));
 		}
 
 		// ContentGuideSourceType::ProgramInfoEndpoint - should be a URL
 		let pie = source.get(xPath(SCHEMA_PREFIX, dvbi.e_ProgramInfoEndpoint), SL_SCHEMA);
 		if (pie) {
-			if (isHTTPPathURL(pie.text())) errs.addError(NotURLMessage(`${errCode}-6`, dvbi.e_ProgramInfoEndpoint, pie));
-			if (pie.attr(dvbi.a_contentType) && pie.attr(dvbi.a_contentType).value() != dvbi.XMLdocumentType)
-				errs.addError(InvalidContentType(`${errCode}-7`, dvbi.e_ProgramInfoEndpoint, dvbi.XMLdocumentType, pie));
+			if (!isHTTPPathURL(pie.text())) errs.addError(NotURLMessage(`${errCode}-6`, dvbi.e_ProgramInfoEndpoint, pie));
+			if (pie.attr(dvbi.a_contentType) && pie.attr(dvbi.a_contentType).value() != XMLdocumentType)
+				errs.addError(InvalidContentType(`${errCode}-7`, dvbi.e_ProgramInfoEndpoint, XMLdocumentType, pie));
 		}
 
 		// ContentGuideSourceType::GroupInfoEndpoint - should be a URL
 		let gie = source.get(xPath(SCHEMA_PREFIX, dvbi.e_GroupInfoEndpoint), SL_SCHEMA);
 		if (gie) {
 			if (!isHTTPPathURL(gie.text())) errs.addError(NotURLMessage(`${errCode}-8`, dvbi.e_GroupInfoEndpoint, gie));
-			if (gie.attr(dvbi.a_contentType) && gie.attr(dvbi.a_contentType).value() != dvbi.XMLdocumentType)
-				errs.addError(InvalidContentType(`${errCode}-9`, dvbi.e_GroupInfoEndpoint, dvbi.XMLdocumentType, gie));
+			if (gie.attr(dvbi.a_contentType) && gie.attr(dvbi.a_contentType).value() != XMLdocumentType)
+				errs.addError(InvalidContentType(`${errCode}-9`, dvbi.e_GroupInfoEndpoint, XMLdocumentType, gie));
 		}
 
 		// ContentGuideSourceType::MoreEpisodesEndpoint - should be a URL
 		let mee = source.get(xPath(SCHEMA_PREFIX, dvbi.e_MoreEpisodesEndpoint), SL_SCHEMA);
 		if (mee) {
 			if (!isHTTPPathURL(mee.text())) errs.addError(NotURLMessage(`${errCode}-10`, dvbi.e_MoreEpisodesEndpoint, mee));
-			if (mee.attr(dvbi.a_contentType) && mee.attr(dvbi.a_contentType).value() != dvbi.XMLdocumentType)
-				errs.addError(InvalidContentType(`${errCode}-11`, dvbi.e_MoreEpisodesEndpoint, dvbi.XMLdocumentType, mee));
+			if (mee.attr(dvbi.a_contentType) && mee.attr(dvbi.a_contentType).value() != XMLdocumentType)
+				errs.addError(InvalidContentType(`${errCode}-11`, dvbi.e_MoreEpisodesEndpoint, XMLdocumentType, mee));
 		}
 	}
 
@@ -1243,7 +1242,7 @@ export default class ServiceListCheck {
 			if (foundHref != "" && validServiceControlApplication(foundHref)) controlApps.push(RelatedMaterial);
 			if (foundHref == dvbi.APP_IN_CONTROL) {
 				//Application controlling playback SHOULD NOT have any service delivery parameters
-				if (hasDeliveryParameters(ServiceInstance, SCHEMA_PREFIX, SL_SCHEMA)) {
+				if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_r5 && hasDeliveryParameters(ServiceInstance, SCHEMA_PREFIX, SL_SCHEMA)) {
 					errs.addError({
 						type: WARNING,
 						code: "SI022",
@@ -2076,7 +2075,9 @@ export default class ServiceListCheck {
 			return;
 		}
 
-		checkAttributes(SL.root(), [dvbi.a_version, tva.a_lang], [dvbi.a_responseStatus, "schemaLocation"], dvbEA.ServiceList, errs, "SL011");
+		let slRequiredAttributes = [dvbi.a_version];
+		if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_r3) slRequiredAttributes.append(tva.a_lang);
+		checkAttributes(SL.root(), slRequiredAttributes, [dvbi.a_responseStatus, "schemaLocation"], dvbEA.ServiceList, errs, "SL011");
 
 		// check ServiceList@version
 		// validated by schema
