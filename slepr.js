@@ -161,7 +161,7 @@ export default class SLEPR {
 			//Provider Name(s)
 			var checkProvider = (provider) => true;
 			checkIt(req.query.ProviderName, dvbi.e_ProviderName, checkProvider) 
-*/
+			*/
 		}
 		return req.parseErr.length == 0;
 	}
