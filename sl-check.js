@@ -878,15 +878,15 @@ export default class ServiceListCheck {
 	 * @param {string}  SL_SCHEMA         Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_PREFIX     Used when constructing Xpath queries
 	 * @param {string}  SCHEMA_NAMESPACE  The namespace of XML document
-	 * @param {XMLnode} source            The node of the element to check
+	 * @param {XMLnode} source            The <ContentGuideSource> element to be checked
 	 * @param {Class}   errs              Errors found in validaton
-	 * @param {object}  loc			      The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
+	 * @param {object}  loc			          The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
 	 * @param {string}  errCode           Error code prefix to be used in reports
 	 */
 	/*private*/ validateAContentGuideSource(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, source, errs, loc, errCode) {
 		let NotURLMessage = (errCode, elem, frag) => ({
 			code: `${errCode}`,
-			message: `${elem.elementize()} is not a valid URL path`,
+			message: `"${frag.text()}" is not a valid URL path for ${elem.elementize()}`,
 			fragment: frag,
 			key: "not URL path",
 		});
@@ -897,6 +897,7 @@ export default class ServiceListCheck {
 			fragment: frag,
 			key: `invalid @${dvbi.a_contentType}`,
 		});
+
 		if (!source) {
 			errs.addError({
 				type: APPLICATION,
@@ -918,7 +919,8 @@ export default class ServiceListCheck {
 		// ContentGuideSourceType::ScheduleInfoEndpoint - should be a URL
 		let sie = source.get(xPath(SCHEMA_PREFIX, dvbi.e_ScheduleInfoEndpoint), SL_SCHEMA);
 		if (sie) {
-			if (!isHTTPPathURL(sie.text())) errs.addError(NotURLMessage(`${errCode}-4`, dvbi.e_ScheduleInfoEndpoint, sie));
+			let sieURL = sie.get(xPath(SCHEMA_PREFIX, dvbi.e_URI), SL_SCHEMA);
+			if (sieURL && !isHTTPPathURL(sieURL.text())) errs.addError(NotURLMessage(`${errCode}-4`, dvbi.e_ScheduleInfoEndpoint, sieL));
 			if (sie.attr(dvbi.a_contentType) && sie.attr(dvbi.a_contentType).value() != XMLdocumentType)
 				errs.addError(InvalidContentType(`${errCode}-5`, dvbi.e_ScheduleInfoEndpoint, XMLdocumentType, sie));
 		}
@@ -926,7 +928,8 @@ export default class ServiceListCheck {
 		// ContentGuideSourceType::ProgramInfoEndpoint - should be a URL
 		let pie = source.get(xPath(SCHEMA_PREFIX, dvbi.e_ProgramInfoEndpoint), SL_SCHEMA);
 		if (pie) {
-			if (!isHTTPPathURL(pie.text())) errs.addError(NotURLMessage(`${errCode}-6`, dvbi.e_ProgramInfoEndpoint, pie));
+			let pieURL = pie.get(xPath(SCHEMA_PREFIX, dvbi.e_URI), SL_SCHEMA);
+			if (pieURL && !isHTTPPathURL(pieURL.text())) errs.addError(NotURLMessage(`${errCode}-6`, dvbi.e_ProgramInfoEndpoint, pie));
 			if (pie.attr(dvbi.a_contentType) && pie.attr(dvbi.a_contentType).value() != XMLdocumentType)
 				errs.addError(InvalidContentType(`${errCode}-7`, dvbi.e_ProgramInfoEndpoint, XMLdocumentType, pie));
 		}
@@ -934,7 +937,8 @@ export default class ServiceListCheck {
 		// ContentGuideSourceType::GroupInfoEndpoint - should be a URL
 		let gie = source.get(xPath(SCHEMA_PREFIX, dvbi.e_GroupInfoEndpoint), SL_SCHEMA);
 		if (gie) {
-			if (!isHTTPPathURL(gie.text())) errs.addError(NotURLMessage(`${errCode}-8`, dvbi.e_GroupInfoEndpoint, gie));
+			let gieURL = gie.get(xPath(SCHEMA_PREFIX, dvbi.e_URI), SL_SCHEMA);
+			if (gieURL && !isHTTPPathURL(gieURL.text())) errs.addError(NotURLMessage(`${errCode}-8`, dvbi.e_GroupInfoEndpoint, gie));
 			if (gie.attr(dvbi.a_contentType) && gie.attr(dvbi.a_contentType).value() != XMLdocumentType)
 				errs.addError(InvalidContentType(`${errCode}-9`, dvbi.e_GroupInfoEndpoint, XMLdocumentType, gie));
 		}
@@ -942,7 +946,8 @@ export default class ServiceListCheck {
 		// ContentGuideSourceType::MoreEpisodesEndpoint - should be a URL
 		let mee = source.get(xPath(SCHEMA_PREFIX, dvbi.e_MoreEpisodesEndpoint), SL_SCHEMA);
 		if (mee) {
-			if (!isHTTPPathURL(mee.text())) errs.addError(NotURLMessage(`${errCode}-10`, dvbi.e_MoreEpisodesEndpoint, mee));
+			let meeURL = mee.get(xPath(SCHEMA_PREFIX, dvbi.e_URI), SL_SCHEMA);
+			if (mee && !isHTTPPathURL(meeURL.text())) errs.addError(NotURLMessage(`${errCode}-10`, dvbi.e_MoreEpisodesEndpoint, mee));
 			if (mee.attr(dvbi.a_contentType) && mee.attr(dvbi.a_contentType).value() != XMLdocumentType)
 				errs.addError(InvalidContentType(`${errCode}-11`, dvbi.e_MoreEpisodesEndpoint, XMLdocumentType, mee));
 		}
