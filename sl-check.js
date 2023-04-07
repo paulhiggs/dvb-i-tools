@@ -884,19 +884,28 @@ export default class ServiceListCheck {
 	 * @param {string}  errCode           Error code prefix to be used in reports
 	 */
 	/*private*/ validateAContentGuideSource(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, source, errs, loc, errCode) {
-		let NotURLMessage = (errCode, elem, frag) => ({
-			code: `${errCode}`,
-			message: `"${frag.text()}" is not a valid URL path for ${elem.elementize()}`,
-			fragment: frag,
-			key: "not URL path",
-		});
-		let InvalidContentType = (errCode, elem, expected, frag) => ({
-			type: WARNING,
-			code: `${errCode}`,
-			message: `${elem.elementize(dvbi.a_contentType)} should contain ${expected}`,
-			fragment: frag,
-			key: `invalid @${dvbi.a_contentType}`,
-		});
+		function CheckEndpoint(elementName, suffix) {
+			let ep = source.get(xPath(SCHEMA_PREFIX, elementName), SL_SCHEMA);
+			if (ep) {
+				let epURL = ep.get(xPath(SCHEMA_PREFIX, dvbi.e_URI), SL_SCHEMA);
+				if (epURL && !isHTTPPathURL(epURL.text()))
+					errs.addError({
+						code: `${errCode}-${suffix}`,
+						message: `"${epURL.text()}" is not a valid URL path for ${elementName.elementize()}`,
+						fragment: ep,
+						key: "not URL path",
+					});
+
+				if (ep.attr(dvbi.a_contentType) && ep.attr(dvbi.a_contentType).value() != XMLdocumentType)
+					errs.addError({
+						type: WARNING,
+						code: `${errCode}-${suffix + 1}`,
+						message: `${elementName.elementize(dvbi.a_contentType)} should contain ${XMLdocumentType}`,
+						fragment: ep,
+						key: `invalid @${dvbi.a_contentType}`,
+					});
+			}
+		}
 
 		if (!source) {
 			errs.addError({
@@ -917,40 +926,16 @@ export default class ServiceListCheck {
 			this.validateRelatedMaterial(RelatedMaterial, errs, loc, CONTENT_GUIDE_RM, SCHEMA_NAMESPACE, `${errCode}-3`);
 
 		// ContentGuideSourceType::ScheduleInfoEndpoint - should be a URL
-		let sie = source.get(xPath(SCHEMA_PREFIX, dvbi.e_ScheduleInfoEndpoint), SL_SCHEMA);
-		if (sie) {
-			let sieURL = sie.get(xPath(SCHEMA_PREFIX, dvbi.e_URI), SL_SCHEMA);
-			if (sieURL && !isHTTPPathURL(sieURL.text())) errs.addError(NotURLMessage(`${errCode}-4`, dvbi.e_ScheduleInfoEndpoint, sieL));
-			if (sie.attr(dvbi.a_contentType) && sie.attr(dvbi.a_contentType).value() != XMLdocumentType)
-				errs.addError(InvalidContentType(`${errCode}-5`, dvbi.e_ScheduleInfoEndpoint, XMLdocumentType, sie));
-		}
+		CheckEndpoint(dvbi.e_ScheduleInfoEndpoint, 4);
 
 		// ContentGuideSourceType::ProgramInfoEndpoint - should be a URL
-		let pie = source.get(xPath(SCHEMA_PREFIX, dvbi.e_ProgramInfoEndpoint), SL_SCHEMA);
-		if (pie) {
-			let pieURL = pie.get(xPath(SCHEMA_PREFIX, dvbi.e_URI), SL_SCHEMA);
-			if (pieURL && !isHTTPPathURL(pieURL.text())) errs.addError(NotURLMessage(`${errCode}-6`, dvbi.e_ProgramInfoEndpoint, pie));
-			if (pie.attr(dvbi.a_contentType) && pie.attr(dvbi.a_contentType).value() != XMLdocumentType)
-				errs.addError(InvalidContentType(`${errCode}-7`, dvbi.e_ProgramInfoEndpoint, XMLdocumentType, pie));
-		}
+		CheckEndpoint(dvbi.e_ProgramInfoEndpoint, 6);
 
 		// ContentGuideSourceType::GroupInfoEndpoint - should be a URL
-		let gie = source.get(xPath(SCHEMA_PREFIX, dvbi.e_GroupInfoEndpoint), SL_SCHEMA);
-		if (gie) {
-			let gieURL = gie.get(xPath(SCHEMA_PREFIX, dvbi.e_URI), SL_SCHEMA);
-			if (gieURL && !isHTTPPathURL(gieURL.text())) errs.addError(NotURLMessage(`${errCode}-8`, dvbi.e_GroupInfoEndpoint, gie));
-			if (gie.attr(dvbi.a_contentType) && gie.attr(dvbi.a_contentType).value() != XMLdocumentType)
-				errs.addError(InvalidContentType(`${errCode}-9`, dvbi.e_GroupInfoEndpoint, XMLdocumentType, gie));
-		}
+		CheckEndpoint(dvbi.e_GroupInfoEndpoint, 8);
 
 		// ContentGuideSourceType::MoreEpisodesEndpoint - should be a URL
-		let mee = source.get(xPath(SCHEMA_PREFIX, dvbi.e_MoreEpisodesEndpoint), SL_SCHEMA);
-		if (mee) {
-			let meeURL = mee.get(xPath(SCHEMA_PREFIX, dvbi.e_URI), SL_SCHEMA);
-			if (mee && !isHTTPPathURL(meeURL.text())) errs.addError(NotURLMessage(`${errCode}-10`, dvbi.e_MoreEpisodesEndpoint, mee));
-			if (mee.attr(dvbi.a_contentType) && mee.attr(dvbi.a_contentType).value() != XMLdocumentType)
-				errs.addError(InvalidContentType(`${errCode}-11`, dvbi.e_MoreEpisodesEndpoint, XMLdocumentType, mee));
-		}
+		CheckEndpoint(dvbi.e_MoreEpisodesEndpoint, 10);
 	}
 
 	/**
