@@ -11,7 +11,8 @@ function PAGE_TOP(label) {
 
 	const MARKUP_TABLE_STYLE = "<style></style>";
 
-	const METAS = '<meta name="google" content="notranslate" />'; // dont allow Chrome to translate the page - seems to 'detect' German
+	// dont allow Chrome to translate the page - seems to 'detect' German
+	const METAS = '<meta name="google" content="notranslate"/><meta charset="utf-8">';
 	const HEAD = `<head>${METAS}${TABLE_STYLE}${XML_STYLE}${MARKUP_TABLE_STYLE}<title>${label}</title></head>`;
 	const PG = `<html lang=\"en\" xml:lang=\"en\">\n${HEAD}<body>`;
 	const PH = `<h1>${label}</h1>`;
