@@ -475,9 +475,9 @@ export default class ServiceListCheck {
 		} else countriesSpecified = countries;
 
 		if (schemaVersion >= SCHEMA_r4) {
-			let selectable = Region.attr(dvbi.a_selectable) ? Region.attr(dvbi.a_selectable).value() == "true" : true;
+			let _selectable = Region.attr(dvbi.a_selectable) ? Region.attr(dvbi.a_selectable).value() == "true" : true;
 
-			if (!selectable && depth == dvbi.MAX_SUBREGION_LEVELS)
+			if (!_selectable && depth == dvbi.MAX_SUBREGION_LEVELS)
 				errs.addError({
 					code: "AR010",
 					message: `Tertiary (leaf) subregion must be selectable`,
@@ -485,7 +485,7 @@ export default class ServiceListCheck {
 					line: Region.line(),
 				});
 
-			if (!selectable && !hasChild(Region, dvbi.e_Region))
+			if (!_selectable && !hasChild(Region, dvbi.e_Region))
 				errs.addError({
 					code: "AR011",
 					message: `leaf subregion must be selectable`,
@@ -493,24 +493,22 @@ export default class ServiceListCheck {
 					line: Region.line(),
 				});
 
-			if (selectable) {
-				if (regionID) {
-					if (knownRegionIDs.find((r) => r.region == regionID) != undefined)
-						errs.addError({
-							code: "AR012",
-							message: `Duplicate ${dvbi.a_regionID.attribute()} ${displayRegionID}`,
-							key: `duplicate ${dvbi.a_regionID}`,
-							line: Region.line(),
-						});
-					else knownRegionIDs.push({ countries: countriesSpecified, region: regionID, used: false, line: Region.line() });
-				} else
+			if (regionID) {
+				if (knownRegionIDs.find((r) => r.region == regionID) != undefined)
 					errs.addError({
-						code: "AR013",
-						message: `${dvbi.a_regionID.attribute()} is required`,
-						key: `no ${dvbi.a_regionID}`,
+						code: "AR012",
+						message: `Duplicate ${dvbi.a_regionID.attribute()} ${displayRegionID}`,
+						key: `duplicate ${dvbi.a_regionID}`,
 						line: Region.line(),
 					});
-			}
+				else knownRegionIDs.push({ countries: countriesSpecified, region: regionID, selectable: _selectable, used: false, line: Region.line() });
+			} else
+				errs.addError({
+					code: "AR013",
+					message: `${dvbi.a_regionID.attribute()} is required`,
+					key: `no ${dvbi.a_regionID}`,
+					line: Region.line(),
+				});
 		} else {
 			if (regionID) {
 				if (knownRegionIDs.find((r) => r.region == regionID) != undefined)
@@ -1915,7 +1913,7 @@ export default class ServiceListCheck {
 			while ((PE = ProminenceList.get(xPath(SCHEMA_PREFIX, dvbi.e_Prominence, ++p), SL_SCHEMA)) != null) {
 				if (!PE.attr(dvbi.a_country) && !PE.attr(dvbi.a_region) && !PE.attr(dvbi.a_ranking)) {
 					errs.addError({
-						code: "SL241",
+						code: "SL228",
 						message: `one of ${dvbi.a_country.attribute()},  ${dvbi.a_region.attribute()} or ${dvbi.a_ranking.attribute()} must be provided`,
 						fragment: PE,
 						key: `missing value`,
@@ -1929,7 +1927,7 @@ export default class ServiceListCheck {
 						/* jshint +W083*/
 						if (found === undefined)
 							errs.addError({
-								code: "SL242",
+								code: "SL229",
 								message: `regionID ${_prominenceRegion.quote()} not specified in ${dvbi.e_RegionList.elementize()}`,
 								fragment: PE,
 								key: "invalid region",
@@ -2157,11 +2155,17 @@ export default class ServiceListCheck {
 		let tr = 0,
 			TargetRegion;
 		while ((TargetRegion = SL.get(xPath(SCHEMA_PREFIX, dvbi.e_TargetRegion, ++tr), SL_SCHEMA)) != null) {
-			let _targetRegionName = TargetRegion.text();
 			/* jshint -W083*/
-			let found = knownRegionIDs.find((r) => r.region == _targetRegionName);
+			let found = knownRegionIDs.find((r) => r.region == TargetRegion.text());
 			/* jshint +W083*/
-			if (found == undefined) errs.addError(UnspecifiedTargetRegion(_targetRegionName, "service list", "SL060"));
+			if (found == undefined) errs.addError(UnspecifiedTargetRegion(TargetRegion.text(), "service list", "SL060"));
+			else if (!found.selectable)
+				errs.addError({
+					code: "SL051",
+					message: `${dvbi.e_TargetRegion.elementize()} ${TargetRegion.text().quote()} in ${dvbi.e_ServiceList.elementize()} is not selectable`,
+					fragment: TargetRegion,
+					key: "unselectable region",
+				});
 			else found.used = true;
 		}
 		// check <ServiceList><SubscriptionPackageList>
@@ -2329,15 +2333,24 @@ export default class ServiceListCheck {
 					if (foundRegion == undefined)
 						errs.addError({
 							code: "SL241",
-							message: `${dvbi.e_TargetRegion.elementize()} ${TargetRegion.text()} in ${dvbi.e_LCNTable.elementize()} is not defined`,
+							message: `${dvbi.e_TargetRegion.elementize()} ${TargetRegion.text().quote()} in ${dvbi.e_LCNTable.elementize()} is not defined`,
 							fragment: TargetRegion,
 							key: "undefined region",
 						});
-					else foundRegion.used = true;
+					else {
+						if (foundRegion.selectable == false)
+							errs.addError({
+								code: "SL242",
+								message: `${dvbi.e_TargetRegion.elementize()} ${TargetRegion.text().quote()} in ${dvbi.e_LCNTable.elementize()} is not selectable`,
+								fragment: TargetRegion,
+								key: "unselectable region",
+							});
+						foundRegion.used = true;
+					}
 
 					if (TargetRegions.includes(_targetRegionName))
 						errs.addError({
-							code: "SL242",
+							code: "SL243",
 							message: `respecification of ${dvbi.e_TargetRegion.elementize()}=${TargetRegion.text()}`,
 							fragment: TargetRegion,
 							key: "duplicate region",
@@ -2434,7 +2447,7 @@ export default class ServiceListCheck {
 		// report any regionIDs that are defined but not used
 		if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_r4) {
 			knownRegionIDs.forEach((kr) => {
-				if (!kr.used)
+				if (!kr.used && kr.selectable)
 					errs.addError({
 						code: "SL281",
 						type: WARNING,
