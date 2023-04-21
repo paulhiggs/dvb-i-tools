@@ -1946,7 +1946,7 @@ export default class ServiceListCheck {
 								if (found.countries.find((c) => c == _prominenceCountry) === undefined)
 									/* jshint +W083*/
 									errs.addError({
-										code: "SL243",
+										code: "SL230",
 										message: `regionID ${_prominenceRegion.quote()} not specified for country ${_prominenceCountry.quote()} in ${dvbi.e_RegionList.elementize()}`,
 										fragment: PE,
 										key: "invalid region",
@@ -2079,7 +2079,7 @@ export default class ServiceListCheck {
 					switch (validatorResp.resp) {
 						case this.knownLanguages.languageUnknown:
 							errs.addError({
-								code: "SL012-1",
+								code: "SL012",
 								message: `${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is invalid`,
 								line: SL.root().line(),
 								key: "invalid language",
@@ -2087,7 +2087,7 @@ export default class ServiceListCheck {
 							break;
 						case this.knownLanguages.languageRedundant:
 							errs.addError({
-								code: "SL012-2",
+								code: "SL013",
 								message: `${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is deprecated (use ${validatorResp.pref.quote()} instead)`,
 								line: SL.root().line(),
 								key: "deprecated language",
@@ -2095,7 +2095,7 @@ export default class ServiceListCheck {
 							break;
 						case this.knownLanguages.languageNotSpecified:
 							errs.addError({
-								code: "SL012-3",
+								code: "SL014",
 								message: `${dvbi.e_ServiceList} xml:${tva.a_lang} value is not provided`,
 								line: SL.root().line(),
 								key: "unspecified language",
@@ -2103,7 +2103,7 @@ export default class ServiceListCheck {
 							break;
 						case this.knownLanguages.languageInvalidType:
 							errs.addError({
-								code: "SL012-4",
+								code: "SL015",
 								message: `${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is invalid`,
 								line: SL.root().line(),
 								key: "invalid language",
@@ -2111,7 +2111,6 @@ export default class ServiceListCheck {
 							break;
 					}
 				}
-				// checkLanguage(this.knownLanguages, SL.root().attr(tva.a_lang).value(), `xml:${tva.a_lang} in ${dvbi.e_ServiceList}`, SL, errs, "SL012");
 			}
 		}
 
@@ -2286,7 +2285,7 @@ export default class ServiceListCheck {
 				if (uniqueID && CGSR.text() == uniqueID.text())
 					errs.addError({
 						type: WARNING,
-						code: "SL230",
+						code: "SL270",
 						message: `${dvbi.e_ContentGuideServiceRef.elementize()} is self`,
 						fragments: [uniqueID, CGSR],
 						key: `self ${dvbi.e_ContentGuideServiceRef.elementize()}`,
@@ -2366,15 +2365,15 @@ export default class ServiceListCheck {
 					let packageLanguage = null;
 					if (SubscriptionPackage.attr(tva.a_lang)) {
 						packageLanguage = SubscriptionPackage.attr(tva.a_lang).value();
-						checkLanguage(this.knownLanguages, packageLanguage, `${dvbi.e_SubscriptionPackage} in ${dvbi.e_LCNTable}`, SubscriptionPackage, errs, "SL245");
+						checkLanguage(this.knownLanguages, packageLanguage, `${dvbi.e_SubscriptionPackage} in ${dvbi.e_LCNTable}`, SubscriptionPackage, errs, "SL265");
 					} else if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_r3) {
-						packageLanguage = GetNodeLanguage(SubscriptionPackage, false, errs, "SL246", this.knownLanguages);
+						packageLanguage = GetNodeLanguage(SubscriptionPackage, false, errs, "SL266", this.knownLanguages);
 					}
 
 					let localSubscriptionPackage = localizedSubscriptionPackage(SubscriptionPackage, packageLanguage);
 					if (SubscriptionPackages.includes(localSubscriptionPackage))
 						errs.addError({
-							code: "SL247",
+							code: "SL267",
 							message: `duplicated ${dvbi.e_SubscriptionPackage.elementize()}`,
 							fragment: SubscriptionPackage,
 							key: "duplicate package name",
@@ -2384,7 +2383,7 @@ export default class ServiceListCheck {
 					if (SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_r3)
 						if (!declaredSubscriptionPackages.includes(localSubscriptionPackage))
 							errs.addError({
-								code: "SL248",
+								code: "SL268",
 								message: `${dvbi.e_SubscriptionPackage.elementize()}="${localSubscriptionPackage}" is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
 								fragment: SubscriptionPackage,
 								key: `undeclared ${dvbi.e_SubscriptionPackage}`,
