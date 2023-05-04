@@ -134,3 +134,20 @@ export function parseISOduration(duration) {
 
 	return parsed;
 }
+
+/**
+ * counts the number of named elements in the specificed node
+ * *
+ * @param {XMLnode} node             the libxmljs node to check
+ * @param {String}  childElementName the name of the child element to count
+ * @returns {integer} the number of named child elments
+ */
+export function CountChildElements(node, childElementName) {
+	let r = 0,
+		childElems = node ? node.childNodes() : null;
+	if (childElems)
+		childElems.forEachSubElement((elem) => {
+			if (elem.name() == childElementName) r++;
+		});
+	return r;
+}

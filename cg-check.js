@@ -18,7 +18,7 @@ import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
 import { mpeg7 } from "./MPEG7_definitions.js";
 
 import { isCRIDURI, isTAGURI } from "./URI_checks.js";
-import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration } from "./utils.js";
+import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration, CountChildElements } from "./utils.js";
 
 import { isHTTPURL, isDVBLocator, isUTCDateTime } from "./pattern_checks.js";
 
@@ -98,23 +98,6 @@ let SchemaVersion = (namespace) => {
 	let x = SchemaVersions.find((ver) => ver.namespace == namespace);
 	return x ? x.version : SCHEMA_unknown;
 };
-
-/**
- * counts the number of named elements in the specificed node
- * *
- * @param {XMLnode} node            the libxmljs node to check
- * @param {String} childElementName the name of the child element to count
- * @returns {integer} the number of named child elments
- */
-function CountChildElements(node, childElementName) {
-	let r = 0,
-		childElems = node ? node.childNodes() : null;
-	if (childElems)
-		childElems.forEachSubElement((elem) => {
-			if (elem.name() == childElementName) r++;
-		});
-	return r;
-}
 
 /**
  * converts a decimal representation of a string to a number

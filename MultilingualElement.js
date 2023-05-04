@@ -2,7 +2,7 @@
 
 import { WARNING, APPLICATION } from "./ErrorList.js";
 import { tva } from "./TVA_definitions.js";
-import { xPath, isIn } from "./utils.js";
+import { xPath, isIn, CountChildElements } from "./utils.js";
 import { datatypeIs } from "./phlib/phlib.js";
 
 const NO_DOCUMENT_LANGUAGE = "**"; // this should not be needed as @xml:lang is required in <ServiceList> and <TVAMain> root elements
@@ -84,15 +84,29 @@ export function checkXMLLangs(props, elementName, elementLocation, node, errs, e
 		return;
 	}
 
-	let elementLanguages = [],
-		i = 0,
-		elem;
+	let elem;
+	let i = 0,
+		numElements = CountChildElements(node, elementName);
+	if (numElements > 1) {
+		while ((elem = node.get(xPath(props.prefix, elementName, ++i), props.schema)) != null) {
+			if (!elem.attr(tva.a_lang))
+				errs.addError({
+					code: `${errCode}-1`,
+					message: `xml:lang must be declared for each multilingual element for ${elementName.elementize()} in ${elementLocation}`,
+					fragment: elem,
+					key: "missing@xml:lang",
+				});
+		}
+	}
+
+	let elementLanguages = [];
+	i = 0;
 	while ((elem = node.get(xPath(props.prefix, elementName, ++i), props.schema)) != null) {
 		let lang = mlLanguage(elem);
 		if (isIn(elementLanguages, lang))
 			errs.addError({
-				code: `${errCode}-1`,
-				message: `${lang == NO_DOCUMENT_LANGUAGE ? "default language" : `xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} for ${elementLocation}`,
+				code: `${errCode}-2`,
+				message: `${lang == NO_DOCUMENT_LANGUAGE ? "default language" : `xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} in ${elementLocation}`,
 				fragment: elem,
 				key: "duplicate @xml:lang",
 			});
@@ -107,7 +121,7 @@ export function checkXMLLangs(props, elementName, elementLocation, node, errs, e
 			});
 
 		//if lang is specified, validate the format and value of the attribute against BCP47 (RFC 5646)
-		if (elem.attr(tva.a_lang) && validator && lang != NO_DOCUMENT_LANGUAGE) checkLanguage(validator, lang, `xml:lang in ${elementName}`, elem, errs, `${errCode}-2`);
+		if (elem.attr(tva.a_lang) && validator && lang != NO_DOCUMENT_LANGUAGE) checkLanguage(validator, lang, `xml:lang in ${elementName}`, elem, errs, `${errCode}-4`);
 	}
 }
 
