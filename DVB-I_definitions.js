@@ -76,6 +76,7 @@ export const dvbi = {
 	AUDIO_PURPOSE_VISUAL_IMPAIRED: `${AudioPurposeCS}:1`,
 	AUDIO_PURPOSE_HEARING_IMPAIRED: `${AudioPurposeCS}:2`,
 	AUDIO_PURPOSE_MAIN: `${AudioPurposeCS}:6`,
+	AUDIO_PURPOSE_DIALOGUE_ENHANCEMENT: `${AudioPurposeCS}:8`,
 
 	// A177 6.11.3 - Caption Coding Format
 	DVB_BITMAP_SUBTITLES: `${CaptionCodingFormatCS}:2.1`,

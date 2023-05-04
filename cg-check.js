@@ -2221,7 +2221,9 @@ export default class ContentGuideCheck {
 		}
 
 		let isValidAudioMixType = (mixType) => [mpeg7.AUDIO_MIX_MONO, mpeg7.AUDIO_MIX_STEREO, mpeg7.AUDIO_MIX_5_1].includes(mixType);
-		let isValidAudioLanguagePurpose = (purpose) => [dvbi.AUDIO_PURPOSE_MAIN, dvbi.AUDIO_PURPOSE_VISUAL_IMPAIRED, dvbi.AUDIO_PURPOSE_HEARING_IMPAIRED].includes(purpose);
+
+		const profiledAudioPurposeCS = [dvbi.AUDIO_PURPOSE_MAIN, dvbi.AUDIO_PURPOSE_VISUAL_IMPAIRED, dvbi.AUDIO_PURPOSE_HEARING_IMPAIRED, dvbi.AUDIO_PURPOSE_DIALOGUE_ENHANCEMENT];
+		let isValidAudioLanguagePurpose = (purpose) => profiledAudioPurposeCS.includes(purpose);
 
 		checkTopElementsAndCardinality(
 			AVAttributes,
