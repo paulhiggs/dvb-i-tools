@@ -565,7 +565,7 @@ export default class ServiceListCheck {
 				line: Region.line(),
 			});
 
-		checkXMLLangs(props, dvbi.e_RegionName, `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${displayRegionID}`, Region, errs, "AR041", false, this.knownLanguages);
+		checkXMLLangs(props, dvbi.e_RegionName, `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${displayRegionID}`, Region, errs, "AR041", this.knownLanguages);
 
 		// <Region><Postcode>
 		let pc = 0,
@@ -951,8 +951,8 @@ export default class ServiceListCheck {
 		}
 		loc = loc ? loc : source.parent().name().elementize();
 
-		checkXMLLangs(props, dvbi.e_Name, loc, source, errs, `${errCode}-1`, false, this.knownLanguages);
-		checkXMLLangs(props, dvbi.e_ProviderName, loc, source, errs, `${errCode}-2`, false, this.knownLanguages);
+		checkXMLLangs(props, dvbi.e_Name, loc, source, errs, `${errCode}-1`, this.knownLanguages);
+		checkXMLLangs(props, dvbi.e_ProviderName, loc, source, errs, `${errCode}-2`, this.knownLanguages);
 
 		let rm = 0,
 			RelatedMaterial;
@@ -1256,7 +1256,7 @@ export default class ServiceListCheck {
 		}
 
 		//<ServiceInstance><DisplayName>
-		checkXMLLangs(props, dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010", false, this.knownLanguages);
+		checkXMLLangs(props, dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010", this.knownLanguages);
 
 		// check @href of <ServiceInstance><RelatedMaterial>
 		let rm = 0,
@@ -1424,7 +1424,7 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><SubscriptionPackage>
-		checkXMLLangs(props, dvbi.e_SubscriptionPackage, ServiceInstance.name().elementize(), ServiceInstance, errs, "SI131", false, this.knownLanguages);
+		checkXMLLangs(props, dvbi.e_SubscriptionPackage, ServiceInstance.name().elementize(), ServiceInstance, errs, "SI131", this.knownLanguages);
 		let sp = 0,
 			SubscriptionPackage;
 		while ((SubscriptionPackage = ServiceInstance.get(xPath(props.prefix, dvbi.e_SubscriptionPackage, ++sp), props.schema)) != null) {
@@ -1763,10 +1763,10 @@ export default class ServiceListCheck {
 		}
 
 		//check <ServiceName>
-		checkXMLLangs(props, dvbi.e_ServiceName, `service ${thisServiceId.quote()}`, service, errs, "SL140", false, this.knownLanguages);
+		checkXMLLangs(props, dvbi.e_ServiceName, `service ${thisServiceId.quote()}`, service, errs, "SL140", this.knownLanguages);
 
 		//check <ProviderName>
-		checkXMLLangs(props, dvbi.e_ProviderName, `service ${thisServiceId.quote()}`, service, errs, "SL141", false, this.knownLanguages);
+		checkXMLLangs(props, dvbi.e_ProviderName, `service ${thisServiceId.quote()}`, service, errs, "SL141", this.knownLanguages);
 
 		//check <RelatedMaterial>
 		let rm = 0,
@@ -2142,10 +2142,10 @@ export default class ServiceListCheck {
 		// validated by schema
 
 		//check <ServiceList><Name>
-		checkXMLLangs(props, dvbi.e_Name, dvbi.e_ServiceList, SL, errs, "SL020", false, this.knownLanguages);
+		checkXMLLangs(props, dvbi.e_Name, dvbi.e_ServiceList, SL, errs, "SL020", this.knownLanguages);
 
 		//check <ServiceList><ProviderName>
-		checkXMLLangs(props, dvbi.e_ProviderName, dvbi.e_ServiceList, SL, errs, "SL030", false, this.knownLanguages);
+		checkXMLLangs(props, dvbi.e_ProviderName, dvbi.e_ServiceList, SL, errs, "SL030", this.knownLanguages);
 
 		//check <ServiceList><RelatedMaterial>
 		let rm = 0,

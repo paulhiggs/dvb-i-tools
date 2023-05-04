@@ -70,16 +70,15 @@ export function mlLanguage(node) {
 /**
  * checks that all the @xml:lang values for an element are unique and that only one instace of the element does not contain an xml:lang attribute
  *
- * @param {object}  props							Metadata of the XML document
+ * @param {object}  props            Metadata of the XML document
  * @param {String}  elementName      The multilingual XML element to check
  * @param {String}  elementLocation  The descriptive location of the element being checked (for reporting)
  * @param {XMLnode} node             The XML tree node containing the element being checked
  * @param {Object}  errs             The class where errors and warnings relating to the service list processing are stored
  * @param {String}  errCode          The error code to be reported
- * @param {Boolean} allowEmpty	     Allow the element value to be empty, i.e. ""
- * @param {Object}  validator 		 The validation class for check the value of the language, or null if no check is to be performed
+ * @param {Object}  validator        The validation class for check the value of the language, or null if no check is to be performed
  */
-export function checkXMLLangs(props, elementName, elementLocation, node, errs, errCode, allowEmpty, validator = null) {
+export function checkXMLLangs(props, elementName, elementLocation, node, errs, errCode, validator = null) {
 	if (!node) {
 		errs.addError({ type: APPLICATION, code: "XL000", message: "checkXMLLangs() called with node==null" });
 		return;
@@ -99,7 +98,7 @@ export function checkXMLLangs(props, elementName, elementLocation, node, errs, e
 			});
 		else elementLanguages.push(lang);
 
-		if (!allowEmpty && elem.text().length == 0)
+		if (elem.text().length == 0)
 			errs.addError({
 				code: `${errCode}-3`,
 				message: `value must be specified for ${elem.parent().name().elementize()}${elem.name().elementize()}`,

@@ -691,7 +691,7 @@ export default class ContentGuideCheck {
 							break;
 					}
 				});
-			checkXMLLangs(props, tva.e_ExplanatoryText, `${BasicDescription.name()}.${tva.e_ParentalGuidance}`, ParentalGuidance, errs, `${errCode}-8`, false, this.knownLanguages);
+			checkXMLLangs(props, tva.e_ExplanatoryText, `${BasicDescription.name()}.${tva.e_ParentalGuidance}`, ParentalGuidance, errs, `${errCode}-8`, this.knownLanguages);
 		}
 	}
 
