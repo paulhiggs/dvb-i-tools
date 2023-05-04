@@ -882,17 +882,28 @@ export default class ServiceListCheck {
 	 * @param {string}  errCode           Error code prefix to be used in reports
 	 */
 	/*private*/ validateAContentGuideSource(SL_SCHEMA, SCHEMA_PREFIX, SCHEMA_NAMESPACE, source, errs, loc, errCode) {
-		function CheckEndpoint(elementName, suffix) {
+		function CheckEndpoint(elementName, suffix, MustEndWithSlash = false) {
 			let ep = source.get(xPath(SCHEMA_PREFIX, elementName), SL_SCHEMA);
 			if (ep) {
 				let epURL = ep.get(xPath(SCHEMA_PREFIX, dvbi.e_URI), SL_SCHEMA);
-				if (epURL && !isHTTPPathURL(epURL.text()))
-					errs.addError({
-						code: `${errCode}-${suffix}`,
-						message: `"${epURL.text()}" is not a valid URL path for ${elementName.elementize()}`,
-						fragment: ep,
-						key: "not URL path",
-					});
+				if (epURL) {
+					if (!isHTTPPathURL(epURL.text()))
+						errs.addError({
+							code: `${errCode}-${suffix}a`,
+							message: `"${epURL.text()}" is not a valid URL path for ${elementName.elementize()}`,
+							fragment: ep,
+							key: "not URL path",
+						});
+
+					if (MustEndWithSlash && !epURL.text().endsWith("/"))
+						errs.addError({
+							type: WARNING,
+							code: `${errCode}-${suffix}b`,
+							message: `"${epURL.text()}" should end with a slash '/' for ${elementName.elementize()}`,
+							fragment: ep,
+							key: "not URL path",
+						});
+				}
 
 				if (ep.attr(dvbi.a_contentType) && ep.attr(dvbi.a_contentType).value() != XMLdocumentType)
 					errs.addError({
@@ -929,8 +940,8 @@ export default class ServiceListCheck {
 		// ContentGuideSourceType::ProgramInfoEndpoint - should be a URL
 		CheckEndpoint(dvbi.e_ProgramInfoEndpoint, 6);
 
-		// ContentGuideSourceType::GroupInfoEndpoint - should be a URL
-		CheckEndpoint(dvbi.e_GroupInfoEndpoint, 8);
+		// ContentGuideSourceType::GroupInfoEndpoint - should be a URL and should end with a /
+		CheckEndpoint(dvbi.e_GroupInfoEndpoint, 8, SchemaVersion(SCHEMA_NAMESPACE) >= SCHEMA_r5);
 
 		// ContentGuideSourceType::MoreEpisodesEndpoint - should be a URL
 		CheckEndpoint(dvbi.e_MoreEpisodesEndpoint, 10);
