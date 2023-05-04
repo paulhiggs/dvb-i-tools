@@ -175,19 +175,26 @@ export default class SLEPR {
 		let slepr = parseXmlString(masterSLEPR);
 
 		let SLEPR_SCHEMA = {},
-			SCHEMA_PREFIX = slepr.root().namespace().prefix();
-		SLEPR_SCHEMA[SCHEMA_PREFIX] = slepr.root().namespace().href();
+			SCHEMA_PREFIX = slepr.root().namespace().prefix(),
+			SCHEMA_NAMESPACE = slepr.root().namespace().href();
+		SLEPR_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
+
+		let props = {
+			schema: SLEPR_SCHEMA,
+			prefix: SCHEMA_PREFIX,
+			namespace: SCHEMA_NAMESPACE,
+		};
 
 		if (req.query.ProviderName) {
 			// if ProviderName is specified, remove any ProviderOffering entries that do not match the name
 			let prov,
 				p = 0,
 				providerCleanup = [];
-			while ((prov = slepr.get("//" + xPath(SCHEMA_PREFIX, dvbi.e_ProviderOffering, ++p), SLEPR_SCHEMA)) != null) {
+			while ((prov = slepr.get("//" + xPath(props.prefix, dvbi.e_ProviderOffering, ++p), props.schema)) != null) {
 				let provName,
 					n = 0,
 					matchedProvider = false;
-				while (!matchedProvider && (provName = prov.get(xPath(SCHEMA_PREFIX, dvbi.e_Provider) + "/" + xPath(SCHEMA_PREFIX, dvbi.e_Name, ++n), SLEPR_SCHEMA)))
+				while (!matchedProvider && (provName = prov.get(xPath(props.prefix, dvbi.e_Provider) + "/" + xPath(props.prefix, dvbi.e_Name, ++n), props.schema)))
 					if (isIn(req.query.ProviderName, provName.text())) matchedProvider = true;
 				if (!matchedProvider) providerCleanup.push(prov);
 			}
@@ -198,10 +205,10 @@ export default class SLEPR {
 			let prov,
 				p = 0,
 				servicesToRemove = [];
-			while ((prov = slepr.get("//" + xPath(SCHEMA_PREFIX, dvbi.e_ProviderOffering, ++p), SLEPR_SCHEMA)) != null) {
+			while ((prov = slepr.get("//" + xPath(props.prefix, dvbi.e_ProviderOffering, ++p), props.schema)) != null) {
 				let serv,
 					s = 0;
-				while ((serv = prov.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceListOffering, ++s), SLEPR_SCHEMA)) != null) {
+				while ((serv = prov.get(xPath(props.prefix, dvbi.e_ServiceListOffering, ++s), props.schema)) != null) {
 					let removeService = false;
 
 					// remove services that do not match the specified regulator list flag
@@ -217,7 +224,7 @@ export default class SLEPR {
 							l = 0,
 							keepService = false,
 							hasLanguage = false;
-						while (!keepService && (lang = serv.get(xPath(SCHEMA_PREFIX, dvbi.e_Language, ++l), SLEPR_SCHEMA))) {
+						while (!keepService && (lang = serv.get(xPath(props.prefix, dvbi.e_Language, ++l), props.schema))) {
 							if (isIn(req.query.Language, lang.text())) keepService = true;
 							hasLanguage = true;
 						}
@@ -230,7 +237,7 @@ export default class SLEPR {
 							c = 0,
 							keepService = false,
 							hasCountry = false;
-						while (!keepService && (targetCountry = serv.get(xPath(SCHEMA_PREFIX, dvbi.e_TargetCountry, ++c), SLEPR_SCHEMA))) {
+						while (!keepService && (targetCountry = serv.get(xPath(props.prefix, dvbi.e_TargetCountry, ++c), props.schema))) {
 							// note that the <TargetCountry> element can signal multiple values. Its XML pattern is "\c\c\c(,\c\c\c)*"
 							let countries = targetCountry.text().split(",");
 							/* jslint -W083 */
@@ -249,7 +256,7 @@ export default class SLEPR {
 							g = 0,
 							keepService = false,
 							hasGenre = false;
-						while (!keepService && (genre = serv.get(xPath(SCHEMA_PREFIX, dvbi.e_Genre, ++g), SLEPR_SCHEMA))) {
+						while (!keepService && (genre = serv.get(xPath(props.prefix, dvbi.e_Genre, ++g), props.schema))) {
 							if (isIn(req.query.Genre, genre.text())) keepService = true;
 							hasGenre = true;
 						}
@@ -258,7 +265,7 @@ export default class SLEPR {
 
 					// remove remaining services that do not have the requested delivery modes
 					if (!removeService && req.query.Delivery) {
-						let delivery = serv.get(xPath(SCHEMA_PREFIX, dvbi.e_Delivery), SLEPR_SCHEMA);
+						let delivery = serv.get(xPath(props.prefix, dvbi.e_Delivery), props.schema);
 
 						if (!delivery) removeService = true;
 						else {
@@ -290,8 +297,8 @@ export default class SLEPR {
 		let prov,
 			p = 0,
 			providersToRemove = [];
-		while ((prov = slepr.get("//" + xPath(SCHEMA_PREFIX, dvbi.e_ProviderOffering, ++p), SLEPR_SCHEMA)) != null) {
-			if (!prov.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceListOffering, 1), SLEPR_SCHEMA)) providersToRemove.push(prov);
+		while ((prov = slepr.get("//" + xPath(props.prefix, dvbi.e_ProviderOffering, ++p), props.schema)) != null) {
+			if (!prov.get(xPath(props.prefix, dvbi.e_ServiceListOffering, 1), props.schema)) providersToRemove.push(prov);
 		}
 		providersToRemove.forEach((provider) => provider.remove());
 
@@ -300,14 +307,14 @@ export default class SLEPR {
 			// remove any 'data:' URLs from RelatedMaterial elements. if there are no remaining MediaLocator elements, then remove the RelatedMaterial
 			let prov,
 				p = 0;
-			while ((prov = slepr.get("//" + xPath(SCHEMA_PREFIX, dvbi.e_ProviderOffering, ++p), SLEPR_SCHEMA)) != null) {
+			while ((prov = slepr.get("//" + xPath(props.prefix, dvbi.e_ProviderOffering, ++p), props.schema)) != null) {
 				let serv,
 					s = 0;
-				while ((serv = prov.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceListOffering, ++s), SLEPR_SCHEMA)) != null) {
+				while ((serv = prov.get(xPath(props.prefix, dvbi.e_ServiceListOffering, ++s), props.schema)) != null) {
 					let relatedMaterial,
 						rm = 0;
 					let discardRelatedMaterial = [];
-					while ((relatedMaterial = serv.get(xPath(SCHEMA_PREFIX, dvbi.e_RelatedMaterial, ++rm), SLEPR_SCHEMA)) != null) {
+					while ((relatedMaterial = serv.get(xPath(props.prefix, dvbi.e_RelatedMaterial, ++rm), props.schema)) != null) {
 						let mediaLocator,
 							ml = 0;
 						let discardLocators = [];

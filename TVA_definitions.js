@@ -156,6 +156,7 @@ export const tva = {
 
 	a_average: "average",
 	a_closed: "closed",
+	a_contentLanguage: "contentLanguage",
 	a_contentType: "contentType",
 	a_crid: "crid",
 	a_end: "end",

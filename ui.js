@@ -1,5 +1,5 @@
 import { HTMLize } from "./phlib/phlib.js";
-import { ERROR, WARNING, INFORMATION } from "./ErrorList.js";
+import { ERROR, WARNING } from "./ErrorList.js";
 import { MODE_URL, MODE_FILE } from "./Validator.js";
 
 const MESSAGES_IN_ORDER = true; // when true outputs the errors, warnings and informations in the 'document order'. false==ouotput in order found
@@ -14,7 +14,7 @@ function PAGE_TOP(label) {
 	// dont allow Chrome to translate the page - seems to 'detect' German
 	const METAS = '<meta name="google" content="notranslate"/><meta charset="utf-8">';
 	const HEAD = `<head>${METAS}${TABLE_STYLE}${XML_STYLE}${MARKUP_TABLE_STYLE}<title>${label}</title></head>`;
-	const PG = `<html lang=\"en\" xml:lang=\"en\">\n${HEAD}<body>`;
+	const PG = `<html lang="en" xml:lang="en">\n${HEAD}<body>`;
 	const PH = `<h1>${label}</h1>`;
 
 	return `${PG}${PH}`;
@@ -36,10 +36,10 @@ function tabulateResults(source, res, error, errs) {
 
 	function tabluateMessage(value) {
 		res.write("<tr>");
-		let anchor = value.hasOwnProperty("line") ? `line-${value.line}` : null;
+		let anchor = Object.prototype.hasOwnProperty.call(value, "line") ? `line-${value.line}` : null;
 		res.write(`<td>${anchor ? `<span class="${link_css}" onclick="myScrollTo('${anchor}')">` : ""}${value.code ? HTMLize(value.code) : ""}${anchor ? "</span>" : ""}</td>`);
 		res.write(`<td>${value.message ? HTMLize(value.message) : ""}`);
-		res.write(`${value.element ? `<br/><span class=\"xmlfont\"><pre>${HTMLize(value.element)}</pre></span>` : ""}</td>`);
+		res.write(`${value.element ? `<br/><span class="xmlfont"><pre>${HTMLize(value.element)}</pre></span>` : ""}</td>`);
 		res.write("</tr>");
 	}
 
@@ -179,7 +179,7 @@ export default function drawForm(deprecateTo, req, res, modes, supportedRequests
 	tabulateResults(source, res, error, errs);
 	res.write(PAGE_BOTTOM);
 
-	return new Promise((resolve, reject) => {
+	return new Promise((resolve, reject /* eslint-disable-line no-unused-vars */) => {
 		resolve(res);
 	});
 }

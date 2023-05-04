@@ -55,7 +55,8 @@ export function checkLanguage(validator, lang, loc, element, errs, errCode) {
 /**
  * Recurse up the XML element hierarchy until we find an element with an @xml:lang attribute or return a ficticouus
  * value of topmost level element does not contain @xml:lang
- * @param {XMLNode} node  the multilingual element whose language is needed
+ *
+ * @param {XMLNode} node    the multilingual element whose language is needed
  * @returns {String} the value of the xml:lang attribute for the element, or the teh closest ancestor
  */
 export function mlLanguage(node) {
@@ -69,8 +70,7 @@ export function mlLanguage(node) {
 /**
  * checks that all the @xml:lang values for an element are unique and that only one instace of the element does not contain an xml:lang attribute
  *
- * @param {String}  SCHEMA           Used when constructing Xpath queries
- * @param {String}  PREFIX           Used when constructing Xpath queries
+ * @param {object}  props							Metadata of the XML document
  * @param {String}  elementName      The multilingual XML element to check
  * @param {String}  elementLocation  The descriptive location of the element being checked (for reporting)
  * @param {XMLnode} node             The XML tree node containing the element being checked
@@ -79,7 +79,7 @@ export function mlLanguage(node) {
  * @param {Boolean} allowEmpty	     Allow the element value to be empty, i.e. ""
  * @param {Object}  validator 		 The validation class for check the value of the language, or null if no check is to be performed
  */
-export function checkXMLLangs(SCHEMA, PREFIX, elementName, elementLocation, node, errs, errCode, allowEmpty, validator = null) {
+export function checkXMLLangs(props, elementName, elementLocation, node, errs, errCode, allowEmpty, validator = null) {
 	if (!node) {
 		errs.addError({ type: APPLICATION, code: "XL000", message: "checkXMLLangs() called with node==null" });
 		return;
@@ -88,7 +88,7 @@ export function checkXMLLangs(SCHEMA, PREFIX, elementName, elementLocation, node
 	let elementLanguages = [],
 		i = 0,
 		elem;
-	while ((elem = node.get(xPath(PREFIX, elementName, ++i), SCHEMA)) != null) {
+	while ((elem = node.get(xPath(props.prefix, elementName, ++i), props.schema)) != null) {
 		let lang = mlLanguage(elem);
 		if (isIn(elementLanguages, lang))
 			errs.addError({

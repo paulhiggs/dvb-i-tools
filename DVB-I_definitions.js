@@ -143,7 +143,7 @@ export const dvbi = {
 	a_Address: "Address",
 	a_CGSID: "CGSID",
 	a_channelNumber: "channelNumber",
-	a_contentLanguage: "contentLanguage",
+	a_contentLanguage: tva.a_contentLanguage,
 	a_contentType: tva.a_contentType,
 	a_controlRemoteAccessOverInternet: "controlRemoteAccessOverInternet",
 	a_country: "country",

@@ -16,10 +16,10 @@ const e_pct = "%", //e_pct="&#x25;",
 	e_hex16 = `[${e_hex}]{1,4}`,
 	e_chrs = `${e_unreserved}${e_pct}&amp;~;=:@`,
 	e_uword = `(:([${e_digit}]{1,4}|[1-5][${e_digit}]{4}|6[0-4][${e_digit}]{3}|65[0-4][${e_digit}]{2}|655[0-2][${e_digit}]|6553[0-5]))`,
-	e_Scheme = `[${e_alpha}][${e_alpha}${e_digit}+\-.]*`,
+	e_Scheme = `[${e_alpha}][${e_alpha}${e_digit}+-.]*`,
 	e_User = `([${e_unreserved}${e_pct}&amp;~;=]+)`,
 	e_Password = `([${e_unreserved}${e_pct}&amp;~;=]+)`,
-	e_NamedHost = `[${e_alpha}${e_digit}${e_pct}._~\-]+`,
+	e_NamedHost = `[${e_alpha}${e_digit}${e_pct}._~-]+`,
 	e_DecimalByte = `(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[${e_digit}])`;
 
 export const e_IPv4Address = `${e_DecimalByte}(\\.${e_DecimalByte}){3}`;

@@ -9,16 +9,16 @@ import "colors";
  *
  * @param {string} SCHEMA_PREFIX   Used when constructing Xpath queries
  * @param {string} elementName     The name of the element to be searched for
- * @param {int} index              The instance of the named element to be searched for (if specified)
- * @returns {string} the XPath selector
+ * @param {int}    index           The instance of the named element to be searched for (if specified)
+ * @returns {string}  the XPath selector
  */
 export var xPath = (SCHEMA_PREFIX, elementName, index = null) => `${SCHEMA_PREFIX}:${elementName}${index ? `[${index}]` : ""}`;
 
 /**
  * constructs an XPath based on the provided arguments
  *
- * @param {string} SCHEMA_PREFIX Used when constructing Xpath queries
- * @param {array} elementNames the name of the element to be searched for
+ * @param {string} SCHEMA_PREFIX    Used when constructing Xpath queries
+ * @param {array}  elementNames     the name of the element to be searched for
  * @returns {string} the XPath selector
  */
 export var xPathM = (SCHEMA_PREFIX, elementNames) => `${SCHEMA_PREFIX}:${elementNames.join(`/${SCHEMA_PREFIX}:`)}`;
@@ -39,17 +39,17 @@ export var xPathM = (SCHEMA_PREFIX, elementNames) => `${SCHEMA_PREFIX}:${element
 /**
  * determines if a value is in a set of values
  *
- * @param {String or Array} values The set of values to check existance in
- * @param {String} value The value to check for existance
- * @return {boolean} if value is in the set of values
+ * @param {String or Array} values     The set of values to check existance in
+ * @param {String}          value      The value to check for existance
+ * @return {boolean}  if value is in the set of values
  */
 export var isIn = (values, value, caseSensitive = true) => findInSet(values, value, caseSensitive);
 
 /**
  * determines if a value is in a set of values using a case insensitive comparison
  *
- * @param {String or Array} values The set of values to check existance in
- * @param {String} value The value to check for existance
+ * @param {String or Array} values     The set of values to check existance in
+ * @param {String}          value      The value to check for existance
  * @return {boolean} if value is in the set of values
  */
 export var isIni = (values, value) => findInSet(values, value, false);
@@ -57,7 +57,7 @@ export var isIni = (values, value) => findInSet(values, value, false);
 /**
  * replace ENTITY strings with a generic characterSet
  *
- * @param {string} str string containing HTML or XML entities (starts with & ends with ;)
+ * @param {string} str    string containing HTML or XML entities (starts with & ends with ;)
  * @return {string} the string with entities replaced with a single character '*'
  */
 export var unEntity = (str) => str.replace(/(&.+;)/gi, "*");
@@ -65,12 +65,12 @@ export var unEntity = (str) => str.replace(/(&.+;)/gi, "*");
 /**
  * checks is an object has none of its own properties
  *
- * @param {Object} obj 	The object to check
+ * @param {Object} obj 	  The object to check
  * @returns {Booolean} true if the object does not contain ant local properties
  */
 export function isEmpty(obj) {
 	for (let key in obj) {
-		if (obj.hasOwnProperty(key)) return false;
+		if (Object.prototype.hasOwnProperty.call(obj, key)) return false;
 	}
 	return true;
 }

@@ -127,7 +127,7 @@ export default class IANAlanguages {
 
 	loadLanguages(options) {
 		if (!options) options = {};
-		if (!options.hasOwnProperty("purge")) options.purge = false;
+		if (!Object.prototype.hasOwnProperty.call(options, "purge")) options.purge = false;
 
 		if (options.file) this.loadLanguagesFromFile(options.file, options.purge);
 		else if (options.url) this.loadLanguagesFromURL(options.url, options.purge);

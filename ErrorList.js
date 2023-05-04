@@ -112,18 +112,18 @@ export default class ErrorList {
 
 	/**
 	 *
-	 * @param {integer} e.type     (optional) ERROR(default) or WARNING
-	 * @param {sring} e.code       Error code
-	 * @param {string} e.message   The error message
-	 * @param {string} e.key       (optional)The category of the message
-	 * @param {string or libxmljs2:Node} e.fragment (optional) The XML fragment (or node in the XML document) triggering the error
-	 * @param {integer} e.line     (optional) the line number of the element in the XML document that triggered the error
+	 * @param {integer}                  e.type      (optional) ERROR(default) or WARNING
+	 * @param {tring}                    e.code      Error code
+	 * @param {string}                   e.message   The error message
+	 * @param {string}                   e.key       (optional)The category of the message
+	 * @param {string or libxmljs2:Node} e.fragment  (optional) The XML fragment (or node in the XML document) triggering the error
+	 * @param {integer}                  e.line      (optional) the line number of the element in the XML document that triggered the error
 	 */
 	addError(e) {
 		let _INVALID_CALL = "invalid addError call",
 			argsOK = true;
-		if (!e.hasOwnProperty("type")) e.type = ERROR;
-		if (!e.hasOwnProperty("reportInTable")) e.reportInTable = true;
+		if (!Object.prototype.hasOwnProperty.call(e, "type")) e.type = ERROR;
+		if (!Object.prototype.hasOwnProperty.call(e, "reportInTable")) e.reportInTable = true;
 
 		if (![ERROR, WARNING, INFORMATION, APPLICATION].includes(e.type)) {
 			this.errors.push({ code: "ERR000", message: `addError() called with invalid type property (${e.type})` });
@@ -163,7 +163,7 @@ export default class ErrorList {
 					newError.element = datatypeIs(fragment, "string") ? fragment : this.prettyPrint(fragment);
 
 					if (datatypeIs(fragment, "string")) {
-						if (e.hasOwnProperty("line")) {
+						if (Object.prototype.hasOwnProperty.call(e, "line")) {
 							this.setError(e.type, e.code, e.message, e.line);
 							newError.line = e.line - 2;
 						}
@@ -179,7 +179,7 @@ export default class ErrorList {
 			let newError = { code: e.code, message: e.message, element: datatypeIs(e.fragment, "string") ? e.fragment : this.prettyPrint(e.fragment) };
 
 			if (datatypeIs(e.fragment, "string")) {
-				if (e.hasOwnProperty("line")) {
+				if (Object.prototype.hasOwnProperty.call(e, "line")) {
 					this.setError(e.type, e.code, e.message, e.line);
 					newError.line = e.line - 2;
 				}

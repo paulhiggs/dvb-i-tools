@@ -6,7 +6,7 @@ import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
 
 import { APPLICATION, WARNING } from "./ErrorList.js";
 
-import { checkLanguage, mlLanguage } from "./MultilingualElement.js";
+import { checkLanguage } from "./MultilingualElement.js";
 import { checkAttributes, checkTopElementsAndCardinality } from "./schema_checks.js";
 import { isJPEGmime, isPNGmime, isWebPmime, validImageSet } from "./MIME_checks.js";
 import { isHTTPURL } from "./pattern_checks.js";
@@ -18,9 +18,9 @@ import { cg_InvalidHrefValue } from "./CommonErrors.js";
  *
  * @param {Object} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
  * @param {Object} errs              The class where errors and warnings relating to the serivce list processing are stored
- * @param {String} errcode			 Error code prefix for reporting
+ * @param {String} errcode           Error code prefix for reporting
  * @param {string} location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
- * @param {Object} languageValidator
+ * @param {Object} languageValidator Validator class to check any @
  */
 export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, location, languageValidator = null) {
 	if (!RelatedMaterial) {
@@ -126,6 +126,9 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 					errs.addError({ code: `${errCode}-25`, message: `${tva.e_MediaUri.elementize()}=${child.text().quote()} is not a valid Image URL`, key: "invalid URL", fragment: child });
 			}
 		});
+	if (languageValidator && MediaLocator.attr(dvbi.a_contentLanguage)) {
+		checkLanguage(languageValidator, MediaLocator.attr(dvbi.a_contentLanguage).value(), MediaLocator.name(), MediaLocator, errs, `${errCode}-27`);
+	}
 	if (!hasMediaURI)
 		errs.addError({
 			code: `${errCode}-26`,

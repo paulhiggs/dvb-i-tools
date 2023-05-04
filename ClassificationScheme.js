@@ -109,7 +109,7 @@ export default class ClassificationScheme {
 	 *
 	 * @param {String} classificationScheme the filename of the classification scheme
 	 */
-	loadFromFile(classificationScheme, le) {
+	loadFromFile(classificationScheme) {
 		console.log(`reading CS (${this.leafsOnly ? "leaf" : "all"} nodes) from ${classificationScheme}`.yellow);
 
 		readFile(classificationScheme, { encoding: "utf-8" }, (err, data) => {
@@ -125,7 +125,7 @@ export default class ClassificationScheme {
 
 	loadCS(options) {
 		if (!options) options = {};
-		if (!options.hasOwnProperty("leafNodesOnly")) options.leafNodesOnly = false;
+		if (!Object.prototype.hasOwnProperty.call(options, "leafNodesOnly")) options.leafNodesOnly = false;
 		this.leafsOnly = options.leafNodesOnly;
 
 		if (options.file) this.loadFromFile(options.file);

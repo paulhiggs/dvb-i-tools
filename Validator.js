@@ -24,7 +24,7 @@ import process from "process";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 
-const __dirname = dirname(fileURLToPath(import.meta.url)); //jshint ignore:line
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 import fetchS from "sync-fetch";
 
@@ -170,12 +170,12 @@ export default function validator(options) {
 		process.exit(1);
 	}
 
-	if (!options.nocsr && !options.hasOwnProperty("CSRfile")) {
+	if (!options.nocsr && !Object.prototype.hasOwnProperty.call(options, "CSRfile")) {
 		console.log("SLEPR file not specified... exiting".red);
 		process.exit(1);
 	}
 
-	if (!options.hasOwnProperty("CORSmode")) options.CORSmode = CORSlibrary;
+	if (!Object.prototype.hasOwnProperty.call(options, "CORSmode")) options.CORSmode = CORSlibrary;
 	else if (!CORSoptions.includes(options.CORSmode)) {
 		console.log(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`.red);
 		process.exit(1);

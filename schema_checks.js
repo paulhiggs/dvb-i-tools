@@ -62,9 +62,9 @@ export function checkAttributes(checkElement, requiredAttributes, optionalAttrib
  * check that the specified child elements are in the parent element
  *
  * @param {XMLNode} parentElement         the element whose children should be checked
- * @param {Array}   childElements		  the names of elements and their cardinality
+ * @param {Array}   childElements		      the names of elements and their cardinality
  * @param {Array}   definedChildElements  the names of all child elements of parentElement that are defined in the schema, including
- *                                          those which are profiled out of DVB-I
+ *                                        those which are profiled out of DVB-I
  * @param {boolean} allowOtherElements    flag indicating if other elements, i.e. those defined in the another are permitted
  * @param {Class}   errs                  errors found in validaton
  * @param {string}  errCode               error code to be used for any error found
@@ -93,8 +93,8 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 		thisElem = elementize(`${parentElement.parent().name()}.${parentElement.name()}`);
 	// check that each of the specifid childElements exists
 	childElements.forEach((elem) => {
-		let _min = elem.hasOwnProperty("minOccurs") ? elem.minOccurs : 1;
-		let _max = elem.hasOwnProperty("maxOccurs") ? elem.maxOccurs : 1;
+		let _min = Object.prototype.hasOwnProperty.call(elem, "minOccurs") ? elem.minOccurs : 1;
+		let _max = Object.prototype.hasOwnProperty.call(elem, "maxOccurs") ? elem.maxOccurs : 1;
 		let namedChildren = getNamedChildElements(parentElement, elem.name),
 			count = namedChildren.length;
 
@@ -141,8 +141,8 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 /**
  * check if the element contains the named child element
  *
- * @param {Object} elem the element to check
- * @param {string} childElementName the name of the child element to look for
+ * @param {Object} elem                 the element to check
+ * @param {string} childElementName     the name of the child element to look for
  * @returns {boolean} true of the element contains the named child element(s) otherwise false
  */
 export var hasChild = (elem, childElementName) => (elem ? elem.childNodes().find((el) => el.type() == "element" && el.name().endsWith(childElementName)) != undefined : false);
@@ -150,10 +150,10 @@ export var hasChild = (elem, childElementName) => (elem ? elem.childNodes().find
 /**
  * validate a XML document gainst the specified schema (included schemas must be in the same directory)
  *
- * @param {Document} XML the XML document to check
- * @param {Document} XSD the schema
- * @param {object} errs array to record any errors
- * @param {string} errCode the error code to report with each error
+ * @param {Document} XML         the XML document to check
+ * @param {Document} XSD         the schema
+ * @param {object}   errs        array to record any errors
+ * @param {string}   errCode     the error code to report with each error
  */
 export function SchemaCheck(XML, XSD, errs, errCode) {
 	if (!XML.validate(XSD)) {
@@ -169,15 +169,14 @@ export function SchemaCheck(XML, XSD, errs, errCode) {
 /**
  * report if the schema version being used is not 'formal'
  *
- * @param {string}  SCHEMA             Used when constructing Xpath queries
- * @param {string}  SCHEMA_PREFIX         Used when constructing Xpath queries
- * @param {XMLdocument} document
- * @param {enum} publication_state the publication status of the schema
- * @param {object} errs array to record any errors
- * @param {string} errCode the error code to report with each error
+ * @param {object}      props                Metadata of the XML document
+ * @param {XMLdocument} document             the XML document
+ * @param {enum}        publication_state    the publication status of the schema
+ * @param {Class}       errs                 array to record any errors
+ * @param {string}      errCode              the error code to report with each error
  */
-export function SchemaVersionCheck(SCHEMA, SCHEMA_PREFIX, document, publication_state, errs, errCode) {
-	let ServiceList = document.get(xPath(SCHEMA_PREFIX, dvbi.e_ServiceList), SCHEMA);
+export function SchemaVersionCheck(props, document, publication_state, errs, errCode) {
+	let ServiceList = document.get(xPath(props.prefix, dvbi.e_ServiceList), props.schema);
 	if (publication_state & OLD) {
 		let err1 = { code: `${errCode}a`, message: "schema version is out of date", key: "schema version" };
 		if (ServiceList) err1.line = ServiceList.line();
@@ -192,9 +191,9 @@ export function SchemaVersionCheck(SCHEMA, SCHEMA_PREFIX, document, publication_
 
 /**
  * load the XML data
- * @param {*} document 	XMLdocument
- * @param {*} errs      error handler for any loading errors
- * @param {*} errcode   error code prefix to use for any loading issues
+ * @param {XMLdocument} document 	  XMLdocument
+ * @param {Class}       errs        error handler for any loading errors
+ * @param {string}      errcode     error code prefix to use for any loading issues
  * @returns {Document}  an XML document structure for use with libxmljs2
  */
 export function SchemaLoad(document, errs, errcode) {

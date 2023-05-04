@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools",
-	"version": "0.6.2",
+	"version": "0.7.0",
 	"description": "DVB-I V&V Tools",
 	"main": "all-in-one.js",
 	"type": "module",
@@ -33,5 +33,8 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/paulhiggs/dvb-i-tools"
+	},
+	"devDependencies": {
+		"eslint": "^8.39.0"
 	}
 }
