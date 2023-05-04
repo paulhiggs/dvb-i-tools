@@ -1748,7 +1748,7 @@ export default class ContentGuideCheck {
 				}
 				break;
 			case CG_REQUEST_BS_CONTENTS:
-				checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_ordered, tva.a_numOfItems, tva.a_serviceIDRef], tvaEA.GroupInformation, errs, "GIB009"); //!!HERE
+				checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_ordered, tva.a_numOfItems, tva.a_serviceIDRef], tvaEA.GroupInformation, errs, "GIB009");
 				checkTopElementsAndCardinality(
 					GroupInformation,
 					[{ name: tva.e_GroupType }, { name: tva.e_BasicDescription, minOccurs: 0 }],
