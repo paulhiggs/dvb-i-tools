@@ -120,9 +120,16 @@ function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasC
 			switch (req.body.doclocation) {
 				case MODE_URL:
 					if (isHTTPURL(req.body.XMLurl)) {
-						let resp = fetchS(req.body.XMLurl);
-						if (resp.ok) VVxml = resp.text();
-						else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
+						let resp = null;
+						try {
+							resp = fetchS(req.body.XMLurl);
+						} catch (error) {
+							req.parseErr = error.message;
+						}
+						if (resp) {
+							if (resp.ok) VVxml = resp.text();
+							else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
+						}
 					} else req.parseErr = `${req.body.XMLurl} is not an HTTP(S) URL`;
 					req.session.data.url = req.body.XMLurl;
 
