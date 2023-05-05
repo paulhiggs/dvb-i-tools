@@ -94,7 +94,7 @@ export function checkXMLLangs(props, elementName, elementLocation, node, errs, e
 					code: `${errCode}-1`,
 					message: `xml:lang must be declared for each multilingual element for ${elementName.elementize()} in ${elementLocation}`,
 					fragment: elem,
-					key: "missing@xml:lang",
+					key: "required @xml:lang",
 				});
 		}
 	}
