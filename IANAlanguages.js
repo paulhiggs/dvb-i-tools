@@ -88,8 +88,8 @@ export default class IANAlanguages {
 	 * load the languages list into the knownLanguages global array from the specified file
 	 * file is formatted according to www.iana.org/assignments/language-subtag-registry/language-subtag-registry
 	 *
-	 * @param {String} languagesFile the file name to load
-	 * @param {boolean} purge  erase the existing values before loading new
+	 * @param {String}  languagesFile   the file name to load
+	 * @param {boolean} purge           erase the existing values before loading new
 	 */
 	loadLanguagesFromFile(languagesFile, purge = false) {
 		console.log(`reading languages from ${languagesFile}`.yellow);
@@ -109,8 +109,8 @@ export default class IANAlanguages {
 	/**
 	 * load the languages list into the knownLanguages global array from the specified URL
 	 *
-	 * @param {String} languagesURL the URL to load
-	 * @param {boolean} purge  erase the existing values before loading new
+	 * @param {String}  languagesURL   the URL to load
+	 * @param {boolean} purge          erase the existing values before loading new
 	 */
 	loadLanguagesFromURL(languagesURL, purge = false) {
 		let isHTTPurl = isHTTPURL(languagesURL);

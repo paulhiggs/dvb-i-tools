@@ -141,11 +141,11 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 /**
  * verifies if the images provided in <MediaLocator> elments are valid according to specification
  *
- * @param {Object} Element       The <RelatedMaterial> element
- * @param {Object} errs          The class where errors and warnings relating to the service list processing are stored
- * @param {String} errCode       Error code prefix for reporting
- * @param {string} location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
- * @param {Object} languageValidator
+ * @param {Object} Element            The <RelatedMaterial> element
+ * @param {Object} errs               The class where errors and warnings relating to the service list processing are stored
+ * @param {String} errCode            Error code prefix for reporting
+ * @param {string} location           The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+ * @param {Object} languageValidator  The class that checks language codes
  */
 export function checkValidLogos(RelatedMaterial, errs, errCode, location, languageValidator = null) {
 	if (!RelatedMaterial) return;

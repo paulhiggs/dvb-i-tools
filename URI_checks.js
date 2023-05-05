@@ -4,7 +4,7 @@ import { datatypeIs } from "./phlib/phlib.js";
  * determine if the passed value conforms to am IETF RFC4151 TAG URI
  *
  * @param {string} identifier  The service identifier to be checked
- * @return {boolean}           true if the service identifier is in RFC4151 TAG URI format
+ * @return {boolean} true if the service identifier is in RFC4151 TAG URI format
  */
 // RFC 4151 compliant - https://tools.ietf.org/html/rfc4151
 // tagURI = "tag:" taggingEntity ":" specific [ "#" fragment ]
@@ -17,8 +17,8 @@ export var isTAGURI = (identifier) => (datatypeIs(identifier, "string") ? TagReg
 /**
  * check if the argument complies to a CRID format
  *
- * @param {string} value	value whose format to check
- * @returns	{boolean}		true if the argument confirms to the CRID format, else false
+ * @param {string} value  value whose format to check
+ * @returns	{boolean} true if the argument confirms to the CRID format, else false
  **/
 let CRIDRegex = new RegExp("crid://(.*)/(.*)", "i");
 export var isCRIDURI = (value) => (datatypeIs(value, "string") ? CRIDRegex.test(value.trim()) : false);

@@ -43,8 +43,8 @@ export default class ISOcountries {
 	/**
 	 * load the countries list into the allowedCountries global array from the specified JSON file
 	 *
-	 * @param {String} countriesFile the file name to load
-	 * @param {boolean} purge  erase the existing values before loading new
+	 * @param {String}  countriesFile   the file name to load
+	 * @param {boolean} purge           erase the existing values before loading new
 	 */
 	loadCountriesFromFile(countriesFile, purge = false) {
 		console.log(`reading countries from ${countriesFile}`.yellow);
@@ -65,8 +65,8 @@ export default class ISOcountries {
 	/**
 	 * load the countries list into the allowedCountries global array from the specified JSON file
 	 *
-	 * @param {String} countriesURL the URL to the file to load
-	 * @param {boolean} purge  erase the existing values before loading new
+	 * @param {String}  countriesURL  the URL to the file to load
+	 * @param {boolean} purge         erase the existing values before loading new
 	 */
 	loadCountriesFromURL(countriesURL, purge = false) {
 		let isHTTPurl = isHTTPURL(countriesURL);
@@ -100,8 +100,8 @@ export default class ISOcountries {
 	/**
 	 * determine if the argument contains a valid ISO 3166 country code
 	 *
-	 * @param {String} countryCode the country code to be checked for validity
-	 * @param {Boolean} caseSensitive ignofe case
+	 * @param {String}  countryCode     the country code to be checked for validity
+	 * @param {Boolean} caseSensitive   ignore case
 	 * @return {boolean} true if countryCode is known else false
 	 */
 	isISO3166code(countryCode, caseSensitive = true) {

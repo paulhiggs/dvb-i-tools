@@ -310,9 +310,9 @@ export default class ContentGuideCheck {
 	/**
 	 * check if the specificed element has the named child element
 	 *
-	 * @param {XMLnode}	node 					the node to check
-	 * @param {string}	elementName		the name of the child element
-	 * @returns {boolean}	true if an element named node.elementName exists, else false
+	 * @param {XMLnode} node         the node to check
+	 * @param {string}  elementName  the name of the child element
+	 * @returns {boolean} true if an element named node.elementName exists, else false
 	 */
 	/* private */ hasElement(node, elementName) {
 		if (!node) return false;
@@ -322,10 +322,10 @@ export default class ContentGuideCheck {
 	/**
 	 * check that the serviceIdRef attribute is a TAG URI and report warnings
 	 *
-	 * @param {XMLnode}	elem			the node containing the element being checked
-	 * @param {Class}		errs			errors found in validaton
-	 * @param {string}	errCode 	error code prefix to be used in reports
-	 * @returns {string}	the serviceIdRef, whether it is valid of not
+	 * @param {XMLnode} elem     the node containing the element being checked
+	 * @param {Class}   errs     errors found in validaton
+	 * @param {string}  errCode  error code prefix to be used in reports
+	 * @returns {string} the serviceIdRef, whether it is valid of not
 	 */
 	/* private */ checkTAGUri(elem, errs, errCode) {
 		if (elem && elem.attr(tva.a_serviceIDRef)) {
@@ -346,12 +346,12 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <Synopsis> elements
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	BasicDescription    the element whose children should be checked
-	 * @param {array}		requiredLengths	    @length attributes that are required to be present
-	 * @param {array}		optionalLengths	    @length attributes that can optionally be present
-	 * @param {Class}		errs								errors found in validaton
-	 * @param {string}	errCode							error code prefix to be used in reports
+	 * @param {object}  props               Metadata of the XML document
+	 * @param {XMLnode} BasicDescription    the element whose children should be checked
+	 * @param {array}   requiredLengths	    @length attributes that are required to be present
+	 * @param {array}   optionalLengths	    @length attributes that can optionally be present
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {string}  errCode             error code prefix to be used in reports
 	 */
 	/* private */ ValidateSynopsis(props, BasicDescription, requiredLengths, optionalLengths, errs, errCode) {
 		if (!BasicDescription) {
@@ -487,12 +487,12 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <Keyword> elements specified
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	BasicDescription		the element whose children should be checked
-	 * @param {integer}	minKeywords					the minimum number of keywords
-	 * @param {integer}	maxKeywords					the maximum number of keywords
-	 * @param {Class}		errs								errors found in validaton
-	 * @param {string} 	errCode							error code prefix to be used in reports
+	 * @param {object}  props             Metadata of the XML document
+	 * @param {XMLnode} BasicDescription  the element whose children should be checked
+	 * @param {integer} minKeywords       the minimum number of keywords
+	 * @param {integer}	maxKeywords       the maximum number of keywords
+	 * @param {Class}   errs              errors found in validaton
+	 * @param {string}  errCode           error code prefix to be used in reports
 	 */
 	/* private */ ValidateKeyword(props, BasicDescription, minKeywords, maxKeywords, errs, errCode) {
 		if (!BasicDescription) {
@@ -547,10 +547,10 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <Genre> elements specified
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	BasicDescription		the element whose children should be checked
-	 * @param {Class}		errs								errors found in validaton
-	 * @param {string}	errCode							error code prefix to be used in reports
+	 * @param {object}  props             Metadata of the XML document
+	 * @param {XMLnode} BasicDescription  the element whose children should be checked
+	 * @param {Class}   errs              errors found in validaton
+	 * @param {string}  errCode           error code prefix to be used in reports
 	 */
 	/* private */ ValidateGenre(props, BasicDescription, errs, errCode) {
 		if (!BasicDescription) {
@@ -584,10 +584,10 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <ParentalGuidance> elements specified.
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	BasicDescription		the element whose children should be checked
-	 * @param {Class}		errs								errors found in validaton
-	 * @param {string}	errCode							error code prefix to be used in reports
+	 * @param {object}  props             Metadata of the XML document
+	 * @param {XMLnode} BasicDescription  the element whose children should be checked
+	 * @param {Class}   errs              errors found in validaton
+	 * @param {string}  errCode           error code prefix to be used in reports
 	 */
 	/* private */ ValidateRelatedMaterial_ParentalGuidance(props, BasicDescription, errs, errCode) {
 		// first <ParentalGuidance> element must contain an <mpeg7:MinimumAge> element
@@ -681,9 +681,9 @@ export default class ContentGuideCheck {
 	/**
 	 * validate a name (either PersonName of Character) to ensure a single GivenName is present with a single optional FamilyName
 	 *
-	 * @param {XMLnode}	elem				the element whose children should be checked
-	 * @param {Class}		errs				errors found in validaton
-	 * @param {string}	errCode			error code prefix to be used in reports
+	 * @param {XMLnode} elem      the element whose children should be checked
+	 * @param {Class}   errs      errors found in validaton
+	 * @param {string}  errCode   error code prefix to be used in reports
 	 */
 	/* private */ ValidateName(elem, errs, errCode) {
 		function checkNamePart(elem, errs, errCode) {
@@ -732,10 +732,10 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <CreditsList> elements specified
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	BasicDescription		the element whose children should be checked
-	 * @param {Class}		errs								errors found in validaton
-	 * @param {string}	errCode							error code prefix to be used in reports
+	 * @param {object}  props              Metadata of the XML document
+	 * @param {XMLnode} BasicDescription   the element whose children should be checked
+	 * @param {Class}   errs               errors found in validaton
+	 * @param {string}  errCode            error code prefix to be used in reports
 	 */
 	/* private */ ValidateCreditsList(props, BasicDescription, errs, errCode) {
 		if (!BasicDescription) {
@@ -835,9 +835,9 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <RelatedMaterial> elements specified
 	 *
-	 * @param {object}	props							Metadata of the XML document
-	 * @param {XMLnode}	BasicDescription	the element whose children should be checked
-	 * @param {Class}		errs							errors found in validaton
+	 * @param {object}  props             Metadata of the XML document
+	 * @param {XMLnode} BasicDescription  the element whose children should be checked
+	 * @param {Class}   errs              errors found in validaton
 	 */
 	/* private */ ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs) {
 		if (!BasicDescription) {
@@ -857,10 +857,10 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <RelatedMaterial> elements containing pagination links
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	BasicDescription		the element whose children should be checked
-	 * @param {Class}		errs								errors found in validaton
-	 * @param {string}	Location						The location of the Basic Description element
+	 * @param {object}  props              Metadata of the XML document
+	 * @param {XMLnode} BasicDescription   the element whose children should be checked
+	 * @param {Class}   errs               errors found in validaton
+	 * @param {string}  Location           The location of the Basic Description element
 	 */
 	/* private */ ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, Location) {
 		if (!BasicDescription) {
@@ -962,9 +962,9 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <RelatedMaterial> elements in  More Episodes response
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	BasicDescription		the element whose children should be checked
-	 * @param {Class}		errs								errors found in validaton
+	 * @param {object}  props              Metadata of the XML document
+	 * @param {XMLnode} BasicDescription   the element whose children should be checked
+	 * @param {Class}   errs               errors found in validaton
 	 */
 	/* private */ ValidateRelatedMaterial_MoreEpisodes(props, BasicDescription, errs) {
 		if (!BasicDescription) {
@@ -990,9 +990,9 @@ export default class ContentGuideCheck {
 
 	/** TemplateAITPromotional Still Image
 	 *
-	 * @param {XMLnode}	RelatedMaterial		the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
-	 * @param {Object}	errs							The class where errors and warnings relating to the serivce list processing are stored
-	 * @param {string}	Location					The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+	 * @param {XMLnode} RelatedMaterial  the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
+	 * @param {Object}  errs             the class where errors and warnings relating to the serivce list processing are stored
+	 * @param {string}  Location         the printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 */
 	/* private */ ValidateTemplateAIT(RelatedMaterial, errs, Location) {
 		if (!RelatedMaterial) {
@@ -1061,9 +1061,9 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <RelatedMaterial> elements specified in a Box Set List
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	BasicDescription		the element whose children should be checked
-	 * @param {Class}		errs								errors found in validaton
+	 * @param {object}  props              Metadata of the XML document
+	 * @param {XMLnode} BasicDescription   the element whose children should be checked
+	 * @param {Class}   errs               errors found in validaton
 	 */
 	/* private */ ValidateRelatedMaterial_BoxSetList(props, BasicDescription, errs) {
 		if (!BasicDescription) {
@@ -1135,12 +1135,12 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <Title> elements specified
 	 *
-	 * @param {object}	props							Metadata of the XML document
-	 * @param {XMLnode}	containingNode		the element whose children should be checked
-	 * @param {boolean}	allowSecondary		indicates if  Title with @type="secondary" is permitted
-	 * @param {Class}		errs							errors found in validaton
-	 * @param {string}	errCode						error code prefix to be used in reports
-	 * @param {boolean}	TypeIsRequired		true is the @type is a required attribute in this use of <Title>
+	 * @param {object}  props            Metadata of the XML document
+	 * @param {XMLnode} containingNode   the element whose children should be checked
+	 * @param {boolean} allowSecondary   indicates if  Title with @type="secondary" is permitted
+	 * @param {Class}   errs             errors found in validaton
+	 * @param {string}  errCode          error code prefix to be used in reports
+	 * @param {boolean} TypeIsRequired   true is the @type is a required attribute in this use of <Title>
 	 */
 	/* private */ ValidateTitle(props, containingNode, allowSecondary, errs, errCode, TypeIsRequired) {
 		if (!containingNode) {
@@ -1218,11 +1218,11 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <BasicDescription> element against the profile for the given request/response type
 	 *
-	 * @param {object}	props							Metadata of the XML document
-	 * @param {XMLnode}	parentElement			the element whose children should be checked
-	 * @param {string}	requestType				the type of content guide request being checked
-	 * @param {Class}		errs							errors found in validaton
-	 * @param {XMLnode}	categoryGroup			the GroupInformation element that others must refer to through <MemberOf>
+	 * @param {object}  props           Metadata of the XML document
+	 * @param {XMLnode} parentElement   the element whose children should be checked
+	 * @param {string}  requestType     the type of content guide request being checked
+	 * @param {Class}   errs            errors found in validaton
+	 * @param {XMLnode} categoryGroup   the GroupInformation element that others must refer to through <MemberOf>
 	 */
 	/* private */ ValidateBasicDescription(props, parentElement, requestType, errs, categoryGroup) {
 		if (!parentElement) {
@@ -1416,13 +1416,13 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <ProgramInformation> element against the profile for the given request/response type
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	ProgramInformation	the element whose children should be checked
-	 * @param {array}		programCRIDs				array to record CRIDs for later use
-	 * @param {array}		groupCRIDs					array of CRIDs found in the GroupInformationTable (null if not used)
-	 * @param {string}	requestType					the type of content guide request being checked
-	 * @param {array}		indexes							array of @index values from other elements in the same table - for duplicate detection
-	 * @param {Class}		errs								errors found in validaton
+	 * @param {object}  props               Metadata of the XML document
+	 * @param {XMLnode} ProgramInformation  the element whose children should be checked
+	 * @param {array}   programCRIDs        array to record CRIDs for later use
+	 * @param {array}   groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {array}   indexes             array of @index values from other elements in the same table - for duplicate detection
+	 * @param {Class}   errs                errors found in validaton
 	 * @returns {String} 	CRID if the current program, if this is it
 	 */
 	/* private */ ValidateProgramInformation(props, ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs) {
@@ -1572,14 +1572,14 @@ export default class ContentGuideCheck {
 	/**
 	 * find and validate any <ProgramInformation> elements in the <ProgramInformationTable>
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	ProgramDescription	the element containing the <ProgramInformationTable>
-	 * @param {array}		programCRIDs				array to record CRIDs for later use
-	 * @param {array}		groupCRIDs					array of CRIDs found in the GroupInformationTable (null if not used)
-	 * @param {string}	requestType					the type of content guide request being checked
-	 * @param {Class}		errs								errors found in validaton
-	 * @param {integer}	o.childCount				the number of child elements to be present (to match GroupInformation@numOfItems)
-	 * @returns {string}	the CRID of the currently airing program (that which is a member of the "now" structural crid)
+	 * @param {object}  props               Metadata of the XML document
+	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
+	 * @param {array}   programCRIDs        array to record CRIDs for later use
+	 * @param {array}   groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {integer} o.childCount        the number of child elements to be present (to match GroupInformation@numOfItems)
+	 * @returns {string} the CRID of the currently airing program (that which is a member of the "now" structural crid)
 	 */
 	/* private */ CheckProgramInformation(props, ProgramDescription, programCRIDs, groupCRIDs, requestType, errs, o = null) {
 		if (!ProgramDescription) {
@@ -1626,13 +1626,13 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <GroupInformation> element for Box Set related requests
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	GroupInformation		the element whose children should be checked
-	 * @param {string}	requestType					the type of content guide request being checked
-	 * @param {Class}		errs								errors found in validaton
-	 * @param {object}	categoryGroup				the GroupInformationElement that others must refer to through <MemberOf>
-	 * @param {array}		indexes							an accumulation of the @index values found
-	 * @param {array}		groupsFound					groupId values found (null if not needed)
+	 * @param {object}  props              Metadata of the XML document
+	 * @param {XMLnode} GroupInformation   the element whose children should be checked
+	 * @param {string}  requestType        the type of content guide request being checked
+	 * @param {Class}   errs               errors found in validaton
+	 * @param {object}  categoryGroup      the GroupInformationElement that others must refer to through <MemberOf>
+	 * @param {array}   indexes            an accumulation of the @index values found
+	 * @param {array}   groupsFound        groupId values found (null if not needed)
 	 */
 	/* private */ ValidateGroupInformationBoxSets(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupsFound) {
 		if (!GroupInformation) {
@@ -1770,11 +1770,11 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <GroupInformation> element for Schedules related requests
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	GroupInformation 		the element whose children should be checked
-	 * @param {string}	requestType					the type of content guide request being checked
-	 * @param {Class}		errs								errors found in validaton
-	 * @param {XMLnode}	categoryGroup				the GroupInformationElement that others must refer to through <MemberOf>
+	 * @param {object}  props              Metadata of the XML document
+	 * @param {XMLnode} GroupInformation   the element whose children should be checked
+	 * @param {string}  requestType        the type of content guide request being checked
+	 * @param {Class}   errs               errors found in validaton
+	 * @param {XMLnode} categoryGroup      the GroupInformationElement that others must refer to through <MemberOf>
 	 */
 	/* private */ ValidateGroupInformationSchedules(props, GroupInformation, requestType, errs, categoryGroup) {
 		if (!GroupInformation) {
@@ -1815,12 +1815,12 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <GroupInformation> element for More Episodes requests
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	GroupInformation		the element whose children should be checked
-	 * @param {string}	requestType					the type of content guide request being checked
-	 * @param {Class}		errs								errors found in validaton
-	 * @param {XMLnode}	categoryGroup				the GroupInformationElement that others must refer to through <MemberOf>
-	 * @param {array}		groupsFound					groupId values found (null if not needed)
+	 * @param {object}  props               Metadata of the XML document
+	 * @param {XMLnode} GroupInformation    the element whose children should be checked
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {XMLnode} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
+	 * @param {array}   groupsFound         groupId values found (null if not needed)
 	 */
 	/* private */ ValidateGroupInformationMoreEpisodes(props, GroupInformation, requestType, errs, categoryGroup, groupsFound) {
 		if (!GroupInformation) {
@@ -1883,13 +1883,13 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <GroupInformation> element against the profile for the given request/response type
 	 *
-	 * @param {object}	props								Metadata of the XML documentE
-	 * @param {XMLnode}	GroupInformation		the element whose children should be checked
-	 * @param {string}	requestType					the type of content guide request being checked
-	 * @param {Class}		errs								errors found in validaton
-	 * @param {XMLnode}	categoryGroup				the GroupInformationElement that others must refer to through <MemberOf>
-	 * @param {array}		indexes							an accumulation of the @index values found
-	 * @param {array}		groupsFound					groupId values found (null if not needed)
+	 * @param {object}  props              Metadata of the XML documentE
+	 * @param {XMLnode} GroupInformation   the element whose children should be checked
+	 * @param {string}  requestType        the type of content guide request being checked
+	 * @param {Class}   errs               errors found in validaton
+	 * @param {XMLnode} categoryGroup      the GroupInformationElement that others must refer to through <MemberOf>
+	 * @param {array}   indexes            an accumulation of the @index values found
+	 * @param {array}   groupsFound        groupId values found (null if not needed)
 	 */
 	/* private */ ValidateGroupInformation(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupsFound) {
 		if (!GroupInformation) {
@@ -1943,12 +1943,12 @@ export default class ContentGuideCheck {
 	/**
 	 * find and validate any <GroupInformation> elements in the <GroupInformationTable>
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	ProgramDescription	the element containing the <ProgramInformationTable>
-	 * @param {string}	requestType					the type of content guide request being checked
-	 * @param {array}		groupIds						buffer to recieve the group ids parsed (null if not needed)
-	 * @param {Class}		errs								errors found in validaton
-	 * @param {integer}	o.childCount				the value from the @numItems attribute of the "category group"
+	 * @param {object}  props               Metadata of the XML document
+	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {array}   groupIds            buffer to recieve the group ids parsed (null if not needed)
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {integer} o.childCount        the value from the @numItems attribute of the "category group"
 	 */
 	/* private */ CheckGroupInformation(props, ProgramDescription, requestType, groupIds, errs, o) {
 		if (!ProgramDescription) {
@@ -2023,14 +2023,14 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <GroupInformation> element against the profile for the given request/response type
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	GroupInformation		the element whose children should be checked
-	 * @param {string}	requestType					the type of content guide request being checked
-	 * @param {Class}		errs								errors found in validaton
-	 * @param {int}			numEarlier					maximum number of <GroupInformation> elements that are earlier
-	 * @param {int}			numNow							maximum number of <GroupInformation> elements that are now
-	 * @param {int}			numLater						maximum number of <GroupInformation> elements that are later
-	 * @param {array}		groupCRIDsFound			list of structural crids already found in this response
+	 * @param {object}  props               Metadata of the XML document
+	 * @param {XMLnode} GroupInformation    the element whose children should be checked
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {int}     numEarlier          maximum number of <GroupInformation> elements that are earlier
+	 * @param {int}     numNow              maximum number of <GroupInformation> elements that are now
+	 * @param {int}     numLater            maximum number of <GroupInformation> elements that are later
+	 * @param {array}   groupCRIDsFound     list of structural crids already found in this response
 	 */
 	/* private */ ValidateGroupInformationNowNext(props, GroupInformation, requestType, errs, numEarlier, numNow, numLater, groupCRIDsFound) {
 		function validValues(errs, numOfItems, numAllowed, grp, element) {
@@ -2094,11 +2094,11 @@ export default class ContentGuideCheck {
 	/**
 	 * find and validate any <GroupInformation> elements used for now/next in the <GroupInformationTable>
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	ProgramDescription	the element containing the <ProgramInformationTable>
-	 * @param {array}		groupIds						array of GroupInformation@CRID values found
-	 * @param {string}	requestType					the type of content guide request being checked
-	 * @param {Class}		errs								errors found in validaton
+	 * @param {object}  props               Metadata of the XML document
+	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
+	 * @param {array}   groupIds            array of GroupInformation@CRID values found
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
 	 */
 	/* private */ CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs) {
 		if (!ProgramDescription) {
@@ -2144,9 +2144,9 @@ export default class ContentGuideCheck {
 	/**
 	 * validate any <AVAttributes> elements in <InstanceDescription> elements
 	 *
-	 * @param {object}	props						Metadata of the XML document
-	 * @param {XMLnode}	AVAttributes		the <AVAttributes> node to be checked
-	 * @param {Class}		errs						errors found in validaton
+	 * @param {object}  props          Metadata of the XML document
+	 * @param {XMLnode} AVAttributes   the <AVAttributes> node to be checked
+	 * @param {Class}   errs           errors found in validaton
 	 */
 	/* private */ ValidateAVAttributes(props, AVAttributes, errs) {
 		if (!AVAttributes) {
@@ -2288,9 +2288,9 @@ export default class ContentGuideCheck {
 	/**
 	 * validate a <RelatedMaterial> element conforms to the Restart Application Linking rules (A177r1 clause 6.5.5)
 	 *
-	 * @param {object}	props							Metadata of the XML document
-	 * @param {XMLnode}	RelatedMaterial		the <RelatedMaterial> node to be checked
-	 * @param {Class}		errs							errors found in validaton
+	 * @param {object}  props            Metadata of the XML document
+	 * @param {XMLnode} RelatedMaterial  the <RelatedMaterial> node to be checked
+	 * @param {Class}   errs             errors found in validaton
 	 * @returns {boolean}	true if this RelatedMaterial element contains a restart link (proper HowRelated@href and MediaLocator.MediaUri and MediaLocator.AuxiliaryURI)
 	 */
 	/* private */ ValidateRestartRelatedMaterial(props, RelatedMaterial, errs) {
@@ -2332,11 +2332,11 @@ export default class ContentGuideCheck {
 	/**
 	 * validate any <InstanceDescription> elements in the <ScheduleEvent> and <OnDemandProgram> elements
 	 *
-	 * @param {object}	props									Metadata of the XML document
-	 * @param {string}	VerifyType						the type of verification to perform (OnDemandProgram | ScheduleEvent)
-	 * @param {XMLnode}	InstanceDescription		the <InstanceDescription> node to be checked
-	 * @param {boolean}	isCurrentProgram			indicates if this <InstanceDescription> element is for the currently airing program
-	 * @param {Class}		errs									errors found in validaton
+	 * @param {object}  props                 Metadata of the XML document
+	 * @param {string}  VerifyType            the type of verification to perform (OnDemandProgram | ScheduleEvent)
+	 * @param {XMLnode} InstanceDescription   the <InstanceDescription> node to be checked
+	 * @param {boolean} isCurrentProgram      indicates if this <InstanceDescription> element is for the currently airing program
+	 * @param {Class}   errs                  errors found in validaton
 	 */
 	/* private */ ValidateInstanceDescription(props, VerifyType, InstanceDescription, isCurrentProgram, errs) {
 		function checkGenre(genre, errs, errcode) {
@@ -2556,10 +2556,10 @@ export default class ContentGuideCheck {
 	/**
 	 * validate a <ProgramURL> or <AuxiliaryURL> element to see if it signals a Template XML AIT
 	 *
-	 * @param {XMLnode}	node									the element node containing the an XML AIT reference
-	 * @param {Array}		allowedContentTypes		the contentTypes that can be signalled in the node@contentType attribute
-	 * @param {Class}		errs									errors found in validaton
-	 * @param {string}	errcode								error code to be used with any errors found
+	 * @param {XMLnode} node                 the element node containing the an XML AIT reference
+	 * @param {Array}   allowedContentTypes  the contentTypes that can be signalled in the node@contentType attribute
+	 * @param {Class}   errs                 errors found in validaton
+	 * @param {string}  errcode              error code to be used with any errors found
 	 */
 	/* private */ CheckPlayerApplication(node, allowedContentTypes, errs, errcode) {
 		if (!node) {
@@ -2615,12 +2615,12 @@ export default class ContentGuideCheck {
 	/**
 	 * validate an <OnDemandProgram> elements in the <ProgramLocationTable>
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	OnDemandProgram			the node containing the <OnDemandProgram> being checked
-	 * @param {array}		programCRIDs				array of program crids defined in <ProgramInformationTable>
-	 * @param {array}		plCRIDs							array of program crids defined in <ProgramLocationTable>
-	 * @param {string}	requestType					the type of content guide request being checked
-	 * @param {Class}		errs								errors found in validaton
+	 * @param {object}  props              Metadata of the XML document
+	 * @param {XMLnode} OnDemandProgram    the node containing the <OnDemandProgram> being checked
+	 * @param {array}   programCRIDs       array of program crids defined in <ProgramInformationTable>
+	 * @param {array}   plCRIDs            array of program crids defined in <ProgramLocationTable>
+	 * @param {string}  requestType        the type of content guide request being checked
+	 * @param {Class}   errs               errors found in validaton
 	 */
 	/* private */ ValidateOnDemandProgram(props, OnDemandProgram, programCRIDs, plCRIDs, requestType, errs) {
 		if (!OnDemandProgram) {
@@ -2744,6 +2744,7 @@ export default class ContentGuideCheck {
 			let InstanceDescription = OnDemandProgram.get(xPath(props.prefix, tva.e_InstanceDescription), props.schema);
 			if (InstanceDescription) this.ValidateInstanceDescription(props, OnDemandProgram.name(), InstanceDescription, false, errs);
 		}
+
 		// <PublishedDuration>
 
 		// <StartOfAvailability> and <EndOfAvailability>
@@ -2781,14 +2782,14 @@ export default class ContentGuideCheck {
 	/**
 	 * validate any <ScheduleEvent> elements in the <ProgramLocationTable.Schedule>
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	Schedule						the <Schedule> node containing the <ScheduleEvent> element to be checked
-	 * @param {array}		programCRIDs				array of program crids defined in <ProgramInformationTable>
-	 * @param {array}		plCRIDs							array of program crids defined in <ProgramLocationTable>
-	 * @param {string}	currentProgramCRID 	CRID of the currently airing program
-	 * @param {Date}		scheduleStart				Date representation of Schedule@start
-	 * @param {Date}		scheduleEnd					Date representation of Schedule@end
-	 * @param {Class}		errs								errors found in validaton
+	 * @param {object}  props               Metadata of the XML document
+	 * @param {XMLnode} Schedule            the <Schedule> node containing the <ScheduleEvent> element to be checked
+	 * @param {array}   programCRIDs        array of program crids defined in <ProgramInformationTable>
+	 * @param {array}   plCRIDs             array of program crids defined in <ProgramLocationTable>
+	 * @param {string}  currentProgramCRID  CRID of the currently airing program
+	 * @param {Date}    scheduleStart       Date representation of Schedule@start
+	 * @param {Date}    scheduleEnd         Date representation of Schedule@end
+	 * @param {Class}   errs                errors found in validaton
 	 */
 	/* private */ ValidateScheduleEvents(props, Schedule, programCRIDs, plCRIDs, currentProgramCRID, scheduleStart, scheduleEnd, errs) {
 		if (!Schedule) {
@@ -2923,13 +2924,13 @@ export default class ContentGuideCheck {
 	/**
 	 * validate a <Schedule> elements in the <ProgramLocationTable>
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	Schedule						the node containing the <Schedule> being checked
-	 * @param {array}		programCRIDs				array of program crids defined in <ProgramInformationTable>
-	 * @param {array}		plCRIDs							array of program crids defined in <ProgramLocationTable>
-	 * @param {string}	currentProgramCRID	CRID of the currently airing program
-	 * @param {string}	requestType					the type of content guide request being checked
-	 * @param {Class}		errs								errors found in validaton
+	 * @param {object}  props                Metadata of the XML document
+	 * @param {XMLnode} Schedule             the node containing the <Schedule> being checked
+	 * @param {array}   programCRIDs         array of program crids defined in <ProgramInformationTable>
+	 * @param {array}   plCRIDs              array of program crids defined in <ProgramLocationTable>
+	 * @param {string}  currentProgramCRID   CRID of the currently airing program
+	 * @param {string}  requestType          the type of content guide request being checked
+	 * @param {Class}   errs                 errors found in validaton
 	 * @returns {string}	the serviceIdRef for this <Schedule> element
 	 */
 	/* private */ ValidateSchedule(props, Schedule, programCRIDS, plCRIDs, currentProgramCRID, requestType, errs) {
@@ -2967,13 +2968,13 @@ export default class ContentGuideCheck {
 	/**
 	 * find and validate any <ProgramLocation> elements in the <ProgramLocationTable>
 	 *
-	 * @param {object}	props								Metadata of the XML document
-	 * @param {XMLnode}	ProgramDescription	the element containing the <ProgramInformationTable>
-	 * @param {array}		programCRIDs				array to record CRIDs for later use
-	 * @param {string}	currentProgramCRID	CRID of the currently airing program
-	 * @param {string}	requestType					the type of content guide request being checked
-	 * @param {Class}		errs								errors found in validaton
-	 * @param {integer}	o.childCount				the number of child elements to be present (to match GroupInformation@numOfItems)
+	 * @param {object}  props               Metadata of the XML document
+	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
+	 * @param {array}   programCRIDs        array to record CRIDs for later use
+	 * @param {string}  currentProgramCRID  CRID of the currently airing program
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {integer} o.childCount        the number of child elements to be present (to match GroupInformation@numOfItems)
 	 */
 	/* private */ CheckProgramLocation(props, ProgramDescription, programCRIDs, currentProgramCRID, requestType, errs, o = null) {
 		if (!ProgramDescription) {
@@ -3062,10 +3063,10 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the content guide and record any errors
 	 *
-	 * @param {String}	CGtext				the service list text to be validated
-	 * @param {String}	requestType		the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
-	 * @param {Class}		errs					errors found in validaton
-	 * @param {String}	log_prefix		the first part of the logging location (of null if no logging)
+	 * @param {String} CGtext       the service list text to be validated
+	 * @param {String} requestType  the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
+	 * @param {Class}  errs         errors found in validaton
+	 * @param {String} log_prefix   the first part of the logging location (of null if no logging)
 	 */
 	doValidateContentGuide(CGtext, requestType, errs, log_prefix) {
 		if (!CGtext) {
@@ -3219,8 +3220,8 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the content guide and record any errors
 	 *
-	 * @param {String}	CGtext			the service list text to be validated
-	 * @param {String}	requestType	the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
+	 * @param {String} CGtext        the service list text to be validated
+	 * @param {String} requestType   the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
 	 * @returns {Class}	errs errors found in validaton
 	 */
 	validateContentGuide(CGtext, requestType) {

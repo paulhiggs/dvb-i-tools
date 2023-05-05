@@ -880,8 +880,8 @@ export default class ServiceListCheck {
 	/**
 	 * check if the node provided contains an RelatedMaterial element for a signalled application
 	 *
-	 * @param {object}  props						Metadata of the XML document
-	 * @param {XMLnode} node           The XML tree node (either a <Service>, <TestService> or a <ServiceInstance>) to be checked
+	 * @param {object}  props     Metadata of the XML document
+	 * @param {XMLnode} node      The XML tree node (either a <Service>, <TestService> or a <ServiceInstance>) to be checked
 	 * @returns {boolean} true if the node contains a <RelatedMaterial> element which signals an application else false
 	 */
 
@@ -900,11 +900,11 @@ export default class ServiceListCheck {
 	/**
 	 * perform any validation on a ContentTypeSourceType element
 	 *
-	 * @param {object}  props							Metadata of the XML document
-	 * @param {XMLnode} source            The <ContentGuideSource> element to be checked
-	 * @param {Class}   errs              Errors found in validaton
-	 * @param {object}  loc			          The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
-	 * @param {string}  errCode           Error code prefix to be used in reports
+	 * @param {object}  props         Metadata of the XML document
+	 * @param {XMLnode} source        The <ContentGuideSource> element to be checked
+	 * @param {Class}   errs          Errors found in validaton
+	 * @param {object}  loc			      The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
+	 * @param {string}  errCode       Error code prefix to be used in reports
 	 */
 	/*private*/ validateAContentGuideSource(props, source, errs, loc, errCode) {
 		function CheckEndpoint(elementName, suffix, MustEndWithSlash = false) {
@@ -1005,14 +1005,14 @@ export default class ServiceListCheck {
 	/**
 	 * validate the SynopsisType elements
 	 *
-	 * @param {object}  props						Metadata of the XML document
-	 * @param {XMLnode} Element             the element whose children should be checked
-	 * @param {string}  ElementName		    the name of the child element to be checked
-	 * @param {array}   requiredLengths	    @length attributes that are required to be present
-	 * @param {array}   optionalLengths	    @length attributes that can optionally be present
-	 * @param {string}  parentLanguage	    the xml:lang of the parent element
-	 * @param {Class}   errs                errors found in validaton
-	 * @param {string}  errCode             error code prefix to be used in reports
+	 * @param {object}  props              Metadata of the XML document
+	 * @param {XMLnode} Element            the element whose children should be checked
+	 * @param {string}  ElementName        the name of the child element to be checked
+	 * @param {array}   requiredLengths	   @length attributes that are required to be present
+	 * @param {array}   optionalLengths	   @length attributes that can optionally be present
+	 * @param {string}  parentLanguage	   the xml:lang of the parent element
+	 * @param {Class}   errs               errors found in validaton
+	 * @param {string}  errCode            error code prefix to be used in reports
 	 */
 	/*private*/ ValidateSynopsisType(props, Element, ElementName, requiredLengths, optionalLengths, parentLanguage, errs, errCode) {
 		if (!Element) {
@@ -1205,7 +1205,7 @@ export default class ServiceListCheck {
 	/**
 	 * validate a ServiceInstance element
 	 *
-	 * @param {object}  props						Metadata of the XML document
+	 * @param {object}  props                 Metadata of the XML document
 	 * @param {XMLnode} ServiceInstance       the service instance element to check
 	 * @param {string}  thisServiceId         the identifier of the service
 	 * @param {array}   subscriptionPackages  the subscription packages reported in the service list
@@ -2029,8 +2029,8 @@ export default class ServiceListCheck {
 	/**
 	 * validate the service list and record any errors
 	 *
-	 * @param {String} SLtext  The service list text to be validated
-	 * @param {Class} errs     Errors found in validaton
+	 * @param {String} SLtext      The service list text to be validated
+	 * @param {Class}  errs        Errors found in validaton
 	 * @param {String} log_prefix  the first part of the logging location (of null if no logging)
 	 */
 	/*public*/ doValidateServiceList(SLtext, errs, log_prefix) {
@@ -2447,7 +2447,7 @@ export default class ServiceListCheck {
 	 * validate the service list and record any errors
 	 *
 	 * @param {String} SLtext  The service list text to be validated
-	 * @returns {Class} errs     Errors found in validaton
+	 * @returns {Class} Errors found in validaton
 	 */
 	/*public*/ validateServiceList(SLtext) {
 		var errs = new ErrorList(SLtext);

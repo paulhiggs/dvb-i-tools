@@ -65,7 +65,7 @@ export var unEntity = (str) => str.replace(/(&.+;)/gi, "*");
 /**
  * checks is an object has none of its own properties
  *
- * @param {Object} obj 	  The object to check
+ * @param {Object} obj   The object to check
  * @returns {Booolean} true if the object does not contain ant local properties
  */
 export function isEmpty(obj) {
@@ -78,7 +78,7 @@ export function isEmpty(obj) {
 /**
  * Synchronously reads a file (if it exists)
  *
- * @param {String} filename 	The name of the file to read
+ * @param {String} filename  The name of the file to read
  * @returns {Buffer} the buffer containing the data from the file, or null if there is a problem reading
  */
 export function readmyfile(filename) {
@@ -111,7 +111,7 @@ export function parseISOduration(duration) {
 	/**
 	 * Sum or substract parsed duration to date
 	 *
-	 * @param {Date} date: A valid date instance
+	 * @param {Date} date A valid date instance
 	 * @throws {TypeError} When date is not valid
 	 * @returns {Date} Date plus or minus duration, according duration sign
 	 */
