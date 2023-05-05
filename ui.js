@@ -3,6 +3,7 @@ import { ERROR, WARNING } from "./ErrorList.js";
 import { MODE_URL, MODE_FILE } from "./Validator.js";
 
 const MESSAGES_IN_ORDER = true; // when true outputs the errors, warnings and informations in the 'document order'. false==ouotput in order found
+const SHOW_LINE_NUMBER = false; // include the line number in the XML document where the error was found
 
 function PAGE_TOP(label) {
 	const TABLE_STYLE =
@@ -32,11 +33,13 @@ function tabulateResults(source, res, error, errs) {
 		var itemPos = document.getElementById(item).getBoundingClientRect();
 		window.scrollTo(window.scrollX+itemPos.x, window.scrollY+itemPos.y);
 	}</script>`;
-	let DETAIL_FORM_HEADER = (mode) => `${scrollFunc}<table><tr><th>code</th><th>${mode}</th></tr>`;
+	let DETAIL_FORM_HEADER = (mode) => `${scrollFunc}<table><tr>${SHOW_LINE_NUMBER ? "<th>line</th>" : ""}<th>code</th><th>${mode}</th></tr>`;
+	let TABLE_FOOTER = "</table><br/>";
 
 	function tabluateMessage(value) {
 		res.write("<tr>");
 		let anchor = Object.prototype.hasOwnProperty.call(value, "line") ? `line-${value.line}` : null;
+		if (SHOW_LINE_NUMBER) res.write(`<td>${Object.prototype.hasOwnProperty.call(value, "line") ? value.line : ""}</td>`);
 		res.write(`<td>${anchor ? `<span class="${link_css}" onclick="myScrollTo('${anchor}')">` : ""}${value.code ? HTMLize(value.code) : ""}${anchor ? "</span>" : ""}</td>`);
 		res.write(`<td>${value.message ? HTMLize(value.message) : ""}`);
 		res.write(`${value.element ? `<br/><span class="xmlfont"><pre>${HTMLize(value.element)}</pre></span>` : ""}</td>`);
@@ -58,43 +61,40 @@ function tabulateResults(source, res, error, errs) {
 				return res.write(`<tr><td><i>${HTMLize(i)}</i></td><td>${errs.countsWarn[i]}</td></tr>`);
 			});
 			resultsShown = true;
-			res.write("</table><br/>");
+			res.write(TABLE_FOOTER);
 		}
 
 		if (errs.numErrors() > 0) {
 			res.write(DETAIL_FORM_HEADER("errors"));
-			let oErrors = MESSAGES_IN_ORDER
-				? errs.errors.sort(function (a, b) {
-						return a?.line > b?.line;
-				  })
-				: errs.errors;
-			oErrors.forEach(tabluateMessage);
+			if (MESSAGES_IN_ORDER)
+				errs.errors.sort(function (a, b) {
+					return a?.line - b?.line;
+				});
+			errs.errors.forEach(tabluateMessage);
 			resultsShown = true;
-			res.write("</table><br/>");
+			res.write(TABLE_FOOTER);
 		}
 
 		if (errs.numWarnings() > 0) {
 			res.write(DETAIL_FORM_HEADER("warnings"));
-			let oWarnings = MESSAGES_IN_ORDER
-				? errs.warnings.sort(function (a, b) {
-						return a?.line > b?.line;
-				  })
-				: errs.warnings;
-			oWarnings.forEach(tabluateMessage);
+			if (MESSAGES_IN_ORDER)
+				errs.warnings.sort(function (a, b) {
+					return a?.line - b?.line;
+				});
+			errs.warnings.forEach(tabluateMessage);
 			resultsShown = true;
-			res.write("</table><br/>");
+			res.write(TABLE_FOOTER);
 		}
 
 		if (errs.numInformationals() > 0) {
 			res.write(DETAIL_FORM_HEADER("informationals"));
-			let oInforms = MESSAGES_IN_ORDER
-				? errs.informationals.sort(function (a, b) {
-						return a?.line > b?.line;
-				  })
-				: errs.informationals;
-			oInforms.forEach(tabluateMessage);
+			if (MESSAGES_IN_ORDER)
+				errs.informationals.sort(function (a, b) {
+					return a?.line > b?.line;
+				});
+			errs.informationals.forEach(tabluateMessage);
 			resultsShown = true;
-			res.write("</table><br/>");
+			res.write(TABLE_FOOTER);
 		}
 	}
 
