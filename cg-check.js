@@ -1237,7 +1237,7 @@ export default class ContentGuideCheck {
 		let isParentGroup = parentElement == categoryGroup;
 		let BasicDescription = parentElement.get(xPath(props.prefix, tva.e_BasicDescription), props.schema);
 		if (!BasicDescription) {
-			errs.addError(NoChildElement(tva.e_BasicDescription.elementize(), parentElement, null, "BD010"));
+			errs.addError(NoChildElement(tva.e_BasicDescription.elementize(), parentElement, null, "BD001"));
 			return;
 		}
 
@@ -1340,7 +1340,7 @@ export default class ContentGuideCheck {
 				switch (requestType) {
 					case CG_REQUEST_SCHEDULE_NOWNEXT: //6.10.17.3 - BasicDescription for NowNext should be empty
 					case CG_REQUEST_SCHEDULE_WINDOW:
-						checkTopElementsAndCardinality(BasicDescription, [], tvaEC.BasicDescription, false, errs, "BD060");
+						checkTopElementsAndCardinality(BasicDescription, [], tvaEC.BasicDescription, false, errs, "BD050");
 						break;
 					case CG_REQUEST_BS_CONTENTS:
 						// BasicDescription must be empty

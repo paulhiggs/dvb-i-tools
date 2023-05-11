@@ -21,9 +21,9 @@ const CS_URI_DELIMITER = ":";
 /**
  * Constructs a linear list of terms from a heirarical clssification schemes which are read from an XML document and parsed by libxmljs
  *
- * @param {String} CSuri The classification scheme domian
- * @param {Object} term The classification scheme term that may include nested subterms
- * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded
+ * @param {String} CSuri           the classification scheme domian
+ * @param {Object} term            the classification scheme term that may include nested subterms
+ * @param {boolean} leafNodesOnly  flag to indicate if only the leaf <term> values are to be loaded
  */
 function addCSTerm(vals, CSuri, term, leafNodesOnly = false) {
 	if (term.type() != "element") return;
@@ -38,8 +38,8 @@ function addCSTerm(vals, CSuri, term, leafNodesOnly = false) {
 /**
  * load the hierarical values from an XML classification scheme document into a linear list
  *
- * @param {String} xmlCS the XML document  of the classification scheme
- * @param {boolean} leafNodesOnly flag to indicate if only the leaf <term> values are to be loaded
+ * @param {String} xmlCS             the XML document  of the classification scheme
+ * @param {boolean} leafNodesOnly    flag to indicate if only the leaf <term> values are to be loaded
  * @returns {Object} values parsed from the classification scheme in .vals and uri of classification scheme in .uri
  */
 function loadClassificationScheme(xmlCS, leafNodesOnly = false) {
@@ -137,7 +137,7 @@ export default class ClassificationScheme {
 	/**
 	 * determines if the value is in the classification scheme
 	 *
-	 * @param {String} value           The value to check for existance
+	 * @param {String} value    The value to check for existance
 	 * @returns {boolean} true if value is in the classification scheme
 	 */
 	isIn(value) {
@@ -146,7 +146,7 @@ export default class ClassificationScheme {
 
 	/**
 	 * determines if the scheme used by the provided term is included
-	 * @param {String} term 	The term whose scheme should bechecked
+	 * @param {String} term     The term whose scheme should bechecked
 	 * @returns {boolean}
 	 */
 	hasScheme(term) {

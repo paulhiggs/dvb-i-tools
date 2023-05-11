@@ -49,8 +49,7 @@ export default class IANAlanguages {
 			let items = entry.replace(/(\r|\t)/gm, "").split("\n");
 
 			if (isIn(items, "Type: language") || isIn(items, " Type: extlang"))
-				for (let i = 0; i < items.length; i++) {
-					let signingLanguage = isSignLanguage(items);
+				for (let i = 0; i < items.length; i++)
 					if (items[i].startsWith("Subtag:")) {
 						let subtag = items[i].split(":")[1].trim();
 						if (isIn(items, "Scope: private-use")) {
@@ -64,22 +63,21 @@ export default class IANAlanguages {
 							}
 						} else {
 							this.languagesList.push(subtag);
-							if (signingLanguage) this.signLanguagesList.push(subtag);
+							if (isSignLanguage(items)) this.signLanguagesList.push(subtag);
 						}
 					}
-				}
 			if (isIn(items, "Type: variant")) {
 				let subtag = null;
 				for (let i = 0; i < items.length; i++) if (items[i].startsWith("Subtag:")) subtag = items[i].split(":")[1].trim();
 				if (subtag) for (let i = 0; i < items.length; i++) if (items[i].startsWith("Prefix:")) this.languagesList.push(`${items[i].split(":")[1].trim()}-${subtag}`);
 			}
 			if (isIn(items, "Type: redundant")) {
-				let red = {};
+				let redund = {};
 				for (let i = 0; i < items.length; i++) {
-					if (items[i].startsWith("Tag:")) red.tag = items[i].split(":")[1].trim();
-					else if (items[i].startsWith("Preferred-Value:")) red.preferred = items[i].split(":")[1].trim();
+					if (items[i].startsWith("Tag:")) redund.tag = items[i].split(":")[1].trim();
+					else if (items[i].startsWith("Preferred-Value:")) redund.preferred = items[i].split(":")[1].trim();
 				}
-				if (red.tag && red.preferred) this.redundantLanguagesList.push(red);
+				if (redund.tag && redund.preferred) this.redundantLanguagesList.push(redund);
 			}
 		});
 	}

@@ -322,21 +322,15 @@ export default class SLEPR {
 							let mediaUri,
 								mu = 0;
 							let discardURIs = [];
-							while ((mediaUri = GetChild(mediaLocator, tva.e_MediaUri, ++mu)) != null) {
-								if (mediaUri.text().toLowerCase().startsWith(RFC2397_PREFIX.toLowerCase())) {
-									discardURIs.push(mediaUri);
-								}
-							}
+							while ((mediaUri = GetChild(mediaLocator, tva.e_MediaUri, ++mu)) != null)
+								if (mediaUri.text().toLowerCase().startsWith(RFC2397_PREFIX.toLowerCase())) discardURIs.push(mediaUri);
+
 							discardURIs.forEach((uri) => uri.remove());
 
-							if (!hasChild(mediaLocator, tva.e_MediaUri)) {
-								discardLocators.push(mediaLocator);
-							}
+							if (!hasChild(mediaLocator, tva.e_MediaUri)) discardLocators.push(mediaLocator);
 						}
 						discardLocators.forEach((locator) => locator.remove());
-						if (!hasChild(relatedMaterial, tva.e_MediaLocator)) {
-							discardRelatedMaterial.push(relatedMaterial);
-						}
+						if (!hasChild(relatedMaterial, tva.e_MediaLocator)) discardRelatedMaterial.push(relatedMaterial);
 					}
 					discardRelatedMaterial.forEach((rm) => rm.remove());
 				}

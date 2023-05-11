@@ -78,12 +78,10 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 			Format.childNodes().forEachSubElement((child) => {
 				if (child.name() == tva.e_StillPictureFormat) {
 					StillPictureFormat = child;
-
 					checkAttributes(child, [tva.a_horizontalSize, tva.a_verticalSize, tva.a_href], [], tvaEA.SillPictureFormat, errs, `${errCode}-12`);
 
-					if (child.attr(tva.a_href)) {
-						let href = child.attr(tva.a_href).value();
-						switch (href) {
+					if (child.attr(tva.a_href))
+						switch (child.attr(tva.a_href).value()) {
 							case mpeg7.JPEG_IMAGE_CS_VALUE:
 								isJPEG = true;
 								break;
@@ -91,9 +89,15 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 								isPNG = true;
 								break;
 							default:
-								cg_InvalidHrefValue(href, child, `${RelatedMaterial.name()}.${tva.e_Format}.${tva.e_StillPictureFormat}`, location, errs, `${errCode}-13`);
+								cg_InvalidHrefValue(
+									child.attr(tva.a_href).value(),
+									child,
+									`${RelatedMaterial.name()}.${tva.e_Format}.${tva.e_StillPictureFormat}`,
+									location,
+									errs,
+									`${errCode}-13`
+								);
 						}
-					}
 				}
 			});
 	}
@@ -126,9 +130,8 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 					errs.addError({ code: `${errCode}-25`, message: `${tva.e_MediaUri.elementize()}=${child.text().quote()} is not a valid Image URL`, key: "invalid URL", fragment: child });
 			}
 		});
-	if (languageValidator && MediaLocator.attr(dvbi.a_contentLanguage)) {
+	if (languageValidator && MediaLocator.attr(dvbi.a_contentLanguage))
 		checkLanguage(languageValidator, MediaLocator.attr(dvbi.a_contentLanguage).value(), MediaLocator.name(), MediaLocator, errs, `${errCode}-27`);
-	}
 	if (!hasMediaURI)
 		errs.addError({
 			code: `${errCode}-26`,

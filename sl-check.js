@@ -491,9 +491,9 @@ export default class ServiceListCheck {
 		} else countriesSpecified = countries;
 
 		if (schemaVersion >= SCHEMA_r4) {
-			let _selectable = Region.attr(dvbi.a_selectable) ? Region.attr(dvbi.a_selectable).value() == "true" : true;
+			let selectable = Region.attr(dvbi.a_selectable) ? Region.attr(dvbi.a_selectable).value() == "true" : true;
 
-			if (!_selectable && depth == dvbi.MAX_SUBREGION_LEVELS)
+			if (!selectable && depth == dvbi.MAX_SUBREGION_LEVELS)
 				errs.addError({
 					code: "AR010",
 					message: "Tertiary (leaf) subregion must be selectable",
@@ -501,7 +501,7 @@ export default class ServiceListCheck {
 					line: Region.line(),
 				});
 
-			if (!_selectable && !hasChild(Region, dvbi.e_Region))
+			if (!selectable && !hasChild(Region, dvbi.e_Region))
 				errs.addError({
 					code: "AR011",
 					message: "leaf subregion must be selectable",
@@ -521,7 +521,7 @@ export default class ServiceListCheck {
 					knownRegionIDs.push({
 						countries: countriesSpecified,
 						region: regionID,
-						selectable: _selectable,
+						selectable: selectable,
 						used: false,
 						line: Region.line(),
 					});
@@ -685,7 +685,7 @@ export default class ServiceListCheck {
 	/**
 	 * verifies if the specified application is valid according to specification
 	 *
-	 * @param {XMLnode} MediaLocator  The <MediaLocator> subelement (a libxmls ojbect tree) of the <RelatedMaterial> element
+	 * @param {XMLnode} MediaLocator  The <MediaLocator> subelement (a libxmls object tree) of the <RelatedMaterial> element
 	 * @param {Object}  errs          The class where errors and warnings relating to the service list processing are stored
 	 * @param {string}  Location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 */
@@ -754,7 +754,7 @@ export default class ServiceListCheck {
 	 * verifies if the specified RelatedMaterial element is valid according to specification (contents and location)
 	 *
 	 * @param {object}  props             Metadata of the XML document
-	 * @param {XMLnode} RelatedMaterial   The <RelatedMaterial> element (a libxmls ojbect tree) to be checked
+	 * @param {XMLnode} RelatedMaterial   The <RelatedMaterial> element (a libxmls object tree) to be checked
 	 * @param {Object}  errs              The class where errors and warnings relating to the service list processing are stored
 	 * @param {string}  Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 * @param {string}  LocationType      The type of element containing the <RelatedMaterial> element. Different validation rules apply to different location types
@@ -1205,13 +1205,13 @@ export default class ServiceListCheck {
 	/**
 	 * validate a ServiceInstance element
 	 *
-	 * @param {object}  props                 Metadata of the XML document
-	 * @param {XMLnode} ServiceInstance       the service instance element to check
-	 * @param {string}  thisServiceId         the identifier of the service
-	 * @param {array}   subscriptionPackages  the subscription packages reported in the service list
-	 * @param {Class}   errs                  errors found in validaton
+	 * @param {object}  props                         Metadata of the XML document
+	 * @param {XMLnode} ServiceInstance               the service instance element to check
+	 * @param {string}  thisServiceId                 the identifier of the service
+	 * @param {array}   declaredSubscriptionPackages  subscription packages that are declared in the service list
+	 * @param {Class}   errs                          errors found in validaton
 	 */
-	/*private*/ validateServiceInstance(props, ServiceInstance, thisServiceId, subscriptionPackages, errs) {
+	/*private*/ validateServiceInstance(props, ServiceInstance, thisServiceId, declaredSubscriptionPackages, errs) {
 		if (!ServiceInstance) {
 			errs.addError({
 				type: APPLICATION,
@@ -1430,7 +1430,7 @@ export default class ServiceListCheck {
 		while ((SubscriptionPackage = ServiceInstance.get(xPath(props.prefix, dvbi.e_SubscriptionPackage, ++sp), props.schema)) != null) {
 			if (SchemaVersion(props.namespace) >= SCHEMA_r3) {
 				let pkg = localizedSubscriptionPackage(SubscriptionPackage);
-				if (!subscriptionPackages.includes(pkg))
+				if (!declaredSubscriptionPackages.includes(pkg))
 					errs.addError({
 						code: "SI130",
 						message: `${dvbi.e_SubscriptionPackage.elementize()}="${pkg}" is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
@@ -1756,9 +1756,8 @@ export default class ServiceListCheck {
 		let tr = 0,
 			TargetRegion;
 		while ((TargetRegion = service.get(xPath(props.prefix, dvbi.e_TargetRegion, ++tr), props.schema)) != null) {
-			let _targetRegionName = TargetRegion.text();
-			let found = knownRegionIDs.find((r) => r.region == _targetRegionName);
-			if (found == undefined) errs.addError(UnspecifiedTargetRegion(_targetRegionName, `service ${thisServiceId.quote()}`, "SL130"));
+			let found = knownRegionIDs.find((r) => r.region == TargetRegion.text());
+			if (found == undefined) errs.addError(UnspecifiedTargetRegion(TargetRegion.text(), `service ${thisServiceId.quote()}`, "SL130"));
 			else found.used = true;
 		}
 
@@ -1847,11 +1846,10 @@ export default class ServiceListCheck {
 			});
 
 		// check <AdditionalServiceParameters>
-		let _ap = 0,
+		let ap = 0,
 			AdditionalParams;
-		while ((AdditionalParams = service.get(xPath(props.prefix, dvbi.e_AdditionalServiceParameters, ++_ap), props.schema)) != null) {
+		while ((AdditionalParams = service.get(xPath(props.prefix, dvbi.e_AdditionalServiceParameters, ++ap), props.schema)) != null)
 			this.CheckExtension(AdditionalParams, EXTENSION_LOCATION_SERVICE_ELEMENT, errs, "SL211");
-		}
 
 		// check <NVOD>
 		let NVOD = service.get(xPath(props.prefix, dvbi.e_NVOD), props.schema);
@@ -1877,11 +1875,11 @@ export default class ServiceListCheck {
 
 				if (NVOD.attr(dvbi.a_reference)) {
 					// check to see if there is a service whose <UniqueIdentifier> equals NVOD@reference and has a NVOD@mode==reference
-					let _s2 = 0,
+					let s2 = 0,
 						service2,
 						referredService = null;
 
-					while ((service2 = SL.get(xPath(props.prefix, dvbi.e_Service, ++_s2), props.schema)) != null && !referredService) {
+					while ((service2 = SL.get(xPath(props.prefix, dvbi.e_Service, ++s2), props.schema)) != null && !referredService) {
 						let ui = service2.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
 						if (ui && ui.text() == NVOD.attr(dvbi.a_reference).value()) referredService = service2;
 					}
@@ -1913,8 +1911,8 @@ export default class ServiceListCheck {
 					}
 				}
 			}
-			let _svcType = service.get(xPath(props.prefix, dvbi.e_ServiceType), props.schema);
-			if (_svcType && _svcType.attr(dvbi.a_href) && !_svcType.attr(dvbi.a_href).value().endsWith("linear"))
+			let svcType = service.get(xPath(props.prefix, dvbi.e_ServiceType), props.schema);
+			if (svcType && svcType.attr(dvbi.a_href) && !svcType.attr(dvbi.a_href).value().endsWith("linear"))
 				// this is a biut of a hack, but sufficient to determine linear service type
 				errs.addError({
 					code: "SL227",
@@ -1941,27 +1939,27 @@ export default class ServiceListCheck {
 				} else {
 					// if @region is used, it must be in the RegionList
 					if (PE.attr(dvbi.a_region)) {
-						let _prominenceRegion = PE.attr(dvbi.a_region).value();
-						let found = knownRegionIDs.find((r) => r.region == _prominenceRegion);
+						let prominenceRegion = PE.attr(dvbi.a_region).value();
+						let found = knownRegionIDs.find((r) => r.region == prominenceRegion);
 						if (found === undefined)
 							errs.addError({
 								code: "SL229",
-								message: `regionID ${_prominenceRegion.quote()} not specified in ${dvbi.e_RegionList.elementize()}`,
+								message: `regionID ${prominenceRegion.quote()} not specified in ${dvbi.e_RegionList.elementize()}`,
 								fragment: PE,
 								key: "invalid region",
 							});
 					}
 					// if @country and @region are used, they must be per the regin list
 					if (PE.attr(dvbi.a_country) && PE.attr(dvbi.a_region)) {
-						let _prominenceRegion = PE.attr(dvbi.a_region).value();
-						let _prominenceCountry = PE.attr(dvbi.a_country).value();
-						let found = knownRegionIDs.find((r) => r.region == _prominenceRegion);
+						let prominenceRegion = PE.attr(dvbi.a_region).value();
+						let prominenceCountry = PE.attr(dvbi.a_country).value();
+						let found = knownRegionIDs.find((r) => r.region == prominenceRegion);
 						if (found !== undefined && Object.prototype.hasOwnProperty.call(found, "countries")) {
 							if (found.countries.length) {
-								if (found.countries.find((c) => c == _prominenceCountry) === undefined)
+								if (found.countries.find((c) => c == prominenceCountry) === undefined)
 									errs.addError({
 										code: "SL230",
-										message: `regionID ${_prominenceRegion.quote()} not specified for country ${_prominenceCountry.quote()} in ${dvbi.e_RegionList.elementize()}`,
+										message: `regionID ${prominenceRegion.quote()} not specified for country ${prominenceCountry.quote()} in ${dvbi.e_RegionList.elementize()}`,
 										fragment: PE,
 										key: "invalid region",
 									});
@@ -2015,15 +2013,15 @@ export default class ServiceListCheck {
 	}
 
 	/*private*/ doSchemaVerification(ServiceList, props, errs, errCode) {
-		let _rc = true;
+		let rc = true;
 
 		let x = SchemaVersions.find((s) => s.namespace == props.namespace);
 		if (x && x.schema) {
 			SchemaCheck(ServiceList, x.schema, errs, `${errCode}:${SchemaVersion(props.namespace)}`);
 			SchemaVersionCheck(props, ServiceList, x.status, errs, `${errCode}a`);
-		} else _rc = false;
+		} else rc = false;
 
-		return _rc;
+		return rc;
 	}
 
 	/**
@@ -2152,8 +2150,8 @@ export default class ServiceListCheck {
 			countControlApps = 0,
 			RelatedMaterial;
 		while ((RelatedMaterial = SL.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
-			let _foundHref = this.validateRelatedMaterial(props, RelatedMaterial, errs, "service list", SERVICE_LIST_RM, "SL040");
-			if (_foundHref != "" && validServiceControlApplication(_foundHref)) countControlApps++;
+			let foundHref = this.validateRelatedMaterial(props, RelatedMaterial, errs, "service list", SERVICE_LIST_RM, "SL040");
+			if (foundHref != "" && validServiceControlApplication(foundHref)) countControlApps++;
 		}
 
 		if (countControlApps > 1)
@@ -2314,8 +2312,8 @@ export default class ServiceListCheck {
 					TargetRegion,
 					TargetRegions = [];
 				while ((TargetRegion = LCNTable.get(xPath(props.prefix, dvbi.e_TargetRegion, ++tr), props.schema)) != null) {
-					let _targetRegionName = TargetRegion.text();
-					let foundRegion = knownRegionIDs.find((r) => r.region == _targetRegionName);
+					let targetRegionName = TargetRegion.text();
+					let foundRegion = knownRegionIDs.find((r) => r.region == targetRegionName);
 					if (foundRegion == undefined)
 						errs.addError({
 							code: "SL241",
@@ -2334,14 +2332,14 @@ export default class ServiceListCheck {
 						foundRegion.used = true;
 					}
 
-					if (TargetRegions.includes(_targetRegionName))
+					if (TargetRegions.includes(targetRegionName))
 						errs.addError({
 							code: "SL243",
 							message: `respecification of ${dvbi.e_TargetRegion.elementize()}=${TargetRegion.text()}`,
 							fragment: TargetRegion,
 							key: "duplicate region",
 						});
-					else TargetRegions.push(_targetRegionName);
+					else TargetRegions.push(targetRegionName);
 				}
 
 				// <LCNTable><SubscriptionPackage>
@@ -2404,16 +2402,16 @@ export default class ServiceListCheck {
 				while ((LCN = LCNTable.get(xPath(props.prefix, dvbi.e_LCN, ++e), props.schema)) != null) {
 					// LCN@channelNumber
 					if (LCN.attr(dvbi.a_channelNumber)) {
-						let _chanNum = LCN.attr(dvbi.a_channelNumber).value();
+						let chanNum = LCN.attr(dvbi.a_channelNumber).value();
 
-						if (isIn(LCNNumbers, _chanNum))
+						if (isIn(LCNNumbers, chanNum))
 							errs.addError({
 								code: "SL262",
-								message: `duplicated channel number ${_chanNum} for ${dvbi.e_LCNTable.elementize()}`,
+								message: `duplicated channel number ${chanNum} for ${dvbi.e_LCNTable.elementize()}`,
 								key: "duplicate channel number",
 								fragment: LCN,
 							});
-						else LCNNumbers.push(_chanNum);
+						else LCNNumbers.push(chanNum);
 					}
 
 					// LCN@serviceRef

@@ -20,9 +20,7 @@ function loadCountryData(countryData) {
 		} else if (key == "alpha3") {
 			if (value.length != 3) return "***";
 			else return value;
-		} else {
-			return value;
-		}
+		} else return value;
 	});
 }
 

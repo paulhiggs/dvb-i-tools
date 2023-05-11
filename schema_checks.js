@@ -34,15 +34,13 @@ export function checkAttributes(checkElement, requiredAttributes, optionalAttrib
 	}
 
 	requiredAttributes.forEach((attributeName) => {
-		if (!checkElement.attr(attributeName)) {
+		if (!checkElement.attr(attributeName))
 			errs.addError({ code: `${errCode}-1`, message: `${attributeName.attribute(`${p}`)} is a required attribute`, key: "missing attribute", line: checkElement.line() });
-		}
 	});
 
 	checkElement.attrs().forEach((attr) => {
-		if (!isIn(requiredAttributes, attr.name()) && !isIn(optionalAttributes, attr.name()) && !isIn(definedAttributes, attr.name())) {
+		if (!isIn(requiredAttributes, attr.name()) && !isIn(optionalAttributes, attr.name()) && !isIn(definedAttributes, attr.name()))
 			errs.addError({ code: `${errCode}-2`, message: `${attr.name().attribute()} is not permitted in ${p}`, key: "unexpected attribute", line: checkElement.line() });
-		}
 	});
 
 	definedAttributes.forEach((attribute) => {
@@ -93,21 +91,21 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 		thisElem = elementize(`${parentElement.parent().name()}.${parentElement.name()}`);
 	// check that each of the specifid childElements exists
 	childElements.forEach((elem) => {
-		let _min = Object.prototype.hasOwnProperty.call(elem, "minOccurs") ? elem.minOccurs : 1;
-		let _max = Object.prototype.hasOwnProperty.call(elem, "maxOccurs") ? elem.maxOccurs : 1;
+		let min = Object.prototype.hasOwnProperty.call(elem, "minOccurs") ? elem.minOccurs : 1;
+		let max = Object.prototype.hasOwnProperty.call(elem, "maxOccurs") ? elem.maxOccurs : 1;
 		let namedChildren = getNamedChildElements(parentElement, elem.name),
 			count = namedChildren.length;
 
-		if (count == 0 && _min != 0) {
+		if (count == 0 && min != 0) {
 			errs.addError({ code: `${errCode}-1`, line: parentElement.line(), message: `Mandatory element ${elem.name.elementize()} not specified in ${thisElem}` });
 			rv = false;
 		} else {
-			if (count < _min || count > _max) {
+			if (count < min || count > max) {
 				namedChildren.forEach((child) =>
 					errs.addError({
 						code: `${errCode}-2`,
 						line: child.line(),
-						message: `Cardinality of ${elem.name.elementize()} in ${thisElem} is not in the range ${_min}..${_max == Infinity ? "unbounded" : _max}`,
+						message: `Cardinality of ${elem.name.elementize()} in ${thisElem} is not in the range ${min}..${max == Infinity ? "unbounded" : max}`,
 					})
 				);
 				rv = false;
