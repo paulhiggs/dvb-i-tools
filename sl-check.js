@@ -1774,28 +1774,27 @@ export default class ServiceListCheck {
 			this.validateRelatedMaterial(props, RelatedMaterial, errs, `service ${thisServiceId.quote()}`, SERVICE_RM, "SL150");
 
 		//check <ServiceGenre>
-		let ServiceGenre = service.get(xPath(props.prefix, dvbi.e_ServiceGenre), props.schema);
-		if (ServiceGenre) {
+		let sg = 0,
+			ServiceGenre;
+		while ((ServiceGenre = service.get(xPath(props.prefix, tva.e_ServiceGenre, ++sg), props.schema)) != null) {
 			checkAttributes(ServiceGenre, [tva.a_href], [tva.a_type], tvaEA.Genre, errs, "SL160");
-			if (ServiceGenre.attr(tva.a_type))
-				if (!isIn(tva.ALL_GENRE_TYPES, ServiceGenre.attr(tva.a_type).value()))
-					errs.addError({
-						code: "SL161",
-						message: `service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} type ${ServiceGenre.attr(dvbi.a_href).value().quote()}`,
-						fragment: ServiceGenre,
-						key: `invalid ${dvbi.e_ServiceGenre} type`,
-					});
+			if (ServiceGenre.attr(tva.a_type) && !isIn(tva.ALL_GENRE_TYPES, ServiceGenre.attr(tva.a_type).value()))
+				errs.addError({
+					code: "SL161",
+					message: `service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} type ${ServiceGenre.attr(dvbi.a_href).value().quote()}`,
+					fragment: ServiceGenre,
+					key: `invalid ${dvbi.e_ServiceGenre} type`,
+				});
 
-			if (ServiceGenre.attr(dvbi.a_href)) {
-				let genre = ServiceGenre.attr(dvbi.a_href).value();
-				if (!this.allowedGenres.isIn(genre))
-					errs.addError({
-						code: "SL162",
-						message: `service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} value ${genre} (must be content genre)`,
-						fragment: ServiceGenre,
-						key: `invalid ${dvbi.e_ServiceGenre}`,
-					});
-			}
+			if (ServiceGenre.attr(dvbi.a_href) && !this.allowedGenres.isIn(ServiceGenre.attr(dvbi.a_href).value()))
+				errs.addError({
+					code: "SL162",
+					message: `service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} value ${ServiceGenre.attr(dvbi.a_href)
+						.value()
+						.quote()} (must be content genre)`,
+					fragment: ServiceGenre,
+					key: `invalid ${dvbi.e_ServiceGenre}`,
+				});
 		}
 		//check <ServiceType>
 		let ServiceType = service.get(xPath(props.prefix, dvbi.e_ServiceType), props.schema);

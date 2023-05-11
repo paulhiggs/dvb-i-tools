@@ -89,7 +89,7 @@
 			<element name="ServiceName" type="mpeg7:TextualType" maxOccurs="unbounded"/>
 			<element name="ProviderName" type="mpeg7:TextualType" maxOccurs="unbounded"/>
 			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="ServiceGenre" type="tva:GenreType" minOccurs="0"/>
+			<element name="ServiceGenre" type="tva:GenreType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="ServiceType" type="tva:ControlledTermType" minOccurs="0"/>
 			<element name="ServiceDescription" type="tva:SynopsisType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="RecordingInfo" type="tva:ControlledTermType" minOccurs="0"/>
