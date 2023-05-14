@@ -13,6 +13,7 @@ export default class IANAlanguages {
 		this.languageRedundant = 2;
 		this.languageNotSpecified = 3;
 		this.languageInvalidType = 4;
+		this.languageFileDate = null;
 		this.empty();
 	}
 
@@ -21,6 +22,14 @@ export default class IANAlanguages {
 		this.redundantLanguagesList = [];
 		this.languageRanges = [];
 		this.signLanguagesList = [];
+	}
+
+	stats(res) {
+		res.numLanguages = this.languagesList.length;
+		res.numRedundantLanguages = this.redundantLanguagesList.length;
+		res.numLanguageRanges = this.languageRanges.length;
+		res.numSignLanguages = this.signLanguagesList.length;
+		if (this.languageFileDate) res.languageFileDate = this.languageFileDate;
 	}
 
 	/**
@@ -48,7 +57,11 @@ export default class IANAlanguages {
 		entries.forEach((entry) => {
 			let items = entry.replace(/(\r|\t)/gm, "").split("\n");
 
-			if (isIn(items, "Type: language") || isIn(items, " Type: extlang"))
+			if (items[0].startsWith("File-Date")) {
+				let tl = items[0].split(":");
+				this.languageFileDate = tl[1];
+			}
+			if (isIn(items, "Type: language") || isIn(items, "Type: extlang"))
 				for (let i = 0; i < items.length; i++)
 					if (items[i].startsWith("Subtag:")) {
 						let subtag = items[i].split(":")[1].trim();

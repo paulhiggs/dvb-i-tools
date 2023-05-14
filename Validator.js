@@ -10,6 +10,8 @@ import "colors";
 import cors from "cors";
 import { createServer } from "https";
 
+import os from "node:os";
+
 // morgan - https://github.com/expressjs/morgan
 import morgan, { token } from "morgan";
 
@@ -28,7 +30,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 import fetchS from "sync-fetch";
 
-import drawForm from "./ui.js";
+import { drawForm, PAGE_TOP, PAGE_BOTTOM } from "./ui.js";
 import ErrorList from "./ErrorList.js";
 import { isHTTPURL } from "./pattern_checks.js";
 import { Default_SLEPR, IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, ISO3166, TVA_ContentAlertCS, DVBI_ParentalGuidanceCS } from "./data-locations.js";
@@ -171,6 +173,24 @@ function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasC
 	res.end();
 }
 
+function stats_header(res) {
+	res.setHeader("Content-Type", "text/html");
+	res.write(PAGE_TOP("Validator Stats"));
+}
+function stats_footer(res) {
+	res.write(PAGE_BOTTOM);
+}
+function tabulate(res, group, stats) {
+	res.write(`<h1>${group}</h1>`);
+	if (Object.keys(stats).length === 0) res.write("<p>No statistics</p>");
+	else {
+		res.write("<table><tr><th>item</th><th>count</th></tr>");
+		Object.getOwnPropertyNames(stats).forEach((key) => res.write(`<tr><td>${key}</td><td>${stats[key]}</td?</tr>`));
+		res.write("</table>");
+	}
+	res.write("<hr/>");
+}
+
 export default function validator(options) {
 	if (options.nocsr && options.nosl && options.nocg) {
 		console.log("nothing to do... exiting".red);
@@ -274,8 +294,7 @@ export default function validator(options) {
 	}
 
 	const SLEPR_query_route = "/query",
-		SLEPR_reload_route = "/reload",
-		SLEPR_stats_route = "/stats";
+		SLEPR_reload_route = "/reload";
 
 	let manualCORS = function (res, req, next) {
 		next();
@@ -341,11 +360,25 @@ export default function validator(options) {
 			csr.loadServiceListRegistry(options.CSRfile);
 			res.status(200).end();
 		});
-
-		app.get(SLEPR_stats_route, function (req, res) {
-			res.status(404).end();
-		});
 	}
+
+	app.get("/stats", function (req, res) {
+		stats_header(res);
+		tabulate(res, "System", {
+			host: os.hostname(),
+			numCPUs: os.cpus().length,
+			machine: os.machine(),
+			platform: os.platform(),
+			release: os.release(),
+			version: os.version(),
+			node: process.version,
+		});
+		csr && tabulate(res, "CSR", csr.stats());
+		slcheck && tabulate(res, "SL", slcheck.stats());
+		cgcheck && tabulate(res, "CG", cgcheck.stats());
+		stats_footer(res);
+		res.status(4200).end();
+	});
 
 	// dont handle any other requests
 	app.get("*", function (req, res) {

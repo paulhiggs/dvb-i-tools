@@ -5,22 +5,20 @@ import { MODE_URL, MODE_FILE } from "./Validator.js";
 const MESSAGES_IN_ORDER = true; // when true outputs the errors, warnings and informations in the 'document order'. false==ouotput in order found
 const SHOW_LINE_NUMBER = false; // include the line number in the XML document where the error was found
 
-function PAGE_TOP(label) {
+export function PAGE_TOP(pageTitle, label = null) {
 	const TABLE_STYLE =
 		"<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
 	const XML_STYLE = "<style>.xmlfont {font-family: Arial, Helvetica, sans-serif; font-size:90%;}</style>";
-
 	const MARKUP_TABLE_STYLE = "<style></style>";
-
 	// dont allow Chrome to translate the page - seems to 'detect' German
 	const METAS = '<meta name="google" content="notranslate"/><meta charset="utf-8">';
-	const HEAD = `<head>${METAS}${TABLE_STYLE}${XML_STYLE}${MARKUP_TABLE_STYLE}<title>${label}</title></head>`;
+	const HEAD = `<head>${METAS}${TABLE_STYLE}${XML_STYLE}${MARKUP_TABLE_STYLE}<title>${pageTitle}</title></head>`;
 	const PG = `<html lang="en" xml:lang="en">\n${HEAD}<body>`;
-	const PH = `<h1>${label}</h1>`;
-
+	const PH = label ? `<h1>${label}</h1>` : "";
 	return `${PG}${PH}`;
 }
-const PAGE_BOTTOM =
+
+export const PAGE_BOTTOM =
 	'<br/><hr><p><i>Submit issues at </i><a href="https://github.com/paulhiggs/dvb-i-tools/issues">https://github.com/paulhiggs/dvb-i-tools/issues</a></p></body></html>';
 
 function tabulateResults(source, res, error, errs) {
@@ -122,11 +120,11 @@ function tabulateResults(source, res, error, errs) {
 	}
 }
 
-export default function drawForm(deprecateTo, req, res, modes, supportedRequests, error = null, errs = null) {
+export function drawForm(deprecateTo, req, res, modes, supportedRequests, error = null, errs = null) {
 	const ENTRY_FORM_REQUEST_TYPE_ID = "requestType";
 
 	res.setHeader("Content-Type", "text/html");
-	res.write(PAGE_TOP("DVB-I Validator"));
+	res.write(PAGE_TOP("DVB-I Validator", "DVB-I Validator"));
 	if (deprecateTo) res.write(`<p style="color:orange;">This endpoint is deprecated, use ${deprecateTo} instead</p><br>`);
 	res.write(`
 	<script>

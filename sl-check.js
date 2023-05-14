@@ -331,6 +331,7 @@ if (!Array.prototype.forEachSubElement) {
 
 export default class ServiceListCheck {
 	constructor(useURLs, preloadedLanguageValidator = null, preloadedGenres = null, preloadedCountries = null) {
+		this.numRequests = 0;
 		if (preloadedLanguageValidator) this.knownLanguages = preloadedLanguageValidator;
 		else {
 			this.knownLanguages = new IANAlanguages();
@@ -386,6 +387,23 @@ export default class ServiceListCheck {
 		});
 
 		this.loadDataFiles(useURLs);
+	}
+
+	stats() {
+		let res = {};
+		res.numRequests = this.numRequests;
+		res.numAllowedGenres = this.allowedGenres.count();
+		res.numKnownCountries = this.knownCountries.count();
+		this.knownLanguages.stats(res);
+		res.numAllowedPictureFormats = this.allowedPictureFormats.count();
+		res.numAllowedColorimetry = this.allowedColorimetry.count();
+		res.numAllowedServiceTypes = this.allowedServiceTypes.count();
+		res.numAllowedAudioSchemes = this.allowedAudioSchemes.count();
+		res.numAllowedVideoSchemes = this.allowedVideoSchemes.count();
+		res.numAllowedVideoConformancePoints = this.allowedVideoConformancePoints.count();
+		res.numAudioPresentationCSvalues = this.AudioPresentationCSvalues.count();
+		res.numAudioPresentationCSvalues = this.AudioPresentationCSvalues.count();
+		return res;
 	}
 
 	/**
@@ -2031,6 +2049,7 @@ export default class ServiceListCheck {
 	 * @param {String} log_prefix  the first part of the logging location (of null if no logging)
 	 */
 	/*public*/ doValidateServiceList(SLtext, errs, log_prefix) {
+		this.numRequests++;
 		if (!SLtext) {
 			errs.addError({
 				type: APPLICATION,

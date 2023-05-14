@@ -55,7 +55,17 @@ function GetChild(element, childName, index) {
 
 export default class SLEPR {
 	constructor(useURLs, preloadedLanguageValidator = null, preloadedCountries = null, preloadedGenres = null) {
+		this.numRequests = 0;
 		this.loadDataFiles(useURLs, preloadedLanguageValidator, preloadedCountries, preloadedGenres);
+	}
+
+	stats() {
+		let res = {};
+		res.numRequests = this.numRequests;
+		res.mumGenres = this.knownGenres.count();
+		this.knownLanguages.stats(res);
+		res.numCountries = this.knownCountries.count();
+		return res;
 	}
 
 	/* public */ loadDataFiles(useURLs, preloadedLanguageValidator = null, preloadedCountries = null, preloadedGenres = null) {

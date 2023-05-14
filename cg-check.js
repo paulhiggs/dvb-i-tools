@@ -254,6 +254,7 @@ export var isRestartAvailability = (genre) => [dvbi.RESTART_AVAILABLE, dvbi.REST
 
 export default class ContentGuideCheck {
 	constructor(useURLs, preloadedLanguageValidator = null, preloadedGenres = null, preloadedCreditItemRoles = null, preloadedRatings = null) {
+		this.numRequests = 0;
 		if (preloadedLanguageValidator) this.knownLanguages = preloadedLanguageValidator;
 		else {
 			console.log("loading languages...".yellow.underline);
@@ -293,6 +294,16 @@ export default class ContentGuideCheck {
 		});
 
 		this.supportedRequests = supportedRequests;
+	}
+
+	stats() {
+		let res = {};
+		res.numRequests = this.numRequests;
+		this.knownLanguages.stats(res);
+		res.numAllowedGenres = this.allowedGenres.count();
+		res.numCreditItemRoles = this.allowedCreditItemRoles.count();
+		res.numRatings = this.allowedRatings.count();
+		return res;
 	}
 
 	/*private*/ doSchemaVerification(TVAdoc, props, errs, errCode) {
@@ -3069,6 +3080,8 @@ export default class ContentGuideCheck {
 	 * @param {String} log_prefix   the first part of the logging location (of null if no logging)
 	 */
 	doValidateContentGuide(CGtext, requestType, errs, log_prefix) {
+		this.numRequests++;
+
 		if (!CGtext) {
 			errs.addError({ type: APPLICATION, code: "CG000", message: "doValidateContentGuide() called with CGtext==null" });
 			return;
