@@ -155,7 +155,7 @@ export var hasChild = (elem, childElementName) => (elem ? elem.childNodes().find
  */
 export function SchemaCheck(XML, XSD, errs, errCode) {
 	if (!XML.validate(XSD)) {
-		let prettyXML = format(XML.toString(), { collapseContent: true, lineSeparator: "\n" });
+		let prettyXML = format(XML.toString(), { collapseContent: true, lineSeparator: "\n" /*, strictMode: true */ });
 		let lines = prettyXML.split("\n");
 		XML.validationErrors.forEach((ve) => {
 			let splt = ve.toString().split("\r");

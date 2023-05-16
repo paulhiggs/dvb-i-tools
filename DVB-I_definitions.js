@@ -39,6 +39,8 @@ export const dvbi = {
 	MAX_NAME_PART_LENGTH: 32,
 	MAX_EXPLANATORY_TEXT_LENGTH: 160,
 
+	MAX_CREDITS_ITEMS: 40,
+
 	XML_AIT_CONTENT_TYPE: "application/vnd.dvb.ait+xml",
 	HTML5_APP: "text/html",
 	XHTML_APP: "application/xhtml+xml",

@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools",
-	"version": "0.7.1",
+	"version": "0.7.2",
 	"description": "DVB-I V&V Tools",
 	"main": "all-in-one.js",
 	"type": "module",
@@ -21,11 +21,11 @@
 		"morgan": "^1.10.0",
 		"serve-favicon": "^2.5.0",
 		"sync-fetch": "^0.4.2",
-		"xml-formatter": "^3.3.2"
+		"xml-formatter": "^3.4.1"
 	},
 	"engines": {
-		"node": ">= 17.8.0",
-		"npm": ">= 8.5.5"
+		"node": ">= 18.13.0",
+		"npm": ">= 8.19.3"
 	},
 	"scripts": {
 		"start": "node all-in-one.js"
