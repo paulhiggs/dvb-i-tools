@@ -8,7 +8,7 @@ import { APPLICATION, WARNING } from "./ErrorList.js";
 
 import { checkLanguage } from "./MultilingualElement.js";
 import { checkAttributes, checkTopElementsAndCardinality } from "./schema_checks.js";
-import { isJPEGmime, isPNGmime, isWebPmime, validImageSet } from "./MIME_checks.js";
+import { isJPEGmime, isPNGmime, isWebPmime, validImageSet, isAllowedImageMime } from "./MIME_checks.js";
 import { isHTTPURL } from "./pattern_checks.js";
 import { cg_InvalidHrefValue } from "./CommonErrors.js";
 
@@ -112,7 +112,7 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 				checkAttributes(child, [tva.a_contentType], [], tvaEA.MediaUri, errs, `${errCode}-22`);
 				if (child.attr(tva.a_contentType)) {
 					let contentType = child.attr(tva.a_contentType).value();
-					if (!isJPEGmime(contentType) && !isPNGmime(contentType))
+					if (!isAllowedImageMime(contentType))
 						errs.addError({
 							code: `${errCode}-23`,
 							message: `invalid ${tva.a_contentType.attribute(tva.e_MediaLocator)}=${contentType.quote()} specified for ${RelatedMaterial.name().elementize()} in ${location}`,
