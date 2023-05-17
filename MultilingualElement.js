@@ -95,7 +95,6 @@ export function checkXMLLangs(elementName, elementLocation, node, errs, errCode,
 						fragment: elem,
 						key: "required @xml:lang",
 					});
-				else console.log(`lang=${elem.attr(tva.a_lang).value()}`);
 			}
 		});
 	}
