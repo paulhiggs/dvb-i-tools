@@ -685,59 +685,8 @@ export default class ContentGuideCheck {
 							break;
 					}
 				});
-			checkXMLLangs(props, tva.e_ExplanatoryText, `${BasicDescription.name()}.${tva.e_ParentalGuidance}`, ParentalGuidance, errs, `${errCode}-8`, this.knownLanguages);
+			checkXMLLangs(tva.e_ExplanatoryText, `${BasicDescription.name()}.${tva.e_ParentalGuidance}`, ParentalGuidance, errs, `${errCode}-8`, this.knownLanguages);
 		}
-	}
-
-	/**
-	 * validate a name (either PersonName of Character) to ensure a single GivenName is present with a single optional FamilyName
-	 *
-	 * @param {XMLnode} elem      the element whose children should be checked
-	 * @param {Class}   errs      errors found in validaton
-	 * @param {string}  errCode   error code prefix to be used in reports
-	 */
-	/* private */ ValidateName(elem, errs, errCode) {
-		function checkNamePart(elem, errs, errCode) {
-			if (unEntity(elem.text()).length > dvbi.MAX_NAME_PART_LENGTH)
-				errs.addError({
-					code: errCode,
-					fragment: elem,
-					message: `${elem.name().elementize()} in ${elem.parent().name().elementize()} is longer than ${dvbi.MAX_NAME_PART_LENGTH} characters`,
-				});
-		}
-
-		if (!elem) {
-			errs.addError({ type: APPLICATION, code: "VN000", message: "ValidateName() called with elem==null" });
-			return;
-		}
-		let familyNameCount = [],
-			givenNameCount = 0;
-		if (elem.childNodes())
-			elem.childNodes().forEachSubElement((subElem) => {
-				switch (subElem.name()) {
-					case tva.e_GivenName:
-						givenNameCount++;
-						checkNamePart(subElem, errs, `${errCode}-2`);
-						break;
-					case tva.e_FamilyName:
-						familyNameCount.push(subElem);
-						checkNamePart(subElem, errs, `${errCode}-3`);
-						break;
-				}
-			});
-
-		if (givenNameCount == 0)
-			errs.addError({
-				code: `${errCode}-4`,
-				message: `${tva.e_GivenName.elementize()} is mandatory in ${elem.name().elementize()}`,
-				line: elem.line(),
-			});
-		if (familyNameCount.length > 1)
-			errs.addError({
-				code: `${errCode}-5`,
-				message: `only a single ${tva.e_FamilyName.elementize()} is permitted in ${elem.name().elementize()}`,
-				multiElementError: familyNameCount,
-			});
 	}
 
 	/**
@@ -757,6 +706,58 @@ export default class ContentGuideCheck {
 			});
 			return;
 		}
+
+		/**
+		 * validate a name (either PersonName of Character) to ensure a single GivenName is present with a single optional FamilyName
+		 *
+		 * @param {XMLnode} elem      the element whose children should be checked
+		 * @param {Class}   errs      errors found in validaton
+		 * @param {string}  errCode   error code prefix to be used in reports
+		 */
+		function ValidateName(elem, errs, errCode) {
+			function checkNamePart(elem, errs, errCode) {
+				if (unEntity(elem.text()).length > dvbi.MAX_NAME_PART_LENGTH)
+					errs.addError({
+						code: errCode,
+						fragment: elem,
+						message: `${elem.name().elementize()} in ${elem.parent().name().elementize()} is longer than ${dvbi.MAX_NAME_PART_LENGTH} characters`,
+					});
+			}
+
+			if (!elem) {
+				errs.addError({ type: APPLICATION, code: "VN000", message: "ValidateName() called with elem==null" });
+				return;
+			}
+			let familyNameCount = [],
+				givenNameCount = 0;
+			if (elem.childNodes())
+				elem.childNodes().forEachSubElement((subElem) => {
+					switch (subElem.name()) {
+						case tva.e_GivenName:
+							givenNameCount++;
+							checkNamePart(subElem, errs, `${errCode}-2`);
+							break;
+						case tva.e_FamilyName:
+							familyNameCount.push(subElem);
+							checkNamePart(subElem, errs, `${errCode}-3`);
+							break;
+					}
+				});
+
+			if (givenNameCount == 0)
+				errs.addError({
+					code: `${errCode}-4`,
+					message: `${tva.e_GivenName.elementize()} is mandatory in ${elem.name().elementize()}`,
+					line: elem.line(),
+				});
+			if (familyNameCount.length > 1)
+				errs.addError({
+					code: `${errCode}-5`,
+					message: `only a single ${tva.e_FamilyName.elementize()} is permitted in ${elem.name().elementize()}`,
+					multiElementError: familyNameCount,
+				});
+		}
+
 		let singleElementError = (elementName, parentElementName) => `only a single ${elementName.elementize()} is permitted in ${parentElementName.elementize()}`;
 		let CreditsList = BasicDescription.get(xPath(props.prefix, tva.e_CreditsList), props.schema);
 		if (!CreditsList) return;
@@ -776,28 +777,33 @@ export default class ContentGuideCheck {
 					});
 			}
 
+			//HERE#18
+
 			let foundPersonName = [],
 				foundCharacter = [],
 				foundOrganizationName = [];
-			let vn = this.ValidateName; // since this. is not allowed in a function declared within a loop
 			if (CreditsItem.childNodes())
 				CreditsItem.childNodes().forEachSubElement((elem) => {
 					switch (elem.name()) {
 						case tva.e_PersonName:
 							foundPersonName.push(elem);
 							// required to have a GivenName optionally have a FamilyName
-							vn(elem, errs, `${errCode}-3`);
+							ValidateName(elem, errs, `${errCode}-11`);
+							checkXMLLangs(tva.e_GivenName, tva.e_PersonName, elem, errs, `${errCode}-12`, this.knownLanguages);
+							checkXMLLangs(tva.e_FamilyName, tva.e_PersonName, elem, errs, `${errCode}-13`, this.knownLanguages);
 							break;
 						case tva.e_Character:
 							foundCharacter.push(elem);
 							// required to have a GivenName optionally have a FamilyName
-							vn(elem, errs, `${errCode}-4`);
+							ValidateName(elem, errs, `${errCode}-21`);
+							checkXMLLangs(tva.e_GivenName, tva.e_Character, elem, errs, `${errCode}-22`, this.knownLanguages);
+							checkXMLLangs(tva.e_FamilyName, tva.e_Character, elem, errs, `${errCode}-23`, this.knownLanguages);
 							break;
 						case tva.e_OrganizationName:
 							foundOrganizationName.push(elem);
 							if (unEntity(elem.text()).length > dvbi.MAX_ORGANIZATION_NAME_LENGTH)
 								errs.addError({
-									code: `${errCode}-5`,
+									code: `${errCode}-31`,
 									message: `length of ${tva.e_OrganizationName.elementize()} in ${tva.e_CreditsItem.elementize()} exceeds ${dvbi.MAX_ORGANIZATION_NAME_LENGTH} characters`,
 									fragment: elem,
 								});
@@ -805,43 +811,44 @@ export default class ContentGuideCheck {
 						default:
 							if (elem.name() != "text")
 								errs.addError({
-									code: `${errCode}-6`,
+									code: `${errCode}-41`,
 									message: `extra element ${elem.name().elementize()} found in ${tva.e_CreditsItem.elementize()}`,
 									fragment: elem,
 								});
 					}
 				});
+			checkXMLLangs(tva.e_OrganizationName, tva.e_CreditsItem, CreditsItem, errs, `${errCode}-11`, this.knownLanguages);
 			if (foundPersonName.length > 1)
 				errs.addError({
-					code: `${errCode}-10`,
+					code: `${errCode}-51`,
 					message: singleElementError(tva.e_PersonName, tva.e_CreditsItem),
 					multiElementError: foundPersonName,
 					tag: `invalid ${tva.e_CreditsItem.elementize()}`,
 				});
 			if (foundCharacter.length > 1)
 				errs.addError({
-					code: `${errCode}-11`,
+					code: `${errCode}-52`,
 					message: singleElementError(tva.e_Character, tva.e_CreditsItem),
 					multiElementError: foundCharacter,
 					tag: `invalid ${tva.e_CreditsItem.elementize()}`,
 				});
 			if (foundOrganizationName.length > 1)
 				errs.addError({
-					code: `${errCode}-12`,
+					code: `${errCode}-53`,
 					message: singleElementError(tva.e_OrganizationName, tva.e_CreditsItem),
 					multiElementError: foundOrganizationName,
 					tag: `invalid ${tva.e_CreditsItem.elementize()}`,
 				});
 			if (foundCharacter.length > 0 && foundPersonName.length == 0)
 				errs.addError({
-					code: `${errCode}-13`,
+					code: `${errCode}-54`,
 					message: `${tva.e_Character.elementize()} in ${tva.e_CreditsItem.elementize()} requires ${tva.e_PersonName.elementize()}`,
 					line: CreditsItem.line(),
 					tag: `invalid ${tva.e_CreditsItem.elementize()}`,
 				});
 			if (foundOrganizationName.length > 0 && (foundPersonName.length > 0 || foundCharacter.length > 0))
 				errs.addError({
-					code: `${errCode}-14`,
+					code: `${errCode}-55`,
 					message: `${tva.e_OrganizationName.elementize()} can only be present when ${tva.e_PersonName.elementize()} and ${tva.e_OrganizationName.elementize()} are absent in ${tva.e_CreditsItem.elementize()}`,
 					line: CreditsItem.line(),
 					tag: `invalid ${tva.e_CreditsItem.elementize()}`,
@@ -849,7 +856,7 @@ export default class ContentGuideCheck {
 		}
 		if (numCreditsItems > dvbi.MAX_CREDITS_ITEMS)
 			errs.addError({
-				code: `${errCode}-15`,
+				code: `${errCode}-16`,
 				message: `a maximum of ${dvbi.MAX_CREDITS_ITEMS} ${tva.e_CreditsItem.elementize()} elements are permitted in ${tva.e_CreditsList.elementize()}`,
 				line: CreditsItem.line(),
 				tag: `excess ${tva.e_CreditsItem.elementize()}`,
@@ -1503,7 +1510,7 @@ export default class ContentGuideCheck {
 		}
 
 		// <ProgramInformation><BasicDescription>
-		this.ValidateBasicDescription(props.schema, props.prefix, props.namespace, ProgramInformation, requestType, errs, null);
+		this.ValidateBasicDescription(props, ProgramInformation, requestType, errs, null);
 
 		if (ProgramInformation.childNodes())
 			ProgramInformation.childNodes().forEachSubElement((child) => {

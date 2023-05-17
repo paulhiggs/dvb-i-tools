@@ -2,7 +2,7 @@
 
 import { WARNING, APPLICATION } from "./ErrorList.js";
 import { tva } from "./TVA_definitions.js";
-import { xPath, isIn, CountChildElements } from "./utils.js";
+import { isIn, CountChildElements } from "./utils.js";
 import { datatypeIs } from "./phlib/phlib.js";
 
 const NO_DOCUMENT_LANGUAGE = "**"; // this should not be needed as @xml:lang is required in <ServiceList> and <TVAMain> root elements
@@ -70,7 +70,6 @@ export function mlLanguage(node) {
 /**
  * checks that all the @xml:lang values for an element are unique and that only one instace of the element does not contain an xml:lang attribute
  *
- * @param {object}  props            Metadata of the XML document
  * @param {String}  elementName      The multilingual XML element to check
  * @param {String}  elementLocation  The descriptive location of the element being checked (for reporting)
  * @param {XMLnode} node             The XML tree node containing the element being checked
@@ -78,51 +77,54 @@ export function mlLanguage(node) {
  * @param {String}  errCode          The error code to be reported
  * @param {Object}  validator        The validation class for check the value of the language, or null if no check is to be performed
  */
-export function checkXMLLangs(props, elementName, elementLocation, node, errs, errCode, validator = null) {
+export function checkXMLLangs(elementName, elementLocation, node, errs, errCode, validator = null) {
 	if (!node) {
 		errs.addError({ type: APPLICATION, code: "XL000", message: "checkXMLLangs() called with node==null" });
 		return;
 	}
 
-	let elem;
-	let i = 0,
-		numElements = CountChildElements(node, elementName);
+	let childElems = node.childNodes();
+	let numElements = CountChildElements(node, elementName);
 	if (numElements > 1) {
-		while ((elem = node.get(xPath(props.prefix, elementName, ++i), props.schema)) != null) {
-			if (!elem.attr(tva.a_lang))
-				errs.addError({
-					code: `${errCode}-1`,
-					message: `xml:lang must be declared for each multilingual element for ${elementName.elementize()} in ${elementLocation}`,
-					fragment: elem,
-					key: "required @xml:lang",
-				});
-		}
+		childElems.forEachSubElement((elem) => {
+			if (elem.name() == elementName) {
+				if (!elem.attr(tva.a_lang))
+					errs.addError({
+						code: `${errCode}-1`,
+						message: `xml:lang must be declared for each multilingual element for ${elementName.elementize()} in ${elementLocation}`,
+						fragment: elem,
+						key: "required @xml:lang",
+					});
+				else console.log(`lang=${elem.attr(tva.a_lang).value()}`);
+			}
+		});
 	}
 
 	let elementLanguages = [];
-	i = 0;
-	while ((elem = node.get(xPath(props.prefix, elementName, ++i), props.schema)) != null) {
-		let lang = mlLanguage(elem);
-		if (isIn(elementLanguages, lang))
-			errs.addError({
-				code: `${errCode}-2`,
-				message: `${lang == NO_DOCUMENT_LANGUAGE ? "default language" : `xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} in ${elementLocation}`,
-				fragment: elem,
-				key: "duplicate @xml:lang",
-			});
-		else elementLanguages.push(lang);
+	childElems.forEachSubElement((elem) => {
+		if (elem.name() == elementName) {
+			let lang = mlLanguage(elem);
+			if (isIn(elementLanguages, lang))
+				errs.addError({
+					code: `${errCode}-2`,
+					message: `${lang == NO_DOCUMENT_LANGUAGE ? "default language" : `xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} in ${elementLocation}`,
+					fragment: elem,
+					key: "duplicate @xml:lang",
+				});
+			else elementLanguages.push(lang);
 
-		if (elem.text().length == 0)
-			errs.addError({
-				code: `${errCode}-3`,
-				message: `value must be specified for ${elem.parent().name().elementize()}${elem.name().elementize()}`,
-				fragment: elem,
-				key: "empty value",
-			});
+			if (elem.text().length == 0)
+				errs.addError({
+					code: `${errCode}-3`,
+					message: `value must be specified for ${elem.parent().name().elementize()}${elem.name().elementize()}`,
+					fragment: elem,
+					key: "empty value",
+				});
 
-		//if lang is specified, validate the format and value of the attribute against BCP47 (RFC 5646)
-		if (elem.attr(tva.a_lang) && validator && lang != NO_DOCUMENT_LANGUAGE) checkLanguage(validator, lang, `xml:lang in ${elementName}`, elem, errs, `${errCode}-4`);
-	}
+			// if lang is specified, validate the format and value of the attribute against BCP47 (RFC 5646)
+			if (elem.attr(tva.a_lang) && validator && lang != NO_DOCUMENT_LANGUAGE) checkLanguage(validator, lang, `xml:lang in ${elementName}`, elem, errs, `${errCode}-4`);
+		}
+	});
 }
 
 /**
