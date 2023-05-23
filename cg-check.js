@@ -42,6 +42,7 @@ import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./MultilingualEle
 import { writeOut } from "./Validator.js";
 
 import { DRAFT, CURRENT } from "./sl-check.js";
+import { keys } from "./CommonErrors.js";
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";
@@ -345,7 +346,7 @@ export default class ContentGuideCheck {
 				errs.addError({
 					type: WARNING,
 					code: errCode,
-					key: "invalid tag",
+					key: keys.k_InvalidTag,
 					message: `${tva.a_serviceIDRef.attribute(elem.name())} ${svcID.quote()} is not a TAG URI`,
 					line: elem.line(),
 				});
@@ -402,7 +403,7 @@ export default class ContentGuideCheck {
 									code: `${errCode}-11`,
 									message: synopsisLengthError(tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_SHORT_LENGTH, _len),
 									fragment: Synopsis,
-									key: "length error",
+									key: keys.k_LengthError,
 								});
 							hasShort = true;
 							break;
@@ -412,7 +413,7 @@ export default class ContentGuideCheck {
 									code: `${errCode}-12`,
 									message: synopsisLengthError(tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_MEDIUM_LENGTH, _len),
 									fragment: Synopsis,
-									key: "length error",
+									key: keys.k_LengthError,
 								});
 							hasMedium = true;
 							break;
@@ -422,7 +423,7 @@ export default class ContentGuideCheck {
 									code: `${errCode}-13`,
 									message: synopsisLengthError(tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_LONG_LENGTH, _len),
 									fragment: Synopsis,
-									key: "length error",
+									key: keys.k_LengthError,
 								});
 							hasLong = true;
 							break;
@@ -444,7 +445,7 @@ export default class ContentGuideCheck {
 								code: `${errCode}-16`,
 								message: singleLengthLangError(synopsisLength, synopsisLang),
 								fragment: Synopsis,
-								key: "duplicted synopsis length",
+								key: keys.k_DuplicatedSynopsisLength,
 							});
 						else shortLangs.push(synopsisLang);
 						break;
@@ -454,7 +455,7 @@ export default class ContentGuideCheck {
 								code: `${errCode}-17`,
 								message: singleLengthLangError(synopsisLength, synopsisLang),
 								fragment: Synopsis,
-								key: "duplicted synopsis length",
+								key: keys.k_DuplicatedSynopsisLength,
 							});
 						else mediumLangs.push(synopsisLang);
 						break;
@@ -464,7 +465,7 @@ export default class ContentGuideCheck {
 								code: `${errCode}-18`,
 								message: singleLengthLangError(synopsisLength, synopsisLang),
 								fragment: Synopsis,
-								key: "duplicted synopsis length",
+								key: keys.k_DuplicatedSynopsisLength,
 							});
 						else longLangs.push(synopsisLang);
 						break;
@@ -477,21 +478,21 @@ export default class ContentGuideCheck {
 				code: `${errCode}-19`,
 				message: requiredSynopsisError(tva.SYNOPSIS_SHORT_LABEL),
 				line: BasicDescription.line(),
-				key: "missing synopsis length",
+				key: keys.k_MissingSynopsisLength,
 			});
 		if (isIn(requiredLengths, tva.SYNOPSIS_MEDIUM_LABEL) && !hasMedium)
 			errs.addError({
 				code: `${errCode}-20`,
 				message: requiredSynopsisError(tva.SYNOPSIS_MEDIUM_LABEL),
 				line: BasicDescription.line(),
-				key: "missing synopsis length",
+				key: keys.k_MissingSynopsisLength,
 			});
 		if (isIn(requiredLengths, tva.SYNOPSIS_LONG_LABEL) && !hasLong)
 			errs.addError({
 				code: `${errCode}-21`,
 				message: requiredSynopsisError(tva.SYNOPSIS_LONG_LABEL),
 				line: BasicDescription.line(),
-				key: "missing synopsis length",
+				key: keys.k_MissingSynopsisLength,
 			});
 	}
 
@@ -529,7 +530,7 @@ export default class ContentGuideCheck {
 			if (keywordType != tva.KEYWORD_TYPE_MAIN && keywordType != tva.KEYWORD_TYPE_OTHER)
 				errs.addError({
 					code: `${errCode}-11`,
-					key: "invalid keyword type",
+					key: keys.k_InvalidKeywordType,
 					message: `${tva.a_type.attribute()}=${keywordType.quote()} not permitted for ${tva.e_Keyword.elementize()}`,
 					fragment: Keyword,
 				});
@@ -538,7 +539,7 @@ export default class ContentGuideCheck {
 					code: `${errCode}-12`,
 					message: `length of ${tva.e_Keyword.elementize()} is greater than ${dvbi.MAX_KEYWORD_LENGTH}`,
 					fragment: Keyword,
-					key: "invalid keyword length",
+					key: keys.k_InvalidKeywordType,
 				});
 		}
 
@@ -603,7 +604,6 @@ export default class ContentGuideCheck {
 	/* private */ ValidateRelatedMaterial_ParentalGuidance(props, BasicDescription, errs, errCode) {
 		// first <ParentalGuidance> element must contain an <mpeg7:MinimumAge> element
 
-		const ERROR_KEY = "parental guidance";
 		if (!BasicDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -629,7 +629,7 @@ export default class ContentGuideCheck {
 							if (countParentalGuidance != 1)
 								errs.addError({
 									code: `${errCode}-11`,
-									key: ERROR_KEY,
+									key: keys.k_ParentalGuidance,
 									message: `${tva.e_MinimumAge.elementize()} must be in the first ${tva.e_ParentalGuidance.elementize()} element`,
 									fragment: pgChild,
 								});
@@ -639,7 +639,7 @@ export default class ContentGuideCheck {
 							if (countParentalGuidance == 1)
 								errs.addError({
 									code: `${errCode}-21`,
-									key: ERROR_KEY,
+									key: keys.k_ParentalGuidance,
 									message: `first ${tva.e_ParentalGuidance.elementize()} element must contain ${elementize("mpeg7:" + tva.e_MinimumAge)}`,
 									fragment: pgChild,
 								});
@@ -650,7 +650,7 @@ export default class ContentGuideCheck {
 									if (!this.allowedRatings.isIn(rating))
 										errs.addError({
 											code: `${errCode}-22`,
-											key: ERROR_KEY,
+											key: keys.k_ParentalGuidance,
 											fragment: pgChild,
 											message: `invalid rating term "${rating}"`,
 										});
@@ -658,7 +658,7 @@ export default class ContentGuideCheck {
 									errs.addError({
 										type: WARNING,
 										code: `${errCode}-23`,
-										key: ERROR_KEY,
+										key: keys.k_ParentalGuidance,
 										message: `foreign (non DVB or TVA) parental rating scheme used`,
 										fragment: pgChild,
 									});
@@ -672,6 +672,7 @@ export default class ContentGuideCheck {
 										code: `${errCode}-31`,
 										message: `${tva.a_length.attribute()}=${pgChild.attr(tva.a_length).value().quote()} is not allowed for ${tva.e_ExplanatoryText.elementize()}`,
 										fragment: pgChild,
+										key: keys.k_LengthError,
 									});
 							}
 							if (unEntity(pgChild.text()).length > dvbi.MAX_EXPLANATORY_TEXT_LENGTH)
@@ -679,6 +680,7 @@ export default class ContentGuideCheck {
 									code: `${errCode}-32`,
 									message: `length of ${tva._ExplanatoryText.elementize()} cannot exceed ${dvbi.MAX_EXPLANATORY_TEXT_LENGTH} characters`,
 									fragment: pgChild,
+									key: keys.k_LengthError,
 								});
 
 							countExplanatoryText.push(pgChild);
@@ -721,6 +723,7 @@ export default class ContentGuideCheck {
 						code: errCode,
 						fragment: elem,
 						message: `${elem.name().elementize()} in ${elem.parent().name().elementize()} is longer than ${dvbi.MAX_NAME_PART_LENGTH} characters`,
+						key: keys.k_LengthError,
 					});
 			}
 
@@ -749,12 +752,14 @@ export default class ContentGuideCheck {
 					code: `${errCode}-4`,
 					message: `${tva.e_GivenName.elementize()} is mandatory in ${elem.name().elementize()}`,
 					line: elem.line(),
+					key: "missing element",
 				});
 			if (familyNameCount.length > 1)
 				errs.addError({
 					code: `${errCode}-5`,
 					message: `only a single ${tva.e_FamilyName.elementize()} is permitted in ${elem.name().elementize()}`,
 					multiElementError: familyNameCount,
+					key: "multiple element",
 				});
 		}
 
@@ -774,10 +779,9 @@ export default class ContentGuideCheck {
 						code: `${errCode}-2`,
 						message: `${CreditsItemRole.quote()} is not valid for ${tva.a_role.attribute(tva.e_CreditsItem)}`,
 						fragment: CreditsItem,
+						key: keys.k_InvalidValue,
 					});
 			}
-
-			//HERE#18
 
 			let foundPersonName = [],
 				foundCharacter = [],
@@ -806,6 +810,7 @@ export default class ContentGuideCheck {
 									code: `${errCode}-31`,
 									message: `length of ${tva.e_OrganizationName.elementize()} in ${tva.e_CreditsItem.elementize()} exceeds ${dvbi.MAX_ORGANIZATION_NAME_LENGTH} characters`,
 									fragment: elem,
+									key: keys.k_LengthError,
 								});
 							break;
 						default:
@@ -814,6 +819,7 @@ export default class ContentGuideCheck {
 									code: `${errCode}-41`,
 									message: `extra element ${elem.name().elementize()} found in ${tva.e_CreditsItem.elementize()}`,
 									fragment: elem,
+									key: "unexpected element",
 								});
 					}
 				});
@@ -823,35 +829,35 @@ export default class ContentGuideCheck {
 					code: `${errCode}-51`,
 					message: singleElementError(tva.e_PersonName, tva.e_CreditsItem),
 					multiElementError: foundPersonName,
-					tag: `invalid ${tva.e_CreditsItem.elementize()}`,
+					key: keys.k_InvalidElement,
 				});
 			if (foundCharacter.length > 1)
 				errs.addError({
 					code: `${errCode}-52`,
 					message: singleElementError(tva.e_Character, tva.e_CreditsItem),
 					multiElementError: foundCharacter,
-					tag: `invalid ${tva.e_CreditsItem.elementize()}`,
+					key: keys.k_InvalidElement,
 				});
 			if (foundOrganizationName.length > 1)
 				errs.addError({
 					code: `${errCode}-53`,
 					message: singleElementError(tva.e_OrganizationName, tva.e_CreditsItem),
 					multiElementError: foundOrganizationName,
-					tag: `invalid ${tva.e_CreditsItem.elementize()}`,
+					key: keys.k_InvalidElement,
 				});
 			if (foundCharacter.length > 0 && foundPersonName.length == 0)
 				errs.addError({
 					code: `${errCode}-54`,
 					message: `${tva.e_Character.elementize()} in ${tva.e_CreditsItem.elementize()} requires ${tva.e_PersonName.elementize()}`,
 					line: CreditsItem.line(),
-					tag: `invalid ${tva.e_CreditsItem.elementize()}`,
+					key: keys.k_InvalidElement,
 				});
 			if (foundOrganizationName.length > 0 && (foundPersonName.length > 0 || foundCharacter.length > 0))
 				errs.addError({
 					code: `${errCode}-55`,
 					message: `${tva.e_OrganizationName.elementize()} can only be present when ${tva.e_PersonName.elementize()} and ${tva.e_OrganizationName.elementize()} are absent in ${tva.e_CreditsItem.elementize()}`,
 					line: CreditsItem.line(),
-					tag: `invalid ${tva.e_CreditsItem.elementize()}`,
+					key: keys.k_InvalidElement,
 				});
 		}
 		if (numCreditsItems > dvbi.MAX_CREDITS_ITEMS)
@@ -859,7 +865,7 @@ export default class ContentGuideCheck {
 				code: `${errCode}-16`,
 				message: `a maximum of ${dvbi.MAX_CREDITS_ITEMS} ${tva.e_CreditsItem.elementize()} elements are permitted in ${tva.e_CreditsList.elementize()}`,
 				line: CreditsItem.line(),
-				tag: `excess ${tva.e_CreditsItem.elementize()}`,
+				key: `excess ${tva.e_CreditsItem.elementize()}`,
 			});
 	}
 
@@ -947,7 +953,7 @@ export default class ContentGuideCheck {
 						errs.addError({
 							code: "VP011",
 							message: `${tva.e_MediaUri.elementize()}=${MediaURI.text().quote()} is not a valid Pagination URL`,
-							key: "invalid URL",
+							key: keys.k_InvalidURL,
 							fragment: MediaURI,
 						});
 				} else
@@ -955,6 +961,7 @@ export default class ContentGuideCheck {
 						code: "VP010",
 						message: `${tva.e_MediaLocator.elementize()}${tva.e_MediaUri.elementize()} not specified for pagination link`,
 						fragment: RelatedMaterial,
+						key: keys.k_MissingElement,
 					});
 			}
 		}
@@ -1061,6 +1068,7 @@ export default class ContentGuideCheck {
 					code: "TA003",
 					message: `${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} does not designate a Template AIT`,
 					fragment: HowRelated,
+					key: "not template AIT",
 				});
 			else {
 				if (MediaLocator.length != 0)
@@ -1078,6 +1086,7 @@ export default class ContentGuideCheck {
 												code: "TA011",
 												message: `invalid ${tva.a_contentType.attribute()}=${contentType.quote()} specified for ${RelatedMaterial.name().elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`,
 												fragment: child,
+												key: keys.k_InvalidValue,
 											});
 									}
 								}
@@ -2623,7 +2632,7 @@ export default class ContentGuideCheck {
 						errs.addError({
 							code: `${errcode}-2`,
 							message: `${node.name().elementize()}=${node.text().quote()} is not a valid AIT URL`,
-							key: "invalid URL",
+							key: keys.k_InvalidURL,
 							fragment: node,
 						});
 					break;
@@ -3116,7 +3125,7 @@ export default class ContentGuideCheck {
 			errs.addError({
 				code: "CG002",
 				message: `Root element is not ${tva.e_TVAMain.elementize()}`,
-				key: "XSD validation",
+				key: keys.k_XSDValidation,
 			});
 			return;
 		}

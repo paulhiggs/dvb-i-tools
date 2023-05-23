@@ -4,6 +4,7 @@ import { WARNING, APPLICATION } from "./ErrorList.js";
 import { tva } from "./TVA_definitions.js";
 import { isIn, CountChildElements } from "./utils.js";
 import { datatypeIs } from "./phlib/phlib.js";
+import { keys } from "./CommonErrors.js";
 
 const NO_DOCUMENT_LANGUAGE = "**"; // this should not be needed as @xml:lang is required in <ServiceList> and <TVAMain> root elements
 
@@ -31,7 +32,7 @@ export function checkLanguage(validator, lang, loc, element, errs, errCode) {
 			langOK = true;
 			break;
 		case validator.languageUnknown:
-			errs.addError({ code: `${errCode}-1`, message: `${loc ? loc : "language"} value ${lang.quote()} is invalid`, fragment: element, key: "invalid language" });
+			errs.addError({ code: `${errCode}-1`, message: `${loc ? loc : "language"} value ${lang.quote()} is invalid`, fragment: element, key: keys.k_InvalidLanguage });
 			break;
 		case validator.languageRedundant:
 			errs.addError({
@@ -43,10 +44,10 @@ export function checkLanguage(validator, lang, loc, element, errs, errCode) {
 			});
 			break;
 		case validator.languageNotSpecified:
-			errs.addError({ code: `${errCode}-3`, message: `${loc ? loc : "language"} value is not provided`, fragment: element, key: "unspecified language" });
+			errs.addError({ code: `${errCode}-3`, message: `${loc ? loc : "language"} value is not provided`, fragment: element, key: keys.k_UnspecifiedLanguage });
 			break;
 		case validator.languageInvalidType:
-			errs.addError({ code: `${errCode}-4`, message: `language is not a String, its "${datatypeIs(lang)}"`, fragment: element, key: "invalid language" });
+			errs.addError({ code: `${errCode}-4`, message: `language is not a String, its "${datatypeIs(lang)}"`, fragment: element, key: keys.k_InvalidLanguage });
 			break;
 	}
 	return langOK;

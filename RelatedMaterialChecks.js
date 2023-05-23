@@ -11,6 +11,7 @@ import { checkAttributes, checkTopElementsAndCardinality } from "./schema_checks
 import { isJPEGmime, isPNGmime, isWebPmime, validImageSet, isAllowedImageMime } from "./MIME_checks.js";
 import { isHTTPURL } from "./pattern_checks.js";
 import { cg_InvalidHrefValue } from "./CommonErrors.js";
+import { keys } from "./CommonErrors.js";
 
 /**
  * verifies if the specified RelatedMaterial contains a Promotional Still Image (per A177 clause 6.10.13). Only a single image is permitted and the format
@@ -127,7 +128,12 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 					}
 				}
 				if (!isHTTPURL(child.text()))
-					errs.addError({ code: `${errCode}-25`, message: `${tva.e_MediaUri.elementize()}=${child.text().quote()} is not a valid Image URL`, key: "invalid URL", fragment: child });
+					errs.addError({
+						code: `${errCode}-25`,
+						message: `${tva.e_MediaUri.elementize()}=${child.text().quote()} is not a valid Image URL`,
+						key: keys.k_InvalidURL,
+						fragment: child,
+					});
 			}
 		});
 	if (languageValidator && MediaLocator.attr(dvbi.a_contentLanguage))

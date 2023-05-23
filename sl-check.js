@@ -47,8 +47,8 @@ import { sl_InvalidHrefValue } from "./CommonErrors.js";
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.js";
 
-import "colors";
 import { writeOut } from "./Validator.js";
+import { keys } from "./CommonErrors.js";
 
 const ANY_NAMESPACE = "$%$!!";
 const LCN_TABLE_NO_TARGETREGION = "unspecifiedRegion",
@@ -502,7 +502,7 @@ export default class ServiceListCheck {
 						errs.addError({
 							code: "AR033",
 							message: `invalid country code (${country}) for region ${displayRegionID}`,
-							key: "invalid country code",
+							key: keys.k_InvalidCountryCode,
 							line: Region.line(),
 						});
 				});
@@ -532,7 +532,7 @@ export default class ServiceListCheck {
 					errs.addError({
 						code: "AR012",
 						message: `Duplicate ${dvbi.a_regionID.attribute()} ${displayRegionID}`,
-						key: `duplicate ${dvbi.a_regionID}`,
+						key: `duplicate ${dvbi.a_regionID.attribute()}`,
 						line: Region.line(),
 					});
 				else
@@ -547,7 +547,7 @@ export default class ServiceListCheck {
 				errs.addError({
 					code: "AR013",
 					message: `${dvbi.a_regionID.attribute()} is required`,
-					key: `no ${dvbi.a_regionID}`,
+					key: `no ${dvbi.a_regionID.attribute()}`,
 					line: Region.line(),
 				});
 		} else {
@@ -556,7 +556,7 @@ export default class ServiceListCheck {
 					errs.addError({
 						code: "AR021",
 						message: `Duplicate ${dvbi.a_regionID.attribute()} ${displayRegionID}`,
-						key: `duplicate ${dvbi.a_regionID}`,
+						key: `duplicate ${dvbi.a_regionID.attribute()}`,
 						line: Region.line(),
 					});
 				else
@@ -570,7 +570,7 @@ export default class ServiceListCheck {
 				errs.addError({
 					code: "AR020",
 					message: `${dvbi.a_regionID.attribute()} is required`,
-					key: `no ${dvbi.a_regionID}`,
+					key: `no ${dvbi.a_regionID.attribute()}`,
 					line: Region.line(),
 				});
 		}
@@ -1007,7 +1007,7 @@ export default class ServiceListCheck {
 			errs.addError({
 				code: errCode,
 				message: `${tva.a_lang.attribute()} is required for ${node.name().quote()}`,
-				key: "unspecified language",
+				key: keys.k_UnspecifiedLanguage,
 				line: node.line(),
 			});
 			return parentLang;
@@ -1626,7 +1626,7 @@ export default class ServiceListCheck {
 					code: "SI182",
 					message: InvalidCountryCode(DVBTtargetCountry.text(), "DVB-T", `service ${thisServiceId.quote()}`),
 					fragment: DVBTtargetCountry,
-					key: "invalid country code",
+					key: keys.k_InvalidCountryCode,
 				});
 		}
 
@@ -1639,7 +1639,7 @@ export default class ServiceListCheck {
 					code: "SI191",
 					message: InvalidCountryCode(DVBCtargetCountry.text(), "DVB-C", `service ${thisServiceId.quote()}`),
 					fragment: DVBCtargetCountry,
-					key: "invalid country code",
+					key: keys.k_InvalidCountryCode,
 				});
 		}
 
@@ -1659,7 +1659,7 @@ export default class ServiceListCheck {
 					code: "SI223",
 					message: `${RTSPURL.text().quote()} is not a valid RTSP URL`,
 					fragment: RTSPURL,
-					key: "invalid URL",
+					key: keys.k_InvalidURL,
 				});
 		}
 
@@ -1801,7 +1801,7 @@ export default class ServiceListCheck {
 					code: "SL161",
 					message: `service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} type ${ServiceGenre.attr(dvbi.a_href).value().quote()}`,
 					fragment: ServiceGenre,
-					key: `invalid ${dvbi.e_ServiceGenre} type`,
+					key: `invalid ${tva.a_type.attribute(dvbi.e_ServiceGenre)}`,
 				});
 
 			if (ServiceGenre.attr(dvbi.a_href) && !this.allowedGenres.isIn(ServiceGenre.attr(dvbi.a_href).value()))
@@ -1811,7 +1811,7 @@ export default class ServiceListCheck {
 						.value()
 						.quote()} (must be content genre)`,
 					fragment: ServiceGenre,
-					key: `invalid ${dvbi.e_ServiceGenre}`,
+					key: `invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)}`,
 				});
 		}
 		//check <ServiceType>
@@ -1821,7 +1821,7 @@ export default class ServiceListCheck {
 				code: "SL164",
 				message: `service ${thisServiceId.quote()} has an invalid ${dvbi.e_ServiceType.elementize()} (${ServiceType.attr(dvbi.a_href).value()})`,
 				fragment: ServiceType,
-				key: `invalid ${dvbi.e_ServiceType}`,
+				key: `invalid ${dvbi.a_href.attribute(dvbi.e_ServiceType)}`,
 			});
 
 		// check <ServiceDescription>
@@ -1845,7 +1845,7 @@ export default class ServiceListCheck {
 					.value()
 					.quote()} for service ${thisServiceId} ${this.RecordingInfoCSvalues.valuesRange()}`,
 				fragment: RecordingInfo,
-				key: `invalid ${dvbi.e_RecordingInfo}`,
+				key: `invalid ${dvbi.a_href.attribute(dvbi.e_RecordingInfo)}`,
 			});
 
 		// check <ContentGuideSource>
@@ -1951,7 +1951,7 @@ export default class ServiceListCheck {
 						code: "SL228",
 						message: `one of ${dvbi.a_country.attribute()},  ${dvbi.a_region.attribute()} or ${dvbi.a_ranking.attribute()} must be provided`,
 						fragment: PE,
-						key: `missing value`,
+						key: "missing value",
 					});
 				} else {
 					// if @region is used, it must be in the RegionList
@@ -1963,7 +1963,7 @@ export default class ServiceListCheck {
 								code: "SL229",
 								message: `regionID ${prominenceRegion.quote()} not specified in ${dvbi.e_RegionList.elementize()}`,
 								fragment: PE,
-								key: "invalid region",
+								key: keys.k_InvalidRegion,
 							});
 					}
 					// if @country and @region are used, they must be per the regin list
@@ -1978,7 +1978,7 @@ export default class ServiceListCheck {
 										code: "SL230",
 										message: `regionID ${prominenceRegion.quote()} not specified for country ${prominenceCountry.quote()} in ${dvbi.e_RegionList.elementize()}`,
 										fragment: PE,
-										key: "invalid region",
+										key: keys.k_InvalidRegion,
 									});
 								else found.used = true;
 							}
@@ -1991,7 +1991,7 @@ export default class ServiceListCheck {
 							code: "SL244",
 							message: InvalidCountryCode(PE.attr(dvbi.a_country).value(), null, `service ${thisServiceId.quote()}`),
 							fragment: PE,
-							key: "invalid country code",
+							key: keys.k_InvalidCountryCode,
 						});
 					}
 
@@ -2068,7 +2068,7 @@ export default class ServiceListCheck {
 				code: "SL004",
 				message: `Root element is not ${dvbi.e_ServiceList.elementize()}`,
 				line: SL.root().line(),
-				key: "XSD validation",
+				key: keys.k_XSDValidation,
 			});
 			return;
 		}
@@ -2078,7 +2078,7 @@ export default class ServiceListCheck {
 				code: "SL003",
 				message: `namespace is not provided for ${dvbi.e_ServiceList.elementize()}`,
 				line: SL.root().line(),
-				key: "XSD validation",
+				key: keys.k_XSDValidation,
 			});
 			return;
 		}
@@ -2098,7 +2098,7 @@ export default class ServiceListCheck {
 			errs.addError({
 				code: "SL010",
 				message: `Unsupported namespace ${props.namespace.quote()}`,
-				key: "XSD validation",
+				key: keys.k_XSDValidation,
 			});
 			return;
 		}
@@ -2122,7 +2122,7 @@ export default class ServiceListCheck {
 								code: "SL012",
 								message: `${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is invalid`,
 								line: SL.root().line(),
-								key: "invalid language",
+								key: keys.k_InvalidLanguage,
 							});
 							break;
 						case this.knownLanguages.languageRedundant:
@@ -2138,7 +2138,7 @@ export default class ServiceListCheck {
 								code: "SL014",
 								message: `${dvbi.e_ServiceList} xml:${tva.a_lang} value is not provided`,
 								line: SL.root().line(),
-								key: "unspecified language",
+								key: keys.k_UnspecifiedLanguage,
 							});
 							break;
 						case this.knownLanguages.languageInvalidType:
@@ -2146,7 +2146,7 @@ export default class ServiceListCheck {
 								code: "SL015",
 								message: `${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is invalid`,
 								line: SL.root().line(),
-								key: "invalid language",
+								key: keys.k_InvalidLanguage,
 							});
 							break;
 					}

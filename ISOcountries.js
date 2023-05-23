@@ -12,9 +12,8 @@ import { isHTTPURL } from "./pattern_checks.js";
  */
 function loadCountryData(countryData) {
 	return JSON.parse(countryData, function (key, value) {
-		if (key == "numeric") {
-			return Number(value);
-		} else if (key == "alpha2") {
+		if (key == "numeric") return Number(value);
+		else if (key == "alpha2") {
 			if (value.length != 2) return "**";
 			else return value;
 		} else if (key == "alpha3") {
@@ -51,11 +50,8 @@ export default class ISOcountries {
 			countriesFile,
 			{ encoding: "utf-8" },
 			function (err, data) {
-				if (!err) {
-					this.countriesList = loadCountryData(data);
-				} else {
-					console.log(err.error);
-				}
+				if (!err) this.countriesList = loadCountryData(data);
+				else console.log(err.error);
 			}.bind(this)
 		);
 	}

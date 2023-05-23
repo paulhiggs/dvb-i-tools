@@ -11,6 +11,8 @@ import { OLD, DRAFT } from "./sl-check.js";
 import { isIn, xPath } from "./utils.js";
 import { datatypeIs } from "./phlib/phlib.js";
 
+import { keys } from "./CommonErrors.js";
+
 /**
  * check that the specified child elements are in the parent element
  *
@@ -155,11 +157,11 @@ export var hasChild = (elem, childElementName) => (elem ? elem.childNodes().find
  */
 export function SchemaCheck(XML, XSD, errs, errCode) {
 	if (!XML.validate(XSD)) {
-		let prettyXML = format(XML.toString(), { collapseContent: true, lineSeparator: "\n" /*, strictMode: true */ });
+		let prettyXML = format(XML.toString(), { collapseContent: true, lineSeparator: "\n", strictMode: true });
 		let lines = prettyXML.split("\n");
 		XML.validationErrors.forEach((ve) => {
 			let splt = ve.toString().split("\r");
-			splt.forEach((err) => errs.addError({ code: errCode, message: err, fragment: lines[ve.line - 1], line: ve.line, key: "XSD validation" }));
+			splt.forEach((err) => errs.addError({ code: errCode, message: err, fragment: lines[ve.line - 1], line: ve.line, key: keys.k_XSDValidation }));
 		});
 	}
 }
