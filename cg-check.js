@@ -763,110 +763,111 @@ export default class ContentGuideCheck {
 				});
 		}
 
-		let singleElementError = (elementName, parentElementName) => `only a single ${elementName.elementize()} is permitted in ${parentElementName.elementize()}`;
 		let CreditsList = BasicDescription.get(xPath(props.prefix, tva.e_CreditsList), props.schema);
-		if (!CreditsList) return;
-		let ci = 0,
-			numCreditsItems = 0,
-			CreditsItem;
-		while ((CreditsItem = CreditsList.get(xPath(props.prefix, tva.e_CreditsItem, ++ci), props.schema)) != null) {
-			numCreditsItems++;
-			checkAttributes(CreditsItem, [tva.a_role], [], tvaEA.CreditsItem, errs, `${errCode}-1`);
-			if (CreditsItem.attr(tva.a_role)) {
-				let CreditsItemRole = CreditsItem.attr(tva.a_role).value();
-				if (!this.allowedCreditItemRoles.isIn(CreditsItemRole))
+		if (CreditsList) {
+			let ci = 0,
+				numCreditsItems = 0,
+				CreditsItem;
+			while ((CreditsItem = CreditsList.get(xPath(props.prefix, tva.e_CreditsItem, ++ci), props.schema)) != null) {
+				numCreditsItems++;
+				checkAttributes(CreditsItem, [tva.a_role], [], tvaEA.CreditsItem, errs, `${errCode}-1`);
+				if (CreditsItem.attr(tva.a_role)) {
+					let CreditsItemRole = CreditsItem.attr(tva.a_role).value();
+					if (!this.allowedCreditItemRoles.isIn(CreditsItemRole))
+						errs.addError({
+							code: `${errCode}-2`,
+							message: `${CreditsItemRole.quote()} is not valid for ${tva.a_role.attribute(tva.e_CreditsItem)}`,
+							fragment: CreditsItem,
+							key: keys.k_InvalidValue,
+						});
+				}
+
+				let foundPersonName = [],
+					foundCharacter = [],
+					foundOrganizationName = [];
+				if (CreditsItem.childNodes())
+					CreditsItem.childNodes().forEachSubElement((elem) => {
+						switch (elem.name()) {
+							case tva.e_PersonName:
+								foundPersonName.push(elem);
+								// required to have a GivenName optionally have a FamilyName
+								ValidateName(elem, errs, `${errCode}-11`);
+								checkXMLLangs(tva.e_GivenName, tva.e_PersonName, elem, errs, `${errCode}-12`, this.knownLanguages);
+								checkXMLLangs(tva.e_FamilyName, tva.e_PersonName, elem, errs, `${errCode}-13`, this.knownLanguages);
+								break;
+							case tva.e_Character:
+								foundCharacter.push(elem);
+								// required to have a GivenName optionally have a FamilyName
+								ValidateName(elem, errs, `${errCode}-21`);
+								checkXMLLangs(tva.e_GivenName, tva.e_Character, elem, errs, `${errCode}-22`, this.knownLanguages);
+								checkXMLLangs(tva.e_FamilyName, tva.e_Character, elem, errs, `${errCode}-23`, this.knownLanguages);
+								break;
+							case tva.e_OrganizationName:
+								foundOrganizationName.push(elem);
+								if (unEntity(elem.text()).length > dvbi.MAX_ORGANIZATION_NAME_LENGTH)
+									errs.addError({
+										code: `${errCode}-31`,
+										message: `length of ${tva.e_OrganizationName.elementize()} in ${tva.e_CreditsItem.elementize()} exceeds ${dvbi.MAX_ORGANIZATION_NAME_LENGTH} characters`,
+										fragment: elem,
+										key: keys.k_LengthError,
+									});
+								break;
+							default:
+								if (elem.name() != "text")
+									errs.addError({
+										code: `${errCode}-91`,
+										message: `extra element ${elem.name().elementize()} found in ${tva.e_CreditsItem.elementize()}`,
+										fragment: elem,
+										key: "unexpected element",
+									});
+						}
+					});
+				let singleElementError = (elementName, parentElementName) => `only a single ${elementName.elementize()} is permitted in ${parentElementName.elementize()}`;
+				checkXMLLangs(tva.e_OrganizationName, tva.e_CreditsItem, CreditsItem, errs, `${errCode}-11`, this.knownLanguages);
+				if (foundPersonName.length > 1)
 					errs.addError({
-						code: `${errCode}-2`,
-						message: `${CreditsItemRole.quote()} is not valid for ${tva.a_role.attribute(tva.e_CreditsItem)}`,
-						fragment: CreditsItem,
-						key: keys.k_InvalidValue,
+						code: `${errCode}-51`,
+						message: singleElementError(tva.e_PersonName, tva.e_CreditsItem),
+						multiElementError: foundPersonName,
+						key: keys.k_InvalidElement,
+					});
+				if (foundCharacter.length > 1)
+					errs.addError({
+						code: `${errCode}-52`,
+						message: singleElementError(tva.e_Character, tva.e_CreditsItem),
+						multiElementError: foundCharacter,
+						key: keys.k_InvalidElement,
+					});
+				if (foundOrganizationName.length > 1)
+					errs.addError({
+						code: `${errCode}-53`,
+						message: singleElementError(tva.e_OrganizationName, tva.e_CreditsItem),
+						multiElementError: foundOrganizationName,
+						key: keys.k_InvalidElement,
+					});
+				if (foundCharacter.length > 0 && foundPersonName.length == 0)
+					errs.addError({
+						code: `${errCode}-54`,
+						message: `${tva.e_Character.elementize()} in ${tva.e_CreditsItem.elementize()} requires ${tva.e_PersonName.elementize()}`,
+						line: CreditsItem.line(),
+						key: keys.k_InvalidElement,
+					});
+				if (foundOrganizationName.length > 0 && (foundPersonName.length > 0 || foundCharacter.length > 0))
+					errs.addError({
+						code: `${errCode}-55`,
+						message: `${tva.e_OrganizationName.elementize()} can only be present when ${tva.e_PersonName.elementize()} and ${tva.e_OrganizationName.elementize()} are absent in ${tva.e_CreditsItem.elementize()}`,
+						line: CreditsItem.line(),
+						key: keys.k_InvalidElement,
 					});
 			}
-
-			let foundPersonName = [],
-				foundCharacter = [],
-				foundOrganizationName = [];
-			if (CreditsItem.childNodes())
-				CreditsItem.childNodes().forEachSubElement((elem) => {
-					switch (elem.name()) {
-						case tva.e_PersonName:
-							foundPersonName.push(elem);
-							// required to have a GivenName optionally have a FamilyName
-							ValidateName(elem, errs, `${errCode}-11`);
-							checkXMLLangs(tva.e_GivenName, tva.e_PersonName, elem, errs, `${errCode}-12`, this.knownLanguages);
-							checkXMLLangs(tva.e_FamilyName, tva.e_PersonName, elem, errs, `${errCode}-13`, this.knownLanguages);
-							break;
-						case tva.e_Character:
-							foundCharacter.push(elem);
-							// required to have a GivenName optionally have a FamilyName
-							ValidateName(elem, errs, `${errCode}-21`);
-							checkXMLLangs(tva.e_GivenName, tva.e_Character, elem, errs, `${errCode}-22`, this.knownLanguages);
-							checkXMLLangs(tva.e_FamilyName, tva.e_Character, elem, errs, `${errCode}-23`, this.knownLanguages);
-							break;
-						case tva.e_OrganizationName:
-							foundOrganizationName.push(elem);
-							if (unEntity(elem.text()).length > dvbi.MAX_ORGANIZATION_NAME_LENGTH)
-								errs.addError({
-									code: `${errCode}-31`,
-									message: `length of ${tva.e_OrganizationName.elementize()} in ${tva.e_CreditsItem.elementize()} exceeds ${dvbi.MAX_ORGANIZATION_NAME_LENGTH} characters`,
-									fragment: elem,
-									key: keys.k_LengthError,
-								});
-							break;
-						default:
-							if (elem.name() != "text")
-								errs.addError({
-									code: `${errCode}-41`,
-									message: `extra element ${elem.name().elementize()} found in ${tva.e_CreditsItem.elementize()}`,
-									fragment: elem,
-									key: "unexpected element",
-								});
-					}
-				});
-			checkXMLLangs(tva.e_OrganizationName, tva.e_CreditsItem, CreditsItem, errs, `${errCode}-11`, this.knownLanguages);
-			if (foundPersonName.length > 1)
+			if (numCreditsItems > dvbi.MAX_CREDITS_ITEMS)
 				errs.addError({
-					code: `${errCode}-51`,
-					message: singleElementError(tva.e_PersonName, tva.e_CreditsItem),
-					multiElementError: foundPersonName,
-					key: keys.k_InvalidElement,
-				});
-			if (foundCharacter.length > 1)
-				errs.addError({
-					code: `${errCode}-52`,
-					message: singleElementError(tva.e_Character, tva.e_CreditsItem),
-					multiElementError: foundCharacter,
-					key: keys.k_InvalidElement,
-				});
-			if (foundOrganizationName.length > 1)
-				errs.addError({
-					code: `${errCode}-53`,
-					message: singleElementError(tva.e_OrganizationName, tva.e_CreditsItem),
-					multiElementError: foundOrganizationName,
-					key: keys.k_InvalidElement,
-				});
-			if (foundCharacter.length > 0 && foundPersonName.length == 0)
-				errs.addError({
-					code: `${errCode}-54`,
-					message: `${tva.e_Character.elementize()} in ${tva.e_CreditsItem.elementize()} requires ${tva.e_PersonName.elementize()}`,
+					code: `${errCode}-16`,
+					message: `a maximum of ${dvbi.MAX_CREDITS_ITEMS} ${tva.e_CreditsItem.elementize()} elements are permitted in ${tva.e_CreditsList.elementize()}`,
 					line: CreditsItem.line(),
-					key: keys.k_InvalidElement,
-				});
-			if (foundOrganizationName.length > 0 && (foundPersonName.length > 0 || foundCharacter.length > 0))
-				errs.addError({
-					code: `${errCode}-55`,
-					message: `${tva.e_OrganizationName.elementize()} can only be present when ${tva.e_PersonName.elementize()} and ${tva.e_OrganizationName.elementize()} are absent in ${tva.e_CreditsItem.elementize()}`,
-					line: CreditsItem.line(),
-					key: keys.k_InvalidElement,
+					key: `excess ${tva.e_CreditsItem.elementize()}`,
 				});
 		}
-		if (numCreditsItems > dvbi.MAX_CREDITS_ITEMS)
-			errs.addError({
-				code: `${errCode}-16`,
-				message: `a maximum of ${dvbi.MAX_CREDITS_ITEMS} ${tva.e_CreditsItem.elementize()} elements are permitted in ${tva.e_CreditsList.elementize()}`,
-				line: CreditsItem.line(),
-				key: `excess ${tva.e_CreditsItem.elementize()}`,
-			});
 	}
 
 	/**

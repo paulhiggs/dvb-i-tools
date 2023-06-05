@@ -14,18 +14,19 @@ import { cg_InvalidHrefValue } from "./CommonErrors.js";
 import { keys } from "./CommonErrors.js";
 
 /**
- * verifies if the specified RelatedMaterial contains a Promotional Still Image (per A177 clause 6.10.13). Only a single image is permitted and the format
+ * verifies if the specified RelatedMaterial contains a image of the specified type(s). Only a single image is permitted and the format
  * specified in <MediaLocator><MediaURI> must match that specified in <Format>
  *
  * @param {Object} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
  * @param {Object} errs              The class where errors and warnings relating to the serivce list processing are stored
  * @param {String} errcode           Error code prefix for reporting
  * @param {string} location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
- * @param {Object} languageValidator Validator class to check any @
+ * @param {array}  allowedHowRelated The set of permitted
+ * @param {Object} languageValidator Validator class to check any @xml:lang
  */
-export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, location, languageValidator = null) {
+function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, allowedHowRelated, languageValidator = null) {
 	if (!RelatedMaterial) {
-		errs.addError({ type: APPLICATION, code: "PS000", message: "ValidatePromotionalStillImage() called with RelatedMaterial==null" });
+		errs.addError({ type: APPLICATION, code: "PS000", message: "validateImageRelatedMaterial() called with RelatedMaterial==null" });
 		return;
 	}
 
@@ -60,10 +61,10 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 	if (!HowRelated || !MediaLocator) return;
 	checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, `${errCode}-2`);
 
-	if (HowRelated.attr(tva.a_href) && HowRelated.attr(tva.a_href).value() != tva.cs_PromotionalStillImage) {
+	if (HowRelated.attr(tva.a_href) && !allowedHowRelated.includes(HowRelated.attr(tva.a_href).value())) {
 		errs.addError({
 			code: `${errCode}-10`,
-			message: `${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} does not designate a Promotional Still Image`,
+			message: `${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} ius not valid for this use`,
 			fragment: HowRelated,
 		});
 		return;
@@ -145,6 +146,20 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 			fragment: MediaLocator,
 			key: `no ${tva.e_MediaUri}`,
 		});
+}
+
+/**
+ * verifies if the specified RelatedMaterial contains a Promotional Still Image (per A177 clause 6.10.13). Only a single image is permitted and the format
+ * specified in <MediaLocator><MediaURI> must match that specified in <Format>
+ *
+ * @param {Object} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
+ * @param {Object} errs              The class where errors and warnings relating to the serivce list processing are stored
+ * @param {String} errcode           Error code prefix for reporting
+ * @param {string} location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+ * @param {Object} languageValidator Validator class to check any @xml:lang
+ */
+export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, location, languageValidator = null) {
+	validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, [tva.cs_PromotionalStillImage], languageValidator);
 }
 
 /**
