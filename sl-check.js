@@ -1644,7 +1644,101 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><DVBSDeliveryParameters>
-		// checked by schema validation
+		let DVBSDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DVBSDeliveryParameters), props.schema);
+		if (DVBSDeliveryParameters) {
+			const ERROR_KEY = "satellite tuning";
+			const MODULATION_S = "DVB-S",
+				MODULATION_S2 = "DVB-S2",
+				MODULATION_S2X = "DVB-S2X";
+			let ModulationSystem = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_ModulationSystem), props.schema);
+			let RollOff = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_RollOff), props.schema);
+			let ModulationType = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_ModulationType), props.schema);
+
+			if (ModulationSystem) {
+				let S_RollOff = ["0.35"];
+				let S2_RollOff = ["0.25", "0.20"].concat(S_RollOff);
+				let S2X_RollOff = ["0.15", "0.10", "0.05"].concat(S2_RollOff);
+				let CheckRollOff = (element, allowed, modulation) => {
+					if (element && !isIn(allowed, element.text()))
+						errs.addError({
+							code: "SI201",
+							key: ERROR_KEY,
+							message: `${dvbi.e_RollOff}=${element.text().quote()} is not permitted for ${modulation} modulation system`,
+							fragment: element,
+						});
+				};
+				let S_Modulation = ["QPSK"];
+				let S2_Modulation = ["8PSK"].concat(S_Modulation);
+				let S2X_Modulation = ["8PSK-L", "16APSK", "16APSK-L", "32APSK", "32APSK-L", "64APSK", "64APSK-L"].concat(S2_Modulation);
+				let CheckModulation = (element, allowed, modulation) => {
+					if (element && !isIn(allowed, element.text()))
+						errs.addError({
+							code: "SI202",
+							key: ERROR_KEY,
+							message: `${dvbi.e_ModulationType}=${element.text().quote()} is not permitted for ${modulation} modulation system`,
+							fragment: element,
+						});
+				};
+
+				let DisallowedElement = (element, childElementName, modulation) => {
+					if (hasChild(element, childElementName))
+						errs.addError({
+							code: "SI204",
+							key: ERROR_KEY,
+							message: `${childElementName.elementize()} is not permitted for this ${dvbi.e_ModulationSystem}="${modulation}"`,
+							fragment: element.get(xPath(props.prefix, childElementName), props.schema),
+						});
+				};
+
+				switch (ModulationSystem.text()) {
+					case MODULATION_S:
+						CheckRollOff(RollOff, S_RollOff, MODULATION_S);
+						CheckModulation(ModulationType, S_Modulation, MODULATION_S);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodCode, MODULATION_S);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, MODULATION_S);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, MODULATION_S);
+						break;
+					case MODULATION_S2:
+						CheckRollOff(RollOff, S2_RollOff, MODULATION_S2);
+						CheckModulation(ModulationType, S2_Modulation, MODULATION_S2);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodCode, MODULATION_S2);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, MODULATION_S2);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, MODULATION_S2);
+						break;
+					case MODULATION_S2X:
+						CheckRollOff(RollOff, S2X_RollOff, MODULATION_S2X); // should not happen as value errors are detected in schema validation
+						CheckModulation(ModulationType, S2X_Modulation, MODULATION_S2X);
+						let ChannelBonding = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_ChannelBonding), props.schema);
+						if (ChannelBonding) {
+							let fq = 0,
+								Frequency,
+								freqs = [],
+								primarySpecified = false;
+							while ((Frequency = ChannelBonding.get(xPath(props.prefix, dvbi.e_Frequency, ++fq), props.schema)) != null) {
+								if (isIn(freqs, Frequency.text()))
+									errs.addError({
+										code: "SI205",
+										key: ERROR_KEY,
+										message: `${dvbi.e_Frequency.elementize()} value ${Frequency.text().quote()} already specified`,
+										fragment: Frequency,
+									});
+								else freqs.push(Frequency.text());
+							}
+							if (Frequency.attr(dvbi.a_primary) && isIn(["true"], Frequency.attr(dvbi.a_primary).value(), false)) {
+								if (primarySpecified)
+									errs.addError({
+										code: "SI206",
+										key: ERROR_KEY,
+										message: `${dvbi.e_Frequency.elementize()} already specified with ${dvbi.a_primary.attribute()}=true`,
+										fragment: Frequency,
+									});
+								else primarySpecified = true;
+							}
+						}
+						break;
+				}
+			}
+		}
 
 		// <ServiceInstance><SATIPDeliveryParameters>
 		// SAT-IP Delivery Parameters can only exist if DVB-T or DVB-S delivery parameters are specified
