@@ -9,6 +9,7 @@ import { elementize, quote } from "./phlib/phlib.js";
 import ErrorList, { WARNING, APPLICATION } from "./ErrorList.js";
 import ClassificationScheme from "./ClassificationScheme.js";
 
+import { sats } from "./DVB_definitions.js";
 import { dvbi, dvbiEC, dvbEA, XMLdocumentType } from "./DVB-I_definitions.js";
 
 import { tva, tvaEA } from "./TVA_definitions.js";
@@ -1647,17 +1648,12 @@ export default class ServiceListCheck {
 		let DVBSDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DVBSDeliveryParameters), props.schema);
 		if (DVBSDeliveryParameters) {
 			const ERROR_KEY = "satellite tuning";
-			const MODULATION_S = "DVB-S",
-				MODULATION_S2 = "DVB-S2",
-				MODULATION_S2X = "DVB-S2X";
 			let ModulationSystem = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_ModulationSystem), props.schema);
 			let RollOff = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_RollOff), props.schema);
 			let ModulationType = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_ModulationType), props.schema);
+			let FEC = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_FEC), props.schema);
 
 			if (ModulationSystem) {
-				let S_RollOff = ["0.35"];
-				let S2_RollOff = ["0.25", "0.20"].concat(S_RollOff);
-				let S2X_RollOff = ["0.15", "0.10", "0.05"].concat(S2_RollOff);
 				let CheckRollOff = (element, allowed, modulation) => {
 					if (element && !isIn(allowed, element.text()))
 						errs.addError({
@@ -1667,15 +1663,23 @@ export default class ServiceListCheck {
 							fragment: element,
 						});
 				};
-				let S_Modulation = ["QPSK"];
-				let S2_Modulation = ["8PSK"].concat(S_Modulation);
-				let S2X_Modulation = ["8PSK-L", "16APSK", "16APSK-L", "32APSK", "32APSK-L", "64APSK", "64APSK-L"].concat(S2_Modulation);
+
 				let CheckModulation = (element, allowed, modulation) => {
 					if (element && !isIn(allowed, element.text()))
 						errs.addError({
 							code: "SI202",
 							key: ERROR_KEY,
 							message: `${dvbi.e_ModulationType}=${element.text().quote()} is not permitted for ${modulation} modulation system`,
+							fragment: element,
+						});
+				};
+
+				let CheckFEC = (element, allowed, modulation) => {
+					if (element && !isIn(allowed, element.text()))
+						errs.addError({
+							code: "SI203",
+							key: ERROR_KEY,
+							message: `${dvbi.e_FEC}=${element.text().quote()} is not permitted for ${modulation} modulation system`,
 							fragment: element,
 						});
 				};
@@ -1691,23 +1695,26 @@ export default class ServiceListCheck {
 				};
 
 				switch (ModulationSystem.text()) {
-					case MODULATION_S:
-						CheckRollOff(RollOff, S_RollOff, MODULATION_S);
-						CheckModulation(ModulationType, S_Modulation, MODULATION_S);
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodCode, MODULATION_S);
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, MODULATION_S);
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, MODULATION_S);
+					case sats.MODULATION_S:
+						CheckRollOff(RollOff, sats.S_RollOff, sats.MODULATION_S);
+						CheckModulation(ModulationType, sats.S_Modulation, sats.MODULATION_S);
+						CheckFEC(FEC, sats.S_FEC, sats.MODULATION_S);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodCode, sats.MODULATION_S);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S);
 						break;
-					case MODULATION_S2:
-						CheckRollOff(RollOff, S2_RollOff, MODULATION_S2);
-						CheckModulation(ModulationType, S2_Modulation, MODULATION_S2);
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodCode, MODULATION_S2);
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, MODULATION_S2);
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, MODULATION_S2);
+					case sats.MODULATION_S2:
+						CheckRollOff(RollOff, sats.S2_RollOff, sats.MODULATION_S2);
+						CheckModulation(ModulationType, sats.S2_Modulation, sats.MODULATION_S2);
+						CheckFEC(FEC, sats.S_FEC, sats.MODULATION_S2);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodCode, sats.MODULATION_S2);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S2);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S2);
 						break;
-					case MODULATION_S2X:
-						CheckRollOff(RollOff, S2X_RollOff, MODULATION_S2X); // should not happen as value errors are detected in schema validation
-						CheckModulation(ModulationType, S2X_Modulation, MODULATION_S2X);
+					case sats.MODULATION_S2X:
+						CheckRollOff(RollOff, sats.S2X_RollOff, sats.MODULATION_S2X); // should not happen as value errors are detected in schema validation
+						CheckModulation(ModulationType, sats.S2X_Modulation, sats.MODULATION_S2X);
+						CheckFEC(FEC, sats.S2X_FEC, sats.MODULATION_S2X);
 						let ChannelBonding = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_ChannelBonding), props.schema);
 						if (ChannelBonding) {
 							let fq = 0,
