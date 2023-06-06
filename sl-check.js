@@ -1654,34 +1654,24 @@ export default class ServiceListCheck {
 			let FEC = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_FEC), props.schema);
 
 			if (ModulationSystem) {
-				let CheckRollOff = (element, allowed, modulation) => {
+				let checkElement = (element, elementName, allowed, modulation, errCode) => {
 					if (element && !isIn(allowed, element.text()))
 						errs.addError({
-							code: "SI201",
+							code: errCode,
 							key: ERROR_KEY,
-							message: `${dvbi.e_RollOff}=${element.text().quote()} is not permitted for ${modulation} modulation system`,
+							message: `${elementName}=${element.text().quote()} is not permitted for ${modulation} modulation system`,
 							fragment: element,
 						});
 				};
-
+				let CheckRollOff = (element, allowed, modulation) => {
+					checkElement(element, dvbi.e_ModulationType, allowed, modulation, "SI201");
+				};
 				let CheckModulation = (element, allowed, modulation) => {
-					if (element && !isIn(allowed, element.text()))
-						errs.addError({
-							code: "SI202",
-							key: ERROR_KEY,
-							message: `${dvbi.e_ModulationType}=${element.text().quote()} is not permitted for ${modulation} modulation system`,
-							fragment: element,
-						});
+					checkElement(element, dvbi.e_RollOff, allowed, modulation, "SI202");
 				};
 
 				let CheckFEC = (element, allowed, modulation) => {
-					if (element && !isIn(allowed, element.text()))
-						errs.addError({
-							code: "SI203",
-							key: ERROR_KEY,
-							message: `${dvbi.e_FEC}=${element.text().quote()} is not permitted for ${modulation} modulation system`,
-							fragment: element,
-						});
+					checkElement(element, dvbi.e_FEC, allowed, modulation, "SI203");
 				};
 
 				let DisallowedElement = (element, childElementName, modulation) => {
