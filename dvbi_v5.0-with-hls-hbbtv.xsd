@@ -231,7 +231,7 @@
 					</simpleType>
 				</element>
 				<sequence minOccurs="0">
-					<element name="SymbolRate" type="unsignedShort"/>
+					<element name="SymbolRate" type="positiveInteger"/>
 					<sequence minOccurs="0">
 						<element name="RollOff">
 							<simpleType>
