@@ -1679,7 +1679,7 @@ export default class ServiceListCheck {
 						errs.addError({
 							code: "SI204",
 							key: ERROR_KEY,
-							message: `${childElementName.elementize()} is not permitted for this ${dvbi.e_ModulationSystem}="${modulation}"`,
+							message: `${childElementName.elementize()} is not permitted for ${dvbi.e_ModulationSystem}="${modulation}"`,
 							fragment: element.get(xPath(props.prefix, childElementName), props.schema),
 						});
 				};
@@ -1689,7 +1689,7 @@ export default class ServiceListCheck {
 						CheckRollOff(RollOff, sats.S_RollOff, sats.MODULATION_S);
 						CheckModulation(ModulationType, sats.S_Modulation, sats.MODULATION_S);
 						CheckFEC(FEC, sats.S_FEC, sats.MODULATION_S);
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodCode, sats.MODULATION_S);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodMode, sats.MODULATION_S);
 						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S);
 						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S);
 						break;
@@ -1697,7 +1697,7 @@ export default class ServiceListCheck {
 						CheckRollOff(RollOff, sats.S2_RollOff, sats.MODULATION_S2);
 						CheckModulation(ModulationType, sats.S2_Modulation, sats.MODULATION_S2);
 						CheckFEC(FEC, sats.S_FEC, sats.MODULATION_S2);
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodCode, sats.MODULATION_S2);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodMode, sats.MODULATION_S2);
 						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S2);
 						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S2);
 						break;

@@ -303,10 +303,10 @@
 						</element>
 					</sequence>
 					<sequence minOccurs="0">
+						<annotation>
+							<documentation>DVB-S2X only</documentation>
+						</annotation>
 						<element name="ModcodMode">
-							<annotation>
-								<documentation>DVB-S2X only</documentation>
-							</annotation>
 							<simpleType>
 								<restriction base="string">
 									<enumeration value="ccm"/>
