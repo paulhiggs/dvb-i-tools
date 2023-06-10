@@ -1657,7 +1657,7 @@ export default class ServiceListCheck {
 				let checkElement = (element, elementName, allowed, modulation, errCode) => {
 					if (element && !isIn(allowed, element.text()))
 						errs.addError({
-							code: "SI200",
+							code: errCode,
 							key: ERROR_KEY,
 							message: `${elementName}=${element.text().quote()} is not permitted for ${modulation} modulation system`,
 							fragment: element,
