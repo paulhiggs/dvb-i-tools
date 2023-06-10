@@ -1657,7 +1657,7 @@ export default class ServiceListCheck {
 				let checkElement = (element, elementName, allowed, modulation, errCode) => {
 					if (element && !isIn(allowed, element.text()))
 						errs.addError({
-							code: errCode,
+							code: "SI200",
 							key: ERROR_KEY,
 							message: `${elementName}=${element.text().quote()} is not permitted for ${modulation} modulation system`,
 							fragment: element,
@@ -1694,6 +1694,17 @@ export default class ServiceListCheck {
 						checkElement(RollOff, dvbi.e_RollOff, sats.S2X_RollOff, sats.MODULATION_S2X, "SI201c");
 						checkElement(ModulationType, dvbi.e_ModulationType, sats.S2X_Modulation, sats.MODULATION_S2X, "SI202c");
 						checkElement(FEC, dvbi.e_FEC, sats.S2X_FEC, sats.MODULATION_S2X, "SI203c");
+						let InputStreamIdentifier = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_InputStreamIdentifier), props.schema);
+						if (InputStreamIdentifier) {
+							let isiVal = parseInt(InputStreamIdentifier.text());
+							if (isiVal < 0 || isiVal > 255)
+								errs.addError({
+									code: "SI207",
+									key: ERROR_KEY,
+									message: `invalid value (${isiVal}) for ${dvbi.dvbi.e_InputStreamIdentifier.elementize()}. should be 0..255`,
+									fragment: InputStreamIdentifier,
+								});
+						}
 						let ChannelBonding = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_ChannelBonding), props.schema);
 						if (ChannelBonding) {
 							let fq = 0,
@@ -2045,8 +2056,9 @@ export default class ServiceListCheck {
 								fragment: PE,
 								key: keys.k_InvalidRegion,
 							});
+						else found.used = true;
 					}
-					// if @country and @region are used, they must be per the regin list
+					// if @country and @region are used, they must be per the region list
 					if (PE.attr(dvbi.a_country) && PE.attr(dvbi.a_region)) {
 						let prominenceRegion = PE.attr(dvbi.a_region).value();
 						let prominenceCountry = PE.attr(dvbi.a_country).value();
