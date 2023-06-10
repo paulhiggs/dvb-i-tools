@@ -1663,17 +1663,6 @@ export default class ServiceListCheck {
 							fragment: element,
 						});
 				};
-				let CheckRollOff = (element, allowed, modulation) => {
-					checkElement(element, dvbi.e_ModulationType, allowed, modulation, "SI201");
-				};
-				let CheckModulation = (element, allowed, modulation) => {
-					checkElement(element, dvbi.e_RollOff, allowed, modulation, "SI202");
-				};
-
-				let CheckFEC = (element, allowed, modulation) => {
-					checkElement(element, dvbi.e_FEC, allowed, modulation, "SI203");
-				};
-
 				let DisallowedElement = (element, childElementName, modulation) => {
 					if (hasChild(element, childElementName))
 						errs.addError({
@@ -1686,25 +1675,25 @@ export default class ServiceListCheck {
 
 				switch (ModulationSystem.text()) {
 					case sats.MODULATION_S:
-						CheckRollOff(RollOff, sats.S_RollOff, sats.MODULATION_S);
-						CheckModulation(ModulationType, sats.S_Modulation, sats.MODULATION_S);
-						CheckFEC(FEC, sats.S_FEC, sats.MODULATION_S);
+						checkElement(RollOff, dvbi.e_RollOff, sats.S_RollOff, sats.MODULATION_S, "SI201a");
+						checkElement(ModulationType, dvbi.e_ModulationType, sats.S_Modulation, sats.MODULATION_S, "SI202a");
+						checkElement(FEC, dvbi.e_FEC, sats.S_FEC, sats.MODULATION_S, "SI203a");
 						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodMode, sats.MODULATION_S);
 						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S);
 						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S);
 						break;
 					case sats.MODULATION_S2:
-						CheckRollOff(RollOff, sats.S2_RollOff, sats.MODULATION_S2);
-						CheckModulation(ModulationType, sats.S2_Modulation, sats.MODULATION_S2);
-						CheckFEC(FEC, sats.S_FEC, sats.MODULATION_S2);
+						checkElement(RollOff, dvbi.e_RollOff, sats.S2_RollOff, sats.MODULATION_S2, "SI201b");
+						checkElement(ModulationType, dvbi.e_ModulationType, sats.S2_Modulation, sats.MODULATION_S2, "SI202b");
+						checkElement(FEC, dvbi.e_FEC, sats.S_FEC, sats.MODULATION_S2, "SI203b");
 						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodMode, sats.MODULATION_S2);
 						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S2);
 						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S2);
 						break;
 					case sats.MODULATION_S2X:
-						CheckRollOff(RollOff, sats.S2X_RollOff, sats.MODULATION_S2X); // should not happen as value errors are detected in schema validation
-						CheckModulation(ModulationType, sats.S2X_Modulation, sats.MODULATION_S2X);
-						CheckFEC(FEC, sats.S2X_FEC, sats.MODULATION_S2X);
+						checkElement(RollOff, dvbi.e_RollOff, sats.S2X_RollOff, sats.MODULATION_S2X, "SI201c");
+						checkElement(ModulationType, dvbi.e_ModulationType, sats.S2X_Modulation, sats.MODULATION_S2X, "SI202c");
+						checkElement(FEC, dvbi.e_FEC, sats.S2X_FEC, sats.MODULATION_S2X, "SI203c");
 						let ChannelBonding = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_ChannelBonding), props.schema);
 						if (ChannelBonding) {
 							let fq = 0,
@@ -1720,16 +1709,16 @@ export default class ServiceListCheck {
 										fragment: Frequency,
 									});
 								else freqs.push(Frequency.text());
-							}
-							if (Frequency.attr(dvbi.a_primary) && isIn(["true"], Frequency.attr(dvbi.a_primary).value(), false)) {
-								if (primarySpecified)
-									errs.addError({
-										code: "SI206",
-										key: ERROR_KEY,
-										message: `${dvbi.e_Frequency.elementize()} already specified with ${dvbi.a_primary.attribute()}=true`,
-										fragment: Frequency,
-									});
-								else primarySpecified = true;
+								if (Frequency.attr(dvbi.a_primary) && isIn(["true"], Frequency.attr(dvbi.a_primary).value(), false)) {
+									if (primarySpecified)
+										errs.addError({
+											code: "SI206",
+											key: ERROR_KEY,
+											message: `${dvbi.e_Frequency.elementize()} already specified with ${dvbi.a_primary.attribute()}=true`,
+											fragment: Frequency,
+										});
+									else primarySpecified = true;
+								}
 							}
 						}
 						break;
