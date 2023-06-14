@@ -432,7 +432,7 @@
 		<complexContent>
 			<extension base="dvbisd:RegionBaseType">
 				<sequence>
-					<element name="Region" type="dvbisd:PrimaryRegionType" minOccurs="1" maxOccurs="unbounded"/>
+					<element name="Region" type="dvbisd:PrimaryRegionType" minOccurs="0" maxOccurs="unbounded"/>
 				</sequence>
 				<attribute name="countryCodes" type="dvbisd:ISO-3166-List" use="required"/>
 			</extension>
