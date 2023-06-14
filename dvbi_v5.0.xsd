@@ -313,7 +313,7 @@
 								</restriction>
 							</simpleType>
 						</element>
-						<element name="InputStreamIdentifier" type="nonNegativeInteger" minOccurs="0"/>
+						<element name="InputStreamIdentifier" type="unsignedByte" minOccurs="0"/>
 						<element name="ChannelBonding" minOccurs="0">
 							<complexType>
 								<sequence>

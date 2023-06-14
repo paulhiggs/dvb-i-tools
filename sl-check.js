@@ -1694,17 +1694,8 @@ export default class ServiceListCheck {
 						checkElement(RollOff, dvbi.e_RollOff, sats.S2X_RollOff, sats.MODULATION_S2X, "SI201c");
 						checkElement(ModulationType, dvbi.e_ModulationType, sats.S2X_Modulation, sats.MODULATION_S2X, "SI202c");
 						checkElement(FEC, dvbi.e_FEC, sats.S2X_FEC, sats.MODULATION_S2X, "SI203c");
-						let InputStreamIdentifier = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_InputStreamIdentifier), props.schema);
-						if (InputStreamIdentifier) {
-							let isiVal = parseInt(InputStreamIdentifier.text());
-							if (isiVal < 0 || isiVal > 255)
-								errs.addError({
-									code: "SI207",
-									key: ERROR_KEY,
-									message: `invalid value (${isiVal}) for ${dvbi.dvbi.e_InputStreamIdentifier.elementize()}. should be 0..255`,
-									fragment: InputStreamIdentifier,
-								});
-						}
+						// <ModcodMode> is value checked in schema verification
+						// <InputStreamIdentifier> is ranfe checked in schema verification
 						let ChannelBonding = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_ChannelBonding), props.schema);
 						if (ChannelBonding) {
 							let fq = 0,
