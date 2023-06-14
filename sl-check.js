@@ -2109,6 +2109,44 @@ export default class ServiceListCheck {
 					}
 				}
 			}
+
+			// check <ParentalRating>
+			let ParentalRating = service.get(xPath(props.prefix, dvbi.e_ParentalRating), props.schema);
+			if (ParentalRating) {
+				let ma=0, MinimumAge, foundCountries=[], noCountrySpecified=false;
+				while ((MinimumAge = ParentalRating.get(xPath(props.prefix, dvbi.e_MinimumAge, ++ma), props.schema)) != null) {
+					if (MinimumAge.attr(dvbi.a_countryCodes)) {
+						let countriesSpecified = MinimumAge.attr(dvbi.a_countryCodes).value().split(",");
+						if (countriesSpecified)
+							countriesSpecified.forEach((country) => {
+								if (!this.knownCountries.isISO3166code(country))
+									errs.addError({
+										code: "SL251",
+										message: `invalid country code (${country}) specified`,
+										key: keys.k_InvalidCountryCode,
+										fragment: MinimumAge,
+									});
+								if (isIn(foundCountries, country)) 
+									errs.addError({
+										code: "SL252",
+										message: `duplicate country code (${country}) specified`,
+										key: "duplicate country",
+										fragment: MinimumAge,
+									});
+								else foundCountries.push(country);
+							});
+					}
+					else {
+						if (noCountrySpecified) 
+							errs.addError({
+								code:"SL253", key: "duplicated country",
+								fragment: MinimumAge,
+								message: "a default minimum age is already specified for this service",
+							});
+						else noCountrySpecified=true;
+					}
+				}
+			}
 		}
 	}
 
