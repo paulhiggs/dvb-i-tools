@@ -78,17 +78,17 @@
 		<attribute name="minimumMetadataUpdatePeriod" type="duration"/>
 		<attribute ref="xml:lang"/>
 	</complexType>
+	<complexType name="LanguageListType">
+		<sequence>
+			<element name="Language" type="tva:AudioLanguageType" maxOccurs="unbounded"/>
+		</sequence>
+	</complexType>
 	<simpleType name="ContentGuideProviderIdType">
 		<restriction base="ID"/>
 	</simpleType>
 	<simpleType name="ContentGuideProviderRefIdType">
 		<restriction base="IDREF"/>
 	</simpleType>
-	<complexType name="LanguageListType">
-		<sequence>
-			<element name="Language" type="tva:AudioLanguageType" maxOccurs="unbounded"/>
-		</sequence>
-	</complexType>
 	<complexType name="ServiceType">
 		<sequence>
 			<element name="UniqueIdentifier" type="dvbisd:ServiceIdentifierType"/>
