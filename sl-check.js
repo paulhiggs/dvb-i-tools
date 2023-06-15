@@ -2253,10 +2253,18 @@ export default class ServiceListCheck {
 			while ((Language = LanguageList.get(xPath(props.prefix, tva.e_Language, ++l), props.schema)) != null) { 
 				let lang = Language.text();
 				checkLanguage(this.knownLanguages, lang, `language in ${tva.e_Language.elementize()}`, Language, errs, "SL030");
+				checkAttributes(
+					Language, //HERE
+					[],
+					[],
+					tvaEA.AudioLanguage,
+					errs,
+					"SL031"
+				);
 				if (isIn(announcedLanguages, lang))
 					errs.addError({
-						code:"SL031",
-						message: `language ${lang} is already included in ${dvbi.e_LanguageList.elementize()}`
+						code:"SL032",
+						message: `language ${lang} is already included in ${dvbi.e_LanguageList.elementize()}`,
 						fragment: Language,
 						key: "duplicate language",
 					});

@@ -84,7 +84,7 @@
 	</simpleType>
 	<complexType name="LanguageListType">
 		<sequence>
-			<element name="Language" type="tva:AudioLanguageType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Language" type="tva:AudioLanguageType" maxOccurs="unbounded"/>
 		</sequence>
 	</complexType>
 	<complexType name="ServiceType">
