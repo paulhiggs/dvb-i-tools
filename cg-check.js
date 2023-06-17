@@ -604,6 +604,10 @@ export default class ContentGuideCheck {
 	/* private */ ValidateRelatedMaterial_ParentalGuidance(props, BasicDescription, errs, errCode) {
 		// first <ParentalGuidance> element must contain an <mpeg7:MinimumAge> element
 
+		/**
+		 * TODO: A177r5 allows ParentalGuidance elements to be specified for multiple countries, either infividually (in an ISO-3166-Code) or collectively (in an ISO-3166-List)
+		 *       Country codes should be valid and not duplicated
+		 */
 		if (!BasicDescription) {
 			errs.addError({
 				type: APPLICATION,

@@ -57,6 +57,7 @@ export const tva = {
 	e_Coding: "Coding",
 	e_Color: "Color",
 	e_ContentVersion: "ContentVersion",
+	e_CountryCodes: "CountryCodes",
 	e_CreationCoordinates: "CreationCoordinates",
 	e_CreditsInformationTable: "CreditsInformationTable",
 	e_CreditsItem: "CreditsItem",

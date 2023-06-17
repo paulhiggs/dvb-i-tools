@@ -6,7 +6,6 @@
 	<!ENTITY PostcodeWildFirst "\*[&PostcodeChar;]*[&PostcodeSep;]?[&PostcodeChar;]+">
 	<!ENTITY PostcodeWildMiddle "([&PostcodeChar;]+\*[&PostcodeSep;]?[&PostcodeChar;]+)|([&PostcodeChar;]+[&PostcodeSep;]?\*[&PostcodeChar;]+)">
 	<!ENTITY PostcodeWildLast "[&PostcodeChar;]+[&PostcodeSep;]?[&PostcodeChar;]*\*">
-	<!ENTITY ISOCountry "[A-Z]{3}">
 	<!ENTITY DecimalByte "(([1-9]?[0-9])|(1[0-9][0-9])|(2[0-4][0-9])|(25[0-5]))">
 	<!ENTITY IPv4Address "(&DecimalByte;\.){3}&DecimalByte;">
 	<!ENTITY HexDigit "[0-9A-Fa-f]">
@@ -109,6 +108,7 @@
 			<element name="AdditionalServiceParameters" type="dvbisd:ExtensionBaseType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="NVOD" type="dvbisd:NVODType" minOccurs="0"/>
 			<element name="ProminenceList" type="dvbisd:ServiceProminenceListType" minOccurs="0"/>
+			<element name="ParentalRating" type="dvbisd:ParentalRatingType" minOccurs="0"/>
 		</sequence>
 		<attribute name="dynamic" type="boolean" default="false"/>
 		<attribute name="version" type="positiveInteger" use="required"/>
@@ -202,7 +202,7 @@
 	<complexType name="ServiceProminenceEntryType">
 		<simpleContent>
 			<extension base="string">
-				<attribute name="country" type="dvbisd:ISO-3166-Code"/>
+				<attribute name="country" type="tva:ISO-3166-Code"/>
 				<attribute name="region" type="dvbisd:RegionIdRefType"/>
 				<attribute name="ranking">
 					<simpleType>
@@ -215,10 +215,23 @@
 			</extension>
 		</simpleContent>
 	</complexType>
+	<complexType name="ParentalRatingType">
+		<sequence>
+			<element name="MinimumAge" maxOccurs="unbounded">
+				<complexType>
+					<simpleContent>
+						<extension base="nonNegativeInteger">
+							<attribute name="countryCodes" type="tva:ISO-3166-List" use="optional"/>
+						</extension>
+					</simpleContent>
+				</complexType>
+			</element>
+		</sequence>
+	</complexType>
 	<complexType name="DVBTDeliveryParametersType">
 		<sequence>
 			<element name="DVBTriplet" type="dvbisd:DVBTripletType"/>
-			<element name="TargetCountry" type="dvbisd:ISO-3166-Code"/>
+			<element name="TargetCountry" type="tva:ISO-3166-Code"/>
 		</sequence>
 	</complexType>
 	<complexType name="DVBSDeliveryParametersType">
@@ -350,7 +363,7 @@
 	<complexType name="DVBCDeliveryParametersType">
 		<sequence>
 			<element name="DVBTriplet" type="dvbisd:DVBTripletType" minOccurs="0"/>
-			<element name="TargetCountry" type="dvbisd:ISO-3166-Code"/>
+			<element name="TargetCountry" type="tva:ISO-3166-Code"/>
 			<element name="NetworkID" type="dvbisd:NetworkIdType"/>
 		</sequence>
 	</complexType>
@@ -377,14 +390,6 @@
 	</complexType>
 	<simpleType name="NetworkIdType">
 		<restriction base="unsignedShort"/>
-	</simpleType>
-	<simpleType name="ISO-3166-Code">
-		<annotation>
-			<documentation xml:lang="en">A country code, as defined by ISO-3166.</documentation>
-		</annotation>
-		<restriction base="string">
-			<pattern value="&ISOCountry;"/>
-		</restriction>
 	</simpleType>
 	<complexType name="ServiceAvailabilityType">
 		<sequence>
@@ -442,7 +447,7 @@
 				<sequence>
 					<element name="Region" type="dvbisd:PrimaryRegionType" minOccurs="0" maxOccurs="unbounded"/>
 				</sequence>
-				<attribute name="countryCodes" type="dvbisd:ISO-3166-List" use="required"/>
+				<attribute name="countryCodes" type="tva:ISO-3166-List" use="required"/>
 			</extension>
 		</complexContent>
 	</complexType>
@@ -741,14 +746,6 @@
 		<attribute name="DestinationPort" type="unsignedInt" use="optional"/>
 		<attribute name="rtx-time" type="unsignedInt" use="required"/>
 	</attributeGroup>
-	<simpleType name="ISO-3166-List">
-		<annotation>
-			<documentation xml:lang="en">A comma separated list of one or more country codes, where the codes are defined by ISO-3166.</documentation>
-		</annotation>
-		<restriction base="string">
-			<pattern value="&ISOCountry;(,&ISOCountry;)*"/>
-		</restriction>
-	</simpleType>
 	<complexType name="RTSPURLType">
 		<simpleContent>
 			<extension base="dvbisd:RTSP">

@@ -449,11 +449,28 @@
 			</extension>
 		</simpleContent>
 	</complexType>
+	<simpleType name="ISO-3166-Code">
+		<annotation>
+			<documentation xml:lang="en">A country code, as defined by ISO-3166.</documentation>
+		</annotation>
+		<restriction base="string">
+			<pattern value="[A-Z]{3}"/>
+		</restriction>
+	</simpleType>
+	<simpleType name="ISO-3166-List">
+		<annotation>
+			<documentation xml:lang="en">A comma separated list of one or more country codes, where the codes are defined by ISO-3166.</documentation>
+		</annotation>
+		<restriction base="string">
+			<pattern value="[A-Z]{3}(,[A-Z]{3})*"/>
+		</restriction>
+	</simpleType>
 	<complexType name="TVAParentalGuidanceType">
 		<complexContent>
 			<extension base="mpeg7:ParentalGuidanceType">
 				<sequence>
 					<element name="ExplanatoryText" type="tva:ExplanationType" minOccurs="0" maxOccurs="unbounded"/>
+					<element name="CountryCodes" type="tva:ISO-3166-List" minOccurs="0"/>
 				</sequence>
 			</extension>
 		</complexContent>
