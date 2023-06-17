@@ -254,6 +254,7 @@ export const dvbi = {
 	e_Interval: "Interval",
 	e_IPMulticastAddress: "IPMulticastAddress",
 	e_Language: "Language",
+	e_LanguageList: "LanguageList",
 	e_Latitude: "Latitude",
 	e_LCN: "LCN",
 	e_LCNTable: "LCNTable",

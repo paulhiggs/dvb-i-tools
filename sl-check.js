@@ -2244,7 +2244,36 @@ export default class ServiceListCheck {
 		checkXMLLangs(dvbi.e_Name, dvbi.e_ServiceList, SL, errs, "SL020", this.knownLanguages);
 
 		//check <ServiceList><ProviderName>
-		checkXMLLangs(dvbi.e_ProviderName, dvbi.e_ServiceList, SL, errs, "SL030", this.knownLanguages);
+		checkXMLLangs(dvbi.e_ProviderName, dvbi.e_ServiceList, SL, errs, "SL021", this.knownLanguages);
+
+		//check <ServiceList><LanguageList>
+		let LanguageList = SL.get(xPath(props.prefix, dvbi.e_LanguageList), props.schema);
+		if (LanguageList) {
+			let announcedLanguages = [],
+				l = 0,
+				Language;
+			while ((Language = LanguageList.get(xPath(props.prefix, tva.e_Language, ++l), props.schema)) != null) {
+				let lang = Language.text();
+				checkLanguage(this.knownLanguages, lang, `language in ${tva.e_Language.elementize()}`, Language, errs, "SL030");
+				checkAttributes(
+					Language, //HERE
+					[],
+					[],
+					tvaEA.AudioLanguage,
+					errs,
+					"SL031"
+				);
+				let lang_lower = lang.toLowerCase();
+				if (isIn(announcedLanguages, lang_lower))
+					errs.addError({
+						code: "SL032",
+						message: `language ${lang} is already included in ${dvbi.e_LanguageList.elementize()}`,
+						fragment: Language,
+						key: "duplicate language",
+					});
+				else announcedLanguages.push(lang_lower);
+			}
+		}
 
 		//check <ServiceList><RelatedMaterial>
 		let rm = 0,
