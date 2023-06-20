@@ -74,6 +74,9 @@ export const dvbi = {
 	CONTENT_TYPE_DASH_MPD: "application/dash+xml", // MPD of linear service
 	CONTENT_TYPE_DVB_PLAYLIST: XMLdocumentType, // XML Playlist
 
+	// A77 6.10.15 Parental Guidance
+	DTG_CONTENT_WARNING_CS_SCHEME: "urn:dtg:metadata:cs:DTGContentWarningCS",
+
 	// A177 6.11.2 - Audio Purpose
 	AUDIO_PURPOSE_VISUAL_IMPAIRED: `${AudioPurposeCS}:1`,
 	AUDIO_PURPOSE_HEARING_IMPAIRED: `${AudioPurposeCS}:2`,

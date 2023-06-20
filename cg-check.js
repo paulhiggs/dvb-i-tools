@@ -10,6 +10,8 @@ import ErrorList, { WARNING, APPLICATION } from "./ErrorList.js";
 
 import ClassificationScheme from "./ClassificationScheme.js";
 import Role from "./Role.js";
+
+import ISOcountries from "./ISOcountries.js";
 import IANAlanguages from "./IANAlanguages.js";
 
 import { dvbi } from "./DVB-I_definitions.js";
@@ -24,6 +26,7 @@ import { isHTTPURL, isDVBLocator, isUTCDateTime } from "./pattern_checks.js";
 
 import {
 	IANA_Subtag_Registry,
+	ISO3166,
 	TVA_ContentCS,
 	TVA_FormatCS,
 	DVBI_ContentSubject,
@@ -36,7 +39,7 @@ import {
 
 import { ValidatePromotionalStillImage } from "./RelatedMaterialChecks.js";
 import { cg_InvalidHrefValue, NoChildElement } from "./CommonErrors.js";
-import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.js";
+import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.js";
 
 import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./MultilingualElement.js";
 import { writeOut } from "./Validator.js";
@@ -254,7 +257,7 @@ if (!Array.prototype.forEachSubElement) {
 export var isRestartAvailability = (genre) => [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(genre);
 
 export default class ContentGuideCheck {
-	constructor(useURLs, preloadedLanguageValidator = null, preloadedGenres = null, preloadedCreditItemRoles = null, preloadedRatings = null) {
+	constructor(useURLs, preloadedLanguageValidator = null, preloadedGenres = null, preloadedCreditItemRoles = null, preloadedRatings = null, preloadedCountries = null) {
 		this.numRequests = 0;
 		if (preloadedLanguageValidator) this.knownLanguages = preloadedLanguageValidator;
 		else {
@@ -286,6 +289,12 @@ export default class ContentGuideCheck {
 			console.log("loading Ratings...".yellow.underline);
 			this.allowedRatings = new ClassificationScheme();
 			this.allowedRatings.loadCS(useURLs ? { urls: [TVA_ContentAlertCS.url, DVBI_ParentalGuidanceCS.url] } : { files: [TVA_ContentAlertCS.file, DVBI_ParentalGuidanceCS.file] });
+		}
+
+		if (preloadedCountries) this.knownCountries = preloadedCountries;
+		else {
+			this.knownCountries = new ISOcountries(false, true);
+			this.knownCountries.loadCountries(useURLs ? { url: ISO3166.url } : { file: ISO3166.file });
 		}
 
 		SchemaVersions.forEach((version) => {
@@ -601,7 +610,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs              errors found in validaton
 	 * @param {string}  errCode           error code prefix to be used in reports
 	 */
-	/* private */ ValidateRelatedMaterial_ParentalGuidance(props, BasicDescription, errs, errCode) {
+	/* private */ Validate_ParentalGuidance(props, BasicDescription, errs, errCode) {
 		// first <ParentalGuidance> element must contain an <mpeg7:MinimumAge> element
 
 		/**
@@ -612,87 +621,134 @@ export default class ContentGuideCheck {
 			errs.addError({
 				type: APPLICATION,
 				code: "PG000",
-				message: "ValidateRelatedMaterial_ParentalGuidance() called with BasicDescription=null",
+				message: "Validate_ParentalGuidance() called with BasicDescription=null",
 			});
 			return;
 		}
 
-		let countParentalGuidance = 0,
-			countExplanatoryText = [];
-
+		const UNSPECIFIED_COUNTRY = "*!*";
+		let foundCountries = [];
 		let pg = 0,
 			ParentalGuidance;
 		while ((ParentalGuidance = BasicDescription.get(xPath(props.prefix, tva.e_ParentalGuidance, ++pg), props.schema)) != null) {
-			countParentalGuidance++;
-			countExplanatoryText = [];
-			if (ParentalGuidance.childNodes())
-				ParentalGuidance.childNodes().forEachSubElement((pgChild) => {
-					switch (pgChild.name()) {
-						case tva.e_MinimumAge:
-							checkAttributes(pgChild, [], [], tvaEA.MinimumAge, errs, `${errCode}-10`);
-							if (countParentalGuidance != 1)
-								errs.addError({
-									code: `${errCode}-11`,
-									key: keys.k_ParentalGuidance,
-									message: `${tva.e_MinimumAge.elementize()} must be in the first ${tva.e_ParentalGuidance.elementize()} element`,
-									fragment: pgChild,
-								});
-							break;
-						case tva.e_ParentalRating:
-							checkAttributes(pgChild, [tva.a_href], [], tvaEA.ParentalRating, errs, `${errCode}-20`);
-							if (countParentalGuidance == 1)
-								errs.addError({
-									code: `${errCode}-21`,
-									key: keys.k_ParentalGuidance,
-									message: `first ${tva.e_ParentalGuidance.elementize()} element must contain ${elementize("mpeg7:" + tva.e_MinimumAge)}`,
-									fragment: pgChild,
-								});
+			let pgCountries = UNSPECIFIED_COUNTRY;
+			if (hasChild(ParentalGuidance, tva.e_CountryCodes)) pgCountries = ParentalGuidance.get(xPath(props.prefix, tva.e_CountryCodes), props.schema).text();
 
-							if (pgChild.attr(tva.a_href)) {
-								let rating = pgChild.attr(tva.a_href).value();
-								if (this.allowedRatings.hasScheme(rating)) {
-									if (!this.allowedRatings.isIn(rating))
-										errs.addError({
-											code: `${errCode}-22`,
-											key: keys.k_ParentalGuidance,
-											fragment: pgChild,
-											message: `invalid rating term "${rating}"`,
-										});
-								} else
+			let pgCountriesList = pgCountries.split(",");
+			pgCountriesList.forEach((pgCountry) => {
+				let thisCountry = foundCountries.find((c) => c.country == pgCountry);
+				if (!thisCountry) {
+					thisCountry = { country: pgCountry, pgCount: 0, MinimumAge: null, ParentalRating: null };
+					foundCountries.push(thisCountry);
+				}
+
+				if (pgCountry != UNSPECIFIED_COUNTRY && !this.knownCountries.isISO3166code(pgCountry))
+					errs.addError({
+						code: `${errCode}-5`,
+						key: keys.k_ParentalGuidance,
+						message: `invalid country code (${pgCountry}) specified`,
+						fragment: ParentalGuidance.get(xPath(props.prefix, tva.e_CountryCodes), props.schema),
+					});
+
+				if (ParentalGuidance.childNodes())
+					ParentalGuidance.childNodes().forEachSubElement((pgChild) => {
+						switch (pgChild.name()) {
+							case tva.e_MinimumAge:
+								checkAttributes(pgChild, [], [], tvaEA.MinimumAge, errs, `${errCode}-10`);
+								if (thisCountry.MinimumAge) {
+									// only one minimum age value is premitted per country
 									errs.addError({
-										type: WARNING,
-										code: `${errCode}-23`,
+										code: `${errCode}-11`,
 										key: keys.k_ParentalGuidance,
-										message: `foreign (non DVB or TVA) parental rating scheme used`,
+										message: `only a single ${tva.e_ParentalGuidance.elementize()} containing ${tva.e_MinimumAge.elementize()} can be specified per country ${
+											pgCountry == UNSPECIFIED_COUNTRY ? "" : `(${pgCountry})`
+										}`,
 										fragment: pgChild,
 									});
-							}
-							break;
-						case tva.e_ExplanatoryText:
-							checkAttributes(pgChild, [tva.a_length], [tva.a_lang], tvaEA.ExplanatoryText, errs, `${errCode}-30`);
-							if (pgChild.attr(tva.a_length)) {
-								if (pgChild.attr(tva.a_length).value() != tva.v_lengthLong)
+								}
+								thisCountry.MinimumAge = pgChild;
+								break;
+							case tva.e_ParentalRating:
+								checkAttributes(pgChild, [tva.a_href], [], tvaEA.ParentalRating, errs, `${errCode}-20`);
+								if (thisCountry.ParentalRating) {
+									// only one parental rating value is permitted per country
 									errs.addError({
-										code: `${errCode}-31`,
-										message: `${tva.a_length.attribute()}=${pgChild.attr(tva.a_length).value().quote()} is not allowed for ${tva.e_ExplanatoryText.elementize()}`,
+										code: `${errCode}-21`,
+										key: keys.k_ParentalGuidance,
+										message: `only a single ${tva.e_ParentalGuidance.elementize()} containing ${tva.e_ParentalRating.elementize()} can be specified per country ${
+											pgCountry == UNSPECIFIED_COUNTRY ? "" : `(${pgCountry})`
+										}`,
+										fragment: pgChild,
+									});
+								}
+								if (pgChild.attr(tva.a_href)) {
+									let rating = pgChild.attr(tva.a_href).value();
+									if (this.allowedRatings.hasScheme(rating)) {
+										if (!this.allowedRatings.isIn(rating))
+											errs.addError({
+												code: `${errCode}-22`,
+												key: keys.k_ParentalGuidance,
+												fragment: pgChild,
+												message: `invalid rating term "${rating}"`,
+											});
+									} else
+										errs.addError({
+											type: WARNING,
+											code: `${errCode}-23`,
+											key: keys.k_ParentalGuidance,
+											message: "foreign (non DVB or TVA) parental rating scheme used",
+											fragment: pgChild,
+										});
+									if (rating.startsWith(dvbi.DTG_CONTENT_WARNING_CS_SCHEME)) {
+										// <ExplanatoryText> is required for DTG Content Warning CS
+										if (!hasChild(ParentalGuidance, tva.e_ExplanatoryText))
+											errs.addError({
+												code: `${errCode}-24`,
+												key: keys.k_ParentalGuidance,
+												message: `${tva.e_ExplanatoryText.elementize()} is required for DTGContentWarningCS`,
+												fragment: ParentalGuidance,
+											});
+									}
+								}
+								thisCountry.ParentalRating = pgChild;
+								break;
+							case tva.e_ExplanatoryText:
+								checkAttributes(pgChild, [tva.a_length], [tva.a_lang], tvaEA.ExplanatoryText, errs, `${errCode}-30`);
+								if (pgChild.attr(tva.a_length)) {
+									if (pgChild.attr(tva.a_length).value() != tva.v_lengthLong)
+										errs.addError({
+											code: `${errCode}-31`,
+											message: `${tva.a_length.attribute()}=${pgChild.attr(tva.a_length).value().quote()} is not allowed for ${tva.e_ExplanatoryText.elementize()}`,
+											fragment: pgChild,
+											key: keys.k_LengthError,
+										});
+								}
+								if (unEntity(pgChild.text()).length > dvbi.MAX_EXPLANATORY_TEXT_LENGTH)
+									errs.addError({
+										code: `${errCode}-32`,
+										message: `length of ${tva._ExplanatoryText.elementize()} cannot exceed ${dvbi.MAX_EXPLANATORY_TEXT_LENGTH} characters`,
 										fragment: pgChild,
 										key: keys.k_LengthError,
 									});
-							}
-							if (unEntity(pgChild.text()).length > dvbi.MAX_EXPLANATORY_TEXT_LENGTH)
-								errs.addError({
-									code: `${errCode}-32`,
-									message: `length of ${tva._ExplanatoryText.elementize()} cannot exceed ${dvbi.MAX_EXPLANATORY_TEXT_LENGTH} characters`,
-									fragment: pgChild,
-									key: keys.k_LengthError,
-								});
-
-							countExplanatoryText.push(pgChild);
-							break;
-					}
-				});
-			checkXMLLangs(tva.e_ExplanatoryText, `${BasicDescription.name()}.${tva.e_ParentalGuidance}`, ParentalGuidance, errs, `${errCode}-8`, this.knownLanguages);
+								break;
+						}
+					});
+				checkXMLLangs(tva.e_ExplanatoryText, `${BasicDescription.name()}.${tva.e_ParentalGuidance}`, ParentalGuidance, errs, `${errCode}-50`, this.knownLanguages);
+			});
 		}
+
+		// now check that for each country, there is a MinimumAge element specified
+		foundCountries.forEach((pgCountry) => {
+			if (pgCountry.ParentalRating && !pgCountry.MinimumAge)
+				errs.addError({
+					code: `${errCode}-60`,
+					key: keys.k_ParentalGuidance,
+					message: `a ${tva.e_ParentalGuidance.elementize()} element contining ${tva.e_MinimumAge.elementize()} is not specified for ${
+						pgCountry.country == UNSPECIFIED_COUNTRY ? "default country" : pgCountry.country
+					}`,
+					fragment: pgCountry.ParentalRating,
+				});
+		});
 	}
 
 	/**
@@ -1298,7 +1354,7 @@ export default class ContentGuideCheck {
 								{ name: tva.e_Title, maxOccurs: Infinity },
 								{ name: tva.e_Synopsis, maxOccurs: Infinity },
 								{ name: tva.e_Genre, minOccurs: 0 },
-								{ name: tva.e_ParentalGuidance, minOccurs: 0, maxOccurs: 2 },
+								{ name: tva.e_ParentalGuidance, minOccurs: 0, maxOccurs: Infinity },
 								{ name: tva.e_RelatedMaterial, minOccurs: 0 },
 							],
 							tvaEC.BasicDescription,
@@ -1309,7 +1365,7 @@ export default class ContentGuideCheck {
 						this.ValidateTitle(props, BasicDescription, true, errs, "BD011", true);
 						this.ValidateSynopsis(props, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL], errs, "BD012");
 						this.ValidateGenre(props, BasicDescription, errs, "BD013");
-						this.ValidateRelatedMaterial_ParentalGuidance(props, BasicDescription, errs, "BD014");
+						this.Validate_ParentalGuidance(props, BasicDescription, errs, "BD014");
 						this.ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
 						break;
 					case CG_REQUEST_PROGRAM: // 6.10.5.3
@@ -1320,7 +1376,7 @@ export default class ContentGuideCheck {
 								{ name: tva.e_Synopsis, maxOccurs: Infinity },
 								{ name: tva.e_Keyword, minOccurs: 0, maxOccurs: Infinity },
 								{ name: tva.e_Genre, minOccurs: 0 },
-								{ name: tva.e_ParentalGuidance, minOccurs: 0, maxOccurs: 2 },
+								{ name: tva.e_ParentalGuidance, minOccurs: 0, maxOccurs: Infinity },
 								{ name: tva.e_CreditsList, minOccurs: 0 },
 								{ name: tva.e_RelatedMaterial, minOccurs: 0 },
 							],
@@ -1333,7 +1389,7 @@ export default class ContentGuideCheck {
 						this.ValidateSynopsis(props, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_LONG_LABEL], errs, "BD022");
 						this.ValidateKeyword(props, BasicDescription, 0, 20, errs, "BD023");
 						this.ValidateGenre(props, BasicDescription, errs, "BD024");
-						this.ValidateRelatedMaterial_ParentalGuidance(props, BasicDescription, errs, "BD025");
+						this.Validate_ParentalGuidance(props, BasicDescription, errs, "BD025");
 						this.ValidateCreditsList(props, BasicDescription, errs, "BD026");
 						this.ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
 						break;
@@ -1343,7 +1399,7 @@ export default class ContentGuideCheck {
 							[
 								{ name: tva.e_Title, maxOccurs: Infinity },
 								{ name: tva.e_Synopsis, minOccurs: 0, maxOccurs: Infinity },
-								{ name: tva.e_ParentalGuidance, minOccurs: 0, maxOccurs: 2 },
+								{ name: tva.e_ParentalGuidance, minOccurs: 0, maxOccurs: Infinity },
 								{ name: tva.e_RelatedMaterial, minOccurs: 0 },
 							],
 							tvaEC.BasicDescription,
@@ -1353,7 +1409,7 @@ export default class ContentGuideCheck {
 						);
 						this.ValidateTitle(props, BasicDescription, true, errs, "BD031", true);
 						this.ValidateSynopsis(props, BasicDescription, [], [tva.SYNOPSIS_MEDIUM_LABEL], errs, "BD032");
-						this.ValidateRelatedMaterial_ParentalGuidance(props, BasicDescription, errs, "BD033");
+						this.Validate_ParentalGuidance(props, BasicDescription, errs, "BD033");
 						this.ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
 						this.ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, "Box Set Contents");
 						break;

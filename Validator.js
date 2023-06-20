@@ -269,7 +269,7 @@ export default function validator(options) {
 	isoCountries.loadCountries(options.urls ? { url: ISO3166.url } : { file: ISO3166.file });
 
 	let slcheck = new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoCountries);
-	let cgcheck = new ContentGuideCheck(options.urls, knownLanguages, knownGenres, null, knownRatings);
+	let cgcheck = new ContentGuideCheck(options.urls, knownLanguages, knownGenres, null, knownRatings, isoCountries);
 
 	if (!options.nosl) {
 		// handle HTTP POST requests to /checkSL
