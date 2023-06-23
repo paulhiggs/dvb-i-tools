@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- ********************************************************************************
 
-This XML document was originally developed in the course of development of the ISO/IEC
-15938 standard (MPEG-7). This XML document contains either a part of the MPEG-7 schema
-implementation for one or more MPEG-7 tools as specified by the MPEG-7 Requirements or
-MPEG-7 description examples conformant to the MPEG-7 schema.
+    This XML document was originally developed in the course of development of the ISO/IEC
+    15938 standard (MPEG-7). This XML document contains either a part of the MPEG-7 schema
+    implementation for one or more MPEG-7 tools as specified by the MPEG-7 Requirements or
+    MPEG-7 description examples conformant to the MPEG-7 schema.
 
-ISO/IEC gives users of MPEG-7 free license to this XML document or modifications thereof
-for use in hardware or software products claiming conformance to MPEG-7.
+    ISO/IEC gives users of MPEG-7 free license to this XML document or modifications thereof
+    for use in hardware or software products claiming conformance to MPEG-7.
 
-Those intending to use this XML document in hardware or software products are advised that
-its use may infringe existing patents. The original developers of this XML document and his/her
-company, the subsequent editors and their companies, and ISO/IEC have no liability for use of
-this XML document or modifications thereof in an implementation.
+    Those intending to use this XML document in hardware or software products are advised that
+    its use may infringe existing patents. The original developers of this XML document and his/her
+    company, the subsequent editors and their companies, and ISO/IEC have no liability for use of
+    this XML document or modifications thereof in an implementation.
 
-Copyright is not released for non MPEG-7 conforming products. The organizations who
-contributed to this XML document retain the full right to use the code for their own purpose,
-assign or donate their contribution to a third party and inhibit third parties from using their
-contribution for non MPEG-7 conforming products.
+    Copyright is not released for non MPEG-7 conforming products. The organizations who
+    contributed to this XML document retain the full right to use the code for their own purpose,
+    assign or donate their contribution to a third party and inhibit third parties from using their
+    contribution for non MPEG-7 conforming products.
 
-Copyright (c) 1999-2002 ISO/IEC. 
+    Copyright (c) 1999-2002 ISO/IEC. 
 
-This XML document is provided for informative purposes only. If any parts of this XML
-document contradict the normative part of the corresponding standard document then the
-normative part should be used as the definitive specification.
+    This XML document is provided for informative purposes only. If any parts of this XML
+    document contradict the normative part of the corresponding standard document then the
+    normative part should be used as the definitive specification.
 
-This notice must be included in all copies or derivative works.
+    This notice must be included in all copies or derivative works.
 ************************************************************************************* -->
 <schema targetNamespace="urn:tva:mpeg7:2008" xmlns:mpeg7="urn:tva:mpeg7:2008"
 	xmlns="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"

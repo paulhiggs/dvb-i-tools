@@ -1,17 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema xmlns:tva="urn:tva:metadata:2023" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:tva:metadata:2023" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<annotation>
-		<documentation xml:lang="en">This schema consists of datatypes that are normatively defined
-			in ETSI TS 102 822-3-1 v1.11.1</documentation>
+		<documentation xml:lang="en">This schema consists of datatypes that are normatively defined in ETSI TS 102 822-3-1 v1.12.1</documentation>
 	</annotation>
 	<annotation>
-		<documentation xml:lang="en"> Proposed change for this new version of the TVA specification </documentation>
-		<documentation xml:lang="en"> 1. Enriched the format of RelatedMaterialType - AVAttributes and StillPictureFormat</documentation>
-		<documentation xml:lang="en"> 2. ServiceURL in ServiceInformationType</documentation>
-		<documentation xml:lang="en"> 3. ServiceType in ServiceInformationType</documentation>
-		<documentation xml:lang="en"> 4. New InstanceMetadataIdRef element in SegmentInformationType</documentation>
-		<documentation xml:lang="en"> 5. New isSkippable and isPrintable attributes in SegmentInformationType</documentation>
-		<documentation xml:lang="en"> 6. New type attribute in TVAMainType to define a type of xml document</documentation>
+		<documentation xml:lang="en">Changes for this new version of the TVA specification </documentation>
+		<documentation xml:lang="en"> 1. added contentLanguage attribute to TVAMediaLocatorType to denote the language of any elements in the reference media</documentation>
 	</annotation>
 	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
@@ -26,8 +20,6 @@
 	<complexType name="TVAMainType">
 		<sequence>
 			<element name="CopyrightNotice" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
-			<!--element name="CopyrightNotice" type="tva:CopyrightNoticeType" minOccurs="0"
-				maxOccurs="unbounded"/-->
 			<element name="MetadataOriginationInformationTable" type="tva:MetadataOriginationInformationTableType" minOccurs="0"/>
 			<element name="ClassificationSchemeTable" type="tva:ClassificationSchemeTableType" minOccurs="0"/>
 			<element name="ProgramDescription" type="tva:ProgramDescriptionType" minOccurs="0"/>
@@ -428,13 +420,6 @@
 			</choice>
 		</sequence>
 	</complexType>
-	<!--complexType name="CopyrightNoticeType">
-		<simpleContent>
-			<extension  base="mpeg7:TextualType">
-				<attribute name="lang" type="language"/>
-			</extension>
-		</simpleContent>
-	</complexType-->
 	<simpleType name="ExplanationLengthType">
 		<restriction base="string">
 			<enumeration value="short"/>
@@ -451,15 +436,15 @@
 	</complexType>
 	<simpleType name="ISO-3166-Code">
 		<annotation>
-			<documentation xml:lang="en">A country code, as defined by ISO-3166.</documentation>
+			<documentation xml:lang="en">A country code, as defined by ISO 3166.</documentation>
 		</annotation>
 		<restriction base="string">
-			<pattern value="[A-Z]{3}"/>
+			<pattern value="[A-Z]{3};"/>
 		</restriction>
 	</simpleType>
-	<simpleType name="ISO-3166-List">
+		<simpleType name="ISO-3166-List">
 		<annotation>
-			<documentation xml:lang="en">A comma separated list of one or more country codes, where the codes are defined by ISO-3166.</documentation>
+			<documentation xml:lang="en">A comma separated list of one or more country codes, where the codes are defined by ISO 3166.</documentation>
 		</annotation>
 		<restriction base="string">
 			<pattern value="[A-Z]{3}(,[A-Z]{3})*"/>
@@ -1376,8 +1361,6 @@
 			<element name="Publisher" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="RightsOwner" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="CopyrightNotice" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
-			<!--element name="CopyrightNotice" type="tva:CopyrightNoticeType" minOccurs="0"
-				maxOccurs="unbounded"/-->
 		</sequence>
 		<attribute name="originID" type="tva:TVAIDType" use="required"/>
 		<attributeGroup ref="tva:fragmentIdentification"/>

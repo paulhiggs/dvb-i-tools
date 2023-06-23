@@ -65,6 +65,7 @@
 		<sequence>
 			<element name="Name" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="ProviderName" type="mpeg7:TextualType" maxOccurs="unbounded"/>
+			<element name="LanguageList" type="dvbisd:LanguageListType" minOccurs="0"/>
 			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="ScheduleInfoEndpoint" type="dvbisd:ExtendedURIType"/>
 			<element name="ProgramInfoEndpoint" type="dvbisd:ExtendedURIType" minOccurs="0"/>
@@ -274,49 +275,49 @@
 						</element>
 						<element name="ModulationType">
 							<simpleType>
-									<restriction base="string">
-											<enumeration value="QPSK"/>
-											<enumeration value="8PSK"/>
-											<enumeration value="8PSK-L"/>
-											<enumeration value="16APSK"/>
-											<enumeration value="16APSK-L"/>
-											<enumeration value="32APSK"/>
-											<enumeration value="32APSK-L"/>
-											<enumeration value="64APSK"/>
-											<enumeration value="64APSK-L"/>
-									</restriction>
+								<restriction base="string">
+									<enumeration value="QPSK"/>
+									<enumeration value="8PSK"/>
+									<enumeration value="8PSK-L"/>
+									<enumeration value="16APSK"/>
+									<enumeration value="16APSK-L"/>
+									<enumeration value="32APSK"/>
+									<enumeration value="32APSK-L"/>
+									<enumeration value="64APSK"/>
+									<enumeration value="64APSK-L"/>
+								</restriction>
 							</simpleType>
 						</element>
 						<element name="FEC">
 							<simpleType>
-									<restriction base="string">
-											<enumeration value="1/2"/>
-											<enumeration value="2/3"/>
-											<enumeration value="3/4"/>
-											<enumeration value="5/6"/>
-											<enumeration value="7/8"/>
-											<enumeration value="8/9"/>
-											<enumeration value="3/5"/>
-											<enumeration value="4/5"/>
-											<enumeration value="9/10"/>
-											<enumeration value="1/4"/>
-											<enumeration value="1/3"/>
-											<enumeration value="2/5"/>
-											<enumeration value="13/45"/>
-											<enumeration value="9/20"/>
-											<enumeration value="11/20"/>
-											<enumeration value="23/36"/>
-											<enumeration value="25/36"/>
-											<enumeration value="13/18"/>
-											<enumeration value="5/9"/>
-											<enumeration value="26/45"/>
-											<enumeration value="28/45"/>
-											<enumeration value="7/9"/>
-											<enumeration value="77/90"/>
-											<enumeration value="8/15"/>
-											<enumeration value="32/45"/>
-											<enumeration value="11/15"/>
-									</restriction>
+								<restriction base="string">
+									<enumeration value="1/2"/>
+									<enumeration value="2/3"/>
+									<enumeration value="3/4"/>
+									<enumeration value="5/6"/>
+									<enumeration value="7/8"/>
+									<enumeration value="8/9"/>
+									<enumeration value="3/5"/>
+									<enumeration value="4/5"/>
+									<enumeration value="9/10"/>
+									<enumeration value="1/4"/>
+									<enumeration value="1/3"/>
+									<enumeration value="2/5"/>
+									<enumeration value="13/45"/>
+									<enumeration value="9/20"/>
+									<enumeration value="11/20"/>
+									<enumeration value="23/36"/>
+									<enumeration value="25/36"/>
+									<enumeration value="13/18"/>
+									<enumeration value="5/9"/>
+									<enumeration value="26/45"/>
+									<enumeration value="28/45"/>
+									<enumeration value="7/9"/>
+									<enumeration value="77/90"/>
+									<enumeration value="8/15"/>
+									<enumeration value="32/45"/>
+									<enumeration value="11/15"/>
+								</restriction>
 							</simpleType>
 						</element>
 					</sequence>
@@ -342,7 +343,7 @@
 												<extension base="positiveInteger">
 													<attribute name="primary" type="boolean" default="false"/>
 												</extension>
-											</simpleContent>                                                                                                 
+											</simpleContent>
 										</complexType>
 									</element>
 								</sequence>
@@ -619,7 +620,9 @@
 		<sequence>
 			<element name="AudioAttributes" type="tva:AudioAttributesType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="AudioConformancePoint" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded">
-				<annotation><documentation>The use of this element is deprecated</documentation></annotation>
+				<annotation>
+					<documentation>The use of this element is deprecated</documentation>
+				</annotation>
 			</element>
 			<element name="VideoAttributes" type="dvbisd:VideoAttributesType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="VideoConformancePoint" type="tva:ControlledTermType" minOccurs="0"/>
