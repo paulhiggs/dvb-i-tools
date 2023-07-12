@@ -80,14 +80,14 @@ var SchemaVersions = [
 		version: SCHEMA_r5,
 		filename: DVBI_ServiceListSchema.r5.file,
 		schema: null,
-		status: DRAFT,
+		status: CURRENT,
 	},
 	{
 		namespace: dvbi.A177v5_Namespace,
 		version: SCHEMA_r4,
 		filename: DVBI_ServiceListSchema.r4.file,
 		schema: null,
-		status: CURRENT,
+		status: OLD,
 	},
 	{
 		namespace: dvbi.A177v4_Namespace,
@@ -2293,21 +2293,13 @@ export default class ServiceListCheck {
 				l = 0,
 				Language;
 			while ((Language = LanguageList.get(xPath(props.prefix, tva.e_Language, ++l), props.schema)) != null) {
-				let lang = Language.text();
-				checkLanguage(this.knownLanguages, lang, `language in ${tva.e_Language.elementize()}`, Language, errs, "SL030");
-				checkAttributes(
-					Language, //HERE
-					[],
-					[],
-					tvaEA.AudioLanguage,
-					errs,
-					"SL031"
-				);
-				let lang_lower = lang.toLowerCase();
+				checkLanguage(this.knownLanguages, Language.text(), `language in ${tva.e_Language.elementize()}`, Language, errs, "SL030");
+				checkAttributes(Language, [], [], tvaEA.AudioLanguage, errs, "SL031");
+				let lang_lower = Language.text().toLowerCase();
 				if (isIn(announcedLanguages, lang_lower))
 					errs.addError({
 						code: "SL032",
-						message: `language ${lang} is already included in ${dvbi.e_LanguageList.elementize()}`,
+						message: `language ${Language.text()} is already included in ${dvbi.e_LanguageList.elementize()}`,
 						fragment: Language,
 						key: "duplicate language",
 					});
