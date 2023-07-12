@@ -32,6 +32,7 @@ export const dvbi = {
 	A177v4_Namespace: `${DVB_metadata}:servicediscovery:2022`,
 	A177v5_Namespace: `${DVB_metadata}:servicediscovery:2022b`,
 	A177v6_Namespace: `${DVB_metadata}:servicediscovery:2023`,
+	A177v7_Namespace: `${DVB_metadata}:servicediscovery:2023b`,
 
 	MAX_TITLE_LENGTH: 80,
 	MAX_KEYWORD_LENGTH: 32,

@@ -66,6 +66,7 @@ const SCHEMA_r0 = 0,
 	SCHEMA_r3 = 3,
 	SCHEMA_r4 = 4,
 	SCHEMA_r5 = 5,
+	SCHEMA_r6 = 6,
 	SCHEMA_unknown = -1;
 
 export const DRAFT = 0x01,
@@ -75,6 +76,13 @@ export const DRAFT = 0x01,
 
 var SchemaVersions = [
 	// schema property is loaded from specified filename
+	{
+		namespace: dvbi.A177v7_Namespace,
+		version: SCHEMA_r6,
+		filename: DVBI_ServiceListSchema.r6.file,
+		schema: null,
+		status: DRAFT,
+	},
 	{
 		namespace: dvbi.A177v6_Namespace,
 		version: SCHEMA_r5,
@@ -126,6 +134,7 @@ const OutOfScheduledHoursBanners = [
 	{ ver: SCHEMA_r3, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
 	{ ver: SCHEMA_r4, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
 	{ ver: SCHEMA_r5, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	{ ver: SCHEMA_r6, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
 ];
 const ContentFinishedBanners = [
 	{ ver: SCHEMA_r1, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
@@ -133,6 +142,7 @@ const ContentFinishedBanners = [
 	{ ver: SCHEMA_r3, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
 	{ ver: SCHEMA_r4, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
 	{ ver: SCHEMA_r5, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	{ ver: SCHEMA_r6, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
 ];
 const ServiceListLogos = [
 	{ ver: SCHEMA_r0, val: dvbi.LOGO_SERVICE_LIST_v1 },
@@ -141,6 +151,7 @@ const ServiceListLogos = [
 	{ ver: SCHEMA_r3, val: dvbi.LOGO_SERVICE_LIST_v3 },
 	{ ver: SCHEMA_r4, val: dvbi.LOGO_SERVICE_LIST_v3 },
 	{ ver: SCHEMA_r5, val: dvbi.LOGO_SERVICE_LIST_v3 },
+	{ ver: SCHEMA_r6, val: dvbi.LOGO_SERVICE_LIST_v3 },
 ];
 const ServiceLogos = [
 	{ ver: SCHEMA_r0, val: dvbi.LOGO_SERVICE_v1 },
@@ -149,11 +160,14 @@ const ServiceLogos = [
 	{ ver: SCHEMA_r3, val: dvbi.LOGO_SERVICE_v3 },
 	{ ver: SCHEMA_r4, val: dvbi.LOGO_SERVICE_v3 },
 	{ ver: SCHEMA_r5, val: dvbi.LOGO_SERVICE_v3 },
+	{ ver: SCHEMA_r6, val: dvbi.LOGO_SERVICE_v3 },
 ];
 const ServiceBanners = [
 	{ ver: SCHEMA_r2, val: dvbi.SERVICE_BANNER_v4 },
 	{ ver: SCHEMA_r3, val: dvbi.SERVICE_BANNER_v4 },
 	{ ver: SCHEMA_r4, val: dvbi.SERVICE_BANNER_v4 },
+	{ ver: SCHEMA_r5, val: dvbi.SERVICE_BANNER_v4 },
+	{ ver: SCHEMA_r6, val: dvbi.SERVICE_BANNER_v4 },
 ];
 const ContentGuideSourceLogos = [
 	{ ver: SCHEMA_r0, val: dvbi.LOGO_CG_PROVIDER_v1 },
@@ -162,6 +176,7 @@ const ContentGuideSourceLogos = [
 	{ ver: SCHEMA_r3, val: dvbi.LOGO_CG_PROVIDER_v3 },
 	{ ver: SCHEMA_r4, val: dvbi.LOGO_CG_PROVIDER_v3 },
 	{ ver: SCHEMA_r5, val: dvbi.LOGO_CG_PROVIDER_v3 },
+	{ ver: SCHEMA_r6, val: dvbi.LOGO_CG_PROVIDER_v3 },
 ];
 
 /**
