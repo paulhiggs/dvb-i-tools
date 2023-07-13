@@ -219,7 +219,15 @@ let uniqueServiceIdentifier = (identifier, identifiers) => !isIn(identifiers, id
  * @param {String} hrefType  The type of the service application
  * @returns {boolean} true if this is a valid application being used with the service else false
  */
-let validServiceControlApplication = (hrefType) => [dvbi.APP_IN_PARALLEL, dvbi.APP_IN_CONTROL].includes(hrefType);
+let validServiceControlApplication = (hrefType) => [dvbi.APP_IN_PARALLEL, dvbi.APP_IN_CONTROL, dvbi.APP_SERVICE_PROVIDER].includes(hrefType);
+
+/**
+ * determines if the identifer provided refers to a valid application being used with the service instance
+ *
+ * @param {String} hrefType  The type of the service application
+ * @returns {boolean} true if this is a valid application being used with the service else false
+ */
+let validServiceInstanceControlApplication = (hrefType) => [dvbi.APP_IN_PARALLEL, dvbi.APP_IN_CONTROL].includes(hrefType);
 
 /**
  * determines if the identifer provided refers to a valid application to be launched when a service is unavailable
@@ -1298,10 +1306,10 @@ export default class ServiceListCheck {
 			RelatedMaterial;
 		while ((RelatedMaterial = ServiceInstance.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
 			let foundHref = this.validateRelatedMaterial(props, RelatedMaterial, errs, `service instance of ${thisServiceId.quote()}`, SERVICE_INSTANCE_RM, "SI020");
-			if (foundHref != "" && validServiceControlApplication(foundHref)) controlApps.push(RelatedMaterial);
+			if (foundHref != "" && validServiceInstanceControlApplication(foundHref)) controlApps.push(RelatedMaterial);
 			if (foundHref == dvbi.APP_IN_CONTROL) {
-				//Application controlling playback SHOULD NOT have any service delivery parameters
-				if (SchemaVersion(props.namespace) >= SCHEMA_r5 && hasDeliveryParameters(ServiceInstance, props.prefix, props.schema)) {
+				// Application controlling playback SHOULD NOT have any service delivery parameters
+				if (SchemaVersion(props.namespace) >= SCHEMA_r5 && hasDeliveryParameters(ServiceInstance, props.prefix, props.schema))
 					errs.addError({
 						type: WARNING,
 						code: "SI022",
@@ -1309,8 +1317,13 @@ export default class ServiceListCheck {
 						fragment: RelatedMaterial,
 						key: "unnecessary delivery",
 					});
-				}
-			}
+			} else if (foundHref == dvbi.APP_SERVICE_PROVIDER)
+				errs.addError({
+					code: "SI023",
+					message: "Service Provider app not permitted for Service Instance",
+					fragment: RelatedMaterial,
+					key: "disallowed app",
+				});
 		}
 		if (controlApps.length > 1)
 			controlApps.forEach((app) => {
