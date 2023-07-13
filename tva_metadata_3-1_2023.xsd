@@ -439,7 +439,7 @@
 			<documentation xml:lang="en">A country code, as defined by ISO 3166.</documentation>
 		</annotation>
 		<restriction base="string">
-			<pattern value="[A-Z]{3};"/>
+			<pattern value="[A-Z]{3}"/>
 		</restriction>
 	</simpleType>
 		<simpleType name="ISO-3166-List">

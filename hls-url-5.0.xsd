@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2023" xmlns:hls="vnd:apple:mpegurl" targetNamespace="vnd:apple:mpegurl" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<import namespace="urn:dvb:metadata:servicediscovery:2023" schemaLocation="dvbi_v5.0-with-hls.xsd"/>
+	<import namespace="urn:dvb:metadata:servicediscovery:2023" schemaLocation="dvbi_v5.0-with-hls-hbbtv.xsd"/>
 	<complexType name="m3u8RefType">
 		<complexContent>
 			<extension base="dvbisd:ExtensionBaseType">

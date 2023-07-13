@@ -216,10 +216,15 @@ let uniqueServiceIdentifier = (identifier, identifiers) => !isIn(identifiers, id
 /**
  * determines if the identifer provided refers to a valid application being used with the service
  *
- * @param {String} hrefType  The type of the service application
+ * @param {String}  hrefType       The type of the service application
+ * @param {integer} schemaVersion  The schema version of the XML document
  * @returns {boolean} true if this is a valid application being used with the service else false
  */
-let validServiceControlApplication = (hrefType) => [dvbi.APP_IN_PARALLEL, dvbi.APP_IN_CONTROL, dvbi.APP_SERVICE_PROVIDER].includes(hrefType);
+let validServiceControlApplication = (hrefType, schemaVersion) => {
+	let appTypes = [dvbi.APP_IN_PARALLEL, dvbi.APP_IN_CONTROL];
+	if (schemaVersion >= SCHEMA_r6) appTypes.push(dvbi.APP_SERVICE_PROVIDER);
+	return appTypes.includes(hrefType);
+};
 
 /**
  * determines if the identifer provided refers to a valid application being used with the service instance
@@ -730,8 +735,9 @@ export default class ServiceListCheck {
 	 * @param {XMLnode} MediaLocator  The <MediaLocator> subelement (a libxmls object tree) of the <RelatedMaterial> element
 	 * @param {Object}  errs          The class where errors and warnings relating to the service list processing are stored
 	 * @param {string}  Location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+	 * @param {string}  AppType       The type of application being checked, from HowRelated@href
 	 */
-	/*private*/ checkSignalledApplication(MediaLocator, errs, Location) {
+	/*private*/ checkSignalledApplication(MediaLocator, errs, Location, AppType) {
 		const validApplicationTypes = [dvbi.XML_AIT_CONTENT_TYPE, dvbi.HTML5_APP, dvbi.XHTML_APP];
 		let isValidApplicationType = (type) => validApplicationTypes.includes(type);
 
@@ -749,12 +755,11 @@ export default class ServiceListCheck {
 						hasMediaURI = true;
 						if (child.attr(tva.a_contentType) && !isValidApplicationType(child.attr(tva.a_contentType).value()))
 							errs.addError({
-								type: WARNING,
 								code: "SA003",
 								message: `${tva.a_contentType.attribute()} ${child
 									.attr(tva.a_contentType)
 									.value()
-									.quote()} is not DVB AIT for ${tva.e_RelatedMaterial.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`,
+									.quote()} is not supported application type for ${tva.e_RelatedMaterial.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`,
 								fragment: child,
 								key: `invalid ${tva.a_contentType.attribute(tva.e_MediaUri)}`,
 							});
@@ -764,6 +769,14 @@ export default class ServiceListCheck {
 								message: `invalid URL ${child.text().quote()} specified for ${child.name().elementize()}`,
 								fragment: child,
 								key: "invalid resource URL",
+							});
+						console.log(`appType=${AppType}`);
+						if (AppType == dvbi.APP_SERVICE_PROVIDER && child.attr(tva.a_contentType) && child.attr(tva.a_contentType).value() != dvbi.XML_AIT_CONTENT_TYPE)
+							errs.addError({
+								code: "SA006",
+								message: `invalid application type (${child.attr(tva.a_contentType).value().quote()} for Serivce Provider Application (only XMLAIT allowed)`,
+								fragment: child,
+								key: "invalid app type",
 							});
 					}
 				});
@@ -780,16 +793,17 @@ export default class ServiceListCheck {
 	/**
 	 * determines if the identifer provided refers to a valid application launching method
 	 *
-	 * @param {XMLnode} HowRelated  The service identifier
+	 * @param {XMLnode} HowRelated     The service identifier
+	 * @param {integer} schemaVersion  The schema version of the XML document
 	 * @returns {boolean} true if this is a valid application launching method else false
 	 */
-	/*private*/ validServiceApplication(HowRelated) {
+	/*private*/ validServiceApplication(HowRelated, schemaVersion) {
 		// return true if the HowRelated element has a 	valid CS value for Service Related Applications (A177 5.2.3)
 		// urn:dvb:metadata:cs:LinkedApplicationCS:2019
 		if (!HowRelated) return false;
 		let val = HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null;
 		if (!val) return false;
-		return validServiceControlApplication(val) || validServiceUnavailableApplication(val);
+		return validServiceControlApplication(val, schemaVersion) || validServiceUnavailableApplication(val);
 	}
 
 	/**
@@ -875,9 +889,9 @@ export default class ServiceListCheck {
 						rc = HowRelated.attr(dvbi.a_href).value();
 
 						checkValidLogos(RelatedMaterial, errs, `${errCode}-22`, Location, this.knownLanguages);
-					} else if (this.validServiceApplication(HowRelated)) {
+					} else if (this.validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
 						rc = HowRelated.attr(dvbi.a_href).value();
-						MediaLocator.forEach((locator) => this.checkSignalledApplication(locator, errs, Location));
+						MediaLocator.forEach((locator) => this.checkSignalledApplication(locator, errs, Location, rc));
 					} else errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-24`));
 					break;
 				case SERVICE_INSTANCE_RM:
@@ -903,9 +917,9 @@ export default class ServiceListCheck {
 							key: "misplaced image type",
 							fragment: HowRelated,
 						});
-					} else if (this.validServiceApplication(HowRelated)) {
+					} else if (this.validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
 						rc = HowRelated.attr(dvbi.a_href).value();
-						MediaLocator.forEach((locator) => this.checkSignalledApplication(locator, errs, Location));
+						MediaLocator.forEach((locator) => this.checkSignalledApplication(locator, errs, Location, rc));
 					} else errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-24`));
 					break;
 				case CONTENT_GUIDE_RM:
@@ -926,14 +940,13 @@ export default class ServiceListCheck {
 	 * @param {XMLnode} node      The XML tree node (either a <Service>, <TestService> or a <ServiceInstance>) to be checked
 	 * @returns {boolean} true if the node contains a <RelatedMaterial> element which signals an application else false
 	 */
-
 	/*private*/ hasSignalledApplication(props, node) {
 		if (node) {
 			let i = 0,
 				elem;
 			while ((elem = node.get(xPath(props.prefix, tva.e_RelatedMaterial, ++i), props.schema)) != null) {
 				let hr = elem.get(xPath(props.prefix, tva.e_HowRelated), props.schema);
-				if (hr && this.validServiceApplication(hr)) return true;
+				if (hr && this.validServiceApplication(hr, SchemaVersion(props.namespace))) return true;
 			}
 		}
 		return false;
@@ -2341,7 +2354,7 @@ export default class ServiceListCheck {
 			RelatedMaterial;
 		while ((RelatedMaterial = SL.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
 			let foundHref = this.validateRelatedMaterial(props, RelatedMaterial, errs, "service list", SERVICE_LIST_RM, "SL040");
-			if (foundHref != "" && validServiceControlApplication(foundHref)) countControlApps++;
+			if (foundHref != "" && validServiceControlApplication(foundHref, SchemaVersion(props.namespace))) countControlApps++;
 		}
 
 		if (countControlApps > 1)
