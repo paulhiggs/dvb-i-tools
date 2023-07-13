@@ -128,55 +128,55 @@ var SchemaVersions = [
 ];
 
 const OutOfScheduledHoursBanners = [
-	{ ver: SCHEMA_r0, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v1 },
-	{ ver: SCHEMA_r1, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
-	{ ver: SCHEMA_r2, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
-	{ ver: SCHEMA_r3, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
-	{ ver: SCHEMA_r4, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
-	{ ver: SCHEMA_r5, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
 	{ ver: SCHEMA_r6, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	{ ver: SCHEMA_r5, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	{ ver: SCHEMA_r4, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	{ ver: SCHEMA_r3, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	{ ver: SCHEMA_r2, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
+	{ ver: SCHEMA_r1, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
+	{ ver: SCHEMA_r0, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v1 },
 ];
 const ContentFinishedBanners = [
-	{ ver: SCHEMA_r1, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
-	{ ver: SCHEMA_r2, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
-	{ ver: SCHEMA_r3, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
-	{ ver: SCHEMA_r4, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
-	{ ver: SCHEMA_r5, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
 	{ ver: SCHEMA_r6, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	{ ver: SCHEMA_r5, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	{ ver: SCHEMA_r4, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	{ ver: SCHEMA_r3, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	{ ver: SCHEMA_r2, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
+	{ ver: SCHEMA_r1, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
 ];
 const ServiceListLogos = [
-	{ ver: SCHEMA_r0, val: dvbi.LOGO_SERVICE_LIST_v1 },
-	{ ver: SCHEMA_r1, val: dvbi.LOGO_SERVICE_LIST_v2 },
-	{ ver: SCHEMA_r2, val: dvbi.LOGO_SERVICE_LIST_v2 },
-	{ ver: SCHEMA_r3, val: dvbi.LOGO_SERVICE_LIST_v3 },
-	{ ver: SCHEMA_r4, val: dvbi.LOGO_SERVICE_LIST_v3 },
-	{ ver: SCHEMA_r5, val: dvbi.LOGO_SERVICE_LIST_v3 },
 	{ ver: SCHEMA_r6, val: dvbi.LOGO_SERVICE_LIST_v3 },
+	{ ver: SCHEMA_r5, val: dvbi.LOGO_SERVICE_LIST_v3 },
+	{ ver: SCHEMA_r4, val: dvbi.LOGO_SERVICE_LIST_v3 },
+	{ ver: SCHEMA_r3, val: dvbi.LOGO_SERVICE_LIST_v3 },
+	{ ver: SCHEMA_r2, val: dvbi.LOGO_SERVICE_LIST_v2 },
+	{ ver: SCHEMA_r1, val: dvbi.LOGO_SERVICE_LIST_v2 },
+	{ ver: SCHEMA_r0, val: dvbi.LOGO_SERVICE_LIST_v1 },
 ];
 const ServiceLogos = [
-	{ ver: SCHEMA_r0, val: dvbi.LOGO_SERVICE_v1 },
-	{ ver: SCHEMA_r1, val: dvbi.LOGO_SERVICE_v2 },
-	{ ver: SCHEMA_r2, val: dvbi.LOGO_SERVICE_v2 },
-	{ ver: SCHEMA_r3, val: dvbi.LOGO_SERVICE_v3 },
-	{ ver: SCHEMA_r4, val: dvbi.LOGO_SERVICE_v3 },
-	{ ver: SCHEMA_r5, val: dvbi.LOGO_SERVICE_v3 },
 	{ ver: SCHEMA_r6, val: dvbi.LOGO_SERVICE_v3 },
+	{ ver: SCHEMA_r5, val: dvbi.LOGO_SERVICE_v3 },
+	{ ver: SCHEMA_r4, val: dvbi.LOGO_SERVICE_v3 },
+	{ ver: SCHEMA_r3, val: dvbi.LOGO_SERVICE_v3 },
+	{ ver: SCHEMA_r2, val: dvbi.LOGO_SERVICE_v2 },
+	{ ver: SCHEMA_r1, val: dvbi.LOGO_SERVICE_v2 },
+	{ ver: SCHEMA_r0, val: dvbi.LOGO_SERVICE_v1 },
 ];
 const ServiceBanners = [
-	{ ver: SCHEMA_r2, val: dvbi.SERVICE_BANNER_v4 },
-	{ ver: SCHEMA_r3, val: dvbi.SERVICE_BANNER_v4 },
-	{ ver: SCHEMA_r4, val: dvbi.SERVICE_BANNER_v4 },
-	{ ver: SCHEMA_r5, val: dvbi.SERVICE_BANNER_v4 },
 	{ ver: SCHEMA_r6, val: dvbi.SERVICE_BANNER_v4 },
+	{ ver: SCHEMA_r5, val: dvbi.SERVICE_BANNER_v4 },
+	{ ver: SCHEMA_r4, val: dvbi.SERVICE_BANNER_v4 },
+	{ ver: SCHEMA_r3, val: dvbi.SERVICE_BANNER_v4 },
+	{ ver: SCHEMA_r2, val: dvbi.SERVICE_BANNER_v4 },
 ];
 const ContentGuideSourceLogos = [
-	{ ver: SCHEMA_r0, val: dvbi.LOGO_CG_PROVIDER_v1 },
-	{ ver: SCHEMA_r1, val: dvbi.LOGO_CG_PROVIDER_v2 },
-	{ ver: SCHEMA_r2, val: dvbi.LOGO_CG_PROVIDER_v2 },
-	{ ver: SCHEMA_r3, val: dvbi.LOGO_CG_PROVIDER_v3 },
-	{ ver: SCHEMA_r4, val: dvbi.LOGO_CG_PROVIDER_v3 },
-	{ ver: SCHEMA_r5, val: dvbi.LOGO_CG_PROVIDER_v3 },
 	{ ver: SCHEMA_r6, val: dvbi.LOGO_CG_PROVIDER_v3 },
+	{ ver: SCHEMA_r5, val: dvbi.LOGO_CG_PROVIDER_v3 },
+	{ ver: SCHEMA_r4, val: dvbi.LOGO_CG_PROVIDER_v3 },
+	{ ver: SCHEMA_r3, val: dvbi.LOGO_CG_PROVIDER_v3 },
+	{ ver: SCHEMA_r2, val: dvbi.LOGO_CG_PROVIDER_v2 },
+	{ ver: SCHEMA_r1, val: dvbi.LOGO_CG_PROVIDER_v2 },
+	{ ver: SCHEMA_r0, val: dvbi.LOGO_CG_PROVIDER_v1 },
 ];
 
 /**
