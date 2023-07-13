@@ -770,11 +770,10 @@ export default class ServiceListCheck {
 								fragment: child,
 								key: "invalid resource URL",
 							});
-						console.log(`appType=${AppType}`);
 						if (AppType == dvbi.APP_SERVICE_PROVIDER && child.attr(tva.a_contentType) && child.attr(tva.a_contentType).value() != dvbi.XML_AIT_CONTENT_TYPE)
 							errs.addError({
 								code: "SA006",
-								message: `invalid application type (${child.attr(tva.a_contentType).value().quote()} for Serivce Provider Application (only XMLAIT allowed)`,
+								message: `invalid application type ${child.attr(tva.a_contentType).value().quote()} for Serivce Provider Application (only XMLAIT allowed)`,
 								fragment: child,
 								key: "invalid app type",
 							});
