@@ -22,6 +22,8 @@ const e_pct = "%", //e_pct="&#x25;",
 	e_NamedHost = `[${e_alpha}${e_digit}${e_pct}._~-]+`,
 	e_DecimalByte = `(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[${e_digit}])`;
 
+const ASCII_chars = `!"#$%&'()*+,\-./${e_digit}:;<=>?@${e_highalpha}[\\]^_${e_lowalpha}{|}~`;
+
 export const e_IPv4Address = `${e_DecimalByte}(\\.${e_DecimalByte}){3}`;
 
 const e_v6_8words = `(${e_hex16}:){7,7}${e_hex16}`, // TEST: 1:2:3:4:5:6:7:8
@@ -231,3 +233,6 @@ export function isTVAAudioLanguageType(languageCode, caseSensitive = true) {
 	const languageRegex = new RegExp(languageFormat, caseSensitive ? "" : "i");
 	return datatypeIs(languageCode, "string") ? languageRegex.test(languageCode) : false;
 }
+
+const ASCIIregexp = new RegExp(`^[${ASCII_chars}]*$`);
+export var isASCII = (arg) => (datatypeIs(arg, "string") ? ASCIIregexp.test(arg) : false);

@@ -17,7 +17,7 @@ import { isTAGURI } from "./URI_checks.js";
 
 import { xPath, xPathM, isIn, unEntity } from "./utils.js";
 
-import { isPostcode, isHTTPURL, isHTTPPathURL, isDomainName, isRTSPURL } from "./pattern_checks.js";
+import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isDomainName, isRTSPURL } from "./pattern_checks.js";
 
 import {
 	IANA_Subtag_Registry,
@@ -762,6 +762,13 @@ export default class ServiceListCheck {
 									.quote()} is not supported application type for ${tva.e_RelatedMaterial.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`,
 								fragment: child,
 								key: `invalid ${tva.a_contentType.attribute(tva.e_MediaUri)}`,
+							});
+						if (!isASCII(child.text()))
+							errs.addError({
+								code: "SA014",
+								message: `URL ${child.text().quote()} contains non-ASCII characters in ${child.name().elementize()}`,
+								fragment: child,
+								key: "invalid resource URL",
 							});
 						if (!isHTTPURL(child.text()))
 							errs.addError({
@@ -2209,7 +2216,7 @@ export default class ServiceListCheck {
 	 *
 	 * @param {String} SLtext      The service list text to be validated
 	 * @param {Class}  errs        Errors found in validaton
-	 * @param {String} log_prefix  the first part of the logging location (of null if no logging)
+	 * @param {String} log_prefix  the first part of the logging location (or null if no logging)
 	 */
 	/*public*/ doValidateServiceList(SLtext, errs, log_prefix) {
 		this.numRequests++;
