@@ -51,7 +51,7 @@ import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck,
 import { writeOut } from "./Validator.js";
 import { keys } from "./CommonErrors.js";
 
-import { MakeJS_SL } from "./sl-parser.js";
+import { MakeJS_SL } from "./dvbi-parser.js";
 
 const ANY_NAMESPACE = "$%$!!";
 const LCN_TABLE_NO_TARGETREGION = "unspecifiedRegion",
