@@ -51,6 +51,8 @@ import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck,
 import { writeOut } from "./Validator.js";
 import { keys } from "./CommonErrors.js";
 
+import { MakeJS_SL } from "./sl-parser.js";
+
 const ANY_NAMESPACE = "$%$!!";
 const LCN_TABLE_NO_TARGETREGION = "unspecifiedRegion",
 	LCN_TABLE_NO_SUBSCRIPTION = "unspecifiedPackage";
@@ -359,6 +361,9 @@ if (!Array.prototype.forEachSubElement) {
 }
 
 export default class ServiceListCheck {
+	/**
+	 * @constructor
+	 */
 	constructor(useURLs, preloadedLanguageValidator = null, preloadedGenres = null, preloadedCountries = null) {
 		this.numRequests = 0;
 		if (preloadedLanguageValidator) this.knownLanguages = preloadedLanguageValidator;
@@ -2217,8 +2222,9 @@ export default class ServiceListCheck {
 	 * @param {String} SLtext      The service list text to be validated
 	 * @param {Class}  errs        Errors found in validaton
 	 * @param {String} log_prefix  the first part of the logging location (or null if no logging)
+	 * @param {boolean} parseToJSON show JSON/JavaScript notation of the Content Guide fragment
 	 */
-	/*public*/ doValidateServiceList(SLtext, errs, log_prefix) {
+	/*public*/ doValidateServiceList(SLtext, errs, log_prefix, parseToJSON) {
 		this.numRequests++;
 		if (!SLtext) {
 			errs.addError({
@@ -2648,15 +2654,20 @@ export default class ServiceListCheck {
 					});
 			});
 		}
+
+		if (parseToJSON) {
+			errs.ServiceList = MakeJS_SL(SL);
+		}
 	}
 
 	/**
 	 * validate the service list and record any errors
 	 *
+	 * @public @deprecated
 	 * @param {String} SLtext  The service list text to be validated
 	 * @returns {Class} Errors found in validaton
 	 */
-	/*public*/ validateServiceList(SLtext) {
+	validateServiceList(SLtext) {
 		var errs = new ErrorList(SLtext);
 		this.doValidateServiceList(SLtext, errs);
 

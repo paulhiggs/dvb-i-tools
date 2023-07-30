@@ -151,3 +151,15 @@ export function CountChildElements(node, childElementName) {
 		});
 	return r;
 }
+
+/**
+ * check if the specificed element has the named child element
+ *
+ * @param {XMLnode} node         the node to check
+ * @param {string}  elementName  the name of the child element
+ * @returns {boolean} true if an element named node.elementName exists, else false
+ */
+export function hasElement(node, elementName) {
+	if (!node) return false;
+	return node.childNodes().find((c) => c.type() == "element" && c.name() == elementName);
+}

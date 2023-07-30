@@ -20,7 +20,7 @@ import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
 import { mpeg7 } from "./MPEG7_definitions.js";
 
 import { isCRIDURI, isTAGURI } from "./URI_checks.js";
-import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration, CountChildElements } from "./utils.js";
+import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration, CountChildElements, hasElement } from "./utils.js";
 
 import { isHTTPURL, isDVBLocator, isUTCDateTime } from "./pattern_checks.js";
 
@@ -326,18 +326,6 @@ export default class ContentGuideCheck {
 		} else _rc = false;
 
 		return _rc;
-	}
-
-	/**
-	 * check if the specificed element has the named child element
-	 *
-	 * @param {XMLnode} node         the node to check
-	 * @param {string}  elementName  the name of the child element
-	 * @returns {boolean} true if an element named node.elementName exists, else false
-	 */
-	/* private */ hasElement(node, elementName) {
-		if (!node) return false;
-		return node.childNodes().find((c) => c.type() == "element" && c.name() == elementName);
 	}
 
 	/**
@@ -3168,8 +3156,9 @@ export default class ContentGuideCheck {
 	 * @param {String} requestType  the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
 	 * @param {Class}  errs         errors found in validaton
 	 * @param {String} log_prefix   the first part of the logging location (of null if no logging)
+	 * @param {boolean} parseToJSON show JSON/JavaScript notation of the Content Guide fragment
 	 */
-	doValidateContentGuide(CGtext, requestType, errs, log_prefix) {
+	doValidateContentGuide(CGtext, requestType, errs, log_prefix, parseToJSON) {
 		this.numRequests++;
 
 		if (!CGtext) {
@@ -3242,7 +3231,7 @@ export default class ContentGuideCheck {
 				);
 
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
-				if (this.hasElement(ProgramDescription, tva.e_GroupInformationTable)) this.CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs);
+				if (hasElement(ProgramDescription, tva.e_GroupInformationTable)) this.CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs);
 				let currentProgramCRIDnn = this.CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs);
 				this.CheckProgramLocation(props, ProgramDescription, programCRIDs, currentProgramCRIDnn, requestType, errs);
 				break;
@@ -3257,7 +3246,7 @@ export default class ContentGuideCheck {
 				);
 
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
-				if (this.hasElement(ProgramDescription, tva.e_GroupInformationTable)) this.CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs);
+				if (hasElement(ProgramDescription, tva.e_GroupInformationTable)) this.CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs);
 				let currentProgramCRIDsw = this.CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs);
 				this.CheckProgramLocation(props, ProgramDescription, programCRIDs, currentProgramCRIDsw, requestType, errs);
 				break;
@@ -3318,9 +3307,14 @@ export default class ContentGuideCheck {
 				this.CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs, o);
 				break;
 		}
+
+		if (parseToJSON) {
+			errs.ContentGuide = {};
+		}
 	}
 
 	/**
+	 *@public @deprecated
 	 * validate the content guide and record any errors
 	 *
 	 * @param {String} CGtext        the service list text to be validated

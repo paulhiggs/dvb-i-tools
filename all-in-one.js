@@ -17,6 +17,7 @@ const optionDefinitions = [
 	{ name: "nocg", type: Boolean, defaultValue: false },
 	{ name: "CSRfile", alias: "f", type: String, defaultValue: Default_SLEPR.file },
 	{ name: "CORSmode", alias: "c", type: String, defaultValue: CORSlibrary },
+	{ name: "parser", type: Boolean, defaultValue: false },
 ];
 
 const options = commandLineArgs(optionDefinitions);

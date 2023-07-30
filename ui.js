@@ -175,6 +175,12 @@ export function drawForm(deprecateTo, req, res, modes, supportedRequests, error 
 			break;
 	}
 	tabulateResults(source, res, error, errs);
+
+	if (errs?.ServiceList || errs?.ContentGuide) {
+		res.write("<hr/>");
+		if (errs.ServiceList) res.write(`<h2>ServiceList</h2><br><pre>${JSON.stringify(errs.ServiceList, null, 2)}</pre>`);
+		if (errs.ContentGuide) res.write(`<h2>ContentGuide</h2><br><pre>${JSON.stringify(errs.ContentGuide, null, 2)}</pre>`);
+	}
 	res.write(PAGE_BOTTOM);
 
 	return new Promise((resolve, reject /* eslint-disable-line no-unused-vars */) => {

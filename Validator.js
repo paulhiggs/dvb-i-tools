@@ -92,7 +92,9 @@ function createPrefix(req) {
 	return `${logDir}${sep}${getDate(new Date())} (${req.body.testtype == MODE_SL ? "SL" : req.body.requestType}) ${fname.replace(/[/\\?%*:|"<>]/g, "-")}`;
 }
 
-function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasCG, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
+function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, options, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
+	let hasSL = !options.noSL,
+		hasCG = !options.noCG;
 	if (!req.session.data) {
 		// setup defaults
 		req.session.data = {};
@@ -151,10 +153,10 @@ function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasC
 		if (!req.parseErr)
 			switch (req.body.testtype) {
 				case MODE_CG:
-					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, log_prefix);
+					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, log_prefix, options.parser);
 					break;
 				case MODE_SL:
-					if (slcheck) slcheck.doValidateServiceList(VVxml, errs, log_prefix);
+					if (slcheck) slcheck.doValidateServiceList(VVxml, errs, log_prefix, options.parser);
 					break;
 			}
 
@@ -274,22 +276,22 @@ export default function validator(options) {
 	if (!options.nosl) {
 		// handle HTTP POST requests to /checkSL
 		app.post("/checkSL", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_SL, MODE_URL);
+			DVB_I_check(true, req, res, slcheck, cgcheck, options, MODE_SL, MODE_URL);
 		});
 
 		// handle HTTP GET requests to /checkSL
 		app.get("/checkSL", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_SL, MODE_URL);
+			DVB_I_check(true, req, res, slcheck, cgcheck, options, MODE_SL, MODE_URL);
 		});
 
 		// handle HTTP POST requests to /checkSLFile
 		app.post("/checkSLFile", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_SL, MODE_FILE);
+			DVB_I_check(true, req, res, slcheck, cgcheck, options, MODE_SL, MODE_FILE);
 		});
 
 		// handle HTTP GET requests to /checkSLFile
 		app.get("/checkSLFile", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_SL, MODE_FILE);
+			DVB_I_check(true, req, res, slcheck, cgcheck, options, MODE_SL, MODE_FILE);
 		});
 	}
 
@@ -316,31 +318,31 @@ export default function validator(options) {
 	if (!options.nocg) {
 		// handle HTTP POST requests to /checkCG
 		app.post("/checkCG", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_CG, MODE_URL);
+			DVB_I_check(true, req, res, slcheck, cgcheck, options, MODE_CG, MODE_URL);
 		});
 
 		// handle HTTP GET requests to /checkCG
 		app.get("/checkCG", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_CG, MODE_URL);
+			DVB_I_check(true, req, res, slcheck, cgcheck, options, MODE_CG, MODE_URL);
 		});
 
 		// handle HTTP POST requests to /checkCGFile
 		app.post("/checkCGFile", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_CG, MODE_FILE);
+			DVB_I_check(true, req, res, slcheck, cgcheck, options, MODE_CG, MODE_FILE);
 		});
 
 		// handle HTTP GET requests to /checkCGFile
 		app.get("/checkCGFile", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_CG, MODE_FILE);
+			DVB_I_check(true, req, res, slcheck, cgcheck, options, MODE_CG, MODE_FILE);
 		});
 	}
 
 	if (!options.nosl || !options.nocg) {
 		app.get("/check", function (req, res) {
-			DVB_I_check(false, req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
+			DVB_I_check(false, req, res, slcheck, cgcheck, options);
 		});
 		app.post("/check", function (req, res) {
-			DVB_I_check(false, req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
+			DVB_I_check(false, req, res, slcheck, cgcheck, options);
 		});
 	}
 
