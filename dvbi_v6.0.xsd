@@ -68,7 +68,6 @@
 		<sequence>
 			<element name="Name" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="ProviderName" type="mpeg7:TextualType" maxOccurs="unbounded"/>
-			<element name="LanguageList" type="dvbisd:LanguageListType" minOccurs="0"/>
 			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="ScheduleInfoEndpoint" type="dvbi-types:ExtendedURIType"/>
 			<element name="ProgramInfoEndpoint" type="dvbi-types:ExtendedURIType" minOccurs="0"/>
