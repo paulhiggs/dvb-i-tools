@@ -282,6 +282,7 @@ export const dvbi = {
 	e_OtherDeliveryParameters: "OtherDeliveryParameters",
 	e_ParentalRating: "ParentalRating",
 	e_Period: "Period",
+	e_Playlist: "Playlist",
 	e_PlaylistEntry: "PlaylistEntry",
 	e_Polarization: "Polarization",
 	e_Postcode: "Postcode",

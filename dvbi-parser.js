@@ -7,14 +7,30 @@ import { dvbi } from "./DVB-I_definitions.js";
 import { xPath, hasElement, isEmpty } from "./utils.js";
 import { mlLanguage } from "./MultilingualElement.js";
 
-let addAttribute = (res, node, attrName, deflt = null) => {
-	if (node && node.attr(attrName)) res[attrName] = node.attr(attrName).value();
-	else if (deflt) res[attrName] = deflt;
+const NUMBER = 999,
+	BOOLEAN = 998,
+	STRING = 997;
+
+let addAttribute = (res, node, attrName, opts = { type: STRING, default: null }) => {
+	if (node && node.attr(attrName)) {
+		res[attrName] = node.attr(attrName).value();
+		if (opts.type == NUMBER) res[attrName] = Number(res[attrName]);
+		else if (opts.type == BOOLEAN) res[attrName] = String(res[attrName]).toLowerCase() === "true";
+	} else if (opts.default) res[attrName] = opts.default;
 };
 
 let addLangAttribute = (res, node) => {
 	addAttribute(res, node, tva.a_lang);
 	if (!res[tva.a_lang]) res[tva.a_lang] = mlLanguage(node);
+};
+
+let addSimpleElement = (res, node, elementName, opts = { type: STRING }) => {
+	let tmp = hasElement(node, elementName);
+	if (tmp) {
+		res[elementName] = tmp.text();
+		if (opts.type == NUMBER) res[elementName] = Number(res[elementName]);
+		else if (opts.type == BOOLEAN) res[elementName] = String(res[elementName]).toLowerCase() === "true";
+	}
 };
 
 let parseTextualType = (node) => {
@@ -62,10 +78,10 @@ let parseBitRate = (node) => {
 	let br = {};
 	if (node) {
 		br.value = node.text();
-		addAttribute(br, node, tva.a_variable);
-		addAttribute(br, node, tva.a_minimum);
-		addAttribute(br, node, tva.a_averge);
-		addAttribute(br, node, tva.a_maximum);
+		addAttribute(br, node, tva.a_variable, { type: BOOLEAN, default: false });
+		addAttribute(br, node, tva.a_minimum, { type: NUMBER });
+		addAttribute(br, node, tva.a_averge, { type: NUMBER });
+		addAttribute(br, node, tva.a_maximum, { type: NUMBER });
 	}
 	return br;
 };
@@ -81,7 +97,7 @@ let parseAVAttributesType = (node, props) => {
 	let avattr = {};
 	if (node) {
 		addControlledTermType(avattr, node, tva.e_FileFormat);
-		addSimpleElement(avattr, node, tva.e_FileSize);
+		addSimpleElement(avattr, node, tva.e_FileSize, { type: NUMBER });
 		addControlledTermType(avattr, node, tva.e_System);
 		if (hasElement(node, tva.e_BitRate)) {
 			avattr[tva.e_BitRate] = [];
@@ -188,11 +204,6 @@ let addRelatedMaterial = (res, node, props) => {
 	while ((r = node.get(xPath(props.prefix, dvbi.e_RelatedMaterial, ++i), props.schema)) != null) res[dvbi.e_RelatedMaterial].push(parseRelatedMaterialType(r, props));
 };
 
-let addSimpleElement = (res, node, elementName) => {
-	let tmp = hasElement(node, elementName);
-	if (tmp) res[elementName] = tmp.text();
-};
-
 let addCountries = (res, node, attributeName, property) => {
 	if (node.attr(attributeName)) res[property] = node.attr(attributeName).value().split(",");
 };
@@ -203,7 +214,7 @@ let parseRegion = (node, props) => {
 		// Region@regionID
 		addAttribute(r, node, dvbi.a_regionID);
 		// Region@selectable
-		addAttribute(r, node, dvbi.a_selectable, true);
+		addAttribute(r, node, dvbi.a_selectable, { type: BOOLEAN, default: true });
 		// Region@lang
 		addLangAttribute(r, node);
 		// Region@countryCodes
@@ -225,9 +236,9 @@ let parseRegion = (node, props) => {
 					addAttribute(loc, elem, dvbi.a_to);
 					break;
 				case dvbi.e_Coordinates:
-					addSimpleElement(loc, elem, dvbi.e_Latitude);
-					addSimpleElement(loc, elem, dvbi.e_Longitude);
-					addSimpleElement(loc, elem, dvbi.e_Radius);
+					addSimpleElement(loc, elem, dvbi.e_Latitude, { type: NUMBER });
+					addSimpleElement(loc, elem, dvbi.e_Longitude, { type: NUMBER });
+					addSimpleElement(loc, elem, dvbi.e_Radius, { type: NUMBER });
 					break;
 			}
 			if (!isEmpty(loc)) {
@@ -251,7 +262,7 @@ let addRegionList = (res, node, props) => {
 	if (!regionlist) return;
 	if (!Object.prototype.hasOwnProperty.call(res, dvbi.e_RegionList)) res[dvbi.e_RegionList] = {};
 
-	addAttribute(res[dvbi.e_RegionList], regionlist, dvbi.a_version);
+	addAttribute(res[dvbi.e_RegionList], regionlist, dvbi.a_version, { type: NUMBER });
 	addLangAttribute(res[dvbi.e_RegionList], regionlist);
 	res[dvbi.e_RegionList][dvbi.e_Region] = [];
 	let i = 0,
@@ -261,6 +272,8 @@ let addRegionList = (res, node, props) => {
 
 let parseContentGuideSource = (node, props) => {
 	let cg = {};
+	addAttribute(cg, node, dvbi.a_CGSID);
+	addAttribute(cg, node, dvbi.a_minimumMetadataUpdatePeriod);
 	addMultiLingual(cg, node, dvbi.e_Name, props);
 	addMultiLingual(cg, node, dvbi.e_ProviderName, props);
 	addRelatedMaterial(cg, node, props);
@@ -293,9 +306,9 @@ let parseSynopsisType = (node) => {
 let parseDVBTriplet = (node) => {
 	let triplet = {};
 	if (node) {
-		addAttribute(triplet, node, dvbi.a_origNetId);
-		addAttribute(triplet, node, dvbi.a_tsId);
-		addAttribute(triplet, node, dvbi.a_serviceId);
+		addAttribute(triplet, node, dvbi.a_origNetId, { type: NUMBER });
+		addAttribute(triplet, node, dvbi.a_tsId, { type: NUMBER });
+		addAttribute(triplet, node, dvbi.a_serviceId, { type: NUMBER });
 	}
 	return triplet;
 };
@@ -320,14 +333,14 @@ let parseDVBSDeliveryParameters = (node, props) => {
 		addTriplet(ds, node);
 
 		addSimpleElement(ds, node, dvbi.e_OrbitalPosition);
-		addSimpleElement(ds, node, dvbi.e_Frequency);
+		addSimpleElement(ds, node, dvbi.e_Frequency, { type: NUMBER });
 		addSimpleElement(ds, node, dvbi.e_Polarization);
-		addSimpleElement(ds, node, dvbi.e_SymbolRate);
+		addSimpleElement(ds, node, dvbi.e_SymbolRate, { type: NUMBER });
 		addSimpleElement(ds, node, dvbi.e_RollOff);
 		addSimpleElement(ds, node, dvbi.e_ModulationSystem);
 		addSimpleElement(ds, node, dvbi.e_FEC);
 		addSimpleElement(ds, node, dvbi.e_ModcodMode);
-		addSimpleElement(ds, node, dvbi.e_InputStreamIdentifier);
+		addSimpleElement(ds, node, dvbi.e_InputStreamIdentifier, { type: NUMBER });
 		let cb = hasElement(node, dvbi.e_ChannelBonding);
 		if (cb) {
 			ds[dvbi.e_ChannelBonding] = [];
@@ -335,8 +348,8 @@ let parseDVBSDeliveryParameters = (node, props) => {
 				f;
 			while ((f = cb.get(xPath(props.prefix, dvbi.e_Frequency, ++i), props.schema)) != null) {
 				let newFreq = {};
-				newFreq.text = f.text();
-				addAttribute(newFreq, f, dvbi.a_primary);
+				newFreq.text = Number(f.text());
+				addAttribute(newFreq, f, dvbi.a_primary, { type: BOOLEAN, default: false });
 				ds[dvbi.e_ChannelBonding].push(newFreq);
 			}
 		}
@@ -349,7 +362,7 @@ let parseDVBCDeliveryParameters = (node) => {
 	if (node) {
 		addTriplet(dc, node);
 		addSimpleElement(dc, node, dvbi.e_TargetCountry);
-		addSimpleElement(dc, node, dvbi.e_NetworkID);
+		addSimpleElement(dc, node, dvbi.e_NetworkID, { type: NUMBER });
 	}
 	return dc;
 };
@@ -360,7 +373,7 @@ let parseDASHDeliveryParameters = (node) => {
 		// DASHDeliveryParameters.UriBasedLocation
 		dd[dvbi.e_UriBasedLocation] = parseExtendedURIType_DVB(hasElement(node, dvbi.e_UriBasedLocation));
 		// DASHDeliveryParameters.MinimumBitRate
-		addSimpleElement(dd, node, dvbi.e_MinimumBitRate);
+		addSimpleElement(dd, node, dvbi.e_MinimumBitRate, { type: NUMBER });
 		// TODO - DASHDeliveryParameters.Extension
 	}
 	return dd;
@@ -371,7 +384,7 @@ let parseRTSPDeliveryParametersType = (node) => {
 	if (node) {
 		addTriplet(rp, node);
 		// TODO - RTSPDeliveryParameters.RTSPURL
-		addSimpleElement(rp, node, dvbi.e_MinimumBitRate);
+		addSimpleElement(rp, node, dvbi.e_MinimumBitRate, { type: NUMBER });
 	}
 	return rp;
 };
@@ -381,7 +394,7 @@ let parseMulticastTSDeliveryParametersType = (node) => {
 	if (node) {
 		addTriplet(mts, node);
 		// TODO - MulticastTSDeliveryParameters.IPMulticastAddress
-		addSimpleElement(mts, node, dvbi.e_MinimumBitRate);
+		addSimpleElement(mts, node, dvbi.e_MinimumBitRate, { type: NUMBER });
 	}
 	return mts;
 };
@@ -391,8 +404,8 @@ let parseCaptionLanguage = (node) => {
 	if (node) {
 		addAttribute(cl, node, tva.a_primary);
 		addAttribute(cl, node, tva.a_translation);
-		addAttribute(cl, node, tva.a_closed, true);
-		addAttribute(cl, node, tva.a_supplemental, false);
+		addAttribute(cl, node, tva.a_closed, { type: BOOLEAN, default: true });
+		addAttribute(cl, node, tva.a_supplemental, { type: BOOLEAN, defaut: false });
 	}
 	return cl;
 };
@@ -440,10 +453,10 @@ let parseContentProtectionType = (node, props) => {
 let parseAudioAttributes = (node) => {
 	let newAA = {};
 	addControlledTermType(newAA, node, tva.e_Coding);
-	addSimpleElement(newAA, node, tva.e_NumOfChannels);
+	addSimpleElement(newAA, node, tva.e_NumOfChannels, { type: NUMBER });
 	addControlledTermType(newAA, node, tva.e_MixType);
-	addSimpleElement(newAA, node, tva.e_SampleFrequency);
-	addSimpleElement(newAA, node, tva.e_BitsPerSample);
+	addSimpleElement(newAA, node, tva.e_SampleFrequency, { type: NUMBER });
+	addSimpleElement(newAA, node, tva.e_BitsPerSample, { type: NUMBER });
 	let bitrate = hasElement(node, tva.e_BitRate);
 	if (bitrate) newAA[tva.e_BitRate] = parseBitRate(bitrate);
 	return newAA;
@@ -453,8 +466,8 @@ let parseVideoAttributes = (node) => {
 	let newVA = {};
 	addControlledTermType(newVA, node, tva.e_Coding);
 	addSimpleElement(newVA, node, tva.e_Scan);
-	addSimpleElement(newVA, node, tva.e_HorizontalSize);
-	addSimpleElement(newVA, node, tva.e_VerticalSize);
+	addSimpleElement(newVA, node, tva.e_HorizontalSize, { type: NUMBER });
+	addSimpleElement(newVA, node, tva.e_VerticalSize, { type: NUMBER });
 	addSimpleElement(newVA, node, tva.e_AspectRatio);
 	let colortype = hasElement(node, tva.e_Color);
 	if (colortype) addAttribute(newVA, node, tva.a_type);
@@ -535,10 +548,10 @@ let parseServiceInstance = (node, props) => {
 						int;
 					while ((int = node.get(xPath(props.prefix, dvbi.dvbi.e_Interval, ++j), props.schema)) != null) {
 						let newInterval = {};
-						addAttribute(newInterval, int, dvbi.a_days, "1 2 3 4 5 6 7");
-						addAttribute(newInterval, int, dvbi.a_recurrence, "1");
-						addAttribute(newInterval, int, dvbi.a_startTime, "00:00:00Z");
-						addAttribute(newInterval, int, dvbi.a_endTime, "23:59:59.999Z");
+						addAttribute(newInterval, int, dvbi.a_days, { default: "1 2 3 4 5 6 7" });
+						addAttribute(newInterval, int, dvbi.a_recurrence, { type: NUMBER, default: 1 });
+						addAttribute(newInterval, int, dvbi.a_startTime, { default: "00:00:00Z" });
+						addAttribute(newInterval, int, dvbi.a_endTime, { default: "23:59:59.999Z" });
 					}
 				}
 				si[dvbi.e_Availability].push(newPeriod);
@@ -555,10 +568,10 @@ let parseServiceInstance = (node, props) => {
 		let fta = hasElement(node, dvbi.e_FTAContentManagement);
 		if (fta) {
 			let fcm = {};
-			addAttribute(fcm, fta, dvbi.a_userDefined);
-			addAttribute(fcm, fta, dvbi.a_doNotScramble);
-			addAttribute(fcm, fta, dvbi.a_controlRemoteAccessOverInternet);
-			addAttribute(fcm, fta, dvbi.a_doNotApplyRevocation);
+			addAttribute(fcm, fta, dvbi.a_userDefined, { type: BOOLEAN });
+			addAttribute(fcm, fta, dvbi.a_doNotScramble, { type: BOOLEAN });
+			addAttribute(fcm, fta, dvbi.a_controlRemoteAccessOverInternet, { type: NUMBER });
+			addAttribute(fcm, fta, dvbi.a_doNotApplyRevocation, { type: BOOLEAN });
 			si[dvbi.e_FTAContentManagement] = fcm;
 		}
 		// ServiceInstance.SourceType
@@ -593,9 +606,9 @@ let parseServiceInstance = (node, props) => {
 		// TODO - ServiceInstance.OtherDeliveryParameters
 
 		// ServiceInstance@priority
-		addAttribute(si, node, dvbi.a_priority, 0);
+		addAttribute(si, node, dvbi.a_priority, { type: NUMBER, default: 0 });
 		// ServiceInstance@id
-		addAttribute(si, node, dvbi.a_id);
+		addAttribute(si, node, dvbi.a_id, { type: NUMBER, default: 0 });
 		// ServiceInstance@lang
 		addLangAttribute(si, node);
 	}
@@ -657,7 +670,7 @@ let addService = (res, node, props) => {
 		newSvc[dvbi.e_NVOD] = {};
 		addAttribute(newSvc[dvbi.e_NVOD], nvod, dvbi.a_mode);
 		addAttribute(newSvc[dvbi.e_NVOD], nvod, dvbi.a_reference);
-		addAttribute(newSvc[dvbi.e_NVOD], nvod, dvbi.a_offset, "PT0S");
+		addAttribute(newSvc[dvbi.e_NVOD], nvod, dvbi.a_offset, { default: "PT0S" });
 	}
 	// ProminenceList
 	let prominence = hasElement(node, dvbi.e_ProminenceList);
@@ -670,7 +683,7 @@ let addService = (res, node, props) => {
 			prom.text = p.text();
 			addAttribute(prom, p, dvbi.a_country);
 			addAttribute(prom, p, dvbi.a_region);
-			addAttribute(prom, p, dvbi.a_ranking);
+			addAttribute(prom, p, dvbi.a_ranking, { type: NUMBER });
 			newSvc[dvbi.e_Prominence].push(prom);
 		}
 	}
@@ -682,17 +695,17 @@ let addService = (res, node, props) => {
 			ma;
 		while ((ma = parentalrating.get(xPath(props.prefix, dvbi.e_MinimumAge, ++i), props.schema)) != null) {
 			let newRating = {};
-			newRating[dvbi.e_MinimumAge] = ma.text();
+			newRating[dvbi.e_MinimumAge] = Number(ma.text());
 			addCountries(newRating, ma, dvbi.a_countryCodes, "Countries");
 			newSvc[dvbi.e_ParentalRating].push(newRating);
 		}
 	}
 	// Service@dynamic
-	addAttribute(newSvc, node, dvbi.a_dynamic, false);
+	addAttribute(newSvc, node, dvbi.a_dynamic, { type: BOOLEAN, default: false });
 	// Service@version
-	addAttribute(newSvc, node, dvbi.a_version);
+	addAttribute(newSvc, node, dvbi.a_version, { type: NUMBER });
 	// Service@replayAvailable
-	addAttribute(newSvc, node, dvbi.a_replayAvailable, false);
+	addAttribute(newSvc, node, dvbi.a_replayAvailable, { type: BOOLEAN, default: false });
 	// Service@lang
 	addLangAttribute(newSvc, node);
 
@@ -722,98 +735,138 @@ export function MakeJS_SL(SL) {
 		namespace: SCHEMA_NAMESPACE,
 	};
 
-	// ServiceList@lang
-	addAttribute(res, SL.root(), tva.a_lang);
-	// ServiceList@version
-	addAttribute(res, SL.root(), dvbi.a_version);
-	// ServiceList@responseStatus
-	addAttribute(res, SL.root(), dvbi.a_responseStatus);
-	// ServiceList.Name
-	addMultiLingual(res, SL, dvbi.e_Name, props);
-	// ServiceList.ProviderName
-	addMultiLingual(res, SL, dvbi.e_ProviderName, props);
-	// ServiceList.LanguageList
-	let ll = hasElement(SL, dvbi.e_LanguageList);
-	if (ll) {
-		res[dvbi.e_Language] = [];
-		let i = 0,
-			l;
-		while ((l = ll.get(xPath(props.prefix, dvbi.e_Language, ++i), props.schema)) != null) res[dvbi.e_Language].push(l.text());
-	}
-	// ServiceList.RelatedMaterial
-	addRelatedMaterial(res, SL, props);
-	// ServiceList.RegionList
-	addRegionList(res, SL, props);
-	// ServiceLIst.TargetRegion
-	if (hasElement(SL, dvbi.e_TargetRegion)) {
-		res[dvbi.e_TargetRegion] = [];
-		let i = 0,
-			r;
-		while ((r = SL.get(xPath(props.prefix, dvbi.e_TargetRegion, ++i), props.schema)) != null) res.TargetRegion.push(r.text());
-	}
-	// ServiceList.LCNTableList
-	let lcntl = hasElement(SL, dvbi.e_LCNTableList);
-	if (lcntl) {
-		res[dvbi.e_LCNTable] = [];
-		let i = 0,
-			lcnt;
-		while ((lcnt = lcntl.get(xPath(props.prefix, dvbi.e_LCNTable, ++i), props.schema)) != null) {
-			let l = {};
-			if (hasElement(lcnt, dvbi.e_TargetRegion)) {
-				l[dvbi.e_TargetRegion] = [];
-				let j = 0,
-					t;
-				while ((t = lcnt.get(xPath(props.prefix, dvbi.e_LCNTable, ++j), props.schema)) != null) l[dvbi.e_TargetRegion].push(t.text());
+	switch (SL.root().name()) {
+		case dvbi.e_ServiceList:
+			// ServiceList@lang
+			addAttribute(res, SL.root(), tva.a_lang);
+			// ServiceList@version
+			addAttribute(res, SL.root(), dvbi.a_version, { type: NUMBER });
+			// ServiceList@responseStatus
+			addAttribute(res, SL.root(), dvbi.a_responseStatus);
+			// ServiceList.Name
+			addMultiLingual(res, SL, dvbi.e_Name, props);
+			// ServiceList.ProviderName
+			addMultiLingual(res, SL, dvbi.e_ProviderName, props);
+			// ServiceList.LanguageList
+			let ll = hasElement(SL, dvbi.e_LanguageList);
+			if (ll) {
+				res[dvbi.e_Language] = [];
+				let i = 0,
+					l;
+				while ((l = ll.get(xPath(props.prefix, dvbi.e_Language, ++i), props.schema)) != null) res[dvbi.e_Language].push(l.text());
 			}
-			if (hasElement(lcnt, dvbi.e_SubscriptionPackage)) {
-				l[dvbi.e_SubscriptionPackage] = [];
-				let j = 0,
-					s;
-				while ((s = lcnt.get(xPath(props.prefix, dvbi.e_SubscriptionPackage, ++j), props.schema)) != null) l[dvbi.e_SubscriptionPackage].push(parseTextualType(s));
+			// ServiceList.RelatedMaterial
+			addRelatedMaterial(res, SL, props);
+			// ServiceList.RegionList
+			addRegionList(res, SL, props);
+			// ServiceLIst.TargetRegion
+			if (hasElement(SL, dvbi.e_TargetRegion)) {
+				res[dvbi.e_TargetRegion] = [];
+				let i = 0,
+					r;
+				while ((r = SL.get(xPath(props.prefix, dvbi.e_TargetRegion, ++i), props.schema)) != null) res.TargetRegion.push(r.text());
 			}
-			if (hasElement(lcnt, dvbi.e_LCN)) {
-				l[dvbi.e_LCN] = [];
-				let j = 0,
-					lcn;
-				while ((lcn = lcnt.get(xPath(props.prefix, dvbi.e_LCN, ++j), props.schema)) != null) {
-					let ent = {};
-					addAttribute(ent, lcn, dvbi.a_channelNumber);
-					addAttribute(ent, lcn, dvbi.a_serviceRef);
-					addAttribute(ent, lcn, dvbi.a_selectable, true);
-					addAttribute(ent, lcn, dvbi.a_visible, true);
-					l[dvbi.e_LCN].push(ent);
+			// ServiceList.LCNTableList
+			let lcntl = hasElement(SL, dvbi.e_LCNTableList);
+			if (lcntl) {
+				res[dvbi.e_LCNTable] = [];
+				let i = 0,
+					lcnt;
+				while ((lcnt = lcntl.get(xPath(props.prefix, dvbi.e_LCNTable, ++i), props.schema)) != null) {
+					let l = {};
+					if (hasElement(lcnt, dvbi.e_TargetRegion)) {
+						l[dvbi.e_TargetRegion] = [];
+						let j = 0,
+							t;
+						while ((t = lcnt.get(xPath(props.prefix, dvbi.e_LCNTable, ++j), props.schema)) != null) l[dvbi.e_TargetRegion].push(t.text());
+					}
+					if (hasElement(lcnt, dvbi.e_SubscriptionPackage)) {
+						l[dvbi.e_SubscriptionPackage] = [];
+						let j = 0,
+							s;
+						while ((s = lcnt.get(xPath(props.prefix, dvbi.e_SubscriptionPackage, ++j), props.schema)) != null) l[dvbi.e_SubscriptionPackage].push(parseTextualType(s));
+					}
+					if (hasElement(lcnt, dvbi.e_LCN)) {
+						l[dvbi.e_LCN] = [];
+						let j = 0,
+							lcn;
+						while ((lcn = lcnt.get(xPath(props.prefix, dvbi.e_LCN, ++j), props.schema)) != null) {
+							let ent = {};
+							addAttribute(ent, lcn, dvbi.a_channelNumber, { type: NUMBER });
+							addAttribute(ent, lcn, dvbi.a_serviceRef);
+							addAttribute(ent, lcn, dvbi.a_selectable, { type: BOOLEAN, default: true });
+							addAttribute(ent, lcn, dvbi.a_visible, { type: BOOLEAN, default: true });
+							l[dvbi.e_LCN].push(ent);
+						}
+					}
+					res[dvbi.e_LCNTable].push(l);
 				}
 			}
-			res[dvbi.e_LCNTable].push(l);
+			// ServiceList.ContentGuideSourceList
+			let cgsl = hasElement(SL, dvbi.e_ContentGuideSourceList);
+			if (cgsl) {
+				res[dvbi.e_ContentGuideSource] = [];
+				let i = 0,
+					cgs;
+				while ((cgs = cgsl.get(xPath(props.prefix, dvbi.e_ContentGuideSource, ++i), props.schema)) != null) res.ContentGuideSource.push(parseContentGuideSource(cgs, props));
+			}
+			// ServiceList.ContentGuideSource
+			let cgs = hasElement(SL, dvbi.e_ContentGuideSource);
+			if (cgs) {
+				if (!Object.prototype.hasOwnProperty.call(res, dvbi.e_ContentGuideSource)) res.ContentGuideSource = [];
+				res[dvbi.e_ContentGuideSource].push(parseContentGuideSource(cgs, props));
+			}
+			// ServiceList.Service and ServiceList.TestService
+			if (SL.childNodes())
+				SL.childNodes().forEachSubElement((elem) => {
+					if ([dvbi.e_Service, dvbi.e_TestService].includes(elem.name())) addService(res, elem, props);
+				});
+
+			// ServiceList.SubscriptionPackageList
+			let spl = hasElement(SL, dvbi.e_SubscriptionPackageList);
+			if (spl) {
+				res[dvbi.e_SubscriptionPackageList] = {};
+				addAttribute(res[dvbi.e_SubscriptionPackageList], spl, dvbi.a_allowNoPackage, { type: BOOLEAN, default: true });
+				res[dvbi.e_SubscriptionPackageList][dvbi.e_SubscriptionPackage] = [];
+				let i = 0,
+					sp;
+				while ((sp = spl.get(xPath(props.prefix, dvbi.e_SubscriptionPackage, ++i), props.schema)) != null)
+					res[dvbi.e_SubscriptionPackageList][dvbi.e_SubscriptionPackage].push(parseTextualType(sp));
+			}
+			break;
+		case dvbi.e_Playlist:
+			break;
+		default:
+			console.log(`SL root element is ${SL.root().name()}`.red);
+			break;
+	}
+	return res;
+}
+
+export function MakeJS_CG(CG) {
+	let res = {};
+
+	if (datatypeIs(CG, "string")) {
+		try {
+			CG = parseXmlString(CG);
+		} catch (err) {
+			return `XML parsing failed: ${err.message}`;
 		}
 	}
-	// ServiceList.ContentGuideSourceList
-	let cgsl = hasElement(SL, dvbi.e_ContentGuideSourceList);
-	if (cgsl) {
-		res[dvbi.e_ContentGuideSource] = [];
-		let i = 0,
-			cgs;
-		while ((cgs = cgsl.get(xPath(props.prefix, dvbi.e_ContentGuideSource, ++i), props.schema)) != null) res.ContentGuideSource.push(parseContentGuideSource(cgs, props));
-	}
-	// ServiceList.ContentGuideSource
-	let cgs = hasElement(SL, dvbi.e_ContentGuideSource);
-	if (cgs) {
-		if (!Object.prototype.hasOwnProperty.call(res, dvbi.e_ContentGuideSource)) res.ContentGuideSource = [];
-		res[dvbi.e_ContentGuideSource].push(parseContentGuideSource(cgs, props));
-	}
-	// ServiceList.Service and ServiceList.TestService
-	if (SL.childNodes())
-		SL.childNodes().forEachSubElement((elem) => {
-			if ([dvbi.e_Service, dvbi.e_TestService].includes(elem.name())) addService(res, elem, props);
-		});
 
-	// ServiceList.SubscriptionPackageList
-	let spl = hasElement(SL, dvbi.e_SubscriptionPackageList);
-	if (spl) {
-		res[dvbi.e_SubscriptionPackage] = [];
-		let i = 0,
-			sp;
-		while ((sp = spl.get(xPath(props.prefix, dvbi.e_SubscriptionPackage, ++i), props.schema)) != null) res[dvbi.e_SubscriptionPackage].push(parseTextualType(sp));
-	}
+	let CG_SCHEMA = {},
+		SCHEMA_PREFIX = CG.root().namespace().prefix(),
+		SCHEMA_NAMESPACE = CG.root().namespace().href();
+	CG_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
+
+	let props = {
+		schema: CG_SCHEMA,
+		prefix: SCHEMA_PREFIX,
+		namespace: SCHEMA_NAMESPACE,
+	};
+
+	if (CG.root().name() == tva.e_TVAMain) {
+	} else console.log(`CG root element is ${CG.root().name()}`.red);
+
 	return res;
 }
