@@ -2,7 +2,7 @@ import { mpeg7 } from "./MPEG7_definitions.js";
 
 export const TVA_CSmetadata = "urn:tva:metadata:cs";
 
-export const tva = {
+export const tva = Object.freeze({
 	SYNOPSIS_BRIEF_LABEL: "brief",
 	SYNOPSIS_BRIEF_LENGTH: 30,
 	SYNOPSIS_SHORT_LABEL: "short",
@@ -39,6 +39,7 @@ export const tva = {
 	e_ActualDuration: "ActualDuration",
 	e_ActualEndTime: "ActualEndTime",
 	e_ActualStartTime: "ActualStartTime",
+	e_AdditionalInformation: "AdditionalInformation",
 	e_AggregationOf: "AggregationOf",
 	e_AspectRatio: "AspectRatio",
 	e_AVAttributes: "AVAttributes",
@@ -48,6 +49,7 @@ export const tva = {
 	e_AuxiliaryURL: "AuxiliaryURL",
 	e_AwardsList: "AwardsList",
 	e_BasicDescription: "BasicDescription",
+	e_BirthDate: "BirthDate",
 	e_BitRate: "BitRate",
 	e_BitsPerSample: "BitsPerSample",
 	e_BroadcastEvent: "BroadcastEvent",
@@ -62,6 +64,7 @@ export const tva = {
 	e_CreditsInformationTable: "CreditsInformationTable",
 	e_CreditsItem: "CreditsItem",
 	e_CreditsList: "CreditsList",
+	e_DeathDate: "DeathDate",
 	e_Definition: "Definition",
 	e_DeliveryMode: "DeliveryMode",
 	e_DepictedCoordinates: "DepictedCoordinates",
@@ -106,17 +109,22 @@ export const tva = {
 	e_MinimumAge: "MinimumAge",
 	e_MixType: "MixType",
 	e_Name: "Name",
+	e_Nationality: "Nationality",
 	e_NumOfChannels: "NumOfChannels",
+	e_Occupation: "Occupation",
 	e_OnDemandProgram: "OnDemandProgram",
 	e_OnDemandService: "OnDemandService",
 	e_OrganizationName: "OrganizationName",
+	e_OrganizationNameIDRef: "OrganizationNameIDRef",
 	e_OtherIdentifier: "OtherIdentifier",
 	e_ParentalGuidance: "ParentalGuidance",
 	e_ParentalRating: "ParentalRating",
 	e_PartOfAggregatedGroup: "PartOfAggregatedGroup",
 	e_PartOfAggregateProgram: "PartOfAggregateProgram",
 	e_PersonName: "PersonName",
+	e_PersonNameIDRef: "PersonNameIDRef",
 	e_PictureFormat: "PictureFormat",
+	e_PresentationRole: "PresentationRole",
 	e_ProductionDate: "ProductionDate",
 	e_ProductionLocation: "ProductionLocation",
 	e_ProgramDescription: "ProgramDescription",
@@ -134,6 +142,8 @@ export const tva = {
 	e_PurchaseList: "PurchaseList",
 	e_PushDownloadProgram: "PushDownloadProgram",
 	e_RelatedMaterial: "RelatedMaterial",
+	e_RelatedPOrganization: "RelatedPOrganization",
+	e_RelatedPerson: "RelatedPerson",
 	e_ReleaseInformation: "ReleaseInformation",
 	e_Repeat: "Repeat",
 	e_RightsInformationTable: "RightsInformationTable",
@@ -153,10 +163,14 @@ export const tva = {
 	e_StreamID: "StreamID",
 	e_Synopsis: "Synopsis",
 	e_System: "System",
+	e_TimeLimitation: "TimeLimitation",
 	e_Title: "Title",
+	e_ValidFrom: "ValidFrom",
+	e_ValidTo: "ValidTo",
 	e_VerticalSize: "VerticalSize",
 	e_VideoAttributes: "VideoAttributes",
 
+	a_authority: "authority",
 	a_average: "average",
 	a_closed: "closed",
 	a_contentLanguage: "contentLanguage",
@@ -175,12 +189,17 @@ export const tva = {
 	a_maximum: "maximum",
 	a_metadataOriginIDRef: "metadataOriginIDRef",
 	a_minimum: "minimum",
+	a_nameType: "nameType",
 	a_numOfItems: "numOfItems",
 	a_ordered: "ordered",
+	a_organisation: "organisation",
 	a_preferred: "preferred",
 	a_primary: "primary",
 	a_programId: "programId",
 	a_purpose: "purpose",
+	a_ref: "ref",
+	a_referenceType: "referenceType",
+	a_relationship: "relationship",
 	a_role: "role",
 	a_serviceIDRef: "serviceIDRef",
 	a_start: "start",
@@ -199,14 +218,14 @@ export const tva = {
 	t_ProgramGroupTypeType: "ProgramGroupTypeType",
 
 	cs_PromotionalStillImage: `${TVA_CSmetadata}:HowRelatedCS:2012:19`,
-};
+});
 
 const tvaBaseMemberOfTypeAttributes = [tva.a_crid, tva.a_index],
 	tvaControlledTermTypeAttributes = [tva.a_href],
 	tvafragmentIdentificationAttributes = [tva.a_fragmentId, tva.a_fragmentVersion, tva.a_fragmentExpirationDate],
 	mpeg7UniqueIDTypeAttributes = [mpeg7.a_type, mpeg7.a_organization, mpeg7.a_authority, mpeg7.a_encoding];
 
-export const tvaEA = {
+export const tvaEA = Object.freeze({
 	// EA = Element-Attributes - the attributes that are defiend for each element
 	AudioLanguage: [tva.a_purpose, mpeg7.a_type, mpeg7.a_supplemental],
 	AuxiliaryURI: [tva.a_contentType, tva.a_uriType],
@@ -236,11 +255,11 @@ export const tvaEA = {
 	SillPictureFormat: [tva.a_horizontalSize, tva.a_verticalSize].concat(),
 	Synopsis: [tva.a_length, tva.a_lang],
 	Title: [tva.a_type, tva.a_lang],
-};
+});
 
 const ProgramLocationType = [tva.e_Program, tva.e_ProgramURL, tva.e_AuxiliaryURL, tva.e_InatanceMetadataId, tva.e_InstanceDescription];
 
-export const tvaEC = {
+export const tvaEC = Object.freeze({
 	// EC = Element-Children - the child elements or each element
 	AudioAttributes: [tva.e_Coding, tva.e_NumOfChannels, tva.e_MixType, tva.e_AudioLanguage, tva.e_SampleFrequency, tva.e_BitsPerSample, tva.e_BitRate],
 	AVAttributes: [tva.e_FileFormat, tva.e_FileSize, tva.e_System, tva.e_BitRate, tva.e_AudioAttributes, tva.e_VideoAttributes, tva.e_CaptioningAttributes],
@@ -349,4 +368,4 @@ export const tvaEC = {
 		tva.e_Free,
 	].concat(ProgramLocationType),
 	VideoAttributes: [tva.e_Coding, tva.e_Scan, tva.e_HorizontalSize, tva.e_VerticalSize, tva.e_AspectRatio, tva.e_Color, tva.e_FrameRate, tva.e_BitRate, tva.e_BitsPerSample],
-};
+});

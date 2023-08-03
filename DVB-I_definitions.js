@@ -25,7 +25,7 @@ const CaptionCodingFormatCS = `${TVA_CSmetadata}:CaptionCodingFormatCS:2015`,
 
 export const XMLdocumentType = "application/xml";
 
-export const dvbi = {
+export const dvbi = Object.freeze({
 	A177v1_Namespace: `${DVB_metadata}:servicediscovery:2019`,
 	A177v2_Namespace: `${DVB_metadata}:servicediscovery:2020`,
 	A177v3_Namespace: `${DVB_metadata}:servicediscovery:2021`,
@@ -337,16 +337,16 @@ export const dvbi = {
 	e_WildcardPostcode: "WildcardPostcode",
 
 	q_inlineImages: "inlineImages",
-};
+});
 
-export const dvbEA = {
+export const dvbEA = Object.freeze({
 	// EA = Element-Attributes - the attributes that are defiend for each element
 	MediaLocator: [dvbi.a_contentLanguage].concat(tvaEA.mediaLocator),
 	NVOD: [dvbi.a_mode, dvbi.a_reference, dvbi.a_offset],
 	ServiceList: [dvbi.a_version, tva.a_lang, dvbi.a_responseStatus],
-};
+});
 
-export const dvbiEC = {
+export const dvbiEC = Object.freeze({
 	// EC = Element-Children - the child elements or each element
 	RelatedMaterial: tvaEC.RelatedMaterial,
-};
+});
