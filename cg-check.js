@@ -23,6 +23,7 @@ import { isCRIDURI, isTAGURI } from "./URI_checks.js";
 import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration, CountChildElements, hasElement } from "./utils.js";
 
 import { isHTTPURL, isDVBLocator, isUTCDateTime } from "./pattern_checks.js";
+import { MakeJS_CG } from "./dvbi-parser.js";
 
 import {
 	IANA_Subtag_Registry,
@@ -3309,7 +3310,7 @@ export default class ContentGuideCheck {
 		}
 
 		if (parseToJSON) {
-			errs.ContentGuide = {};
+			errs.ContentGuide = MakeJS_CG(CG);
 		}
 	}
 

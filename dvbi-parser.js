@@ -176,7 +176,7 @@ let parseMPEG7PersonNameType = (node, props) => {
 		addAttribute(nc, node, mpeg7.a_abbrev);
 		return nc;
 	};
-	node.childNodes.forEachSubElement((c) => {
+	node.childNodes().forEachSubElement((c) => {
 		switch (c.name()) {
 			case mpeg7.e_GivenName:
 				if (!Object.prototype.hasOwnProperty.call(person, mpeg7.e_GivenName)) person[mpeg7.e_GivenName] = [];
@@ -398,7 +398,7 @@ let parseSynopsisType = (node, props) => {
 };
 
 /**
- * DVB-I Parsing
+ * DVB-I Parsing - Service List
  */
 
 let parseVideoAttributesType = (node, props) => {
@@ -886,6 +886,10 @@ export function MakeJS_SL(SL) {
 	return res;
 }
 
+/**
+ * DVB-I Parsing - Program Guide Data
+ */
+
 let parseBaseMemberOfType = (node, props) => {
 	let parseValidPeriodType = (node, /* eslint-disable no-unused-vars*/ props /* eslint-enable */) => {
 		let pt = {};
@@ -961,7 +965,7 @@ let parseTVAAgentType = (node, props) => {
 let parseTVAPersonNameType = (node, props) => {
 	let person = parseMPEG7PersonNameType(node, props);
 	addElements(person, node, tva.e_OtherIdentifier, props, parseUniqueIDType);
-	addElements(person, node, dvbi.e_RelatedMaterial, props, parseRelatedMaterialType);
+	addElements(person, node, tva.e_RelatedMaterial, props, parseRelatedMaterialType);
 	addElements(person, node, tva.e_AdditionalInformation, props, parseTextualType);
 	addAttribute(person, node, tva.a_nameType);
 	return person;
@@ -971,7 +975,7 @@ let parseCreditsItemType = (node, props) => {
 	let ci = parseTVAAgentType(node, props);
 	addElements(ci, node, tva.e_Character, props, parseMPEG7PersonNameType);
 	addElements(ci, node, tva.e_PresentationRole, props, parseTextualType);
-	addElements(ci, node, dvbi.e_RelatedMaterial, props, parseRelatedMaterialType);
+	addElements(ci, node, tva.e_RelatedMaterial, props, parseRelatedMaterialType);
 	addAttribute(ci, node, tva.a_role);
 	addAttribute(ci, node, tva.a_index, { type: NUMBER });
 	return ci;
@@ -982,10 +986,10 @@ let parseBasicDescription = (node, props) => {
 	addElements(bd, node, tva.e_Title, props, parseTitleType);
 	addElements(bd, node, tva.e_Synopsis, props, parseSynopsisType);
 	addElements(bd, node, tva.e_Keyword, props, parseKeywordType);
-	addElements(bd, node, dvbi.e_Genre, props, parseGenre);
-	addElements(bd, node, dvbi.e_ParentalGuidance, props, parseTVAParentalGuidanceType);
+	addElements(bd, node, tva.e_Genre, props, parseGenre);
+	addElements(bd, node, tva.e_ParentalGuidance, props, parseTVAParentalGuidanceType);
 	addElements(bd, hasElement(node, tva.e_CreditsList), tva.e_CreditsItem, props, parseCreditsItemType);
-	addElements(bd, node, dvbi.e_RelatedMaterial, props, parseRelatedMaterialType);
+	addElements(bd, node, tva.e_RelatedMaterial, props, parseRelatedMaterialType);
 	//HERE TODO
 	return bd;
 };
@@ -1026,7 +1030,7 @@ let parseInstanceDescriptionType = (node, props) => {
 	addElement(id, node, tva.e_SignLanguage, props, parseSignLanguageType);
 	addElement(id, node, tva.e_AVAttributes, props, parseAVAttributesType);
 	addElements(id, node, tva.e_OtherIdentifier, parseUniqueIDType);
-	addElements(id, node, dvbi.e_RelatedMaterial, props, parseRelatedMaterialType);
+	addElements(id, node, tva.e_RelatedMaterial, props, parseRelatedMaterialType);
 	return id;
 };
 let parseProgramLocationType = (node, props) => {
