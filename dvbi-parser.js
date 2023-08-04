@@ -863,12 +863,13 @@ export function MakeJS_SL(SL) {
 				res[dvbi.e_ContentGuideSource] = [];
 				let i = 0,
 					cgs;
-				while ((cgs = cgsl.get(xPath(props.prefix, dvbi.e_ContentGuideSource, ++i), props.schema)) != null) res.ContentGuideSource.push(parseContentGuideSource(cgs, props));
+				while ((cgs = cgsl.get(xPath(props.prefix, dvbi.e_ContentGuideSource, ++i), props.schema)) != null)
+					res[dvbi.e_ContentGuideSource].push(parseContentGuideSource(cgs, props));
 			}
 			// ServiceList.ContentGuideSource
 			let cgs = hasElement(SL, dvbi.e_ContentGuideSource);
 			if (cgs) {
-				if (!Object.prototype.hasOwnProperty.call(res, dvbi.e_ContentGuideSource)) res.ContentGuideSource = [];
+				if (!Object.prototype.hasOwnProperty.call(res, dvbi.e_ContentGuideSource)) res[dvbi.e_ContentGuideSource] = [];
 				res[dvbi.e_ContentGuideSource].push(parseContentGuideSource(cgs, props));
 			}
 			if (SL.childNodes())
@@ -990,7 +991,6 @@ let parseBasicDescription = (node, props) => {
 	addElements(bd, node, tva.e_ParentalGuidance, props, parseTVAParentalGuidanceType);
 	addElements(bd, hasElement(node, tva.e_CreditsList), tva.e_CreditsItem, props, parseCreditsItemType);
 	addElements(bd, node, tva.e_RelatedMaterial, props, parseRelatedMaterialType);
-	//HERE TODO
 	return bd;
 };
 
@@ -1072,14 +1072,6 @@ let parseOnDemandProgramType = (node, props) => {
 	return od;
 };
 
-let parseProgramLocationTableType = (node, props) => {
-	let plt = {};
-	addLangAttribute(plt, node);
-	addElements(plt, node, tva.e_Schedule, props, parseScheduleType);
-	addElements(plt, node, tva.e_OnDemandProgram, props, parseOnDemandProgramType);
-	return plt;
-};
-
 let parseProgramGroupTypeType = (node, props) => {
 	let parseBaseProgramGroupTypeType = (/* eslint-disable no-unused-vars*/ node, props /* eslint-enable */) => {
 		return {};
@@ -1088,6 +1080,14 @@ let parseProgramGroupTypeType = (node, props) => {
 	addAttribute(pgtt, node, tva.a_type);
 	addAttribute(pgtt, node, tva.a_value);
 	return pgtt;
+};
+
+let parseProgramLocationTableType = (node, props) => {
+	let plt = {};
+	addLangAttribute(plt, node);
+	addElements(plt, node, tva.e_Schedule, props, parseScheduleType);
+	addElements(plt, node, tva.e_OnDemandProgram, props, parseOnDemandProgramType);
+	return plt;
 };
 
 let parseGroupInformation = (node, props) => {
