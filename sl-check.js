@@ -51,7 +51,7 @@ import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck,
 import { writeOut } from "./Validator.js";
 import { keys } from "./CommonErrors.js";
 
-import { MakeJS_SL } from "./dvbi-parser.js";
+import { MakeJS_SL } from "./dvbi-parser-DOM.js";
 
 const ANY_NAMESPACE = "$%$!!";
 const LCN_TABLE_NO_TARGETREGION = "unspecifiedRegion",
@@ -2656,7 +2656,7 @@ export default class ServiceListCheck {
 		}
 
 		if (parseToJSON) {
-			errs.ServiceList = MakeJS_SL(SL);
+			errs.ServiceList = MakeJS_SL(SLtext);
 		}
 	}
 
