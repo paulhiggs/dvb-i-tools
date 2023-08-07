@@ -177,7 +177,7 @@ export function drawForm(deprecateTo, req, res, modes, supportedRequests, error 
 	tabulateResults(source, res, error, errs);
 	res.write(PAGE_BOTTOM);
 
-	return new Promise((resolve, reject /* eslint-disable-line no-unused-vars */) => {
+	return new Promise((resolve, /* eslint-disable no-unused-vars */ reject /* eslint-enable */) => {
 		resolve(res);
 	});
 }

@@ -145,12 +145,12 @@ if (cluster.isPrimary) {
 		cluster.fork();
 	}
 
-	cluster.on("exit", (worker, code, signal /* eslint-disable-line no-unused-vars */) => {
+	cluster.on("exit", (worker, /* eslint-disable no-unused-vars*/ code, signal /* eslint-enable */) => {
 		console.log(`worker ${worker.process.pid} died`.red);
 		console.log("Let's fork another worker!".red);
 		cluster.fork();
 	});
-	cluster.on("message", (worker, msg, handle /* eslint-disable-line no-unused-vars */) => {
+	cluster.on("message", (/* eslint-disable no-unused-vars*/ worker /* eslint-enable */, msg, /* eslint-disable no-unused-vars*/ handle /* eslint-enable */) => {
 		if (msg.topic)
 			switch (msg.topic) {
 				case RELOAD:
@@ -177,7 +177,7 @@ if (cluster.isPrimary) {
 } else {
 	var app = express();
 	app.use(cors());
-	token("pid", function getPID(req /* eslint-disable-line no-unused-vars */) {
+	token("pid", function getPID(/* eslint-disable no-unused-vars */ req /* eslint-enable */) {
 		return process.pid;
 	});
 	token("protocol", function getProtocol(req) {

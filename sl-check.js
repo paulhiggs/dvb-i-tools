@@ -2660,7 +2660,7 @@ export default class ServiceListCheck {
 		var errs = new ErrorList(SLtext);
 		this.doValidateServiceList(SLtext, errs);
 
-		return new Promise((resolve, reject /* eslint-disable-line no-unused-vars */) => {
+		return new Promise((resolve, /* eslint-disable no-unused-vars*/ reject /* eslint-enable */) => {
 			resolve(errs);
 		});
 	}
