@@ -893,7 +893,6 @@ export default class ServiceListCheck {
 						this.validServiceBanner(HowRelated, props.namespace)
 					) {
 						rc = HowRelated.attr(dvbi.a_href).value();
-
 						checkValidLogos(RelatedMaterial, errs, `${errCode}-22`, Location, this.knownLanguages);
 					} else if (this.validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
 						rc = HowRelated.attr(dvbi.a_href).value();
@@ -909,13 +908,16 @@ export default class ServiceListCheck {
 							fragment: HowRelated,
 						});
 
-					if (
-						this.validOutScheduleHours(HowRelated, props.namespace) ||
-						this.validContentFinishedBanner(HowRelated, props.namespace) ||
-						this.validServiceLogo(HowRelated, props.namespace)
-					) {
+					if (this.validContentFinishedBanner(HowRelated, props.namespace) || this.validServiceLogo(HowRelated, props.namespace)) {
 						rc = HowRelated.attr(dvbi.a_href).value();
 						checkValidLogos(RelatedMaterial, errs, `${errCode}-32`, Location, this.knownLanguages);
+					} else if (this.validOutScheduleHours(HowRelated, ANY_NAMESPACE) && SchemaVersion(props.namespace) >= SCHEMA_r6) {
+						errs.addError({
+							code: `${errCode}-35`,
+							message: "Out of Service Banner is not permitted in a Service Instance from A177r6",
+							key: "misplaced image type",
+							fragment: HowRelated,
+						});
 					} else if (this.validServiceBanner(HowRelated, props.namespace)) {
 						errs.addError({
 							code: `${errCode}-33`,
@@ -926,7 +928,7 @@ export default class ServiceListCheck {
 					} else if (this.validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
 						rc = HowRelated.attr(dvbi.a_href).value();
 						MediaLocator.forEach((locator) => this.checkSignalledApplication(locator, errs, Location, rc));
-					} else errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-24`));
+					} else errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-34`));
 					break;
 				case CONTENT_GUIDE_RM:
 					if (this.validContentGuideSourceLogo(HowRelated, props.namespace)) {
