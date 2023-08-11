@@ -7,14 +7,22 @@
   <Term termID="linear">
     <Name xml:lang="en">The service contains linear programming</Name>
   </Term>
-  <Term termID="ondemand">
+  <Term termID="linear-radio">
+		<Name xml:lang="en">The service contains linear radio programming</Name>
+	</Term>
+	<Term termID="ondemand">
     <Name xml:lang="en">The service contains on demand programming</Name>
   </Term>
+	<Term termID="ondemand-radio">
+		<Name xml:lang="en">The service contains on demand radio programming</Name>
+	</Term>
   <Term termID="data">
     <Name xml:lang="en">The service contains only data signalling</Name>
   </Term>
+	<Term termID="mosaic">
+		<Name xml:lang="en">The service contains a visually structured composition derived from other services</Name>
+	</Term>
   <Term termID="other">
-    <Name xml:lang="en">The service cannot be described by one of the categories
-      in this scheme</Name>
+    <Name xml:lang="en">The service cannot be described by one of the categories in this scheme</Name>
   </Term>
 </ClassificationScheme>
