@@ -59,10 +59,11 @@ import { readmyfile } from "./utils.js";
 const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
 
-export function writeOut(errs, filebase, markup) {
+export function writeOut(errs, filebase, markup, req = null) {
 	if (!filebase || errs.markupXML?.length == 0) return;
 
 	let outputLines = [];
+	if (markup && req?.body?.XMLurl) outputLines.push(`<!-- source: ${req.body.XMLurl} -->`);
 	errs.markupXML.forEach((line) => {
 		outputLines.push(line.value);
 		if (markup && line.validationErrors)
@@ -168,7 +169,7 @@ function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasC
 		req.diags.countWarnings = errs.numWarnings();
 		req.diags.countInforms = errs.numInformationals();
 
-		writeOut(errs, log_prefix, true);
+		writeOut(errs, log_prefix, true, req);
 	}
 	res.end();
 }
