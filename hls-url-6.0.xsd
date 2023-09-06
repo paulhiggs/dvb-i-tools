@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2023b" xmlns:hls="vnd:apple:mpegurl" targetNamespace="vnd:apple:mpegurl" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<import namespace="urn:dvb:metadata:servicediscovery:2023b" schemaLocation="dvbi_v6.0-with-hls-hbbtv.xsd"/>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="vnd:apple:mpegurl" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<import namespace="urn:dvb:metadata:servicediscovery-types:2023" schemaLocation="dvbi-types_v1.0.xsd"/>
 	<complexType name="m3u8RefType">
 		<complexContent>
-			<extension base="dvbisd:ExtensionBaseType">
+			<extension base="dvbi-types:ExtensionBaseType">
 				<sequence>
-					<element name="UriBasedLocation" type="dvbisd:ExtendedURIType"/>
+					<element name="UriBasedLocation" type="dvbi-types:ExtendedURIType"/>
 				</sequence>
 			</extension>
 		</complexContent>

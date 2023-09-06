@@ -18,8 +18,6 @@
 	<import namespace="urn:tva:metadata:2023" schemaLocation="tva_metadata_3-1.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
 	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
-	<import namespace="vnd:apple:mpegurl" schemaLocation="hls-url-6.0.xsd"/>
-	<import namespace="urn:hbbtv:dvbi:schema:2021" schemaLocation="hbbtv-ext-6.0.xsd"/>
 	<element name="ServiceList" type="dvbisd:ServiceListType"/>
 	<element name="Playlist" type="dvbisd:DASHPlaylistType"/>
 	<complexType name="ServiceListType">
@@ -388,6 +386,13 @@
 			<element name="MinimumBitRate" type="unsignedInt" minOccurs="0"/>
 			<element name="Extension" type="dvbi-types:ExtensionBaseType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
+	</complexType>
+	<complexType name="IdentifierBasedDeliveryParametersType">
+		<simpleContent>
+			<extension base="anyURI">
+				<attribute name="contentType" type="mpeg7:mimeType"/>
+			</extension>
+		</simpleContent>
 	</complexType>
 	<complexType name="ServiceAvailabilityType">
 		<sequence>
