@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023" targetNamespace="urn:dvb:metadata:servicediscovery-types:2023" 
-xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2023" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<import namespace="urn:tva:metadata:2023" schemaLocation="tva_metadata_3-1.xsd"/>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2023" targetNamespace="urn:dvb:metadata:servicediscovery-types:2023" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<import namespace="urn:tva:metadata:2023" schemaLocation="tva_metadata_3-1_2023.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
 	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
 	<complexType name="ExtensionBaseType" abstract="true">
@@ -75,27 +74,26 @@ xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2023" elementFormDe
 				<attribute name="minimumBitRate" type="unsignedInt"/>
 			</extension>
 		</complexContent>
-	</complexType>	
-	<complexType name="NoAdditionalIPParametersType ">
+	</complexType>
+	<complexType name="NoAdditionalIPParametersType">
 		<complexContent>
-			<extension base="dvbi-types:AbstractIPDeliveryType">
-				<!-- no additional elements or attributes -->
-			</extension>
-		</complexContent>	
+			<extension base="dvbi-types:AbstractIPDeliveryType"/>
+			<!-- no additional elements or attributes -->
+		</complexContent>
 	</complexType>
 	<complexType name="DVBTDeliveryType">
 		<complexContent>
 			<extension base="dvbi-types:AbstractDeliveryType">
 				<attribute name="originalNetworkID" type="dvbi-types:NetworkIdType" use="optional"/>
 			</extension>
-		</complexContent>	
+		</complexContent>
 	</complexType>
 	<complexType name="DVBCDeliveryType">
 		<complexContent>
 			<extension base="dvbi-types:AbstractDeliveryType">
 				<attribute name="networkID" type="dvbi-types:NetworkIdType" use="required"/>
 			</extension>
-		</complexContent>	
+		</complexContent>
 	</complexType>
 	<complexType name="DVBSDeliveryType">
 		<complexContent>
@@ -109,14 +107,14 @@ xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2023" elementFormDe
 					</annotation>
 				</attribute>
 			</extension>
-		</complexContent>	
+		</complexContent>
 	</complexType>
 	<complexType name="ApplicationTypeListType">
 		<sequence>
 			<element name="ApplicationType" type="dvbi-types:ApplicationType" maxOccurs="unbounded"/>
 		</sequence>
 	</complexType>
-	<complexType name="ApplicationType">	
+	<complexType name="ApplicationType">
 		<attribute name="contentType" type="mpeg7:mimeType" use="required"/>
 		<attribute name="xmlAitApplicationType" type="mpeg7:mimeType"/>
 	</complexType>
@@ -165,4 +163,3 @@ xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2023" elementFormDe
 		<attribute name="contentType" type="mpeg7:mimeType" use="required"/>
 	</complexType>
 </schema>
-
