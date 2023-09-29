@@ -13,9 +13,12 @@
 	<!ENTITY Hex16 "&HexDigit;{1,4}">
 	<!ENTITY Hex8 "&HexDigit;{1,2}">
 ]>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2023b" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2023" targetNamespace="urn:dvb:metadata:servicediscovery:2023b" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<import namespace="urn:dvb:metadata:servicediscovery-types:2023" schemaLocation="dvbi-types_v1.0.xsd"/>
-	<import namespace="urn:tva:metadata:2023" schemaLocation="tva_metadata_3-1_2023.xsd"/>
+<schema targetNamespace="urn:dvb:metadata:servicediscovery:2023b" xmlns="http://www.w3.org/2001/XMLSchema" 
+		xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2023b" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023" 
+		xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2024" 
+		elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<import namespace="urn:dvb:metadata:servicediscovery-types:2023" schemaLocation="dvbi_types_v1.0.xsd"/>
+	<import namespace="urn:tva:metadata:2024" schemaLocation="tva_metadata_3-1_2024.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
 	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
 	<element name="ServiceList" type="dvbisd:ServiceListType"/>
@@ -231,7 +234,11 @@
 	<complexType name="DVBTDeliveryParametersType">
 		<sequence>
 			<element name="DVBTriplet" type="dvbi-types:DVBTripletType"/>
-			<element name="TargetCountry" type="tva:ISO-3166-Code"/>
+			<element name="TargetCountry" type="tva:ISO-3166-Code" minOccurs="0">
+				<annotation>
+					<documentation>The use of this element is deprecated.</documentation>
+				</annotation>
+			</element>
 		</sequence>
 	</complexType>
 	<complexType name="DVBSDeliveryParametersType">
@@ -363,7 +370,11 @@
 	<complexType name="DVBCDeliveryParametersType">
 		<sequence>
 			<element name="DVBTriplet" type="dvbi-types:DVBTripletType" minOccurs="0"/>
-			<element name="TargetCountry" type="tva:ISO-3166-Code"/>
+			<element name="TargetCountry" type="tva:ISO-3166-Code" minOccurs="0">
+				<annotation>
+					<documentation>The use of this element is deprecated.</documentation>
+				</annotation>
+			</element>
 			<element name="NetworkID" type="dvbi-types:NetworkIdType"/>
 		</sequence>
 	</complexType>

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema xmlns:tva="urn:tva:metadata:2023" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:tva:metadata:2023" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<schema xmlns:tva="urn:tva:metadata:2024" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:tva:metadata:2024" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<annotation>
-		<documentation xml:lang="en">This schema consists of datatypes that are normatively defined in ETSI TS 102 822-3-1 v1.12.1</documentation>
+		<documentation xml:lang="en">This schema consists of datatypes that are normatively defined in ETSI TS 102 822-3-1 v1.13.1</documentation>
 	</annotation>
 	<annotation>
 		<documentation xml:lang="en">Changes for this new version of the TVA specification </documentation>
-		<documentation xml:lang="en"> 1. added contentLanguage attribute to TVAMediaLocatorType to denote the language of any elements in the reference media</documentation>
+		<documentation xml:lang="en"> 1. addition of accessibility attributes</documentation>
 	</annotation>
 	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
@@ -20,6 +20,8 @@
 	<complexType name="TVAMainType">
 		<sequence>
 			<element name="CopyrightNotice" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
+			<!--element name="CopyrightNotice" type="tva:CopyrightNoticeType" minOccurs="0"
+				maxOccurs="unbounded"/-->
 			<element name="MetadataOriginationInformationTable" type="tva:MetadataOriginationInformationTableType" minOccurs="0"/>
 			<element name="ClassificationSchemeTable" type="tva:ClassificationSchemeTableType" minOccurs="0"/>
 			<element name="ProgramDescription" type="tva:ProgramDescriptionType" minOccurs="0"/>
@@ -272,6 +274,7 @@
 				</complexType>
 			</element>
 			<element name="SourceMediaLocator" type="mpeg7:MediaLocatorType" minOccurs="0"/>
+			<element name="AccessibilityAttributes" type="tva:AccessibilityAttributesType" minOccurs="0"/>
 		</sequence>
 		<attribute ref="xml:lang"/>
 	</complexType>
@@ -420,6 +423,13 @@
 			</choice>
 		</sequence>
 	</complexType>
+	<!--complexType name="CopyrightNoticeType">
+		<simpleContent>
+			<extension  base="mpeg7:TextualType">
+				<attribute name="lang" type="language"/>
+			</extension>
+		</simpleContent>
+	</complexType-->
 	<simpleType name="ExplanationLengthType">
 		<restriction base="string">
 			<enumeration value="short"/>
@@ -436,15 +446,18 @@
 	</complexType>
 	<simpleType name="ISO-3166-Code">
 		<annotation>
-			<documentation xml:lang="en">A country code, as defined by ISO 3166.</documentation>
+			<documentation xml:lang="en">
+				A country code, as defined by ISO 3166.</documentation>
 		</annotation>
 		<restriction base="string">
 			<pattern value="[A-Z]{3}"/>
 		</restriction>
 	</simpleType>
-		<simpleType name="ISO-3166-List">
+	<simpleType name="ISO-3166-List">
 		<annotation>
-			<documentation xml:lang="en">A comma separated list of one or more country codes, where the codes are defined by ISO 3166.</documentation>
+			<documentation xml:lang="en">
+				A comma separated list of one or more country codes, where the codes are 
+				defined by ISO 3166.</documentation>
 		</annotation>
 		<restriction base="string">
 			<pattern value="[A-Z]{3}(,[A-Z]{3})*"/>
@@ -551,6 +564,7 @@
 			<element name="AudioAttributes" type="tva:AudioAttributesType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="VideoAttributes" type="tva:VideoAttributesType" minOccurs="0"/>
 			<element name="CaptioningAttributes" type="tva:CaptioningAttributesType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="AccessibilityAttributes" type="tva:AccessibilityAttributesType" minOccurs="0"/>
 		</sequence>
 	</complexType>
 	<simpleType name="ScanType">
@@ -588,6 +602,118 @@
 				</attribute>
 			</extension>
 		</simpleContent>
+	</complexType>
+	<complexType name="AccessibilityAttributesType">
+		<sequence>
+			<element name="SubtitleAttributes" type="tva:SubtitleAttributesType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="AudioDescriptionAttributes" type="tva:AudioDescriptionAttributesType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="SigningAttributes" type="tva:SigningAttributesType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="DialogueEnhancementAttributes" type="tva:DialogueEnhancementAttributesType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="SpokenSubtitlesAttributes" type="tva:SpokenSubtitlesAttributesType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="MagnificationUIAttributes" type="tva:MagnificationUIAttributesType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="HighContrastUIAttributes" type="tva:HighContrastUIAttributesType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="ScreenReaderAttributes" type="tva:ScreenReaderAttributesType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="ResponseToUserAction" type="tva:ResponseToUserActionType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+	</complexType>
+	<complexType name="BaseAccessibilityAttributeType" abstract="true">
+		<sequence>
+			<element name="AppInformation" type="tva:AppInformationType" minOccurs="0"/>
+			<element name="Personalisation" type="boolean" default="false" minOccurs="0"/>
+		</sequence>
+	</complexType>
+	<complexType name="AppInformationType">
+		<sequence>
+			<element name="RequiredStandardVersion" type="anyURI"/>
+			<element name="RequiredOptionalFeature" type="anyURI" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+	</complexType>
+	<complexType name="SubtitleAttributesType">
+		<complexContent>
+			<extension base="tva:BaseAccessibilityAttributeType">
+				<sequence>
+					<element name="Coding" type="tva:ControlledTermType"/>
+					<element name="SubtitleLanguage" type="language"/>
+					<element name="Purpose" type="tva:ControlledTermType" minOccurs="0"/>
+					<element name="SuitableForTTS" type="boolean"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="AudioDescriptionAttributesType">
+		<complexContent>
+			<extension base="tva:BaseAccessibilityAttributeType">
+				<sequence>
+					<element name="AudioAttributes" type="tva:AudioAttributesType"/>
+					<element name="ReceiverMix" type="boolean" default="false" minOccurs="0"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="SigningAttributesType">
+		<complexContent>
+			<extension base="tva:BaseAccessibilityAttributeType">
+				<sequence>
+					<element name="Coding" type="tva:ControlledTermType"/>
+					<element name="SignLanguage" type="language" minOccurs="0"/>
+					<element name="Closed" type="boolean" default="false" minOccurs="0"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="DialogueEnhancementAttributesType">
+		<complexContent>
+			<extension base="tva:BaseAccessibilityAttributeType">
+				<sequence>
+					<element name="AudioAttributes" type="tva:AudioAttributesType"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="SpokenSubtitlesAttributesType">
+		<complexContent>
+			<extension base="tva:BaseAccessibilityAttributeType">
+				<sequence>
+					<element name="AudioAttributes" type="tva:AudioAttributesType"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="MagnificationUIAttributesType">
+		<complexContent>
+			<extension base="tva:BaseAccessibilityAttributeType">
+				<sequence>
+					<element name="Purpose" type="tva:ControlledTermType" maxOccurs="unbounded"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="HighContrastUIAttributesType">
+		<complexContent>
+			<extension base="tva:BaseAccessibilityAttributeType">
+				<sequence>
+					<element name="Purpose" type="tva:ControlledTermType" maxOccurs="unbounded"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="ScreenReaderAttributesType">
+		<complexContent>
+			<extension base="tva:BaseAccessibilityAttributeType">
+				<sequence>
+					<element name="Purpose" type="tva:ControlledTermType" maxOccurs="unbounded"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="ResponseToUserActionType">
+		<complexContent>
+			<extension base="tva:BaseAccessibilityAttributeType">
+				<sequence>
+					<element name="Purpose" type="tva:ControlledTermType" maxOccurs="unbounded"/>
+				</sequence>
+			</extension>
+		</complexContent>
 	</complexType>
 	<annotation>
 		<documentation xml:lang="en">Section 6.3.6 PROGRAMME INFORMATION</documentation>
@@ -1361,6 +1487,8 @@
 			<element name="Publisher" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="RightsOwner" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="CopyrightNotice" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
+			<!--element name="CopyrightNotice" type="tva:CopyrightNoticeType" minOccurs="0"
+				maxOccurs="unbounded"/-->
 		</sequence>
 		<attribute name="originID" type="tva:TVAIDType" use="required"/>
 		<attributeGroup ref="tva:fragmentIdentification"/>
