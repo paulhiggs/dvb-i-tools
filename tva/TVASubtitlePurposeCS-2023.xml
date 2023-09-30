@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassificationScheme uri="urn:tva:metadata:SubtitlePurposeCS:2023" xmlns="urn:tva:mpeg7:2008" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:tva:mpeg7:2008 tva_mpeg7.xsd" xsi:type="ClassificationSchemeType">
+	<!-- ##################################################################### -->
+	<!-- SUBTITLEPURPOSE                                                       -->
+	<!-- Definition: Terms that describe the main purpose of subtitles.        -->
+	<!-- ##################################################################### -->
+	<Term termID="1">
+		<Name xml:lang="en">Same language dialogue</Name>
+		<Definition>Subtitles for the dialog in the default audio language.</Definition>
+	</Term>
+	<Term termID="2">
+		<Name xml:lang="en">Other language dialogue</Name>
+		<Definition>Translated subtitles for dialogs other than the default language.</Definition>
+	</Term>
+	<Term termID="3">
+		<Name xml:lang="en">All dialogue</Name>
+		<Definition>Subtitles for all dialogs regardless of language.</Definition>
+	</Term>
+	<Term termID="4">
+		<Name xml:lang="en">Hard of hearing</Name>
+		<Definition>Subtitles produced for the deaf and hard of hearing with no distinction between default language and other languages</Definition>
+	</Term>
+	<Term termID="5">
+		<Name xml:lang="en">Other language dialogue with hard of hearing</Name>
+		<Definition>Subtitles produced for the deaf and hard of hearing only for a language that is not the default audio language.</Definition>
+	</Term>
+	<Term termID="6">
+		<Name xml:lang="en">All dialogue with hard of hearing</Name>
+		<Definition>Subtitles produced for the deaf and hard of hearing for all dialogues (whether they are in the default audio language or other languages).</Definition>
+	</Term>
+	<Term termID="7">
+		<Name xml:lang="en">Audio description</Name>
+		<Definition>Subtitles that includes the description of the visual scene and that intended to be used by the receiver to render audio description (e.g. with text-to-speech technology.</Definition>
+	</Term>
+	<Term termID="8">
+		<Name xml:lang="en">Content related commentary</Name>
+		<Definition>Subitles that include content-related commentary (e.g. directors commentary).</Definition>
+	</Term>
+</ClassificationScheme>

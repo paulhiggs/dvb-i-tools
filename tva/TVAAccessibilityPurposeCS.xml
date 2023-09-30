@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassificationScheme uri="urn:tva:metadata:AccessibiltyPurposeCS:2023" xmlns="urn:tva:mpeg7:2008" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:tva:mpeg7:2008 tva_mpeg7.xsd" xsi:type="ClassificationSchemeType">
+    <!-- ##################################################################### -->
+    <!-- ACCESSIBILITYPURPOSE                                                  -->
+    <!-- Definition: Contain terms that describe the purpose of access         -->
+    <!-- services provided by a linked application.                            -->
+    <!-- ##################################################################### -->
+    <Term termID="1">
+        <Name xml:lang="en">Magnification UI Parameters</Name>
+        <Term termID="1.1">
+            <Name>textMagnification</Name>
+        </Term>
+        <Term termID="1.2">
+            <Name>magnifierGlass</Name>
+        </Term>
+        <Term termID="1.3">
+            <Name>screenZoom</Name>
+        </Term>
+        <Term termID="1.4">
+            <Name>largeLayout</Name>
+        </Term>
+    </Term>
+    <Term termID="2">
+        <Name xml:lang="en">High Contrast UI Parameters</Name>
+        <Term termID="2.1">
+            <Name>monochrome</Name>
+        </Term>
+    </Term>
+    <Term termID="3">
+        <Name xml:lang="en">Screen Reader Parameters</Name>
+        <Term termID="3.1">
+            <Name>voice male</Name>
+        </Term>
+        <Term termID="3.2">
+            <Name>voice female</Name>
+        </Term>
+        <Term termID="3.3">
+            <Name>language</Name>
+        </Term>
+    </Term>
+    <Term termID="4">
+        <Name xml:lang="en">Response to a User Action Parameter</Name>
+        <Term termID="4.1">
+            <Name>audio</Name>
+        </Term>
+        <Term termID="4.2">
+            <Name>visual</Name>
+        </Term>
+        <Term termID="4.3">
+            <Name>haptic</Name>
+        </Term>
+    </Term>    
+</ClassificationScheme>
