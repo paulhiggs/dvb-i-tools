@@ -25,6 +25,10 @@ const CaptionCodingFormatCS = `${TVA_CSmetadata}:CaptionCodingFormatCS:2015`,
 
 export const XMLdocumentType = "application/xml";
 
+const ApplicationsPrefix = "urn:dvb:appinformation";
+const StandardPrefix = `${ApplicationsPrefix}:standardversion`;
+const FeaturePrefix = `${ApplicationsPrefix}:optionalfeature`;
+
 export const dvbi = {
 	A177v1_Namespace: `${DVB_metadata}:servicediscovery:2019`,
 	A177v2_Namespace: `${DVB_metadata}:servicediscovery:2020`,
@@ -33,6 +37,25 @@ export const dvbi = {
 	A177v5_Namespace: `${DVB_metadata}:servicediscovery:2022b`,
 	A177v6_Namespace: `${DVB_metadata}:servicediscovery:2023`,
 	A177v7_Namespace: `${DVB_metadata}:servicediscovery:2023b`,
+
+	ApplicationStandards: [
+		`${StandardPrefix}:hbbtv:1.2.1`,
+		`${StandardPrefix}:hbbtv:1.5.1`,
+		`${StandardPrefix}:hbbtv:1.6.1`,
+		`${StandardPrefix}:hbbtv:1.7.1`,
+		`${StandardPrefix}:cta500a:2018`,
+		`${StandardPrefix}:cta500b:2019`,
+		`${StandardPrefix}:cta500c:2020`,
+		`${StandardPrefix}:cta500d:2021`,
+		`${StandardPrefix}:cta500e:2022`,
+	],
+	ApplicationOptions: [
+		`${FeaturePrefix}:hbbtv:2decoder`,
+		`${FeaturePrefix}:hbbtv:2html`,
+		`${FeaturePrefix}:hbbtv:graphics_01`,
+		`${FeaturePrefix}:hbbtv:graphics_02`,
+		`${FeaturePrefix}:hbbtv:aria`,
+	],
 
 	MAX_TITLE_LENGTH: 80,
 	MAX_KEYWORD_LENGTH: 32,

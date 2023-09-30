@@ -37,6 +37,9 @@ import {
 	MPEG7_AudioPresentationCS,
 	DVBI_RecordingInfoCS,
 	DVB_ColorimetryCS,
+	TVA_AccessibilityPurposeCS,
+	TVA_SubitleCodingFormatCS,
+	TVA_SubitlePurposeCS,
 } from "./data-locations.js";
 
 import ISOcountries from "./ISOcountries.js";
@@ -359,9 +362,9 @@ if (!Array.prototype.forEachSubElement) {
 }
 
 export default class ServiceListCheck {
-	constructor(useURLs, preloadedLanguageValidator = null, preloadedGenres = null, preloadedCountries = null) {
+	constructor(useURLs, opts) {
 		this.numRequests = 0;
-		if (preloadedLanguageValidator) this.knownLanguages = preloadedLanguageValidator;
+		if (opts?.languages) this.knownLanguages = opts.languages;
 		else {
 			this.knownLanguages = new IANAlanguages();
 			console.log("loading languages...".yellow.underline);
@@ -377,7 +380,7 @@ export default class ServiceListCheck {
 				});
 		}
 
-		if (preloadedGenres) this.allowedGenres = preloadedGenres;
+		if (opts?.genres) this.allowedGenres = opts.genres;
 		else {
 			this.allowedGenres = new ClassificationScheme();
 			console.log("loading Genre classification schemes...".yellow.underline);
@@ -392,10 +395,28 @@ export default class ServiceListCheck {
 			);
 		}
 
-		if (preloadedCountries) this.knownCountries = preloadedCountries;
+		if (opts.countries) this.knownCountries = opts.countries;
 		else {
 			this.knownCountries = new ISOcountries(false, true);
 			this.knownCountries.loadCountries(useURLs ? { url: ISO3166.url } : { file: ISO3166.file });
+		}
+
+		if (opts?.accessibilities) this.accessibilityPurposes = opts.accessibilities;
+		else {
+			this.accessibilityPurposes = new ClassificationScheme();
+			this.accessibilityPurposes.loadCS(useURLs ? { url: TVA_AccessibilityPurposeCS.url } : { file: TVA_AccessibilityPurposeCS.file });
+		}
+
+		if (opts?.stcodings) this.subtitleCodings = opts.stcodings;
+		else {
+			this.subtitleCodings = new ClassificationScheme();
+			this.subtitleCodings.loadCS(useURLs ? { url: TVA_SubitleCodingFormatCS.url } : { file: TVA_SubitleCodingFormatCS.file });
+		}
+
+		if (opts?.stpurposes) this.subtitlePurposes = opts.stpurposes;
+		else {
+			this.subtitlePurposes = new ClassificationScheme();
+			this.subtitlePurposes.loadCS(useURLs ? { url: TVA_SubitlePurposeCS.url } : { file: TVA_SubitlePurposeCS.file });
 		}
 
 		this.allowedServiceTypes = new ClassificationScheme();
@@ -1468,6 +1489,12 @@ export default class ServiceListCheck {
 			cp = 0;
 			while ((conf = ContentAttributes.get(xPath(props.prefix, tva.e_SignLanguage, ++cp), props.schema)) != null)
 				checkLanguage(this.knownLanguages, conf.text(), tva.e_SignLanguage.elementize(), conf, errs, "SI111");
+
+			// Check ContentAttributes/AccessibilityAttributes
+			let aa = ContentAttributes.get(xPath(props.prefix, tva.e_AccessibilityAttributes), props.schema));
+			if (aa) { 
+				//TODO: check AccessibilityAttributes
+			}
 		}
 
 		// <ServiceInstance><Availability>

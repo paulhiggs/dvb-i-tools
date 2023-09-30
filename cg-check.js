@@ -29,6 +29,9 @@ import {
 	ISO3166,
 	TVA_ContentCS,
 	TVA_FormatCS,
+	TVA_AccessibilityPurposeCS,
+	TVA_SubitleCodingFormatCS,
+	TVA_SubitlePurposeCS,
 	DVBI_ContentSubject,
 	DVBI_CreditsItemRoles,
 	DVBIv2_CreditsItemRoles,
@@ -73,9 +76,17 @@ const supportedRequests = [
 
 const SCHEMA_r0 = 0,
 	SCHEMA_r1 = 1,
+	SCHEMA_r2 = 2,
 	SCHEMA_unknown = -1;
 
 var SchemaVersions = [
+	{
+		namespace: TVAschema.v2024.namespace,
+		version: SCHEMA_r2,
+		filename: TVAschema.v2024.file,
+		schema: null,
+		status: DRAFT,
+	},
 	{
 		namespace: TVAschema.v2023.namespace,
 		version: SCHEMA_r1,
@@ -257,16 +268,16 @@ if (!Array.prototype.forEachSubElement) {
 export var isRestartAvailability = (genre) => [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(genre);
 
 export default class ContentGuideCheck {
-	constructor(useURLs, preloadedLanguageValidator = null, preloadedGenres = null, preloadedCreditItemRoles = null, preloadedRatings = null, preloadedCountries = null) {
+	constructor(useURLs, opts) {
 		this.numRequests = 0;
-		if (preloadedLanguageValidator) this.knownLanguages = preloadedLanguageValidator;
+		if (opts?.languages) this.knownLanguages = opts.languages;
 		else {
 			console.log("loading languages...".yellow.underline);
 			this.knownLanguages = new IANAlanguages();
 			this.knownLanguages.loadLanguages(useURLs ? { url: IANA_Subtag_Registry.url, purge: true } : { file: IANA_Subtag_Registry.file, purge: true });
 		}
 
-		if (preloadedGenres) this.allowedGenres = preloadedGenres;
+		if (opts?.genres) this.allowedGenres = opts.genres;
 		else {
 			console.log("loading classification schemes...".yellow.underline);
 			this.allowedGenres = new ClassificationScheme();
@@ -275,7 +286,7 @@ export default class ContentGuideCheck {
 			);
 		}
 
-		if (preloadedCreditItemRoles) this.allowedCreditItemRoles = preloadedCreditItemRoles;
+		if (opts?.credits) this.allowedCreditItemRoles = opts.credits;
 		else {
 			console.log("loading CreditItem roles...".yellow.underline);
 			this.allowedCreditItemRoles = new Role();
@@ -284,17 +295,35 @@ export default class ContentGuideCheck {
 			);
 		}
 
-		if (preloadedRatings) this.allowedRatings = preloadedRatings;
+		if (opts?.ratings) this.allowedRatings = opts.ratings;
 		else {
 			console.log("loading Ratings...".yellow.underline);
 			this.allowedRatings = new ClassificationScheme();
 			this.allowedRatings.loadCS(useURLs ? { urls: [TVA_ContentAlertCS.url, DVBI_ParentalGuidanceCS.url] } : { files: [TVA_ContentAlertCS.file, DVBI_ParentalGuidanceCS.file] });
 		}
 
-		if (preloadedCountries) this.knownCountries = preloadedCountries;
+		if (opts?.countries) this.knownCountries = opts.countries;
 		else {
 			this.knownCountries = new ISOcountries(false, true);
 			this.knownCountries.loadCountries(useURLs ? { url: ISO3166.url } : { file: ISO3166.file });
+		}
+
+		if (opts?.accessibilities) this.accessibilityPurposes = opts.accessibilities;
+		else {
+			this.accessibilityPurposes = new ClassificationScheme();
+			this.accessibilityPurposes.loadCS(useURLs ? { url: TVA_AccessibilityPurposeCS.url } : { file: TVA_AccessibilityPurposeCS.file });
+		}
+
+		if (opts?.stcodings) this.subtitleCodings = opts.stcodings;
+		else {
+			this.subtitleCodings = new ClassificationScheme();
+			this.subtitleCodings.loadCS(useURLs ? { url: TVA_SubitleCodingFormatCS.url } : { file: TVA_SubitleCodingFormatCS.file });
+		}
+
+		if (opts?.stpurposes) this.subtitlePurposes = opts.stpurposes;
+		else {
+			this.subtitlePurposes = new ClassificationScheme();
+			this.subtitlePurposes.loadCS(useURLs ? { url: TVA_SubitlePurposeCS.url } : { file: TVA_SubitlePurposeCS.file });
 		}
 
 		SchemaVersions.forEach((version) => {
@@ -2384,6 +2413,8 @@ export default class ContentGuideCheck {
 				}
 			}
 		}
+
+		//TODO: <AccessibilityAttributes>
 	}
 
 	/**
@@ -2469,6 +2500,7 @@ export default class ContentGuideCheck {
 
 		switch (VerifyType) {
 			case tva.e_OnDemandProgram:
+				//TODO: CaptionLanguage and SignLanguage are not in A177r6, replaced with AVAttribites.AccessibilityAttributes
 				checkTopElementsAndCardinality(
 					InstanceDescription,
 					[
@@ -2485,6 +2517,7 @@ export default class ContentGuideCheck {
 				);
 				break;
 			case tva.e_ScheduleEvent:
+				//TODO: CaptionLanguage and SignLanguage are not in A177r6, replaced with AVAttribites.AccessibilityAttributes
 				checkTopElementsAndCardinality(
 					InstanceDescription,
 					[
@@ -2570,6 +2603,7 @@ export default class ContentGuideCheck {
 		}
 
 		// <CaptionLanguage>
+		// TODO: not allowed in A177r6
 		let CaptionLanguage = InstanceDescription.get(xPath(props.prefix, tva.e_CaptionLanguage), props.schema);
 		if (CaptionLanguage) {
 			checkLanguage(this.knownLanguages, CaptionLanguage.text(), `${InstanceDescription.name()}.${tva.e_CaptionLanguage}`, CaptionLanguage, errs, "ID021");
@@ -2577,6 +2611,7 @@ export default class ContentGuideCheck {
 		}
 
 		// <SignLanguage>
+		// TODO: not allowed in A177r6
 		let SignLanguage = InstanceDescription.get(xPath(props.prefix, tva.e_SignLanguage), props.schema);
 		if (SignLanguage) {
 			checkLanguage(this.knownLanguages, SignLanguage.text(), `${InstanceDescription.name()}.${tva.e_SignLanguage}`, SignLanguage, errs, "ID031");

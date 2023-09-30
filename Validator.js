@@ -33,7 +33,19 @@ import fetchS from "sync-fetch";
 import { drawForm, PAGE_TOP, PAGE_BOTTOM } from "./ui.js";
 import ErrorList from "./ErrorList.js";
 import { isHTTPURL } from "./pattern_checks.js";
-import { Default_SLEPR, IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, ISO3166, TVA_ContentAlertCS, DVBI_ParentalGuidanceCS } from "./data-locations.js";
+import {
+	Default_SLEPR,
+	IANA_Subtag_Registry,
+	TVA_ContentCS,
+	TVA_FormatCS,
+	DVBI_ContentSubject,
+	ISO3166,
+	TVA_ContentAlertCS,
+	DVBI_ParentalGuidanceCS,
+	TVA_AccessibilityPurposeCS,
+	TVA_SubitleCodingFormatCS,
+	TVA_SubitlePurposeCS,
+} from "./data-locations.js";
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.js";
 
 import IANAlanguages from "./IANAlanguages.js";
@@ -266,11 +278,35 @@ export default function validator(options) {
 	let knownRatings = new ClassificationScheme();
 	knownRatings.loadCS(options.urls ? { urls: [TVA_ContentAlertCS.url, DVBI_ParentalGuidanceCS.url] } : { files: [TVA_ContentAlertCS.file, DVBI_ParentalGuidanceCS.file] });
 
+	let accessibilityPurposes = new ClassificationScheme();
+	accessibilityPurposes.loadCS(options.urls ? { url: TVA_AccessibilityPurposeCS.url } : { file: TVA_AccessibilityPurposeCS.file });
+
+	let subtitleCodings = new ClassificationScheme();
+	subtitleCodings.loadCS(options.urls ? { url: TVA_SubitleCodingFormatCS.url } : { file: TVA_SubitleCodingFormatCS.file });
+
+	let subtitlePurposess = new ClassificationScheme();
+	subtitlePurposess.loadCS(options.urls ? { url: TVA_SubitlePurposeCS.url } : { file: TVA_SubitlePurposeCS.file });
+
 	let isoCountries = new ISOcountries(false, true);
 	isoCountries.loadCountries(options.urls ? { url: ISO3166.url } : { file: ISO3166.file });
 
-	let slcheck = new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoCountries);
-	let cgcheck = new ContentGuideCheck(options.urls, knownLanguages, knownGenres, null, knownRatings, isoCountries);
+	let slcheck = new ServiceListCheck(options.urls, {
+		languagess: knownLanguages,
+		genres: knownGenres,
+		countries: isoCountries,
+		accessibilities: accessibilityPurposes,
+		stcodings: subtitleCodings,
+		stpurposes: subtitlePurposess,
+	});
+	let cgcheck = new ContentGuideCheck(options.urls, {
+		languages: knownLanguages,
+		genres: knownGenres,
+		ratings: knownRatings,
+		countries: isoCountries,
+		accessibilities: accessibilityPurposes,
+		stcodings: subtitleCodings,
+		stpurposes: subtitlePurposess,
+	});
 
 	if (!options.nosl) {
 		// handle HTTP POST requests to /checkSL
