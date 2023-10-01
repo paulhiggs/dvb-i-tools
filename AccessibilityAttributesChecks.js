@@ -213,6 +213,10 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 	let children = AccessibilityAttributes.childNodes();
 	let allowedAppChildren = [{ name: tva.e_AppInformation }, { name: tva.e_Personalisation }, { name: tva.e_Purpose, maxOccurs: Infinity }];
 	let allAppChildren = [tva.e_Purpose].concat(BaseAccessibilityAttributesType);
+	const appInformationElements = [
+		{ name: tva.e_AppInformation, minOccurs: 0 },
+		{ name: tva.e_Personalisation, minOccurs: 0 },
+	];
 
 	if (children)
 		children.forEachSubElement((elem) => {
@@ -240,14 +244,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 				case tva.e_SubtitleAttributes:
 					checkTopElementsAndCardinality(
 						elem,
-						[
-							{ name: tva.e_AppInformation, minOccurs: 0 },
-							{ name: tva.e_Personalisation, minOccurs: 0 },
-							{ name: tva.e_Coding },
-							{ name: tva.e_SubtitleLanguage },
-							{ name: tva.e_Purpose, minOccurs: 0 },
-							{ name: tva.e_SuitableForTTS },
-						],
+						[{ name: tva.e_Coding }, { name: tva.e_SubtitleLanguage }, { name: tva.e_Purpose, minOccurs: 0 }, { name: tva.e_SuitableForTTS }].concat(appInformationElements),
 						tvaEC.SubtitleAttributes,
 						false,
 						errs,
@@ -261,12 +258,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 				case tva.e_AudioDescriptionAttributes:
 					checkTopElementsAndCardinality(
 						elem,
-						[
-							{ name: tva.e_AppInformation, minOccurs: 0 },
-							{ name: tva.e_Personalisation, minOccurs: 0 },
-							{ name: tva.e_AudioAttributes },
-							{ name: tva.e_ReceiverMix, minOccurs: 0 },
-						],
+						[{ name: tva.e_AudioAttributes }, { name: tva.e_ReceiverMix, minOccurs: 0 }].concat(appInformationElements),
 						tvaEC.AudioDescriptionAttributes,
 						false,
 						errs,
@@ -278,13 +270,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 				case tva.e_SigningAttributes:
 					checkTopElementsAndCardinality(
 						elem,
-						[
-							{ name: tva.e_AppInformation, minOccurs: 0 },
-							{ name: tva.e_Personalisation, minOccurs: 0 },
-							{ name: tva.e_Coding },
-							{ name: tva.e_SignLanguage, minOccurs: 0 },
-							{ name: tva.e_Closed, minOccurs: 0 },
-						],
+						[{ name: tva.e_Coding }, { name: tva.e_SignLanguage, minOccurs: 0 }, { name: tva.e_Closed, minOccurs: 0 }].concat(appInformationElements),
 						tvaEC.SigningAttributes,
 						false,
 						errs,
@@ -295,26 +281,12 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 					checkSignLanguage(elem, tva.e_SignLanguage, 74);
 					break;
 				case tva.e_DialogueEnhancementAttributes:
-					checkTopElementsAndCardinality(
-						elem,
-						[{ name: tva.e_AppInformation, minOccurs: 0 }, { name: tva.e_Personalisation, minOccurs: 0 }, { name: tva.e_AudioAttributes }],
-						tvaEC.DialogEnhancementAttributes,
-						false,
-						errs,
-						`${errCode}-81`
-					);
+					checkTopElementsAndCardinality(elem, [{ name: tva.e_AudioAttributes }].concat(appInformationElements), tvaEC.DialogEnhancementAttributes, false, errs, `${errCode}-81`);
 					checkAppInformation(elem, 82);
 					checkAudioAttributes(elem, tva.e_AudioAttributes, 83);
 					break;
 				case tva.e_SpokenSubtitlesAttributes:
-					checkTopElementsAndCardinality(
-						elem,
-						[{ name: tva.e_AppInformation, minOccurs: 0 }, { name: tva.e_Personalisation, minOccurs: 0 }, { name: tva.e_AudioAttributes }],
-						tvaEC.SpokenSubtitlesAttributes,
-						false,
-						errs,
-						`${errCode}-91`
-					);
+					checkTopElementsAndCardinality(elem, [{ name: tva.e_AudioAttributes }].concat(appInformationElements), tvaEC.SpokenSubtitlesAttributes, false, errs, `${errCode}-91`);
 					checkAppInformation(elem, 92);
 					checkAudioAttributes(elem, tva.e_AudioAttributes, 93);
 					break;
