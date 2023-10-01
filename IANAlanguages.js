@@ -24,6 +24,10 @@ export default class IANAlanguages {
 		this.signLanguagesList = [];
 	}
 
+	count() {
+		return `lang=${this.languagesList.length},sign=${this.signLanguagesList.length},redun=${this.redundantLanguagesList.length}`;
+	}
+
 	stats(res) {
 		res.numLanguages = this.languagesList.length;
 		res.numRedundantLanguages = this.redundantLanguagesList.length;

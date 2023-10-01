@@ -8,12 +8,6 @@ import { attribute, elementize, quote } from "./phlib/phlib.js";
 
 import ErrorList, { WARNING, APPLICATION } from "./ErrorList.js";
 
-import ClassificationScheme from "./ClassificationScheme.js";
-import Role from "./Role.js";
-
-import ISOcountries from "./ISOcountries.js";
-import IANAlanguages from "./IANAlanguages.js";
-
 import { dvbi } from "./DVB-I_definitions.js";
 import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
 
@@ -24,21 +18,7 @@ import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration, CountChildEleme
 
 import { isHTTPURL, isDVBLocator, isUTCDateTime } from "./pattern_checks.js";
 
-import {
-	IANA_Subtag_Registry,
-	ISO3166,
-	TVA_ContentCS,
-	TVA_FormatCS,
-	TVA_AccessibilityPurposeCS,
-	TVA_SubitleCodingFormatCS,
-	TVA_SubitlePurposeCS,
-	DVBI_ContentSubject,
-	DVBI_CreditsItemRoles,
-	DVBIv2_CreditsItemRoles,
-	TVAschema,
-	TVA_ContentAlertCS,
-	DVBI_ParentalGuidanceCS,
-} from "./data-locations.js";
+import { TVAschema } from "./data-locations.js";
 
 import { ValidatePromotionalStillImage } from "./RelatedMaterialChecks.js";
 import { cg_InvalidHrefValue, NoChildElement } from "./CommonErrors.js";
@@ -49,6 +29,21 @@ import { writeOut } from "./Validator.js";
 
 import { DRAFT, CURRENT } from "./sl-check.js";
 import { keys } from "./CommonErrors.js";
+
+import {
+	LoadGenres,
+	LoadRatings,
+	LoadVideoCodecCS,
+	LoadAudioCodecCS,
+	LoadAudioPresentationCS,
+	LoadAccessibilityPurpose,
+	LoadSubtitleCodings,
+	LoadSubtitlePurposes,
+	LoadLanguages,
+	LoadCountries,
+} from "./CSLoaders.js";
+import { LoadCredits } from "./RoleLoader.js";
+import { CheckAccessibilityAttributes } from "./AccessibilityAttributesChecks.js";
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";
@@ -270,61 +265,18 @@ export var isRestartAvailability = (genre) => [dvbi.RESTART_AVAILABLE, dvbi.REST
 export default class ContentGuideCheck {
 	constructor(useURLs, opts) {
 		this.numRequests = 0;
-		if (opts?.languages) this.knownLanguages = opts.languages;
-		else {
-			console.log("loading languages...".yellow.underline);
-			this.knownLanguages = new IANAlanguages();
-			this.knownLanguages.loadLanguages(useURLs ? { url: IANA_Subtag_Registry.url, purge: true } : { file: IANA_Subtag_Registry.file, purge: true });
-		}
+		this.knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs);
+		this.allowedGenres = opts?.genres ? opts.genres : LoadGenres(useURLs);
+		this.allowedVideoSchemes = opts?.videofmts ? opts.videofmts : LoadVideoCodecCS(useURLs);
+		this.allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs);
 
-		if (opts?.genres) this.allowedGenres = opts.genres;
-		else {
-			console.log("loading classification schemes...".yellow.underline);
-			this.allowedGenres = new ClassificationScheme();
-			this.allowedGenres.loadCS(
-				useURLs ? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] } : { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] }
-			);
-		}
-
-		if (opts?.credits) this.allowedCreditItemRoles = opts.credits;
-		else {
-			console.log("loading CreditItem roles...".yellow.underline);
-			this.allowedCreditItemRoles = new Role();
-			this.allowedCreditItemRoles.loadRoles(
-				useURLs ? { urls: [DVBI_CreditsItemRoles.url, DVBIv2_CreditsItemRoles.url] } : { files: [DVBI_CreditsItemRoles.file, DVBIv2_CreditsItemRoles.file] }
-			);
-		}
-
-		if (opts?.ratings) this.allowedRatings = opts.ratings;
-		else {
-			console.log("loading Ratings...".yellow.underline);
-			this.allowedRatings = new ClassificationScheme();
-			this.allowedRatings.loadCS(useURLs ? { urls: [TVA_ContentAlertCS.url, DVBI_ParentalGuidanceCS.url] } : { files: [TVA_ContentAlertCS.file, DVBI_ParentalGuidanceCS.file] });
-		}
-
-		if (opts?.countries) this.knownCountries = opts.countries;
-		else {
-			this.knownCountries = new ISOcountries(false, true);
-			this.knownCountries.loadCountries(useURLs ? { url: ISO3166.url } : { file: ISO3166.file });
-		}
-
-		if (opts?.accessibilities) this.accessibilityPurposes = opts.accessibilities;
-		else {
-			this.accessibilityPurposes = new ClassificationScheme();
-			this.accessibilityPurposes.loadCS(useURLs ? { url: TVA_AccessibilityPurposeCS.url } : { file: TVA_AccessibilityPurposeCS.file });
-		}
-
-		if (opts?.stcodings) this.subtitleCodings = opts.stcodings;
-		else {
-			this.subtitleCodings = new ClassificationScheme();
-			this.subtitleCodings.loadCS(useURLs ? { url: TVA_SubitleCodingFormatCS.url } : { file: TVA_SubitleCodingFormatCS.file });
-		}
-
-		if (opts?.stpurposes) this.subtitlePurposes = opts.stpurposes;
-		else {
-			this.subtitlePurposes = new ClassificationScheme();
-			this.subtitlePurposes.loadCS(useURLs ? { url: TVA_SubitlePurposeCS.url } : { file: TVA_SubitlePurposeCS.file });
-		}
+		this.AudioPresentationCSvalues = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs);
+		this.allowedCreditItemRoles = opts?.credits ? opts.credits : LoadCredits(useURLs);
+		this.allowedRatings = opts?.ratings ? opts.ratings : LoadRatings(useURLs);
+		this.knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs);
+		this.accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs);
+		this.subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs);
+		this.subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs);
 
 		SchemaVersions.forEach((version) => {
 			process.stdout.write(`..loading ${version.version} ${version.namespace} from ${version.filename} `.yellow);
@@ -2414,7 +2366,27 @@ export default class ContentGuideCheck {
 			}
 		}
 
-		//TODO: <AccessibilityAttributes>
+		// <AccessibilityAttributes>
+		let AccessibilityAttributes = AVAttributes.get(xPath(props.prefix, tva.e_AccessibilityAttributes), props.schema);
+		if (AccessibilityAttributes) {
+			CheckAccessibilityAttributes(
+				props,
+				AccessibilityAttributes,
+				{
+					AccessibilityPurposeCS: this.accessibilityPurposes,
+					RequiredStandardVersionCS: this.RequiredStandardVersionCS,
+					RequiredOptionalFeatureCS: this.RequiredOptionalFeatureCS,
+					VideoCodecCS: this.allowedVideoSchemes,
+					AudioCodecCS: this.allowedAudioSchemes,
+					SubtitleCodingFormatCS: this.subtitleCodings,
+					SubtitlePurposeTypeCS: this.subtitlePurposes,
+					KnownLanguages: this.knownLanguages,
+					AudioPresentationCS: this.AudioPresentationCSvalues,
+				},
+				errs,
+				"AV051"
+			);
+		}
 	}
 
 	/**
@@ -2500,39 +2472,41 @@ export default class ContentGuideCheck {
 
 		switch (VerifyType) {
 			case tva.e_OnDemandProgram:
-				//TODO: CaptionLanguage and SignLanguage are not in A177r6, replaced with AVAttribites.AccessibilityAttributes
-				checkTopElementsAndCardinality(
-					InstanceDescription,
-					[
-						{ name: tva.e_Genre, minOccurs: 2, maxOccurs: 2 },
-						{ name: tva.e_CaptionLanguage, minOccurs: 0 },
-						{ name: tva.e_SignLanguage, minOccurs: 0 },
-						{ name: tva.e_AVAttributes, minOccurs: 0 },
-						{ name: tva.e_OtherIdentifier, minOccurs: 0, maxOccurs: Infinity },
-					],
-					tvaEC.InstanceDescription,
-					false,
-					errs,
-					"ID001"
-				);
+				let allowedODChildren =
+					SchemaVersion(props.namespace) < SCHEMA_r2
+						? [
+								{ name: tva.e_Genre, minOccurs: 2, maxOccurs: 2 },
+								{ name: tva.e_CaptionLanguage, minOccurs: 0 },
+								{ name: tva.e_SignLanguage, minOccurs: 0 },
+								{ name: tva.e_AVAttributes, minOccurs: 0 },
+								{ name: tva.e_OtherIdentifier, minOccurs: 0, maxOccurs: Infinity },
+						  ]
+						: [
+								{ name: tva.e_Genre, minOccurs: 2, maxOccurs: 2 },
+								{ name: tva.e_AVAttributes, minOccurs: 0 },
+								{ name: tva.e_OtherIdentifier, minOccurs: 0, maxOccurs: Infinity },
+						  ];
+
+				checkTopElementsAndCardinality(InstanceDescription, allowedODChildren, tvaEC.InstanceDescription, false, errs, "ID001");
 				break;
 			case tva.e_ScheduleEvent:
-				//TODO: CaptionLanguage and SignLanguage are not in A177r6, replaced with AVAttribites.AccessibilityAttributes
-				checkTopElementsAndCardinality(
-					InstanceDescription,
-					[
-						{ name: tva.e_Genre, minOccurs: 0 },
-						{ name: tva.e_CaptionLanguage, minOccurs: 0 },
-						{ name: tva.e_SignLanguage, minOccurs: 0 },
-						{ name: tva.e_AVAttributes, minOccurs: 0 },
-						{ name: tva.e_OtherIdentifier, minOccurs: 0, maxOccurs: Infinity },
-						{ name: tva.e_RelatedMaterial, minOccurs: 0 },
-					],
-					tvaEC.InstanceDescription,
-					false,
-					errs,
-					"ID002"
-				);
+				let allowedSEChildren =
+					SchemaVersion(props.namespace) < SCHEMA_r2
+						? [
+								{ name: tva.e_Genre, minOccurs: 0 },
+								{ name: tva.e_CaptionLanguage, minOccurs: 0 },
+								{ name: tva.e_SignLanguage, minOccurs: 0 },
+								{ name: tva.e_AVAttributes, minOccurs: 0 },
+								{ name: tva.e_OtherIdentifier, minOccurs: 0, maxOccurs: Infinity },
+								{ name: tva.e_RelatedMaterial, minOccurs: 0 },
+						  ]
+						: [
+								{ name: tva.e_Genre, minOccurs: 0 },
+								{ name: tva.e_AVAttributes, minOccurs: 0 },
+								{ name: tva.e_OtherIdentifier, minOccurs: 0, maxOccurs: Infinity },
+								{ name: tva.e_RelatedMaterial, minOccurs: 0 },
+						  ];
+				checkTopElementsAndCardinality(InstanceDescription, allowedSEChildren, tvaEC.InstanceDescription, false, errs, "ID002");
 				break;
 			default:
 				errs.addError({

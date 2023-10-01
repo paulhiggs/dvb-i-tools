@@ -57,6 +57,7 @@ export const tva = {
 	e_CaptioningAttributes: "CaptioningAttributes",
 	e_CaptionLanguage: "CaptionLanguage",
 	e_Character: "Character",
+	e_Closed: "Closed",
 	e_Coding: "Coding",
 	e_Color: "Color",
 	e_ContentVersion: "ContentVersion",
@@ -119,6 +120,7 @@ export const tva = {
 	e_ParentalRating: "ParentalRating",
 	e_PartOfAggregatedGroup: "PartOfAggregatedGroup",
 	e_PartOfAggregateProgram: "PartOfAggregateProgram",
+	e_Personalisation: "Personalisation",
 	e_PersonName: "PersonName",
 	e_PictureFormat: "PictureFormat",
 	e_ProductionDate: "ProductionDate",
@@ -138,6 +140,7 @@ export const tva = {
 	e_PurchaseList: "PurchaseList",
 	e_Purpose: "Purpose",
 	e_PushDownloadProgram: "PushDownloadProgram",
+	e_ReceiverMix: "ReceiverMix",
 	e_RelatedMaterial: "RelatedMaterial",
 	e_ReleaseInformation: "ReleaseInformation",
 	e_Repeat: "Repeat",
@@ -164,6 +167,7 @@ export const tva = {
 	e_StreamID: "StreamID",
 	e_SubtitleAttributes: "SubtitleAttributes",
 	e_SubtitleLanguage: "SubtitleLanguage",
+	e_SuitableForTTS: "SuitableForTTS",
 	e_Synopsis: "Synopsis",
 	e_System: "System",
 	e_Title: "Title",
@@ -251,11 +255,33 @@ export const tvaEA = {
 };
 
 const ProgramLocationType = [tva.e_Program, tva.e_ProgramURL, tva.e_AuxiliaryURL, tva.e_InatanceMetadataId, tva.e_InstanceDescription];
+export const BaseAccessibilityAttributesType = [tva.e_AppInformation, tva.e_Personalisation];
 
 export const tvaEC = {
 	// EC = Element-Children - the child elements or each element
+	AccessibilityAttributes: [
+		tva.e_SubtitleAttributes,
+		tva.e_AudioDescriptionAttributes,
+		tva.e_SigningAttributes,
+		tva.e_DialogueEnhancementAttributes,
+		tva.e_SpokenSubtitlesAttributes,
+		tva.e_MagnificationUIAttributes,
+		tva.e_HighContrastUIAttributes,
+		tva.e_ScreenReaderAttributes,
+		tva.e_ResponseToUserAction,
+	],
 	AudioAttributes: [tva.e_Coding, tva.e_NumOfChannels, tva.e_MixType, tva.e_AudioLanguage, tva.e_SampleFrequency, tva.e_BitsPerSample, tva.e_BitRate],
-	AVAttributes: [tva.e_FileFormat, tva.e_FileSize, tva.e_System, tva.e_BitRate, tva.e_AudioAttributes, tva.e_VideoAttributes, tva.e_CaptioningAttributes],
+	AudioDescriptionAttributes: [tva.e_AudioAttributes, tva.e_ReceiverMix].concat(BaseAccessibilityAttributesType),
+	AVAttributes: [
+		tva.e_FileFormat,
+		tva.e_FileSize,
+		tva.e_System,
+		tva.e_BitRate,
+		tva.e_AudioAttributes,
+		tva.e_VideoAttributes,
+		tva.e_CaptioningAttributes,
+		tva.e_AccessibilityAttributes,
+	],
 	CaptioningAttributes: [tva.e_Coding, tva.e_BitRate],
 	BasicDescription: [
 		tva.e_Title,
@@ -280,6 +306,7 @@ export const tvaEC = {
 		tva.e_PublishedDuration,
 		tva.e_PurchaseList,
 	],
+	DialogEnhancementAttributes: [tva.e_AudioAttributes].concat(BaseAccessibilityAttributesType),
 	Format: [tva.e_AVAttributes, tva.e_StillPictureFormat],
 	GroupInformation: [tva.e_GroupType, tva.e_BasicDescription, tva.e_MemberOf, tva.e_OtherIdentifier, tva.e_PartOfAggregatedGroup, tva.e_AggregationOf],
 	InstanceDescription: [
@@ -345,6 +372,7 @@ export const tvaEC = {
 		tva.e_PromotionalMedia,
 		tva.e_SocialMediaReference,
 		tva.e_SourceMediaLocator,
+		tva.e_AccessibilityAttributes,
 	],
 	Schedule: [tva.e_ScheduleEvent],
 	ScheduleEvent: [
@@ -360,5 +388,8 @@ export const tvaEC = {
 		tva.e_LastShowing,
 		tva.e_Free,
 	].concat(ProgramLocationType),
+	SigningAttributes: [tva.e_Coding, tva.e_SignLanguage, tva.e_Closed].concat(BaseAccessibilityAttributesType),
+	SpokenSubtitlesAttributes: [tva.e_AudioAttributes].concat(BaseAccessibilityAttributesType),
+	SubtitleAttributes: [tva.e_Coding, tva.e_SubtitleLanguage, tva.e_Purpose, tva.e_SuitableForTTS].concat(BaseAccessibilityAttributesType),
 	VideoAttributes: [tva.e_Coding, tva.e_Scan, tva.e_HorizontalSize, tva.e_VerticalSize, tva.e_AspectRatio, tva.e_Color, tva.e_FrameRate, tva.e_BitRate, tva.e_BitsPerSample],
 };
