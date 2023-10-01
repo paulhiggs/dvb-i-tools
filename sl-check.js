@@ -7,7 +7,6 @@ import process from "process";
 import { elementize, quote } from "./phlib/phlib.js";
 
 import ErrorList, { WARNING, APPLICATION } from "./ErrorList.js";
-import ClassificationScheme from "./ClassificationScheme.js";
 
 import { sats } from "./DVB_definitions.js";
 import { dvbi, dvbiEC, dvbEA, XMLdocumentType } from "./DVB-I_definitions.js";
@@ -19,28 +18,7 @@ import { xPath, xPathM, isIn, unEntity } from "./utils.js";
 
 import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isDomainName, isRTSPURL } from "./pattern_checks.js";
 
-import {
-	IANA_Subtag_Registry,
-	TVA_ContentCS,
-	TVA_FormatCS,
-	DVBI_ContentSubject,
-	ISO3166,
-	DVBI_ServiceListSchema,
-	TVA_PictureFormatCS,
-	DVBI_ServiceTypeCS,
-	DVB_AudioCodecCS,
-	MPEG7_AudioCodingFormatCS,
-	DVB_AudioConformanceCS,
-	DVB_VideoCodecCS,
-	MPEG7_VisualCodingFormatCS,
-	DVB_VideoConformanceCS,
-	MPEG7_AudioPresentationCS,
-	DVBI_RecordingInfoCS,
-	DVB_ColorimetryCS,
-} from "./data-locations.js";
-
-import ISOcountries from "./ISOcountries.js";
-import IANAlanguages from "./IANAlanguages.js";
+import { DVBI_ServiceListSchema } from "./data-locations.js";
 
 import { checkValidLogos } from "./RelatedMaterialChecks.js";
 import { sl_InvalidHrefValue } from "./CommonErrors.js";
@@ -50,6 +28,26 @@ import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck,
 
 import { writeOut } from "./Validator.js";
 import { keys } from "./CommonErrors.js";
+
+import {
+	LoadGenres,
+	LoadVideoCodecCS,
+	LoadAudioCodecCS,
+	LoadAccessibilityPurpose,
+	LoadSubtitleCodings,
+	LoadSubtitlePurposes,
+	LoadAudioConformanceCS,
+	LoadVideoConformanceCS,
+	LoadAudioPresentationCS,
+	LoadRecordingInfoCS,
+	LoadPictureFormatCS,
+	LoadColorimetryCS,
+	LoadServiceTypeCS,
+	LoadLanguages,
+	LoadCountries,
+} from "./CSLoaders.js";
+
+import { CheckAccessibilityAttributes } from "./AccessibilityAttributesChecks.js";
 
 const ANY_NAMESPACE = "$%$!!";
 const LCN_TABLE_NO_TARGETREGION = "unspecifiedRegion",
@@ -359,54 +357,10 @@ if (!Array.prototype.forEachSubElement) {
 }
 
 export default class ServiceListCheck {
-	constructor(useURLs, preloadedLanguageValidator = null, preloadedGenres = null, preloadedCountries = null) {
+	constructor(useURLs, opts) {
 		this.numRequests = 0;
-		if (preloadedLanguageValidator) this.knownLanguages = preloadedLanguageValidator;
-		else {
-			this.knownLanguages = new IANAlanguages();
-			console.log("loading languages...".yellow.underline);
-			if (useURLs)
-				this.knownLanguages.loadLanguages({
-					url: IANA_Subtag_Registry.url,
-					purge: true,
-				});
-			else
-				this.knownLanguages.loadLanguages({
-					file: IANA_Subtag_Registry.file,
-					purge: true,
-				});
-		}
 
-		if (preloadedGenres) this.allowedGenres = preloadedGenres;
-		else {
-			this.allowedGenres = new ClassificationScheme();
-			console.log("loading Genre classification schemes...".yellow.underline);
-			this.allowedGenres.loadCS(
-				useURLs
-					? {
-							urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url],
-					  }
-					: {
-							files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file],
-					  }
-			);
-		}
-
-		if (preloadedCountries) this.knownCountries = preloadedCountries;
-		else {
-			this.knownCountries = new ISOcountries(false, true);
-			this.knownCountries.loadCountries(useURLs ? { url: ISO3166.url } : { file: ISO3166.file });
-		}
-
-		this.allowedServiceTypes = new ClassificationScheme();
-		this.allowedAudioSchemes = new ClassificationScheme();
-		this.allowedVideoSchemes = new ClassificationScheme();
-		this.allowedAudioConformancePoints = new ClassificationScheme();
-		this.allowedVideoConformancePoints = new ClassificationScheme();
-		this.RecordingInfoCSvalues = new ClassificationScheme();
-		this.allowedPictureFormats = new ClassificationScheme();
-		this.AudioPresentationCSvalues = new ClassificationScheme();
-		this.allowedColorimetry = new ClassificationScheme();
+		this.knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs);
 
 		console.log("loading service list schemas...".yellow.underline);
 		SchemaVersions.forEach((version) => {
@@ -415,7 +369,23 @@ export default class ServiceListCheck {
 			console.log(version.schema ? "OK".green : "FAIL".red);
 		});
 
-		this.loadDataFiles(useURLs);
+		console.log("loading classification schemes...".yellow.underline);
+		this.allowedGenres = opts?.genres ? opts.genres : LoadGenres(useURLs);
+		this.allowedVideoSchemes = opts?.videofmts ? opts.videofmts : LoadVideoCodecCS(useURLs);
+		this.allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs);
+		this.AudioPresentationCSvalues = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs);
+		this.accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs);
+		this.subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs);
+		this.subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs);
+		this.knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs);
+
+		this.allowedPictureFormats = LoadPictureFormatCS(useURLs);
+		this.allowedColorimetry = LoadColorimetryCS(useURLs);
+		this.allowedServiceTypes = LoadServiceTypeCS(useURLs);
+
+		this.allowedAudioConformancePoints = LoadAudioConformanceCS(useURLs);
+		this.allowedVideoConformancePoints = LoadVideoConformanceCS(useURLs);
+		this.RecordingInfoCSvalues = LoadRecordingInfoCS(useURLs);
 	}
 
 	stats() {
@@ -433,60 +403,6 @@ export default class ServiceListCheck {
 		res.numAudioPresentationCSvalues = this.AudioPresentationCSvalues.count();
 		res.numAudioPresentationCSvalues = this.AudioPresentationCSvalues.count();
 		return res;
-	}
-
-	/**
-	 * loads in the configuration files for the validator, loading the appropriate global variables
-	 *
-	 * @param {boolean} useURLs    if true then configuration data should be loaded from network locations otherwise, load from local files
-	 */
-	/*private*/ loadDataFiles(useURLs) {
-		console.log("loading classification schemes...".yellow.underline);
-		this.allowedPictureFormats.loadCS(useURLs ? { url: TVA_PictureFormatCS.url } : { file: TVA_PictureFormatCS.file });
-		this.allowedColorimetry.loadCS(useURLs ? { url: DVB_ColorimetryCS.y2020.url, leafNodesOnly: true } : { file: DVB_ColorimetryCS.y2020.file, leafNodesOnly: true });
-		this.allowedServiceTypes.loadCS(useURLs ? { url: DVBI_ServiceTypeCS.url } : { file: DVBI_ServiceTypeCS.file });
-
-		this.allowedAudioSchemes.loadCS(
-			useURLs
-				? {
-						urls: [DVB_AudioCodecCS.y2007.url, DVB_AudioCodecCS.y2020.url, MPEG7_AudioCodingFormatCS.url],
-						leafNodesOnly: true,
-				  }
-				: {
-						files: [DVB_AudioCodecCS.y2007.file, DVB_AudioCodecCS.y2020.file, MPEG7_AudioCodingFormatCS.file],
-						leafNodesOnly: true,
-				  }
-		);
-
-		this.allowedAudioConformancePoints.loadCS(useURLs ? { url: DVB_AudioConformanceCS.url, leafNodesOnly: true } : { file: DVB_AudioConformanceCS.file, leafNodesOnly: true });
-
-		this.allowedVideoSchemes.loadCS(
-			useURLs
-				? {
-						urls: [DVB_VideoCodecCS.y2007.url, DVB_VideoCodecCS.y2021.url, DVB_VideoCodecCS.y2022.url, MPEG7_VisualCodingFormatCS.url],
-						leafNodesOnly: true,
-				  }
-				: {
-						files: [DVB_VideoCodecCS.y2007.file, DVB_VideoCodecCS.y2021.file, DVB_VideoCodecCS.y2022.file, MPEG7_VisualCodingFormatCS.file],
-						leafNodesOnly: true,
-				  }
-		);
-
-		this.allowedVideoConformancePoints.loadCS(
-			useURLs
-				? {
-						urls: [DVB_VideoConformanceCS.y2017.url, DVB_VideoConformanceCS.y2021.url, DVB_VideoConformanceCS.y2022.url],
-						leafNodesOnly: true,
-				  }
-				: {
-						files: [DVB_VideoConformanceCS.y2017.file, DVB_VideoConformanceCS.y2021.file, DVB_VideoConformanceCS.y2022.file],
-						leafNodesOnly: true,
-				  }
-		);
-
-		this.AudioPresentationCSvalues.loadCS(useURLs ? { url: MPEG7_AudioPresentationCS.url } : { file: MPEG7_AudioPresentationCS.file });
-
-		this.RecordingInfoCSvalues.loadCS(useURLs ? { url: DVBI_RecordingInfoCS.url } : { file: DVBI_RecordingInfoCS.file });
 	}
 
 	/**
@@ -836,7 +752,7 @@ export default class ServiceListCheck {
 		}
 		checkTopElementsAndCardinality(
 			RelatedMaterial,
-			[{ name: tva.e_HowRelated }, { name: tva.e_MediaLocator, maxOccurs: Infinity }],
+			[{ name: tva.e_HowRelated }, { name: tva.e_MediaLocator, maxOccurs: Infinity }, { name: tva.e_AccessibilityAttributes, minOccurs: 0 }],
 			dvbiEC.RelatedMaterial,
 			false,
 			errs,
@@ -844,7 +760,8 @@ export default class ServiceListCheck {
 		);
 
 		let HowRelated = null,
-			MediaLocator = [];
+			MediaLocator = [],
+			AccessibilityAttribiutes = [];
 		if (RelatedMaterial.childNodes())
 			RelatedMaterial.childNodes().forEachSubElement((elem) => {
 				switch (elem.name()) {
@@ -853,6 +770,9 @@ export default class ServiceListCheck {
 						break;
 					case tva.e_MediaLocator:
 						MediaLocator.push(elem);
+						break;
+					case tva.e_AccessibilityAttributes:
+						AccessibilityAttribiutes.push(elem);
 						break;
 				}
 			});
@@ -938,6 +858,26 @@ export default class ServiceListCheck {
 					break;
 			}
 		}
+
+		AccessibilityAttribiutes.forEach((aa) => {
+			CheckAccessibilityAttributes(
+				props,
+				aa,
+				{
+					AccessibilityPurposeCS: this.accessibilityPurposes,
+					RequiredStandardVersionCS: this.RequiredStandardVersionCS,
+					RequiredOptionalFeatureCS: this.RequiredOptionalFeatureCS,
+					VideoCodecCS: this.allowedVideoSchemes,
+					AudioCodecCS: this.allowedAudioSchemes,
+					SubtitleCodingFormatCS: this.subtitleCodings,
+					SubtitlePurposeTypeCS: this.subtitlePurposes,
+					KnownLanguages: this.knownLanguages,
+					AudioPresentationCS: this.AudioPresentationCSvalues,
+				},
+				errs,
+				`${errCode}-51`
+			);
+		});
 		return rc;
 	}
 
@@ -1468,6 +1408,28 @@ export default class ServiceListCheck {
 			cp = 0;
 			while ((conf = ContentAttributes.get(xPath(props.prefix, tva.e_SignLanguage, ++cp), props.schema)) != null)
 				checkLanguage(this.knownLanguages, conf.text(), tva.e_SignLanguage.elementize(), conf, errs, "SI111");
+
+			// Check ContentAttributes/AccessibilityAttributes
+			let aa = ContentAttributes.get(xPath(props.prefix, tva.e_AccessibilityAttributes), props.schema);
+			if (aa) {
+				CheckAccessibilityAttributes(
+					props,
+					aa,
+					{
+						AccessibilityPurposeCS: this.accessibilityPurposes,
+						RequiredStandardVersionCS: this.RequiredStandardVersionCS,
+						RequiredOptionalFeatureCS: this.RequiredOptionalFeatureCS,
+						VideoCodecCS: this.allowedVideoSchemes,
+						AudioCodecCS: this.allowedAudioSchemes,
+						SubtitleCodingFormatCS: this.subtitleCodings,
+						SubtitlePurposeTypeCS: this.subtitlePurposes,
+						KnownLanguages: this.knownLanguages,
+						AudioPresentationCS: this.AudioPresentationCSvalues,
+					},
+					errs,
+					"SI112"
+				);
+			}
 		}
 
 		// <ServiceInstance><Availability>

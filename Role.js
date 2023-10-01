@@ -5,11 +5,15 @@
 import { readFile } from "fs";
 
 import { handleErrors } from "./fetch-err-handler.js";
-
-import ClassificationScheme from "./ClassificationScheme.js";
 import { isHTTPURL } from "./pattern_checks.js";
 
+import ClassificationScheme from "./ClassificationScheme.js";
+
 export default class Role extends ClassificationScheme {
+	constructor() {
+		super();
+	}
+
 	/**
 	 * read a classification scheme from a URL and load its hierarical values into a linear list
 	 *

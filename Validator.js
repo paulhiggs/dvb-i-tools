@@ -33,12 +33,22 @@ import fetchS from "sync-fetch";
 import { drawForm, PAGE_TOP, PAGE_BOTTOM } from "./ui.js";
 import ErrorList from "./ErrorList.js";
 import { isHTTPURL } from "./pattern_checks.js";
-import { Default_SLEPR, IANA_Subtag_Registry, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject, ISO3166, TVA_ContentAlertCS, DVBI_ParentalGuidanceCS } from "./data-locations.js";
+import { Default_SLEPR } from "./data-locations.js";
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.js";
 
-import IANAlanguages from "./IANAlanguages.js";
-import ISOcountries from "./ISOcountries.js";
-import ClassificationScheme from "./ClassificationScheme.js";
+import {
+	LoadGenres,
+	LoadRatings,
+	LoadVideoCodecCS,
+	LoadAudioCodecCS,
+	LoadAudioPresentationCS,
+	LoadAccessibilityPurpose,
+	LoadSubtitleCodings,
+	LoadSubtitlePurposes,
+	LoadLanguages,
+	LoadCountries,
+} from "./CSLoaders.js";
+
 export const MODE_UNSPECIFIED = "none",
 	MODE_SL = "sl",
 	MODE_CG = "cg",
@@ -255,22 +265,40 @@ export default function validator(options) {
 
 	if (options.urls && options.CSRfile == Default_SLEPR.file) options.CSRfile = Default_SLEPR.url;
 
-	let knownLanguages = new IANAlanguages();
-	knownLanguages.loadLanguages(options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file });
+	let knownLanguages = LoadLanguages(options.urls);
+	let knownGenres = LoadGenres(options.urls);
+	let knownRatings = LoadRatings(options.urls);
+	let accessibilityPurposes = LoadAccessibilityPurpose(options.urls);
+	let subtitleCodings = LoadSubtitleCodings(options.urls);
+	let subtitlePurposes = LoadSubtitlePurposes(options.urls);
+	let isoCountries = LoadCountries(options.urls);
+	let videoFormats = LoadVideoCodecCS(options.urls);
+	let audioFormats = LoadAudioCodecCS(options.urls);
+	let audioPresentation = LoadAudioPresentationCS(options.urls);
 
-	let knownGenres = new ClassificationScheme();
-	knownGenres.loadCS(
-		options.urls ? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] } : { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] }
-	);
-
-	let knownRatings = new ClassificationScheme();
-	knownRatings.loadCS(options.urls ? { urls: [TVA_ContentAlertCS.url, DVBI_ParentalGuidanceCS.url] } : { files: [TVA_ContentAlertCS.file, DVBI_ParentalGuidanceCS.file] });
-
-	let isoCountries = new ISOcountries(false, true);
-	isoCountries.loadCountries(options.urls ? { url: ISO3166.url } : { file: ISO3166.file });
-
-	let slcheck = new ServiceListCheck(options.urls, knownLanguages, knownGenres, isoCountries);
-	let cgcheck = new ContentGuideCheck(options.urls, knownLanguages, knownGenres, null, knownRatings, isoCountries);
+	let slcheck = new ServiceListCheck(options.urls, {
+		languagess: knownLanguages,
+		genres: knownGenres,
+		countries: isoCountries,
+		accessibilities: accessibilityPurposes,
+		stcodings: subtitleCodings,
+		stpurposes: subtitlePurposes,
+		videofmts: videoFormats,
+		audiofmts: audioFormats,
+		audiopres: audioPresentation,
+	});
+	let cgcheck = new ContentGuideCheck(options.urls, {
+		languages: knownLanguages,
+		genres: knownGenres,
+		ratings: knownRatings,
+		countries: isoCountries,
+		accessibilities: accessibilityPurposes,
+		stcodings: subtitleCodings,
+		stpurposes: subtitlePurposes,
+		videofmts: videoFormats,
+		audiofmts: audioFormats,
+		audiopres: audioPresentation,
+	});
 
 	if (!options.nosl) {
 		// handle HTTP POST requests to /checkSL

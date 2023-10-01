@@ -143,7 +143,7 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
  *
  * @param {Object} elem                 the element to check
  * @param {string} childElementName     the name of the child element to look for
- * @returns {boolean} true of the element contains the named child element(s) otherwise false
+ * @returns {boolean} true if the element contains the named child element(s) otherwise false
  */
 export var hasChild = (elem, childElementName) => (elem ? elem.childNodes().find((el) => el.type() == "element" && el.name().endsWith(childElementName)) != undefined : false);
 

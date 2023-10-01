@@ -635,8 +635,9 @@
 			</element>
 			<element name="VideoAttributes" type="dvbisd:VideoAttributesType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="VideoConformancePoint" type="tva:ControlledTermType" minOccurs="0"/>
-			<element name="CaptionLanguage" type="tva:CaptionLanguageType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="SignLanguage" type="tva:SignLanguageType" minOccurs="0" maxOccurs="unbounded"/>
+<!--			<element name="CaptionLanguage" type="tva:CaptionLanguageType" minOccurs="0" maxOccurs="unbounded"/> -->
+<!--			<element name="SignLanguage" type="tva:SignLanguageType" minOccurs="0" maxOccurs="unbounded"/> -->
+			<element name="AccessibilityAttributes" type="tva:AccessibilityAttributesType" minOccurs="0"/>
 		</sequence>
 	</complexType>
 	<!-- -->

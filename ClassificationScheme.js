@@ -16,7 +16,7 @@ import { isHTTPURL } from "./pattern_checks.js";
 
 import { dvb } from "./DVB_definitions.js";
 
-const CS_URI_DELIMITER = ":";
+export const CS_URI_DELIMITER = ":";
 
 /**
  * Constructs a linear list of terms from a heirarical clssification schemes which are read from an XML document and parsed by libxmljs

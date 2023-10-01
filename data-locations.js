@@ -37,6 +37,15 @@ export const TVA_PictureFormatCS = { file: join(pathTVA, idTVA_PictureCS), url: 
 const idTVA_ContentAlertCS = "ContentAlertCS.xml";
 export const TVA_ContentAlertCS = { file: join(pathTVA, idTVA_ContentAlertCS), url: `${REPO_RAW}${pathTVA}/${idTVA_ContentAlertCS}` };
 
+const idTVA_AccessibilityPurposeCS = "TVAAccessibilityPurposeCS.xml";
+export const TVA_AccessibilityPurposeCS = { file: join(pathTVA, idTVA_AccessibilityPurposeCS), url: `${REPO_RAW}${pathTVA}/${idTVA_AccessibilityPurposeCS}` };
+
+const idTVA_SubtitleCodingFormatCS = "TVASubtitleCodingFormatCS-2023.xml";
+export const TVA_SubitleCodingFormatCS = { file: join(pathTVA, idTVA_SubtitleCodingFormatCS), url: `${REPO_RAW}${pathTVA}/${idTVA_SubtitleCodingFormatCS}` };
+
+const idTVA_SubtitlePurposeCS = "TVASubtitlePurposeCS-2023.xml";
+export const TVA_SubitlePurposeCS = { file: join(pathTVA, idTVA_SubtitlePurposeCS), url: `${REPO_RAW}${pathTVA}/${idTVA_SubtitlePurposeCS}` };
+
 const idDVB_ContentSubjectCS = "DVBContentSubjectCS-2019.xml";
 export const DVBI_ContentSubject = { file: join(pathDVBI, idDVB_ContentSubjectCS), url: `${REPO_RAW}${pathDVBI}/${idDVB_ContentSubjectCS}` };
 
@@ -101,6 +110,7 @@ const TVAfileprefix = "tva_metadata_3-1";
 export const TVAschema = {
 	v2019: { namespace: `${TVAnamespace}:2019`, file: join(".", `${TVAfileprefix}_2019.xsd`) },
 	v2023: { namespace: `${TVAnamespace}:2023`, file: join(".", `${TVAfileprefix}_2023.xsd`) },
+	v2024: { namespace: `${TVAnamespace}:2024`, file: join(".", `${TVAfileprefix}_2024.xsd`) },
 };
 
 export const DVBI_ServiceListSchema = {
