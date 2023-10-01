@@ -23,35 +23,31 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 
 	let accessibilityParent = AccessibilityAttributes.parent().name();
 
+	let mediaAccessibilityElements = [
+		{ name: tva.e_SubtitleAttributes, minOccurs: 0, maxOccurs: Infinity },
+		{ name: tva.e_AudioDescriptionAttributes, minOccurs: 0, maxOccurs: Infinity },
+		{ name: tva.e_SigningAttributes, minOccurs: 0, maxOccurs: Infinity },
+		{ name: tva.e_DialogueEnhancementAttributes, minOccurs: 0, maxOccurs: Infinity },
+		{ name: tva.e_SpokenSubtitlesAttributes, minOccurs: 0, maxOccurs: Infinity },
+	];
+	let applicationAccessibilityElement = [
+		{ name: tva.e_MagnificationUIAttributes, minOccurs: 0, maxOccurs: Infinity },
+		{ name: tva.e_HighContrastUIAttributes, minOccurs: 0, maxOccurs: Infinity },
+		{ name: tva.e_ScreenReaderAttributes, minOccurs: 0, maxOccurs: Infinity },
+		{ name: tva.e_ResponseToUserAction, minOccurs: 0, maxOccurs: Infinity },
+	];
+
 	if (accessibilityParent == tva.e_RelatedMaterial) {
 		checkTopElementsAndCardinality(
 			AccessibilityAttributes,
-			[
-				{ name: tva.e_MagnificationUIAttributes, minOccurs: 0, maxOccurs: Infinity },
-				{ name: tva.e_HighContrastUIAttributes, minOccurs: 0, maxOccurs: Infinity },
-				{ name: tva.e_ScreenReaderAttributes, minOccurs: 0, maxOccurs: Infinity },
-				{ name: tva.e_ResponseToUserAction, minOccurs: 0, maxOccurs: Infinity },
-			],
+			mediaAccessibilityElements.concat(applicationAccessibilityElement),
 			tvaEC.AccessibilityAttributes,
 			false,
 			errs,
 			`${errCode}-1`
 		);
 	} else if ([tva.e_AVAttributes, dvbi.e_ContentAttributes].includes(accessibilityParent)) {
-		checkTopElementsAndCardinality(
-			AccessibilityAttributes,
-			[
-				{ name: tva.e_SubtitleAttributes, minOccurs: 0, maxOccurs: Infinity },
-				{ name: tva.e_AudioDescriptionAttributes, minOccurs: 0, maxOccurs: Infinity },
-				{ name: tva.e_SigningAttributes, minOccurs: 0, maxOccurs: Infinity },
-				{ name: tva.e_DialogueEnhancementAttributes, minOccurs: 0, maxOccurs: Infinity },
-				{ name: tva.e_SpokenSubtitlesAttributes, minOccurs: 0, maxOccurs: Infinity },
-			],
-			tvaEC.AccessibilityAttributes,
-			false,
-			errs,
-			`${errCode}-2`
-		);
+		checkTopElementsAndCardinality(AccessibilityAttributes, mediaAccessibilityElements, tvaEC.AccessibilityAttributes, false, errs, `${errCode}-2`);
 	} else {
 		errs.addError({
 			type: APPLICATION,
@@ -73,7 +69,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 						if (!cs.AccessibilityPurposeCS.isIn(purposeTerm))
 							errs.addError({
 								code: `${errCode}-${errNum}a`,
-								message: `"${purposeTerm}" is not a valid accessibility purpose"`,
+								message: `"${purposeTerm}" is not a valid accessibility purpose`,
 								fragment: e,
 								key: ACCESSIBILITY_CHECK_KEY,
 							});
@@ -100,7 +96,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 			children.forEachSubElement((e) => {
 				switch (e.name()) {
 					case tva.e_RequiredStandardVersion:
-						if (!cs.RequiredStandardVersionCS(e.text()))
+						if (!dvbi.ApplicationStandards.includes(e.text()))
 							errs.addError({
 								type: WARNING,
 								code: `${errCode}-${errNum}a`,
@@ -110,7 +106,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 							});
 						break;
 					case tva.e_RequiredOptionalFeature:
-						if (!cs.RequiredOptionalFeatureCS(e.text()))
+						if (!dvbi.ApplicationOptions.includes(e.text()))
 							errs.addError({
 								type: WARNING,
 								code: `${errCode}-${errNum}b`,
@@ -210,14 +206,14 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 			});
 	};
 
-	let children = AccessibilityAttributes.childNodes();
-	let allowedAppChildren = [{ name: tva.e_AppInformation }, { name: tva.e_Personalisation }, { name: tva.e_Purpose, maxOccurs: Infinity }];
-	let allAppChildren = [tva.e_Purpose].concat(BaseAccessibilityAttributesType);
 	const appInformationElements = [
 		{ name: tva.e_AppInformation, minOccurs: 0 },
 		{ name: tva.e_Personalisation, minOccurs: 0 },
 	];
+	let allowedAppChildren = [{ name: tva.e_Purpose, maxOccurs: Infinity }].concat(appInformationElements);
+	let allAppChildren = [tva.e_Purpose].concat(BaseAccessibilityAttributesType);
 
+	let children = AccessibilityAttributes.childNodes();
 	if (children)
 		children.forEachSubElement((elem) => {
 			switch (elem.name()) {

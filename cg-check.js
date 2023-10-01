@@ -2251,6 +2251,7 @@ export default class ContentGuideCheck {
 				{ name: tva.e_AudioAttributes, minOccurs: 0, maxOccurs: Infinity },
 				{ name: tva.e_VideoAttributes, minOccurs: 0, maxOccurs: Infinity },
 				{ name: tva.e_CaptioningAttributes, minOccurs: 0, maxOccurs: Infinity },
+				{ name: tva.e_AccessibilityAttributes, minOccurs: 0 },
 			],
 			tvaEC.AVAttributes,
 			false,

@@ -760,7 +760,8 @@ export default class ServiceListCheck {
 		);
 
 		let HowRelated = null,
-			MediaLocator = [];
+			MediaLocator = [],
+			AccessibilityAttribiutes = [];
 		if (RelatedMaterial.childNodes())
 			RelatedMaterial.childNodes().forEachSubElement((elem) => {
 				switch (elem.name()) {
@@ -769,6 +770,9 @@ export default class ServiceListCheck {
 						break;
 					case tva.e_MediaLocator:
 						MediaLocator.push(elem);
+						break;
+					case tva.e_AccessibilityAttributes:
+						AccessibilityAttribiutes.push(elem);
 						break;
 				}
 			});
@@ -854,6 +858,26 @@ export default class ServiceListCheck {
 					break;
 			}
 		}
+
+		AccessibilityAttribiutes.forEach((aa) => {
+			CheckAccessibilityAttributes(
+				props,
+				aa,
+				{
+					AccessibilityPurposeCS: this.accessibilityPurposes,
+					RequiredStandardVersionCS: this.RequiredStandardVersionCS,
+					RequiredOptionalFeatureCS: this.RequiredOptionalFeatureCS,
+					VideoCodecCS: this.allowedVideoSchemes,
+					AudioCodecCS: this.allowedAudioSchemes,
+					SubtitleCodingFormatCS: this.subtitleCodings,
+					SubtitlePurposeTypeCS: this.subtitlePurposes,
+					KnownLanguages: this.knownLanguages,
+					AudioPresentationCS: this.AudioPresentationCSvalues,
+				},
+				errs,
+				`${errCode}-51`
+			);
+		});
 		return rc;
 	}
 

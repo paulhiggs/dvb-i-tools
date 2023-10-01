@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ClassificationScheme uri="urn:tva:metadata:cs:AccessibiltyPurposeCS:2023" xmlns="urn:tva:mpeg7:2008" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:tva:mpeg7:2008 tva_mpeg7.xsd" xsi:type="ClassificationSchemeType">
+<ClassificationScheme uri="urn:tva:metadata:cs:AccessibilityPurposeCS:2023" xmlns="urn:tva:mpeg7:2008" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:tva:mpeg7:2008 tva_mpeg7.xsd" xsi:type="ClassificationSchemeType">
     <!-- ##################################################################### -->
     <!-- ACCESSIBILITYPURPOSE                                                  -->
     <!-- Definition: Contain terms that describe the purpose of access         -->
