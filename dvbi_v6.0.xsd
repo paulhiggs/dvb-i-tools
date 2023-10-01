@@ -17,7 +17,7 @@
 		xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2023b" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023" 
 		xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2024" 
 		elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<import namespace="urn:dvb:metadata:servicediscovery-types:2023" schemaLocation="dvbi-types_v1.0.xsd"/>
+	<import namespace="urn:dvb:metadata:servicediscovery-types:2023" schemaLocation="dvbi_types_v1.0.xsd"/>
 	<import namespace="urn:tva:metadata:2024" schemaLocation="tva_metadata_3-1_2024.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
 	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
@@ -234,7 +234,11 @@
 	<complexType name="DVBTDeliveryParametersType">
 		<sequence>
 			<element name="DVBTriplet" type="dvbi-types:DVBTripletType"/>
-			<element name="TargetCountry" type="tva:ISO-3166-Code"/>
+			<element name="TargetCountry" type="tva:ISO-3166-Code" minOccurs="0">
+				<annotation>
+					<documentation>The use of this element is deprecated.</documentation>
+				</annotation>
+			</element>
 		</sequence>
 	</complexType>
 	<complexType name="DVBSDeliveryParametersType">
@@ -366,7 +370,11 @@
 	<complexType name="DVBCDeliveryParametersType">
 		<sequence>
 			<element name="DVBTriplet" type="dvbi-types:DVBTripletType" minOccurs="0"/>
-			<element name="TargetCountry" type="tva:ISO-3166-Code"/>
+			<element name="TargetCountry" type="tva:ISO-3166-Code" minOccurs="0">
+				<annotation>
+					<documentation>The use of this element is deprecated.</documentation>
+				</annotation>
+			</element>
 			<element name="NetworkID" type="dvbi-types:NetworkIdType"/>
 		</sequence>
 	</complexType>
@@ -532,13 +540,41 @@
 			<element name="TargetRegion" type="dvbisd:RegionIdRefType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="SubscriptionPackage" type="dvbisd:SubscriptionPackageType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="LCN" type="dvbisd:LCNTableEntryType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="LCNRange" type="dvbisd:LCNRangeType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
+		<attribute name="preserveBroadcastLCN" type="boolean" default="false"/>
 	</complexType>
 	<complexType name="LCNTableEntryType">
 		<attribute name="channelNumber" type="positiveInteger" use="required"/>
 		<attribute name="serviceRef" type="dvbi-types:ServiceIdentifierType" use="required"/>
 		<attribute name="selectable" type="boolean" default="true"/>
 		<attribute name="visible" type="boolean" default="true"/>
+	</complexType>
+	<complexType name="LCNRangeType">
+		<attribute name="start" type="positiveInteger" use="required"/>
+		<attribute name="end" type="positiveInteger"/>
+		<attribute name="priority" type="nonNegativeInteger" default="0"/>
+		<attribute name="fillMethod" default="startFromHighest">
+			<simpleType>
+				<restriction base="string">
+					<enumeration value="fillGaps"/>
+					<enumeration value="startFromHighest"/>
+				</restriction>
+			</simpleType>
+		</attribute>
+		<attribute name="serviceOrigin" default="dvbi">
+			<simpleType>
+				<restriction base="string">
+					<enumeration value="any"/>
+					<enumeration value="dvbi"/>
+					<enumeration value="targetBroadcast"/>
+					<enumeration value="otherBroadcast"/>
+					<enumeration value="otherIP"/>
+				</restriction>
+			</simpleType>
+		</attribute>
+		<attribute name="serviceType" type="mpeg7:termReferenceType"/>
+		<attribute name="serviceGenre" type="mpeg7:termReferenceType"/>
 	</complexType>
 	<complexType name="SubscriptionPackageType">
 		<simpleContent>
