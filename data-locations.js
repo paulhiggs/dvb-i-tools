@@ -37,13 +37,13 @@ export const TVA_PictureFormatCS = { file: join(pathTVA, idTVA_PictureCS), url: 
 const idTVA_ContentAlertCS = "ContentAlertCS.xml";
 export const TVA_ContentAlertCS = { file: join(pathTVA, idTVA_ContentAlertCS), url: `${REPO_RAW}${pathTVA}/${idTVA_ContentAlertCS}` };
 
-const idTVA_AccessibilityPurposeCS = "TVAAccessibilityPurposeCS.xml";
+const idTVA_AccessibilityPurposeCS = "AccessibilityPurposeCS.xml";
 export const TVA_AccessibilityPurposeCS = { file: join(pathTVA, idTVA_AccessibilityPurposeCS), url: `${REPO_RAW}${pathTVA}/${idTVA_AccessibilityPurposeCS}` };
 
-const idTVA_SubtitleCodingFormatCS = "TVASubtitleCodingFormatCS-2023.xml";
+const idTVA_SubtitleCodingFormatCS = "SubtitleCodingFormatCS.xml";
 export const TVA_SubitleCodingFormatCS = { file: join(pathTVA, idTVA_SubtitleCodingFormatCS), url: `${REPO_RAW}${pathTVA}/${idTVA_SubtitleCodingFormatCS}` };
 
-const idTVA_SubtitlePurposeCS = "TVASubtitlePurposeCS-2023.xml";
+const idTVA_SubtitlePurposeCS = "SubtitlePurposeCS.xml";
 export const TVA_SubitlePurposeCS = { file: join(pathTVA, idTVA_SubtitlePurposeCS), url: `${REPO_RAW}${pathTVA}/${idTVA_SubtitlePurposeCS}` };
 
 const idDVB_ContentSubjectCS = "DVBContentSubjectCS-2019.xml";

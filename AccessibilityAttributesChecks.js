@@ -129,7 +129,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 						errs.addError({
 							code: `${errCode}-${errNum}`,
 							fragment: e,
-							message: `"${href}" is not valid for ${e.name().elementize()} in ${elem.name().elementize()})`,
+							message: `"${href}" is not valid for ${e.name().elementize()} in ${elem.name().elementize()}`,
 							key: ACCESSIBILITY_CHECK_KEY,
 						});
 				}
@@ -240,7 +240,9 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 				case tva.e_SubtitleAttributes:
 					checkTopElementsAndCardinality(
 						elem,
-						[{ name: tva.e_Coding }, { name: tva.e_SubtitleLanguage }, { name: tva.e_Purpose, minOccurs: 0 }, { name: tva.e_SuitableForTTS }].concat(appInformationElements),
+						[{ name: tva.e_Coding, maxOccurs: Infinity }, { name: tva.e_SubtitleLanguage }, { name: tva.e_Purpose, minOccurs: 0 }, { name: tva.e_SuitableForTTS }].concat(
+							appInformationElements
+						),
 						tvaEC.SubtitleAttributes,
 						false,
 						errs,

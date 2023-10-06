@@ -7,31 +7,30 @@
     <!-- ##################################################################### -->
     <Term termID="1">
         <Name xml:lang="en">WST Subtitles</Name>
-        <Definition xml:lang="en">World System Teletext subtitles.</Definition>
+        <Definition xml:lang="en">World System Teletext subtitles</Definition>
     </Term>
     <Term termID="2">
         <Name xml:lang="en">DVB Subtitles</Name>
-        <Definition xml:lang="en">Digital Video Broadcasting Subtitles ETSI EN 300 743
-            [i.2].</Definition>
+        <Definition xml:lang="en">Digital Video Broadcasting Subtitles [ETSI EN 300 743].</Definition>
         <Term termID="2.1">
             <Name>DVB Subtitles (bitmaps)</Name>
             <Definition>DVB subtitling service containing object_data_segment{}s with
                 object_coding_method=0x00.</Definition>
             <Term termID="2.1.2">
-                <Name>Compliance with version 1.1.1 and 1.2.1 of ETSI EN 300 743</Name>
-                <Definition>Indicative service compatibility with SDTV</Definition>
+                <Name>Compliance with version 1.1.1 and 1.2.1 of [ETSI EN 300 743]</Name>
+                <Definition>Indicative service compatibility with SDTV.</Definition>
             </Term>
             <Term termID="2.1.3">
-                <Name>Compliance with version 1.3.1 of ETSI EN 300 743</Name>
-                <Definition>Indicative service compatibility with HDTV, UHDTV as defined in V1.3.1 of ETSI EN 300 743</Definition>
+                <Name>Compliance with version 1.3.1 of [ETSI EN 300 743]</Name>
+                <Definition>Indicative service compatibility with HDTV, SDTV as defined in V1.3.1 of [ETSI EN 300 743].</Definition>
             </Term>
             <Term termID="2.1.4">
-                <Name>Compliance with version 1.4.1 and 1.5.1 of ETSI EN 300 743</Name>
-                <Definition>Indicative service compatibility with 3DTV</Definition>
+                <Name>Compliance with version 1.4.1 and 1.5.1 of [ETSI EN 300 743]</Name>
+                <Definition>Indicative service compatibility with 3DTV, HDTV, SDTV.</Definition>
             </Term>
             <Term termID="2.1.5">
-                <Name>Compliance with version V1.6.1 of ETSI EN 300 743</Name>
-                <Definition>Indicative service compatibility with HDTV, UHDTV as defined in V1.6.1 of ETSI EN 300 743</Definition>
+                <Name>Compliance with version V1.6.1 of [ETSI EN 300 743]</Name>
+                <Definition>Indicative service compatibility with HDTV, UHDTV, 3DTV, SDTV as defined in V1.6.1 of [ETSI EN 300 743].</Definition>
             </Term>
         </Term>
     </Term>
@@ -54,10 +53,10 @@
         </Term>
         <Term termID="3.3">
             <Name xml:lang="en">IMSC Subtitles</Name>
-            <Definition xml:lang="en">Internet Media Subtitles and Captions</Definition>
+            <Definition xml:lang="en">Internet Media Subtitles and Captions.</Definition>
             <Term termID="3.3.1">
                 <Name xml:lang="en">IMSC Subtitles Text Profile</Name>
-                <Definition xml:lang="en">Internet Media Subtitles and Captions, text-only profile</Definition>
+                <Definition xml:lang="en">Internet Media Subtitles and Captions, text-only profile.</Definition>
                 <Term termID="3.3.1.1">
                     <Name xml:lang="en">IMSC Subtitles Text Profile Version 1.0</Name>
                 </Term>
@@ -73,7 +72,7 @@
             </Term>
             <Term termID="3.3.2">
                 <Name xml:lang="en">IMSC Subtitles Image Profile</Name>
-                <Definition xml:lang="en">Internet Media Subtitles and Captions, image-only profile</Definition>
+                <Definition xml:lang="en">Internet Media Subtitles and Captions, image-only profile.</Definition>
                 <Term termID="3.3.2.1">
                     <Name xml:lang="en">IMSC Subtitles Image Profile Version 1.0</Name>
                 </Term>
@@ -99,7 +98,7 @@
     </Term>
     <Term termID="6">
        <Name xml:lang="en">DVB TTML Subtitles</Name>
-       <Definition xml:lang="en">DVB TTML Subtitles as defiend in ETSI EN 303 560</Definition>
+       <Definition xml:lang="en">DVB TTML Subtitles as defiend in [ETSI EN 303 560].</Definition>
         <Term termID="6.1">
             <Name xml:lang="en">DVB TTML Subtitles with processor profile Default conformance point</Name>
         </Term>
@@ -110,4 +109,9 @@
              <Name xml:lang="en">DVB TTML Subtitles with processor profile EBU-TT-D, Version 1.0.1</Name>
          </Term>
      </Term>
+     <Term termID="99">
+		<Name xml:lang="en">other subtitles</Name>
+		<Definition xml:lang="en">Other subtitling format not specifically identified in this
+			Classification scheme.</Definition>
+	</Term>
 </ClassificationScheme>

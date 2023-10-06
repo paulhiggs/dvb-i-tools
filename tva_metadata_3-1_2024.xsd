@@ -499,7 +499,7 @@
 		</sequence>
 	</complexType>
 	<annotation>
-		<documentation xml:lang="en">Section 6.3.5 AUDIO AND VIDEO INFORMATION</documentation>
+		<documentation xml:lang="en">Section 6.3.5 AUDIO, VIDEO AND ACCESSIBILITY INFORMATION</documentation>
 	</annotation>
 	<complexType name="BitRateType">
 		<simpleContent>
@@ -632,7 +632,7 @@
 		<complexContent>
 			<extension base="tva:BaseAccessibilityAttributeType">
 				<sequence>
-					<element name="Coding" type="tva:ControlledTermType"/>
+					<element name="Coding" type="tva:ControlledTermType" maxOccurs="unbounded"/>
 					<element name="SubtitleLanguage" type="language"/>
 					<element name="Purpose" type="tva:ControlledTermType" minOccurs="0"/>
 					<element name="SuitableForTTS" type="boolean"/>
