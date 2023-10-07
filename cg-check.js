@@ -592,12 +592,6 @@ export default class ContentGuideCheck {
 	 * @param {string}  errCode           error code prefix to be used in reports
 	 */
 	/* private */ Validate_ParentalGuidance(props, BasicDescription, errs, errCode) {
-		// first <ParentalGuidance> element must contain an <mpeg7:MinimumAge> element
-
-		/**
-		 * TODO: A177r5 allows ParentalGuidance elements to be specified for multiple countries, either infividually (in an ISO-3166-Code) or collectively (in an ISO-3166-List)
-		 *       Country codes should be valid and not duplicated
-		 */
 		if (!BasicDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -631,6 +625,7 @@ export default class ContentGuideCheck {
 						fragment: ParentalGuidance.get(xPath(props.prefix, tva.e_CountryCodes), props.schema),
 					});
 
+				// first <ParentalGuidance> element must contain an <mpeg7:MinimumAge> element
 				if (ParentalGuidance.childNodes())
 					ParentalGuidance.childNodes().forEachSubElement((pgChild) => {
 						switch (pgChild.name()) {
@@ -2578,7 +2573,6 @@ export default class ContentGuideCheck {
 		}
 
 		// <CaptionLanguage>
-		// TODO: not allowed in A177r6
 		let CaptionLanguage = InstanceDescription.get(xPath(props.prefix, tva.e_CaptionLanguage), props.schema);
 		if (CaptionLanguage) {
 			checkLanguage(this.knownLanguages, CaptionLanguage.text(), `${InstanceDescription.name()}.${tva.e_CaptionLanguage}`, CaptionLanguage, errs, "ID021");
@@ -2586,7 +2580,6 @@ export default class ContentGuideCheck {
 		}
 
 		// <SignLanguage>
-		// TODO: not allowed in A177r6
 		let SignLanguage = InstanceDescription.get(xPath(props.prefix, tva.e_SignLanguage), props.schema);
 		if (SignLanguage) {
 			checkLanguage(this.knownLanguages, SignLanguage.text(), `${InstanceDescription.name()}.${tva.e_SignLanguage}`, SignLanguage, errs, "ID031");
