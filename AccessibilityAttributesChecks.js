@@ -232,7 +232,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 					checkAppInformation(elem, 32);
 					checkPurpose(elem, "3", 33);
 					break;
-				case tva.e_ResponseToUserAction:
+				case tva.e_ResponseToUserActionAttributes:
 					checkTopElementsAndCardinality(elem, allowedAppChildren, allAppChildren, false, errs, `${errCode}-41`);
 					checkAppInformation(elem, 42);
 					checkPurpose(elem, "4", 43);
