@@ -61,6 +61,7 @@ Validates the value space of the instance document, validation against the schem
 - the [:2022 schema](https://dvb.org/wp-content/uploads/2021/06/A177r3_Service-Discovery-and-Programme-Metadata-for-DVB-I_January-2022.pdf)
 - the [:2022b schema](https://dvb.org/wp-content/uploads/2022/01/A177r4_Service-Discovery-and-Programme-Metadata-for-DVB-I_Interim-Draft_TS-103-770-v121_September-2022.pdf)
 - the [:2023 schema](https://dvb.org/wp-content/uploads/2022/09/A177r5_Service-Discovery-and-Programme-Metadata-for-DVB-I_Interim-Draft_TS-103-770-v121_July-2023.pdf) ([latest details](https://dvb.org/?standard=service-discovery-and-programme-metadata-for-dvb-i))
+- the [:2023b schema](https://raw.githubusercontent.com/paulhiggs/dvb-i-tools/main/tva_metadata_3-1_2024.xsd)
 
 Checks performed:
 
@@ -98,6 +99,7 @@ Checks performed:
 - SAT&gt;IP parameters are only specified with DVB-T or DVB-S delivery parameters
 - unique service prominence values
 - unigue global and national parental rating values for services and program metadata
+- correct use of accessibility features and applications signalling
 
 ### Use
 
