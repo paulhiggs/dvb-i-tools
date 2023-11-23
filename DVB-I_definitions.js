@@ -204,6 +204,7 @@ export const dvbi = {
 	a_from: "from",
 	a_GroupAddress: "GroupAddress",
 	a_href: tva.a_href,
+	a_id: tva.a_id,
 	a_MaxBitrate: "MaxBitrate",
 	a_mode: "mode",
 	a_minimumMetadataUpdatePeriod: "minimumMetadataUpdatePeriod",

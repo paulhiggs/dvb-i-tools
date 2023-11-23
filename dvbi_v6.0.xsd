@@ -13,12 +13,9 @@
 	<!ENTITY Hex16 "&HexDigit;{1,4}">
 	<!ENTITY Hex8 "&HexDigit;{1,2}">
 ]>
-<schema targetNamespace="urn:dvb:metadata:servicediscovery:2023b" xmlns="http://www.w3.org/2001/XMLSchema" 
-		xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2023b" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023" 
-		xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2024" 
-		elementFormDefault="qualified" attributeFormDefault="unqualified">
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2023b" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2024" targetNamespace="urn:dvb:metadata:servicediscovery:2023b" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<import namespace="urn:dvb:metadata:servicediscovery-types:2023" schemaLocation="dvbi_types_v1.0.xsd"/>
-	<import namespace="urn:tva:metadata:2024" schemaLocation="tva_metadata_3-1_2024.xsd"/>
+	<import namespace="urn:tva:metadata:2024" schemaLocation="tva_metadata_3-1.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
 	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
 	<element name="ServiceList" type="dvbisd:ServiceListType"/>
@@ -43,6 +40,7 @@
 			<element name="SubscriptionPackageList" type="dvbisd:SubscriptionPackageListType" minOccurs="0"/>
 			<any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
+		<attribute name="id" type="dvbi-types:ServiceIdentifierType" use="required"/>
 		<attribute name="version" type="positiveInteger" use="required"/>
 		<attribute name="responseStatus" use="optional">
 			<simpleType>
@@ -72,7 +70,7 @@
 			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="ScheduleInfoEndpoint" type="dvbi-types:ExtendedURIType"/>
 			<element name="ProgramInfoEndpoint" type="dvbi-types:ExtendedURIType" minOccurs="0"/>
-			<element name="GroupInfoEndpoint" type="dvbi-types:ExtendedURIType" minOccurs="0"/>
+			<element name="GroupInfoEndpoint" type="dvbi-types:ExtendedURIPathType" minOccurs="0"/>
 			<element name="MoreEpisodesEndpoint" type="dvbi-types:ExtendedURIType" minOccurs="0"/>
 		</sequence>
 		<attribute name="CGSID" type="dvbisd:ContentGuideProviderIdType" use="required"/>
@@ -126,7 +124,14 @@
 			<element name="Availability" type="dvbisd:ServiceAvailabilityType" minOccurs="0"/>
 			<element name="SubscriptionPackage" type="dvbisd:SubscriptionPackageType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="FTAContentManagement" type="dvbisd:FTAContentManagementType" minOccurs="0"/>
-			<element name="SourceType" type="anyURI" minOccurs="0"/>
+			<element name="SourceType" type="anyURI" minOccurs="0">
+				<annotation>
+					<documentation>
+					The use of this element is deprecated in this version of the specification, in favour of the client application making 
+					a delivery system determination based on the specified delivery parameters.
+				</documentation>
+				</annotation>
+			</element>
 			<element name="AltServiceName" type="string" minOccurs="0" maxOccurs="unbounded"/>
 			<choice minOccurs="0">
 				<sequence>
@@ -635,8 +640,6 @@
 			</element>
 			<element name="VideoAttributes" type="dvbisd:VideoAttributesType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="VideoConformancePoint" type="tva:ControlledTermType" minOccurs="0"/>
-<!--			<element name="CaptionLanguage" type="tva:CaptionLanguageType" minOccurs="0" maxOccurs="unbounded"/> -->
-<!--			<element name="SignLanguage" type="tva:SignLanguageType" minOccurs="0" maxOccurs="unbounded"/> -->
 			<element name="AccessibilityAttributes" type="tva:AccessibilityAttributesType" minOccurs="0"/>
 		</sequence>
 	</complexType>

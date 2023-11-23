@@ -201,6 +201,7 @@ const EXTENSION_LOCATION_SERVICE_LIST_REGISTRY = 101,
  * @returns {boolean} true if the service identifier complies with the specification otherwise false
  */
 let validServiceIdentifier = (identifier) => isTAGURI(identifier);
+let validServiceListIdentifier = (identifier) => isTAGURI(identifier);
 
 /**
  * determines if the identifer provided is unique against a list of known identifiers
@@ -2290,6 +2291,17 @@ export default class ServiceListCheck {
 
 		// check ServiceList@responseStatus
 		// validated by schema
+
+		// check ServiceList@id
+		if (SL.root().attr(dvbi.a_id)) {
+			let thisServiceListId = SL.root().attr(dvbi.a_id).value();
+			if (!validServiceListIdentifier(thisServiceListId))
+				errs.addError({
+					code: "SL016",
+					message: `${thisServiceListId.quote()} is not a valid service list identifier`,
+					key: "invalid tag",
+				});
+		}
 
 		//check <ServiceList><Name>
 		checkXMLLangs(dvbi.e_Name, dvbi.e_ServiceList, SL, errs, "SL020", this.knownLanguages);

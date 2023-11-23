@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2023" targetNamespace="urn:dvb:metadata:servicediscovery-types:2023" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<import namespace="urn:tva:metadata:2023" schemaLocation="tva_metadata_3-1_2023.xsd"/>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2024" targetNamespace="urn:dvb:metadata:servicediscovery-types:2023" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<import namespace="urn:tva:metadata:2024" schemaLocation="tva_metadata_3-1.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
 	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
 	<complexType name="ExtensionBaseType" abstract="true">
@@ -49,6 +49,7 @@
 					<attribute name="receivedMultiplex" type="boolean" default="false"/>
 				</complexType>
 			</element>
+			<element name="ServiceListId" type="dvbi-types:ServiceIdentifierType"/>
 		</sequence>
 		<attribute name="regulatorListFlag" type="boolean" default="false"/>
 		<attribute ref="xml:lang"/>
@@ -110,13 +111,29 @@
 		</complexContent>
 	</complexType>
 	<complexType name="ApplicationTypeListType">
-		<sequence>
-			<element name="ApplicationType" type="dvbi-types:ApplicationType" maxOccurs="unbounded"/>
-		</sequence>
+		<complexContent>
+			<extension base="dvbi-types:AbstractDeliveryType">
+				<sequence>
+					<element name="ApplicationType" type="dvbi-types:ApplicationType" maxOccurs="unbounded"/>
+				</sequence>
+			</extension>
+		</complexContent>
 	</complexType>
 	<complexType name="ApplicationType">
 		<attribute name="contentType" type="mpeg7:mimeType" use="required"/>
 		<attribute name="xmlAitApplicationType" type="mpeg7:mimeType"/>
+	</complexType>
+	<complexType name="ExtendedURIPathType">
+		<sequence>
+			<element name="URI">
+				<simpleType>
+					<restriction base="anyURI">
+						<pattern value=".+/"/>
+					</restriction>
+				</simpleType>
+			</element>
+		</sequence>
+		<attribute name="contentType" type="mpeg7:mimeType" use="required"/>
 	</complexType>
 	<!-- -->
 	<!-- data types adapted from  SDnS v1.4 -->
