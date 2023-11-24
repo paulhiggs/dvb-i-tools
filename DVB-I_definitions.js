@@ -204,7 +204,7 @@ export const dvbi = {
 	a_from: "from",
 	a_GroupAddress: "GroupAddress",
 	a_href: tva.a_href,
-	a_id: tva.a_id,
+	a_id: "id",
 	a_MaxBitrate: "MaxBitrate",
 	a_mode: "mode",
 	a_minimumMetadataUpdatePeriod: "minimumMetadataUpdatePeriod",
@@ -364,7 +364,7 @@ export const dvbEA = {
 	// EA = Element-Attributes - the attributes that are defiend for each element
 	MediaLocator: [dvbi.a_contentLanguage].concat(tvaEA.mediaLocator),
 	NVOD: [dvbi.a_mode, dvbi.a_reference, dvbi.a_offset],
-	ServiceList: [dvbi.a_version, tva.a_lang, dvbi.a_responseStatus],
+	ServiceList: [dvbi.a_version, tva.a_lang, dvbi.a_responseStatus, dvbi.a_id],
 };
 
 export const dvbiEC = {

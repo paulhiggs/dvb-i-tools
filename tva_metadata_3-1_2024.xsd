@@ -613,7 +613,7 @@
 			<element name="MagnificationUIAttributes" type="tva:MagnificationUIAttributesType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="HighContrastUIAttributes" type="tva:HighContrastUIAttributesType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="ScreenReaderAttributes" type="tva:ScreenReaderAttributesType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="ResponseToUserActionAttributes" type="tva:ResponseToUserActioAttributesType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="ResponseToUserActionAttributes" type="tva:ResponseToUserActionAttributesType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 	</complexType>
 	<complexType name="BaseAccessibilityAttributeType" abstract="true">

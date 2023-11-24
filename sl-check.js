@@ -2238,7 +2238,7 @@ export default class ServiceListCheck {
 			return;
 		}
 
-		let slRequiredAttributes = [dvbi.a_version];
+		let slRequiredAttributes = [dvbi.a_version, dvbi.a_id];
 		if (SchemaVersion(props.namespace) >= SCHEMA_r3) slRequiredAttributes.push(tva.a_lang);
 		checkAttributes(SL.root(), slRequiredAttributes, [dvbi.a_responseStatus, "schemaLocation"], dvbEA.ServiceList, errs, "SL011");
 

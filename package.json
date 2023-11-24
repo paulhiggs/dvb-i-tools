@@ -24,7 +24,7 @@
 		"xml-formatter": "^3.6.0"
 	},
 	"engines": {
-		"node": ">= 18.13.0",
+		"node": ">= 20.10.0",
 		"npm": ">= 8.19.3"
 	},
 	"scripts": {
