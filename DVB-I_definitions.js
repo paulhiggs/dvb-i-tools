@@ -30,13 +30,13 @@ const StandardPrefix = `${ApplicationsPrefix}:standardversion`;
 const FeaturePrefix = `${ApplicationsPrefix}:optionalfeature`;
 
 export const dvbi = {
-	A177v1_Namespace: `${DVB_metadata}:servicediscovery:2019`,
-	A177v2_Namespace: `${DVB_metadata}:servicediscovery:2020`,
-	A177v3_Namespace: `${DVB_metadata}:servicediscovery:2021`,
-	A177v4_Namespace: `${DVB_metadata}:servicediscovery:2022`,
-	A177v5_Namespace: `${DVB_metadata}:servicediscovery:2022b`,
-	A177v6_Namespace: `${DVB_metadata}:servicediscovery:2023`,
-	A177v7_Namespace: `${DVB_metadata}:servicediscovery:2023b`,
+	A177_Namespace: `${DVB_metadata}:servicediscovery:2019`,
+	A177r1_Namespace: `${DVB_metadata}:servicediscovery:2020`,
+	A177r2_Namespace: `${DVB_metadata}:servicediscovery:2021`,
+	A177r3_Namespace: `${DVB_metadata}:servicediscovery:2022`,
+	A177r4_Namespace: `${DVB_metadata}:servicediscovery:2022b`,
+	A177r5_Namespace: `${DVB_metadata}:servicediscovery:2023`,
+	A177r6_Namespace: `${DVB_metadata}:servicediscovery:2023b`,
 
 	ApplicationStandards: [
 		`${StandardPrefix}:hbbtv:1.2.1`,
@@ -86,7 +86,7 @@ export const dvbi = {
 	EIT_PROGRAMME_CRID_TYPE: "eit-programme-crid",
 	EIT_SERIES_CRID_TYPE: "eit-series-crid",
 
-	// A177v1 only table 15 - deprecated in A177v2
+	// A177 only table 15 - deprecated in A177r1
 	DVBT_SOURCE_TYPE: `${DVB_SOURCE_PREFIX}:dvb-t`,
 	DVBS_SOURCE_TYPE: `${DVB_SOURCE_PREFIX}:dvb-s`,
 	DVBC_SOURCE_TYPE: `${DVB_SOURCE_PREFIX}:dvb-c`,
@@ -128,27 +128,27 @@ export const dvbi = {
 	RESTART_CHECK: `${RestartAvailabilityCS}:restart_check`,
 	RESTART_PENDING: `${RestartAvailabilityCS}:restart_pending`,
 
-	// A177v1 7.3.1
+	// A177 7.3.1
 	BANNER_OUTSIDE_AVAILABILITY_v1: `${DVB_RELATED_CS_v1}:1000.1`,
 	LOGO_SERVICE_LIST_v1: `${DVB_RELATED_CS_v1}:1001.1`,
 	LOGO_SERVICE_v1: `${DVB_RELATED_CS_v1}:1001.2`,
 	LOGO_CG_PROVIDER_v1: `${DVB_RELATED_CS_v1}:1002.1`,
 
-	// A177v2 7.3.1
+	// A177r1 7.3.1
 	BANNER_OUTSIDE_AVAILABILITY_v2: `${DVB_RELATED_CS_v2}:1000.1`,
 	BANNER_CONTENT_FINISHED_v2: `${DVB_RELATED_CS_v2}:1000.2`, // added in A17732
 	LOGO_SERVICE_LIST_v2: `${DVB_RELATED_CS_v2}:1001.1`,
 	LOGO_SERVICE_v2: `${DVB_RELATED_CS_v2}:1001.2`,
 	LOGO_CG_PROVIDER_v2: `${DVB_RELATED_CS_v2}:1002.1`,
 
-	// A177v2 7.3.1
+	// A177r1 7.3.1
 	BANNER_OUTSIDE_AVAILABILITY_v3: `${DVB_RELATED_CS_v3}:1000.1`,
 	BANNER_CONTENT_FINISHED_v3: `${DVB_RELATED_CS_v3}:1000.2`,
 	LOGO_SERVICE_LIST_v3: `${DVB_RELATED_CS_v3}:1001.1`,
 	LOGO_SERVICE_v3: `${DVB_RELATED_CS_v3}:1001.2`,
 	LOGO_CG_PROVIDER_v3: `${DVB_RELATED_CS_v3}:1002.1`,
 
-	// A177v3
+	// A177r2
 	SERVICE_BANNER_v4: `${DVB_RELATED_CS_v3}:1001.3`, // added in A177r3
 
 	// A177 7.3.2

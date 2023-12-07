@@ -75,49 +75,49 @@ export const DRAFT = 0x01,
 var SchemaVersions = [
 	// schema property is loaded from specified filename
 	{
-		namespace: dvbi.A177v7_Namespace,
+		namespace: dvbi.A177r6_Namespace,
 		version: SCHEMA_r6,
 		filename: DVBI_ServiceListSchema.r6.file,
 		schema: null,
 		status: DRAFT,
 	},
 	{
-		namespace: dvbi.A177v6_Namespace,
+		namespace: dvbi.A177r5_Namespace,
 		version: SCHEMA_r5,
 		filename: DVBI_ServiceListSchema.r5.file,
 		schema: null,
 		status: CURRENT,
 	},
 	{
-		namespace: dvbi.A177v5_Namespace,
+		namespace: dvbi.A177r4_Namespace,
 		version: SCHEMA_r4,
 		filename: DVBI_ServiceListSchema.r4.file,
 		schema: null,
 		status: OLD,
 	},
 	{
-		namespace: dvbi.A177v4_Namespace,
+		namespace: dvbi.A177r3_Namespace,
 		version: SCHEMA_r3,
 		filename: DVBI_ServiceListSchema.r3.file,
 		schema: null,
 		status: OLD,
 	},
 	{
-		namespace: dvbi.A177v3_Namespace,
+		namespace: dvbi.A177r2_Namespace,
 		version: SCHEMA_r2,
 		filename: DVBI_ServiceListSchema.r2.file,
 		schema: null,
 		status: OLD,
 	},
 	{
-		namespace: dvbi.A177v2_Namespace,
+		namespace: dvbi.A177r1_Namespace,
 		version: SCHEMA_r1,
 		filename: DVBI_ServiceListSchema.r1.file,
 		schema: null,
 		status: ETSI,
 	},
 	{
-		namespace: dvbi.A177v1_Namespace,
+		namespace: dvbi.A177_Namespace,
 		version: SCHEMA_r0,
 		filename: DVBI_ServiceListSchema.r0.file,
 		schema: null,
@@ -584,7 +584,7 @@ export default class ServiceListCheck {
 	/**
 	 * determines if the identifer provided refers to a valid banner for content-finished presentation
 	 *
-	 * @since DVB A177v2
+	 * @since DVB A177r1
 	 * @param {XMLnode} HowRelated  The banner identifier
 	 * @param {String}  namespace   The namespace being used in the XML document
 	 * @returns {boolean} true if this is a valid banner for content-finished presentation else false
@@ -1473,7 +1473,7 @@ export default class ServiceListCheck {
 
 		// <ServiceInstance><FTAContentManagement>
 
-		// note that the <SourceType> element becomes optional and in A177v2, but if specified then the relevant
+		// note that the <SourceType> element becomes optional and in A177r1, but if specified then the relevant
 		// delivery parameters also need to be specified
 		let SourceType = ServiceInstance.get(xPath(props.prefix, dvbi.e_SourceType), props.schema);
 		if (SourceType) {
@@ -2238,8 +2238,9 @@ export default class ServiceListCheck {
 			return;
 		}
 
-		let slRequiredAttributes = [dvbi.a_version, dvbi.a_id];
+		let slRequiredAttributes = [dvbi.a_version];
 		if (SchemaVersion(props.namespace) >= SCHEMA_r3) slRequiredAttributes.push(tva.a_lang);
+		if (SchemaVersion(props.namespace) >= SCHEMA_r6) slRequiredAttributes.push(dvbi.a_id);
 		checkAttributes(SL.root(), slRequiredAttributes, [dvbi.a_responseStatus, "schemaLocation"], dvbEA.ServiceList, errs, "SL011");
 
 		// check ServiceList@version
