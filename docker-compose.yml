@@ -1,0 +1,27 @@
+version: '1.0'
+volumes:
+  node_modules:
+services:
+  dvb-i-tools:
+    build: .
+    environment:
+      - no_proxy=localhost,statics,127.0.0.1
+    volumes:
+      - ./:/usr/src/app
+      - node_modules:/usr/src/app/node_modules
+    networks:
+      - validate-net
+    ports:
+      - "3030:3030"
+  statics:
+    image: httpd:2.4
+    volumes:
+      - D:/dvb-i-test-files/proves-dvb-i/ServiceList:/usr/local/apache2/htdocs/
+    ports:
+      - "8080:80"
+    networks:
+      - validate-net
+
+networks:
+  validate-net:
+    external: true
