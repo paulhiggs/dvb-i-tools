@@ -196,3 +196,8 @@ If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `s
   - "library" - default mode - use the Express CORS library
   - "manual" - do code based CORS header insertion (not fully implemented or tested)
   - "none" - dont do any CORS handling
+
+### Installation alternative (Docker)
+
+1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
+2. run it - `docker compose up`
