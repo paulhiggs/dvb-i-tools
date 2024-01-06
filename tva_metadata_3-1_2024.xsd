@@ -616,7 +616,7 @@
 			<element name="ResponseToUserActionAttributes" type="tva:ResponseToUserActionAttributesType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 	</complexType>
-	<complexType name="BaseAccessibilityAttributeType" abstract="true">
+	<complexType name="BaseAccessibilityAttributesType" abstract="true">
 		<sequence>
 			<element name="AppInformation" type="tva:AppInformationType" minOccurs="0"/>
 			<element name="Personalisation" type="boolean" default="false" minOccurs="0"/>
@@ -630,7 +630,7 @@
 	</complexType>
 	<complexType name="SubtitleAttributesType">
 		<complexContent>
-			<extension base="tva:BaseAccessibilityAttributeType">
+			<extension base="tva:BaseAccessibilityAttributesType">
 				<sequence>
 					<element name="Coding" type="tva:ControlledTermType" maxOccurs="unbounded"/>
 					<element name="SubtitleLanguage" type="language"/>
@@ -642,7 +642,7 @@
 	</complexType>
 	<complexType name="AudioDescriptionAttributesType">
 		<complexContent>
-			<extension base="tva:BaseAccessibilityAttributeType">
+			<extension base="tva:BaseAccessibilityAttributesType">
 				<sequence>
 					<element name="AudioAttributes" type="tva:AudioAttributesType"/>
 					<element name="ReceiverMix" type="boolean" default="false" minOccurs="0"/>
@@ -652,7 +652,7 @@
 	</complexType>
 	<complexType name="SigningAttributesType">
 		<complexContent>
-			<extension base="tva:BaseAccessibilityAttributeType">
+			<extension base="tva:BaseAccessibilityAttributesType">
 				<sequence>
 					<element name="Coding" type="tva:ControlledTermType"/>
 					<element name="SignLanguage" type="language" minOccurs="0"/>
@@ -663,7 +663,7 @@
 	</complexType>
 	<complexType name="DialogueEnhancementAttributesType">
 		<complexContent>
-			<extension base="tva:BaseAccessibilityAttributeType">
+			<extension base="tva:BaseAccessibilityAttributesType">
 				<sequence>
 					<element name="AudioAttributes" type="tva:AudioAttributesType"/>
 				</sequence>
@@ -672,7 +672,7 @@
 	</complexType>
 	<complexType name="SpokenSubtitlesAttributesType">
 		<complexContent>
-			<extension base="tva:BaseAccessibilityAttributeType">
+			<extension base="tva:BaseAccessibilityAttributesType">
 				<sequence>
 					<element name="AudioAttributes" type="tva:AudioAttributesType"/>
 				</sequence>
@@ -681,7 +681,7 @@
 	</complexType>
 	<complexType name="MagnificationUIAttributesType">
 		<complexContent>
-			<extension base="tva:BaseAccessibilityAttributeType">
+			<extension base="tva:BaseAccessibilityAttributesType">
 				<sequence>
 					<element name="Purpose" type="tva:ControlledTermType" maxOccurs="unbounded"/>
 				</sequence>
@@ -690,7 +690,7 @@
 	</complexType>
 	<complexType name="HighContrastUIAttributesType">
 		<complexContent>
-			<extension base="tva:BaseAccessibilityAttributeType">
+			<extension base="tva:BaseAccessibilityAttributesType">
 				<sequence>
 					<element name="Purpose" type="tva:ControlledTermType" maxOccurs="unbounded"/>
 				</sequence>
@@ -699,7 +699,7 @@
 	</complexType>
 	<complexType name="ScreenReaderAttributesType">
 		<complexContent>
-			<extension base="tva:BaseAccessibilityAttributeType">
+			<extension base="tva:BaseAccessibilityAttributesType">
 				<sequence>
 					<element name="Purpose" type="tva:ControlledTermType" maxOccurs="unbounded"/>
 				</sequence>
@@ -708,7 +708,7 @@
 	</complexType>
 	<complexType name="ResponseToUserActionAttributesType">
 		<complexContent>
-			<extension base="tva:BaseAccessibilityAttributeType">
+			<extension base="tva:BaseAccessibilityAttributesType">
 				<sequence>
 					<element name="Purpose" type="tva:ControlledTermType" maxOccurs="unbounded"/>
 				</sequence>
