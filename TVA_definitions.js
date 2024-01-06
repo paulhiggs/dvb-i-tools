@@ -153,6 +153,7 @@ export const tva = {
 	e_Schedule: "Schedule",
 	e_ScheduleEvent: "ScheduleEvent",
 	e_ScreenReaderAttributes: "ScreenReaderAttributes",
+	e_ScreenReaderLanguage: "ScreenReaderLanguage",
 	e_SegmentInformationTable: "SegmentInformationTable",
 	e_ServiceInformationTable: "ServiceInformationTable",
 	e_SegmentReference: "SegmentReference",

@@ -228,9 +228,11 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 					checkPurpose(elem, "2", 23);
 					break;
 				case tva.e_ScreenReaderAttributes:
-					checkTopElementsAndCardinality(elem, allowedAppChildren, allAppChildren, false, errs, `${errCode}-31`);
+					let ScreenReaderChildElements = allowedAppChildren.push({ name: tva.e_ScreenReaderLanguage, minOccurs: 0, maxOccurs: Infinity });
+					checkTopElementsAndCardinality(elem, ScreenReaderChildElements, allAppChildren, false, errs, `${errCode}-31`);
 					checkAppInformation(elem, 32);
 					checkPurpose(elem, "3", 33);
+					checkLanguage(elem, tva.e_ScreenReaderLanguage, 34);
 					break;
 				case tva.e_ResponseToUserActionAttributes:
 					checkTopElementsAndCardinality(elem, allowedAppChildren, allAppChildren, false, errs, `${errCode}-41`);

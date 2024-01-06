@@ -702,6 +702,7 @@
 			<extension base="tva:BaseAccessibilityAttributesType">
 				<sequence>
 					<element name="Purpose" type="tva:ControlledTermType" maxOccurs="unbounded"/>
+					<element name="ScreenReaderLanguage" type="language" minOccurs="0" maxOccurs="unbounded"/>
 				</sequence>
 			</extension>
 		</complexContent>
