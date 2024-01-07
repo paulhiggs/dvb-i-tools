@@ -25,10 +25,6 @@ const CaptionCodingFormatCS = `${TVA_CSmetadata}:CaptionCodingFormatCS:2015`,
 
 export const XMLdocumentType = "application/xml";
 
-const ApplicationsPrefix = "urn:dvb:appinformation";
-const StandardPrefix = `${ApplicationsPrefix}:standardversion`;
-const FeaturePrefix = `${ApplicationsPrefix}:optionalfeature`;
-
 const HbbTVStandardPrefix = "urn:hbbtv:appinformation:standardversion:hbbtv";
 const HbbTVFeaturePrefix = "urn:hbbtv:appinformation:optionalfeature:hbbtv";
 const CTAStandardPrefix = "urn:cta:wave:appinformation:standardversion";
