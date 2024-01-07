@@ -43,6 +43,7 @@ import {
 	LoadAudioCodecCS,
 	LoadAudioPresentationCS,
 	LoadAccessibilityPurpose,
+	LoadAudioPurpose,
 	LoadSubtitleCodings,
 	LoadSubtitlePurposes,
 	LoadLanguages,
@@ -269,6 +270,7 @@ export default function validator(options) {
 	let knownGenres = LoadGenres(options.urls);
 	let knownRatings = LoadRatings(options.urls);
 	let accessibilityPurposes = LoadAccessibilityPurpose(options.urls);
+	let audioPurposes = LoadAudioPurpose(options.urls);
 	let subtitleCodings = LoadSubtitleCodings(options.urls);
 	let subtitlePurposes = LoadSubtitlePurposes(options.urls);
 	let isoCountries = LoadCountries(options.urls);
@@ -281,6 +283,7 @@ export default function validator(options) {
 		genres: knownGenres,
 		countries: isoCountries,
 		accessibilities: accessibilityPurposes,
+		audiopurps: audioPurposes,
 		stcodings: subtitleCodings,
 		stpurposes: subtitlePurposes,
 		videofmts: videoFormats,
@@ -293,6 +296,7 @@ export default function validator(options) {
 		ratings: knownRatings,
 		countries: isoCountries,
 		accessibilities: accessibilityPurposes,
+		audiopurps: audioPurposes,
 		stcodings: subtitleCodings,
 		stpurposes: subtitlePurposes,
 		videofmts: videoFormats,

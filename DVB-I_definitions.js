@@ -29,6 +29,10 @@ const ApplicationsPrefix = "urn:dvb:appinformation";
 const StandardPrefix = `${ApplicationsPrefix}:standardversion`;
 const FeaturePrefix = `${ApplicationsPrefix}:optionalfeature`;
 
+const HbbTVStandardPrefix = "urn:hbbtv:appinformation:standardversion:hbbtv";
+const HbbTVFeaturePrefix = "urn:hbbtv:appinformation:optionalfeature:hbbtv";
+const CTAStandardPrefix = "urn:cta:wave:appinformation:standardversion";
+
 export const dvbi = {
 	A177_Namespace: `${DVB_metadata}:servicediscovery:2019`,
 	A177r1_Namespace: `${DVB_metadata}:servicediscovery:2020`,
@@ -39,22 +43,23 @@ export const dvbi = {
 	A177r6_Namespace: `${DVB_metadata}:servicediscovery:2023b`,
 
 	ApplicationStandards: [
-		`${StandardPrefix}:hbbtv:1.2.1`,
-		`${StandardPrefix}:hbbtv:1.5.1`,
-		`${StandardPrefix}:hbbtv:1.6.1`,
-		`${StandardPrefix}:hbbtv:1.7.1`,
-		`${StandardPrefix}:cta500a:2018`,
-		`${StandardPrefix}:cta500b:2019`,
-		`${StandardPrefix}:cta500c:2020`,
-		`${StandardPrefix}:cta500d:2021`,
-		`${StandardPrefix}:cta500e:2022`,
+		`${HbbTVStandardPrefix}:1.2.1`,
+		`${HbbTVStandardPrefix}:1.5.1`,
+		`${HbbTVStandardPrefix}:1.6.1`,
+		`${HbbTVStandardPrefix}:1.7.1`,
+		`${CTAStandardPrefix}:cta500a:2018`,
+		`${CTAStandardPrefix}:cta500b:2019`,
+		`${CTAStandardPrefix}:cta500c:2020`,
+		`${CTAStandardPrefix}:cta500d:2021`,
+		`${CTAStandardPrefix}:cta500e:2022`,
+		`${CTAStandardPrefix}:cta500f:2023`,
 	],
 	ApplicationOptions: [
-		`${FeaturePrefix}:hbbtv:2decoder`,
-		`${FeaturePrefix}:hbbtv:2html`,
-		`${FeaturePrefix}:hbbtv:graphics_01`,
-		`${FeaturePrefix}:hbbtv:graphics_02`,
-		`${FeaturePrefix}:hbbtv:aria`,
+		`${HbbTVFeaturePrefix}:2decoder`,
+		`${HbbTVFeaturePrefix}:2html`,
+		`${HbbTVFeaturePrefix}:graphics_01`,
+		`${HbbTVFeaturePrefix}:graphics_02`,
+		`${HbbTVFeaturePrefix}:screader`,
 	],
 
 	MAX_TITLE_LENGTH: 80,

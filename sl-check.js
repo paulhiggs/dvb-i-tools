@@ -34,6 +34,7 @@ import {
 	LoadVideoCodecCS,
 	LoadAudioCodecCS,
 	LoadAccessibilityPurpose,
+	LoadAudioPurpose,
 	LoadSubtitleCodings,
 	LoadSubtitlePurposes,
 	LoadAudioConformanceCS,
@@ -376,6 +377,7 @@ export default class ServiceListCheck {
 		this.allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs);
 		this.AudioPresentationCSvalues = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs);
 		this.accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs);
+		this.audioPurposes = opts?.audiopurp ? opts.audiopurp : LoadAudioPurpose(useURLs);
 		this.subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs);
 		this.subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs);
 		this.knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs);

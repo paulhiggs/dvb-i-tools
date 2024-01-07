@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassificationScheme uri="urn:tva:metadata:cs:AudioPurposeCS:2007">
+	<!-- ##################################################################### -->
+	<!-- AUDIOPURPOSE                                                          -->
+	<!-- ##################################################################### -->
+	<Term termID="1">
+		<Name xml:lang="en">Audio description for the visually impaired people</Name>
+	</Term>
+	<Term termID="2">
+		<Name xml:lang="en">Audio description for the hard of hearing people</Name>
+	</Term>
+	<Term termID="3">
+		<Name xml:lang="en">Supplemental commentary</Name>
+	</Term>
+	<Term termID="4">
+		<Name xml:lang="en">Director's commentary</Name>
+	</Term>
+	<Term termID="5">
+		<Name xml:lang="en">Educational notes</Name>
+	</Term>
+	<Term termID="6">
+		<Name xml:lang="en">Main programme audio</Name>
+	</Term>
+	<Term termID="7">
+		<Name xml:lang="en">Clean feed - no effects mix</Name>
+	</Term>
+	<Term termID="8">
+		<Name xml:lang="en">Dialogue Enhancement</Name>
+	</Term>
+    <Term termID="9">
+		<Name xml:lang="en">Spoken Subtitles</Name>
+	</Term>
+</ClassificationScheme>

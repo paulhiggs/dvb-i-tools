@@ -37,6 +37,13 @@
         <Term termID="3.3">
             <Name>language</Name>
         </Term>
+				<Term termID="3.4">
+            <Name>expert user (low verbose UI)</Name>
+        </Term>
+        <Term termID="3.5">
+            <Name>speed</Name>
+            <Definition xml:lang="en">Screen reader application supports configurable playback speeds</Definition>
+        </Term>
     </Term>
     <Term termID="4">
         <Name xml:lang="en">Response to a User Action Parameter</Name>
@@ -49,5 +56,11 @@
         <Term termID="4.3">
             <Name>haptic</Name>
         </Term>
-    </Term>    
+    </Term>
+		<Term termID="5">
+        <Name xml:lang="en">Sign-Language Parameter</Name>
+        <Term termID="5.1">
+            <Name>In-Vision Sign-Language</Name>
+        </Term>
+    </Term>
 </ClassificationScheme>

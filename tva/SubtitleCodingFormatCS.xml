@@ -98,20 +98,14 @@
     </Term>
     <Term termID="6">
        <Name xml:lang="en">DVB TTML Subtitles</Name>
-       <Definition xml:lang="en">DVB TTML Subtitles as defiend in [ETSI EN 303 560].</Definition>
-        <Term termID="6.1">
-            <Name xml:lang="en">DVB TTML Subtitles with processor profile Default conformance point</Name>
-        </Term>
-        <Term termID="6.2">
-            <Name xml:lang="en">DVB TTML Subtitles with processor profile IMSC1 Text Profile, Version 1.0.1</Name>
-         </Term>
-         <Term termID="6.3">
-             <Name xml:lang="en">DVB TTML Subtitles with processor profile EBU-TT-D, Version 1.0.1</Name>
-         </Term>
-     </Term>
-     <Term termID="99">
-		<Name xml:lang="en">other subtitles</Name>
-		<Definition xml:lang="en">Other subtitling format not specifically identified in this
-			Classification scheme.</Definition>
-	</Term>
+       <Definition xml:lang="en">DVB TTML Subtitles as defiend in [ETSI EN 303 560]. If no explicit payload format is signalled, the Default conformance point processor profile applies.</Definition>
+	  </Term>
+    <Term termID="7">
+      <Name xml:lang="en">Subtitles in ISOBMFF</Name>
+      <Definition xml:lang="en">Subtitles encapsulated in ISOBMFF according to ISO/IEC 14496-30.</Definition>
+    </Term>
+    <Term termID="99">
+		  <Name xml:lang="en">other subtitles</Name>
+		  <Definition xml:lang="en">Other subtitling format not specifically identified in this Classification scheme.</Definition>
+	  </Term>
 </ClassificationScheme>

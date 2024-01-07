@@ -40,6 +40,9 @@ export const TVA_ContentAlertCS = { file: join(pathTVA, idTVA_ContentAlertCS), u
 const idTVA_AccessibilityPurposeCS = "AccessibilityPurposeCS.xml";
 export const TVA_AccessibilityPurposeCS = { file: join(pathTVA, idTVA_AccessibilityPurposeCS), url: `${REPO_RAW}${pathTVA}/${idTVA_AccessibilityPurposeCS}` };
 
+const idTVA_AudioPurposeCS = "AudioPurposeCS.xml";
+export const TVA_AudioPurposeCS = { file: join(pathTVA, idTVA_AudioPurposeCS), url: `${REPO_RAW}${pathTVA}/${idTVA_AudioPurposeCS}` };
+
 const idTVA_SubtitleCodingFormatCS = "SubtitleCodingFormatCS.xml";
 export const TVA_SubitleCodingFormatCS = { file: join(pathTVA, idTVA_SubtitleCodingFormatCS), url: `${REPO_RAW}${pathTVA}/${idTVA_SubtitleCodingFormatCS}` };
 

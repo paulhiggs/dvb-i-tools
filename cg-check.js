@@ -37,6 +37,7 @@ import {
 	LoadAudioCodecCS,
 	LoadAudioPresentationCS,
 	LoadAccessibilityPurpose,
+	LoadAudioPurpose,
 	LoadSubtitleCodings,
 	LoadSubtitlePurposes,
 	LoadLanguages,
@@ -275,6 +276,7 @@ export default class ContentGuideCheck {
 		this.allowedRatings = opts?.ratings ? opts.ratings : LoadRatings(useURLs);
 		this.knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs);
 		this.accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs);
+		this.audioPurposes = opts?.audiopurps ? opts.audiopurps : LoadAudioPurpose(useURLs);
 		this.subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs);
 		this.subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs);
 
