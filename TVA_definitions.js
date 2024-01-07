@@ -389,6 +389,7 @@ export const tvaEC = {
 		tva.e_LastShowing,
 		tva.e_Free,
 	].concat(ProgramLocationType),
+	ScreenReaderAttributes: [tva.e_Purpose, tva.e_ScreenReaderLanguage].concat(BaseAccessibilityAttributesType),
 	SigningAttributes: [tva.e_Coding, tva.e_SignLanguage, tva.e_Closed].concat(BaseAccessibilityAttributesType),
 	SpokenSubtitlesAttributes: [tva.e_AudioAttributes].concat(BaseAccessibilityAttributesType),
 	SubtitleAttributes: [tva.e_Coding, tva.e_SubtitleLanguage, tva.e_Purpose, tva.e_SuitableForTTS].concat(BaseAccessibilityAttributesType),

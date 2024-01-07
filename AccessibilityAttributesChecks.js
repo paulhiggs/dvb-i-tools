@@ -248,7 +248,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 					break;
 				case tva.e_ScreenReaderAttributes:
 					let ScreenReaderChildElements = [{ name: tva.e_ScreenReaderLanguage, minOccurs: 0, maxOccurs: Infinity }].concat(allowedAppChildren);
-					checkTopElementsAndCardinality(elem, ScreenReaderChildElements, allAppChildren, false, errs, `${errCode}-31`);
+					checkTopElementsAndCardinality(elem, ScreenReaderChildElements, tvaEC.ScreenReaderAttributes, false, errs, `${errCode}-31`);
 					checkAppInformation(elem, 32);
 					checkPurpose(elem, "3", 33);
 					checkLanguage(elem, tva.e_ScreenReaderLanguage, 34);
