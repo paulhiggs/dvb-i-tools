@@ -50,6 +50,8 @@ import {
 
 import { CheckAccessibilityAttributes } from "./AccessibilityAttributesChecks.js";
 
+import { DASH_IF_Content_Protection_List, ContentProtectionIDs, CA_SYSTEM_ID_REGISTRY, CASystemIDs } from "./identifiers.js";
+
 const ANY_NAMESPACE = "$%$!!";
 const LCN_TABLE_NO_TARGETREGION = "unspecifiedRegion",
 	LCN_TABLE_NO_SUBSCRIPTION = "unspecifiedPackage";
@@ -1300,6 +1302,58 @@ export default class ServiceListCheck {
 			});
 
 		// <ServiceInstance><ContentProtection>
+		let cp = 0,
+			ContentProtection;
+		while ((ContentProtection = ServiceInstance.get(xPath(props.prefix, dvbi.e_ContentProtection, ++cp), props.schema)) != null) {
+			let ca = 0,
+				CASystemID;
+			while ((CASystemID = ContentProtection.get(xPath(props.prefix, dvbi.e_CASystemId, ++ca), props.schema)) != null) {
+				let CASid_value = parseInt(CASystemID.text(), 10);
+				if (isNaN(CASid_value)) {
+					CASid_value = parseInt(CASystemID.text(), 16);
+				}
+				if (isNaN(CASid_value)) {
+					errs.addError({
+						code: "SI031",
+						message: `${dvbi.e_CASystemId.elementize()} value (${CASystemID.text()}) must me expressed in decimal or hexadecimal`,
+						fragment: CASystemID,
+						key: "invalid value",
+					});
+				} else {
+					if (CASystemIDs.find((el) => CASid_value >= el.id_from && CASid_value <= el.id_to) == undefined) {
+						errs.addError({
+							code: "SI032",
+							message: `${dvbi.e_CASystemId.elementize()} value (${CASystemID.text()}) is not found in ${CA_SYSTEM_ID_REGISTRY}`,
+							fragment: CASystemID,
+							key: "invalid value",
+						});
+					}
+				}
+			}
+			let ds = 0,
+				DRMSystemID;
+			while ((DRMSystemID = ContentProtection.get(xPath(props.prefix, dvbi.e_DRMSystemId, ++ds), props.schema)) != null) {
+				let DRMSystemID_value = null;
+
+				if (SchemaVersion(props.namespace) <= SCHEMA_r1) {
+					// first two versions of the schema were 'incorrect' - has nested <DRMSystemId> elements.
+					let nestedDRMsystemid = DRMSystemID.get(xPath(props.prefix, dvbi.e_DRMSystemId), props.schema);
+					if (nestedDRMsystemid) {
+						DRMSystemID_value = nestedDRMsystemid.text();
+					}
+				} else {
+					DRMSystemID_value = DRMSystemID.text();
+				}
+				if (DRMSystemID_value && ContentProtectionIDs.find((el) => el.id == DRMSystemID_value || el.id.substring(el.id.lastIndexOf(":") + 1) == DRMSystemID_value) == undefined) {
+					errs.addError({
+						code: "SI033",
+						message: `${dvbi.e_DRMSystemId.elementize()} value (${DRMSystemID_value}) is not found in ${DASH_IF_Content_Protection_List}`,
+						fragment: DRMSystemID,
+						key: "invalid value",
+					});
+				}
+			}
+		}
 
 		// <ServiceInstance><ContentAttributes>
 		let ContentAttributes = ServiceInstance.get(xPath(props.prefix, dvbi.e_ContentAttributes), props.schema);
