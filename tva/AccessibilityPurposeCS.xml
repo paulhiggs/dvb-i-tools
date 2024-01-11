@@ -3,7 +3,7 @@
     <!-- ##################################################################### -->
     <!-- ACCESSIBILITYPURPOSE                                                  -->
     <!-- Definition: Contain terms that describe the purpose of access         -->
-    <!-- services provided by a linked application.                            -->
+    <!--             services provided by a linked application.                -->
     <!-- ##################################################################### -->
     <Term termID="1">
         <Name xml:lang="en">Magnification UI Parameters</Name>
@@ -35,12 +35,10 @@
             <Name>voice female</Name>
         </Term>
         <Term termID="3.3">
-            <Name>language</Name>
+            <Name>Configurable verbosity</Name>
+						<Definition xml:lang="en">Screen reader application supports configurable verbosity</Definition>
         </Term>
-				<Term termID="3.4">
-            <Name>expert user (low verbose UI)</Name>
-        </Term>
-        <Term termID="3.5">
+        <Term termID="3.4">
             <Name>speed</Name>
             <Definition xml:lang="en">Screen reader application supports configurable playback speeds</Definition>
         </Term>
@@ -55,12 +53,6 @@
         </Term>
         <Term termID="4.3">
             <Name>haptic</Name>
-        </Term>
-    </Term>
-		<Term termID="5">
-        <Name xml:lang="en">Sign-Language Parameter</Name>
-        <Term termID="5.1">
-            <Name>In-Vision Sign-Language</Name>
         </Term>
     </Term>
 </ClassificationScheme>

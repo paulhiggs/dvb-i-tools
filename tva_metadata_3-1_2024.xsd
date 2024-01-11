@@ -20,8 +20,6 @@
 	<complexType name="TVAMainType">
 		<sequence>
 			<element name="CopyrightNotice" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
-			<!--element name="CopyrightNotice" type="tva:CopyrightNoticeType" minOccurs="0"
-				maxOccurs="unbounded"/-->
 			<element name="MetadataOriginationInformationTable" type="tva:MetadataOriginationInformationTableType" minOccurs="0"/>
 			<element name="ClassificationSchemeTable" type="tva:ClassificationSchemeTableType" minOccurs="0"/>
 			<element name="ProgramDescription" type="tva:ProgramDescriptionType" minOccurs="0"/>
@@ -423,13 +421,6 @@
 			</choice>
 		</sequence>
 	</complexType>
-	<!--complexType name="CopyrightNoticeType">
-		<simpleContent>
-			<extension  base="mpeg7:TextualType">
-				<attribute name="lang" type="language"/>
-			</extension>
-		</simpleContent>
-	</complexType-->
 	<simpleType name="ExplanationLengthType">
 		<restriction base="string">
 			<enumeration value="short"/>
@@ -551,8 +542,6 @@
 		<sequence>
 			<element name="Coding" type="tva:ControlledTermType" minOccurs="0"/>
 			<element name="BitRate" type="tva:BitRateType" minOccurs="0"/>
-			<!-- ###################################################################### -->
-			<!--element name="AudioLanguage" type="tva:AudioLanguageType" minOccurs="0"/-->
 		</sequence>
 	</complexType>
 	<complexType name="AVAttributesType">
@@ -934,8 +923,6 @@
 					<element name="FirstShowing" type="tva:FlagType" minOccurs="0"/>
 					<element name="LastShowing" type="tva:FlagType" minOccurs="0"/>
 					<element name="Free" type="tva:FlagType" minOccurs="0"/>
-					<!-- NOT NEEDED -->
-					<!--element name="IsRecordable" type="tva:FlagType" minOccurs="0"/-->
 				</sequence>
 				<attribute name="metadataOriginIDRef" type="tva:TVAIDRefType"/>
 				<attribute ref="xml:lang"/>
@@ -976,10 +963,6 @@
 					<element name="MaxNumberOfDownloads" type="int" minOccurs="0"/>
 					<element name="ExpiryTimeAfterDownload" type="duration" minOccurs="0"/>
 					<element name="ExpiryTimeAfterDownloadFirstStart" type="duration" minOccurs="0"/>
-					<!-- NOT needed - see isSkippable in segment -->
-					<!-- timeshift is a functionality to watch content later -->
-					<!-- element name="TimeshiftNotPermitted" type="tva:FlagType" minOccurs="0"/-->
-					<!-- element name="ConsumptionMode" type="tva:DeliveryModeType" minOccurs="0"/-->
 				</sequence>
 				<attributeGroup ref="tva:fragmentIdentification"/>
 				<attribute name="metadataOriginIDRef" type="tva:TVAIDRefType"/>
@@ -1488,8 +1471,6 @@
 			<element name="Publisher" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="RightsOwner" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="CopyrightNotice" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
-			<!--element name="CopyrightNotice" type="tva:CopyrightNoticeType" minOccurs="0"
-				maxOccurs="unbounded"/-->
 		</sequence>
 		<attribute name="originID" type="tva:TVAIDType" use="required"/>
 		<attributeGroup ref="tva:fragmentIdentification"/>

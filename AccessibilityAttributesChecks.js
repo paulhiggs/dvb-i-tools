@@ -7,8 +7,6 @@ import { tva, tvaEC, BaseAccessibilityAttributesType } from "./TVA_definitions.j
 import { checkTopElementsAndCardinality } from "./schema_checks.js";
 import { CS_URI_DELIMITER } from "./ClassificationScheme.js";
 
-//import { attribute, elementize, quote } from "./phlib/phlib.js";
-
 export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs, errs, errCode) {
 	const ACCESSIBILITY_CHECK_KEY = "accessibility attributes";
 
