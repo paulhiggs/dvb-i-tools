@@ -1308,25 +1308,38 @@ export default class ServiceListCheck {
 			let ca = 0,
 				CASystemID;
 			while ((CASystemID = ContentProtection.get(xPath(props.prefix, dvbi.e_CASystemId, ++ca), props.schema)) != null) {
-				let CASid_value = parseInt(CASystemID.text(), 10);
-				if (isNaN(CASid_value)) {
-					CASid_value = parseInt(CASystemID.text(), 16);
-				}
-				if (isNaN(CASid_value)) {
-					errs.addError({
-						code: "SI031",
-						message: `${dvbi.e_CASystemId.elementize()} value (${CASystemID.text()}) must me expressed in decimal or hexadecimal`,
-						fragment: CASystemID,
-						key: "invalid value",
-					});
+				let CASystemID_value = null;
+
+				if (SchemaVersion(props.namespace) <= SCHEMA_r1) {
+					// first two versions of the schema were 'incorrect' - has nested <CASystemId> elements.
+					let nestedCAsystemid = CASystemID.get(xPath(props.prefix, dvbi.e_CASystemId), props.schema);
+					if (nestedCAsystemid) {
+						CASystemID_value = nestedCAsystemid.text();
+					}
 				} else {
-					if (CASystemIDs.find((el) => CASid_value >= el.id_from && CASid_value <= el.id_to) == undefined) {
+					CASystemID_value = CASystemID.text();
+				}
+				if (CASystemID_value) {
+					let CASid_value = parseInt(CASystemID_value, 10);
+					if (isNaN(CASid_value)) {
+						CASid_value = parseInt(CASystemID_value, 16);
+					}
+					if (isNaN(CASid_value)) {
 						errs.addError({
-							code: "SI032",
-							message: `${dvbi.e_CASystemId.elementize()} value (${CASystemID.text()}) is not found in ${CA_SYSTEM_ID_REGISTRY}`,
+							code: "SI031",
+							message: `${dvbi.e_CASystemId.elementize()} value (${CASystemID_value}) must me expressed in decimal or hexadecimal`,
 							fragment: CASystemID,
-							key: "invalid value",
+							key: "invalid identifier",
 						});
+					} else {
+						if (CASystemIDs.find((el) => CASid_value >= el.id_from && CASid_value <= el.id_to) == undefined) {
+							errs.addError({
+								code: "SI032",
+								message: `${dvbi.e_CASystemId.elementize()} value (${CASystemID_value}) is not found in ${CA_SYSTEM_ID_REGISTRY}`,
+								fragment: CASystemID,
+								key: "invalid identifier",
+							});
+						}
 					}
 				}
 			}
@@ -1349,7 +1362,7 @@ export default class ServiceListCheck {
 						code: "SI033",
 						message: `${dvbi.e_DRMSystemId.elementize()} value (${DRMSystemID_value}) is not found in ${DASH_IF_Content_Protection_List}`,
 						fragment: DRMSystemID,
-						key: "invalid value",
+						key: "invalid identifier",
 					});
 				}
 			}
