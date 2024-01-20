@@ -102,11 +102,11 @@
 		</simpleContent>
 	</complexType>
 	<complexType name="TermNameType">
-		<simpleContent>
+		<complexContent>
 			<extension base="mpeg7:TextualType">
 				<attribute name="preferred" type="boolean"/>
 			</extension>
-		</simpleContent>
+		</complexContent>
 	</complexType>
 	<complexType name="ControlledTermType">
 		<sequence>
@@ -621,7 +621,8 @@
 		<complexContent>
 			<extension base="tva:BaseAccessibilityAttributesType">
 				<sequence>
-					<element name="Coding" type="tva:ControlledTermType" maxOccurs="unbounded"/>
+					<element name="Carriage" type="tva:ControlledTermType" minOccurs="0"/>
+					<element name="Coding" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded"/>
 					<element name="SubtitleLanguage" type="language"/>
 					<element name="Purpose" type="tva:ControlledTermType" minOccurs="0"/>
 					<element name="SuitableForTTS" type="boolean"/>
@@ -643,7 +644,7 @@
 		<complexContent>
 			<extension base="tva:BaseAccessibilityAttributesType">
 				<sequence>
-					<element name="Coding" type="tva:ControlledTermType"/>
+					<element name="Coding" type="tva:ControlledTermType" maxOccurs="unbounded"/>
 					<element name="SignLanguage" type="language" minOccurs="0"/>
 					<element name="Closed" type="boolean" default="false" minOccurs="0"/>
 				</sequence>

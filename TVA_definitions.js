@@ -56,6 +56,7 @@ export const tva = {
 	e_BroadcastEvent: "BroadcastEvent",
 	e_CaptioningAttributes: "CaptioningAttributes",
 	e_CaptionLanguage: "CaptionLanguage",
+	e_Carriage: "Carriage",
 	e_Character: "Character",
 	e_Closed: "Closed",
 	e_Coding: "Coding",
@@ -392,6 +393,6 @@ export const tvaEC = {
 	ScreenReaderAttributes: [tva.e_Purpose, tva.e_ScreenReaderLanguage].concat(BaseAccessibilityAttributesType),
 	SigningAttributes: [tva.e_Coding, tva.e_SignLanguage, tva.e_Closed].concat(BaseAccessibilityAttributesType),
 	SpokenSubtitlesAttributes: [tva.e_AudioAttributes].concat(BaseAccessibilityAttributesType),
-	SubtitleAttributes: [tva.e_Coding, tva.e_SubtitleLanguage, tva.e_Purpose, tva.e_SuitableForTTS].concat(BaseAccessibilityAttributesType),
+	SubtitleAttributes: [tva.e_Carriage, tva.e_Coding, tva.e_SubtitleLanguage, tva.e_Purpose, tva.e_SuitableForTTS].concat(BaseAccessibilityAttributesType),
 	VideoAttributes: [tva.e_Coding, tva.e_Scan, tva.e_HorizontalSize, tva.e_VerticalSize, tva.e_AspectRatio, tva.e_Color, tva.e_FrameRate, tva.e_BitRate, tva.e_BitsPerSample],
 };

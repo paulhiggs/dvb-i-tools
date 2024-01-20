@@ -29,6 +29,7 @@ import {
 	DVB_ColorimetryCS,
 	TVA_AccessibilityPurposeCS,
 	TVA_AudioPurposeCS,
+	TVA_SubitleCarriageCS,
 	TVA_SubitleCodingFormatCS,
 	TVA_SubitlePurposeCS,
 	TVA_ContentAlertCS,
@@ -119,6 +120,13 @@ export function LoadAudioPurpose(useURLs) {
 	console.log("loading Audio Purposes...".yellow.underline);
 	let cs = new ClassificationScheme();
 	cs.loadCS(useURLs ? { url: TVA_AudioPurposeCS.url, leafNodesOnly: true } : { file: TVA_AudioPurposeCS.file, leafNodesOnly: true });
+	return cs;
+}
+
+export function LoadSubtitleCarriages(useURLs) {
+	console.log("loading Subtitle Carriages...".yellow.underline);
+	let cs = new ClassificationScheme();
+	cs.loadCS(useURLs ? { url: TVA_SubitleCarriageCS.url } : { file: TVA_SubitleCarriageCS.file });
 	return cs;
 }
 

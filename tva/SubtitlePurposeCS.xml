@@ -1,25 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ClassificationScheme uri="urn:tva:metadata:cs:SubtitlePurposeCS:2023" xmlns="urn:tva:mpeg7:2008" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:tva:mpeg7:2008 tva_mpeg7.xsd" xsi:type="ClassificationSchemeType">
+<ClassificationScheme uri="urn:tva:metadata:cs:SubtitlePurposeCS:2023">
 	<!-- ##################################################################### -->
 	<!-- SUBTITLEPURPOSE                                                       -->
 	<!-- Definition: Terms that describe the main purpose of subtitles.        -->
 	<!-- ##################################################################### -->
 	<Term termID="1">
+		<Name xml:lang="en">Translation</Name>
+		<Definition>
+			Translation of just the dialogue in a language other than the audio track dialogue.
+			</Definition>
+	</Term>
+	<Term termID="2">
 		<Name xml:lang="en">Hard of hearing</Name>
 		<Definition>Subtitles produced for the deaf and hard of hearing people</Definition>
 	</Term>
-	<Term termID="2">
-		<Name xml:lang="en">Audio description</Name>
-		<Definition>Subtitles that includes the description of the visual scene and that intended 
-			to be used by the receiver to render audio description 
-			(e.g. with text-to-speech technology.)</Definition>
-	</Term>
 	<Term termID="3">
-		<Name xml:lang="en">Content related commentary</Name>
-		<Definition>Subitles that include content-related commentary (e.g. directors commentary).</Definition>
+		<Name xml:lang="en">Audio description</Name>
+		<Definition>Subtitles that include the description of the visual scene and intended 
+			to be used by the receiver to render audio description 
+			(e.g. with text-to-speech technology.</Definition>
 	</Term>
-	<Term termID="7">
+	<Term termID="4">
+		<Name xml:lang="en">Content related commentary</Name>
+		<Definition>Subtitles that include content-related commentary (e.g. directors 
+			commentary).</Definition>
+	</Term>
+	<Term termID="57">
 		<Name xml:lang="en">Forced Narrative</Name>
-		<Definition>Subtitles used to clarify dialogue, burned-in text, and other information that is not explained or easily understood by the viewer. </Definition>
-  </Term>
+		<Definition>Subtitles used to clarify dialogue, burned-in text, and other information that is 
+			not explained or easily understood by the viewer.</Definition>
+	</Term>
 </ClassificationScheme>

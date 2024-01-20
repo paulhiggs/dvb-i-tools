@@ -35,6 +35,7 @@ import {
 	LoadAudioCodecCS,
 	LoadAccessibilityPurpose,
 	LoadAudioPurpose,
+	LoadSubtitleCarriages,
 	LoadSubtitleCodings,
 	LoadSubtitlePurposes,
 	LoadAudioConformanceCS,
@@ -380,6 +381,7 @@ export default class ServiceListCheck {
 		this.AudioPresentationCSvalues = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs);
 		this.accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs);
 		this.audioPurposes = opts?.audiopurp ? opts.audiopurp : LoadAudioPurpose(useURLs);
+		this.subtitleCarriages = opts?.stcarriage ? opts.stcarriage : LoadSubtitleCarriages(useURLs);
 		this.subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs);
 		this.subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs);
 		this.knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs);
@@ -874,6 +876,7 @@ export default class ServiceListCheck {
 					RequiredOptionalFeatureCS: this.RequiredOptionalFeatureCS,
 					VideoCodecCS: this.allowedVideoSchemes,
 					AudioCodecCS: this.allowedAudioSchemes,
+					SubtitleCarriageCS: this.subtitleCarriages,
 					SubtitleCodingFormatCS: this.subtitleCodings,
 					SubtitlePurposeTypeCS: this.subtitlePurposes,
 					KnownLanguages: this.knownLanguages,
@@ -1491,6 +1494,7 @@ export default class ServiceListCheck {
 						RequiredOptionalFeatureCS: this.RequiredOptionalFeatureCS,
 						VideoCodecCS: this.allowedVideoSchemes,
 						AudioCodecCS: this.allowedAudioSchemes,
+						SubtitleCarriageCS: this.subtitleCarriages,
 						SubtitleCodingFormatCS: this.subtitleCodings,
 						SubtitlePurposeTypeCS: this.subtitlePurposes,
 						KnownLanguages: this.knownLanguages,

@@ -259,18 +259,23 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 				case tva.e_SubtitleAttributes:
 					checkTopElementsAndCardinality(
 						elem,
-						[{ name: tva.e_Coding, maxOccurs: Infinity }, { name: tva.e_SubtitleLanguage }, { name: tva.e_Purpose, minOccurs: 0 }, { name: tva.e_SuitableForTTS }].concat(
-							appInformationElements
-						),
+						[
+							{ name: tva.e_Carriage, minOccurs: 0 },
+							{ name: tva.e_Coding, minOccurs: 0, maxOccurs: Infinity },
+							{ name: tva.e_SubtitleLanguage },
+							{ name: tva.e_Purpose, minOccurs: 0 },
+							{ name: tva.e_SuitableForTTS },
+						].concat(appInformationElements),
 						tvaEC.SubtitleAttributes,
 						false,
 						errs,
 						`${errCode}-51`
 					);
 					checkAppInformation(elem, 52);
-					checkCS(elem, tva.e_Coding, cs.SubtitleCodingFormatCS, 53);
-					checkLanguage(elem, tva.e_SubtitleLanguage, 54);
-					checkCS(elem, tva.e_Purpose, cs.SubtitlePurposeTypeCS, 55);
+					checkCS(elem, tva.e_Carriage, cs.SubtitleCarriageCS, 53);
+					checkCS(elem, tva.e_Coding, cs.SubtitleCodingFormatCS, 54);
+					checkLanguage(elem, tva.e_SubtitleLanguage, 55);
+					checkCS(elem, tva.e_Purpose, cs.SubtitlePurposeTypeCS, 56);
 					break;
 				case tva.e_AudioDescriptionAttributes:
 					checkTopElementsAndCardinality(

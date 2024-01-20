@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>		
+<ClassificationScheme uri="urn:tva:metadata:cs:SubtitleCarriageCS:2023">
+	<!-- ##################################################################### -->
+	<!-- SUBTITLECARRIAGE                                                      -->
+	<!-- DEFINITION: Defines the method used for carrying subtitles.           -->
+	<!-- NOTE: This CS replaces the CaptionCodingFormatCS                      -->
+	<!-- and is used in conjunction with SubtitleCodingFormatCS.               -->
+	<!-- ##################################################################### -->
+	<Term termID="1">
+		<Name xml:lang="en">Application Subtitles</Name>
+		<Definition xml:lang="en">In-application rendered subtitles.</Definition>
+	</Term>
+	<Term termID="2">
+		<Name xml:lang="en">DVB TTML Subtitles</Name>
+		<Definition xml:lang="en">DVB TTML subtitles as defined in [ETSI EN 303 560].
+			TTML subtitle streams packetized for carriage in DVB MPEG-2 transport streams.
+			If no explicit SubtitleCodingFormatCS format is signalled, 
+			the default conformance point processor profile applies.</Definition>
+	</Term>
+	<Term termID="3">
+		<Name xml:lang="en">Subtitles in ISOBMFF</Name>
+		<Definition xml:lang="en">Subtitles encapsulated in ISOBMFF according to ISO/IEC 14496-30.
+		</Definition>
+	</Term>
+</ClassificationScheme>
