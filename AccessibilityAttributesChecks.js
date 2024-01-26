@@ -7,6 +7,8 @@ import { tva, tvaEC, BaseAccessibilityAttributesType } from "./TVA_definitions.j
 import { checkTopElementsAndCardinality } from "./schema_checks.js";
 import { CS_URI_DELIMITER } from "./ClassificationScheme.js";
 
+import { datatypeIs } from "./phlib/phlib.js";
+
 export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs, errs, errCode) {
 	const ACCESSIBILITY_CHECK_KEY = "accessibility attributes";
 
@@ -88,7 +90,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 
 	let checkAppInformation = (elem, errNum) => {
 		let appInfo = elem.childNodes().find((el) => el.type() == "element" && el.name().endsWith(tva.e_AppInformation));
-		if (appInfo == undefined) return;
+		if (appInfo == undefined) return false; // AppInformation element is not present
 		let children = appInfo.childNodes();
 		if (children)
 			children.forEachSubElement((e) => {
@@ -115,9 +117,10 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 						break;
 				}
 			});
+		return true; // AppInformation element is present
 	};
 
-	let checkCS = (elem, childName, cs, errNum) => {
+	let checkCS = (elem, childName, cs, errNum, storage = null) => {
 		let children = elem.childNodes();
 		if (children)
 			children.forEach((e) => {
@@ -130,6 +133,9 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 							message: `"${href}" is not valid for ${e.name().elementize()} in ${elem.name().elementize()}`,
 							key: ACCESSIBILITY_CHECK_KEY,
 						});
+					if (storage && datatypeIs(storage, "array") && href) {
+						storage.push(href);
+					}
 				}
 			});
 	};
@@ -231,6 +237,9 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 	let allAppChildren = [tva.e_Purpose].concat(BaseAccessibilityAttributesType);
 
 	let children = AccessibilityAttributes.childNodes();
+	let carriages = [],
+		codings = [],
+		hasAppInformation = false;
 	if (children)
 		children.forEachSubElement((elem) => {
 			switch (elem.name()) {
@@ -260,8 +269,8 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 					checkTopElementsAndCardinality(
 						elem,
 						[
-							{ name: tva.e_Carriage, minOccurs: 0 },
-							{ name: tva.e_Coding, minOccurs: 0, maxOccurs: Infinity },
+							{ name: tva.e_Carriage },
+							{ name: tva.e_Coding, maxOccurs: Infinity },
 							{ name: tva.e_SubtitleLanguage },
 							{ name: tva.e_Purpose, minOccurs: 0 },
 							{ name: tva.e_SuitableForTTS },
@@ -271,9 +280,9 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 						errs,
 						`${errCode}-51`
 					);
-					checkAppInformation(elem, 52);
-					checkCS(elem, tva.e_Carriage, cs.SubtitleCarriageCS, 53);
-					checkCS(elem, tva.e_Coding, cs.SubtitleCodingFormatCS, 54);
+					hasAppInformation = checkAppInformation(elem, 52);
+					checkCS(elem, tva.e_Carriage, cs.SubtitleCarriageCS, 53, carriages);
+					checkCS(elem, tva.e_Coding, cs.SubtitleCodingFormatCS, 54, codings);
 					checkLanguage(elem, tva.e_SubtitleLanguage, 55);
 					checkCS(elem, tva.e_Purpose, cs.SubtitlePurposeTypeCS, 56);
 					break;
@@ -314,4 +323,17 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 					break;
 			}
 		});
+	if (carriages.includes(tva.APPLICATION_SUBTITLE_CARRIAGE) && codings.includes(tva.APPLICATION_SUBTITLE_CODING)) {
+		// A177r6 clause 4.5.2.3 - When the SubtitlesAttributes.Carriage element is set to “Application Subtitles” and/or the
+		// SubtitlesAttributes.Coding element is set to “Application - defined Subtitle Format”, the SubtitlesAttributes.AppInformation
+		// should be defined, as subtitle availability depends on whether the application is supported by the DVB - I client.
+		if (!hasAppInformation) {
+			errs.addError({
+				code: `${errCode}-99`,
+				fragment: AccessibilityAttributes,
+				message: `${tva.e_AppInformation.elementize()} must be provided for application defined subtitles`,
+				key: ACCESSIBILITY_CHECK_KEY,
+			});
+		}
+	}
 }

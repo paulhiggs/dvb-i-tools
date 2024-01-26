@@ -83,14 +83,14 @@ var SchemaVersions = [
 		version: SCHEMA_r6,
 		filename: DVBI_ServiceListSchema.r6.file,
 		schema: null,
-		status: DRAFT,
+		status: CURRENT,
 	},
 	{
 		namespace: dvbi.A177r5_Namespace,
 		version: SCHEMA_r5,
 		filename: DVBI_ServiceListSchema.r5.file,
 		schema: null,
-		status: CURRENT,
+		status: OLD,
 	},
 	{
 		namespace: dvbi.A177r4_Namespace,

@@ -27,7 +27,7 @@ import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck,
 import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./MultilingualElement.js";
 import { writeOut } from "./Validator.js";
 
-import { DRAFT, CURRENT } from "./sl-check.js";
+import { CURRENT, OLD } from "./sl-check.js";
 import { keys } from "./CommonErrors.js";
 
 import {
@@ -82,21 +82,21 @@ var SchemaVersions = [
 		version: SCHEMA_r2,
 		filename: TVAschema.v2024.file,
 		schema: null,
-		status: DRAFT,
+		status: CURRENT,
 	},
 	{
 		namespace: TVAschema.v2023.namespace,
 		version: SCHEMA_r1,
 		filename: TVAschema.v2023.file,
 		schema: null,
-		status: DRAFT,
+		status: OLD,
 	},
 	{
 		namespace: TVAschema.v2019.namespace,
 		version: SCHEMA_r0,
 		filename: TVAschema.v2019.file,
 		schema: null,
-		status: CURRENT,
+		status: OLD,
 	},
 ];
 
@@ -2246,12 +2246,17 @@ export default class ContentGuideCheck {
 
 		checkTopElementsAndCardinality(
 			AVAttributes,
-			[
-				{ name: tva.e_AudioAttributes, minOccurs: 0, maxOccurs: Infinity },
-				{ name: tva.e_VideoAttributes, minOccurs: 0, maxOccurs: Infinity },
-				{ name: tva.e_CaptioningAttributes, minOccurs: 0, maxOccurs: Infinity },
-				{ name: tva.e_AccessibilityAttributes, minOccurs: 0 },
-			],
+			SchemaVersion(props.namespace) >= SCHEMA_r2
+				? [
+						{ name: tva.e_AudioAttributes, minOccurs: 0, maxOccurs: Infinity },
+						{ name: tva.e_VideoAttributes, minOccurs: 0, maxOccurs: Infinity },
+						{ name: tva.e_AccessibilityAttributes, minOccurs: 0 },
+				  ]
+				: [
+						{ name: tva.e_AudioAttributes, minOccurs: 0, maxOccurs: Infinity },
+						{ name: tva.e_VideoAttributes, minOccurs: 0, maxOccurs: Infinity },
+						{ name: tva.e_CaptioningAttributes, minOccurs: 0, maxOccurs: Infinity },
+				  ],
 			tvaEC.AVAttributes,
 			false,
 			errs,

@@ -621,8 +621,8 @@
 		<complexContent>
 			<extension base="tva:BaseAccessibilityAttributesType">
 				<sequence>
-					<element name="Carriage" type="tva:ControlledTermType" minOccurs="0"/>
-					<element name="Coding" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded"/>
+					<element name="Carriage" type="tva:ControlledTermType"/>
+					<element name="Coding" type="tva:ControlledTermType" maxOccurs="unbounded"/>
 					<element name="SubtitleLanguage" type="language"/>
 					<element name="Purpose" type="tva:ControlledTermType" minOccurs="0"/>
 					<element name="SuitableForTTS" type="boolean"/>

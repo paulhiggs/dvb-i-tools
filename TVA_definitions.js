@@ -31,6 +31,9 @@ export const tva = {
 
 	ALLOWED_ASPECT_RATIO_TYPES: ["original", "publication"],
 
+	APPLICATION_SUBTITLE_CODING: "urn:tva:metadata:cs:SubtitleCodingFormatCS:2023:8",
+	APPLICATION_SUBTITLE_CARRIAGE: "urn:tva:metadata:cs:SubtitleCarriageCS:2023:1",
+
 	e_TVAMain: "TVAMain",
 	e_ProgramInformationTable: "ProgramInformationTable",
 	e_ProgramLocationTable: "ProgramLocationTable",
