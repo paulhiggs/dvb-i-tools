@@ -86,7 +86,13 @@ export default class IANAlanguages {
 			if (isIn(items, "Type: variant")) {
 				let subtag = null;
 				for (let i = 0; i < items.length; i++) if (items[i].startsWith("Subtag:")) subtag = items[i].split(":")[1].trim();
-				if (subtag) for (let i = 0; i < items.length; i++) if (items[i].startsWith("Prefix:")) this.languagesList.push(`${items[i].split(":")[1].trim()}-${subtag}`);
+				if (subtag) {
+					for (let i = 0; i < items.length; i++)
+						if (items[i].startsWith("Prefix:")) {
+							this.languagesList.push(items[i].split(":")[1].trim()); // prefix on its own is allowed
+							this.languagesList.push(`${items[i].split(":")[1].trim()}-${subtag}`); // prefix-suffix is allowed
+						}
+				}
 			}
 			if (isIn(items, "Type: redundant")) {
 				let redund = {};
@@ -94,7 +100,7 @@ export default class IANAlanguages {
 					if (items[i].startsWith("Tag:")) redund.tag = items[i].split(":")[1].trim();
 					else if (items[i].startsWith("Preferred-Value:")) redund.preferred = items[i].split(":")[1].trim();
 				}
-				if (redund.tag && redund.preferred) this.redundantLanguagesList.push(redund);
+				if (redund.tag) this.redundantLanguagesList.push(redund);
 			}
 		});
 	}
@@ -160,11 +166,25 @@ export default class IANAlanguages {
 		if (datatypeIs(value, "string")) {
 			if (this.languageRanges.find((range) => range.start <= value && value <= range.end)) return { resp: this.languageKnown };
 
+			if (value.indexOf("-") != -1) {
+				let matches = true;
+				let parts = value.split("-");
+				parts.forEach((p) => {
+					matches &= isIni(this.languagesList, p);
+				});
+				if (matches) return { resp: this.languageKnown };
+			}
+
 			if (isIni(this.languagesList, value)) return { resp: this.languageKnown };
 
 			let lc = value.toLowerCase();
 			let found = this.redundantLanguagesList.find((e) => e.tag.toLowerCase() == lc);
-			if (found) return { resp: this.languageRedundant, pref: found.preferred };
+			if (found) {
+				let res = { resp: this.languageRedundant };
+				if (found?.preferred) res.pref = found.preferred;
+				[];
+				return res;
+			}
 
 			return { resp: this.languageUnknown };
 		}
