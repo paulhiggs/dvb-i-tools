@@ -11,6 +11,17 @@
 		<Definition xml:lang="en">In-application rendered subtitles.</Definition>
 	</Term>
 	<Term termID="2">
+		<Name xml:lang="en">Subtitles in TS</Name>
+		<Definition xml:lang="en">Subtitles carried in an MPEG-2 Transport Stream.</Definition>
+		<Term termID="2.1">
+			<Name xml:lang="en">DVB TTML Subtitles</Name>
+			<Definition xml:lang="en">DVB TTML subtitles as defined in [ETSI EN 303 560].
+				TTML subtitle streams packetized for carriage in DVB MPEG-2 transport streams.
+				If no explicit SubtitleCodingFormatCS format is signalled, 
+				the default conformance point processor profile applies.</Definition>
+		</Term>
+	</Term>
+	<Term termID="2">
 		<Name xml:lang="en">DVB TTML Subtitles</Name>
 		<Definition xml:lang="en">DVB TTML subtitles as defined in [ETSI EN 303 560].
 			TTML subtitle streams packetized for carriage in DVB MPEG-2 transport streams.
@@ -22,4 +33,15 @@
 		<Definition xml:lang="en">Subtitles encapsulated in ISOBMFF according to ISO/IEC 14496-30.
 		</Definition>
 	</Term>
+	<Term termID="4">
+		<Name xml:lang="en">Standalone subtitle resource</Name>
+		<Definition xml:lang="en">Subtitle resource carried separately from other content.
+		</Definition>
+	</Term>
+	<Term termID="99">
+		<Name xml:lang="en">Other subtitle carriage</Name>
+		<Definition xml:lang="en">Other method of carrying subtitles not specifically identified in
+			this cClassification scheme.</Definition>
+	</Term>
 </ClassificationScheme>
+

@@ -15,6 +15,37 @@ import "colors";
 export var xPath = (SCHEMA_PREFIX, elementName, index = null) => `${SCHEMA_PREFIX}:${elementName}${index ? `[${index}]` : ""}`;
 
 /**
+ * Finds the first named child element
+ *
+ * @param {*} element 								The containing parent element
+ * @param {string} childElementName 	The name of the child element to find
+ * @returns the named child element or undefined if not present
+ */
+var getFirstElementByTagName = (element, childElementName) => element.childNodes()?.find((c) => c.type() == "element" && c.name() == childElementName);
+
+export function getElementByTagName(element, childElementName, index = null) {
+	switch (datatypeIs(childElementName)) {
+		case "string":
+			if (!index) return getFirstElementByTagName(element, childElementName);
+
+			let cnt = 0,
+				ch1 = element.childNodes();
+			for (let i = 0; i < ch1.length; i++) {
+				if (ch1[i].type() == "element" && ch1[i].name() == childElementName) cnt++;
+				if (cnt >= index) return ch1[i];
+			}
+			break;
+		case "array":
+			if (index) return undefined; // cant use index with list of elements
+			let ch = element;
+			for (let i = 0; ch && i < childElementName.length; i++) ch = getFirstElementByTagName(ch, childElementName[i]);
+			return ch;
+			break; // eslint-disable-line no-unreachable
+	}
+	return undefined;
+}
+
+/**
  * constructs an XPath based on the provided arguments
  *
  * @param {string} SCHEMA_PREFIX    Used when constructing Xpath queries

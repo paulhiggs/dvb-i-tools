@@ -10,8 +10,7 @@ import { checkLanguage } from "./MultilingualElement.js";
 import { checkAttributes, checkTopElementsAndCardinality } from "./schema_checks.js";
 import { isJPEGmime, isPNGmime, isWebPmime, validImageSet, isAllowedImageMime } from "./MIME_checks.js";
 import { isHTTPURL } from "./pattern_checks.js";
-import { cg_InvalidHrefValue } from "./CommonErrors.js";
-import { keys } from "./CommonErrors.js";
+import { cg_InvalidHrefValue, InvalidURL, keys } from "./CommonErrors.js";
 
 /**
  * verifies if the specified RelatedMaterial contains a image of the specified type(s). Only a single image is permitted and the format
@@ -204,13 +203,7 @@ export function checkValidLogos(RelatedMaterial, errs, errCode, location, langua
 								specifiedMediaTypes.push(contentType);
 							}
 
-							if (!isHTTPURL(MediaUri.text()))
-								errs.addError({
-									code: `${errCode}-6`,
-									message: `invalid URL ${MediaUri.text().quote()} specified for ${tva.e_MediaUri.elementize()}`,
-									fragment: MediaUri,
-									key: "invalid resource URL",
-								});
+							if (!isHTTPURL(MediaUri.text())) errs.addError(InvalidURL(MediaUri.text(), MediaUri, tva.e_MediaUri, `${errCode}-6`));
 						}
 					});
 			}

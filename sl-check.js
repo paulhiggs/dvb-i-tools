@@ -14,14 +14,14 @@ import { dvbi, dvbiEC, dvbEA, XMLdocumentType } from "./DVB-I_definitions.js";
 import { tva, tvaEA } from "./TVA_definitions.js";
 import { isTAGURI } from "./URI_checks.js";
 
-import { xPath, xPathM, isIn, unEntity } from "./utils.js";
+import { xPath, xPathM, isIn, unEntity, getElementByTagName } from "./utils.js";
 
 import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isDomainName, isRTSPURL } from "./pattern_checks.js";
 
 import { DVBI_ServiceListSchema } from "./data-locations.js";
 
 import { checkValidLogos } from "./RelatedMaterialChecks.js";
-import { sl_InvalidHrefValue } from "./CommonErrors.js";
+import { sl_InvalidHrefValue, InvalidURL } from "./CommonErrors.js";
 
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.js";
@@ -921,15 +921,9 @@ export default class ServiceListCheck {
 		function CheckEndpoint(elementName, suffix, MustEndWithSlash = false) {
 			let ep = source.get(xPath(props.prefix, elementName), props.schema);
 			if (ep) {
-				let epURL = ep.get(xPath(props.prefix, dvbi.e_URI), props.schema);
+				let epURL = getElementByTagName(ep, dvbi.e_URI);
 				if (epURL) {
-					if (!isHTTPPathURL(epURL.text()))
-						errs.addError({
-							code: `${errCode}-${suffix}a`,
-							message: `"${epURL.text()}" is not a valid URL path for ${elementName.elementize()}`,
-							fragment: ep,
-							key: "not URL path",
-						});
+					if (!isHTTPPathURL(epURL.text())) errs.addError(InvalidURL(epURL.text(), ep, elementName, `${errCode}-${suffix}a`));
 
 					if (MustEndWithSlash && !epURL.text().endsWith("/"))
 						errs.addError({
@@ -940,7 +934,6 @@ export default class ServiceListCheck {
 							key: "not URL path",
 						});
 				}
-
 				if (ep.attr(dvbi.a_contentType) && ep.attr(dvbi.a_contentType).value() != XMLdocumentType)
 					errs.addError({
 						type: WARNING,
@@ -1355,10 +1348,10 @@ export default class ServiceListCheck {
 					// first two versions of the schema were 'incorrect' - has nested <DRMSystemId> elements.
 					let nestedDRMsystemid = DRMSystemID.get(xPath(props.prefix, dvbi.e_DRMSystemId), props.schema);
 					if (nestedDRMsystemid) {
-						DRMSystemID_value = nestedDRMsystemid.text();
+						DRMSystemID_value = nestedDRMsystemid.text().toLowerCase();
 					}
 				} else {
-					DRMSystemID_value = DRMSystemID.text();
+					DRMSystemID_value = DRMSystemID.text().toLowerCase();
 				}
 				if (DRMSystemID_value && ContentProtectionIDs.find((el) => el.id == DRMSystemID_value || el.id.substring(el.id.lastIndexOf(":") + 1) == DRMSystemID_value) == undefined) {
 					errs.addError({
@@ -1679,7 +1672,7 @@ export default class ServiceListCheck {
 						key: `no ${dvbi.a_contentType.attribute()} for DASH`,
 					});
 
-				let uri = URIBasedLocation.get(xPath(props.prefix, dvbi.e_URI), props.schema);
+				let uri = getElementByTagName(URIBasedLocation, dvbi.e_URI);
 				if (uri && !isHTTPURL(uri.text()))
 					errs.addError({
 						code: "SI174",
@@ -2335,9 +2328,11 @@ export default class ServiceListCheck {
 							});
 							break;
 						case this.knownLanguages.languageRedundant:
+							let msg = `${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is deprecated`;
+							if (validatorResp?.pref) msg += `(use ${validatorResp.pref.quote()} instead)`;
 							errs.addError({
 								code: "SL013",
-								message: `${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is deprecated (use ${validatorResp.pref.quote()} instead)`,
+								message: msg,
 								line: SL.root().line(),
 								key: "deprecated language",
 							});

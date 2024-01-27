@@ -58,3 +58,11 @@ export var sl_InvalidHrefValue = (value, element, src, loc, errCode) => ({
 	message: `invalid ${dvbi.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`,
 	key: "invalid href",
 });
+
+export var InvalidURL = (value, element, src, errCode) => ({
+	code: errCode,
+	fragment: element,
+	line: element.line(),
+	message: `invalid URL "${value}" specified for ${src.elementize()}`,
+	key: keys.k_InvalidURL,
+});
