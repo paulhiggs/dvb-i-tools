@@ -35,10 +35,12 @@ export function checkLanguage(validator, lang, loc, element, errs, errCode) {
 			errs.addError({ code: `${errCode}-1`, message: `${loc ? loc : "language"} value ${lang.quote()} is invalid`, fragment: element, key: keys.k_InvalidLanguage });
 			break;
 		case validator.languageRedundant:
+			let msg = `${loc ? loc : "language"} value ${lang.quote()} is deprecated`;
+			if (validatorResp?.pref) msg += ` (use ${validatorResp.pref.quote()} instead)`;
 			errs.addError({
 				type: WARNING,
 				code: `${errCode}-2`,
-				message: `${loc ? loc : "language"} value ${lang.quote()} is deprecated (use ${validatorResp.pref.quote()} instead)`,
+				message: msg,
 				fragment: element,
 				key: "deprecated language",
 			});
