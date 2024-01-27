@@ -123,7 +123,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 	let checkCS = (elem, childName, cs, errNum, storage = null) => {
 		let children = elem.childNodes();
 		if (children)
-			children.forEach((e) => {
+			children.forEachSubElement((e) => {
 				if (e.name() == childName) {
 					let href = e.attr(tva.a_href) ? e.attr(tva.a_href).value() : null;
 					if (href && !cs.isIn(href))
@@ -143,7 +143,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 	let checkSignLanguage = (elem, childName, errNum) => {
 		let children = elem.childNodes();
 		if (children)
-			children.forEach((e) => {
+			children.forEachSubElement((e) => {
 				if (e.name() == childName) {
 					if (cs.KnownLanguages.checkSignLanguage(e.text()) != cs.KnownLanguages.languageKnown)
 						errs.addError({
@@ -160,12 +160,22 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 		if (!cs.KnownLanguages) return;
 		let children = elem.childNodes();
 		if (children)
-			children.forEach((e) => {
+			children.forEachSubElement((e) => {
 				if (e.name() == childName) {
 					let res = cs.KnownLanguages.isKnown(e.text()).resp;
-					if (res != cs.KnownLanguages.languageKnown)
+					if (res == cs.KnownLanguages.languageRedundant) {
+						let msg = `language value ${e.text().quote()} is deprecated`;
+						if (res?.pref) msg += ` (use ${res.pref.quote()} instead)`;
 						errs.addError({
-							code: `${errCode}-${errNum}`,
+							code: `${errCode}-${errNum}a`,
+							fragment: e,
+							message: msg,
+							key: ACCESSIBILITY_CHECK_KEY,
+							type: WARNING,
+						});
+					} else if (res != cs.KnownLanguages.languageKnown)
+						errs.addError({
+							code: `${errCode}-${errNum}b`,
 							fragment: e,
 							message: `"${e.text()}" is not a valid language for ${e.name().elementize()} in ${elem.name().elementize()} (res=${res})`,
 							key: ACCESSIBILITY_CHECK_KEY,
@@ -178,7 +188,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 		if (!cs.AudioPurposeCS) return;
 		let children = elem.childNodes();
 		if (children)
-			children.forEach((e) => {
+			children.forEachSubElement((e) => {
 				if (e.name() == childName) {
 					if (e.attr(tva.a_purpose) && !cs.AudioPurposeCS.isIn(e.attr(tva.a_purpose).value()))
 						errs.addError({
