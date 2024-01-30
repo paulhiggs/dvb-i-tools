@@ -36,7 +36,7 @@ export const dvbi = {
 	A177r3_Namespace: `${DVB_metadata}:servicediscovery:2022`,
 	A177r4_Namespace: `${DVB_metadata}:servicediscovery:2022b`,
 	A177r5_Namespace: `${DVB_metadata}:servicediscovery:2023`,
-	A177r6_Namespace: `${DVB_metadata}:servicediscovery:2023b`,
+	A177r6_Namespace: `${DVB_metadata}:servicediscovery:2024`,
 
 	ApplicationStandards: [
 		`${HbbTVStandardPrefix}:1.2.1`,
