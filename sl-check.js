@@ -21,7 +21,7 @@ import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isDomainName, isRTSPURL 
 import { DVBI_ServiceListSchema } from "./data-locations.js";
 
 import { checkValidLogos } from "./RelatedMaterialChecks.js";
-import { sl_InvalidHrefValue, InvalidURL } from "./CommonErrors.js";
+import { sl_InvalidHrefValue, InvalidURL, DeprecatedFeature } from "./CommonErrors.js";
 
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.js";
@@ -84,6 +84,7 @@ var SchemaVersions = [
 		filename: DVBI_ServiceListSchema.r6.file,
 		schema: null,
 		status: CURRENT,
+		specVersion: "A177r6",
 	},
 	{
 		namespace: dvbi.A177r5_Namespace,
@@ -91,6 +92,7 @@ var SchemaVersions = [
 		filename: DVBI_ServiceListSchema.r5.file,
 		schema: null,
 		status: OLD,
+		specVersion: "A177r5",
 	},
 	{
 		namespace: dvbi.A177r4_Namespace,
@@ -98,6 +100,7 @@ var SchemaVersions = [
 		filename: DVBI_ServiceListSchema.r4.file,
 		schema: null,
 		status: OLD,
+		specVersion: "A177r4",
 	},
 	{
 		namespace: dvbi.A177r3_Namespace,
@@ -105,6 +108,7 @@ var SchemaVersions = [
 		filename: DVBI_ServiceListSchema.r3.file,
 		schema: null,
 		status: OLD,
+		specVersion: "A177r3",
 	},
 	{
 		namespace: dvbi.A177r2_Namespace,
@@ -112,6 +116,7 @@ var SchemaVersions = [
 		filename: DVBI_ServiceListSchema.r2.file,
 		schema: null,
 		status: OLD,
+		specVersion: "A177r2",
 	},
 	{
 		namespace: dvbi.A177r1_Namespace,
@@ -119,6 +124,7 @@ var SchemaVersions = [
 		filename: DVBI_ServiceListSchema.r1.file,
 		schema: null,
 		status: ETSI,
+		specVersion: "A177r1",
 	},
 	{
 		namespace: dvbi.A177_Namespace,
@@ -126,6 +132,7 @@ var SchemaVersions = [
 		filename: DVBI_ServiceListSchema.r0.file,
 		schema: null,
 		status: OLD,
+		specVersion: "A177",
 	},
 ];
 
@@ -190,6 +197,11 @@ const ContentGuideSourceLogos = [
 let SchemaVersion = (namespace) => {
 	let x = SchemaVersions.find((ver) => ver.namespace == namespace);
 	return x ? x.version : SCHEMA_unknown;
+};
+
+let SchemaSpecVersion = (namespace) => {
+	let x = SchemaVersions.find((ver) => ver.namespace == namespace);
+	return x ? x.specVersion : "r?";
 };
 
 const EXTENSION_LOCATION_SERVICE_LIST_REGISTRY = 101,
@@ -1399,16 +1411,7 @@ export default class ServiceListCheck {
 			// Check @href of ContentAttributes/AudioConformancePoints
 			cp = 0;
 			while ((conf = ContentAttributes.get(xPath(props.prefix, dvbi.e_AudioConformancePoint, ++cp), props.schema)) != null) {
-				if (SchemaVersion(props.namespace) > SCHEMA_r4)
-					// Issue #10
-					errs.addError({
-						type: WARNING,
-						code: "SI062",
-						message: `use of ${dvbi.e_AudioConformancePoint.elementize()} is deprecated`,
-						fragment: conf,
-						key: "deprecated feature",
-					});
-
+				if (SchemaVersion(props.namespace) > SCHEMA_r4) errs.addError(DeprecatedFeature(conf, SchemaSpecVersion(props.namespace), "SI062"));
 				if (conf.attr(dvbi.a_href) && !this.allowedAudioConformancePoints.isIn(conf.attr(dvbi.a_href).value()))
 					errs.addError({
 						code: "SI061",
@@ -1535,6 +1538,9 @@ export default class ServiceListCheck {
 						key: `undeclared ${dvbi.e_SubscriptionPackage}`,
 					});
 			}
+			if (SchemaVersion(props.namespace) >= SCHEMA_r5) {
+				errs.addError(DeprecatedFeature(SubscriptionPackage, SchemaSpecVersion(props.namespace), "SI131"));
+			}
 		}
 
 		// <ServiceInstance><FTAContentManagement>
@@ -1625,14 +1631,7 @@ export default class ServiceListCheck {
 							break;
 					}
 			}
-			if (v1Params && SchemaVersion(props.namespace) >= SCHEMA_r1)
-				errs.addError({
-					type: WARNING,
-					code: "SI160",
-					message: `${dvbi.e_SourceType.elementize()} is deprecated in this version (service ${thisServiceId.quote()})`,
-					fragment: SourceType,
-					key: "deprecated feature",
-				});
+			if (v1Params && SchemaVersion(props.namespace) >= SCHEMA_r1) errs.addError(DeprecatedFeature(SourceType, SchemaSpecVersion(props.namespace), "SI160"));
 		} else {
 			if (SchemaVersion(props.namespace) == SCHEMA_r0)
 				errs.addError({
@@ -1700,26 +1699,32 @@ export default class ServiceListCheck {
 		let DVBTDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DVBTDeliveryParameters), props.schema);
 		if (DVBTDeliveryParameters) {
 			let DVBTtargetCountry = DVBTDeliveryParameters.get(xPath(props.prefix, dvbi.e_TargetCountry), props.schema);
-			if (DVBTtargetCountry && !this.knownCountries.isISO3166code(DVBTtargetCountry.text()))
-				errs.addError({
-					code: "SI182",
-					message: InvalidCountryCode(DVBTtargetCountry.text(), "DVB-T", `service ${thisServiceId.quote()}`),
-					fragment: DVBTtargetCountry,
-					key: keys.k_InvalidCountryCode,
-				});
+			if (DVBTtargetCountry) {
+				if (!this.knownCountries.isISO3166code(DVBTtargetCountry.text()))
+					errs.addError({
+						code: "SI182",
+						message: InvalidCountryCode(DVBTtargetCountry.text(), "DVB-T", `service ${thisServiceId.quote()}`),
+						fragment: DVBTtargetCountry,
+						key: keys.k_InvalidCountryCode,
+					});
+				if (SchemaVersion(props.namespace) >= SCHEMA_r6) errs.addError(DeprecatedFeature(DVBTtargetCountry, SchemaSpecVersion(props.namespace), "SI183"));
+			}
 		}
 
 		// <ServiceInstance><DVBCDeliveryParameters>
 		let DVBCDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DVBCDeliveryParameters), props.schema);
 		if (DVBCDeliveryParameters) {
 			let DVBCtargetCountry = ServiceInstance.get(xPathM(props.prefix, [dvbi.e_DVBCDeliveryParameters, dvbi.e_TargetCountry]), props.schema);
-			if (DVBCtargetCountry && !this.knownCountries.isISO3166code(DVBCtargetCountry.text()))
-				errs.addError({
-					code: "SI191",
-					message: InvalidCountryCode(DVBCtargetCountry.text(), "DVB-C", `service ${thisServiceId.quote()}`),
-					fragment: DVBCtargetCountry,
-					key: keys.k_InvalidCountryCode,
-				});
+			if (DVBCtargetCountry) {
+				if (!this.knownCountries.isISO3166code(DVBCtargetCountry.text()))
+					errs.addError({
+						code: "SI191",
+						message: InvalidCountryCode(DVBCtargetCountry.text(), "DVB-C", `service ${thisServiceId.quote()}`),
+						fragment: DVBCtargetCountry,
+						key: keys.k_InvalidCountryCode,
+					});
+				if (SchemaVersion(props.namespace) >= SCHEMA_r6) errs.addError(DeprecatedFeature(DVBCtargetCountry, SchemaSpecVersion(props.namespace), "SI192"));
+			}
 		}
 
 		// <ServiceInstance><DVBSDeliveryParameters>
@@ -2440,10 +2445,14 @@ export default class ServiceListCheck {
 				});
 			else found.used = true;
 		}
+
 		// check <ServiceList><SubscriptionPackageList>
 		let declaredSubscriptionPackages = [];
 		let SubscriptionPackageList = SL.get(xPath(props.prefix, dvbi.e_SubscriptionPackageList), props.schema);
 		if (SubscriptionPackageList) {
+			if (SchemaVersion(props.namespace) >= SCHEMA_r5) {
+				errs.addError(DeprecatedFeature(SubscriptionPackageList, SchemaSpecVersion(props.namespace), "SL062"));
+			}
 			let sp = 0,
 				SubscriptionPackage;
 			while ((SubscriptionPackage = SubscriptionPackageList.get(xPath(props.prefix, dvbi.e_SubscriptionPackage, ++sp), props.schema)) != null) {
@@ -2602,6 +2611,9 @@ export default class ServiceListCheck {
 					SubscriptionPackages = [];
 				while ((SubscriptionPackage = LCNTable.get(xPath(props.prefix, dvbi.e_SubscriptionPackage, ++sp), props.schema)) != null) {
 					let packageLanguage = null;
+					if (SchemaVersion(props.namespace) >= SCHEMA_r5) {
+						errs.addError(DeprecatedFeature(SubscriptionPackage, SchemaSpecVersion(props.namespace), "SL264"));
+					}
 					if (SubscriptionPackage.attr(tva.a_lang)) {
 						packageLanguage = SubscriptionPackage.attr(tva.a_lang).value();
 						checkLanguage(this.knownLanguages, packageLanguage, `${dvbi.e_SubscriptionPackage} in ${dvbi.e_LCNTable}`, SubscriptionPackage, errs, "SL265");

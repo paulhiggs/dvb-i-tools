@@ -20,6 +20,7 @@ export const keys = {
 	k_XSDValidation: "XSD validation",
 };
 
+import { WARNING } from "./ErrorList.js";
 /**
  * Add an error message when the a required element is not present
  *
@@ -65,4 +66,13 @@ export var InvalidURL = (value, element, src, errCode) => ({
 	line: element.line(),
 	message: `invalid URL "${value}" specified for ${src.elementize()}`,
 	key: keys.k_InvalidURL,
+});
+
+export var DeprecatedFeature = (what, when, errCode) => ({
+	type: WARNING,
+	code: errCode,
+	fragment: what,
+	line: what.line(),
+	message: `${what.name().elementize()} in ${what.parent().name().elementize()} is deprecated in ${when}`,
+	keys: "deprecated feature",
 });
