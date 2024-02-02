@@ -1538,9 +1538,6 @@ export default class ServiceListCheck {
 						key: `undeclared ${dvbi.e_SubscriptionPackage}`,
 					});
 			}
-			if (SchemaVersion(props.namespace) >= SCHEMA_r5) {
-				errs.addError(DeprecatedFeature(SubscriptionPackage, SchemaSpecVersion(props.namespace), "SI131"));
-			}
 		}
 
 		// <ServiceInstance><FTAContentManagement>
@@ -2450,9 +2447,6 @@ export default class ServiceListCheck {
 		let declaredSubscriptionPackages = [];
 		let SubscriptionPackageList = SL.get(xPath(props.prefix, dvbi.e_SubscriptionPackageList), props.schema);
 		if (SubscriptionPackageList) {
-			if (SchemaVersion(props.namespace) >= SCHEMA_r5) {
-				errs.addError(DeprecatedFeature(SubscriptionPackageList, SchemaSpecVersion(props.namespace), "SL062"));
-			}
 			let sp = 0,
 				SubscriptionPackage;
 			while ((SubscriptionPackage = SubscriptionPackageList.get(xPath(props.prefix, dvbi.e_SubscriptionPackage, ++sp), props.schema)) != null) {
