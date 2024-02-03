@@ -3,7 +3,7 @@
 	<!-- ##################################################################### -->
 	<!-- RECORDINGINFO                                                         -->
 	<!-- Definition: A series of definitions providing information about       -->
-	<!--           recording permission                                        -->
+	<!--             recording permission                                      -->
 	<!-- ##################################################################### -->
 	<Term termID="1">
 		<Name xml:lang="en">Broadcast simulcast</Name>

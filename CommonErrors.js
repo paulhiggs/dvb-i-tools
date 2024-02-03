@@ -68,11 +68,20 @@ export var InvalidURL = (value, element, src, errCode) => ({
 	key: keys.k_InvalidURL,
 });
 
-export var DeprecatedFeature = (what, when, errCode) => ({
+export var DeprecatedElement = (what, when, errCode) => ({
 	type: WARNING,
 	code: errCode,
 	fragment: what,
 	line: what.line(),
 	message: `${what.name().elementize()} in ${what.parent().name().elementize()} is deprecated in ${when}`,
-	keys: "deprecated feature",
+	keys: "deprecated element",
+});
+
+export var DeprecatedAttribute = (what, when, errCode) => ({
+	type: WARNING,
+	code: errCode,
+	fragment: what.parent(),
+	line: what.parent().line(),
+	message: `${what.name().elementize(what.parent().name)} is deprecated in ${when}`,
+	keys: "deprecated attribute",
 });
