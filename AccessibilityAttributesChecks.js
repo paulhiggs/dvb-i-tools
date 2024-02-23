@@ -34,7 +34,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 		{ name: tva.e_MagnificationUIAttributes, minOccurs: 0, maxOccurs: Infinity },
 		{ name: tva.e_HighContrastUIAttributes, minOccurs: 0, maxOccurs: Infinity },
 		{ name: tva.e_ScreenReaderAttributes, minOccurs: 0, maxOccurs: Infinity },
-		{ name: tva.e_ResponseToUserAction, minOccurs: 0, maxOccurs: Infinity },
+		{ name: tva.e_ResponseToUserActionAttributes, minOccurs: 0, maxOccurs: Infinity },
 	];
 
 	if (accessibilityParent == tva.e_RelatedMaterial) {
