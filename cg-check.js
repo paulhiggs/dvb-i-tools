@@ -14,7 +14,7 @@ import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
 import { mpeg7 } from "./MPEG7_definitions.js";
 
 import { isCRIDURI, isTAGURI } from "./URI_checks.js";
-import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration, CountChildElements } from "./utils.js";
+import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration, CountChildElements, DuplicatedValue } from "./utils.js";
 
 import { isHTTPURL, isDVBLocator, isUTCDateTime } from "./pattern_checks.js";
 
@@ -1810,13 +1810,12 @@ export default class ContentGuideCheck {
 					let index = valUnsignedInt(MemberOf.attr(tva.a_index).value());
 					if (index >= 1) {
 						if (indexes) {
-							if (indexes.includes(index))
+							if (DuplicatedValue(indexes, index))
 								errs.addError({
 									code: "GI043",
 									message: `duplicated ${tva.a_index.attribute(`${GroupInformation.name()}.${tva.e_MemberOf}`)} values (${index})`,
 									fragment: MemberOf,
 								});
-							else indexes.push(index);
 						}
 					} else
 						errs.addError({
@@ -2715,7 +2714,7 @@ export default class ContentGuideCheck {
 					if (!patterns.isHTTPURL(node.text()))
 						errs.addError({code:`${errcode}-3`, message:`${node.name().elementize()}=${node.text().quote()} is not a valid URL`, key:"invalid URL", fragment:node});		
 					break;
-	*/
+				*/
 			}
 		} else
 			errs.addError({

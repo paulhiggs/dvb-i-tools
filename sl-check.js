@@ -14,7 +14,7 @@ import { dvbi, dvbiEC, dvbEA, XMLdocumentType } from "./DVB-I_definitions.js";
 import { tva, tvaEA } from "./TVA_definitions.js";
 import { isTAGURI } from "./URI_checks.js";
 
-import { xPath, xPathM, isIn, unEntity, getElementByTagName } from "./utils.js";
+import { xPath, xPathM, isIn, unEntity, getElementByTagName, DuplicatedValue } from "./utils.js";
 
 import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isDomainName, isRTSPURL } from "./pattern_checks.js";
 
@@ -1643,7 +1643,7 @@ export default class ServiceListCheck {
 			altSN,
 			alt = 0;
 		while ((altSN = ServiceInstance.get(xPath(props.prefix, dvbi.e_AltServiceName, ++alt), props.schema)) != null) {
-			if (alternateNames.includes(altSN.text()))
+			if (DuplicatedValue(alternateNames, altSN.text()))
 				errs.addError({
 					type: WARNING,
 					code: "SI165",
@@ -1651,7 +1651,6 @@ export default class ServiceListCheck {
 					message: `${dvbi.e_AltServiceName}=${altSN.text().quote} already specificed in ${dvbi.e_ServiceInstance.elementize()} of service ${thisServiceId.quote()}`,
 					key: "duplicate name",
 				});
-			else alternateNames.push(altSN.text());
 		}
 
 		// <ServiceInstance><DASHDeliveryParameters>
@@ -1934,11 +1933,21 @@ export default class ServiceListCheck {
 
 		//check <TargetRegion>
 		let tr = 0,
-			TargetRegion;
+			TargetRegion,
+			rBuf = [];
 		while ((TargetRegion = service.get(xPath(props.prefix, dvbi.e_TargetRegion, ++tr), props.schema)) != null) {
 			let found = knownRegionIDs.find((r) => r.region == TargetRegion.text());
 			if (found == undefined) errs.addError(UnspecifiedTargetRegion(TargetRegion.text(), `service ${thisServiceId.quote()}`, "SL130"));
 			else found.used = true;
+			if (DuplicatedValue(rBuf, TargetRegion.text())) {
+				errs.addError({
+					type: WARNING,
+					code: "SL131",
+					key: "duplicate value",
+					message: `duplicate value (${TargetRegion.value}) specified for ${dvbi.e_TargetRegion.elementize()}`,
+					fragment: TargetRegion,
+				});
+			}
 		}
 
 		//check <ServiceName>
@@ -2429,18 +2438,28 @@ export default class ServiceListCheck {
 
 		//check <ServiceList><TargetRegion>
 		let tr = 0,
-			TargetRegion;
+			TargetRegion,
+			rBuf = [];
 		while ((TargetRegion = SL.get(xPath(props.prefix, dvbi.e_TargetRegion, ++tr), props.schema)) != null) {
 			let found = knownRegionIDs.find((r) => r.region == TargetRegion.text());
-			if (found == undefined) errs.addError(UnspecifiedTargetRegion(TargetRegion.text(), "service list", "SL060"));
+			if (found == undefined) errs.addError(UnspecifiedTargetRegion(TargetRegion.text(), "service list", "SL051"));
 			else if (!found.selectable)
 				errs.addError({
-					code: "SL051",
+					code: "SL052",
 					message: `${dvbi.e_TargetRegion.elementize()} ${TargetRegion.text().quote()} in ${dvbi.e_ServiceList.elementize()} is not selectable`,
 					fragment: TargetRegion,
 					key: "unselectable region",
 				});
 			else found.used = true;
+			if (DuplicatedValue(rBuf, TargetRegion.text())) {
+				errs.addError({
+					type: WARNING,
+					code: "SL053",
+					key: "duplicate value",
+					message: `duplicate value (${TargetRegion.value}) specified for ${dvbi.e_TargetRegion.elementize()}`,
+					fragment: TargetRegion,
+				});
+			}
 		}
 
 		// check <ServiceList><SubscriptionPackageList>
@@ -2589,14 +2608,13 @@ export default class ServiceListCheck {
 						foundRegion.used = true;
 					}
 
-					if (TargetRegions.includes(targetRegionName))
+					if (DuplicatedValue(TargetRegions, targetRegionName))
 						errs.addError({
 							code: "SL243",
 							message: `respecification of ${dvbi.e_TargetRegion.elementize()}=${TargetRegion.text()}`,
 							fragment: TargetRegion,
 							key: "duplicate region",
 						});
-					else TargetRegions.push(targetRegionName);
 				}
 
 				// <LCNTable><SubscriptionPackage>
@@ -2616,14 +2634,13 @@ export default class ServiceListCheck {
 					}
 
 					let localSubscriptionPackage = localizedSubscriptionPackage(SubscriptionPackage, packageLanguage);
-					if (SubscriptionPackages.includes(localSubscriptionPackage))
+					if (DuplicatedValue(SubscriptionPackages, localSubscriptionPackage))
 						errs.addError({
 							code: "SL267",
 							message: `duplicated ${dvbi.e_SubscriptionPackage.elementize()}`,
 							fragment: SubscriptionPackage,
 							key: "duplicate package name",
 						});
-					else SubscriptionPackages.push(localSubscriptionPackage);
 
 					if (SchemaVersion(props.namespace) >= SCHEMA_r3)
 						if (!declaredSubscriptionPackages.includes(localSubscriptionPackage))
@@ -2644,14 +2661,13 @@ export default class ServiceListCheck {
 						let key = `${region}::${sPackage}`,
 							displayPackage =
 								sPackage == LCN_TABLE_NO_SUBSCRIPTION ? `unspecified ${dvbi.e_SubscriptionPackage.elementize()}` : `${dvbi.e_SubscriptionPackage.elementize()}="${sPackage}"`;
-						if (tableQualifiers.includes(key))
+						if (DuplicatedValue(tableQualifiers, key))
 							errs.addError({
 								code: "SL251",
 								message: `combination of ${displayRegion} and ${displayPackage} already used`,
 								key: "reused region/package",
 								line: LCNTable.line(),
 							});
-						else tableQualifiers.push(key);
 					});
 				});
 

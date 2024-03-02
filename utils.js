@@ -182,3 +182,16 @@ export function CountChildElements(node, childElementName) {
 		});
 	return r;
 }
+
+/**
+ * determines if the specified value is already in the array
+ * *
+ * @param {Array} found    the libxmljs node to check
+ * @param {String}  val    the value whose existance is to be checked
+ * @returns {boolean} true if @val is already present in @found, else false
+ */
+export function DuplicatedValue(found, val) {
+	let f = found.includes(val);
+	if (!f) found.push(val);
+	return f;
+}
