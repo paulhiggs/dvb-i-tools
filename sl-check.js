@@ -1227,7 +1227,7 @@ export default class ServiceListCheck {
 	 * @param {array}   declaredSubscriptionPackages  subscription packages that are declared in the service list
 	 * @param {Class}   errs                          errors found in validaton
 	 */
-	/*private*/ validateServiceInstance(props, ServiceInstance, thisServiceId, declaredSubscriptionPackages, errs) {
+	/*private*/ validateServiceInstance(props, ServiceInstance, thisServiceId, declaredSubscriptionPackages, declaredAudioLanguages, errs) {
 		if (!ServiceInstance) {
 			errs.addError({
 				type: APPLICATION,
@@ -1404,6 +1404,22 @@ export default class ServiceListCheck {
 										fragment: child,
 										key: "audio codec",
 									});
+								break;
+							case tva.e_AudioLanguage:
+								// check if the specificed audio language is included in the LanguageList for the Service List
+								if (declaredAudioLanguages.length != 0) {
+									let audioLanguage = child.text().toLowerCase();
+									let found = declaredAudioLanguages.find((el) => (el.language = audioLanguage));
+									if (found == undefined) {
+										errs.addError({
+											type: WARNING,
+											code: "SI053",
+											message: `audio language "${child.text()} is not defined in ${dvbi.e_LanguageList.elementize()}`,
+											fragment: child,
+											key: "audio language",
+										});
+									} else found.used = true;
+								}
 								break;
 						}
 					});
@@ -1900,10 +1916,11 @@ export default class ServiceListCheck {
 	 * @param {array}   knownServices                 services found and checked thus far
 	 * @param {array}   knownRegionIDs                regions identifiers from the RegionList
 	 * @param {array}   declaredSubscriptionPackages  subscription packages that are declared in the service list
+	 * @param {array}   declaredAudioLanguages        language values declared in the <LanguageList> of the service list
 	 * @param {array}   ContentGuideSourceIDs         identifiers of content guide sources found in the service list
 	 * @param {Class}   errs                          errors found in validaton
 	 */
-	/*private*/ validateService(props, SL, service, thisServiceId, knownServices, knownRegionIDs, declaredSubscriptionPackages, ContentGuideSourceIDs, errs) {
+	/*private*/ validateService(props, SL, service, thisServiceId, knownServices, knownRegionIDs, declaredSubscriptionPackages, declaredAudioLanguages, ContentGuideSourceIDs, errs) {
 		// check <UniqueIdentifier>
 		let uID = service.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
 		if (uID) {
@@ -1929,7 +1946,7 @@ export default class ServiceListCheck {
 		let si = 0,
 			ServiceInstance;
 		while ((ServiceInstance = service.get(xPath(props.prefix, dvbi.e_ServiceInstance, ++si), props.schema)) != null)
-			this.validateServiceInstance(props, ServiceInstance, thisServiceId, declaredSubscriptionPackages, errs);
+			this.validateServiceInstance(props, ServiceInstance, thisServiceId, declaredSubscriptionPackages, declaredAudioLanguages, errs);
 
 		//check <TargetRegion>
 		let tr = 0,
@@ -2390,23 +2407,23 @@ export default class ServiceListCheck {
 		checkXMLLangs(dvbi.e_ProviderName, dvbi.e_ServiceList, SL, errs, "SL021", this.knownLanguages);
 
 		//check <ServiceList><LanguageList>
+		let announcedAudioLanguages = [];
 		let LanguageList = SL.get(xPath(props.prefix, dvbi.e_LanguageList), props.schema);
 		if (LanguageList) {
-			let announcedLanguages = [],
-				l = 0,
+			let l = 0,
 				Language;
 			while ((Language = LanguageList.get(xPath(props.prefix, tva.e_Language, ++l), props.schema)) != null) {
 				checkLanguage(this.knownLanguages, Language.text(), `language in ${tva.e_Language.elementize()}`, Language, errs, "SL030");
 				checkAttributes(Language, [], [], tvaEA.AudioLanguage, errs, "SL031");
 				let lang_lower = Language.text().toLowerCase();
-				if (isIn(announcedLanguages, lang_lower))
+				if (isIn(announcedAudioLanguages, lang_lower))
 					errs.addError({
 						code: "SL032",
 						message: `language ${Language.text()} is already included in ${dvbi.e_LanguageList.elementize()}`,
 						fragment: Language,
 						key: "duplicate language",
 					});
-				else announcedLanguages.push(lang_lower);
+				else announcedAudioLanguages.push({ language: lang_lower, used: false, fragment: Language });
 			}
 		}
 
@@ -2519,9 +2536,18 @@ export default class ServiceListCheck {
 		while ((service = SL.get(xPath(props.prefix, dvbi.e_Service, ++s), props.schema)) != null) {
 			// for each service
 			errs.setW("num services", s);
-			let thisServiceId = `service-${s}`; // use a default value in case <UniqueIdentifier> is not specified
-
-			this.validateService(props, SL, service, thisServiceId, knownServices, knownRegionIDs, declaredSubscriptionPackages, ContentGuideSourceIDs, errs);
+			this.validateService(
+				props,
+				SL,
+				service,
+				`service-${s}`, // use a default value in case <UniqueIdentifier> is not specified
+				knownServices,
+				knownRegionIDs,
+				declaredSubscriptionPackages,
+				announcedAudioLanguages,
+				ContentGuideSourceIDs,
+				errs
+			);
 		}
 
 		if (SchemaVersion(props.namespace) >= SCHEMA_r5) {
@@ -2533,11 +2559,21 @@ export default class ServiceListCheck {
 			while ((testService = SL.get(xPath(props.prefix, dvbi.e_TestService, ++ts), props.schema)) != null) {
 				// for each service
 				errs.setW("num test services", ts);
-				let thisServiceId = `testservice-${ts}`; // use a default value in case <UniqueIdentifier> is not specified
-
-				this.validateService(props, SL, testService, thisServiceId, knownServices, knownRegionIDs, declaredSubscriptionPackages, ContentGuideSourceIDs, errs);
+				this.validateService(
+					props,
+					SL,
+					testService,
+					`testservice-${ts}`, // use a default value in case <UniqueIdentifier> is not specified,
+					knownServices,
+					knownRegionIDs,
+					declaredSubscriptionPackages,
+					announcedAudioLanguages,
+					ContentGuideSourceIDs,
+					errs
+				);
 			}
 		}
+
 		// check <Service><ContentGuideServiceRef>
 		// issues a warning if this is a reference to self
 		s = 0;
@@ -2715,6 +2751,18 @@ export default class ServiceListCheck {
 					});
 			});
 		}
+
+		// report any languages in the <LanguageList> that are not used
+		announcedAudioLanguages.forEach((lang) => {
+			if (!lang.used)
+				errs.addError({
+					code: "SL282",
+					type: WARNING,
+					message: `language "${lang.language}" is defined but not used`,
+					key: `unused ${dvbi.e_Language}`,
+					fragment: lang.fragment,
+				});
+		});
 	}
 
 	/**
