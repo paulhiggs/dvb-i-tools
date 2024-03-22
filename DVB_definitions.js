@@ -23,9 +23,10 @@ export const sats = {
 	S_FEC: _S_FEC,
 	S_RollOff: _S_RollOff,
 	S_Modulation: _S_Modulation,
+	S2_FEC: _S_FEC,
 	S2_RollOff: _S2_RollOff,
 	S2_Modulation: _S2_Modulation,
-	S2X_RollOff: _S2X_RollOff,
 	S2X_FEC: _S2X_FEC,
+	S2X_RollOff: _S2X_RollOff,
 	S2X_Modulation: _S2X_Modulation,
 };
