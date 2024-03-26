@@ -56,28 +56,32 @@ function loadClassificationScheme(xmlCS, leafNodesOnly = false) {
 }
 
 export default class ClassificationScheme {
+	#values;
+	#schemes;
+	#leafsOnly;
+
 	constructor() {
-		this.values = new AvlTree();
-		this.schemes = [];
-		this.leafsOnly = false;
+		this.#values = new AvlTree();
+		this.#schemes = [];
+		this.#leafsOnly = false;
 		loadClassificationScheme.bind(this);
 	}
 
 	count() {
-		return this.values.count();
+		return this.#values.count();
 	}
 
 	empty() {
-		this.values.clear();
-		this.schemes = [];
+		this.#values.clear();
+		this.#schemes = [];
 	}
 
 	insertValue(key, value = true) {
-		if (key != "") this.values.insert(key, value);
+		if (key != "") this.#values.insert(key, value);
 	}
 
 	valuesRange() {
-		return this.leafsOnly ? "-only leaf nodes are used from the CS" : "all nodes in the CS are used";
+		return this.#leafsOnly ? "-only leaf nodes are used from the CS" : "all nodes in the CS are used";
 	}
 
 	/**
@@ -86,20 +90,20 @@ export default class ClassificationScheme {
 	 * @param {String} csURL URL to the classification scheme
 
 	 */
-	loadFromURL(csURL) {
+	#loadFromURL(csURL) {
 		let isHTTPurl = isHTTPURL(csURL);
-		console.log(`${isHTTPurl ? "" : "--> NOT "}retrieving CS (${this.leafsOnly ? "leaf" : "all"} nodes) from ${csURL} via fetch()`.yellow);
+		console.log(`${isHTTPurl ? "" : "--> NOT "}retrieving CS (${this.#leafsOnly ? "leaf" : "all"} nodes) from ${csURL} via fetch()`.yellow);
 		if (!isHTTPurl) return;
 
 		fetch(csURL)
 			.then(handleErrors)
 			.then((response) => response.text())
-			.then((strXML) => loadClassificationScheme(parseXmlString(strXML), this.leafsOnly))
+			.then((strXML) => loadClassificationScheme(parseXmlString(strXML), this.#leafsOnly))
 			.then((res) => {
 				res.vals.forEach((e) => {
 					this.insertValue(e, true);
 				});
-				this.schemes.push(res.uri);
+				this.#schemes.push(res.uri);
 			})
 			.catch((error) => console.log(`error (${error}) retrieving ${csURL}`.red));
 	}
@@ -109,16 +113,16 @@ export default class ClassificationScheme {
 	 *
 	 * @param {String} classificationScheme the filename of the classification scheme
 	 */
-	loadFromFile(classificationScheme) {
-		console.log(`reading CS (${this.leafsOnly ? "leaf" : "all"} nodes) from ${classificationScheme}`.yellow);
+	#loadFromFile(classificationScheme) {
+		console.log(`reading CS (${this.#leafsOnly ? "leaf" : "all"} nodes) from ${classificationScheme}`.yellow);
 
 		readFile(classificationScheme, { encoding: "utf-8" }, (err, data) => {
 			if (!err) {
-				let res = loadClassificationScheme(parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm, "")), this.leafsOnly);
+				let res = loadClassificationScheme(parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm, "")), this.#leafsOnly);
 				res.vals.forEach((e) => {
 					this.insertValue(e, true);
 				});
-				this.schemes.push(res.uri);
+				this.#schemes.push(res.uri);
 			} else console.log(err.red);
 		});
 	}
@@ -126,12 +130,12 @@ export default class ClassificationScheme {
 	loadCS(options) {
 		if (!options) options = {};
 		if (!Object.prototype.hasOwnProperty.call(options, "leafNodesOnly")) options.leafNodesOnly = false;
-		this.leafsOnly = options.leafNodesOnly;
+		this.#leafsOnly = options.leafNodesOnly;
 
-		if (options.file) this.loadFromFile(options.file);
-		if (options.files) options.files.forEach((file) => this.loadFromFile(file));
-		if (options.url) this.loadFromURL(options.url);
-		if (options.urls) options.urls.forEach((url) => this.loadFromURL(url));
+		if (options.file) this.#loadFromFile(options.file);
+		if (options.files) options.files.forEach((file) => this.#loadFromFile(file));
+		if (options.url) this.#loadFromURL(options.url);
+		if (options.urls) options.urls.forEach((url) => this.#loadFromURL(url));
 	}
 
 	/**
@@ -141,7 +145,7 @@ export default class ClassificationScheme {
 	 * @returns {boolean} true if value is in the classification scheme
 	 */
 	isIn(value) {
-		return this.values.has(value);
+		return this.#values.has(value);
 	}
 
 	/**
@@ -152,12 +156,12 @@ export default class ClassificationScheme {
 	hasScheme(term) {
 		let pos = term.lastIndexOf(CS_URI_DELIMITER);
 		if (pos == -1) return false;
-		return this.schemes.includes(term.slice(0, pos));
+		return this.#schemes.includes(term.slice(0, pos));
 	}
 
 	showMe(prefix = "") {
-		console.log(`in showme("${prefix}"), count=${this.values.count()}`);
-		this.values.traverseInOrder((node) => {
+		console.log(`in showme("${prefix}"), count=${this.#values.count()}`);
+		this.#values.traverseInOrder((node) => {
 			if (prefix == "" || node.getValue().beginsWith(prefix)) console.log(node.getValue());
 		});
 	}

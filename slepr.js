@@ -54,37 +54,42 @@ function GetChild(element, childName, index) {
 }
 
 export default class SLEPR {
+	#numRequests;
+	#knownLanguages;
+	#knownCountries;
+	#knownGenres;
+
 	constructor(useURLs, preloadedLanguageValidator = null, preloadedCountries = null, preloadedGenres = null) {
-		this.numRequests = 0;
+		this.#numRequests = 0;
 		this.loadDataFiles(useURLs, preloadedLanguageValidator, preloadedCountries, preloadedGenres);
 	}
 
 	stats() {
 		let res = {};
-		res.numRequests = this.numRequests;
-		res.mumGenres = this.knownGenres.count();
-		this.knownLanguages.stats(res);
-		res.numCountries = this.knownCountries.count();
+		res.numRequests = this.#numRequests;
+		res.mumGenres = this.#knownGenres.count();
+		this.#knownLanguages.stats(res);
+		res.numCountries = this.#knownCountries.count();
 		return res;
 	}
 
 	/* public */ loadDataFiles(useURLs, preloadedLanguageValidator = null, preloadedCountries = null, preloadedGenres = null) {
-		if (preloadedLanguageValidator) this.knownLanguages = preloadedLanguageValidator;
+		if (preloadedLanguageValidator) this.#knownLanguages = preloadedLanguageValidator;
 		else {
-			this.knownLanguages = new IANAlanguages();
-			this.knownLanguages.loadLanguages(useURLs ? { url: IANA_Subtag_Registry.url, purge: true } : { file: IANA_Subtag_Registry.file, purge: true });
+			this.#knownLanguages = new IANAlanguages();
+			this.#knownLanguages.loadLanguages(useURLs ? { url: IANA_Subtag_Registry.url, purge: true } : { file: IANA_Subtag_Registry.file, purge: true });
 		}
 
-		if (preloadedCountries) this.knownCountries = preloadedCountries;
+		if (preloadedCountries) this.#knownCountries = preloadedCountries;
 		else {
-			this.knownCountries = new ISOcountries(false, true);
-			this.knownCountries.loadCountries(useURLs ? { url: ISO3166.url } : { file: ISO3166.file });
+			this.#knownCountries = new ISOcountries(false, true);
+			this.#knownCountries.loadCountries(useURLs ? { url: ISO3166.url } : { file: ISO3166.file });
 		}
 
-		if (preloadedGenres) this.knownGenres = preloadedGenres;
+		if (preloadedGenres) this.#knownGenres = preloadedGenres;
 		else {
-			this.knownGenres = new ClassificationScheme();
-			this.knownGenres.loadCS(
+			this.#knownGenres = new ClassificationScheme();
+			this.#knownGenres.loadCS(
 				useURLs ? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] } : { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] }
 			);
 		}
@@ -147,7 +152,7 @@ export default class SLEPR {
 			}
 
 			//TargetCountry(s)
-			var checkTargetCountry = (country) => this.knownCountries.isISO3166code(country, false);
+			var checkTargetCountry = (country) => this.#knownCountries.isISO3166code(country, false);
 			checkIt(req.query.TargetCountry, dvbi.e_TargetCountry, checkTargetCountry);
 
 			//Language(s)
@@ -159,7 +164,7 @@ export default class SLEPR {
 			checkIt(req.query.Delivery, dvbi.e_Delivery, checkDelivery);
 
 			// Genre(s)
-			var checkGenre = (genre) => this.knownGenres.isIn(genre);
+			var checkGenre = (genre) => this.#knownGenres.isIn(genre);
 			checkIt(req.query.Genre, dvbi.e_Genre, checkGenre);
 
 			if (req.query.inlineImages) {
@@ -177,6 +182,7 @@ export default class SLEPR {
 	}
 
 	/* public */ processServiceListRequest(req, res) {
+		this.#numRequests++;
 		if (!this.checkQuery(req)) {
 			if (req.parseErr) res.write(`[${req.parseErr.join(",\n\t")}]`);
 			res.status(400);

@@ -24,13 +24,17 @@ var nthIndexOf = (str, pat, n) => {
 };
 
 export default class ErrorList {
+	#numCountsE; // keep these counters as arrays constructed by
+	#numCountsW; // direct insertion do not maintain them
+	#numCountsI;
+
 	constructor() {
 		this.countsErr = [];
-		this.numCountsE = 0; // keep these counters as arrays constructed by
+		this.#numCountsE = 0;
 		this.countsWarn = [];
-		this.numCountsW = 0; // direct insertion do not maintain them
+		this.#numCountsW = 0;
 		this.countsInfo = [];
-		this.numCountsI = 0;
+		this.#numCountsI = 0;
 		this.errors = [];
 		this.warnings = [];
 		this.informationals = [];
@@ -50,62 +54,62 @@ export default class ErrorList {
 	 * @param {*} message the verbose error message
 	 * @param {*} lineNo  the line number in the received text to attach the error to
 	 */
-	/* private */ setError(type, code, message, lineNo) {
+	/* private method */ #setError(type, code, message, lineNo) {
 		let found = this.markupXML.find((line) => line.ix == lineNo);
 		if (found) {
 			if (!found.validationErrors) found.validationErrors = [];
 			found.validationErrors.push(`${type} ${code}: ${message}`);
 		}
 	}
-	/* private */ increment(key) {
+	/* private method*/ #increment(key) {
 		if (this.countsErr[key] === undefined) this.set(key);
 		else this.countsErr[key]++;
 	}
 	set(key, value = 1) {
 		this.countsErr[key] = value;
-		this.numCountsE++;
+		this.#numCountsE++;
 	}
-	/* private */ incrementW(key) {
+	/* private method*/ #incrementW(key) {
 		if (this.countsWarn[key] === undefined) this.setW(key);
 		else this.countsWarn[key]++;
 	}
 	setW(key, value = 1) {
 		this.countsWarn[key] = value;
-		this.numCountsW++;
+		this.#numCountsW++;
 	}
-	/* private */ incrementI(key) {
+	/* private method*/ #incrementI(key) {
 		if (this.countsInfo[key] === undefined) this.setI(key);
 		else this.countsInfo[key]++;
 	}
 	setI(key, value = 1) {
 		this.countsInfo[key] = value;
-		this.numCountsI++;
+		this.#numCountsI++;
 	}
 
-	/* private method */ prettyPrint(node) {
+	/* private method */ #prettyPrint(node) {
 		// clean up and redo formatting
 		let tmp = node.toString({ declaration: false, format: true });
 		let maxLen = nthIndexOf(tmp, "\n", MAX_FRAGMENT_LINES);
 		return maxLen == -1 ? tmp : `${tmp.slice(0, maxLen)}\n....\n`;
 	}
 
-	/* private method */ insertErrorData(type, key, err) {
+	/* private method */ #insertErrorData(type, key, err) {
 		switch (type) {
 			case ERROR:
 				this.errors.push(err);
-				if (key) this.increment(key);
+				if (key) this.#increment(key);
 				break;
 			case APPLICATION:
 				this.errors.push(err);
-				this.increment("application process error");
+				this.#increment("application process error");
 				break;
 			case WARNING:
 				this.warnings.push(err);
-				if (key) this.incrementW(key);
+				if (key) this.#incrementW(key);
 				break;
 			case INFORMATION:
 				this.informationals.push(err);
-				if (key) this.incrementI(key);
+				if (key) this.#incrementI(key);
 				break;
 		}
 	}
@@ -113,7 +117,7 @@ export default class ErrorList {
 	/**
 	 *
 	 * @param {integer}                  e.type      (optional) ERROR(default) or WARNING
-	 * @param {tring}                    e.code      Error code
+	 * @param {string}                   e.code      Error code
 	 * @param {string}                   e.message   The error message
 	 * @param {string}                   e.key       (optional)The category of the message
 	 * @param {string or libxmljs2:Node} e.fragment  (optional) The XML fragment (or node in the XML document) triggering the error
@@ -127,18 +131,18 @@ export default class ErrorList {
 
 		if (![ERROR, WARNING, INFORMATION, APPLICATION].includes(e.type)) {
 			this.errors.push({ code: "ERR000", message: `addError() called with invalid type property (${e.type})` });
-			this.increment(_INVALID_CALL);
+			this.#increment(_INVALID_CALL);
 			argsOK = false;
 		}
 		if (!e.code) {
 			this.errors.push({ code: "ERR001", message: "addError() called without code property" });
-			this.increment(_INVALID_CALL);
+			this.#increment(_INVALID_CALL);
 			e.code = "ERR001";
 			argsOK = false;
 		}
 		if (!e.message) {
 			this.errors.push({ code: "ERR002", message: "addError() called without message property" });
-			this.increment(_INVALID_CALL);
+			this.#increment(_INVALID_CALL);
 			e.message = "no error message";
 			argsOK = false;
 		}
@@ -151,50 +155,50 @@ export default class ErrorList {
 			 * each element of multiElementError is an element that is marked up, but the error message is
 			 * only reported once in the error list
 			 */
-			this.insertErrorData(e.type, e.key, { code: e.code, message: e.message });
+			this.#insertErrorData(e.type, e.key, { code: e.code, message: e.message });
 			e.multiElementError.forEach((fragment) => {
-				if (fragment && !datatypeIs(fragment, "string")) this.setError(e.type, e.code, e.message, fragment.line());
+				if (fragment && !datatypeIs(fragment, "string")) this.#setError(e.type, e.code, e.message, fragment.line());
 			});
 		} else if (e.fragments) {
 			// note that the line of the error is derived from the fragment -- e.line is only used with the fragment is already a string
 			e.fragments.forEach((fragment) => {
 				let newError = { code: e.code, message: e.message };
 				if (fragment) {
-					newError.element = datatypeIs(fragment, "string") ? fragment : this.prettyPrint(fragment);
+					newError.element = datatypeIs(fragment, "string") ? fragment : this.#prettyPrint(fragment);
 
 					if (datatypeIs(fragment, "string")) {
 						if (Object.prototype.hasOwnProperty.call(e, "line")) {
-							this.setError(e.type, e.code, e.message, e.line);
+							this.#setError(e.type, e.code, e.message, e.line);
 							newError.line = e.line - 2;
 						}
 					} else {
-						this.setError(e.type, e.code, e.message, fragment.line());
+						this.#setError(e.type, e.code, e.message, fragment.line());
 						newError.line = fragment.line() - 2;
 					}
-					if (e.reportInTable) this.insertErrorData(e.type, e.key, newError);
+					if (e.reportInTable) this.#insertErrorData(e.type, e.key, newError);
 				}
 			});
 		} else if (e.fragment) {
 			// note that the line of the error is derived from the fragment -- e.line is only used with the fragment is already a string
-			let newError = { code: e.code, message: e.message, element: datatypeIs(e.fragment, "string") ? e.fragment : this.prettyPrint(e.fragment) };
+			let newError = { code: e.code, message: e.message, element: datatypeIs(e.fragment, "string") ? e.fragment : this.#prettyPrint(e.fragment) };
 
 			if (datatypeIs(e.fragment, "string")) {
 				if (Object.prototype.hasOwnProperty.call(e, "line")) {
-					this.setError(e.type, e.code, e.message, e.line);
+					this.#setError(e.type, e.code, e.message, e.line);
 					newError.line = e.line - 2;
 				}
 			} else {
-				this.setError(e.type, e.code, e.message, e.fragment.line());
+				this.#setError(e.type, e.code, e.message, e.fragment.line());
 				newError.line = e.fragment.line() - 2;
 			}
-			if (e.reportInTable) this.insertErrorData(e.type, e.key, newError);
+			if (e.reportInTable) this.#insertErrorData(e.type, e.key, newError);
 		} else {
 			let newError = { code: e.code, message: e.message, element: null };
 			if (e.line) {
-				this.setError(e.type, e.code, e.message, e.line);
+				this.#setError(e.type, e.code, e.message, e.line);
 				newError.line = e.line - 2;
 			}
-			if (e.reportInTable) this.insertErrorData(e.type, e.key, newError);
+			if (e.reportInTable) this.#insertErrorData(e.type, e.key, newError);
 		}
 	}
 
@@ -209,12 +213,12 @@ export default class ErrorList {
 	}
 
 	numCountsErr() {
-		return this.numCountsE;
+		return this.#numCountsE;
 	}
 	numCountsWarn() {
-		return this.numCountsW;
+		return this.#numCountsW;
 	}
 	numCountsInfo() {
-		return this.numCountsI;
+		return this.#numCountsI;
 	}
 }

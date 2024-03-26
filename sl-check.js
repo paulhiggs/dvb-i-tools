@@ -374,10 +374,29 @@ if (!Array.prototype.forEachSubElement) {
 }
 
 export default class ServiceListCheck {
-	constructor(useURLs, opts) {
-		this.numRequests = 0;
+	#numRequests;
+	#knownLanguages;
+	#allowedGenres;
+	#allowedVideoSchemes;
+	#allowedAudioSchemes;
+	#knownCountries;
+	#AudioPresentationCSvalues;
+	#accessibilityPurposes;
+	#audioPurposes;
+	#subtitleCarriages;
+	#subtitleCodings;
+	#subtitlePurposes;
+	#allowedPictureFormats;
+	#allowedColorimetry;
+	#allowedServiceTypes;
+	#allowedAudioConformancePoints;
+	#allowedVideoConformancePoints;
+	#RecordingInfoCSvalues;
 
-		this.knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs);
+	constructor(useURLs, opts) {
+		this.#numRequests = 0;
+
+		this.#knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs);
 
 		console.log("loading service list schemas...".yellow.underline);
 		SchemaVersions.forEach((version) => {
@@ -387,40 +406,39 @@ export default class ServiceListCheck {
 		});
 
 		console.log("loading classification schemes...".yellow.underline);
-		this.allowedGenres = opts?.genres ? opts.genres : LoadGenres(useURLs);
-		this.allowedVideoSchemes = opts?.videofmts ? opts.videofmts : LoadVideoCodecCS(useURLs);
-		this.allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs);
-		this.AudioPresentationCSvalues = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs);
-		this.accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs);
-		this.audioPurposes = opts?.audiopurp ? opts.audiopurp : LoadAudioPurpose(useURLs);
-		this.subtitleCarriages = opts?.stcarriage ? opts.stcarriage : LoadSubtitleCarriages(useURLs);
-		this.subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs);
-		this.subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs);
-		this.knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs);
+		this.#allowedGenres = opts?.genres ? opts.genres : LoadGenres(useURLs);
+		this.#allowedVideoSchemes = opts?.videofmts ? opts.videofmts : LoadVideoCodecCS(useURLs);
+		this.#allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs);
+		this.#AudioPresentationCSvalues = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs);
+		this.#accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs);
+		this.#audioPurposes = opts?.audiopurp ? opts.audiopurp : LoadAudioPurpose(useURLs);
+		this.#subtitleCarriages = opts?.stcarriage ? opts.stcarriage : LoadSubtitleCarriages(useURLs);
+		this.#subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs);
+		this.#subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs);
+		this.#knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs);
 
-		this.allowedPictureFormats = LoadPictureFormatCS(useURLs);
-		this.allowedColorimetry = LoadColorimetryCS(useURLs);
-		this.allowedServiceTypes = LoadServiceTypeCS(useURLs);
+		this.#allowedPictureFormats = LoadPictureFormatCS(useURLs);
+		this.#allowedColorimetry = LoadColorimetryCS(useURLs);
+		this.#allowedServiceTypes = LoadServiceTypeCS(useURLs);
 
-		this.allowedAudioConformancePoints = LoadAudioConformanceCS(useURLs);
-		this.allowedVideoConformancePoints = LoadVideoConformanceCS(useURLs);
-		this.RecordingInfoCSvalues = LoadRecordingInfoCS(useURLs);
+		this.#allowedAudioConformancePoints = LoadAudioConformanceCS(useURLs);
+		this.#allowedVideoConformancePoints = LoadVideoConformanceCS(useURLs);
+		this.#RecordingInfoCSvalues = LoadRecordingInfoCS(useURLs);
 	}
 
 	stats() {
 		let res = {};
-		res.numRequests = this.numRequests;
-		res.numAllowedGenres = this.allowedGenres.count();
-		res.numKnownCountries = this.knownCountries.count();
-		this.knownLanguages.stats(res);
-		res.numAllowedPictureFormats = this.allowedPictureFormats.count();
-		res.numAllowedColorimetry = this.allowedColorimetry.count();
-		res.numAllowedServiceTypes = this.allowedServiceTypes.count();
-		res.numAllowedAudioSchemes = this.allowedAudioSchemes.count();
-		res.numAllowedVideoSchemes = this.allowedVideoSchemes.count();
-		res.numAllowedVideoConformancePoints = this.allowedVideoConformancePoints.count();
-		res.numAudioPresentationCSvalues = this.AudioPresentationCSvalues.count();
-		res.numAudioPresentationCSvalues = this.AudioPresentationCSvalues.count();
+		res.numRequests = this.#numRequests;
+		res.numAllowedGenres = this.#allowedGenres.count();
+		res.numKnownCountries = this.#knownCountries.count();
+		this.#knownLanguages.stats(res);
+		res.numAllowedPictureFormats = this.#allowedPictureFormats.count();
+		res.numAllowedColorimetry = this.#allowedColorimetry.count();
+		res.numAllowedServiceTypes = this.#allowedServiceTypes.count();
+		res.numAllowedAudioSchemes = this.#allowedAudioSchemes.count();
+		res.numAllowedVideoSchemes = this.#allowedVideoSchemes.count();
+		res.numAllowedVideoConformancePoints = this.#allowedVideoConformancePoints.count();
+		res.numAudioPresentationCSvalues = this.#AudioPresentationCSvalues.count();
 		return res;
 	}
 
@@ -434,7 +452,7 @@ export default class ServiceListCheck {
 	 * @param {Array}   countries
 	 * @param {Object}  errs             The class where errors and warnings relating to the service list processing are stored
 	 */
-	/*private*/ addRegion(props, Region, depth, knownRegionIDs, countries, errs) {
+	/*private*/ #addRegion(props, Region, depth, knownRegionIDs, countries, errs) {
 		if (!Region) {
 			errs.addError({
 				type: APPLICATION,
@@ -462,7 +480,7 @@ export default class ServiceListCheck {
 			countriesSpecified = countryCodesSpecified.value().split(",");
 			if (countriesSpecified)
 				countriesSpecified.forEach((country) => {
-					if (!this.knownCountries.isISO3166code(country))
+					if (!this.#knownCountries.isISO3166code(country))
 						errs.addError({
 							code: "AR033",
 							message: `invalid country code (${country}) for region ${displayRegionID}`,
@@ -547,7 +565,7 @@ export default class ServiceListCheck {
 				line: Region.line(),
 			});
 
-		checkXMLLangs(dvbi.e_RegionName, `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${displayRegionID}`, Region, errs, "AR041", this.knownLanguages);
+		checkXMLLangs(dvbi.e_RegionName, `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${displayRegionID}`, Region, errs, "AR041", this.#knownLanguages);
 
 		// <Region><Postcode>
 		let pc = 0,
@@ -565,7 +583,7 @@ export default class ServiceListCheck {
 		let rc = 0,
 			RegionChild;
 		while ((RegionChild = Region.get(xPath(props.prefix, dvbi.e_Region, ++rc), props.schema)) != null)
-			this.addRegion(props, RegionChild, depth + 1, knownRegionIDs, countriesSpecified, errs);
+			this.#addRegion(props, RegionChild, depth + 1, knownRegionIDs, countriesSpecified, errs);
 	}
 
 	/**
@@ -576,7 +594,7 @@ export default class ServiceListCheck {
 	 * @param {any}   value            value to match with val: in the allowed values
 	 * @returns {boolean} true if {index, value} pair exists in the list of allowed values when namespace is specific or if any val: equals value with namespace is ANY_NAMESPACE, else false
 	 */
-	/*private*/ match(permittedValues, version, value) {
+	/*private*/ #match(permittedValues, version, value) {
 		if (value && permittedValues) {
 			if (version == ANY_NAMESPACE) return permittedValues.find((elem) => elem.value == value) != undefined;
 			else {
@@ -594,9 +612,9 @@ export default class ServiceListCheck {
 	 * @param {String}  namespace   The namespace being used in the XML document
 	 * @returns {boolean} true if this is a valid banner for out-of-servce-hours presentation else false
 	 */
-	/*private*/ validOutScheduleHours(HowRelated, namespace) {
+	/*private*/ #validOutScheduleHours(HowRelated, namespace) {
 		// return true if val is a valid CS value for Out of Service Banners (A177 5.2.5.3)
-		return this.match(OutOfScheduledHoursBanners, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null);
+		return this.#match(OutOfScheduledHoursBanners, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null);
 	}
 
 	/**
@@ -607,9 +625,9 @@ export default class ServiceListCheck {
 	 * @param {String}  namespace   The namespace being used in the XML document
 	 * @returns {boolean} true if this is a valid banner for content-finished presentation else false
 	 */
-	/*private*/ validContentFinishedBanner(HowRelated, namespace) {
+	/*private*/ #validContentFinishedBanner(HowRelated, namespace) {
 		// return true if val is a valid CS value for Content Finished Banner (A177 5.2.7.3)
-		return this.match(
+		return this.#match(
 			ContentFinishedBanners,
 			namespace == ANY_NAMESPACE ? namespace : SchemaVersion(namespace),
 			HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null
@@ -623,9 +641,9 @@ export default class ServiceListCheck {
 	 * @param {String}  namespace   The namespace being used in the XML document
 	 * @returns {boolean} true if this is a valid logo for a service list else false
 	 */
-	/*private*/ validServiceListLogo(HowRelated, namespace) {
+	/*private*/ #validServiceListLogo(HowRelated, namespace) {
 		// return true if HowRelated@href is a valid CS value Service List Logo (A177 5.2.6.1)
-		return this.match(ServiceListLogos, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null);
+		return this.#match(ServiceListLogos, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null);
 	}
 
 	/**
@@ -635,9 +653,9 @@ export default class ServiceListCheck {
 	 * @param {String}  namespace   The namespace being used in the XML document
 	 * @returns {boolean} true if this is a valid logo for a service  else false
 	 */
-	/*private*/ validServiceLogo(HowRelated, namespace) {
+	/*private*/ #validServiceLogo(HowRelated, namespace) {
 		// return true if val is a valid CS value Service Logo (A177 5.2.6.2)
-		return this.match(ServiceLogos, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null);
+		return this.#match(ServiceLogos, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null);
 	}
 
 	/**
@@ -647,9 +665,9 @@ export default class ServiceListCheck {
 	 * @param {String}  namespace   The namespace being used in the XML document
 	 * @returns {boolean} true if this is a valid banner for a service  else false
 	 */
-	/*private*/ validServiceBanner(HowRelated, namespace) {
+	/*private*/ #validServiceBanner(HowRelated, namespace) {
 		// return true if val is a valid CS value Service Banner (A177 5.2.6.x)
-		return this.match(ServiceBanners, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null);
+		return this.#match(ServiceBanners, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null);
 	}
 
 	/**
@@ -659,9 +677,9 @@ export default class ServiceListCheck {
 	 * @param {String}  namespace   The namespace being used in the XML document
 	 * @returns {boolean} true if this is a valid logo for a content guide source else false
 	 */
-	/*private*/ validContentGuideSourceLogo(HowRelated, namespace) {
+	/*private*/ #validContentGuideSourceLogo(HowRelated, namespace) {
 		// return true if val is a valid CS value Service Logo (A177 5.2.6.3)
-		return this.match(ContentGuideSourceLogos, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null);
+		return this.#match(ContentGuideSourceLogos, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null);
 	}
 
 	/**
@@ -672,7 +690,7 @@ export default class ServiceListCheck {
 	 * @param {string}  Location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 * @param {string}  AppType       The type of application being checked, from HowRelated@href
 	 */
-	/*private*/ checkSignalledApplication(MediaLocator, errs, Location, AppType) {
+	/*private*/ #checkSignalledApplication(MediaLocator, errs, Location, AppType) {
 		const validApplicationTypes = [dvbi.XML_AIT_CONTENT_TYPE, dvbi.HTML5_APP, dvbi.XHTML_APP];
 		let isValidApplicationType = (type) => validApplicationTypes.includes(type);
 
@@ -738,7 +756,7 @@ export default class ServiceListCheck {
 	 * @param {integer} schemaVersion  The schema version of the XML document
 	 * @returns {boolean} true if this is a valid application launching method else false
 	 */
-	/*private*/ validServiceApplication(HowRelated, schemaVersion) {
+	/*private*/ #validServiceApplication(HowRelated, schemaVersion) {
 		// return true if the HowRelated element has a 	valid CS value for Service Related Applications (A177 5.2.3)
 		// urn:dvb:metadata:cs:LinkedApplicationCS:2019
 		if (!HowRelated) return false;
@@ -758,7 +776,7 @@ export default class ServiceListCheck {
 	 * @param {string}  errCode           The prefix to use for any errors found
 	 * @returns {string} an href value if valid, else ""
 	 */
-	/*private*/ validateRelatedMaterial(props, RelatedMaterial, errs, Location, LocationType, errCode) {
+	/*private*/ #validateRelatedMaterial(props, RelatedMaterial, errs, Location, LocationType, errCode) {
 		let rc = "";
 		if (!RelatedMaterial) {
 			errs.addError({
@@ -811,13 +829,13 @@ export default class ServiceListCheck {
 		if (HowRelated.attr(dvbi.a_href)) {
 			switch (LocationType) {
 				case SERVICE_LIST_RM:
-					if (this.validServiceListLogo(HowRelated, props.namespace)) {
+					if (this.#validServiceListLogo(HowRelated, props.namespace)) {
 						rc = HowRelated.attr(dvbi.a_href).value();
-						checkValidLogos(RelatedMaterial, errs, `${errCode}-10`, Location, this.knownLanguages);
+						checkValidLogos(RelatedMaterial, errs, `${errCode}-10`, Location, this.#knownLanguages);
 					} else errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-11`));
 					break;
 				case SERVICE_RM:
-					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && SchemaVersion(props.namespace) == SCHEMA_r0)
+					if (this.#validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && SchemaVersion(props.namespace) == SCHEMA_r0)
 						errs.addError({
 							code: `${errCode}-21`,
 							message: `${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${props.namespace.quote()} in ${Location}`,
@@ -826,20 +844,20 @@ export default class ServiceListCheck {
 						});
 
 					if (
-						this.validOutScheduleHours(HowRelated, props.namespace) ||
-						this.validContentFinishedBanner(HowRelated, props.namespace) ||
-						this.validServiceLogo(HowRelated, props.namespace) ||
-						this.validServiceBanner(HowRelated, props.namespace)
+						this.#validOutScheduleHours(HowRelated, props.namespace) ||
+						this.#validContentFinishedBanner(HowRelated, props.namespace) ||
+						this.#validServiceLogo(HowRelated, props.namespace) ||
+						this.#validServiceBanner(HowRelated, props.namespace)
 					) {
 						rc = HowRelated.attr(dvbi.a_href).value();
-						checkValidLogos(RelatedMaterial, errs, `${errCode}-22`, Location, this.knownLanguages);
-					} else if (this.validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
+						checkValidLogos(RelatedMaterial, errs, `${errCode}-22`, Location, this.#knownLanguages);
+					} else if (this.#validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
 						rc = HowRelated.attr(dvbi.a_href).value();
-						MediaLocator.forEach((locator) => this.checkSignalledApplication(locator, errs, Location, rc));
+						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, errs, Location, rc));
 					} else errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-24`));
 					break;
 				case SERVICE_INSTANCE_RM:
-					if (this.validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && SchemaVersion(props.namespace) == SCHEMA_r0)
+					if (this.#validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && SchemaVersion(props.namespace) == SCHEMA_r0)
 						errs.addError({
 							code: `${errCode}-31`,
 							message: `${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${props.namespace.quote()} in ${Location}`,
@@ -847,32 +865,32 @@ export default class ServiceListCheck {
 							fragment: HowRelated,
 						});
 
-					if (this.validContentFinishedBanner(HowRelated, props.namespace) || this.validServiceLogo(HowRelated, props.namespace)) {
+					if (this.#validContentFinishedBanner(HowRelated, props.namespace) || this.#validServiceLogo(HowRelated, props.namespace)) {
 						rc = HowRelated.attr(dvbi.a_href).value();
-						checkValidLogos(RelatedMaterial, errs, `${errCode}-32`, Location, this.knownLanguages);
-					} else if (this.validOutScheduleHours(HowRelated, ANY_NAMESPACE) && SchemaVersion(props.namespace) >= SCHEMA_r6) {
+						checkValidLogos(RelatedMaterial, errs, `${errCode}-32`, Location, this.#knownLanguages);
+					} else if (this.#validOutScheduleHours(HowRelated, ANY_NAMESPACE) && SchemaVersion(props.namespace) >= SCHEMA_r6) {
 						errs.addError({
 							code: `${errCode}-35`,
 							message: "Out of Service Banner is not permitted in a Service Instance from A177r6",
 							key: "misplaced image type",
 							fragment: HowRelated,
 						});
-					} else if (this.validServiceBanner(HowRelated, props.namespace)) {
+					} else if (this.#validServiceBanner(HowRelated, props.namespace)) {
 						errs.addError({
 							code: `${errCode}-33`,
 							message: "Service Banner is not permitted in a Service Instance",
 							key: "misplaced image type",
 							fragment: HowRelated,
 						});
-					} else if (this.validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
+					} else if (this.#validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
 						rc = HowRelated.attr(dvbi.a_href).value();
-						MediaLocator.forEach((locator) => this.checkSignalledApplication(locator, errs, Location, rc));
+						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, errs, Location, rc));
 					} else errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-34`));
 					break;
 				case CONTENT_GUIDE_RM:
-					if (this.validContentGuideSourceLogo(HowRelated, props.namespace)) {
+					if (this.#validContentGuideSourceLogo(HowRelated, props.namespace)) {
 						rc = HowRelated.attr(dvbi.a_href).value();
-						checkValidLogos(RelatedMaterial, errs, `${errCode}-41`, Location, this.knownLanguages);
+						checkValidLogos(RelatedMaterial, errs, `${errCode}-41`, Location, this.#knownLanguages);
 					} else errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-42`));
 					break;
 			}
@@ -883,16 +901,16 @@ export default class ServiceListCheck {
 				props,
 				aa,
 				{
-					AccessibilityPurposeCS: this.accessibilityPurposes,
+					AccessibilityPurposeCS: this.#accessibilityPurposes,
 					RequiredStandardVersionCS: this.RequiredStandardVersionCS,
 					RequiredOptionalFeatureCS: this.RequiredOptionalFeatureCS,
-					VideoCodecCS: this.allowedVideoSchemes,
-					AudioCodecCS: this.allowedAudioSchemes,
-					SubtitleCarriageCS: this.subtitleCarriages,
-					SubtitleCodingFormatCS: this.subtitleCodings,
-					SubtitlePurposeTypeCS: this.subtitlePurposes,
-					KnownLanguages: this.knownLanguages,
-					AudioPresentationCS: this.AudioPresentationCSvalues,
+					VideoCodecCS: this.#allowedVideoSchemes,
+					AudioCodecCS: this.#allowedAudioSchemes,
+					SubtitleCarriageCS: this.#subtitleCarriages,
+					SubtitleCodingFormatCS: this.#subtitleCodings,
+					SubtitlePurposeTypeCS: this.#subtitlePurposes,
+					KnownLanguages: this.#knownLanguages,
+					AudioPresentationCS: this.#AudioPresentationCSvalues,
 				},
 				errs,
 				`${errCode}-51`
@@ -908,13 +926,13 @@ export default class ServiceListCheck {
 	 * @param {XMLnode} node      The XML tree node (either a <Service>, <TestService> or a <ServiceInstance>) to be checked
 	 * @returns {boolean} true if the node contains a <RelatedMaterial> element which signals an application else false
 	 */
-	/*private*/ hasSignalledApplication(props, node) {
+	/*private*/ #hasSignalledApplication(props, node) {
 		if (node) {
 			let i = 0,
 				elem;
 			while ((elem = node.get(xPath(props.prefix, tva.e_RelatedMaterial, ++i), props.schema)) != null) {
 				let hr = elem.get(xPath(props.prefix, tva.e_HowRelated), props.schema);
-				if (hr && this.validServiceApplication(hr, SchemaVersion(props.namespace))) return true;
+				if (hr && this.#validServiceApplication(hr, SchemaVersion(props.namespace))) return true;
 			}
 		}
 		return false;
@@ -929,7 +947,7 @@ export default class ServiceListCheck {
 	 * @param {object}  loc			      The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
 	 * @param {string}  errCode       Error code prefix to be used in reports
 	 */
-	/*private*/ validateAContentGuideSource(props, source, errs, loc, errCode) {
+	/*private*/ #validateAContentGuideSource(props, source, errs, loc, errCode) {
 		function CheckEndpoint(elementName, suffix, MustEndWithSlash = false) {
 			let ep = source.get(xPath(props.prefix, elementName), props.schema);
 			if (ep) {
@@ -967,13 +985,13 @@ export default class ServiceListCheck {
 		}
 		loc = loc ? loc : source.parent().name().elementize();
 
-		checkXMLLangs(dvbi.e_Name, loc, source, errs, `${errCode}-1`, this.knownLanguages);
-		checkXMLLangs(dvbi.e_ProviderName, loc, source, errs, `${errCode}-2`, this.knownLanguages);
+		checkXMLLangs(dvbi.e_Name, loc, source, errs, `${errCode}-1`, this.#knownLanguages);
+		checkXMLLangs(dvbi.e_ProviderName, loc, source, errs, `${errCode}-2`, this.#knownLanguages);
 
 		let rm = 0,
 			RelatedMaterial;
 		while ((RelatedMaterial = source.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null)
-			this.validateRelatedMaterial(props, RelatedMaterial, errs, loc, CONTENT_GUIDE_RM, `${errCode}-3`);
+			this.#validateRelatedMaterial(props, RelatedMaterial, errs, loc, CONTENT_GUIDE_RM, `${errCode}-3`);
 
 		// ContentGuideSourceType::ScheduleInfoEndpoint - should be a URL
 		CheckEndpoint(dvbi.e_ScheduleInfoEndpoint, 4);
@@ -999,7 +1017,7 @@ export default class ServiceListCheck {
 	 * @param {string}  errCode    error number to use instead of local values
 	 * @returns {string} the @lang attribute of the node element of the parentLang if it does not exist of is not specified
 	 */
-	/* private */ GetLanguage(validator, errs, node, parentLang, isRequired, errCode) {
+	/* private */ #GetLanguage(validator, errs, node, parentLang, isRequired, errCode) {
 		if (!node) return parentLang;
 		if (!node.attr(tva.a_lang) && isRequired) {
 			errs.addError({
@@ -1030,7 +1048,7 @@ export default class ServiceListCheck {
 	 * @param {Class}   errs               errors found in validaton
 	 * @param {string}  errCode            error code prefix to be used in reports
 	 */
-	/*private*/ ValidateSynopsisType(props, Element, ElementName, requiredLengths, optionalLengths, parentLanguage, errs, errCode) {
+	/*private*/ #ValidateSynopsisType(props, Element, ElementName, requiredLengths, optionalLengths, parentLanguage, errs, errCode) {
 		if (!Element) {
 			errs.addError({
 				type: APPLICATION,
@@ -1059,7 +1077,7 @@ export default class ServiceListCheck {
 			extendedLangs = [];
 		let ERROR_KEY = "synopsis";
 		while ((ste = Element.get(xPath(props.prefix, ElementName, ++s), props.schema)) != null) {
-			let synopsisLang = this.GetLanguage(this.knownLanguages, errs, ste, parentLanguage, false, `${errCode}-2`);
+			let synopsisLang = this.#GetLanguage(this.#knownLanguages, errs, ste, parentLanguage, false, `${errCode}-2`);
 			let synopsisLength = ste.attr(tva.a_length) ? ste.attr(tva.a_length).value() : null;
 
 			if (synopsisLength) {
@@ -1227,7 +1245,7 @@ export default class ServiceListCheck {
 	 * @param {array}   declaredSubscriptionPackages  subscription packages that are declared in the service list
 	 * @param {Class}   errs                          errors found in validaton
 	 */
-	/*private*/ validateServiceInstance(props, ServiceInstance, thisServiceId, declaredSubscriptionPackages, declaredAudioLanguages, errs) {
+	/*private*/ #validateServiceInstance(props, ServiceInstance, thisServiceId, declaredSubscriptionPackages, declaredAudioLanguages, errs) {
 		if (!ServiceInstance) {
 			errs.addError({
 				type: APPLICATION,
@@ -1272,14 +1290,14 @@ export default class ServiceListCheck {
 		}
 
 		//<ServiceInstance><DisplayName>
-		checkXMLLangs(dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010", this.knownLanguages);
+		checkXMLLangs(dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010", this.#knownLanguages);
 
 		// check @href of <ServiceInstance><RelatedMaterial>
 		let rm = 0,
 			controlApps = [],
 			RelatedMaterial;
 		while ((RelatedMaterial = ServiceInstance.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
-			let foundHref = this.validateRelatedMaterial(props, RelatedMaterial, errs, `service instance of ${thisServiceId.quote()}`, SERVICE_INSTANCE_RM, "SI020");
+			let foundHref = this.#validateRelatedMaterial(props, RelatedMaterial, errs, `service instance of ${thisServiceId.quote()}`, SERVICE_INSTANCE_RM, "SI020");
 			if (foundHref != "" && validServiceInstanceControlApplication(foundHref)) controlApps.push(RelatedMaterial);
 			if (foundHref == dvbi.APP_IN_CONTROL) {
 				// Application controlling playback SHOULD NOT have any service delivery parameters
@@ -1387,20 +1405,20 @@ export default class ServiceListCheck {
 					conf.childNodes().forEachSubElement((child) => {
 						switch (child.name()) {
 							case tva.e_Coding:
-								if (child.attr(dvbi.a_href) && !this.allowedAudioSchemes.isIn(child.attr(dvbi.a_href).value()))
+								if (child.attr(dvbi.a_href) && !this.#allowedAudioSchemes.isIn(child.attr(dvbi.a_href).value()))
 									errs.addError({
 										code: "SI052",
-										message: `invalid ${dvbi.a_href.attribute(child.name())} value for (${child.attr(dvbi.a_href).value()}) ${this.allowedAudioSchemes.valuesRange()}`,
+										message: `invalid ${dvbi.a_href.attribute(child.name())} value for (${child.attr(dvbi.a_href).value()}) ${this.#allowedAudioSchemes.valuesRange()}`,
 										fragment: child,
 										key: "audio codec",
 									});
 								break;
 							case tva.e_MixType:
 								// taken from MPEG-7 AudioPresentationCS
-								if (child.attr(dvbi.a_href) && !this.AudioPresentationCSvalues.isIn(child.attr(dvbi.a_href).value()))
+								if (child.attr(dvbi.a_href) && !this.#AudioPresentationCSvalues.isIn(child.attr(dvbi.a_href).value()))
 									errs.addError({
 										code: "SI055",
-										message: `invalid ${dvbi.a_href.attribute(child.name())} value for (${child.attr(dvbi.a_href).value()}) ${this.AudioPresentationCSvalues.valuesRange()}`,
+										message: `invalid ${dvbi.a_href.attribute(child.name())} value for (${child.attr(dvbi.a_href).value()}) ${this.#AudioPresentationCSvalues.valuesRange()}`,
 										fragment: child,
 										key: "audio codec",
 									});
@@ -1428,10 +1446,10 @@ export default class ServiceListCheck {
 			cp = 0;
 			while ((conf = ContentAttributes.get(xPath(props.prefix, dvbi.e_AudioConformancePoint, ++cp), props.schema)) != null) {
 				if (SchemaVersion(props.namespace) > SCHEMA_r4) errs.addError(DeprecatedElement(conf, SchemaSpecVersion(props.namespace), "SI062"));
-				if (conf.attr(dvbi.a_href) && !this.allowedAudioConformancePoints.isIn(conf.attr(dvbi.a_href).value()))
+				if (conf.attr(dvbi.a_href) && !this.#allowedAudioConformancePoints.isIn(conf.attr(dvbi.a_href).value()))
 					errs.addError({
 						code: "SI061",
-						message: `invalid ${dvbi.a_href.attribute(dvbi.e_AudioConformancePoint)} (${conf.attr(dvbi.a_href).value()}) ${this.allowedAudioConformancePoints.valuesRange()}`,
+						message: `invalid ${dvbi.a_href.attribute(dvbi.e_AudioConformancePoint)} (${conf.attr(dvbi.a_href).value()}) ${this.#allowedAudioConformancePoints.valuesRange()}`,
 						fragment: conf,
 						key: "audio conf point",
 					});
@@ -1444,28 +1462,28 @@ export default class ServiceListCheck {
 					conf.childNodes().forEachSubElement((child) => {
 						switch (child.name()) {
 							case tva.e_Coding:
-								if (child.attr(dvbi.a_href) && !this.allowedVideoSchemes.isIn(child.attr(dvbi.a_href).value()))
+								if (child.attr(dvbi.a_href) && !this.#allowedVideoSchemes.isIn(child.attr(dvbi.a_href).value()))
 									errs.addError({
 										code: "SI072",
-										message: `invalid ${dvbi.a_href.attribute(tva.e_Coding)} (${child.attr(dvbi.a_href).value()}) ${this.allowedVideoSchemes.valuesRange()}`,
+										message: `invalid ${dvbi.a_href.attribute(tva.e_Coding)} (${child.attr(dvbi.a_href).value()}) ${this.#allowedVideoSchemes.valuesRange()}`,
 										fragment: child,
 										key: "video codec",
 									});
 								break;
 							case tva.e_PictureFormat:
-								if (child.attr(dvbi.a_href) && !this.allowedPictureFormats.isIn(child.attr(dvbi.a_href).value()))
+								if (child.attr(dvbi.a_href) && !this.#allowedPictureFormats.isIn(child.attr(dvbi.a_href).value()))
 									errs.addError({
 										code: "SI082",
-										message: `invalid ${dvbi.a_href.attribute(tva.e_PictureFormat)} value (${child.attr(dvbi.a_href).value()}) ${this.allowedPictureFormats.valuesRange()}`,
+										message: `invalid ${dvbi.a_href.attribute(tva.e_PictureFormat)} value (${child.attr(dvbi.a_href).value()}) ${this.#allowedPictureFormats.valuesRange()}`,
 										fragment: child,
 										key: tva.e_PictureFormat,
 									});
 								break;
 							case dvbi.e_Colorimetry:
-								if (child.attr(dvbi.a_href) && !this.allowedColorimetry.isIn(child.attr(dvbi.a_href).value()))
+								if (child.attr(dvbi.a_href) && !this.#allowedColorimetry.isIn(child.attr(dvbi.a_href).value()))
 									errs.addError({
 										code: "SI084",
-										message: `invalid ${dvbi.a_href.attribute(dvbi.e_Colorimetry)} value (${child.attr(dvbi.a_href).value()}) ${this.allowedColorimetry.valuesRange()}`,
+										message: `invalid ${dvbi.a_href.attribute(dvbi.e_Colorimetry)} value (${child.attr(dvbi.a_href).value()}) ${this.#allowedColorimetry.valuesRange()}`,
 										fragment: child,
 										key: dvbi.e_Colorimetry,
 									});
@@ -1476,10 +1494,12 @@ export default class ServiceListCheck {
 			// Check @href of ContentAttributes/VideoConformancePoints
 			cp = 0;
 			while ((conf = ContentAttributes.get(xPath(props.prefix, dvbi.e_VideoConformancePoint, ++cp), props.schema)) != null)
-				if (conf.attr(dvbi.a_href) && !this.allowedVideoConformancePoints.isIn(conf.attr(dvbi.a_href).value()))
+				if (conf.attr(dvbi.a_href) && !this.#allowedVideoConformancePoints.isIn(conf.attr(dvbi.a_href).value()))
 					errs.addError({
 						code: "SI091",
-						message: `invalid ${dvbi.a_href.attribute(dvbi.e_VideoConformancePoint)} value (${conf.attr(dvbi.a_href).value()}) ${this.allowedVideoConformancePoints.valuesRange()}`,
+						message: `invalid ${dvbi.a_href.attribute(dvbi.e_VideoConformancePoint)} value (${conf
+							.attr(dvbi.a_href)
+							.value()}) ${this.#allowedVideoConformancePoints.valuesRange()}`,
 						fragment: conf,
 						key: "video conf point",
 					});
@@ -1487,12 +1507,12 @@ export default class ServiceListCheck {
 			// Check ContentAttributes/CaptionLanguage
 			cp = 0;
 			while ((conf = ContentAttributes.get(xPath(props.prefix, tva.e_CaptionLanguage, ++cp), props.schema)) != null)
-				checkLanguage(this.knownLanguages, conf.text(), tva.e_CaptionLanguage.elementize(), conf, errs, "SI101");
+				checkLanguage(this.#knownLanguages, conf.text(), tva.e_CaptionLanguage.elementize(), conf, errs, "SI101");
 
 			// Check ContentAttributes/SignLanguage
 			cp = 0;
 			while ((conf = ContentAttributes.get(xPath(props.prefix, tva.e_SignLanguage, ++cp), props.schema)) != null)
-				checkLanguage(this.knownLanguages, conf.text(), tva.e_SignLanguage.elementize(), conf, errs, "SI111");
+				checkLanguage(this.#knownLanguages, conf.text(), tva.e_SignLanguage.elementize(), conf, errs, "SI111");
 
 			// Check ContentAttributes/AccessibilityAttributes
 			let aa = ContentAttributes.get(xPath(props.prefix, tva.e_AccessibilityAttributes), props.schema);
@@ -1501,16 +1521,16 @@ export default class ServiceListCheck {
 					props,
 					aa,
 					{
-						AccessibilityPurposeCS: this.accessibilityPurposes,
+						AccessibilityPurposeCS: this.#accessibilityPurposes,
 						RequiredStandardVersionCS: this.RequiredStandardVersionCS,
 						RequiredOptionalFeatureCS: this.RequiredOptionalFeatureCS,
-						VideoCodecCS: this.allowedVideoSchemes,
-						AudioCodecCS: this.allowedAudioSchemes,
-						SubtitleCarriageCS: this.subtitleCarriages,
-						SubtitleCodingFormatCS: this.subtitleCodings,
-						SubtitlePurposeTypeCS: this.subtitlePurposes,
-						KnownLanguages: this.knownLanguages,
-						AudioPresentationCS: this.AudioPresentationCSvalues,
+						VideoCodecCS: this.#allowedVideoSchemes,
+						AudioCodecCS: this.#allowedAudioSchemes,
+						SubtitleCarriageCS: this.#subtitleCarriages,
+						SubtitleCodingFormatCS: this.#subtitleCodings,
+						SubtitlePurposeTypeCS: this.#subtitlePurposes,
+						KnownLanguages: this.#knownLanguages,
+						AudioPresentationCS: this.#AudioPresentationCSvalues,
 					},
 					errs,
 					"SI112"
@@ -1540,7 +1560,7 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><SubscriptionPackage>
-		checkXMLLangs(dvbi.e_SubscriptionPackage, ServiceInstance.name().elementize(), ServiceInstance, errs, "SI131", this.knownLanguages);
+		checkXMLLangs(dvbi.e_SubscriptionPackage, ServiceInstance.name().elementize(), ServiceInstance, errs, "SI131", this.#knownLanguages);
 		let sp = 0,
 			SubscriptionPackage;
 		while ((SubscriptionPackage = ServiceInstance.get(xPath(props.prefix, dvbi.e_SubscriptionPackage, ++sp), props.schema)) != null) {
@@ -1603,7 +1623,7 @@ export default class ServiceListCheck {
 						// no xxxxDeliveryParameters is signalled
 						// check for appropriate Service.RelatedMaterial or Service.ServiceInstance.RelatedMaterial
 						let service = ServiceInstance.parent();
-						if (!this.hasSignalledApplication(props.schema, props.prefix, service) && !this.hasSignalledApplication(props.schema, props.prefix, ServiceInstance)) {
+						if (!this.#hasSignalledApplication(props.schema, props.prefix, service) && !this.#hasSignalledApplication(props.schema, props.prefix, ServiceInstance)) {
 							errs.addError({
 								code: "SI157a",
 								message: `No Application is signalled for ${dvbi.e_SourceType}=${dvbi.DVBAPPLICATION_SOURCE_TYPE.quote()} in Service ${thisServiceId.quote()}`,
@@ -1703,7 +1723,7 @@ export default class ServiceListCheck {
 			let e = 0,
 				Extension;
 			while ((Extension = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_Extension, ++e), props.schema)) != null) {
-				this.CheckExtension(Extension, EXTENSION_LOCATION_DASH_INSTANCE, errs, "SI175");
+				this.#CheckExtension(Extension, EXTENSION_LOCATION_DASH_INSTANCE, errs, "SI175");
 			}
 		}
 
@@ -1712,7 +1732,7 @@ export default class ServiceListCheck {
 		if (DVBTDeliveryParameters) {
 			let DVBTtargetCountry = DVBTDeliveryParameters.get(xPath(props.prefix, dvbi.e_TargetCountry), props.schema);
 			if (DVBTtargetCountry) {
-				if (!this.knownCountries.isISO3166code(DVBTtargetCountry.text()))
+				if (!this.#knownCountries.isISO3166code(DVBTtargetCountry.text()))
 					errs.addError({
 						code: "SI182",
 						message: InvalidCountryCode(DVBTtargetCountry.text(), "DVB-T", `service ${thisServiceId.quote()}`),
@@ -1728,7 +1748,7 @@ export default class ServiceListCheck {
 		if (DVBCDeliveryParameters) {
 			let DVBCtargetCountry = ServiceInstance.get(xPathM(props.prefix, [dvbi.e_DVBCDeliveryParameters, dvbi.e_TargetCountry]), props.schema);
 			if (DVBCtargetCountry) {
-				if (!this.knownCountries.isISO3166code(DVBCtargetCountry.text()))
+				if (!this.#knownCountries.isISO3166code(DVBCtargetCountry.text()))
 					errs.addError({
 						code: "SI191",
 						message: InvalidCountryCode(DVBCtargetCountry.text(), "DVB-C", `service ${thisServiceId.quote()}`),
@@ -1849,11 +1869,11 @@ export default class ServiceListCheck {
 		// <ServiceInstance><OtherDeliveryParameters>
 		let OtherDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_OtherDeliveryParameters), props.schema);
 		if (OtherDeliveryParameters) {
-			this.CheckExtension(OtherDeliveryParameters, EXTENSION_LOCATION_OTHER_DELIVERY, errs, "SI237");
+			this.#CheckExtension(OtherDeliveryParameters, EXTENSION_LOCATION_OTHER_DELIVERY, errs, "SI237");
 		}
 	}
 
-	/*private*/ CheckExtension(extn, extLoc, errs, errCode) {
+	/*private*/ #CheckExtension(extn, extLoc, errs, errCode) {
 		if (!extn) {
 			errs.addError({
 				type: APPLICATION,
@@ -1920,7 +1940,18 @@ export default class ServiceListCheck {
 	 * @param {array}   ContentGuideSourceIDs         identifiers of content guide sources found in the service list
 	 * @param {Class}   errs                          errors found in validaton
 	 */
-	/*private*/ validateService(props, SL, service, thisServiceId, knownServices, knownRegionIDs, declaredSubscriptionPackages, declaredAudioLanguages, ContentGuideSourceIDs, errs) {
+	/*private*/ #validateService(
+		props,
+		SL,
+		service,
+		thisServiceId,
+		knownServices,
+		knownRegionIDs,
+		declaredSubscriptionPackages,
+		declaredAudioLanguages,
+		ContentGuideSourceIDs,
+		errs
+	) {
 		// check <UniqueIdentifier>
 		let uID = service.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
 		if (uID) {
@@ -1946,7 +1977,7 @@ export default class ServiceListCheck {
 		let si = 0,
 			ServiceInstance;
 		while ((ServiceInstance = service.get(xPath(props.prefix, dvbi.e_ServiceInstance, ++si), props.schema)) != null)
-			this.validateServiceInstance(props, ServiceInstance, thisServiceId, declaredSubscriptionPackages, declaredAudioLanguages, errs);
+			this.#validateServiceInstance(props, ServiceInstance, thisServiceId, declaredSubscriptionPackages, declaredAudioLanguages, errs);
 
 		//check <TargetRegion>
 		let tr = 0,
@@ -1968,16 +1999,16 @@ export default class ServiceListCheck {
 		}
 
 		//check <ServiceName>
-		checkXMLLangs(dvbi.e_ServiceName, `service ${thisServiceId.quote()}`, service, errs, "SL140", this.knownLanguages);
+		checkXMLLangs(dvbi.e_ServiceName, `service ${thisServiceId.quote()}`, service, errs, "SL140", this.#knownLanguages);
 
 		//check <ProviderName>
-		checkXMLLangs(dvbi.e_ProviderName, `service ${thisServiceId.quote()}`, service, errs, "SL141", this.knownLanguages);
+		checkXMLLangs(dvbi.e_ProviderName, `service ${thisServiceId.quote()}`, service, errs, "SL141", this.#knownLanguages);
 
 		//check <RelatedMaterial>
 		let rm = 0,
 			RelatedMaterial;
 		while ((RelatedMaterial = service.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null)
-			this.validateRelatedMaterial(props, RelatedMaterial, errs, `service ${thisServiceId.quote()}`, SERVICE_RM, "SL150");
+			this.#validateRelatedMaterial(props, RelatedMaterial, errs, `service ${thisServiceId.quote()}`, SERVICE_RM, "SL150");
 
 		//check <ServiceGenre>
 		let sg = 0,
@@ -1992,7 +2023,7 @@ export default class ServiceListCheck {
 					key: `invalid ${tva.a_type.attribute(dvbi.e_ServiceGenre)}`,
 				});
 
-			if (ServiceGenre.attr(dvbi.a_href) && !this.allowedGenres.isIn(ServiceGenre.attr(dvbi.a_href).value()))
+			if (ServiceGenre.attr(dvbi.a_href) && !this.#allowedGenres.isIn(ServiceGenre.attr(dvbi.a_href).value()))
 				errs.addError({
 					code: "SL162",
 					message: `service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} value ${ServiceGenre.attr(dvbi.a_href)
@@ -2004,7 +2035,7 @@ export default class ServiceListCheck {
 		}
 		//check <ServiceType>
 		let ServiceType = service.get(xPath(props.prefix, dvbi.e_ServiceType), props.schema);
-		if (ServiceType && ServiceType.attr(dvbi.a_href) && !this.allowedServiceTypes.isIn(ServiceType.attr(dvbi.a_href).value()))
+		if (ServiceType && ServiceType.attr(dvbi.a_href) && !this.#allowedServiceTypes.isIn(ServiceType.attr(dvbi.a_href).value()))
 			errs.addError({
 				code: "SL164",
 				message: `service ${thisServiceId.quote()} has an invalid ${dvbi.e_ServiceType.elementize()} (${ServiceType.attr(dvbi.a_href).value()})`,
@@ -2013,7 +2044,7 @@ export default class ServiceListCheck {
 			});
 
 		// check <ServiceDescription>
-		this.ValidateSynopsisType(
+		this.#ValidateSynopsisType(
 			props,
 			service,
 			dvbi.e_ServiceDescription,
@@ -2026,19 +2057,19 @@ export default class ServiceListCheck {
 
 		// check <RecordingInfo>
 		let RecordingInfo = service.get(xPath(props.prefix, dvbi.e_RecordingInfo), props.schema);
-		if (RecordingInfo && RecordingInfo.attr(dvbi.a_href) && !this.RecordingInfoCSvalues.isIn(RecordingInfo.attr(dvbi.a_href).value()))
+		if (RecordingInfo && RecordingInfo.attr(dvbi.a_href) && !this.#RecordingInfoCSvalues.isIn(RecordingInfo.attr(dvbi.a_href).value()))
 			errs.addError({
 				code: "SL180",
 				message: `invalid ${dvbi.e_RecordingInfo.elementize()} value ${RecordingInfo.attr(dvbi.a_href)
 					.value()
-					.quote()} for service ${thisServiceId} ${this.RecordingInfoCSvalues.valuesRange()}`,
+					.quote()} for service ${thisServiceId} ${this.#RecordingInfoCSvalues.valuesRange()}`,
 				fragment: RecordingInfo,
 				key: `invalid ${dvbi.a_href.attribute(dvbi.e_RecordingInfo)}`,
 			});
 
 		// check <ContentGuideSource>
 		let sCG = service.get(xPath(props.prefix, dvbi.e_ContentGuideSource), props.schema);
-		if (sCG) this.validateAContentGuideSource(props, sCG, errs, `${dvbi.e_ContentGuideSource.elementize()} in service ${thisServiceId}`, "SL190");
+		if (sCG) this.#validateAContentGuideSource(props, sCG, errs, `${dvbi.e_ContentGuideSource.elementize()} in service ${thisServiceId}`, "SL190");
 
 		//check <ContentGuideSourceRef>
 		let sCGref = service.get(xPath(props.prefix, dvbi.e_ContentGuideSourceRef), props.schema);
@@ -2054,7 +2085,7 @@ export default class ServiceListCheck {
 		let ap = 0,
 			AdditionalParams;
 		while ((AdditionalParams = service.get(xPath(props.prefix, dvbi.e_AdditionalServiceParameters, ++ap), props.schema)) != null)
-			this.CheckExtension(AdditionalParams, EXTENSION_LOCATION_SERVICE_ELEMENT, errs, "SL211");
+			this.#CheckExtension(AdditionalParams, EXTENSION_LOCATION_SERVICE_ELEMENT, errs, "SL211");
 
 		// check <NVOD>
 		let NVOD = service.get(xPath(props.prefix, dvbi.e_NVOD), props.schema);
@@ -2175,7 +2206,7 @@ export default class ServiceListCheck {
 					}
 
 					// if @country is specified, it must be valid
-					if (PE.attr(dvbi.a_country) && !this.knownCountries.isISO3166code(PE.attr(dvbi.a_country).value())) {
+					if (PE.attr(dvbi.a_country) && !this.#knownCountries.isISO3166code(PE.attr(dvbi.a_country).value())) {
 						errs.addError({
 							code: "SL244",
 							message: InvalidCountryCode(PE.attr(dvbi.a_country).value(), null, `service ${thisServiceId.quote()}`),
@@ -2228,7 +2259,7 @@ export default class ServiceListCheck {
 					let countriesSpecified = MinimumAge.attr(dvbi.a_countryCodes).value().split(",");
 					if (countriesSpecified)
 						countriesSpecified.forEach((country) => {
-							if (!this.knownCountries.isISO3166code(country))
+							if (!this.#knownCountries.isISO3166code(country))
 								errs.addError({
 									code: "SL251",
 									message: `invalid country code (${country}) specified`,
@@ -2258,7 +2289,7 @@ export default class ServiceListCheck {
 		}
 	}
 
-	/*private*/ doSchemaVerification(ServiceList, props, errs, errCode) {
+	/*private*/ #doSchemaVerification(ServiceList, props, errs, errCode) {
 		let rc = true;
 
 		let x = SchemaVersions.find((s) => s.namespace == props.namespace);
@@ -2278,7 +2309,7 @@ export default class ServiceListCheck {
 	 * @param {String} log_prefix  the first part of the logging location (or null if no logging)
 	 */
 	/*public*/ doValidateServiceList(SLtext, errs, log_prefix) {
-		this.numRequests++;
+		this.#numRequests++;
 		if (!SLtext) {
 			errs.addError({
 				type: APPLICATION,
@@ -2323,7 +2354,7 @@ export default class ServiceListCheck {
 			namespace: SCHEMA_NAMESPACE,
 		};
 
-		if (!this.doSchemaVerification(SL, props, errs, "SL005")) {
+		if (!this.#doSchemaVerification(SL, props, errs, "SL005")) {
 			errs.addError({
 				code: "SL010",
 				message: `Unsupported namespace ${props.namespace.quote()}`,
@@ -2343,11 +2374,11 @@ export default class ServiceListCheck {
 		// check ServiceList@lang
 		if (SL.root().attr(tva.a_lang)) {
 			let serviceListLang = SL.root().attr(tva.a_lang).value();
-			if (this.knownLanguages) {
-				let validatorResp = this.knownLanguages.isKnown(serviceListLang);
-				if (validatorResp.resp != this.knownLanguages.languageKnown) {
+			if (this.#knownLanguages) {
+				let validatorResp = this.#knownLanguages.isKnown(serviceListLang);
+				if (validatorResp.resp != this.#knownLanguages.languageKnown) {
 					switch (validatorResp.resp) {
-						case this.knownLanguages.languageUnknown:
+						case this.#knownLanguages.languageUnknown:
 							errs.addError({
 								code: "SL012",
 								message: `${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is invalid`,
@@ -2355,7 +2386,7 @@ export default class ServiceListCheck {
 								key: keys.k_InvalidLanguage,
 							});
 							break;
-						case this.knownLanguages.languageRedundant:
+						case this.#knownLanguages.languageRedundant:
 							let msg = `${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is deprecated`;
 							if (validatorResp?.pref) msg += `(use ${validatorResp.pref.quote()} instead)`;
 							errs.addError({
@@ -2365,7 +2396,7 @@ export default class ServiceListCheck {
 								key: "deprecated language",
 							});
 							break;
-						case this.knownLanguages.languageNotSpecified:
+						case this.#knownLanguages.languageNotSpecified:
 							errs.addError({
 								code: "SL014",
 								message: `${dvbi.e_ServiceList} xml:${tva.a_lang} value is not provided`,
@@ -2373,7 +2404,7 @@ export default class ServiceListCheck {
 								key: keys.k_UnspecifiedLanguage,
 							});
 							break;
-						case this.knownLanguages.languageInvalidType:
+						case this.#knownLanguages.languageInvalidType:
 							errs.addError({
 								code: "SL015",
 								message: `${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is invalid`,
@@ -2401,10 +2432,10 @@ export default class ServiceListCheck {
 		}
 
 		//check <ServiceList><Name>
-		checkXMLLangs(dvbi.e_Name, dvbi.e_ServiceList, SL, errs, "SL020", this.knownLanguages);
+		checkXMLLangs(dvbi.e_Name, dvbi.e_ServiceList, SL, errs, "SL020", this.#knownLanguages);
 
 		//check <ServiceList><ProviderName>
-		checkXMLLangs(dvbi.e_ProviderName, dvbi.e_ServiceList, SL, errs, "SL021", this.knownLanguages);
+		checkXMLLangs(dvbi.e_ProviderName, dvbi.e_ServiceList, SL, errs, "SL021", this.#knownLanguages);
 
 		//check <ServiceList><LanguageList>
 		let announcedAudioLanguages = [];
@@ -2413,7 +2444,7 @@ export default class ServiceListCheck {
 			let l = 0,
 				Language;
 			while ((Language = LanguageList.get(xPath(props.prefix, tva.e_Language, ++l), props.schema)) != null) {
-				checkLanguage(this.knownLanguages, Language.text(), `language in ${tva.e_Language.elementize()}`, Language, errs, "SL030");
+				checkLanguage(this.#knownLanguages, Language.text(), `language in ${tva.e_Language.elementize()}`, Language, errs, "SL030");
 				checkAttributes(Language, [], [], tvaEA.AudioLanguage, errs, "SL031");
 				let lang_lower = Language.text().toLowerCase();
 				if (isIn(announcedAudioLanguages, lang_lower))
@@ -2432,7 +2463,7 @@ export default class ServiceListCheck {
 			countControlApps = 0,
 			RelatedMaterial;
 		while ((RelatedMaterial = SL.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
-			let foundHref = this.validateRelatedMaterial(props, RelatedMaterial, errs, "service list", SERVICE_LIST_RM, "SL040");
+			let foundHref = this.#validateRelatedMaterial(props, RelatedMaterial, errs, "service list", SERVICE_LIST_RM, "SL040");
 			if (foundHref != "" && validServiceControlApplication(foundHref, SchemaVersion(props.namespace))) countControlApps++;
 		}
 
@@ -2450,7 +2481,7 @@ export default class ServiceListCheck {
 			// recurse the regionlist - Regions can be nested in Regions
 			let r = 0,
 				Region;
-			while ((Region = RegionList.get(xPath(props.prefix, dvbi.e_Region, ++r), props.schema)) != null) this.addRegion(props, Region, 0, knownRegionIDs, null, errs);
+			while ((Region = RegionList.get(xPath(props.prefix, dvbi.e_Region, ++r), props.schema)) != null) this.#addRegion(props, Region, 0, knownRegionIDs, null, errs);
 		}
 
 		//check <ServiceList><TargetRegion>
@@ -2508,7 +2539,7 @@ export default class ServiceListCheck {
 			let cgs = 0,
 				CGSource;
 			while ((CGSource = CGSourceList.get(xPath(props.prefix, dvbi.e_ContentGuideSource, ++cgs), props.schema)) != null) {
-				this.validateAContentGuideSource(props, CGSource, errs, `${dvbi.e_ServiceList}.${dvbi.e_ContentGuideSourceList}.${dvbi.e_ContentGuideSource}[${cgs}]`, "SL070");
+				this.#validateAContentGuideSource(props, CGSource, errs, `${dvbi.e_ServiceList}.${dvbi.e_ContentGuideSourceList}.${dvbi.e_ContentGuideSource}[${cgs}]`, "SL070");
 
 				if (CGSource.attr(dvbi.a_CGSID)) {
 					if (isIn(ContentGuideSourceIDs, CGSource.attr(dvbi.a_CGSID).value()))
@@ -2525,7 +2556,7 @@ export default class ServiceListCheck {
 
 		// check  elements in <ServiceList><ContentGuideSource>
 		let slGCS = SL.get(xPath(props.prefix, dvbi.e_ContentGuideSource), props.schema);
-		if (slGCS) this.validateAContentGuideSource(props, slGCS, errs, `${dvbi.e_ServiceList}.${dvbi.e_ContentGuideSource}`, "SL080");
+		if (slGCS) this.#validateAContentGuideSource(props, slGCS, errs, `${dvbi.e_ServiceList}.${dvbi.e_ContentGuideSource}`, "SL080");
 
 		errs.setW("num services", 0);
 
@@ -2536,7 +2567,7 @@ export default class ServiceListCheck {
 		while ((service = SL.get(xPath(props.prefix, dvbi.e_Service, ++s), props.schema)) != null) {
 			// for each service
 			errs.setW("num services", s);
-			this.validateService(
+			this.#validateService(
 				props,
 				SL,
 				service,
@@ -2559,7 +2590,7 @@ export default class ServiceListCheck {
 			while ((testService = SL.get(xPath(props.prefix, dvbi.e_TestService, ++ts), props.schema)) != null) {
 				// for each service
 				errs.setW("num test services", ts);
-				this.validateService(
+				this.#validateService(
 					props,
 					SL,
 					testService,
@@ -2664,9 +2695,9 @@ export default class ServiceListCheck {
 					}
 					if (SubscriptionPackage.attr(tva.a_lang)) {
 						packageLanguage = SubscriptionPackage.attr(tva.a_lang).value();
-						checkLanguage(this.knownLanguages, packageLanguage, `${dvbi.e_SubscriptionPackage} in ${dvbi.e_LCNTable}`, SubscriptionPackage, errs, "SL265");
+						checkLanguage(this.#knownLanguages, packageLanguage, `${dvbi.e_SubscriptionPackage} in ${dvbi.e_LCNTable}`, SubscriptionPackage, errs, "SL265");
 					} else if (SchemaVersion(props.namespace) >= SCHEMA_r3) {
-						packageLanguage = GetNodeLanguage(SubscriptionPackage, false, errs, "SL266", this.knownLanguages);
+						packageLanguage = GetNodeLanguage(SubscriptionPackage, false, errs, "SL266", this.#knownLanguages);
 					}
 
 					let localSubscriptionPackage = localizedSubscriptionPackage(SubscriptionPackage, packageLanguage);

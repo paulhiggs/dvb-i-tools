@@ -265,22 +265,37 @@ if (!Array.prototype.forEachSubElement) {
 export var isRestartAvailability = (genre) => [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(genre);
 
 export default class ContentGuideCheck {
-	constructor(useURLs, opts) {
-		this.numRequests = 0;
-		this.knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs);
-		this.allowedGenres = opts?.genres ? opts.genres : LoadGenres(useURLs);
-		this.allowedVideoSchemes = opts?.videofmts ? opts.videofmts : LoadVideoCodecCS(useURLs);
-		this.allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs);
+	#numRequests;
+	#knownLanguages;
+	#allowedGenres;
+	#allowedVideoSchemes;
+	#allowedAudioSchemes;
+	#AudioPresentationCSvalues;
+	#allowedCreditItemRoles;
+	#allowedRatings;
+	#knownCountries;
+	#accessibilityPurposes;
+	#audioPurposes;
+	#subtitleCarriages;
+	#subtitleCodings;
+	#subtitlePurposes;
 
-		this.AudioPresentationCSvalues = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs);
-		this.allowedCreditItemRoles = opts?.credits ? opts.credits : LoadCredits(useURLs);
-		this.allowedRatings = opts?.ratings ? opts.ratings : LoadRatings(useURLs);
-		this.knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs);
+	constructor(useURLs, opts) {
+		this.#numRequests = 0;
+		this.#knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs);
+		this.#allowedGenres = opts?.genres ? opts.genres : LoadGenres(useURLs);
+		this.#allowedVideoSchemes = opts?.videofmts ? opts.videofmts : LoadVideoCodecCS(useURLs);
+		this.#allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs);
+
+		this.#AudioPresentationCSvalues = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs);
+		this.#allowedCreditItemRoles = opts?.credits ? opts.credits : LoadCredits(useURLs);
+		this.#allowedRatings = opts?.ratings ? opts.ratings : LoadRatings(useURLs);
+		this.#knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs);
 		this.accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs);
-		this.audioPurposes = opts?.audiopurps ? opts.audiopurps : LoadAudioPurpose(useURLs);
-		this.subtitleCarriages = opts?.stcarriage ? opts.stcarriage : LoadSubtitleCarriages(useURLs);
-		this.subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs);
-		this.subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs);
+		this.#audioPurposes = opts?.audiopurps ? opts.audiopurps : LoadAudioPurpose(useURLs);
+		this.#subtitleCarriages = opts?.stcarriage ? opts.stcarriage : LoadSubtitleCarriages(useURLs);
+		this.#subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs);
+		this.#subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs);
 
 		SchemaVersions.forEach((version) => {
 			process.stdout.write(`..loading ${version.version} ${version.namespace} from ${version.filename} `.yellow);
@@ -293,15 +308,15 @@ export default class ContentGuideCheck {
 
 	stats() {
 		let res = {};
-		res.numRequests = this.numRequests;
-		this.knownLanguages.stats(res);
-		res.numAllowedGenres = this.allowedGenres.count();
-		res.numCreditItemRoles = this.allowedCreditItemRoles.count();
-		res.numRatings = this.allowedRatings.count();
+		res.numRequests = this.#numRequests;
+		this.#knownLanguages.stats(res);
+		res.numAllowedGenres = this.#allowedGenres.count();
+		res.numCreditItemRoles = this.#allowedCreditItemRoles.count();
+		res.numRatings = this.#allowedRatings.count();
 		return res;
 	}
 
-	/*private*/ doSchemaVerification(TVAdoc, props, errs, errCode) {
+	/*private*/ #doSchemaVerification(TVAdoc, props, errs, errCode) {
 		let _rc = true;
 
 		let x = SchemaVersions.find((s) => s.namespace == props.namespace);
@@ -320,7 +335,7 @@ export default class ContentGuideCheck {
 	 * @param {string}  elementName  the name of the child element
 	 * @returns {boolean} true if an element named node.elementName exists, else false
 	 */
-	/* private */ hasElement(node, elementName) {
+	/* private */ #hasElement(node, elementName) {
 		if (!node) return false;
 		return node.childNodes().find((c) => c.type() == "element" && c.name() == elementName);
 	}
@@ -333,7 +348,7 @@ export default class ContentGuideCheck {
 	 * @param {string}  errCode  error code prefix to be used in reports
 	 * @returns {string} the serviceIdRef, whether it is valid of not
 	 */
-	/* private */ checkTAGUri(elem, errs, errCode) {
+	/* private */ #checkTAGUri(elem, errs, errCode) {
 		if (elem && elem.attr(tva.a_serviceIDRef)) {
 			let svcID = elem.attr(tva.a_serviceIDRef).value();
 			if (!isTAGURI(svcID))
@@ -359,7 +374,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                errors found in validaton
 	 * @param {string}  errCode             error code prefix to be used in reports
 	 */
-	/* private */ ValidateSynopsis(props, BasicDescription, requiredLengths, optionalLengths, errs, errCode) {
+	/* private */ #ValidateSynopsis(props, BasicDescription, requiredLengths, optionalLengths, errs, errCode) {
 		if (!BasicDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -384,7 +399,7 @@ export default class ContentGuideCheck {
 		while ((Synopsis = BasicDescription.get(xPath(props.prefix, tva.e_Synopsis, ++s), props.schema)) != null) {
 			checkAttributes(Synopsis, [tva.a_length], [tva.a_lang], tvaEA.Synopsis, errs, `${errCode}-1`);
 
-			let synopsisLang = GetNodeLanguage(Synopsis, false, errs, `${errCode}-2`, this.knownLanguages);
+			let synopsisLang = GetNodeLanguage(Synopsis, false, errs, `${errCode}-2`, this.#knownLanguages);
 			let synopsisLength = Synopsis.attr(tva.a_length) ? Synopsis.attr(tva.a_length).value() : null;
 
 			if (synopsisLength) {
@@ -500,7 +515,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs              errors found in validaton
 	 * @param {string}  errCode           error code prefix to be used in reports
 	 */
-	/* private */ ValidateKeyword(props, BasicDescription, minKeywords, maxKeywords, errs, errCode) {
+	/* private */ #ValidateKeyword(props, BasicDescription, minKeywords, maxKeywords, errs, errCode) {
 		if (!BasicDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -516,7 +531,7 @@ export default class ContentGuideCheck {
 			checkAttributes(Keyword, [], [tva.a_lang, tva.a_type], tvaEA.Keyword, errs, `${errCode}-1`);
 
 			let keywordType = Keyword.attr(tva.a_type) ? Keyword.attr(tva.a_type).value() : tva.DEFAULT_KEYWORD_TYPE;
-			let keywordLang = GetNodeLanguage(Keyword, false, errs, `${errCode}-2`, this.knownLanguages);
+			let keywordLang = GetNodeLanguage(Keyword, false, errs, `${errCode}-2`, this.#knownLanguages);
 
 			if (counts[keywordLang] === undefined) counts[keywordLang] = [Keyword];
 			else counts[keywordLang].push(Keyword);
@@ -558,7 +573,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs              errors found in validaton
 	 * @param {string}  errCode           error code prefix to be used in reports
 	 */
-	/* private */ ValidateGenre(props, BasicDescription, errs, errCode) {
+	/* private */ #ValidateGenre(props, BasicDescription, errs, errCode) {
 		if (!BasicDescription) {
 			errs.addError({ type: APPLICATION, code: "GE000", message: "ValidateGenre() called with BasicDescription=null" });
 			return;
@@ -577,7 +592,7 @@ export default class ContentGuideCheck {
 				});
 
 			let genreValue = Genre.attr(tva.a_href) ? Genre.attr(tva.a_href).value() : "";
-			if (!this.allowedGenres.isIn(genreValue))
+			if (!this.#allowedGenres.isIn(genreValue))
 				errs.addError({
 					code: `${errCode}-2`,
 					key: "invalid genre",
@@ -595,7 +610,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs              errors found in validaton
 	 * @param {string}  errCode           error code prefix to be used in reports
 	 */
-	/* private */ Validate_ParentalGuidance(props, BasicDescription, errs, errCode) {
+	/* private */ #Validate_ParentalGuidance(props, BasicDescription, errs, errCode) {
 		if (!BasicDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -621,7 +636,7 @@ export default class ContentGuideCheck {
 					foundCountries.push(thisCountry);
 				}
 
-				if (pgCountry != UNSPECIFIED_COUNTRY && !this.knownCountries.isISO3166code(pgCountry))
+				if (pgCountry != UNSPECIFIED_COUNTRY && !this.#knownCountries.isISO3166code(pgCountry))
 					errs.addError({
 						code: `${errCode}-5`,
 						key: keys.k_ParentalGuidance,
@@ -663,8 +678,8 @@ export default class ContentGuideCheck {
 								}
 								if (pgChild.attr(tva.a_href)) {
 									let rating = pgChild.attr(tva.a_href).value();
-									if (this.allowedRatings.hasScheme(rating)) {
-										if (!this.allowedRatings.isIn(rating))
+									if (this.#allowedRatings.hasScheme(rating)) {
+										if (!this.#allowedRatings.isIn(rating))
 											errs.addError({
 												code: `${errCode}-22`,
 												key: keys.k_ParentalGuidance,
@@ -713,7 +728,7 @@ export default class ContentGuideCheck {
 								break;
 						}
 					});
-				checkXMLLangs(tva.e_ExplanatoryText, `${BasicDescription.name()}.${tva.e_ParentalGuidance}`, ParentalGuidance, errs, `${errCode}-50`, this.knownLanguages);
+				checkXMLLangs(tva.e_ExplanatoryText, `${BasicDescription.name()}.${tva.e_ParentalGuidance}`, ParentalGuidance, errs, `${errCode}-50`, this.#knownLanguages);
 			});
 		}
 
@@ -739,7 +754,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs               errors found in validaton
 	 * @param {string}  errCode            error code prefix to be used in reports
 	 */
-	/* private */ ValidateCreditsList(props, BasicDescription, errs, errCode) {
+	/* private */ #ValidateCreditsList(props, BasicDescription, errs, errCode) {
 		if (!BasicDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -813,7 +828,7 @@ export default class ContentGuideCheck {
 				checkAttributes(CreditsItem, [tva.a_role], [], tvaEA.CreditsItem, errs, `${errCode}-1`);
 				if (CreditsItem.attr(tva.a_role)) {
 					let CreditsItemRole = CreditsItem.attr(tva.a_role).value();
-					if (!this.allowedCreditItemRoles.isIn(CreditsItemRole))
+					if (!this.#allowedCreditItemRoles.isIn(CreditsItemRole))
 						errs.addError({
 							code: `${errCode}-2`,
 							message: `${CreditsItemRole.quote()} is not valid for ${tva.a_role.attribute(tva.e_CreditsItem)}`,
@@ -832,15 +847,15 @@ export default class ContentGuideCheck {
 								foundPersonName.push(elem);
 								// required to have a GivenName optionally have a FamilyName
 								ValidateName(elem, errs, `${errCode}-11`);
-								checkXMLLangs(tva.e_GivenName, tva.e_PersonName, elem, errs, `${errCode}-12`, this.knownLanguages);
-								checkXMLLangs(tva.e_FamilyName, tva.e_PersonName, elem, errs, `${errCode}-13`, this.knownLanguages);
+								checkXMLLangs(tva.e_GivenName, tva.e_PersonName, elem, errs, `${errCode}-12`, this.#knownLanguages);
+								checkXMLLangs(tva.e_FamilyName, tva.e_PersonName, elem, errs, `${errCode}-13`, this.#knownLanguages);
 								break;
 							case tva.e_Character:
 								foundCharacter.push(elem);
 								// required to have a GivenName optionally have a FamilyName
 								ValidateName(elem, errs, `${errCode}-21`);
-								checkXMLLangs(tva.e_GivenName, tva.e_Character, elem, errs, `${errCode}-22`, this.knownLanguages);
-								checkXMLLangs(tva.e_FamilyName, tva.e_Character, elem, errs, `${errCode}-23`, this.knownLanguages);
+								checkXMLLangs(tva.e_GivenName, tva.e_Character, elem, errs, `${errCode}-22`, this.#knownLanguages);
+								checkXMLLangs(tva.e_FamilyName, tva.e_Character, elem, errs, `${errCode}-23`, this.#knownLanguages);
 								break;
 							case tva.e_OrganizationName:
 								foundOrganizationName.push(elem);
@@ -863,7 +878,7 @@ export default class ContentGuideCheck {
 						}
 					});
 				let singleElementError = (elementName, parentElementName) => `only a single ${elementName.elementize()} is permitted in ${parentElementName.elementize()}`;
-				checkXMLLangs(tva.e_OrganizationName, tva.e_CreditsItem, CreditsItem, errs, `${errCode}-11`, this.knownLanguages);
+				checkXMLLangs(tva.e_OrganizationName, tva.e_CreditsItem, CreditsItem, errs, `${errCode}-11`, this.#knownLanguages);
 				if (foundPersonName.length > 1)
 					errs.addError({
 						code: `${errCode}-51`,
@@ -917,7 +932,7 @@ export default class ContentGuideCheck {
 	 * @param {XMLnode} BasicDescription  the element whose children should be checked
 	 * @param {Class}   errs              errors found in validaton
 	 */
-	/* private */ ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs) {
+	/* private */ #ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs) {
 		if (!BasicDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -929,7 +944,7 @@ export default class ContentGuideCheck {
 		let rm = 0,
 			RelatedMaterial;
 		while ((RelatedMaterial = BasicDescription.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null)
-			ValidatePromotionalStillImage(RelatedMaterial, errs, "RMPSI001", BasicDescription.name().elementize(), this.knownLanguages);
+			ValidatePromotionalStillImage(RelatedMaterial, errs, "RMPSI001", BasicDescription.name().elementize(), this.#knownLanguages);
 	}
 
 	/**
@@ -940,7 +955,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs               errors found in validaton
 	 * @param {string}  Location           The location of the Basic Description element
 	 */
-	/* private */ ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, Location) {
+	/* private */ #ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, Location) {
 		if (!BasicDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -1045,7 +1060,7 @@ export default class ContentGuideCheck {
 	 * @param {XMLnode} BasicDescription   the element whose children should be checked
 	 * @param {Class}   errs               errors found in validaton
 	 */
-	/* private */ ValidateRelatedMaterial_MoreEpisodes(props, BasicDescription, errs) {
+	/* private */ #ValidateRelatedMaterial_MoreEpisodes(props, BasicDescription, errs) {
 		if (!BasicDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -1059,10 +1074,10 @@ export default class ContentGuideCheck {
 				let rm = 0,
 					RelatedMaterial;
 				while ((RelatedMaterial = BasicDescription.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null)
-					ValidatePromotionalStillImage(RelatedMaterial, errs, "RMME001", BasicDescription.name(), this.knownLanguages);
+					ValidatePromotionalStillImage(RelatedMaterial, errs, "RMME001", BasicDescription.name(), this.#knownLanguages);
 				break;
 			case tva.e_GroupInformation:
-				this.ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, "More Episodes");
+				this.#ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, "More Episodes");
 				break;
 		}
 	}
@@ -1073,7 +1088,7 @@ export default class ContentGuideCheck {
 	 * @param {Object}  errs             the class where errors and warnings relating to the serivce list processing are stored
 	 * @param {string}  Location         the printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 */
-	/* private */ ValidateTemplateAIT(RelatedMaterial, errs, Location) {
+	/* private */ #ValidateTemplateAIT(RelatedMaterial, errs, Location) {
 		if (!RelatedMaterial) {
 			errs.addError({
 				type: APPLICATION,
@@ -1146,7 +1161,7 @@ export default class ContentGuideCheck {
 	 * @param {XMLnode} BasicDescription   the element whose children should be checked
 	 * @param {Class}   errs               errors found in validaton
 	 */
-	/* private */ ValidateRelatedMaterial_BoxSetList(props, BasicDescription, errs) {
+	/* private */ #ValidateRelatedMaterial_BoxSetList(props, BasicDescription, errs) {
 		if (!BasicDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -1172,7 +1187,7 @@ export default class ContentGuideCheck {
 					switch (hrHref) {
 						case dvbi.TEMPLATE_AIT_URI:
 							countTemplateAIT.push(HowRelated);
-							this.ValidateTemplateAIT(RelatedMaterial, errs, BasicDescription.name().elementize());
+							this.#ValidateTemplateAIT(RelatedMaterial, errs, BasicDescription.name().elementize());
 							break;
 						case dvbi.PAGINATION_FIRST_URI:
 						case dvbi.PAGINATION_PREV_URI:
@@ -1183,7 +1198,7 @@ export default class ContentGuideCheck {
 							break;
 						case tva.cs_PromotionalStillImage:
 							countImage.push(HowRelated);
-							ValidatePromotionalStillImage(RelatedMaterial, errs, "MB012", BasicDescription.name().elementize(), this.knownLanguages);
+							ValidatePromotionalStillImage(RelatedMaterial, errs, "MB012", BasicDescription.name().elementize(), this.#knownLanguages);
 							break;
 						default:
 							errs.addError(cg_InvalidHrefValue(hrHref, HowRelated, `${tva.e_RelatedMaterial.elementize()} in Box Set List`, "MB011"));
@@ -1210,7 +1225,7 @@ export default class ContentGuideCheck {
 				multiElementError: countImage,
 			});
 
-		if (hasPagination) this.ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, "Box Set List");
+		if (hasPagination) this.#ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, "Box Set List");
 	}
 
 	/**
@@ -1223,7 +1238,7 @@ export default class ContentGuideCheck {
 	 * @param {string}  errCode          error code prefix to be used in reports
 	 * @param {boolean} TypeIsRequired   true is the @type is a required attribute in this use of <Title>
 	 */
-	/* private */ ValidateTitle(props, containingNode, allowSecondary, errs, errCode, TypeIsRequired) {
+	/* private */ #ValidateTitle(props, containingNode, allowSecondary, errs, errCode, TypeIsRequired) {
 		if (!containingNode) {
 			errs.addError({ type: APPLICATION, code: "VT000", message: "ValidateTitle() called with containingNode==null" });
 			return;
@@ -1243,7 +1258,7 @@ export default class ContentGuideCheck {
 			checkAttributes(Title, requiredAttributes, optionalAttributes, tvaEA.Title, errs, `${errCode}-1`);
 
 			let titleType = Title.attr(tva.a_type) ? Title.attr(tva.a_type).value() : mpeg7.DEFAULT_TITLE_TYPE;
-			let titleLang = GetNodeLanguage(Title, false, errs, `${errCode}-2`, this.knownLanguages);
+			let titleLang = GetNodeLanguage(Title, false, errs, `${errCode}-2`, this.#knownLanguages);
 			let titleStr = unEntity(Title.text());
 
 			if (titleStr.length > dvbi.MAX_TITLE_LENGTH)
@@ -1305,7 +1320,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs            errors found in validaton
 	 * @param {XMLnode} categoryGroup   the GroupInformation element that others must refer to through <MemberOf>
 	 */
-	/* private */ ValidateBasicDescription(props, parentElement, requestType, errs, categoryGroup) {
+	/* private */ #ValidateBasicDescription(props, parentElement, requestType, errs, categoryGroup) {
 		if (!parentElement) {
 			errs.addError({
 				type: APPLICATION,
@@ -1342,11 +1357,11 @@ export default class ContentGuideCheck {
 							errs,
 							"BD010"
 						);
-						this.ValidateTitle(props, BasicDescription, true, errs, "BD011", true);
-						this.ValidateSynopsis(props, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL], errs, "BD012");
-						this.ValidateGenre(props, BasicDescription, errs, "BD013");
-						this.Validate_ParentalGuidance(props, BasicDescription, errs, "BD014");
-						this.ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
+						this.#ValidateTitle(props, BasicDescription, true, errs, "BD011", true);
+						this.#ValidateSynopsis(props, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL], errs, "BD012");
+						this.#ValidateGenre(props, BasicDescription, errs, "BD013");
+						this.#Validate_ParentalGuidance(props, BasicDescription, errs, "BD014");
+						this.#ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
 						break;
 					case CG_REQUEST_PROGRAM: // 6.10.5.3
 						checkTopElementsAndCardinality(
@@ -1365,13 +1380,13 @@ export default class ContentGuideCheck {
 							errs,
 							"BD020"
 						);
-						this.ValidateTitle(props, BasicDescription, true, errs, "BD021", true);
-						this.ValidateSynopsis(props, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_LONG_LABEL], errs, "BD022");
-						this.ValidateKeyword(props, BasicDescription, 0, 20, errs, "BD023");
-						this.ValidateGenre(props, BasicDescription, errs, "BD024");
-						this.Validate_ParentalGuidance(props, BasicDescription, errs, "BD025");
-						this.ValidateCreditsList(props, BasicDescription, errs, "BD026");
-						this.ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
+						this.#ValidateTitle(props, BasicDescription, true, errs, "BD021", true);
+						this.#ValidateSynopsis(props, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_LONG_LABEL], errs, "BD022");
+						this.#ValidateKeyword(props, BasicDescription, 0, 20, errs, "BD023");
+						this.#ValidateGenre(props, BasicDescription, errs, "BD024");
+						this.#Validate_ParentalGuidance(props, BasicDescription, errs, "BD025");
+						this.#ValidateCreditsList(props, BasicDescription, errs, "BD026");
+						this.#ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
 						break;
 					case CG_REQUEST_BS_CONTENTS: // 6.10.5.4
 						checkTopElementsAndCardinality(
@@ -1387,11 +1402,11 @@ export default class ContentGuideCheck {
 							errs,
 							"BD030"
 						);
-						this.ValidateTitle(props, BasicDescription, true, errs, "BD031", true);
-						this.ValidateSynopsis(props, BasicDescription, [], [tva.SYNOPSIS_MEDIUM_LABEL], errs, "BD032");
-						this.Validate_ParentalGuidance(props, BasicDescription, errs, "BD033");
-						this.ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
-						this.ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, "Box Set Contents");
+						this.#ValidateTitle(props, BasicDescription, true, errs, "BD031", true);
+						this.#ValidateSynopsis(props, BasicDescription, [], [tva.SYNOPSIS_MEDIUM_LABEL], errs, "BD032");
+						this.#Validate_ParentalGuidance(props, BasicDescription, errs, "BD033");
+						this.#ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
+						this.#ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, "Box Set Contents");
 						break;
 					case CG_REQUEST_MORE_EPISODES:
 						checkTopElementsAndCardinality(
@@ -1405,8 +1420,8 @@ export default class ContentGuideCheck {
 							errs,
 							"BD040"
 						);
-						this.ValidateTitle(props, BasicDescription, true, errs, "BD041", true);
-						this.ValidateRelatedMaterial_MoreEpisodes(props, BasicDescription, errs);
+						this.#ValidateTitle(props, BasicDescription, true, errs, "BD041", true);
+						this.#ValidateRelatedMaterial_MoreEpisodes(props, BasicDescription, errs);
 						break;
 					default:
 						errs.addError({
@@ -1444,16 +1459,16 @@ export default class ContentGuideCheck {
 								"BD062"
 							);
 
-						this.ValidateTitle(props, BasicDescription, false, errs, "BD063", false);
+						this.#ValidateTitle(props, BasicDescription, false, errs, "BD063", false);
 						if (!isParentGroup) {
-							this.ValidateSynopsis(props, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [], errs, "BD064");
-							this.ValidateKeyword(props, BasicDescription, 0, 20, errs, "BD065");
-							this.ValidateRelatedMaterial_BoxSetList(props, BasicDescription, errs);
+							this.#ValidateSynopsis(props, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [], errs, "BD064");
+							this.#ValidateKeyword(props, BasicDescription, 0, 20, errs, "BD065");
+							this.#ValidateRelatedMaterial_BoxSetList(props, BasicDescription, errs);
 						}
 						break;
 					case CG_REQUEST_MORE_EPISODES:
 						checkTopElementsAndCardinality(BasicDescription, [{ name: tva.e_RelatedMaterial, maxOccurs: 4 }], tvaEC.BasicDescription, false, errs, "BD070");
-						this.ValidateRelatedMaterial_MoreEpisodes(props, BasicDescription, errs);
+						this.#ValidateRelatedMaterial_MoreEpisodes(props, BasicDescription, errs);
 						break;
 					case CG_REQUEST_BS_CATEGORIES:
 						if (isParentGroup) checkTopElementsAndCardinality(BasicDescription, [{ name: tva.e_Title, maxOccurs: Infinity }], tvaEC.BasicDescription, false, errs, "BD080");
@@ -1471,11 +1486,11 @@ export default class ContentGuideCheck {
 								errs,
 								"BD081"
 							);
-						this.ValidateTitle(props, BasicDescription, false, errs, "BD082", false);
-						if (!isParentGroup) this.ValidateSynopsis(props, BasicDescription, [tva.SYNOPSIS_SHORT_LABEL], [], errs, "BD083");
-						this.ValidateGenre(props, BasicDescription, errs, "BD084");
-						this.ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
-						this.ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, "Box Set Categories");
+						this.#ValidateTitle(props, BasicDescription, false, errs, "BD082", false);
+						if (!isParentGroup) this.#ValidateSynopsis(props, BasicDescription, [tva.SYNOPSIS_SHORT_LABEL], [], errs, "BD083");
+						this.#ValidateGenre(props, BasicDescription, errs, "BD084");
+						this.#ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
+						this.#ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, "Box Set Categories");
 						break;
 					default:
 						errs.addError({
@@ -1506,7 +1521,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                errors found in validaton
 	 * @returns {String} 	CRID if the current program, if this is it
 	 */
-	/* private */ ValidateProgramInformation(props, ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs) {
+	/* private */ #ValidateProgramInformation(props, ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs) {
 		if (!ProgramInformation) {
 			errs.addError({
 				type: APPLICATION,
@@ -1538,7 +1553,7 @@ export default class ContentGuideCheck {
 			"PI002"
 		);
 
-		GetNodeLanguage(ProgramInformation, false, errs, "PI010", this.knownLanguages);
+		GetNodeLanguage(ProgramInformation, false, errs, "PI010", this.#knownLanguages);
 		let isCurrentProgram = false,
 			programCRID = null;
 
@@ -1560,7 +1575,7 @@ export default class ContentGuideCheck {
 		}
 
 		// <ProgramInformation><BasicDescription>
-		this.ValidateBasicDescription(props, ProgramInformation, requestType, errs, null);
+		this.#ValidateBasicDescription(props, ProgramInformation, requestType, errs, null);
 
 		if (ProgramInformation.childNodes())
 			ProgramInformation.childNodes().forEachSubElement((child) => {
@@ -1662,7 +1677,7 @@ export default class ContentGuideCheck {
 	 * @param {integer} o.childCount        the number of child elements to be present (to match GroupInformation@numOfItems)
 	 * @returns {string} the CRID of the currently airing program (that which is a member of the "now" structural crid)
 	 */
-	/* private */ CheckProgramInformation(props, ProgramDescription, programCRIDs, groupCRIDs, requestType, errs, o = null) {
+	/* private */ #CheckProgramInformation(props, ProgramDescription, programCRIDs, groupCRIDs, requestType, errs, o = null) {
 		if (!ProgramDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -1678,7 +1693,7 @@ export default class ContentGuideCheck {
 			return null;
 		}
 		checkAttributes(ProgramInformationTable, [], [tva.a_lang], tvaEA.ProgramInformationTable, errs, "PI102");
-		GetNodeLanguage(ProgramInformationTable, false, errs, "PI103", this.knownLanguages);
+		GetNodeLanguage(ProgramInformationTable, false, errs, "PI103", this.#knownLanguages);
 
 		let pi = 0,
 			ProgramInformation,
@@ -1686,7 +1701,7 @@ export default class ContentGuideCheck {
 			indexes = [],
 			currentProgramCRID = null;
 		while ((ProgramInformation = ProgramInformationTable.get(xPath(props.prefix, tva.e_ProgramInformation, ++pi), props.schema)) != null) {
-			let t = this.ValidateProgramInformation(props, ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs);
+			let t = this.#ValidateProgramInformation(props, ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs);
 			if (t) currentProgramCRID = t;
 			cnt++;
 		}
@@ -1715,7 +1730,7 @@ export default class ContentGuideCheck {
 	 * @param {array}   indexes            an accumulation of the @index values found
 	 * @param {array}   groupsFound        groupId values found (null if not needed)
 	 */
-	/* private */ ValidateGroupInformationBoxSets(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupsFound) {
+	/* private */ #ValidateGroupInformationBoxSets(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupsFound) {
 		if (!GroupInformation) {
 			errs.addError({
 				type: APPLICATION,
@@ -1841,10 +1856,10 @@ export default class ContentGuideCheck {
 				});
 		}
 
-		this.checkTAGUri(GroupInformation, errs, "GIB51");
+		this.#checkTAGUri(GroupInformation, errs, "GIB51");
 
 		// <GroupInformation><BasicDescription>
-		this.ValidateBasicDescription(props, GroupInformation, requestType, errs, categoryGroup);
+		this.#ValidateBasicDescription(props, GroupInformation, requestType, errs, categoryGroup);
 	}
 
 	/**
@@ -1856,7 +1871,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs               errors found in validaton
 	 * @param {XMLnode} categoryGroup      the GroupInformationElement that others must refer to through <MemberOf>
 	 */
-	/* private */ ValidateGroupInformationSchedules(props, GroupInformation, requestType, errs, categoryGroup) {
+	/* private */ #ValidateGroupInformationSchedules(props, GroupInformation, requestType, errs, categoryGroup) {
 		if (!GroupInformation) {
 			errs.addError({
 				type: APPLICATION,
@@ -1889,7 +1904,7 @@ export default class ContentGuideCheck {
 		}
 
 		// <GroupInformation><BasicDescription>
-		this.ValidateBasicDescription(props, GroupInformation, requestType, errs, categoryGroup);
+		this.#ValidateBasicDescription(props, GroupInformation, requestType, errs, categoryGroup);
 	}
 
 	/**
@@ -1902,7 +1917,7 @@ export default class ContentGuideCheck {
 	 * @param {XMLnode} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
 	 * @param {array}   groupsFound         groupId values found (null if not needed)
 	 */
-	/* private */ ValidateGroupInformationMoreEpisodes(props, GroupInformation, requestType, errs, categoryGroup, groupsFound) {
+	/* private */ #ValidateGroupInformationMoreEpisodes(props, GroupInformation, requestType, errs, categoryGroup, groupsFound) {
 		if (!GroupInformation) {
 			errs.addError({
 				type: APPLICATION,
@@ -1957,7 +1972,7 @@ export default class ContentGuideCheck {
 			});
 
 		// <GroupInformation><BasicDescription>
-		this.ValidateBasicDescription(props, GroupInformation, requestType, errs, categoryGroup);
+		this.#ValidateBasicDescription(props, GroupInformation, requestType, errs, categoryGroup);
 	}
 
 	/**
@@ -1971,7 +1986,7 @@ export default class ContentGuideCheck {
 	 * @param {array}   indexes            an accumulation of the @index values found
 	 * @param {array}   groupsFound        groupId values found (null if not needed)
 	 */
-	/* private */ ValidateGroupInformation(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupsFound) {
+	/* private */ #ValidateGroupInformation(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupsFound) {
 		if (!GroupInformation) {
 			errs.addError({
 				type: APPLICATION,
@@ -1981,20 +1996,20 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		GetNodeLanguage(GroupInformation, false, errs, "GI001", this.knownLanguages);
+		GetNodeLanguage(GroupInformation, false, errs, "GI001", this.#knownLanguages);
 
 		switch (requestType) {
 			case CG_REQUEST_SCHEDULE_NOWNEXT:
 			case CG_REQUEST_SCHEDULE_WINDOW:
-				this.ValidateGroupInformationSchedules(props, GroupInformation, requestType, errs, categoryGroup);
+				this.#ValidateGroupInformationSchedules(props, GroupInformation, requestType, errs, categoryGroup);
 				break;
 			case CG_REQUEST_BS_CATEGORIES:
 			case CG_REQUEST_BS_LISTS:
 			case CG_REQUEST_BS_CONTENTS:
-				this.ValidateGroupInformationBoxSets(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupsFound);
+				this.#ValidateGroupInformationBoxSets(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupsFound);
 				break;
 			case CG_REQUEST_MORE_EPISODES:
-				this.ValidateGroupInformationMoreEpisodes(props, GroupInformation, requestType, errs, categoryGroup, groupsFound);
+				this.#ValidateGroupInformationMoreEpisodes(props, GroupInformation, requestType, errs, categoryGroup, groupsFound);
 				break;
 		}
 
@@ -2030,7 +2045,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                errors found in validaton
 	 * @param {integer} o.childCount        the value from the @numItems attribute of the "category group"
 	 */
-	/* private */ CheckGroupInformation(props, ProgramDescription, requestType, groupIds, errs, o) {
+	/* private */ #CheckGroupInformation(props, ProgramDescription, requestType, groupIds, errs, o) {
 		if (!ProgramDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -2046,7 +2061,7 @@ export default class ContentGuideCheck {
 			//errs.addError({code:"GI101", message:`${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`, line:ProgramDescription.line()});
 			return;
 		}
-		GetNodeLanguage(GroupInformationTable, false, errs, "GI102", this.knownLanguages);
+		GetNodeLanguage(GroupInformationTable, false, errs, "GI102", this.#knownLanguages);
 
 		// find which GroupInformation element is the "category group"
 		let categoryGroup = null;
@@ -2077,7 +2092,7 @@ export default class ContentGuideCheck {
 			giCount = 0;
 		gi = 0;
 		while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
-			this.ValidateGroupInformation(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupIds);
+			this.#ValidateGroupInformation(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupIds);
 			if (GroupInformation != categoryGroup) giCount++;
 		}
 		if (categoryGroup) {
@@ -2112,7 +2127,7 @@ export default class ContentGuideCheck {
 	 * @param {int}     numLater            maximum number of <GroupInformation> elements that are later
 	 * @param {array}   groupCRIDsFound     list of structural crids already found in this response
 	 */
-	/* private */ ValidateGroupInformationNowNext(props, GroupInformation, requestType, errs, numEarlier, numNow, numLater, groupCRIDsFound) {
+	/* private */ #ValidateGroupInformationNowNext(props, GroupInformation, requestType, errs, numEarlier, numNow, numLater, groupCRIDsFound) {
 		function validValues(errs, numOfItems, numAllowed, grp, element) {
 			if (numOfItems <= 0)
 				errs.addError({
@@ -2138,7 +2153,7 @@ export default class ContentGuideCheck {
 		}
 
 		// NOWNEXT and WINDOW GroupInformationElements contains the same syntax as other GroupInformationElements
-		this.ValidateGroupInformation(props, GroupInformation, requestType, errs, null, null, null);
+		this.#ValidateGroupInformation(props, GroupInformation, requestType, errs, null, null, null);
 
 		if (GroupInformation.attr(tva.a_groupId)) {
 			let grp = GroupInformation.attr(tva.a_groupId).value();
@@ -2180,7 +2195,7 @@ export default class ContentGuideCheck {
 	 * @param {string}  requestType         the type of content guide request being checked
 	 * @param {Class}   errs                errors found in validaton
 	 */
-	/* private */ CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs) {
+	/* private */ #CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs) {
 		if (!ProgramDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -2199,17 +2214,17 @@ export default class ContentGuideCheck {
 			});
 			return;
 		}
-		GetNodeLanguage(GroupInformationTable, false, errs, "NM002", this.knownLanguages);
+		GetNodeLanguage(GroupInformationTable, false, errs, "NM002", this.#knownLanguages);
 
 		let gi = 0,
 			GroupInformation;
 		while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
 			switch (requestType) {
 				case CG_REQUEST_SCHEDULE_NOWNEXT:
-					this.ValidateGroupInformationNowNext(props, GroupInformation, requestType, errs, 0, 1, 1, groupIds);
+					this.#ValidateGroupInformationNowNext(props, GroupInformation, requestType, errs, 0, 1, 1, groupIds);
 					break;
 				case CG_REQUEST_SCHEDULE_WINDOW:
-					this.ValidateGroupInformationNowNext(props, GroupInformation, requestType, errs, 10, 1, 10, groupIds);
+					this.#ValidateGroupInformationNowNext(props, GroupInformation, requestType, errs, 10, 1, 10, groupIds);
 					break;
 				default:
 					errs.addError({
@@ -2228,7 +2243,7 @@ export default class ContentGuideCheck {
 	 * @param {XMLnode} AVAttributes   the <AVAttributes> node to be checked
 	 * @param {Class}   errs           errors found in validaton
 	 */
-	/* private */ ValidateAVAttributes(props, AVAttributes, errs) {
+	/* private */ #ValidateAVAttributes(props, AVAttributes, errs) {
 		if (!AVAttributes) {
 			errs.addError({
 				type: APPLICATION,
@@ -2306,7 +2321,7 @@ export default class ContentGuideCheck {
 						});
 				}
 
-				validLanguage = checkLanguage(this.knownLanguages, audioLang, `${tva.e_AudioAttributes}.${tva.e_AudioLanguage}`, AudioLanguage, errs, "AV015");
+				validLanguage = checkLanguage(this.#knownLanguages, audioLang, `${tva.e_AudioAttributes}.${tva.e_AudioLanguage}`, AudioLanguage, errs, "AV015");
 
 				if (validLanguage && validPurpose) {
 					if (audioCounts[audioLang] === undefined) audioCounts[audioLang] = [AudioLanguage];
@@ -2377,16 +2392,16 @@ export default class ContentGuideCheck {
 				props,
 				AccessibilityAttributes,
 				{
-					AccessibilityPurposeCS: this.accessibilityPurposes,
+					AccessibilityPurposeCS: this.#accessibilityPurposes,
 					RequiredStandardVersionCS: this.RequiredStandardVersionCS,
 					RequiredOptionalFeatureCS: this.RequiredOptionalFeatureCS,
-					VideoCodecCS: this.allowedVideoSchemes,
-					AudioCodecCS: this.allowedAudioSchemes,
-					SubtitleCarriageCS: this.subtitleCarriages,
-					SubtitleCodingFormatCS: this.subtitleCodings,
-					SubtitlePurposeTypeCS: this.subtitlePurposes,
-					KnownLanguages: this.knownLanguages,
-					AudioPresentationCS: this.AudioPresentationCSvalues,
+					VideoCodecCS: this.#allowedVideoSchemes,
+					AudioCodecCS: this.#allowedAudioSchemes,
+					SubtitleCarriageCS: this.#subtitleCarriages,
+					SubtitleCodingFormatCS: this.#subtitleCodings,
+					SubtitlePurposeTypeCS: this.#subtitlePurposes,
+					KnownLanguages: this.#knownLanguages,
+					AudioPresentationCS: this.#AudioPresentationCSvalues,
 				},
 				errs,
 				"AV051"
@@ -2402,7 +2417,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs             errors found in validaton
 	 * @returns {boolean}	true if this RelatedMaterial element contains a restart link (proper HowRelated@href and MediaLocator.MediaUri and MediaLocator.AuxiliaryURI)
 	 */
-	/* private */ ValidateRestartRelatedMaterial(props, RelatedMaterial, errs) {
+	/* private */ #ValidateRestartRelatedMaterial(props, RelatedMaterial, errs) {
 		if (!RelatedMaterial) {
 			errs.addError({
 				type: APPLICATION,
@@ -2447,7 +2462,7 @@ export default class ContentGuideCheck {
 	 * @param {boolean} isCurrentProgram      indicates if this <InstanceDescription> element is for the currently airing program
 	 * @param {Class}   errs                  errors found in validaton
 	 */
-	/* private */ ValidateInstanceDescription(props, VerifyType, InstanceDescription, isCurrentProgram, errs) {
+	/* private */ #ValidateInstanceDescription(props, VerifyType, InstanceDescription, isCurrentProgram, errs) {
 		function checkGenre(genre, errs, errcode) {
 			if (!genre) return null;
 			checkAttributes(genre, [tva.a_href], [tva.a_type], tvaEA.Genre, errs, `${errcode}-1`);
@@ -2584,17 +2599,17 @@ export default class ContentGuideCheck {
 		// <CaptionLanguage>
 		let CaptionLanguage = InstanceDescription.get(xPath(props.prefix, tva.e_CaptionLanguage), props.schema);
 		if (CaptionLanguage) {
-			checkLanguage(this.knownLanguages, CaptionLanguage.text(), `${InstanceDescription.name()}.${tva.e_CaptionLanguage}`, CaptionLanguage, errs, "ID021");
+			checkLanguage(this.#knownLanguages, CaptionLanguage.text(), `${InstanceDescription.name()}.${tva.e_CaptionLanguage}`, CaptionLanguage, errs, "ID021");
 			BooleanValue(CaptionLanguage, tva.a_closed, "ID022", errs);
 		}
 
 		// <SignLanguage>
 		let SignLanguage = InstanceDescription.get(xPath(props.prefix, tva.e_SignLanguage), props.schema);
 		if (SignLanguage) {
-			checkLanguage(this.knownLanguages, SignLanguage.text(), `${InstanceDescription.name()}.${tva.e_SignLanguage}`, SignLanguage, errs, "ID031");
+			checkLanguage(this.#knownLanguages, SignLanguage.text(), `${InstanceDescription.name()}.${tva.e_SignLanguage}`, SignLanguage, errs, "ID031");
 			FalseValue(SignLanguage, tva.a_closed, "ID032", errs);
 			// check value is "sgn" according to ISO 639-2 or a sign language listed in ISO 639-3
-			if (SignLanguage.text() != "sgn" && !this.knownLanguages.isKnownSignLanguage(SignLanguage.text()))
+			if (SignLanguage.text() != "sgn" && !this.#knownLanguages.isKnownSignLanguage(SignLanguage.text()))
 				errs.addError({
 					code: "ID033",
 					message: `invalid ${tva.e_SignLanguage.elementize()} ${SignLanguage.text().quote()} in ${InstanceDescription.name().elementize()}`,
@@ -2604,7 +2619,7 @@ export default class ContentGuideCheck {
 
 		// <AVAttributes>
 		let AVAttributes = InstanceDescription.get(xPath(props.prefix, tva.e_AVAttributes), props.schema);
-		if (AVAttributes) this.ValidateAVAttributes(props, AVAttributes, errs);
+		if (AVAttributes) this.#ValidateAVAttributes(props, AVAttributes, errs);
 
 		// <OtherIdentifier>
 		let oi = 0,
@@ -2641,7 +2656,7 @@ export default class ContentGuideCheck {
 		// <RelatedMaterial>
 		let RelatedMaterial = InstanceDescription.get(xPath(props.prefix, tva.e_RelatedMaterial), props.schema);
 		if (RelatedMaterial) {
-			if (this.ValidateRestartRelatedMaterial(props, RelatedMaterial, errs)) restartRelatedMaterial = RelatedMaterial; //THIS
+			if (this.#ValidateRestartRelatedMaterial(props, RelatedMaterial, errs)) restartRelatedMaterial = RelatedMaterial; //THIS
 		}
 
 		// Genre and RelatedMaterial for restart capability should only be specified for the "current" (ie. 'now') program
@@ -2674,7 +2689,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                 errors found in validaton
 	 * @param {string}  errcode              error code to be used with any errors found
 	 */
-	/* private */ CheckPlayerApplication(node, allowedContentTypes, errs, errcode) {
+	/* private */ #CheckPlayerApplication(node, allowedContentTypes, errs, errcode) {
 		if (!node) {
 			errs.addError({ type: APPLICATION, code: "PA000a", message: "CheckPlayerApplication() called with node==null" });
 			return;
@@ -2735,7 +2750,7 @@ export default class ContentGuideCheck {
 	 * @param {string}  requestType        the type of content guide request being checked
 	 * @param {Class}   errs               errors found in validaton
 	 */
-	/* private */ ValidateOnDemandProgram(props, OnDemandProgram, programCRIDs, plCRIDs, requestType, errs) {
+	/* private */ #ValidateOnDemandProgram(props, OnDemandProgram, programCRIDs, plCRIDs, requestType, errs) {
 		if (!OnDemandProgram) {
 			errs.addError({
 				type: APPLICATION,
@@ -2815,8 +2830,8 @@ export default class ContentGuideCheck {
 		}
 
 		checkAttributes(OnDemandProgram, [tva.a_serviceIDRef], [tva.a_lang], tvaEA.OnDemandProgram, errs, "OD005");
-		GetNodeLanguage(OnDemandProgram, false, errs, "OD006", this.knownLanguages);
-		this.checkTAGUri(OnDemandProgram, errs, "OD007");
+		GetNodeLanguage(OnDemandProgram, false, errs, "OD006", this.#knownLanguages);
+		this.#checkTAGUri(OnDemandProgram, errs, "OD007");
 
 		// <Program>
 		let Program = OnDemandProgram.get(xPath(props.prefix, tva.e_Program), props.schema);
@@ -2846,16 +2861,16 @@ export default class ContentGuideCheck {
 
 		// <ProgramURL>
 		let ProgramURL = OnDemandProgram.get(xPath(props.prefix, tva.e_ProgramURL), props.schema);
-		if (ProgramURL) this.CheckPlayerApplication(ProgramURL, [dvbi.XML_AIT_CONTENT_TYPE], errs, "OD020");
+		if (ProgramURL) this.#CheckPlayerApplication(ProgramURL, [dvbi.XML_AIT_CONTENT_TYPE], errs, "OD020");
 
 		// <AuxiliaryURL>
 		let AuxiliaryURL = OnDemandProgram.get(xPath(props.prefix, tva.e_AuxiliaryURL), props.schema);
-		if (AuxiliaryURL) this.CheckPlayerApplication(AuxiliaryURL, [dvbi.XML_AIT_CONTENT_TYPE /*, dvbi.HTML5_APP, dvbi.XHTML_APP, dvbi.iOS_APP, dvbi.ANDROID_APP*/], errs, "OD030");
+		if (AuxiliaryURL) this.#CheckPlayerApplication(AuxiliaryURL, [dvbi.XML_AIT_CONTENT_TYPE /*, dvbi.HTML5_APP, dvbi.XHTML_APP, dvbi.iOS_APP, dvbi.ANDROID_APP*/], errs, "OD030");
 
 		// <InstanceDescription>
 		if (validRequest && [CG_REQUEST_BS_CONTENTS, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType)) {
 			let InstanceDescription = OnDemandProgram.get(xPath(props.prefix, tva.e_InstanceDescription), props.schema);
-			if (InstanceDescription) this.ValidateInstanceDescription(props, OnDemandProgram.name(), InstanceDescription, false, errs);
+			if (InstanceDescription) this.#ValidateInstanceDescription(props, OnDemandProgram.name(), InstanceDescription, false, errs);
 		}
 
 		// <PublishedDuration>
@@ -2904,7 +2919,7 @@ export default class ContentGuideCheck {
 	 * @param {Date}    scheduleEnd         Date representation of Schedule@end
 	 * @param {Class}   errs                errors found in validaton
 	 */
-	/* private */ ValidateScheduleEvents(props, Schedule, programCRIDs, plCRIDs, currentProgramCRID, scheduleStart, scheduleEnd, errs) {
+	/* private */ #ValidateScheduleEvents(props, Schedule, programCRIDs, plCRIDs, currentProgramCRID, scheduleStart, scheduleEnd, errs) {
 		if (!Schedule) {
 			errs.addError({
 				type: APPLICATION,
@@ -2918,7 +2933,7 @@ export default class ContentGuideCheck {
 		let se = 0,
 			ScheduleEvent;
 		while ((ScheduleEvent = Schedule.get(xPath(props.prefix, tva.e_ScheduleEvent, ++se), props.schema)) != null) {
-			GetNodeLanguage(ScheduleEvent, false, errs, "SE001", this.knownLanguages);
+			GetNodeLanguage(ScheduleEvent, false, errs, "SE001", this.#knownLanguages);
 			checkAttributes(ScheduleEvent, [], [], tvaEA.ScheduleEvent, errs, "SE002");
 
 			checkTopElementsAndCardinality(
@@ -2976,7 +2991,7 @@ export default class ContentGuideCheck {
 
 			// <InstanceDescription>
 			let InstanceDescription = ScheduleEvent.get(xPath(props.prefix, tva.e_InstanceDescription), props.schema);
-			if (InstanceDescription) this.ValidateInstanceDescription(props, tva.e_ScheduleEvent, InstanceDescription, isCurrentProgram, errs);
+			if (InstanceDescription) this.#ValidateInstanceDescription(props, tva.e_ScheduleEvent, InstanceDescription, isCurrentProgram, errs);
 
 			// <PublishedStartTime> and <PublishedDuration>
 			let pstElem = ScheduleEvent.get(xPath(props.prefix, tva.e_PublishedStartTime), props.schema);
@@ -3046,7 +3061,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                 errors found in validaton
 	 * @returns {string}	the serviceIdRef for this <Schedule> element
 	 */
-	/* private */ ValidateSchedule(props, Schedule, programCRIDS, plCRIDs, currentProgramCRID, requestType, errs) {
+	/* private */ #ValidateSchedule(props, Schedule, programCRIDS, plCRIDs, currentProgramCRID, requestType, errs) {
 		if (!Schedule) {
 			errs.addError({ type: APPLICATION, code: "VS000", message: "ValidateSchedule() called with Schedule==null" });
 			return;
@@ -3055,8 +3070,8 @@ export default class ContentGuideCheck {
 		checkTopElementsAndCardinality(Schedule, [{ name: tva.e_ScheduleEvent, minOccurs: 0, maxOccurs: Infinity }], tvaEC.Schedule, false, errs, "VS001");
 		checkAttributes(Schedule, [tva.a_serviceIDRef, tva.a_start, tva.a_end], [], tvaEA.Schedule, errs, "VS002");
 
-		GetNodeLanguage(Schedule, false, errs, "VS003", this.knownLanguages);
-		let serviceIdRef = this.checkTAGUri(Schedule, errs, "VS004");
+		GetNodeLanguage(Schedule, false, errs, "VS003", this.#knownLanguages);
+		let serviceIdRef = this.#checkTAGUri(Schedule, errs, "VS004");
 		let startSchedule = Schedule.attr(tva.a_start),
 			fr = null,
 			endSchedule = Schedule.attr(tva.a_end),
@@ -3073,7 +3088,7 @@ export default class ContentGuideCheck {
 					fragment: Schedule,
 				});
 
-		this.ValidateScheduleEvents(props, Schedule, programCRIDS, plCRIDs, currentProgramCRID, fr, to, errs);
+		this.#ValidateScheduleEvents(props, Schedule, programCRIDS, plCRIDs, currentProgramCRID, fr, to, errs);
 
 		return serviceIdRef;
 	}
@@ -3089,7 +3104,7 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                errors found in validaton
 	 * @param {integer} o.childCount        the number of child elements to be present (to match GroupInformation@numOfItems)
 	 */
-	/* private */ CheckProgramLocation(props, ProgramDescription, programCRIDs, currentProgramCRID, requestType, errs, o = null) {
+	/* private */ #CheckProgramLocation(props, ProgramDescription, programCRIDs, currentProgramCRID, requestType, errs, o = null) {
 		if (!ProgramDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -3117,7 +3132,7 @@ export default class ContentGuideCheck {
 		);
 		checkAttributes(ProgramLocationTable, [], [tva.a_lang], tvaEA.ProgramLocationTable, errs, "PL011");
 
-		GetNodeLanguage(ProgramLocationTable, false, errs, "PL012", this.knownLanguages);
+		GetNodeLanguage(ProgramLocationTable, false, errs, "PL012", this.#knownLanguages);
 
 		let cntODP = 0,
 			cntSE = 0,
@@ -3128,11 +3143,11 @@ export default class ContentGuideCheck {
 			ProgramLocationTable.childNodes().forEachSubElement((child) => {
 				switch (child.name()) {
 					case tva.e_OnDemandProgram:
-						this.ValidateOnDemandProgram(props, child, programCRIDs, plCRIDs, requestType, errs);
+						this.#ValidateOnDemandProgram(props, child, programCRIDs, plCRIDs, requestType, errs);
 						cntODP++;
 						break;
 					case tva.e_Schedule:
-						let thisServiceIdRef = this.ValidateSchedule(props, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
+						let thisServiceIdRef = this.#ValidateSchedule(props, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
 						if (thisServiceIdRef.length)
 							if (isIni(foundServiceIds, thisServiceIdRef))
 								errs.addError({
@@ -3182,7 +3197,7 @@ export default class ContentGuideCheck {
 	 * @param {String} log_prefix   the first part of the logging location (of null if no logging)
 	 */
 	doValidateContentGuide(CGtext, requestType, errs, log_prefix) {
-		this.numRequests++;
+		this.#numRequests++;
 
 		if (!CGtext) {
 			errs.addError({ type: APPLICATION, code: "CG000", message: "doValidateContentGuide() called with CGtext==null" });
@@ -3214,9 +3229,9 @@ export default class ContentGuideCheck {
 			namespace: SCHEMA_NAMESPACE,
 		};
 
-		this.doSchemaVerification(CG, props, errs, "CG003");
+		this.#doSchemaVerification(CG, props, errs, "CG003");
 
-		GetNodeLanguage(CG.root(), true, errs, "CG005", this.knownLanguages);
+		GetNodeLanguage(CG.root(), true, errs, "CG005", this.#knownLanguages);
 		let ProgramDescription = CG.get(xPath(props.prefix, tva.e_ProgramDescription), props.schema);
 		if (!ProgramDescription) {
 			errs.addError({ code: "CG006", message: `No ${tva.e_ProgramDescription.elementize()} element specified.` });
@@ -3239,8 +3254,8 @@ export default class ContentGuideCheck {
 					"CG011"
 				);
 
-				this.CheckProgramInformation(props, ProgramDescription, programCRIDs, null, requestType, errs);
-				this.CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs);
+				this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, null, requestType, errs);
+				this.#CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs);
 				break;
 			case CG_REQUEST_SCHEDULE_NOWNEXT:
 				// schedule response (6.5.4.1) has <ProgramLocationTable> and <ProgramInformationTable> elements
@@ -3254,9 +3269,9 @@ export default class ContentGuideCheck {
 				);
 
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
-				if (this.hasElement(ProgramDescription, tva.e_GroupInformationTable)) this.CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs);
-				let currentProgramCRIDnn = this.CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs);
-				this.CheckProgramLocation(props, ProgramDescription, programCRIDs, currentProgramCRIDnn, requestType, errs);
+				if (this.#hasElement(ProgramDescription, tva.e_GroupInformationTable)) this.#CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs);
+				let currentProgramCRIDnn = this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs);
+				this.#CheckProgramLocation(props, ProgramDescription, programCRIDs, currentProgramCRIDnn, requestType, errs);
 				break;
 			case CG_REQUEST_SCHEDULE_WINDOW:
 				checkTopElementsAndCardinality(
@@ -3269,9 +3284,9 @@ export default class ContentGuideCheck {
 				);
 
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
-				if (this.hasElement(ProgramDescription, tva.e_GroupInformationTable)) this.CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs);
-				let currentProgramCRIDsw = this.CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs);
-				this.CheckProgramLocation(props, ProgramDescription, programCRIDs, currentProgramCRIDsw, requestType, errs);
+				if (this.#hasElement(ProgramDescription, tva.e_GroupInformationTable)) this.#CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs);
+				let currentProgramCRIDsw = this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs);
+				this.#CheckProgramLocation(props, ProgramDescription, programCRIDs, currentProgramCRIDsw, requestType, errs);
 				break;
 			case CG_REQUEST_PROGRAM:
 				// program information response (6.6.2) has <ProgramLocationTable> and <ProgramInformationTable> elements
@@ -3284,8 +3299,8 @@ export default class ContentGuideCheck {
 					"CG041"
 				);
 
-				this.CheckProgramInformation(props, ProgramDescription, programCRIDs, null, requestType, errs);
-				this.CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs);
+				this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, null, requestType, errs);
+				this.#CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs);
 				break;
 			case CG_REQUEST_MORE_EPISODES:
 				// more episodes response (6.7.3) has <ProgramInformationTable>, <GroupInformationTable> and <ProgramLocationTable> elements
@@ -3298,21 +3313,21 @@ export default class ContentGuideCheck {
 					"CG051"
 				);
 
-				this.CheckGroupInformation(props, ProgramDescription, requestType, groupIds, errs, o);
-				this.CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs, o);
-				this.CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs, o);
+				this.#CheckGroupInformation(props, ProgramDescription, requestType, groupIds, errs, o);
+				this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs, o);
+				this.#CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs, o);
 				break;
 			case CG_REQUEST_BS_CATEGORIES:
 				// box set categories response (6.8.2.3) has <GroupInformationTable> element
 				checkTopElementsAndCardinality(ProgramDescription, [{ name: tva.e_GroupInformationTable }], tvaEC.ProgramDescription, false, errs, "CG061");
 
-				this.CheckGroupInformation(props, ProgramDescription, requestType, null, errs, null);
+				this.#CheckGroupInformation(props, ProgramDescription, requestType, null, errs, null);
 				break;
 			case CG_REQUEST_BS_LISTS:
 				// box set lists response (6.8.3.3) has <GroupInformationTable> element
 				checkTopElementsAndCardinality(ProgramDescription, [{ name: tva.e_GroupInformationTable }], tvaEC.ProgramDescription, false, errs, "CG071");
 
-				this.CheckGroupInformation(props, ProgramDescription, requestType, null, errs, null);
+				this.#CheckGroupInformation(props, ProgramDescription, requestType, null, errs, null);
 				break;
 			case CG_REQUEST_BS_CONTENTS:
 				// box set contents response (6.8.4.3) has <ProgramInformationTable>, <GroupInformationTable> and <ProgramLocationTable> elements
@@ -3325,9 +3340,9 @@ export default class ContentGuideCheck {
 					"CG081"
 				);
 
-				this.CheckGroupInformation(props, ProgramDescription, requestType, groupIds, errs, o);
-				this.CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs, o);
-				this.CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs, o);
+				this.#CheckGroupInformation(props, ProgramDescription, requestType, groupIds, errs, o);
+				this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs, o);
+				this.#CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs, o);
 				break;
 		}
 	}

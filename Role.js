@@ -19,7 +19,7 @@ export default class Role extends ClassificationScheme {
 	 *
 	 * @param {String} rolesURL URL to the classification scheme
 	 */
-	loadFromURL(rolesURL) {
+	#loadFromURL(rolesURL) {
 		let isHTTPurl = isHTTPURL(rolesURL);
 		console.log(`${isHTTPurl ? "" : "--> NOT "}retrieving Roles from ${rolesURL} via fetch()`.yellow);
 		if (!isHTTPurl) return;
@@ -40,7 +40,7 @@ export default class Role extends ClassificationScheme {
 	 *
 	 * @param {String} rolesFile the filename of the classification scheme
 	 */
-	loadFromFile(rolesFile) {
+	#loadFromFile(rolesFile) {
 		console.log(`reading Roles from ${rolesFile}`.yellow);
 
 		readFile(rolesFile, { encoding: "utf-8" }, (err, data) => {
@@ -54,9 +54,9 @@ export default class Role extends ClassificationScheme {
 
 	loadRoles(options) {
 		if (!options) options = {};
-		if (options.file) this.loadFromFile(options.file);
-		if (options.files) options.files.forEach((file) => this.loadFromFile(file));
-		if (options.url) this.loadFromURL(options.url);
-		if (options.urls) options.urls.forEach((url) => this.loadFromURL(url));
+		if (options.file) this.#loadFromFile(options.file);
+		if (options.files) options.files.forEach((file) => this.#loadFromFile(file));
+		if (options.url) this.#loadFromURL(options.url);
+		if (options.urls) options.urls.forEach((url) => this.#loadFromURL(url));
 	}
 }

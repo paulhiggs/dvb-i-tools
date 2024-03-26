@@ -24,6 +24,10 @@ function loadCountryData(countryData) {
 }
 
 export default class ISOcountries {
+	#countriesList;
+	#use2CharCountries;
+	#use3CharCountries;
+
 	/**
 	 * constructor
 	 *
@@ -32,9 +36,9 @@ export default class ISOcountries {
 	 */
 	constructor(use2 = true, use3 = false) {
 		loadCountryData.bind(this);
-		this.countriesList = [];
-		this.use2CharCountries = use2;
-		this.use3CharCountries = use3;
+		this.#countriesList = [];
+		this.#use2CharCountries = use2;
+		this.#use3CharCountries = use3;
 	}
 
 	/**
@@ -43,14 +47,14 @@ export default class ISOcountries {
 	 * @param {String}  countriesFile   the file name to load
 	 * @param {boolean} purge           erase the existing values before loading new
 	 */
-	loadCountriesFromFile(countriesFile, purge = false) {
+	#loadCountriesFromFile(countriesFile, purge = false) {
 		console.log(`reading countries from ${countriesFile}`.yellow);
 		if (purge) this.reset();
 		readFile(
 			countriesFile,
 			{ encoding: "utf-8" },
 			function (err, data) {
-				if (!err) this.countriesList = loadCountryData(data);
+				if (!err) this.#countriesList = loadCountryData(data);
 				else console.log(err.error);
 			}.bind(this)
 		);
@@ -62,7 +66,7 @@ export default class ISOcountries {
 	 * @param {String}  countriesURL  the URL to the file to load
 	 * @param {boolean} purge         erase the existing values before loading new
 	 */
-	loadCountriesFromURL(countriesURL, purge = false) {
+	#loadCountriesFromURL(countriesURL, purge = false) {
 		let isHTTPurl = isHTTPURL(countriesURL);
 		console.log(`${isHTTPurl ? "" : "--> NOT "}retrieving countries from ${countriesURL} using fetch()`.yellow);
 		if (!isHTTPurl) return;
@@ -71,7 +75,7 @@ export default class ISOcountries {
 		fetch(countriesURL)
 			.then(handleErrors)
 			.then((response) => response.text())
-			.then((responseText) => (this.countriesList = loadCountryData(responseText)))
+			.then((responseText) => (this.#countriesList = loadCountryData(responseText)))
 			.catch((error) => console.log(`error (${error}) retrieving ${countriesURL}`.red));
 	}
 
@@ -79,16 +83,16 @@ export default class ISOcountries {
 		if (!options) options = {};
 		if (!options.purge) options.purge = true;
 
-		if (options.file) this.loadCountriesFromFile(options.file, options.purge);
-		else if (options.url) this.loadCountriesFromURL(options.url, options.purge);
+		if (options.file) this.#loadCountriesFromFile(options.file, options.purge);
+		else if (options.url) this.#loadCountriesFromURL(options.url, options.purge);
 	}
 
 	reset() {
-		this.countriesList.length = 0;
+		this.#countriesList.length = 0;
 	}
 
 	count() {
-		return this.countriesList.length;
+		return this.#countriesList.length;
 	}
 
 	/**
@@ -102,11 +106,11 @@ export default class ISOcountries {
 		let found = false,
 			countryCode_lc = countryCode.toLowerCase();
 
-		if (this.use3CharCountries && countryCode.length == 3) {
-			if (caseSensitive ? this.countriesList.find((elem) => elem.alpha3 == countryCode) : this.countriesList.find((elem) => elem.alpha3.toLowerCase() == countryCode_lc))
+		if (this.#use3CharCountries && countryCode.length == 3) {
+			if (caseSensitive ? this.#countriesList.find((elem) => elem.alpha3 == countryCode) : this.#countriesList.find((elem) => elem.alpha3.toLowerCase() == countryCode_lc))
 				found = true;
-		} else if (this.use2CharCountries && countryCode.length == 2) {
-			if (caseSensitive ? this.countriesList.find((elem) => elem.alpha2 == countryCode) : this.countriesList.find((elem) => elem.alpha2.toLowerCase() == countryCode_lc))
+		} else if (this.#use2CharCountries && countryCode.length == 2) {
+			if (caseSensitive ? this.#countriesList.find((elem) => elem.alpha2 == countryCode) : this.#countriesList.find((elem) => elem.alpha2.toLowerCase() == countryCode_lc))
 				found = true;
 		}
 		return found;
