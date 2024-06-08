@@ -39,6 +39,7 @@ export default class ErrorList {
 		this.warnings = [];
 		this.informationals = [];
 		this.markupXML = [];
+		this.errorDescriptions = [];
 	}
 	/**
 	 * loads the text that can be marked up with any validation errors/warnings etc
@@ -115,6 +116,7 @@ export default class ErrorList {
 	}
 
 	/**
+	 * log an error from the service list or program metadata analysis
 	 *
 	 * @param {integer}                  e.type      (optional) ERROR(default) or WARNING
 	 * @param {string}                   e.code      Error code
@@ -220,5 +222,19 @@ export default class ErrorList {
 	}
 	numCountsInfo() {
 		return this.#numCountsI;
+	}
+
+	/**
+	 * built up descriptive information on the errors found in the analysis
+	 *
+	 * @param {string}  e.code         Error code, should be the same as @e.code passed to addError
+	 * @param {string}  e.description  A long form description of the stated error code
+	 */
+	errorDescription(e) {
+		if (!e.code || !e.description) return;
+		let found = this.errorDescriptions.find((element) => e.code == element.code);
+		if (found) {
+			if (found.description.indexOf(e.description) == -1) found.description += `\n${e.description}`;
+		} else this.errorDescriptions.push(e);
 	}
 }

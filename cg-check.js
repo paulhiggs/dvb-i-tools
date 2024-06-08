@@ -583,22 +583,34 @@ export default class ContentGuideCheck {
 			Genre;
 		while ((Genre = BasicDescription.get(xPath(props.prefix, tva.e_Genre, ++g), props.schema)) != null) {
 			let genreType = Genre.attr(tva.a_type) ? Genre.attr(tva.a_type).value() : tva.DEFAULT_GENRE_TYPE;
-			if (genreType != tva.GENRE_TYPE_MAIN)
+			if (genreType != tva.GENRE_TYPE_MAIN) {
 				errs.addError({
 					code: `${errCode}-1`,
 					key: "disallowed genre type",
-					message: `${tva.a_type.attribute()}=${genreType.quote()} not permitted for ${tva.e_Genre.elementize()}`,
+					message: `${tva.a_type.attribute(tva.e_Genre)}=${genreType.quote()} not permitted for ${tva.e_Genre.elementize()}`,
 					fragment: Genre,
 				});
+				errs.errorDescription({
+					code: `${errCode}-1`,
+					clause: "A177 clause 6.10.5",
+					description: `${tva.a_type.attribute(tva.e_Genre)} must be "${tva.GENRE_TYPE_MAIN}", semantic definitions of ${tva.e_Genre.elementize()}`,
+				});
+			}
 
 			let genreValue = Genre.attr(tva.a_href) ? Genre.attr(tva.a_href).value() : "";
-			if (!this.#allowedGenres.isIn(genreValue))
+			if (!this.#allowedGenres.isIn(genreValue)) {
 				errs.addError({
 					code: `${errCode}-2`,
 					key: "invalid genre",
 					message: `invalid ${tva.a_href.attribute()} value ${genreValue.quote()} for ${tva.e_Genre.elementize()}`,
 					fragment: Genre,
 				});
+				errs.errorDescription({
+					code: `${errCode}-2`,
+					clause: "A177 clause 6.10.5",
+					description: `The value of ${tva.a_href.attribute(tva.e_Genre)} must be as specified in the semantic definitions of ${tva.e_Genre.elementize()}`,
+				});
+			}
 		}
 	}
 
@@ -3331,14 +3343,21 @@ export default class ContentGuideCheck {
 				break;
 			case CG_REQUEST_BS_CONTENTS:
 				// box set contents response (6.8.4.3) has <ProgramInformationTable>, <GroupInformationTable> and <ProgramLocationTable> elements
-				checkTopElementsAndCardinality(
-					ProgramDescription,
-					[{ name: tva.e_ProgramLocationTable }, { name: tva.e_ProgramInformationTable }, { name: tva.e_GroupInformationTable }],
-					tvaEC.ProgramDescription,
-					false,
-					errs,
-					"CG081"
-				);
+				if (
+					checkTopElementsAndCardinality(
+						ProgramDescription,
+						[{ name: tva.e_ProgramLocationTable }, { name: tva.e_ProgramInformationTable }, { name: tva.e_GroupInformationTable }],
+						tvaEC.ProgramDescription,
+						false,
+						errs,
+						"CG081"
+					)
+				)
+					errs.errorDescription({
+						code: "CG081",
+						clause: "A177 clause 6.8.4.3",
+						descripition: `the required child elements of ${tva.e_ProgramDescription.elementize()} for Box Set Contents need to be provied`,
+					});
 
 				this.#CheckGroupInformation(props, ProgramDescription, requestType, groupIds, errs, o);
 				this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs, o);

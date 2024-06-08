@@ -18,11 +18,13 @@ export function PAGE_TOP(pageTitle, label = null) {
 	return `${PG}${PH}`;
 }
 
-export const PAGE_BOTTOM =
-	'<br/><hr><p><i>Submit issues at </i><a href="https://github.com/paulhiggs/dvb-i-tools/issues">https://github.com/paulhiggs/dvb-i-tools/issues</a></p></body></html>';
+const BREAK = "<br/>",
+	LINE = "<hr/>";
+
+export const PAGE_BOTTOM = `${BREAK}${LINE}<p><i>Submit issues at </i><a href="https://github.com/paulhiggs/dvb-i-tools/issues">https://github.com/paulhiggs/dvb-i-tools/issues</a></p></body></html>`;
 
 function tabulateResults(source, res, error, errs) {
-	const RESULT_WITH_INSTRUCTION = `<br><p><i>Results:</i> ${source}</p>`;
+	const RESULT_WITH_INSTRUCTION = `${BREAK}<p><i>Results:</i> ${source}</p>`;
 	const SUMMARY_FORM_HEADER = "<table><tr><th>item</th><th>count</th></tr>";
 	const Dodger_Blue = "#1E90FF",
 		link_css = "jump";
@@ -32,7 +34,9 @@ function tabulateResults(source, res, error, errs) {
 		window.scrollTo(window.scrollX+itemPos.x, window.scrollY+itemPos.y);
 	}</script>`;
 	let DETAIL_FORM_HEADER = (mode) => `${scrollFunc}<table><tr>${SHOW_LINE_NUMBER ? "<th>line</th>" : ""}<th>code</th><th>${mode}</th></tr>`;
-	let TABLE_FOOTER = "</table><br/>";
+	let DESCRIPTION_TABLE_HEDER = () => `<table><tr><th>code</th><th>description</th></tr>`;
+
+	let TABLE_FOOTER = `</table>${BREAK}`;
 
 	function tabluateMessage(value) {
 		res.write("<tr>");
@@ -96,10 +100,20 @@ function tabulateResults(source, res, error, errs) {
 		}
 	}
 
-	if (!error && !resultsShown) res.write("no errors, warnings or informationals");
+	if (!error && !resultsShown) res.write(`no errors, warnings or informationals${BREAK}`);
+	else if (errs.errorDescriptions.length) {
+		res.write(DESCRIPTION_TABLE_HEDER());
+		errs.errorDescriptions.forEach((desc) => {
+			res.write(`<tr><td>${desc.code}</td>`);
+			res.write(`<td>${HTMLize(desc.description).replace(/\n/, BREAK)}`);
+			if (desc.clause && desc.clause.lentgh) res.write(`${BREAK}reference: ${desc.clause}`);
+			res.write("</td></tr>");
+		});
+		res.write(TABLE_FOOTER);
+	}
 
 	if (errs && errs.markupXML?.length > 0) {
-		res.write("<hr/>");
+		res.write(LINE);
 		const ERR = "errors",
 			WARN = "warnings",
 			INFO = "info",
@@ -114,9 +128,9 @@ function tabulateResults(source, res, error, errs) {
 				else cla = INFO;
 			}
 			let qualifier = tip ? ` class="${cla}" title="${tip}"` : "";
-			res.write(`<span id="line-${line.ix}"${qualifier}>${HTMLize(line.value)}</span><br/>`);
+			res.write(`<span id="line-${line.ix}"${qualifier}>${HTMLize(line.value)}</span>${BREAK}`);
 		});
-		res.write("</pre><hr/>");
+		res.write(`</pre>${LINE}`);
 	}
 }
 
@@ -148,7 +162,7 @@ export function drawForm(deprecateTo, req, res, modes, supportedRequests, error 
 		<br><br>
 		<input id="radURL" type="radio" name="doclocation" value="${modes.url}" ${req.session.data.entry == modes.url ? "checked" : ""} onclick="redrawForm()">URL</input>
 		<input id="radFile" type="radio" name="doclocation" value="${modes.file}" ${req.session.data.entry == modes.file ? "checked" : ""} onclick="redrawForm()">File</input>
-		<hr>
+		${LINE}
 		<div id="entryURL" ${req.session.data.entry == modes.url ? "" : "hidden"}><p><i>URL:</i><input type="url" name="XMLurl" value="${
 		req.session.data.url ? req.session.data.url : ""
 	}"></p></div>

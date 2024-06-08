@@ -875,12 +875,22 @@ export default class ServiceListCheck {
 							key: "misplaced image type",
 							fragment: HowRelated,
 						});
+						errs.errorDescription({
+							code: `${errCode}-35`,
+							clause: "A177 table 16",
+							description: `Out of Service banner is not permitted in the ${tva.e_RelatedMaterial.elementize()} element of a ${dvbi.e_ServiceInstance.elementize()}`,
+						});
 					} else if (this.#validServiceBanner(HowRelated, props.namespace)) {
 						errs.addError({
 							code: `${errCode}-33`,
 							message: "Service Banner is not permitted in a Service Instance",
 							key: "misplaced image type",
 							fragment: HowRelated,
+						});
+						errs.errorDescription({
+							code: `${errCode}-33`,
+							clause: "A177 table 16",
+							description: `Service banner is not permitted in the ${tva.e_RelatedMaterial.elementize()} element of a ${dvbi.e_ServiceInstance.elementize()}`,
 						});
 					} else if (this.#validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
 						rc = HowRelated.attr(dvbi.a_href).value();
@@ -2330,6 +2340,11 @@ export default class ServiceListCheck {
 				line: SL.root().line(),
 				key: keys.k_XSDValidation,
 			});
+			errs.errorDescriprion({
+				code: "SL004",
+				clause: "A177 clause 5.5.1",
+				description: `the root element of the service list XML instance document must be ${dvbi.e_ServiceList.elementize()}`,
+			});
 			return;
 		}
 
@@ -2339,6 +2354,11 @@ export default class ServiceListCheck {
 				message: `namespace is not provided for ${dvbi.e_ServiceList.elementize()}`,
 				line: SL.root().line(),
 				key: keys.k_XSDValidation,
+			});
+			errs.errorDescriprion({
+				code: "SL003",
+				clause: "A177 clause 5.4.1",
+				description: `the namespace for ${dvbi.e_ServiceList.elementize()} is required to ensure appropriate syntax and semantic checking`,
 			});
 			return;
 		}
@@ -2423,12 +2443,18 @@ export default class ServiceListCheck {
 		// check ServiceList@id
 		if (SL.root().attr(dvbi.a_id)) {
 			let thisServiceListId = SL.root().attr(dvbi.a_id).value();
-			if (!validServiceListIdentifier(thisServiceListId))
+			if (!validServiceListIdentifier(thisServiceListId)) {
 				errs.addError({
 					code: "SL016",
 					message: `${thisServiceListId.quote()} is not a valid service list identifier`,
 					key: "invalid tag",
 				});
+				errs.errorDescription({
+					code: "SL016",
+					clause: "A177 clause 5.2.2",
+					description: "Service identifiers should use a registered URI scheme, such as the 'tag' URI scheme defined in IETF RFC 4151",
+				});
+			}
 		}
 
 		//check <ServiceList><Name>
@@ -2758,13 +2784,21 @@ export default class ServiceListCheck {
 					}
 
 					// LCN@serviceRef
-					if (LCN.attr(dvbi.a_serviceRef) && !isIn(knownServices, LCN.attr(dvbi.a_serviceRef).value()))
+					if (LCN.attr(dvbi.a_serviceRef) && !isIn(knownServices, LCN.attr(dvbi.a_serviceRef).value())) {
 						errs.addError({
 							code: "SL263",
 							message: `LCN reference to unknown service ${LCN.attr(dvbi.a_serviceRef).value()}`,
 							key: "LCN unknown services",
 							fragment: LCN,
 						});
+						errs.errorDescription({
+							code: "SL263",
+							clause: "A177 table 23",
+							description: `The value of ${dvbi.a_serviceRef.attribute(
+								dvbi.e_LCN
+							)} needs to refer to the ${dvbi.e_UniqueIdentifier.elementize()} of a ${dvbi.e_Service.elementize()}`,
+						});
+					}
 				}
 			}
 		}
@@ -2785,14 +2819,20 @@ export default class ServiceListCheck {
 
 		// report any languages in the <LanguageList> that are not used
 		announcedAudioLanguages.forEach((lang) => {
-			if (!lang.used)
+			if (!lang.used) {
 				errs.addError({
 					code: "SL282",
 					type: WARNING,
-					message: `language "${lang.language}" is defined but not used`,
+					message: `audio language "${lang.language}" is defined in ${dvbi.e_LanguageList.elementize()} but not used`,
 					key: `unused ${dvbi.e_Language}`,
 					fragment: lang.fragment,
 				});
+				errs.errorDescription({
+					code: "SL282",
+					clause: "see A177 table 14",
+					description: `lanugages used in ${tva.e_AudioAttributes.elementize()}${tva.e_AudioLanguage.elementize()} should be announced in ${dvbi.e_LanguageList.elementize()}`,
+				});
+			}
 		});
 	}
 
