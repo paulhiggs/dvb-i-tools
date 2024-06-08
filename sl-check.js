@@ -1,4 +1,4 @@
-import "colors";
+import chalk from "chalk";
 import { parseXmlString } from "libxmljs2";
 
 import { readFileSync } from "fs";
@@ -398,14 +398,14 @@ export default class ServiceListCheck {
 
 		this.#knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs);
 
-		console.log("loading service list schemas...".yellow.underline);
+		console.log(chalk.yellow.underline("loading service list schemas..."));
 		SchemaVersions.forEach((version) => {
-			process.stdout.write(`..loading ${version.version} ${version.namespace} from ${version.filename} `.yellow);
+			process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
 			version.schema = parseXmlString(readFileSync(version.filename));
-			console.log(version.schema ? "OK".green : "FAIL".red);
+			console.log(version.schema ? chalk.green("OK") : chalk.red.bold("FAIL"));
 		});
 
-		console.log("loading classification schemes...".yellow.underline);
+		console.log(chalk.yellow.underline("loading classification schemes..."));
 		this.#allowedGenres = opts?.genres ? opts.genres : LoadGenres(useURLs);
 		this.#allowedVideoSchemes = opts?.videofmts ? opts.videofmts : LoadVideoCodecCS(useURLs);
 		this.#allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs);

@@ -2,7 +2,7 @@ import { statSync, readFileSync } from "fs";
 
 import { datatypeIs } from "./phlib/phlib.js";
 
-import "colors";
+import chalk from "chalk";
 
 /**
  * constructs an XPath based on the provided arguments
@@ -117,7 +117,7 @@ export function readmyfile(filename) {
 		let stats = statSync(filename);
 		if (stats.isFile()) return readFileSync(filename);
 	} catch (err) {
-		console.log(`${err.code}, ${err.path}`.magenta);
+		console.log(chalk.magenta(`${err.code}, ${err.path}`));
 	}
 	return null;
 }

@@ -2,6 +2,7 @@
  * Manages Classification Scheme checking based in a flat list of roles
  *
  */
+import chalk from "chalk";
 import { readFile } from "fs";
 
 import { handleErrors } from "./fetch-err-handler.js";
@@ -21,7 +22,7 @@ export default class Role extends ClassificationScheme {
 	 */
 	#loadFromURL(rolesURL) {
 		let isHTTPurl = isHTTPURL(rolesURL);
-		console.log(`${isHTTPurl ? "" : "--> NOT "}retrieving Roles from ${rolesURL} via fetch()`.yellow);
+		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving Roles from ${rolesURL} via fetch()`));
 		if (!isHTTPurl) return;
 
 		fetch(rolesURL)
@@ -32,7 +33,7 @@ export default class Role extends ClassificationScheme {
 					this.insertValue(e.trim(), true);
 				})
 			)
-			.catch((error) => console.log(`error (${error}) retrieving ${rolesURL}`.red));
+			.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${rolesURL}`)));
 	}
 
 	/**
@@ -41,14 +42,14 @@ export default class Role extends ClassificationScheme {
 	 * @param {String} rolesFile the filename of the classification scheme
 	 */
 	#loadFromFile(rolesFile) {
-		console.log(`reading Roles from ${rolesFile}`.yellow);
+		console.log(chalk.yellow(`reading Roles from ${rolesFile}`));
 
 		readFile(rolesFile, { encoding: "utf-8" }, (err, data) => {
 			if (!err)
 				data.split("\n").forEach((e) => {
 					this.insertValue(e.trim(), true);
 				});
-			else console.log(err.red);
+			else console.log(chalk.red(err));
 		});
 	}
 

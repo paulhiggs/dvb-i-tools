@@ -3,6 +3,7 @@
 
  Load Classification Schemes and other File related resources
 */
+import chalk from "chalk";
 
 import ClassificationScheme from "./ClassificationScheme.js";
 //import Role from "./Role.js";
@@ -37,14 +38,14 @@ import {
 } from "./data-locations.js";
 
 export function LoadCountries(useURLs) {
-	console.log("loading countries...".yellow.underline);
+	console.log(chalk.yellow.underline("loading countries..."));
 	let c = new ISOcountries(false, true);
 	c.loadCountries(useURLs ? { url: ISO3166.url } : { file: ISO3166.file });
 	return c;
 }
 
 export function LoadLanguages(useURLs) {
-	console.log("loading languages...".yellow.underline);
+	console.log(chalk.yellow.underline("loading languages..."));
 	let l = new IANAlanguages();
 	l.loadLanguages(
 		useURLs
@@ -61,7 +62,7 @@ export function LoadLanguages(useURLs) {
 }
 
 export function LoadVideoCodecCS(useURLs) {
-	console.log("loading Video Codecs...".yellow.underline);
+	console.log(chalk.yellow.underline("loading Video Codecs..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(
 		useURLs
@@ -78,7 +79,7 @@ export function LoadVideoCodecCS(useURLs) {
 }
 
 export function LoadAudioCodecCS(useURLs) {
-	console.log("loading Audio Codecs...".yellow.underline);
+	console.log(chalk.yellow.underline("loading Audio Codecs..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(
 		useURLs
@@ -96,7 +97,7 @@ export function LoadAudioCodecCS(useURLs) {
 
 export function LoadGenres(useURLs) {
 	let cs = new ClassificationScheme();
-	console.log("loading Genres ...".yellow.underline);
+	console.log(chalk.yellow.underline("loading Genres ..."));
 	cs.loadCS(
 		useURLs
 			? {
@@ -110,48 +111,48 @@ export function LoadGenres(useURLs) {
 }
 
 export function LoadAccessibilityPurpose(useURLs) {
-	console.log("loading Accessibility Purposes...".yellow.underline);
+	console.log(chalk.yellow.underline("loading Accessibility Purposes..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(useURLs ? { url: TVA_AccessibilityPurposeCS.url, leafNodesOnly: true } : { file: TVA_AccessibilityPurposeCS.file, leafNodesOnly: true });
 	return cs;
 }
 
 export function LoadAudioPurpose(useURLs) {
-	console.log("loading Audio Purposes...".yellow.underline);
+	console.log(chalk.yellow.underline("loading Audio Purposes..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(useURLs ? { url: TVA_AudioPurposeCS.url, leafNodesOnly: true } : { file: TVA_AudioPurposeCS.file, leafNodesOnly: true });
 	return cs;
 }
 
 export function LoadSubtitleCarriages(useURLs) {
-	console.log("loading Subtitle Carriages...".yellow.underline);
+	console.log(chalk.yellow.underline("loading Subtitle Carriages..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(useURLs ? { url: TVA_SubitleCarriageCS.url } : { file: TVA_SubitleCarriageCS.file });
 	return cs;
 }
 
 export function LoadSubtitleCodings(useURLs) {
-	console.log("loading Subtitle Codings...".yellow.underline);
+	console.log(chalk.yellow.underline("loading Subtitle Codings..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(useURLs ? { url: TVA_SubitleCodingFormatCS.url } : { file: TVA_SubitleCodingFormatCS.file });
 	return cs;
 }
 
 export function LoadSubtitlePurposes(useURLs) {
-	console.log("loading Subtitle Purposes...".yellow.underline);
+	console.log(chalk.yellow.underline("loading Subtitle Purposes..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(useURLs ? { url: TVA_SubitlePurposeCS.url } : { file: TVA_SubitlePurposeCS.file });
 	return cs;
 }
 
 export function LoadAudioConformanceCS(useURLs) {
-	console.log("loading Audio Conformance Points...".yellow.underline);
+	console.log(chalk.yellow.underline("loading Audio Conformance Points..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(useURLs ? { url: DVB_AudioConformanceCS.url, leafNodesOnly: true } : { file: DVB_AudioConformanceCS.file, leafNodesOnly: true });
 	return cs;
 }
 export function LoadVideoConformanceCS(useURLs) {
-	console.log("loading Video Conformance Points...".yellow.underline);
+	console.log(chalk.yellow.underline("loading Video Conformance Points..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(
 		useURLs
@@ -168,42 +169,42 @@ export function LoadVideoConformanceCS(useURLs) {
 }
 
 export function LoadAudioPresentationCS(useURLs) {
-	console.log("loading AudioPresentation...".yellow.underline);
+	console.log(chalk.yellow.underline("loading AudioPresentation..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(useURLs ? { url: MPEG7_AudioPresentationCS.url } : { file: MPEG7_AudioPresentationCS.file });
 	return cs;
 }
 
 export function LoadRecordingInfoCS(useURLs) {
-	console.log("loading Recording Info...".yellow.underline);
+	console.log(chalk.yellow.underline("loading Recording Info..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(useURLs ? { url: DVBI_RecordingInfoCS.url } : { file: DVBI_RecordingInfoCS.file });
 	return cs;
 }
 
 export function LoadPictureFormatCS(useURLs) {
-	console.log("loading PictureFormats...".yellow.underline);
+	console.log(chalk.yellow.underline("loading PictureFormats..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(useURLs ? { url: TVA_PictureFormatCS.url } : { file: TVA_PictureFormatCS.file });
 	return cs;
 }
 
 export function LoadColorimetryCS(useURLs) {
-	console.log("loading Colorimetry...".yellow.underline);
+	console.log(chalk.yellow.underline("loading Colorimetry..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(useURLs ? { url: DVB_ColorimetryCS.y2020.url, leafNodesOnly: true } : { file: DVB_ColorimetryCS.y2020.file, leafNodesOnly: true });
 	return cs;
 }
 
 export function LoadServiceTypeCS(useURLs) {
-	console.log("loading ServiceTypes...".yellow.underline);
+	console.log(chalk.yellow.underline("loading ServiceTypes..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(useURLs ? { url: DVBI_ServiceTypeCS.url } : { file: DVBI_ServiceTypeCS.file });
 	return cs;
 }
 
 export function LoadRatings(useURLs) {
-	console.log("loading Ratings...".yellow.underline);
+	console.log(chalk.yellow.underline("loading Ratings..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(useURLs ? { urls: [TVA_ContentAlertCS.url, DVBI_ParentalGuidanceCS.url] } : { files: [TVA_ContentAlertCS.file, DVBI_ParentalGuidanceCS.file] });
 	return cs;

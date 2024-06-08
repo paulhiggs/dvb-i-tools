@@ -1,3 +1,5 @@
+import chalk from "chalk";
+
 // express framework - https://expressjs.com/en/4x/api.html
 import express from "express";
 
@@ -99,7 +101,7 @@ try {
 }
 
 if (!CORSoptions.includes(options.CORSmode)) {
-	console.log(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`.red);
+	console.log(chalk.red(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`));
 	process.exit(1);
 }
 
@@ -131,8 +133,8 @@ const RELOAD = "RELOAD",
 	STATS = "STATS";
 
 if (cluster.isPrimary) {
-	console.log(`Number of CPUs is ${numCPUs}`.orange);
-	console.log(`Primary ${process.pid} is running`.orange);
+	console.log(chalk.orange(`Number of CPUs is ${numCPUs}`));
+	console.log(chalk.orange(`Primary ${process.pid} is running`));
 
 	var metrics = {
 		numRequests: 0,
@@ -146,8 +148,8 @@ if (cluster.isPrimary) {
 	}
 
 	cluster.on("exit", (worker, /* eslint-disable no-unused-vars*/ code, signal /* eslint-enable */) => {
-		console.log(`worker ${worker.process.pid} died`.red);
-		console.log("Let's fork another worker!".red);
+		console.log(chalk.red(`worker ${worker.process.pid} died`));
+		console.log(chalk.red("Let's fork another worker!"));
 		cluster.fork();
 	});
 	cluster.on("message", (/* eslint-disable no-unused-vars*/ worker /* eslint-enable */, msg, /* eslint-disable no-unused-vars*/ handle /* eslint-enable */) => {
@@ -250,7 +252,7 @@ if (cluster.isPrimary) {
 	});
 	// start the HTTP server
 	var http_server = app.listen(options.port, function () {
-		console.log(`HTTP listening on port number ${http_server.address().port}, PID=${process.pid}`.cyan);
+		console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}, PID=${process.pid}`));
 	});
 	// start the HTTPS server
 	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
@@ -263,7 +265,7 @@ if (cluster.isPrimary) {
 
 		var https_server = createServer(https_options, app);
 		https_server.listen(options.sport, function () {
-			console.log(`HTTPS listening on port number ${https_server.address().port}, PID=${process.pid}`.cyan);
+			console.log(chalk.cyan(`HTTPS listening on port number ${https_server.address().port}, PID=${process.pid}`));
 		});
 	}
 }

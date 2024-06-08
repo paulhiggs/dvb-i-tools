@@ -1,3 +1,5 @@
+import chalk from "chalk";
+
 // command line arguments - https://github.com/75lb/command-line-args
 import commandLineArgs from "command-line-args";
 
@@ -13,7 +15,7 @@ const optionDefinitions = [
 ];
 const options = commandLineArgs(optionDefinitions);
 
-console.log(`this application is deprecated! using ${`"all-in-one --nocsr --nosl ${options.urls ? "--urls" : ""}--port ${options.port} --sport ${options.sport}"`.green}`);
+console.log(`this application is deprecated! use ${chalk.green(`"all-in-one --nocsr --nosl ${options.urls ? "--urls" : ""}--port ${options.port} --sport ${options.sport}"`)}`);
 
 options.nocsr = true;
 options.nosl = true;

@@ -1,6 +1,6 @@
 // SLEPR - Service List End Point Resolver
 
-import "colors";
+import chalk from "chalk";
 import { readFile } from "fs";
 
 // libxmljs - https://www.npmjs.com/package/libxmljs2
@@ -101,7 +101,7 @@ export default class SLEPR {
 	 * @param {string} filename   filename of the master XML document
 	 */
 	/* public */ loadServiceListRegistry(filename) {
-		console.log(`loading SLR from ${filename}`.yellow);
+		console.log(chalk.yellow(`loading SLR from ${filename}`));
 
 		if (isHTTPURL(filename)) {
 			fetch(filename)
@@ -109,14 +109,14 @@ export default class SLEPR {
 				.then((response) => response.text())
 				.then((responseText) => (masterSLEPR = responseText.replace(/(\r\n|\n|\r|\t)/gm, "")))
 				.catch((error) => {
-					console.log(`error (${error}) retrieving ${filename}`.red);
+					console.log(chalk.red(`error (${error}) retrieving ${filename}`));
 					masterSLEPR = EMPTY_SLEPR;
 				});
 			masterSLEPR = fetch(filename);
 		} else
 			readFile(filename, { encoding: "utf-8" }, function (err, data) {
 				if (!err) masterSLEPR = data.replace(/(\r\n|\n|\r|\t)/gm, "");
-				else console.log(err.red);
+				else console.log(chalk.red(err));
 			});
 	}
 

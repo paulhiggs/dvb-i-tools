@@ -4,6 +4,7 @@
  * Manages Classification Scheme loading and checking
  *
  */
+import chalk from "chalk";
 import { readFile } from "fs";
 import { parseXmlString } from "libxmljs2";
 
@@ -92,7 +93,7 @@ export default class ClassificationScheme {
 	 */
 	#loadFromURL(csURL) {
 		let isHTTPurl = isHTTPURL(csURL);
-		console.log(`${isHTTPurl ? "" : "--> NOT "}retrieving CS (${this.#leafsOnly ? "leaf" : "all"} nodes) from ${csURL} via fetch()`.yellow);
+		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving CS (${this.#leafsOnly ? "leaf" : "all"} nodes) from ${csURL} via fetch()`));
 		if (!isHTTPurl) return;
 
 		fetch(csURL)
@@ -105,7 +106,7 @@ export default class ClassificationScheme {
 				});
 				this.#schemes.push(res.uri);
 			})
-			.catch((error) => console.log(`error (${error}) retrieving ${csURL}`.red));
+			.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${csURL}`)));
 	}
 
 	/**
@@ -114,7 +115,7 @@ export default class ClassificationScheme {
 	 * @param {String} classificationScheme the filename of the classification scheme
 	 */
 	#loadFromFile(classificationScheme) {
-		console.log(`reading CS (${this.#leafsOnly ? "leaf" : "all"} nodes) from ${classificationScheme}`.yellow);
+		console.log(chalk.yellow(`reading CS (${this.#leafsOnly ? "leaf" : "all"} nodes) from ${classificationScheme}`));
 
 		readFile(classificationScheme, { encoding: "utf-8" }, (err, data) => {
 			if (!err) {
@@ -123,7 +124,7 @@ export default class ClassificationScheme {
 					this.insertValue(e, true);
 				});
 				this.#schemes.push(res.uri);
-			} else console.log(err.red);
+			} else console.log(chalk.red(err));
 		});
 	}
 

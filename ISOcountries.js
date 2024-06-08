@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import { handleErrors } from "./fetch-err-handler.js";
 
 import { readFile } from "fs";
@@ -48,14 +49,14 @@ export default class ISOcountries {
 	 * @param {boolean} purge           erase the existing values before loading new
 	 */
 	#loadCountriesFromFile(countriesFile, purge = false) {
-		console.log(`reading countries from ${countriesFile}`.yellow);
+		console.log(chalk.yellow(`reading countries from ${countriesFile}`));
 		if (purge) this.reset();
 		readFile(
 			countriesFile,
 			{ encoding: "utf-8" },
 			function (err, data) {
 				if (!err) this.#countriesList = loadCountryData(data);
-				else console.log(err.error);
+				else console.log(chalk.red(err.error));
 			}.bind(this)
 		);
 	}
@@ -68,7 +69,7 @@ export default class ISOcountries {
 	 */
 	#loadCountriesFromURL(countriesURL, purge = false) {
 		let isHTTPurl = isHTTPURL(countriesURL);
-		console.log(`${isHTTPurl ? "" : "--> NOT "}retrieving countries from ${countriesURL} using fetch()`.yellow);
+		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving countries from ${countriesURL} using fetch()`));
 		if (!isHTTPurl) return;
 
 		if (purge) this.reset();
@@ -76,7 +77,7 @@ export default class ISOcountries {
 			.then(handleErrors)
 			.then((response) => response.text())
 			.then((responseText) => (this.#countriesList = loadCountryData(responseText)))
-			.catch((error) => console.log(`error (${error}) retrieving ${countriesURL}`.red));
+			.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${countriesURL}`)));
 	}
 
 	loadCountries(options) {

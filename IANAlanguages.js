@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import { handleErrors } from "./fetch-err-handler.js";
 
 import { readFile } from "fs";
@@ -119,7 +120,7 @@ export default class IANAlanguages {
 	 * @param {boolean} purge           erase the existing values before loading new
 	 */
 	#loadLanguagesFromFile(languagesFile, purge = false) {
-		console.log(`reading languages from ${languagesFile}`.yellow);
+		console.log(chalk.yellow(`reading languages from ${languagesFile}`));
 		if (purge) this.empty();
 
 		readFile(
@@ -128,7 +129,7 @@ export default class IANAlanguages {
 			function (err, data) {
 				if (!err) {
 					this.#processLanguageData(data);
-				} else console.log(`error loading languages ${err}`.red);
+				} else console.log(chalk.red(`error loading languages ${err}`));
 			}.bind(this)
 		);
 	}
@@ -141,7 +142,7 @@ export default class IANAlanguages {
 	 */
 	#loadLanguagesFromURL(languagesURL, purge = false) {
 		let isHTTPurl = isHTTPURL(languagesURL);
-		console.log(`${isHTTPurl ? "" : "--> NOT "}retrieving languages from ${languagesURL} using fetch()`.yellow);
+		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving languages from ${languagesURL} using fetch()`));
 		if (!isHTTPurl) return;
 
 		if (purge) this.empty();
@@ -149,7 +150,7 @@ export default class IANAlanguages {
 			.then(handleErrors)
 			.then((response) => response.text())
 			.then((responseText) => this.#processLanguageData(responseText))
-			.catch((error) => console.log(`error (${error}) retrieving ${languagesURL}`.red));
+			.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${languagesURL}`)));
 	}
 
 	loadLanguages(options) {

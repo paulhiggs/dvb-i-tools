@@ -1,4 +1,4 @@
-import "colors";
+import chalk from "chalk";
 import { parseXmlString } from "libxmljs2";
 
 import { readFileSync } from "fs";
@@ -298,9 +298,9 @@ export default class ContentGuideCheck {
 		this.#subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs);
 
 		SchemaVersions.forEach((version) => {
-			process.stdout.write(`..loading ${version.version} ${version.namespace} from ${version.filename} `.yellow);
+			process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
 			version.schema = parseXmlString(readFileSync(version.filename));
-			console.log(version.schema ? "OK".green : "FAIL".red);
+			console.log(version.schema ? chalk.green("OK") : chalk.red.bold("FAIL"));
 		});
 
 		this.supportedRequests = supportedRequests;

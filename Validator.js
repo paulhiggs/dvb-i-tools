@@ -5,7 +5,7 @@ import session from "express-session";
 import { existsSync, writeFile } from "fs";
 import { join, sep } from "path";
 
-import "colors";
+import chalk from "chalk";
 
 import cors from "cors";
 import { createServer } from "https";
@@ -84,7 +84,7 @@ export function writeOut(errs, filebase, markup, req = null) {
 	});
 	let filename = markup ? `${filebase}.mkup.txt` : `${filebase}.raw.txt`;
 	writeFile(filename, outputLines.join("\n"), (err) => {
-		if (err) console.log(`${err}`.red);
+		if (err) console.log(chalk.red(err));
 	});
 }
 
@@ -205,18 +205,18 @@ function tabulate(res, group, stats) {
 
 export default function validator(options) {
 	if (options.nocsr && options.nosl && options.nocg) {
-		console.log("nothing to do... exiting".red);
+		console.log(chalk.red("nothing to do... exiting"));
 		process.exit(1);
 	}
 
 	if (!options.nocsr && !Object.prototype.hasOwnProperty.call(options, "CSRfile")) {
-		console.log("SLEPR file not specified... exiting".red);
+		console.log(chalk.red("SLEPR file not specified... exiting"));
 		process.exit(1);
 	}
 
 	if (!Object.prototype.hasOwnProperty.call(options, "CORSmode")) options.CORSmode = CORSlibrary;
 	else if (!CORSoptions.includes(options.CORSmode)) {
-		console.log(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`.red);
+		console.log(chalk.red(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`));
 		process.exit(1);
 	}
 
@@ -420,7 +420,7 @@ export default function validator(options) {
 
 	// start the HTTP server
 	var http_server = app.listen(options.port, function () {
-		console.log(`HTTP listening on port number ${http_server.address().port}`.cyan);
+		console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}`));
 	});
 
 	// start the HTTPS server
@@ -435,7 +435,7 @@ export default function validator(options) {
 
 		var https_server = createServer(https_options, app);
 		https_server.listen(options.sport, function () {
-			console.log(`HTTPS listening on port number ${https_server.address().port}`.cyan);
+			console.log(chalk.cyan(`HTTPS listening on port number ${https_server.address().port}`));
 		});
 	}
 }
