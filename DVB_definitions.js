@@ -6,10 +6,9 @@ export const dvb = {
 };
 
 const _S_FEC = ["1/2", "3/5", "2/3", "3/4", "4/5", "5/6", "8/9", "9/10"];
-const _S_RollOff = ["0.35"];
 const _S_Modulation = ["QPSK"];
 
-const _S2_RollOff = ["0.25", "0.20"].concat(_S_RollOff);
+const _S2_RollOff = ["0.35", "0.25", "0.20"];
 const _S2_Modulation = ["8PSK"].concat(_S_Modulation);
 
 const _S2X_RollOff = ["0.15", "0.10", "0.05"].concat(_S2_RollOff);
@@ -21,7 +20,7 @@ export const sats = {
 	MODULATION_S2: "DVB-S2",
 	MODULATION_S2X: "DVB-S2X",
 	S_FEC: _S_FEC,
-	S_RollOff: _S_RollOff,
+	S_RollOff: null,		// rolloff is not permitted in satellite_delivery_system_descriptor of EN 300 468
 	S_Modulation: _S_Modulation,
 	S2_FEC: _S_FEC,
 	S2_RollOff: _S2_RollOff,
