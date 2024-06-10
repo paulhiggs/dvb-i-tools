@@ -14,8 +14,8 @@
 	<Term termID="1">
 		<Name>H264</Name>
 		<Definition>
-                 ISO/IEC 14496-10 Video Codec. Also known as H.264
-           </Definition>
+			ISO/IEC 14496-10 Video Codec. Also known as H.264
+		</Definition>
 		<Term termID="1.1">
 			<Name>H264 BaseLine Profile</Name>
 			<Term termID="1.1.1">

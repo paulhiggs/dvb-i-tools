@@ -2,6 +2,7 @@ export const dvb = {
 	a_termID: "termID",
 	a_uri: "uri",
 
+	e_ClassificationScheme: "ClassificatioNScheme",
 	e_Term: "Term",
 };
 
