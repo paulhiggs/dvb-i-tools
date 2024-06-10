@@ -1788,10 +1788,10 @@ export default class ServiceListCheck {
 							fragment: element,
 						});
 				};
-				let DisallowedElement = (element, childElementName, modulation) => {
+				let DisallowedElement = (element, childElementName, modulation, suffix="-0") => {
 					if (hasChild(element, childElementName))
 						errs.addError({
-							code: "SI204",
+							code: `SI204${suffix}`,
 							key: ERROR_KEY,
 							message: `${childElementName.elementize()} is not permitted for ${dvbi.e_ModulationSystem}="${modulation}"`,
 							fragment: element.get(xPath(props.prefix, childElementName), props.schema),
@@ -1800,20 +1800,20 @@ export default class ServiceListCheck {
 
 				switch (ModulationSystem.text()) {
 					case sats.MODULATION_S:
+						checkElement(RollOff, dvbi.e_RollOff, sats.S_RollOff, sats.MODULATION_S, "SI201a");
 						checkElement(ModulationType, dvbi.e_ModulationType, sats.S_Modulation, sats.MODULATION_S, "SI202a");
 						checkElement(FEC, dvbi.e_FEC, sats.S_FEC, sats.MODULATION_S, "SI203a");
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_RollOff, sats.MODULATION_S);
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodMode, sats.MODULATION_S);
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S);
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodMode, sats.MODULATION_S, "a");
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S, "b");
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S, "c");
 						break;
 					case sats.MODULATION_S2:
 						checkElement(RollOff, dvbi.e_RollOff, sats.S2_RollOff, sats.MODULATION_S2, "SI201b");
 						checkElement(ModulationType, dvbi.e_ModulationType, sats.S2_Modulation, sats.MODULATION_S2, "SI202b");
 						checkElement(FEC, dvbi.e_FEC, sats.S2_FEC, sats.MODULATION_S2, "SI203b");
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodMode, sats.MODULATION_S2);
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S2);
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S2);
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodMode, sats.MODULATION_S2, "k");
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S2, 'l');
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S2, "m");
 						break;
 					case sats.MODULATION_S2X:
 						checkElement(RollOff, dvbi.e_RollOff, sats.S2X_RollOff, sats.MODULATION_S2X, "SI201c");
