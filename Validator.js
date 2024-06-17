@@ -146,7 +146,6 @@ function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasC
 						}
 					} else req.parseErr = `${req.body.XMLurl} is not an HTTP(S) URL`;
 					req.session.data.url = req.body.XMLurl;
-
 					break;
 				case MODE_FILE:
 					try {
@@ -185,10 +184,10 @@ function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasC
 	res.end();
 }
 
-function validateServiceList(req, res,slcheck) {
+function validateServiceList(req, res, slcheck) {
 	let errs = new ErrorList();
-	let resp = null;
-	let VVxml = null;
+	let resp, VVxml = null;
+	let log_prefix = createPrefix(req, res);
 	try {
 		resp = fetchS(req.query.url);
 	} catch (error) {
@@ -198,15 +197,17 @@ function validateServiceList(req, res,slcheck) {
 		if (resp.ok) VVxml = resp.text();
 		else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
 	}
-	slcheck.doValidateServiceList(VVxml, errs, null);
-	drawResults(req,res, req.parseErr, errs)
+	slcheck.doValidateServiceList(VVxml, errs, log_prefix);
+	drawResults(req,res, req.parseErr, errs);
+
+	writeOut(errs, log_prefix, true, req);
 	res.end();
 }
 
-function validateServiceListJson(req, res,slcheck) {
+function validateServiceListJson(req, res, slcheck) {
 	let errs = new ErrorList();
-	let resp = null;
-	let VVxml = null;
+	let resp, VVxml = null;
+	let log_prefix = createPrefix(req, res);
 	try {
 		resp = fetchS(req.query.url);
 	} catch (error) {
@@ -216,14 +217,14 @@ function validateServiceListJson(req, res,slcheck) {
 		if (resp.ok) VVxml = resp.text();
 		else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
 	}
-	slcheck.doValidateServiceList(VVxml, errs, null);
+	slcheck.doValidateServiceList(VVxml, errs, log_prefix);
 	res.setHeader("Content-Type", "application/json");
-	if(req.query.results == "all") {
-		res.write(JSON.stringify({ errs }))
-	}
-	else {
-		res.write(JSON.stringify({ errors: errs.errors.length, warnings : errs.warnings.length, informationals: errs.informationals.length }))
-	}
+	if (req.parseErr) 
+		res.write(JSON.stringify({parseErr:req.parseErr}));
+	else 
+		res.write(JSON.stringify( (req.query.results && req.query.results == "all") ? { errs } : { errors: errs.errors.length, warnings : errs.warnings.length, informationals: errs.informationals.length }));
+
+	writeOut(errs, log_prefix, true, req);
 	res.end();
 }
 
@@ -366,6 +367,14 @@ export default function validator(options) {
 		app.get("/checkSLFile", function (req, res) {
 			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_SL, MODE_FILE);
 		});
+
+		app.get("/validate_sl", function (req, res) {
+			validateServiceList(req, res, slcheck);
+		});
+
+		app.get("/validate_sl_json", function (req, res) {
+			validateServiceListJson(req, res, slcheck);
+		});
 	}
 
 	const SLEPR_query_route = "/query",
@@ -436,14 +445,6 @@ export default function validator(options) {
 			res.status(200).end();
 		});
 	}
-
-	app.get("/validate_sl", function (req, res) {
-		validateServiceList(req, res,slcheck);
-	});
-
-	app.get("/validate_sl_json", function (req, res) {
-		validateServiceListJson(req, res,slcheck);
-	});
 
 	app.get("/stats", function (req, res) {
 		stats_header(res);

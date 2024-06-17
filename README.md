@@ -105,7 +105,6 @@ Checks performed:
 
 &lt;server&gt;/check gives a basic/primitive UI. Enter the URL to your service list or a local filename and press "Submit" button. Await results!
 
-
 ### Installation
 
 1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
