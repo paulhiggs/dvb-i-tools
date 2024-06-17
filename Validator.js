@@ -30,7 +30,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 import fetchS from "sync-fetch";
 
-import { drawForm, PAGE_TOP, PAGE_BOTTOM } from "./ui.js";
+import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults } from "./ui.js";
 import ErrorList from "./ErrorList.js";
 import { isHTTPURL } from "./pattern_checks.js";
 import { Default_SLEPR } from "./data-locations.js";
@@ -181,6 +181,48 @@ function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasC
 		req.diags.countInforms = errs.numInformationals();
 
 		writeOut(errs, log_prefix, true, req);
+	}
+	res.end();
+}
+
+function validateServiceList(req, res,slcheck) {
+	let errs = new ErrorList();
+	let resp = null;
+	let VVxml = null;
+	try {
+		resp = fetchS(req.query.url);
+	} catch (error) {
+		req.parseErr = error.message;
+	}
+	if (resp) {
+		if (resp.ok) VVxml = resp.text();
+		else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
+	}
+	slcheck.doValidateServiceList(VVxml, errs, null);
+	drawResults(req,res, req.parseErr, errs)
+	res.end();
+}
+
+function validateServiceListJson(req, res,slcheck) {
+	let errs = new ErrorList();
+	let resp = null;
+	let VVxml = null;
+	try {
+		resp = fetchS(req.query.url);
+	} catch (error) {
+		req.parseErr = error.message;
+	}
+	if (resp) {
+		if (resp.ok) VVxml = resp.text();
+		else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
+	}
+	slcheck.doValidateServiceList(VVxml, errs, null);
+	res.setHeader("Content-Type", "application/json");
+	if(req.query.results == "all") {
+		res.write(JSON.stringify({ errs }))
+	}
+	else {
+		res.write(JSON.stringify({ errors: errs.errors.length, warnings : errs.warnings.length, informationals: errs.informationals.length }))
 	}
 	res.end();
 }
@@ -394,6 +436,14 @@ export default function validator(options) {
 			res.status(200).end();
 		});
 	}
+
+	app.get("/validate_sl", function (req, res) {
+		validateServiceList(req, res,slcheck);
+	});
+
+	app.get("/validate_sl_json", function (req, res) {
+		validateServiceListJson(req, res,slcheck);
+	});
 
 	app.get("/stats", function (req, res) {
 		stats_header(res);

@@ -171,6 +171,51 @@ Same as for the individual applications
 
 &lt;server&gt;/check gives a basic/primitive UI. Select the valildation type (service list or Content Guide) and provide either a URL or local file. Press "Validate!" button. Await results!
 
+&lt;server&gt;/validate_sl?url=&lt;service_list_url&gt; gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation 
+
+&lt;server&gt;/validate_sl_json?url=&lt;service_list_url&gt; valdiates the list in the "url"-parameter and gives the number of errors, warnings and informationals as JSON, 
+```json
+{
+  "errors":1,
+  "warnings":0,
+  "informationals":0
+}
+```
+&lt;server&gt;/validate_sl_json?url=&lt;service_list_url&gt;&results=all valdiates the list "url"-parameter and gives the complete validation results as JSON
+```json
+{
+  "errs":
+    {
+    "countsErr":[],
+    "countsWarn":[],
+    "countsInfo":[],
+    "errors":[
+      {
+      "code":"SL005:6",
+      "message":"Error: Element '{urn:dvb:metadata:servicediscovery:2024}Service': Missing child element(s). Expected is one of ( {urn:dvb:metadata:servicediscovery:2024}ServiceName, {urn:dvb:metadata:servicediscovery:2024}ProviderName ).\n",
+      "element":"    <Service version=\"1\">","line":3
+      }
+    ],
+    "warnings":[],
+    "informationals":[],
+    "markupXML":[
+      {"value":"<?xml version=\"1.0\" encoding=\"UTF-8\"?>","ix":1},{"value":"<ServiceList xmlns=\"urn:dvb:metadata:servicediscovery:2024\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema‑instance\" id=\"tag:example.com,2024:list1\" version=\"20240611115822\" xml:lang=\"en\">","ix":2},
+      {"value":"  <Name>List</Name>","ix":3},
+      {"value":"  <ProviderName>Provider</ProviderName>","ix":4},
+      {"value":"  <Service version=\"1\">","ix":5,
+        "validationErrors":[
+          "(E) SL005:6: Error: Element '{urn:dvb:metadata:servicediscovery:2024}Service': Missing child element(s). Expected is one of ( {urn:dvb:metadata:servicediscovery:2024}ServiceName, {urn:dvb:metadata:servicediscovery:2024}ProviderName ).\n"
+          ]
+      },
+      {"value":"   <UniqueIdentifier>tag:example.com,2024:ch1</UniqueIdentifier>","ix":6},
+      {"value":"   <ServiceName>Service</ServiceName>","ix":7},
+      {"value":" </Service>","ix":8},
+      {"value":"</ServiceList>","ix":9}
+    ],
+    "errorDescriptions":[]
+  }
+}
+```
 ### Installation
 
 1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
