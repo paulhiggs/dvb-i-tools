@@ -103,13 +103,8 @@ Checks performed:
 
 ### Use
 
-#### URL based validation
+&lt;server&gt;/check gives a basic/primitive UI. Enter the URL to your service list or a local filename and press "Submit" button. Await results!
 
-&lt;server&gt;/check gives a basic/primitive UI. Enter the URL to your service list and press "Submit" button. Await results!
-
-#### File based validation
-
-&lt;server&gt;/checkFile gives a basic/primitive UI. Select the service list file and press "Submit" button. Await results!
 
 ### Installation
 
@@ -190,8 +185,8 @@ If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `s
 - --port [-p] set the HTTP listening port (default: 3030)
 - --sport [-s] set the HTTPS listening port (default: 3031)
 - --nocsr do not start the CSR function
-- --nosl do not perform service list validation
-- --nocg do not perform content guide validation
+- --nosl do not offer service list validation
+- --nocg do not offer content guide validation
 - --CORSmode [-c] select the type of CORS handling
   - "library" - default mode - use the Express CORS library
   - "manual" - do code based CORS header insertion (not fully implemented or tested)
