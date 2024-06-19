@@ -172,9 +172,9 @@ Same as for the individual applications
 
 &lt;server&gt;/check gives a basic/primitive UI. Select the valildation type (service list or Content Guide) and provide either a URL or local file. Press "Validate!" button. Await results!
 
-&lt;server&gt;/validate_sl?url=&lt;service_list_url&gt; gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation 
+&lt;server&gt;/validate_sl?url=&lt;service_list_url&gt; gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the servicelist in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML
 
-&lt;server&gt;/validate_sl_json?url=&lt;service_list_url&gt; valdiates the list in the "url"-parameter and gives the number of errors, warnings and informationals as JSON, 
+&lt;server&gt;/validate_sl_json?url=&lt;service_list_url&gt; valdiates the list in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml"  instead of the url query parameter. Example response:
 ```json
 {
   "errors":1,
@@ -182,7 +182,7 @@ Same as for the individual applications
   "informationals":0
 }
 ```
-&lt;server&gt;/validate_sl_json?url=&lt;service_list_url&gt;&results=all valdiates the list "url"-parameter and gives the complete validation results as JSON
+&lt;server&gt;/validate_sl_json?url=&lt;service_list_url&gt;&results=all valdiates the list "url"-parameter and gives the complete validation results as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. Example response:
 ```json
 {
   "errs":
