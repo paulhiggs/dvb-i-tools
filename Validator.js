@@ -198,7 +198,7 @@ function validateServiceList(req, res, slcheck) {
 		else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
 	}
 	slcheck.doValidateServiceList(VVxml, errs, log_prefix);
-	drawResults(req,res, req.parseErr, errs);
+	drawResults(req, res, req.parseErr, errs);
 
 	writeOut(errs, log_prefix, true, req);
 	res.end();
@@ -235,6 +235,7 @@ function stats_header(res) {
 function stats_footer(res) {
 	res.write(PAGE_BOTTOM);
 }
+
 function tabulate(res, group, stats) {
 	res.write(`<h1>${group}</h1>`);
 	if (Object.keys(stats).length === 0) res.write("<p>No statistics</p>");
