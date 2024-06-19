@@ -188,14 +188,19 @@ function validateServiceList(req, res, slcheck) {
 	let errs = new ErrorList();
 	let resp, VVxml = null;
 	let log_prefix = createPrefix(req, res);
-	try {
-		resp = fetchS(req.query.url);
-	} catch (error) {
-		req.parseErr = error.message;
+	if(req.method == "GET") {
+		try {
+			resp = fetchS(req.query.url);
+		} catch (error) {
+			req.parseErr = error.message;
+		}
+		if (resp) {
+			if (resp.ok) VVxml = resp.text();
+			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
+		}
 	}
-	if (resp) {
-		if (resp.ok) VVxml = resp.text();
-		else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
+	else if(req.method == "POST") {
+		VVxml = req.body
 	}
 	slcheck.doValidateServiceList(VVxml, errs, log_prefix);
 	drawResults(req,res, req.parseErr, errs);
@@ -208,14 +213,19 @@ function validateServiceListJson(req, res, slcheck) {
 	let errs = new ErrorList();
 	let resp, VVxml = null;
 	let log_prefix = createPrefix(req, res);
-	try {
-		resp = fetchS(req.query.url);
-	} catch (error) {
-		req.parseErr = error.message;
+	if(req.method == "GET") {
+		try {
+			resp = fetchS(req.query.url);
+		} catch (error) {
+			req.parseErr = error.message;
+		}
+		if (resp) {
+			if (resp.ok) VVxml = resp.text();
+			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
+		}
 	}
-	if (resp) {
-		if (resp.ok) VVxml = resp.text();
-		else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
+	else if(req.method == "POST") {
+		VVxml = req.body
 	}
 	slcheck.doValidateServiceList(VVxml, errs, log_prefix);
 	res.setHeader("Content-Type", "application/json");
@@ -374,6 +384,14 @@ export default function validator(options) {
 
 		app.get("/validate_sl_json", function (req, res) {
 			validateServiceListJson(req, res, slcheck);
+		});
+
+		app.post("/validate_sl",express.text({type: "application/xml",limit: '2mb'}), function (req, res) {
+			validateServiceList(req, res,slcheck);
+		});
+
+		app.post("/validate_sl_json",express.text({type: "application/xml",limit: '2mb'}), function (req, res) {
+			validateServiceListJson(req, res,slcheck);
 		});
 	}
 
