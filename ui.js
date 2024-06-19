@@ -199,7 +199,7 @@ export function drawForm(deprecateTo, req, res, modes, supportedRequests, error 
 export function drawResults(req, res, error = null, errs = null) {
 	res.setHeader("Content-Type", "text/html");
 	res.write(PAGE_TOP("DVB-I Validator", "DVB-I Validator"));
-	tabulateResults(req.query.url, res, error, errs);
+	tabulateResults(req.query.url? req.query.url : "uploaded list" , res, error, errs);
 	res.write(PAGE_BOTTOM);
 	return new Promise((resolve, /* eslint-disable no-unused-vars */ reject /* eslint-enable */) => {
 		resolve(res);
