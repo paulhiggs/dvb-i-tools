@@ -480,7 +480,7 @@ export default function validator(options) {
 		slcheck && tabulate(res, "SL", slcheck.stats());
 		cgcheck && tabulate(res, "CG", cgcheck.stats());
 		stats_footer(res);
-		res.status(4200).end();
+		res.status(200).end();
 	});
 
 	// dont handle any other requests
