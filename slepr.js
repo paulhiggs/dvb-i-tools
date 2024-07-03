@@ -183,6 +183,14 @@ export default class SLEPR {
 
 	/* public */ processServiceListRequest(req, res) {
 		this.#numRequests++;
+		if (req?.query?.queryCapabilities) {
+			res.type("text/xml");
+			res.write("urn:paulhiggs,2024-06:BabelFish#ja,zh,mi\nurn:ibm.com,1981:CTrlAtlDel\n");
+			res.status(200);
+			return true; 
+		}
+
+
 		if (!this.checkQuery(req)) {
 			if (req.parseErr) res.write(`[${req.parseErr.join(",\n\t")}]`);
 			res.status(400);
