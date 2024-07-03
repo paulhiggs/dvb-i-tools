@@ -40,7 +40,7 @@ export default class IANAlanguages {
 		res.numRedundantLanguages = this.#redundantLanguagesList.length;
 		res.numLanguageRanges = this.#languageRanges.length;
 		res.numSignLanguages = this.#signLanguagesList.length;
-		if (this.#languageFileDate) res.#languageFileDate = this.#languageFileDate;
+		if (this.#languageFileDate) res.languageFileDate = this.#languageFileDate;
 	}
 
 	/**
