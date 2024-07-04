@@ -1,3 +1,9 @@
+/**
+ * TVA_defintions.js
+ * 
+ * Definitions made by TV0Anytime in versions of ETSI TS 102 822-3-1
+ */
+
 import { mpeg7 } from "./MPEG7_definitions.js";
 
 export const TVA_CSmetadata = "urn:tva:metadata:cs";

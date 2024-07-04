@@ -2,9 +2,7 @@
  * error_list.js
  *
  * Manages errors and warnings for the application
- *
  */
-
 import { datatypeIs } from "./phlib/phlib.js";
 
 export const ERROR = "(E)",
@@ -14,7 +12,7 @@ export const ERROR = "(E)",
 
 const MAX_FRAGMENT_LINES = 6; // the maximum number of lines in an element to display when that element has an error
 
-var nthIndexOf = (str, pat, n) => {
+let nthIndexOf = (str, pat, n) => {
 	let i = -1;
 	while (n-- && i++ < str.length) {
 		i = str.indexOf(pat, i);
@@ -89,8 +87,8 @@ export default class ErrorList {
 
 	/* private method */ #prettyPrint(node) {
 		// clean up and redo formatting
-		let tmp = node.toString({ declaration: false, format: true });
-		let maxLen = nthIndexOf(tmp, "\n", MAX_FRAGMENT_LINES);
+		const tmp = node.toString({ declaration: false, format: true });
+		const maxLen = nthIndexOf(tmp, "\n", MAX_FRAGMENT_LINES);
 		return maxLen == -1 ? tmp : `${tmp.slice(0, maxLen)}\n....\n`;
 	}
 
@@ -126,8 +124,8 @@ export default class ErrorList {
 	 * @param {integer}                  e.line      (optional) the line number of the element in the XML document that triggered the error
 	 */
 	addError(e) {
-		let _INVALID_CALL = "invalid addError call",
-			argsOK = true;
+		const _INVALID_CALL = "invalid addError call";
+		let argsOK = true;
 		if (!Object.prototype.hasOwnProperty.call(e, "type")) e.type = ERROR;
 		if (!Object.prototype.hasOwnProperty.call(e, "reportInTable")) e.reportInTable = true;
 

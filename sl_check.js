@@ -1,33 +1,30 @@
-import chalk from "chalk";
-import { parseXmlString } from "libxmljs2";
-
+/**
+ * sl_check.js
+ * 
+ * Check a service list
+ */
 import { readFileSync } from "fs";
 import process from "process";
 
+import chalk from "chalk";
+import { parseXmlString } from "libxmljs2";
+
 import { elementize, quote } from "./phlib/phlib.js";
 
-import ErrorList, { WARNING, APPLICATION } from "./error_list.js";
-
+import { tva, tvaEA } from "./TVA_definitions.js";
 import { sats } from "./DVB_definitions.js";
 import { dvbi, dvbiEC, dvbEA, XMLdocumentType } from "./DVB-I_definitions.js";
 
-import { tva, tvaEA } from "./TVA_definitions.js";
+import ErrorList, { WARNING, APPLICATION } from "./error_list.js";
 import { isTAGURI } from "./URI_checks.js";
-
 import { xPath, xPathM, isIn, unEntity, getElementByTagName, DuplicatedValue } from "./utils.js";
-
 import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isDomainName, isRTSPURL } from "./pattern_checks.js";
-
 import { DVBI_ServiceListSchema } from "./data_locations.js";
-
 import { checkValidLogos } from "./related_material_checks.js";
 import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys } from "./common_errors.js";
-
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./multilingual_element.js";
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.js";
-
 import { writeOut } from "./validator.js";
-
 import {
 	LoadGenres,
 	LoadVideoCodecCS,
@@ -47,9 +44,7 @@ import {
 	LoadLanguages,
 	LoadCountries,
 } from "./classification_scheme_loaders.js";
-
-import { CheckAccessibilityAttributes } from "./accessibility_attributes_checks.jss";
-
+import { CheckAccessibilityAttributes } from "./accessibility_attributes_checks.js";
 import { DASH_IF_Content_Protection_List, ContentProtectionIDs, CA_SYSTEM_ID_REGISTRY, CASystemIDs } from "./identifiers.js";
 
 const ANY_NAMESPACE = "$%$!!";
@@ -75,7 +70,7 @@ export const DRAFT = 0x01,
 	ETSI = 0x04,
 	CURRENT = 0x08;
 
-var SchemaVersions = [
+let SchemaVersions = [
 	// schema property is loaded from specified filename
 	{
 		namespace: dvbi.A177r6_Namespace,
@@ -194,12 +189,12 @@ const ContentGuideSourceLogos = [
  * @returns {integer} Representation of the schema version or error code if unknown
  */
 let SchemaVersion = (namespace) => {
-	let x = SchemaVersions.find((ver) => ver.namespace == namespace);
+	const x = SchemaVersions.find((ver) => ver.namespace == namespace);
 	return x ? x.version : SCHEMA_unknown;
 };
 
 let SchemaSpecVersion = (namespace) => {
-	let x = SchemaVersions.find((ver) => ver.namespace == namespace);
+	const x = SchemaVersions.find((ver) => ver.namespace == namespace);
 	return x ? x.specVersion : "r?";
 };
 
@@ -438,6 +433,7 @@ export default class ServiceListCheck {
 		res.numAllowedVideoSchemes = this.#allowedVideoSchemes.count();
 		res.numAllowedVideoConformancePoints = this.#allowedVideoConformancePoints.count();
 		res.numAudioPresentationCSvalues = this.#AudioPresentationCSvalues.count();
+		res.numAudioPurporses = this.#audioPurposes.count();
 		return res;
 	}
 
@@ -907,7 +903,6 @@ export default class ServiceListCheck {
 
 		AccessibilityAttribiutes.forEach((aa) => {
 			CheckAccessibilityAttributes(
-				props,
 				aa,
 				{
 					AccessibilityPurposeCS: this.#accessibilityPurposes,
@@ -1265,9 +1260,9 @@ export default class ServiceListCheck {
 		}
 
 		function checkMulticastDeliveryParams(params, errs, errCode) {
-			let IPMulticastAddress = params.get(xPath(props.prefix, dvbi.e_IPMulticastAddress), props.schema);
+			const IPMulticastAddress = params.get(xPath(props.prefix, dvbi.e_IPMulticastAddress), props.schema);
 			if (IPMulticastAddress) {
-				let CNAME = IPMulticastAddress.get(xPath(props.prefix, dvbi.e_CNAME), props.schema);
+				const CNAME = IPMulticastAddress.get(xPath(props.prefix, dvbi.e_CNAME), props.schema);
 				if (CNAME && !isDomainName(CNAME.text()))
 					errs.addError({
 						code: `${errCode}-1`,
@@ -1306,7 +1301,7 @@ export default class ServiceListCheck {
 			controlApps = [],
 			RelatedMaterial;
 		while ((RelatedMaterial = ServiceInstance.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
-			let foundHref = this.#validateRelatedMaterial(props, RelatedMaterial, errs, `service instance of ${thisServiceId.quote()}`, SERVICE_INSTANCE_RM, "SI020");
+			const foundHref = this.#validateRelatedMaterial(props, RelatedMaterial, errs, `service instance of ${thisServiceId.quote()}`, SERVICE_INSTANCE_RM, "SI020");
 			if (foundHref != "" && validServiceInstanceControlApplication(foundHref)) controlApps.push(RelatedMaterial);
 			if (foundHref == dvbi.APP_IN_CONTROL) {
 				// Application controlling playback SHOULD NOT have any service delivery parameters
@@ -1344,16 +1339,15 @@ export default class ServiceListCheck {
 				CASystemID;
 			while ((CASystemID = ContentProtection.get(xPath(props.prefix, dvbi.e_CASystemId, ++ca), props.schema)) != null) {
 				let CASystemID_value = null;
-
 				if (SchemaVersion(props.namespace) <= SCHEMA_r1) {
 					// first two versions of the schema were 'incorrect' - has nested <CASystemId> elements.
 					let nestedCAsystemid = CASystemID.get(xPath(props.prefix, dvbi.e_CASystemId), props.schema);
 					if (nestedCAsystemid) {
 						CASystemID_value = nestedCAsystemid.text();
 					}
-				} else {
+				} 
+				else 
 					CASystemID_value = CASystemID.text();
-				}
 				if (CASystemID_value) {
 					let CASid_value = parseInt(CASystemID_value, 10);
 					if (isNaN(CASid_value)) {
@@ -1389,9 +1383,8 @@ export default class ServiceListCheck {
 					if (nestedDRMsystemid) {
 						DRMSystemID_value = nestedDRMsystemid.text().toLowerCase();
 					}
-				} else {
-					DRMSystemID_value = DRMSystemID.text().toLowerCase();
-				}
+				} 
+				else DRMSystemID_value = DRMSystemID.text().toLowerCase();
 				if (DRMSystemID_value && ContentProtectionIDs.find((el) => el.id == DRMSystemID_value || el.id.substring(el.id.lastIndexOf(":") + 1) == DRMSystemID_value) == undefined) {
 					errs.addError({
 						code: "SI033",
@@ -1404,7 +1397,7 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><ContentAttributes>
-		let ContentAttributes = ServiceInstance.get(xPath(props.prefix, dvbi.e_ContentAttributes), props.schema);
+		const ContentAttributes = ServiceInstance.get(xPath(props.prefix, dvbi.e_ContentAttributes), props.schema);
 		if (ContentAttributes) {
 			// Check ContentAttributes/AudioAttributes - other subelements are checked with schema based validation
 			let cp = 0,
@@ -1524,10 +1517,9 @@ export default class ServiceListCheck {
 				checkLanguage(this.#knownLanguages, conf.text(), tva.e_SignLanguage.elementize(), conf, errs, "SI111");
 
 			// Check ContentAttributes/AccessibilityAttributes
-			let aa = ContentAttributes.get(xPath(props.prefix, tva.e_AccessibilityAttributes), props.schema);
+			const aa = ContentAttributes.get(xPath(props.prefix, tva.e_AccessibilityAttributes), props.schema);
 			if (aa) {
 				CheckAccessibilityAttributes(
-					props,
 					aa,
 					{
 						AccessibilityPurposeCS: this.#accessibilityPurposes,
@@ -1548,14 +1540,14 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><Availability>
-		let Availability = ServiceInstance.get(xPath(props.prefix, dvbi.e_Availability), props.schema);
+		const Availability = ServiceInstance.get(xPath(props.prefix, dvbi.e_Availability), props.schema);
 		if (Availability) {
 			let Period,
 				p = 0;
 			while ((Period = Availability.get(xPath(props.prefix, dvbi.e_Period, ++p), props.schema)) != null)
 				if (Period.attr(dvbi.a_validFrom) && Period.attr(dvbi.a_validTo)) {
 					// validTo should be >= validFrom
-					let fr = new Date(Period.attr(dvbi.a_validFrom).value()),
+					const fr = new Date(Period.attr(dvbi.a_validFrom).value()),
 						to = new Date(Period.attr(dvbi.a_validTo).value());
 
 					if (to.getTime() < fr.getTime())
@@ -1574,7 +1566,7 @@ export default class ServiceListCheck {
 			SubscriptionPackage;
 		while ((SubscriptionPackage = ServiceInstance.get(xPath(props.prefix, dvbi.e_SubscriptionPackage, ++sp), props.schema)) != null) {
 			if (SchemaVersion(props.namespace) >= SCHEMA_r3) {
-				let pkg = localizedSubscriptionPackage(SubscriptionPackage);
+				const pkg = localizedSubscriptionPackage(SubscriptionPackage);
 				if (!declaredSubscriptionPackages.includes(pkg))
 					errs.addError({
 						code: "SI130",
@@ -1589,7 +1581,7 @@ export default class ServiceListCheck {
 
 		// note that the <SourceType> element becomes optional and in A177r1, but if specified then the relevant
 		// delivery parameters also need to be specified
-		let SourceType = ServiceInstance.get(xPath(props.prefix, dvbi.e_SourceType), props.schema);
+		const SourceType = ServiceInstance.get(xPath(props.prefix, dvbi.e_SourceType), props.schema);
 		if (SourceType) {
 			let v1Params = false;
 			switch (SourceType.text()) {
@@ -1631,7 +1623,7 @@ export default class ServiceListCheck {
 					} else {
 						// no xxxxDeliveryParameters is signalled
 						// check for appropriate Service.RelatedMaterial or Service.ServiceInstance.RelatedMaterial
-						let service = ServiceInstance.parent();
+						const service = ServiceInstance.parent();
 						if (!this.#hasSignalledApplication(props.schema, props.prefix, service) && !this.#hasSignalledApplication(props.schema, props.prefix, ServiceInstance)) {
 							errs.addError({
 								code: "SI157a",
@@ -1699,11 +1691,11 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><DASHDeliveryParameters>
-		let DASHDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DASHDeliveryParameters), props.schema);
+		const DASHDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DASHDeliveryParameters), props.schema);
 		if (DASHDeliveryParameters) {
-			let URIBasedLocation = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_UriBasedLocation), props.schema);
+			const URIBasedLocation = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_UriBasedLocation), props.schema);
 			if (URIBasedLocation) {
-				let uriContentType = URIBasedLocation.attr(dvbi.a_contentType);
+				const uriContentType = URIBasedLocation.attr(dvbi.a_contentType);
 				if (uriContentType && !validDASHcontentType(uriContentType.value()))
 					errs.addError({
 						code: "SI173",
@@ -1712,7 +1704,7 @@ export default class ServiceListCheck {
 						key: `no ${dvbi.a_contentType.attribute()} for DASH`,
 					});
 
-				let uri = getElementByTagName(URIBasedLocation, dvbi.e_URI);
+				const uri = getElementByTagName(URIBasedLocation, dvbi.e_URI);
 				if (uri && !isHTTPURL(uri.text()))
 					errs.addError({
 						code: "SI174",
@@ -1723,7 +1715,7 @@ export default class ServiceListCheck {
 			}
 
 			// <DASHDeliveryParameters><MulticastTSDeliveryParameters>
-			let MulticastTSDeliveryParameters = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_MulticastTSDeliveryParameters), props.schema);
+			const MulticastTSDeliveryParameters = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_MulticastTSDeliveryParameters), props.schema);
 			if (MulticastTSDeliveryParameters) {
 				checkMulticastDeliveryParams(MulticastTSDeliveryParameters, errs, "SI176");
 			}

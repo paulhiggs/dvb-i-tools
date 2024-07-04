@@ -1,33 +1,29 @@
-import chalk from "chalk";
-
-// express framework - https://expressjs.com/en/4x/api.html
-import express from "express";
-
-// morgan - https://www.npmjs.com/package/morgan
-import morgan, { token } from "morgan";
-
-// favourite icon - https://www.npmjs.com/package/serve-favicon
-import favicon from "serve-favicon";
-
+/**
+ * csr.js
+ * 
+ * An standalone runner for a service list entry point registry (SLEPR) that can be used as a Central Service List Registry (CSR)
+ */
 import { join } from "path";
-const keyFilename = join(".", "selfsigned.key"),
-	certFilename = join(".", "selfsigned.crt");
-
 import { createServer } from "https";
-
-// command line arguments - https://www.npmjs.com/package/command-line-args
-import commandLineArgs from "command-line-args";
-import commandLineUsage from "command-line-usage";
-
 import cluster from "cluster";
 import { cpus } from "os";
-import cors from "cors";
 import process from "process";
+
+import chalk from "chalk";
+import express from "express";
+import morgan, { token } from "morgan";
+import favicon from "serve-favicon";
+import commandLineArgs from "command-line-args";
+import commandLineUsage from "command-line-usage";
+import cors from "cors";
 
 import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data_locations.js";
 
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./globals.js";
 import { readmyfile } from "./utils.js";
+
+const keyFilename = join(".", "selfsigned.key"),
+	certFilename = join(".", "selfsigned.crt");
 
 const numCPUs = cpus().length;
 
@@ -94,7 +90,7 @@ const commandLineHelp = [
 ];
 
 try {
-	var options = commandLineArgs(optionDefinitions);
+	let options = commandLineArgs(optionDefinitions);
 } catch (err) {
 	console.log(commandLineUsage(commandLineHelp));
 	process.exit(1);
@@ -113,11 +109,11 @@ if (options.help) {
 if (options.urls && options.file == Default_SLEPR.file) options.file = Default_SLEPR.url;
 
 import IANAlanguages from "./IANA_languages.js";
-var knownLanguages = new IANAlanguages();
+let knownLanguages = new IANAlanguages();
 knownLanguages.loadLanguages(options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file });
 
 import ISOcountries from "./ISO_countries.js";
-var knownCountries = new ISOcountries(false, true);
+let knownCountries = new ISOcountries(false, true);
 knownCountries.loadCountries(options.urls ? { url: ISO3166.url } : { file: ISO3166.file });
 
 import ClassificationScheme from "./classification_scheme.js";
@@ -136,7 +132,7 @@ if (cluster.isPrimary) {
 	console.log(chalk.orange(`Number of CPUs is ${numCPUs}`));
 	console.log(chalk.orange(`Primary ${process.pid} is running`));
 
-	var metrics = {
+	let metrics = {
 		numRequests: 0,
 		numFailed: 0,
 		reloadRequests: 0,
@@ -177,7 +173,7 @@ if (cluster.isPrimary) {
 			}
 	});
 } else {
-	var app = express();
+	let app = express();
 	app.use(cors());
 	token("pid", function getPID(/* eslint-disable no-unused-vars */ req /* eslint-enable */) {
 		return process.pid;
@@ -212,7 +208,7 @@ if (cluster.isPrimary) {
 			next();
 		};
 	}
-	var csr = new SLEPR(options.urls);
+	let csr = new SLEPR(options.urls);
 	csr.loadServiceListRegistry(options.file, knownLanguages, knownCountries, knownGenres);
 	app.use(morgan(":pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr"));
 	app.use(favicon(join("phlib", "ph-icon.ico")));
@@ -251,19 +247,19 @@ if (cluster.isPrimary) {
 			}
 	});
 	// start the HTTP server
-	var http_server = app.listen(options.port, function () {
+	let http_server = app.listen(options.port, function () {
 		console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}, PID=${process.pid}`));
 	});
 	// start the HTTPS server
 	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
-	var https_options = {
+	let https_options = {
 		key: readmyfile(keyFilename),
 		cert: readmyfile(certFilename),
 	};
 	if (https_options.key && https_options.cert) {
 		if (options.sport == options.port) options.sport = options.port + 1;
 
-		var https_server = createServer(https_options, app);
+		let https_server = createServer(https_options, app);
 		https_server.listen(options.sport, function () {
 			console.log(chalk.cyan(`HTTPS listening on port number ${https_server.address().port}, PID=${process.pid}`));
 		});

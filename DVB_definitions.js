@@ -1,15 +1,14 @@
 /**
+ * DVB_definitions.js
+ * 
  * Some definitions from other (non DVB-I) specifications
- * 
- * 
+ *  
  * references
  * (DVB-SI) ETSI EN 300 468 - https://www.etsi.org/deliver/etsi_en/300400_300499/300468/
  * (DVB-S) ETSI EN 300 421 - https://www.etsi.org/deliver/etsi_en/300400_300499/300421/
  * (DVB-S2) ETSI EN 303 307-1 - https://www.etsi.org/deliver/etsi_en/302300_302399/30230701/
  * (DVB-S2x) ETSI EN 303 307-2 - https://www.etsi.org/deliver/etsi_en/302300_302399/30230702/
  */
-
-
 export const dvb = {
 	a_termID: "termID",
 	a_uri: "uri",

@@ -1,8 +1,13 @@
-import chalk from "chalk";
-import { handleErrors } from "./fetch_err_handler.js";
-
+/** 
+ * ISO_countries.js
+ * 
+ * Load and check country codes
+ */
 import { readFile } from "fs";
 
+import chalk from "chalk";
+
+import { handleErrors } from "./fetch_err_handler.js";
 import { isHTTPURL } from "./pattern_checks.js";
 
 /**
@@ -104,8 +109,8 @@ export default class ISOcountries {
 	 * @return {boolean} true if countryCode is known else false
 	 */
 	isISO3166code(countryCode, caseSensitive = true) {
-		let found = false,
-			countryCode_lc = countryCode.toLowerCase();
+		let found = false;
+		const countryCode_lc = countryCode.toLowerCase();
 
 		if (this.#use3CharCountries && countryCode.length == 3) {
 			if (caseSensitive ? this.#countriesList.find((elem) => elem.alpha3 == countryCode) : this.#countriesList.find((elem) => elem.alpha3.toLowerCase() == countryCode_lc))

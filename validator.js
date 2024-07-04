@@ -1,41 +1,31 @@
-// express framework - https://expressjs.com/en/4x/api.html
-import express from "express";
-import session from "express-session";
-
+/**
+ * validator.js
+ * 
+ * 
+ */
 import { existsSync, writeFile } from "fs";
 import { join, sep } from "path";
-
-import chalk from "chalk";
-
-import cors from "cors";
 import { createServer } from "https";
-
 import os from "node:os";
-
-// morgan - https://github.com/expressjs/morgan
-import morgan, { token } from "morgan";
-
-// file upload for express - https://github.com/richardgirges/express-fileupload
-import fileupload from "express-fileupload";
-
-// favourite icon - https://www.npmjs.com/package/serve-favicon
-import favicon from "serve-favicon";
-
 import process from "process";
-
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
+import chalk from "chalk";
+import cors from "cors";
+import express from "express";
+import session from "express-session";
+import morgan, { token } from "morgan";
+import fileupload from "express-fileupload";
+import favicon from "serve-favicon";
 import fetchS from "sync-fetch";
 
+import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.js";
+import { Default_SLEPR } from "./data_locations.js";
 import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults } from "./ui.js";
 import ErrorList from "./error_list.js";
 import { isHTTPURL } from "./pattern_checks.js";
-import { Default_SLEPR } from "./data_locations.js";
-import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.js";
-
+import { readmyfile } from "./utils.js";
 import {
 	LoadGenres,
 	LoadRatings,
@@ -49,6 +39,12 @@ import {
 	LoadLanguages,
 	LoadCountries,
 } from "./classification_scheme_loaders.js";
+import ServiceListCheck from "./sl_check.js";
+import ContentGuideCheck from "./cg_check.js";
+import SLEPR from "./slepr.js";
+
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export const MODE_UNSPECIFIED = "none",
 	MODE_SL = "sl",
@@ -56,17 +52,8 @@ export const MODE_UNSPECIFIED = "none",
 	MODE_URL = "url",
 	MODE_FILE = "file";
 
-// the service list validation
-import ServiceListCheck from "./sl_check.js";
+let csr = null;
 
-// the content guide validation
-import ContentGuideCheck from "./cg_check.js";
-
-// the service list registrt
-import SLEPR from "./slepr.js";
-var csr = null;
-
-import { readmyfile } from "./utils.js";
 const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
 
@@ -82,7 +69,7 @@ export function writeOut(errs, filebase, markup, req = null) {
 				outputLines.push(`<!--${error.replace(/[\n]/g, "")}-->`);
 			});
 	});
-	let filename = markup ? `${filebase}.mkup.txt` : `${filebase}.raw.txt`;
+	const filename = markup ? `${filebase}.mkup.txt` : `${filebase}.raw.txt`;
 	writeFile(filename, outputLines.join("\n"), (err) => {
 		if (err) console.log(chalk.red(err));
 	});
@@ -98,7 +85,7 @@ function createPrefix(req) {
 		return `${d.getFullYear()}-${fillZero(d.getMonth() + 1)}-${fillZero(d.getDate())} ${fillZero(d.getHours())}.${fillZero(d.getMinutes())}.${fillZero(d.getSeconds())}`;
 	};
 
-	let fname = req.body.doclocation == MODE_URL ? req.body.XMLurl.substr(req.body.XMLurl.lastIndexOf("/") + 1) : req?.files?.XMLfile?.name;
+	const fname = req.body.doclocation == MODE_URL ? req.body.XMLurl.substr(req.body.XMLurl.lastIndexOf("/") + 1) : req?.files?.XMLfile?.name;
 	if (!fname) return null;
 
 	return `${logDir}${sep}${getDate(new Date())} (${req.body.testtype == MODE_SL ? "SL" : req.body.requestType}) ${fname.replace(/[/\\?%*:|"<>]/g, "-")}`;
@@ -187,7 +174,7 @@ function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasC
 function validateServiceList(req, res, slcheck) {
 	let errs = new ErrorList();
 	let resp, VVxml = null;
-	let log_prefix = createPrefix(req, res);
+	const log_prefix = createPrefix(req, res);
 	if(req.method == "GET") {
 		try {
 			resp = fetchS(req.query.url);
@@ -212,7 +199,7 @@ function validateServiceList(req, res, slcheck) {
 function validateServiceListJson(req, res, slcheck) {
 	let errs = new ErrorList();
 	let resp, VVxml = null;
-	let log_prefix = createPrefix(req, res);
+	const log_prefix = createPrefix(req, res);
 	if(req.method == "GET") {
 		try {
 			resp = fetchS(req.query.url);
@@ -225,14 +212,14 @@ function validateServiceListJson(req, res, slcheck) {
 		}
 	}
 	else if(req.method == "POST") {
-		VVxml = req.body
+		VVxml = req.body;
 	}
 	slcheck.doValidateServiceList(VVxml, errs, log_prefix);
 	res.setHeader("Content-Type", "application/json");
 	if (req.parseErr) 
 		res.write(JSON.stringify({parseErr:req.parseErr}));
 	else 
-		res.write(JSON.stringify( (req.query.results && req.query.results == "all") ? { errs } : { errors: errs.errors.length, warnings : errs.warnings.length, informationals: errs.informationals.length }));
+		res.write(JSON.stringify((req.query.results && req.query.results == "all") ? {errs} : {errors: errs.errors.length, warnings : errs.warnings.length, informationals: errs.informationals.length}));
 
 	writeOut(errs, log_prefix, true, req);
 	res.end();
@@ -306,7 +293,7 @@ export default function validator(options) {
 
 	app.use(morgan(":remote-addr :protocol :method :url :status :res[content-length] :counts - :response-time ms :agent :parseErr :location"));
 
-	app.use(express.urlencoded({ extended: true }));
+	app.use(express.urlencoded({extended: true}));
 
 	app.set("trust proxy", 1);
 	app.use(
@@ -314,7 +301,7 @@ export default function validator(options) {
 			secret: "keyboard car",
 			resave: false,
 			saveUninitialized: true,
-			cookie: { maxAge: 60000 },
+			cookie: {maxAge: 60000},
 		})
 	);
 
@@ -387,11 +374,11 @@ export default function validator(options) {
 			validateServiceListJson(req, res, slcheck);
 		});
 
-		app.post("/validate_sl",express.text({type: "application/xml",limit: '2mb'}), function (req, res) {
+		app.post("/validate_sl",express.text({type: "application/xml", limit: '2mb'}), function (req, res) {
 			validateServiceList(req, res,slcheck);
 		});
 
-		app.post("/validate_sl_json",express.text({type: "application/xml",limit: '2mb'}), function (req, res) {
+		app.post("/validate_sl_json",express.text({type: "application/xml", limit: '2mb'}), function (req, res) {
 			validateServiceListJson(req, res,slcheck);
 		});
 	}
@@ -399,13 +386,13 @@ export default function validator(options) {
 	const SLEPR_query_route = "/query",
 		SLEPR_reload_route = "/reload";
 
-	let manualCORS = function (res, req, next) {
+	let manualCORS = function (/* eslint-disable no-unused-vars*/ res, req, /* eslint-enable */ next) {
 		next();
 	};
 	if (options.CORSmode == CORSlibrary) {
 		app.options("*", cors());
 	} else if (options.CORSmode == CORSmanual) {
-		manualCORS = function (req, res, next) {
+		manualCORS = function (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res, next) {
 			let opts = res.getHeader("X-Frame-Options");
 			if (opts) {
 				if (!opts.includes("SAMEORIGIN")) opts.push("SAMEORIGIN");
@@ -459,13 +446,13 @@ export default function validator(options) {
 			res.end();
 		});
 
-		app.get(SLEPR_reload_route, function (req, res) {
+		app.get(SLEPR_reload_route, function (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) {
 			csr.loadServiceListRegistry(options.CSRfile);
 			res.status(200).end();
 		});
 	}
 
-	app.get("/stats", function (req, res) {
+	app.get("/stats", function (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) {
 		stats_header(res);
 		tabulate(res, "System", {
 			host: os.hostname(),
@@ -484,7 +471,7 @@ export default function validator(options) {
 	});
 
 	// dont handle any other requests
-	app.get("*", function (req, res) {
+	app.get("*", function (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) {
 		res.status(404).end();
 	});
 

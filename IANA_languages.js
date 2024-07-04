@@ -1,11 +1,17 @@
-import chalk from "chalk";
-import { handleErrors } from "./fetch_err_handler.js";
-
+/**
+ * IANA_languages.js
+ * 
+ * Load and check language identifiers
+ */
 import { readFile } from "fs";
 
+import chalk from "chalk";
+
+import { datatypeIs } from "./phlib/phlib.js";
+
+import { handleErrors } from "./fetch_err_handler.js";
 import { isIn, isIni } from "./utils.js";
 import { isHTTPURL } from "./pattern_checks.js";
-import { datatypeIs } from "./phlib/phlib.js";
 
 export default class IANAlanguages {
 	#languagesList;
@@ -29,6 +35,7 @@ export default class IANAlanguages {
 		this.#redundantLanguagesList = [];
 		this.#languageRanges = [];
 		this.#signLanguagesList = [];
+		this.#languageFileDate = null;
 	}
 
 	count() {
@@ -58,15 +65,15 @@ export default class IANAlanguages {
 		 * @return {boolean} true if the language subtag is a sign language
 		 */
 		function isSignLanguage(items) {
-			let isSign = false;
-			for (let i = 0; i < items.length; i++) if (items[i].startsWith("Description") && items[i].toLowerCase().includes("sign")) isSign = true;
-
-			return isSign;
+			for (let i = 0; i < items.length; i++)
+				 if (items[i].startsWith("Description") && items[i].toLowerCase().includes("sign")) 
+						return true;
+			return false;
 		}
 
-		let entries = languageData.split("%%");
+		const entries = languageData.split("%%");
 		entries.forEach((entry) => {
-			let items = entry.replace(/(\r|\t)/gm, "").split("\n");
+			const items = entry.replace(/(\r|\t)/gm, "").split("\n");
 
 			if (items[0].startsWith("File-Date")) {
 				let tl = items[0].split(":");

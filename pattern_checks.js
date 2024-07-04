@@ -1,5 +1,8 @@
-// pattern_checks.js
-
+/**
+ * pattern_checks.js
+ *
+ * useful regular expression based checks
+ */
 import { datatypeIs } from "./phlib/phlib.js";
 
 const e_pct = "%", //e_pct="&#x25;",
@@ -65,7 +68,7 @@ const e_IPvFutureHost = `\\[v[a-f${e_digit}][${e_unreserved}${e_pct}&amp;~;=:]+\
  * @returns {boolean} true if the argment is compliant to a tva:RatioType
  */
 const ratioRegex = new RegExp(`^[${e_digit}]+:[${e_digit}]+$`);
-export var isRatioType = (str) => (datatypeIs(str, "string") ? ratioRegex.test(str.trim()) : false);
+export let isRatioType = (str) => (datatypeIs(str, "string") ? ratioRegex.test(str.trim()) : false);
 
 /**
  * checks if the argument complies to an XML representation of UTC time
@@ -74,7 +77,7 @@ export var isRatioType = (str) => (datatypeIs(str, "string") ? ratioRegex.test(s
  * @returns {boolean}  true if the argment is formatted according to UTC ("Zulu") time
  */
 const UTCregex = new RegExp(/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\\.[0-9]+)?(Z)?$/);
-export var isUTCDateTime = (str) => (datatypeIs(str, "string") ? UTCregex.test(str.trim()) : false);
+export let isUTCDateTime = (str) => (datatypeIs(str, "string") ? UTCregex.test(str.trim()) : false);
 
 /**
  * checks of the specified argument matches an HTTP(s) URL where the protocol is required to be provided
@@ -85,7 +88,7 @@ export var isUTCDateTime = (str) => (datatypeIs(str, "string") ? UTCregex.test(s
  * see RFC 3986 - https://tools.ietf.org/html/rfc3986
  */
 const HTTPURLregex = new RegExp(`^https?:(//${e_AuthorityAndPath}|${e_PathNoAuthority})${e_Query}?${e_Fragment}?$`, "i");
-export var isHTTPURL = (arg) => (datatypeIs(arg, "string") ? HTTPURLregex.test(arg.trim()) : false);
+export let isHTTPURL = (arg) => (datatypeIs(arg, "string") ? HTTPURLregex.test(arg.trim()) : false);
 
 /**
  * checks of the specified argument matches the scheme, authority and path syntax components of an HTTP(s) URL where the protocol is required to be provided
@@ -96,7 +99,7 @@ export var isHTTPURL = (arg) => (datatypeIs(arg, "string") ? HTTPURLregex.test(a
  * see RFC 3986 - https://tools.ietf.org/html/rfc3986
  */
 const HTTPPathURLregex = new RegExp(`^https?:(//${e_AuthorityAndPath}|${e_PathNoAuthority})$`, "i");
-export var isHTTPPathURL = (arg) => (datatypeIs(arg, "string") ? HTTPPathURLregex.test(arg.trim()) : false);
+export let isHTTPPathURL = (arg) => (datatypeIs(arg, "string") ? HTTPPathURLregex.test(arg.trim()) : false);
 
 /**
  * isURL and isURN use the syntax from MPEG DASH - http://github.com/MPEGGroup/DASHSchema/
@@ -104,8 +107,8 @@ export var isHTTPPathURL = (arg) => (datatypeIs(arg, "string") ? HTTPPathURLrege
  */
 const URNregex = new RegExp(`^${e_URN}$`, "i"),
 	URLregex = new RegExp(`^${e_URL}$`, "i");
-export var isURL = (arg) => (datatypeIs(arg, "string") ? URLregex.test(arg) : false);
-export var isURN = (arg) => (datatypeIs(arg, "string") ? URNregex.test(arg) : false);
+export let isURL = (arg) => (datatypeIs(arg, "string") ? URLregex.test(arg) : false);
+export let isURN = (arg) => (datatypeIs(arg, "string") ? URNregex.test(arg) : false);
 
 /**
  * checks of the specified argument matches URL according to RFC 3986 - https://tools.ietf.org/html/rfc3986
@@ -113,7 +116,7 @@ export var isURN = (arg) => (datatypeIs(arg, "string") ? URNregex.test(arg) : fa
  * @param {string} arg  The value whose format is to be checked
  * @returns {boolean} true if the argument is an HTTP URL
  */
-export var isURI = (arg) => isURL(arg) || isURN(arg);
+export let isURI = (arg) => isURL(arg) || isURN(arg);
 
 /**
  * Checks the URI conforms to RFC 2397.
@@ -122,7 +125,7 @@ export var isURI = (arg) => isURL(arg) || isURN(arg);
  * Thanks to https://gist.github.com/khanzadimahdi/bab8a3416bdb764b9eda5b38b35735b8
  */
 const dataRegexp = new RegExp(`^data:((?:\w+\/(?:(?!;).)+)?)((?:;[\w\W]*?[^;])*),(.+)$`, "i");
-export var isDataURI = (arg) => (datatypeIs(arg, "string") ? dataRegexp.test(arg) : false);
+export let isDataURI = (arg) => (datatypeIs(arg, "string") ? dataRegexp.test(arg) : false);
 
 /**
  * checks if the argument complies to an XML representation of UTC time (i.e. ISO 8601-2:2019)
@@ -134,7 +137,7 @@ export var isDataURI = (arg) => (datatypeIs(arg, "string") ? dataRegexp.test(arg
 const isoRegex = new RegExp(
 	/^[-+]?P(?!$)(([-+]?\d+Y)|([-+]?\d+\.\d+Y$))?(([-+]?\d+M)|([-+]?\d+\.\d+M$))?(([-+]?\d+W)|([-+]?\d+\.\d+W$))?(([-+]?\d+D)|([-+]?\d+\.\d+D$))?(T(?=[\d+-])(([-+]?\d+H)|([-+]?\d+\.\d+H$))?(([-+]?\d+M)|([-+]?\d+\.\d+M$))?([-+]?\d+(\.\d+)?S)?)??$/
 );
-export var isISODuration = (duration) => (datatypeIs(duration, "string") ? isoRegex.test(duration.trim()) : false);
+export let isISODuration = (duration) => (datatypeIs(duration, "string") ? isoRegex.test(duration.trim()) : false);
 
 /**
  * checks if the argument complies to a DVB locator according to clause 6.4.2 of ETSI TS 102 851
@@ -144,7 +147,7 @@ export var isISODuration = (duration) => (datatypeIs(duration, "string") ? isoRe
  * @returns {boolean}  true is the argment is formatted as a DVB locator
  */
 const locatorRegex = new RegExp(`^dvb://[${e_digit}${e_hexChar}]+.[${e_digit}${e_hexChar}]*.[${e_digit}${e_hexChar}]+;[${e_digit}${e_hexChar}]+$`);
-export var isDVBLocator = (locator) => (datatypeIs(locator, "string") ? locatorRegex.test(locator.trim()) : false);
+export let isDVBLocator = (locator) => (datatypeIs(locator, "string") ? locatorRegex.test(locator.trim()) : false);
 
 /**
  *
@@ -152,7 +155,7 @@ export var isDVBLocator = (locator) => (datatypeIs(locator, "string") ? locatorR
  * @returns {boolean} true if the postcode argument is a valid postcode, otherwise false
  */
 const postcodeRegex = new RegExp(`[${e_digit}${e_lowalpha}]+([- ][${e_digit}${e_lowalpha}]+)?$`, "i");
-export var isPostcode = (postcode) => (datatypeIs(postcode, "string") ? postcodeRegex.test(postcode.trim()) : false);
+export let isPostcode = (postcode) => (datatypeIs(postcode, "string") ? postcodeRegex.test(postcode.trim()) : false);
 
 /**
  *
@@ -172,7 +175,7 @@ export var isWildcardPostcode = (postcode) =>
  * @returns {boolean} true if the signalled extensionName is in the specification defined format, else false
  */
 const ExtensionRegex = new RegExp(`^[${e_digit}${e_lowalpha}][${e_digit}${e_lowalpha}:\\-/\\.]*[${e_digit}${e_lowalpha}]$`, "i");
-export var validExtensionName = (ext) => (datatypeIs(ext, "string") ? ExtensionRegex.test(ext.trim()) : false);
+export let validExtensionName = (ext) => (datatypeIs(ext, "string") ? ExtensionRegex.test(ext.trim()) : false);
 
 /**
  * check if the argument is in the correct format for a TV-Anytime FrameRateType
@@ -183,7 +186,7 @@ export var validExtensionName = (ext) => (datatypeIs(ext, "string") ? ExtensionR
  */
 const FrameRateRegex1 = new RegExp(`^[${e_digit}]{1,3}(\\.[${e_digit}]{1,3})?$`);
 const FrameRateRegex2 = new RegExp(`^[${e_digit}]{1,3}\\/1\\.001$`);
-export var validFrameRate = (rate) => (datatypeIs(rate, "string") ? FrameRateRegex1.test(rate.trim()) || FrameRateRegex2.test(rate.trim()) : false);
+export let validFrameRate = (rate) => (datatypeIs(rate, "string") ? FrameRateRegex1.test(rate.trim()) || FrameRateRegex2.test(rate.trim()) : false);
 
 /**
  * checks of the specified argument matches an domain name (RFC 1034)
@@ -192,7 +195,7 @@ export var validFrameRate = (rate) => (datatypeIs(rate, "string") ? FrameRateReg
  * @returns {boolean} true if the argument is a domain name
  */
 const DomainNameRegex = new RegExp(/^[a-z\d]+([\-\.]{1}[a-z\d]+)*\.[a-z]{2,5}(:[\d]{1,5})?(\/.*)?$/, "i");
-export var isDomainName = (domain) => (datatypeIs(domain, "string") ? DomainNameRegex.test(domain.trim()) : false);
+export let isDomainName = (domain) => (datatypeIs(domain, "string") ? DomainNameRegex.test(domain.trim()) : false);
 
 /**
  * checks of the specified argument matches an RTSP URL
@@ -202,7 +205,7 @@ export var isDomainName = (domain) => (datatypeIs(domain, "string") ? DomainName
  * @returns {boolean} true if the argument is an RTSP URL
  */
 const RTSPRegex = new RegExp(/^rtsp:\/\/.*$/, "i");
-export var isRTSPURL = (arg) => (datatypeIs(arg, "string") ? isURL(arg) && RTSPRegex.test(arg.trim()) : false);
+export let isRTSPURL = (arg) => (datatypeIs(arg, "string") ? isURL(arg) && RTSPRegex.test(arg.trim()) : false);
 
 /**
  * check that a values conforms to the ServiceDaysList type
@@ -211,7 +214,7 @@ export var isRTSPURL = (arg) => (datatypeIs(arg, "string") ? isURL(arg) && RTSPR
  * @returns {boolean} true if the value is properly formated
  */
 const DaysListRegex = new RegExp(/^([1-7]\s+)*[1-7]$/); // list of values 1-7 separeted by spaces
-export var validServiceDaysList = (daysList) => (datatypeIs(daysList, "string") ? DaysListRegex.test(daysList.trim()) : false);
+export let validServiceDaysList = (daysList) => (datatypeIs(daysList, "string") ? DaysListRegex.test(daysList.trim()) : false);
 
 /**
  * check that a values conforms to the ZuluTimeType type
@@ -220,7 +223,7 @@ export var validServiceDaysList = (daysList) => (datatypeIs(daysList, "string") 
  * @returns {boolean} true if the value is properly formated
  */
 const ZuluRegex = new RegExp(/^(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?)Z$/);
-export var validZuluTimeType = (time) => (datatypeIs(time, "string") ? ZuluRegex.test(time.trim()) : false);
+export let validZuluTimeType = (time) => (datatypeIs(time, "string") ? ZuluRegex.test(time.trim()) : false);
 
 /**
  * checks that the supplied argument conforms to the pattern for a TVA LanguageType
@@ -235,4 +238,4 @@ export function isTVAAudioLanguageType(languageCode, caseSensitive = true) {
 }
 
 const ASCIIregexp = new RegExp(`^[${ASCII_chars}]*$`);
-export var isASCII = (arg) => (datatypeIs(arg, "string") ? ASCIIregexp.test(arg) : false);
+export let isASCII = (arg) => (datatypeIs(arg, "string") ? ASCIIregexp.test(arg) : false);

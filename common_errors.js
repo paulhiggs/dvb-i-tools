@@ -1,6 +1,10 @@
-// common_errors.js
-import { dvbi } from "./DVB-I_definitions.js";
+/** 
+ * common_errors.js
+ *
+ * error templates used by different validatirs
+ */
 import { tva } from "./TVA_definitions.js";
+import { dvbi } from "./DVB-I_definitions.js";
 
 export const keys = {
 	k_InvalidValue: "invalid value",

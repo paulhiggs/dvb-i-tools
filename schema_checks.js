@@ -1,15 +1,16 @@
-// schema_checks.js
-
+/**
+ * schema_checks.js
+ */
 import { parseXmlString } from "libxmljs2";
 import format from "xml-formatter";
 
 import { elementize, datatypeIs } from "./phlib/phlib.js";
+
 import { dvbi } from "./DVB-I_definitions.js";
+
 import { APPLICATION, INFORMATION, WARNING } from "./error_list.js";
 import { OLD, DRAFT } from "./sl_check.js";
-
 import { isIn, xPath } from "./utils.js";
-
 import { keys } from "./common_errors.js";
 
 /**

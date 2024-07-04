@@ -1,4 +1,10 @@
+/**
+ * ui.js
+ * 
+ * Drive the HTML user interface
+ */
 import { HTMLize } from "./phlib/phlib.js";
+
 import { ERROR, WARNING } from "./error_list.js";
 import { MODE_URL, MODE_FILE } from "./validator.js";
 

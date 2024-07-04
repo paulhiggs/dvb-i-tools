@@ -1,15 +1,20 @@
-// AccessibilityAttribitesChecks.js
+/**
+ * accessibility_attribites_checks.js
+ * 
+ * Checks the value space of the <AccessibilityAttributes> element against the rules and 
+ * values provided in DVB A177.
+ */
+import { datatypeIs } from "./phlib/phlib.js";
+
+import { tva, tvaEC, BaseAccessibilityAttributesType } from "./TVA_definitions.js";
+import { dvbi } from "./DVB-I_definitions.js";
 
 import { APPLICATION, WARNING } from "./error_list.js";
-import { dvbi } from "./DVB-I_definitions.js";
-import { tva, tvaEC, BaseAccessibilityAttributesType } from "./TVA_definitions.js";
-
 import { checkTopElementsAndCardinality } from "./schema_checks.js";
 import { CS_URI_DELIMITER } from "./classification_scheme.js";
 
-import { datatypeIs } from "./phlib/phlib.js";
 
-export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs, errs, errCode) {
+export function CheckAccessibilityAttributes(AccessibilityAttributes, cs, errs, errCode) {
 	const ACCESSIBILITY_CHECK_KEY = "accessibility attributes";
 
 	if (!AccessibilityAttributes) {
@@ -21,16 +26,16 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 		return;
 	}
 
-	let accessibilityParent = AccessibilityAttributes.parent().name();
+	const accessibilityParent = AccessibilityAttributes.parent().name();
 
-	let mediaAccessibilityElements = [
+	const mediaAccessibilityElements = [
 		{ name: tva.e_SubtitleAttributes, minOccurs: 0, maxOccurs: Infinity },
 		{ name: tva.e_AudioDescriptionAttributes, minOccurs: 0, maxOccurs: Infinity },
 		{ name: tva.e_SigningAttributes, minOccurs: 0, maxOccurs: Infinity },
 		{ name: tva.e_DialogueEnhancementAttributes, minOccurs: 0, maxOccurs: Infinity },
 		{ name: tva.e_SpokenSubtitlesAttributes, minOccurs: 0, maxOccurs: Infinity },
 	];
-	let applicationAccessibilityElement = [
+	const applicationAccessibilityElement = [
 		{ name: tva.e_MagnificationUIAttributes, minOccurs: 0, maxOccurs: Infinity },
 		{ name: tva.e_HighContrastUIAttributes, minOccurs: 0, maxOccurs: Infinity },
 		{ name: tva.e_ScreenReaderAttributes, minOccurs: 0, maxOccurs: Infinity },

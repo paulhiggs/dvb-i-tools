@@ -2,20 +2,17 @@
  * classification_scheme.js
  *
  * Manages Classification Scheme loading and checking
- *
  */
-import chalk from "chalk";
 import { readFile } from "fs";
+
+import chalk from "chalk";
+import { AvlTree } from "@datastructures-js/binary-search-tree";
 import { parseXmlString } from "libxmljs2";
 
+import { dvb } from "./DVB_definitions.js";
 import { handleErrors } from "./fetch_err_handler.js";
-
-import { AvlTree } from "@datastructures-js/binary-search-tree";
-
 import { hasChild } from "./schema_checks.js";
 import { isHTTPURL } from "./pattern_checks.js";
-
-import { dvb } from "./DVB_definitions.js";
 
 export const CS_URI_DELIMITER = ":";
 
@@ -47,7 +44,7 @@ function loadClassificationScheme(xmlCS, leafNodesOnly = false) {
 	let rc = { uri: null, vals: [] };
 	if (!xmlCS) return rc;
 
-	let CSnamespace = xmlCS.root().attr(dvb.a_uri);
+	const CSnamespace = xmlCS.root().attr(dvb.a_uri);
 	if (!CSnamespace) return rc;
 	rc.uri = CSnamespace.value();
 	let t = 0,
@@ -92,7 +89,7 @@ export default class ClassificationScheme {
 
 	 */
 	#loadFromURL(csURL) {
-		let isHTTPurl = isHTTPURL(csURL);
+		const isHTTPurl = isHTTPURL(csURL);
 		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving CS (${this.#leafsOnly ? "leaf" : "all"} nodes) from ${csURL} via fetch()`));
 		if (!isHTTPurl) return;
 
@@ -155,7 +152,7 @@ export default class ClassificationScheme {
 	 * @returns {boolean}
 	 */
 	hasScheme(term) {
-		let pos = term.lastIndexOf(CS_URI_DELIMITER);
+		const pos = term.lastIndexOf(CS_URI_DELIMITER);
 		if (pos == -1) return false;
 		return this.#schemes.includes(term.slice(0, pos));
 	}

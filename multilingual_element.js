@@ -1,9 +1,14 @@
-// multilingual_element.js
+/**
+ * multilingual_element.js
+ * 
+ * check that multiple elements for expressing multilingual values match DVB-I requirments
+ */
+import { datatypeIs } from "./phlib/phlib.js";
+
+import { tva } from "./TVA_definitions.js";
 
 import { WARNING, APPLICATION } from "./error_list.js";
-import { tva } from "./TVA_definitions.js";
 import { isIn, CountChildElements } from "./utils.js";
-import { datatypeIs } from "./phlib/phlib.js";
 import { keys } from "./common_errors.js";
 
 const NO_DOCUMENT_LANGUAGE = "**"; // this should not be needed as @xml:lang is required in <ServiceList> and <TVAMain> root elements
@@ -25,8 +30,8 @@ export function checkLanguage(validator, lang, loc, element, errs, errCode) {
 		return false;
 	}
 
-	let validatorResp = validator.isKnown(lang),
-		langOK = false;
+	const validatorResp = validator.isKnown(lang);
+	let	langOK = false;
 	switch (validatorResp.resp) {
 		case validator.languageKnown:
 			langOK = true;
@@ -87,8 +92,7 @@ export function checkXMLLangs(elementName, elementLocation, node, errs, errCode,
 	}
 
 	let childElems = node.childNodes();
-	let numElements = CountChildElements(node, elementName);
-	if (numElements > 1) {
+	if ( CountChildElements(node, elementName) > 1) {
 		childElems.forEachSubElement((elem) => {
 			if (elem.name() == elementName) {
 				if (!elem.attr(tva.a_lang))

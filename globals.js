@@ -1,3 +1,9 @@
+/**
+ * globals.js
+ * 
+ * Useful global values
+ */
+
 export const HTTPPort = {
 	csr: 3000,
 	sl: 3010,

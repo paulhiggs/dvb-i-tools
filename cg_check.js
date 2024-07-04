@@ -1,34 +1,32 @@
+/**
+ * cg_check.js
+ * 
+ * Validate content guide metadata
+ */
+import process from "process";
+import { readFileSync } from "fs";
+
 import chalk from "chalk";
 import { parseXmlString } from "libxmljs2";
 
-import { readFileSync } from "fs";
-import process from "process";
-
 import { attribute, elementize, quote } from "./phlib/phlib.js";
 
-import ErrorList, { WARNING, APPLICATION } from "./error_list.js";
-
-import { dvbi } from "./DVB-I_definitions.js";
-import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
-
 import { mpeg7 } from "./MPEG7_definitions.js";
-
-import { isCRIDURI, isTAGURI } from "./URI_checks.js";
-import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration, CountChildElements, DuplicatedValue } from "./utils.js";
-
-import { isHTTPURL, isDVBLocator, isUTCDateTime } from "./pattern_checks.js";
+import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
+import { dvbi } from "./DVB-I_definitions.js";
 
 import { TVAschema } from "./data_locations.js";
 
-import { ValidatePromotionalStillImage } from "./RelatedMaterialChecks.js";
+import ErrorList, { WARNING, APPLICATION } from "./error_list.js";
+import { isCRIDURI, isTAGURI } from "./URI_checks.js";
+import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration, CountChildElements, DuplicatedValue } from "./utils.js";
+import { isHTTPURL, isDVBLocator, isUTCDateTime } from "./pattern_checks.js";
+import { ValidatePromotionalStillImage } from "./related_material_checks.js";
 import { cg_InvalidHrefValue, NoChildElement, keys } from "./common_errors.js";
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.js";
-
 import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./multilingual_element.js";
 import { writeOut } from "./validator.js";
-
 import { CURRENT, OLD } from "./sl_check.js";
-
 import {
 	LoadGenres,
 	LoadRatings,
@@ -75,7 +73,7 @@ const SCHEMA_r0 = 0,
 	SCHEMA_r2 = 2,
 	SCHEMA_unknown = -1;
 
-var SchemaVersions = [
+const SchemaVersions = [
 	{
 		namespace: TVAschema.v2024.namespace,
 		version: SCHEMA_r2,
@@ -269,7 +267,7 @@ export default class ContentGuideCheck {
 	#allowedGenres;
 	#allowedVideoSchemes;
 	#allowedAudioSchemes;
-	#AudioPresentationCSvalues;
+	#audioPresentationCSvalues;
 	#allowedCreditItemRoles;
 	#allowedRatings;
 	#knownCountries;
@@ -286,11 +284,11 @@ export default class ContentGuideCheck {
 		this.#allowedVideoSchemes = opts?.videofmts ? opts.videofmts : LoadVideoCodecCS(useURLs);
 		this.#allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs);
 
-		this.#AudioPresentationCSvalues = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs);
+		this.#audioPresentationCSvalues = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs);
 		this.#allowedCreditItemRoles = opts?.credits ? opts.credits : LoadCredits(useURLs);
 		this.#allowedRatings = opts?.ratings ? opts.ratings : LoadRatings(useURLs);
 		this.#knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs);
-		this.accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs);
+		this.#accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs);
 		this.#audioPurposes = opts?.audiopurps ? opts.audiopurps : LoadAudioPurpose(useURLs);
 		this.#subtitleCarriages = opts?.stcarriage ? opts.stcarriage : LoadSubtitleCarriages(useURLs);
 		this.#subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs);
@@ -312,6 +310,7 @@ export default class ContentGuideCheck {
 		res.numAllowedGenres = this.#allowedGenres.count();
 		res.numCreditItemRoles = this.#allowedCreditItemRoles.count();
 		res.numRatings = this.#allowedRatings.count();
+		res.numAudioPurposes = this.#audioPurposes.count();
 		return res;
 	}
 
@@ -398,12 +397,12 @@ export default class ContentGuideCheck {
 		while ((Synopsis = BasicDescription.get(xPath(props.prefix, tva.e_Synopsis, ++s), props.schema)) != null) {
 			checkAttributes(Synopsis, [tva.a_length], [tva.a_lang], tvaEA.Synopsis, errs, `${errCode}-1`);
 
-			let synopsisLang = GetNodeLanguage(Synopsis, false, errs, `${errCode}-2`, this.#knownLanguages);
-			let synopsisLength = Synopsis.attr(tva.a_length) ? Synopsis.attr(tva.a_length).value() : null;
+			const synopsisLang = GetNodeLanguage(Synopsis, false, errs, `${errCode}-2`, this.#knownLanguages);
+			const synopsisLength = Synopsis.attr(tva.a_length) ? Synopsis.attr(tva.a_length).value() : null;
 
 			if (synopsisLength) {
 				if (isIn(requiredLengths, synopsisLength) || isIn(optionalLengths, synopsisLength)) {
-					let _len = unEntity(Synopsis.text()).length;
+					const _len = unEntity(Synopsis.text()).length;
 					switch (synopsisLength) {
 						case tva.SYNOPSIS_SHORT_LABEL:
 							if (_len > tva.SYNOPSIS_SHORT_LENGTH)
@@ -581,7 +580,7 @@ export default class ContentGuideCheck {
 		let g = 0,
 			Genre;
 		while ((Genre = BasicDescription.get(xPath(props.prefix, tva.e_Genre, ++g), props.schema)) != null) {
-			let genreType = Genre.attr(tva.a_type) ? Genre.attr(tva.a_type).value() : tva.DEFAULT_GENRE_TYPE;
+			const genreType = Genre.attr(tva.a_type) ? Genre.attr(tva.a_type).value() : tva.DEFAULT_GENRE_TYPE;
 			if (genreType != tva.GENRE_TYPE_MAIN) {
 				errs.addError({
 					code: `${errCode}-1`,
@@ -596,7 +595,7 @@ export default class ContentGuideCheck {
 				});
 			}
 
-			let genreValue = Genre.attr(tva.a_href) ? Genre.attr(tva.a_href).value() : "";
+			const genreValue = Genre.attr(tva.a_href) ? Genre.attr(tva.a_href).value() : "";
 			if (!this.#allowedGenres.isIn(genreValue)) {
 				errs.addError({
 					code: `${errCode}-2`,
@@ -639,7 +638,7 @@ export default class ContentGuideCheck {
 			let pgCountries = UNSPECIFIED_COUNTRY;
 			if (hasChild(ParentalGuidance, tva.e_CountryCodes)) pgCountries = ParentalGuidance.get(xPath(props.prefix, tva.e_CountryCodes), props.schema).text();
 
-			let pgCountriesList = pgCountries.split(",");
+			const pgCountriesList = pgCountries.split(",");
 			pgCountriesList.forEach((pgCountry) => {
 				let thisCountry = foundCountries.find((c) => c.country == pgCountry);
 				if (!thisCountry) {
@@ -688,7 +687,7 @@ export default class ContentGuideCheck {
 									});
 								}
 								if (pgChild.attr(tva.a_href)) {
-									let rating = pgChild.attr(tva.a_href).value();
+									const rating = pgChild.attr(tva.a_href).value();
 									if (this.#allowedRatings.hasScheme(rating)) {
 										if (!this.#allowedRatings.isIn(rating))
 											errs.addError({
@@ -829,7 +828,7 @@ export default class ContentGuideCheck {
 				});
 		}
 
-		let CreditsList = BasicDescription.get(xPath(props.prefix, tva.e_CreditsList), props.schema);
+		const CreditsList = BasicDescription.get(xPath(props.prefix, tva.e_CreditsList), props.schema);
 		if (CreditsList) {
 			let ci = 0,
 				numCreditsItems = 0,
@@ -838,7 +837,7 @@ export default class ContentGuideCheck {
 				numCreditsItems++;
 				checkAttributes(CreditsItem, [tva.a_role], [], tvaEA.CreditsItem, errs, `${errCode}-1`);
 				if (CreditsItem.attr(tva.a_role)) {
-					let CreditsItemRole = CreditsItem.attr(tva.a_role).value();
+					const CreditsItemRole = CreditsItem.attr(tva.a_role).value();
 					if (!this.#allowedCreditItemRoles.isIn(CreditsItemRole))
 						errs.addError({
 							code: `${errCode}-2`,
@@ -1040,7 +1039,7 @@ export default class ContentGuideCheck {
 		if (checkLinkCounts(errs, countPaginationLast, "last", "VP014")) linkCountErrs = true;
 
 		if (!linkCountErrs) {
-			let numPaginations = countPaginationFirst.length + countPaginationPrev.length + countPaginationNext.length + countPaginationLast.length;
+			const numPaginations = countPaginationFirst.length + countPaginationPrev.length + countPaginationNext.length + countPaginationLast.length;
 			if (numPaginations != 0 && numPaginations != 2 && numPaginations != 4)
 				errs.addError({
 					code: "VP020",
@@ -1189,12 +1188,12 @@ export default class ContentGuideCheck {
 			RelatedMaterial;
 
 		while ((RelatedMaterial = BasicDescription.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
-			let HowRelated = RelatedMaterial.get(xPath(props.prefix, tva.e_HowRelated), props.schema);
+			const HowRelated = RelatedMaterial.get(xPath(props.prefix, tva.e_HowRelated), props.schema);
 			if (!HowRelated) errs.addError(NoChildElement(tva.e_HowRelated.elementize(), RelatedMaterial, null, "MB009"));
 			else {
 				checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "MB010");
 				if (HowRelated.attr(tva.a_href)) {
-					let hrHref = HowRelated.attr(tva.a_href).value();
+					const hrHref = HowRelated.attr(tva.a_href).value();
 					switch (hrHref) {
 						case dvbi.TEMPLATE_AIT_URI:
 							countTemplateAIT.push(HowRelated);
@@ -1268,9 +1267,9 @@ export default class ContentGuideCheck {
 		while ((Title = containingNode.get(xPath(props.prefix, tva.e_Title, ++t), props.schema)) != null) {
 			checkAttributes(Title, requiredAttributes, optionalAttributes, tvaEA.Title, errs, `${errCode}-1`);
 
-			let titleType = Title.attr(tva.a_type) ? Title.attr(tva.a_type).value() : mpeg7.DEFAULT_TITLE_TYPE;
-			let titleLang = GetNodeLanguage(Title, false, errs, `${errCode}-2`, this.#knownLanguages);
-			let titleStr = unEntity(Title.text());
+			const titleType = Title.attr(tva.a_type) ? Title.attr(tva.a_type).value() : mpeg7.DEFAULT_TITLE_TYPE;
+			const titleLang = GetNodeLanguage(Title, false, errs, `${errCode}-2`, this.#knownLanguages);
+			const titleStr = unEntity(Title.text());
 
 			if (titleStr.length > dvbi.MAX_TITLE_LENGTH)
 				errs.addError({
@@ -1341,8 +1340,8 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		let isParentGroup = parentElement == categoryGroup;
-		let BasicDescription = parentElement.get(xPath(props.prefix, tva.e_BasicDescription), props.schema);
+		const isParentGroup = parentElement == categoryGroup;
+		const BasicDescription = parentElement.get(xPath(props.prefix, tva.e_BasicDescription), props.schema);
 		if (!BasicDescription) {
 			errs.addError(NoChildElement(tva.e_BasicDescription.elementize(), parentElement, null, "BD001"));
 			return;
@@ -1605,7 +1604,7 @@ export default class ContentGuideCheck {
 
 						// <ProgramInformation><EpisodeOf>@crid
 						if (child.attr(tva.a_crid)) {
-							let foundCRID = child.attr(tva.a_crid).value();
+							const foundCRID = child.attr(tva.a_crid).value();
 							if (groupCRIDs && !isIni(groupCRIDs, foundCRID))
 								errs.addError({
 									code: "PI032",
@@ -1659,8 +1658,8 @@ export default class ContentGuideCheck {
 
 						// <ProgramInformation><MemberOf>@index
 						if (child.attr(tva.a_index)) {
-							let index = valUnsignedInt(child.attr(tva.a_index).value());
-							let indexInCRID = `${foundCRID ? foundCRID : "noCRID"}(${index})`;
+							const index = valUnsignedInt(child.attr(tva.a_index).value());
+							const indexInCRID = `${foundCRID ? foundCRID : "noCRID"}(${index})`;
 							if (isIni(indexes, indexInCRID))
 								errs.addError({
 									code: "PI046",
@@ -1712,7 +1711,7 @@ export default class ContentGuideCheck {
 			indexes = [],
 			currentProgramCRID = null;
 		while ((ProgramInformation = ProgramInformationTable.get(xPath(props.prefix, tva.e_ProgramInformation, ++pi), props.schema)) != null) {
-			let t = this.#ValidateProgramInformation(props, ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs);
+			const t = this.#ValidateProgramInformation(props, ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs);
 			if (t) currentProgramCRID = t;
 			cnt++;
 		}
@@ -1819,10 +1818,10 @@ export default class ContentGuideCheck {
 			}
 		}
 
-		let categoryCRID = categoryGroup && categoryGroup.attr(tva.a_groupId) ? categoryGroup.attr(tva.a_groupId).value() : "";
+		const categoryCRID = categoryGroup && categoryGroup.attr(tva.a_groupId) ? categoryGroup.attr(tva.a_groupId).value() : "";
 
 		if (!isParentGroup) {
-			let MemberOf = GroupInformation.get(xPath(props.prefix, tva.e_MemberOf), props.schema);
+			const MemberOf = GroupInformation.get(xPath(props.prefix, tva.e_MemberOf), props.schema);
 			if (MemberOf) {
 				checkAttributes(MemberOf, [tva.a_type, tva.a_index, tva.a_crid], [], tvaEA.MemberOf, errs, "GIB041");
 				if (MemberOf.attr(tva.a_type) && MemberOf.attr(tva.a_type).value() != tva.t_MemberOfType)
@@ -1833,7 +1832,7 @@ export default class ContentGuideCheck {
 					});
 
 				if (MemberOf.attr(tva.a_index)) {
-					let index = valUnsignedInt(MemberOf.attr(tva.a_index).value());
+					const index = valUnsignedInt(MemberOf.attr(tva.a_index).value());
 					if (index >= 1) {
 						if (indexes) {
 							if (DuplicatedValue(indexes, index))
@@ -1894,7 +1893,7 @@ export default class ContentGuideCheck {
 		checkAttributes(GroupInformation, [tva.a_groupId, tva.a_ordered, tva.a_numOfItems], [tva.a_lang], tvaEA.GroupInformation, errs, "GIS001");
 
 		if (GroupInformation.attr(tva.a_groupId)) {
-			let groupId = GroupInformation.attr(tva.a_groupId).value();
+			const groupId = GroupInformation.attr(tva.a_groupId).value();
 			if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW].includes(requestType))
 				if (![dvbi.CRID_NOW, dvbi.CRID_LATER, dvbi.CRID_EARLIER].includes(groupId))
 					errs.addError({
@@ -1947,7 +1946,7 @@ export default class ContentGuideCheck {
 		checkAttributes(GroupInformation, [tva.a_groupId, tva.a_ordered, tva.a_numOfItems], [tva.a_lang], tvaEA.GroupInformation, errs, "GIM002");
 
 		if (GroupInformation.attr(tva.a_groupId)) {
-			let groupId = GroupInformation.attr(tva.a_groupId).value();
+			const groupId = GroupInformation.attr(tva.a_groupId).value();
 			if (!isCRIDURI(groupId))
 				errs.addError({
 					code: "GIM003",
@@ -1959,7 +1958,7 @@ export default class ContentGuideCheck {
 
 		TrueValue(GroupInformation, tva.a_ordered, "GIM004", errs, false);
 
-		let GroupType = GroupInformation.get(xPath(props.prefix, tva.e_GroupType), props.schema);
+		const GroupType = GroupInformation.get(xPath(props.prefix, tva.e_GroupType), props.schema);
 		if (GroupType) {
 			checkAttributes(GroupType, [tva.a_type, tva.a_value], [], tvaEA.GroupType, errs, "GIM011");
 
@@ -2024,7 +2023,7 @@ export default class ContentGuideCheck {
 				break;
 		}
 
-		let GroupType = GroupInformation.get(xPath(props.prefix, tva.e_GroupType), props.schema);
+		const GroupType = GroupInformation.get(xPath(props.prefix, tva.e_GroupType), props.schema);
 		if (GroupType) {
 			if (!(GroupType.attr(tva.a_type) && GroupType.attr(tva.a_type).value() == tva.t_ProgramGroupTypeType))
 				errs.addError({
@@ -2066,7 +2065,7 @@ export default class ContentGuideCheck {
 			return;
 		}
 		let gi, GroupInformation;
-		let GroupInformationTable = ProgramDescription.get(xPath(props.prefix, tva.e_GroupInformationTable), props.schema);
+		const GroupInformationTable = ProgramDescription.get(xPath(props.prefix, tva.e_GroupInformationTable), props.schema);
 
 		if (!GroupInformationTable) {
 			//errs.addError({code:"GI101", message:`${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`, line:ProgramDescription.line()});
@@ -2167,7 +2166,7 @@ export default class ContentGuideCheck {
 		this.#ValidateGroupInformation(props, GroupInformation, requestType, errs, null, null, null);
 
 		if (GroupInformation.attr(tva.a_groupId)) {
-			let grp = GroupInformation.attr(tva.a_groupId).value();
+			const grp = GroupInformation.attr(tva.a_groupId).value();
 			if ((grp == dvbi.CRID_EARLIER && numEarlier > 0) || (grp == dvbi.CRID_NOW && numNow > 0) || (grp == dvbi.CRID_LATER && numLater > 0)) {
 				let numOfItems = GroupInformation.attr(tva.a_numOfItems) ? valUnsignedInt(GroupInformation.attr(tva.a_numOfItems).value()) : -1;
 				switch (grp) {
@@ -2216,7 +2215,7 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		let GroupInformationTable = ProgramDescription.get(xPath(props.prefix, tva.e_GroupInformationTable), props.schema);
+		const GroupInformationTable = ProgramDescription.get(xPath(props.prefix, tva.e_GroupInformationTable), props.schema);
 		if (!GroupInformationTable) {
 			errs.addError({
 				code: "NN001",
@@ -2306,7 +2305,7 @@ export default class ContentGuideCheck {
 				"AV010"
 			);
 
-			let MixType = AudioAttributes.get(xPath(props.prefix, tva.e_MixType), props.schema);
+			const MixType = AudioAttributes.get(xPath(props.prefix, tva.e_MixType), props.schema);
 			if (MixType) {
 				checkAttributes(MixType, [tva.a_href], [], tvaEA.MixType, errs, "AV011");
 				if (MixType.attr(tva.a_href) && !isValidAudioMixType(MixType.attr(tva.a_href).value()))
@@ -2317,7 +2316,7 @@ export default class ContentGuideCheck {
 					});
 			}
 
-			let AudioLanguage = AudioAttributes.get(xPath(props.prefix, tva.e_AudioLanguage), props.schema);
+			const AudioLanguage = AudioAttributes.get(xPath(props.prefix, tva.e_AudioLanguage), props.schema);
 			if (AudioLanguage) {
 				checkAttributes(AudioLanguage, [tva.a_purpose], [], tvaEA.AudioLanguage, errs, "AV013");
 				let validLanguage = false,
@@ -2381,7 +2380,7 @@ export default class ContentGuideCheck {
 		if (CaptioningAttributes) {
 			checkTopElementsAndCardinality(CaptioningAttributes, [{ name: tva.e_Coding, minOccurs: 0 }], tvaEC.CaptioningAttributes, false, errs, "AV040");
 
-			let Coding = CaptioningAttributes.get(xPath(props.prefix, tva.e_Coding), props.schema);
+			const Coding = CaptioningAttributes.get(xPath(props.prefix, tva.e_Coding), props.schema);
 			if (Coding) {
 				checkAttributes(Coding, [tva.a_href], [], tvaEA.Coding, errs, "AV041");
 				if (Coding.attr(tva.a_href)) {
@@ -2397,10 +2396,9 @@ export default class ContentGuideCheck {
 		}
 
 		// <AccessibilityAttributes>
-		let AccessibilityAttributes = AVAttributes.get(xPath(props.prefix, tva.e_AccessibilityAttributes), props.schema);
+		const AccessibilityAttributes = AVAttributes.get(xPath(props.prefix, tva.e_AccessibilityAttributes), props.schema);
 		if (AccessibilityAttributes) {
 			CheckAccessibilityAttributes(
-				props,
 				AccessibilityAttributes,
 				{
 					AccessibilityPurposeCS: this.#accessibilityPurposes,
@@ -2412,7 +2410,7 @@ export default class ContentGuideCheck {
 					SubtitleCodingFormatCS: this.#subtitleCodings,
 					SubtitlePurposeTypeCS: this.#subtitlePurposes,
 					KnownLanguages: this.#knownLanguages,
-					AudioPresentationCS: this.#AudioPresentationCSvalues,
+					AudioPresentationCS: this.#audioPresentationCSvalues,
 				},
 				errs,
 				"AV051"

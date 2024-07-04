@@ -1,4 +1,8 @@
-// data_locations.js
+/** 
+ * data_locations.js
+ * 
+ * paths and URLs to various files used by the validation toole
+ */
 import { join } from "path";
 
 const REPO_RAW = "https://raw.githubusercontent.com/paulhiggs/dvb-i-tools/main/";
