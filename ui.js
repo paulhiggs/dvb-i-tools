@@ -1,6 +1,6 @@
 import { HTMLize } from "./phlib/phlib.js";
-import { ERROR, WARNING } from "./ErrorList.js";
-import { MODE_URL, MODE_FILE } from "./Validator.js";
+import { ERROR, WARNING } from "./error_list.js";
+import { MODE_URL, MODE_FILE } from "./validator.js";
 
 const MESSAGES_IN_ORDER = true; // when true outputs the errors, warnings and informations in the 'document order'. false==ouotput in order found
 const SHOW_LINE_NUMBER = false; // include the line number in the XML document where the error was found

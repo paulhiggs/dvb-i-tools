@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { handleErrors } from "./fetch-err-handler.js";
+import { handleErrors } from "./fetch_err_handler.js";
 
 import { readFile } from "fs";
 

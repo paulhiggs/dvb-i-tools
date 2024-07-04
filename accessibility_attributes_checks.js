@@ -1,11 +1,11 @@
 // AccessibilityAttribitesChecks.js
 
-import { APPLICATION, WARNING } from "./ErrorList.js";
+import { APPLICATION, WARNING } from "./error_list.js";
 import { dvbi } from "./DVB-I_definitions.js";
 import { tva, tvaEC, BaseAccessibilityAttributesType } from "./TVA_definitions.js";
 
 import { checkTopElementsAndCardinality } from "./schema_checks.js";
-import { CS_URI_DELIMITER } from "./ClassificationScheme.js";
+import { CS_URI_DELIMITER } from "./classification_scheme.js";
 
 import { datatypeIs } from "./phlib/phlib.js";
 

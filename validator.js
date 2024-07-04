@@ -31,9 +31,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 import fetchS from "sync-fetch";
 
 import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults } from "./ui.js";
-import ErrorList from "./ErrorList.js";
+import ErrorList from "./error_list.js";
 import { isHTTPURL } from "./pattern_checks.js";
-import { Default_SLEPR } from "./data-locations.js";
+import { Default_SLEPR } from "./data_locations.js";
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.js";
 
 import {
@@ -48,7 +48,7 @@ import {
 	LoadSubtitlePurposes,
 	LoadLanguages,
 	LoadCountries,
-} from "./CSLoaders.js";
+} from "./classification_scheme_loaders.js";
 
 export const MODE_UNSPECIFIED = "none",
 	MODE_SL = "sl",
@@ -57,10 +57,10 @@ export const MODE_UNSPECIFIED = "none",
 	MODE_FILE = "file";
 
 // the service list validation
-import ServiceListCheck from "./sl-check.js";
+import ServiceListCheck from "./sl_check.js";
 
 // the content guide validation
-import ContentGuideCheck from "./cg-check.js";
+import ContentGuideCheck from "./cg_check.js";
 
 // the service list registrt
 import SLEPR from "./slepr.js";

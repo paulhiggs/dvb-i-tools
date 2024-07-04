@@ -3,15 +3,14 @@
 import { parseXmlString } from "libxmljs2";
 import format from "xml-formatter";
 
-import { elementize } from "./phlib/phlib.js";
+import { elementize, datatypeIs } from "./phlib/phlib.js";
 import { dvbi } from "./DVB-I_definitions.js";
-import { APPLICATION, INFORMATION, WARNING } from "./ErrorList.js";
-import { OLD, DRAFT } from "./sl-check.js";
+import { APPLICATION, INFORMATION, WARNING } from "./error_list.js";
+import { OLD, DRAFT } from "./sl_check.js";
 
 import { isIn, xPath } from "./utils.js";
-import { datatypeIs } from "./phlib/phlib.js";
 
-import { keys } from "./CommonErrors.js";
+import { keys } from "./common_errors.js";
 
 /**
  * check that the specified child elements are in the parent element

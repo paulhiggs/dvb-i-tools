@@ -1,10 +1,10 @@
-// MultilingualElement.js
+// multilingual_element.js
 
-import { WARNING, APPLICATION } from "./ErrorList.js";
+import { WARNING, APPLICATION } from "./error_list.js";
 import { tva } from "./TVA_definitions.js";
 import { isIn, CountChildElements } from "./utils.js";
 import { datatypeIs } from "./phlib/phlib.js";
-import { keys } from "./CommonErrors.js";
+import { keys } from "./common_errors.js";
 
 const NO_DOCUMENT_LANGUAGE = "**"; // this should not be needed as @xml:lang is required in <ServiceList> and <TVAMain> root elements
 

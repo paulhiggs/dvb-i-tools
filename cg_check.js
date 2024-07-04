@@ -6,7 +6,7 @@ import process from "process";
 
 import { attribute, elementize, quote } from "./phlib/phlib.js";
 
-import ErrorList, { WARNING, APPLICATION } from "./ErrorList.js";
+import ErrorList, { WARNING, APPLICATION } from "./error_list.js";
 
 import { dvbi } from "./DVB-I_definitions.js";
 import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
@@ -18,17 +18,16 @@ import { xPath, xPathM, isIn, isIni, unEntity, parseISOduration, CountChildEleme
 
 import { isHTTPURL, isDVBLocator, isUTCDateTime } from "./pattern_checks.js";
 
-import { TVAschema } from "./data-locations.js";
+import { TVAschema } from "./data_locations.js";
 
 import { ValidatePromotionalStillImage } from "./RelatedMaterialChecks.js";
-import { cg_InvalidHrefValue, NoChildElement } from "./CommonErrors.js";
+import { cg_InvalidHrefValue, NoChildElement, keys } from "./common_errors.js";
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.js";
 
-import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./MultilingualElement.js";
-import { writeOut } from "./Validator.js";
+import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./multilingual_element.js";
+import { writeOut } from "./validator.js";
 
-import { CURRENT, OLD } from "./sl-check.js";
-import { keys } from "./CommonErrors.js";
+import { CURRENT, OLD } from "./sl_check.js";
 
 import {
 	LoadGenres,
@@ -43,9 +42,9 @@ import {
 	LoadSubtitlePurposes,
 	LoadLanguages,
 	LoadCountries,
-} from "./CSLoaders.js";
-import { LoadCredits } from "./RoleLoader.js";
-import { CheckAccessibilityAttributes } from "./AccessibilityAttributesChecks.js";
+} from "./classification_scheme_loaders.js";
+import { LoadCredits } from "./role_loader.js";
+import { CheckAccessibilityAttributes } from "./accessibility_attributes_checks.js";
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";

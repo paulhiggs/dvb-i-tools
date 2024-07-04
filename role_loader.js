@@ -1,12 +1,12 @@
 /**
- * RoleLoader.js
+ * role_loader.js
  *
  */
 
 import chalk from "chalk";
 
-import Role from "./Role.js";
-import { DVBI_CreditsItemRoles, DVBIv2_CreditsItemRoles } from "./data-locations.js";
+import Role from "./related_material_checks.js";
+import { DVBI_CreditsItemRoles, DVBIv2_CreditsItemRoles } from "./data_locations.js";
 
 export function LoadCredits(useURLs) {
 	console.log(chalk.yellow.underline("loading CreditsItem roles..."));

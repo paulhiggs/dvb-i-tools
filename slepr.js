@@ -6,14 +6,14 @@ import { readFile } from "fs";
 // libxmljs - https://www.npmjs.com/package/libxmljs2
 import { parseXmlString } from "libxmljs2";
 
-import { handleErrors } from "./fetch-err-handler.js";
+import { handleErrors } from "./fetch_err_handler.js";
 
 import { xPath, isIn } from "./utils.js";
 
 import { dvbi } from "./DVB-I_definitions.js";
 import { tva } from "./TVA_definitions.js";
 
-import { IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data-locations.js";
+import { IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data_locations.js";
 import { hasChild } from "./schema_checks.js";
 
 import { datatypeIs } from "./phlib/phlib.js";
@@ -28,9 +28,9 @@ const allowed_arguments = [dvbi.e_ProviderName, dvbi.a_regulatorListFlag, dvbi.e
 
 import { isHTTPURL, isTVAAudioLanguageType } from "./pattern_checks.js";
 
-import IANAlanguages from "./IANAlanguages.js";
-import ClassificationScheme from "./ClassificationScheme.js";
-import ISOcountries from "./ISOcountries.js";
+import IANAlanguages from "./IANA_languages.js";
+import ClassificationScheme from "./classification_scheme.js";
+import ISOcountries from "./ISO_countries.js";
 
 const DVB_DASH_DELIVERY = "dvb-dash",
 	DVB_T_DELIVERY = "dvb-t",

@@ -1,5 +1,5 @@
 /**
- * ErrorList.js
+ * error_list.js
  *
  * Manages errors and warnings for the application
  *

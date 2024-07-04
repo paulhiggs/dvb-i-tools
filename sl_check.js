@@ -6,7 +6,7 @@ import process from "process";
 
 import { elementize, quote } from "./phlib/phlib.js";
 
-import ErrorList, { WARNING, APPLICATION } from "./ErrorList.js";
+import ErrorList, { WARNING, APPLICATION } from "./error_list.js";
 
 import { sats } from "./DVB_definitions.js";
 import { dvbi, dvbiEC, dvbEA, XMLdocumentType } from "./DVB-I_definitions.js";
@@ -18,16 +18,15 @@ import { xPath, xPathM, isIn, unEntity, getElementByTagName, DuplicatedValue } f
 
 import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isDomainName, isRTSPURL } from "./pattern_checks.js";
 
-import { DVBI_ServiceListSchema } from "./data-locations.js";
+import { DVBI_ServiceListSchema } from "./data_locations.js";
 
-import { checkValidLogos } from "./RelatedMaterialChecks.js";
-import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement } from "./CommonErrors.js";
+import { checkValidLogos } from "./related_material_checks.js";
+import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys } from "./common_errors.js";
 
-import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
+import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./multilingual_element.js";
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.js";
 
-import { writeOut } from "./Validator.js";
-import { keys } from "./CommonErrors.js";
+import { writeOut } from "./validator.js";
 
 import {
 	LoadGenres,
@@ -47,9 +46,9 @@ import {
 	LoadServiceTypeCS,
 	LoadLanguages,
 	LoadCountries,
-} from "./CSLoaders.js";
+} from "./classification_scheme_loaders.js";
 
-import { CheckAccessibilityAttributes } from "./AccessibilityAttributesChecks.js";
+import { CheckAccessibilityAttributes } from "./accessibility_attributes_checks.jss";
 
 import { DASH_IF_Content_Protection_List, ContentProtectionIDs, CA_SYSTEM_ID_REGISTRY, CASystemIDs } from "./identifiers.js";
 

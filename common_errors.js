@@ -1,4 +1,4 @@
-// CommonErrors.js
+// common_errors.js
 import { dvbi } from "./DVB-I_definitions.js";
 import { tva } from "./TVA_definitions.js";
 
@@ -20,7 +20,7 @@ export const keys = {
 	k_XSDValidation: "XSD validation",
 };
 
-import { WARNING } from "./ErrorList.js";
+import { WARNING } from "./error_list.js";
 /**
  * Add an error message when the a required element is not present
  *

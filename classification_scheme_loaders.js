@@ -1,15 +1,14 @@
 /**
- CSLoaders.js
+ classification_scheme_loaders.js
 
  Load Classification Schemes and other File related resources
 */
 import chalk from "chalk";
 
-import ClassificationScheme from "./ClassificationScheme.js";
-//import Role from "./Role.js";
+import ClassificationScheme from "./classification_scheme.js";
 
-import IANAlanguages from "./IANAlanguages.js";
-import ISOcountries from "./ISOcountries.js";
+import IANAlanguages from "./IANA_languages.js";
+import ISOcountries from "./ISO_countries.js";
 
 import {
 	IANA_Subtag_Registry,
@@ -35,7 +34,7 @@ import {
 	TVA_SubitlePurposeCS,
 	TVA_ContentAlertCS,
 	DVBI_ParentalGuidanceCS,
-} from "./data-locations.js";
+} from "./data_locations.js";
 
 export function LoadCountries(useURLs) {
 	console.log(chalk.yellow.underline("loading countries..."));

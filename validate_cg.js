@@ -5,7 +5,7 @@ import commandLineArgs from "command-line-args";
 
 import { HTTPPort } from "./globals.js";
 
-import validator from "./Validator.js";
+import validator from "./validator.js";
 
 // command line options
 const optionDefinitions = [

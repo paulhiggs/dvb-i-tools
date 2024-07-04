@@ -49,7 +49,7 @@ The server can be reloaded with an updated `slepr-master.xml` file by invoking i
 
 If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
 
-## validate-sl.js
+## validate_sl.js
 
 DVB-I Service List validator
 
@@ -111,7 +111,7 @@ Checks performed:
 
 1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
 1. Install necessary libraries (express, libxmljs, morgan) `npm install`
-1. run it - `node validate-sl [--port 3010] [--sport 3011]`
+1. run it - `node validate_sl [--port 3010] [--sport 3011]`
 
 If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
 
@@ -123,7 +123,7 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 - --port [-p] set the HTTP listening port (default: 3010)
 - --sport [-s] set the HTTPS listening port (default: 3011)
 
-## validate-cg.js
+## validate_cg.js
 
 DVB-I Content Guide validator
 
@@ -150,7 +150,7 @@ Checks performed:
 
 1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
 1. Install necessary libraries (express, libxmljs, morgan) `npm install`
-1. run it - `node validate-cg [--urls] [--port 3020] [--sport 3021]`
+1. run it - `node validate_cg [--urls] [--port 3020] [--sport 3021]`
 
 If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
 
@@ -162,7 +162,7 @@ If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `s
 
 ## all-in-one.js
 
-Implements csr.js, validate-cg.js and validate-sl.js in a single node
+Implements csr.js, validate_cg.js and validate_sl.js in a single node
 
 ### Description
 

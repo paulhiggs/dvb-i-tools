@@ -24,7 +24,7 @@ import { cpus } from "os";
 import cors from "cors";
 import process from "process";
 
-import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data-locations.js";
+import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data_locations.js";
 
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./globals.js";
 import { readmyfile } from "./utils.js";
@@ -112,15 +112,15 @@ if (options.help) {
 
 if (options.urls && options.file == Default_SLEPR.file) options.file = Default_SLEPR.url;
 
-import IANAlanguages from "./IANAlanguages.js";
+import IANAlanguages from "./IANA_languages.js";
 var knownLanguages = new IANAlanguages();
 knownLanguages.loadLanguages(options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file });
 
-import ISOcountries from "./ISOcountries.js";
+import ISOcountries from "./ISO_countries.js";
 var knownCountries = new ISOcountries(false, true);
 knownCountries.loadCountries(options.urls ? { url: ISO3166.url } : { file: ISO3166.file });
 
-import ClassificationScheme from "./ClassificationScheme.js";
+import ClassificationScheme from "./classification_scheme.js";
 let knownGenres = new ClassificationScheme();
 knownGenres.loadCS(
 	options.urls ? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] } : { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] }

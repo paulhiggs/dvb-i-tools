@@ -1,10 +1,10 @@
-// RelatedMaterialChecks.js
+// related_material_checks.js
 
 import { mpeg7 } from "./MPEG7_definitions.js";
 import { dvbi, dvbEA } from "./DVB-I_definitions.js";
 import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
 
-import { APPLICATION, WARNING } from "./ErrorList.js";
+import { APPLICATION, WARNING } from "./error_list.js";
 
 import { checkLanguage } from "./MultilingualElement.js";
 import { checkAttributes, checkTopElementsAndCardinality } from "./schema_checks.js";

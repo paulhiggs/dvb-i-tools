@@ -5,10 +5,10 @@
 import chalk from "chalk";
 import { readFile } from "fs";
 
-import { handleErrors } from "./fetch-err-handler.js";
+import { handleErrors } from "./fetch_err_handler.js";
 import { isHTTPURL } from "./pattern_checks.js";
 
-import ClassificationScheme from "./ClassificationScheme.js";
+import ClassificationScheme from "./classification_scheme.js";
 
 export default class Role extends ClassificationScheme {
 	constructor() {

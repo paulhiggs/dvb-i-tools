@@ -1,5 +1,5 @@
 /**
- * ClassificationScheme.js
+ * classification_scheme.js
  *
  * Manages Classification Scheme loading and checking
  *
@@ -8,7 +8,7 @@ import chalk from "chalk";
 import { readFile } from "fs";
 import { parseXmlString } from "libxmljs2";
 
-import { handleErrors } from "./fetch-err-handler.js";
+import { handleErrors } from "./fetch_err_handler.js";
 
 import { AvlTree } from "@datastructures-js/binary-search-tree";
 

@@ -1,4 +1,4 @@
-// data-locations.js
+// data_locations.js
 import { join } from "path";
 
 const REPO_RAW = "https://raw.githubusercontent.com/paulhiggs/dvb-i-tools/main/";
