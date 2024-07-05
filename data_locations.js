@@ -17,6 +17,8 @@ const pathDVBCS = "dvb/cs/",
 	url2007CS = "cs/2007",
 	path2017CS = `${pathDVBCS}2017`,
 	url2017CS = "cs/2017",
+	path2019CS = `${pathDVBCS}2019`,
+	url2019CS = "cs/2019",
 	path2020CS = `${pathDVBCS}2020`,
 	url2020CS = "cs/2020",
 	path2021CS = `${pathDVBCS}2021`,
@@ -57,10 +59,10 @@ const idTVA_SubtitlePurposeCS = "SubtitlePurposeCS.xml";
 export const TVA_SubitlePurposeCS = { file: join(pathTVA, idTVA_SubtitlePurposeCS), url: `${REPO_RAW}${pathTVA}/${idTVA_SubtitlePurposeCS}` };
 
 const idDVB_ContentSubjectCS = "DVBContentSubjectCS-2019.xml";
-export const DVBI_ContentSubject = { file: join(pathDVBI, idDVB_ContentSubjectCS), url: `${REPO_RAW}${pathDVBI}/${idDVB_ContentSubjectCS}` };
+export const DVBI_ContentSubject = { file: join(pathDVBI, idDVB_ContentSubjectCS), url: `${DVB_METADATA}${url2019CS}/${idDVB_ContentSubjectCS}` };
 
 const idDVB_ServiceTypeCS = "DVBServiceTypeCS-2019.xml";
-export const DVBI_ServiceTypeCS = { file: join(pathDVBI, idDVB_ServiceTypeCS), url: `${REPO_RAW}${pathDVBI}/${idDVB_ServiceTypeCS}` };
+export const DVBI_ServiceTypeCS = { file: join(pathDVBI, idDVB_ServiceTypeCS), url: `${DVB_METADATA}${url2022CS}/${idDVB_ServiceTypeCS}` };
 
 const idDVB_AudioCodecCS = "AudioCodecCS.xml";
 export const DVB_AudioCodecCS = {
