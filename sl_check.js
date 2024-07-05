@@ -2304,7 +2304,7 @@ export default class ServiceListCheck {
 	 * @param {Class}  errs        Errors found in validaton
 	 * @param {String} log_prefix  the first part of the logging location (or null if no logging)
 	 */
-	/*public*/ doValidateServiceList(SLtext, errs, log_prefix) {
+	/*public*/ doValidateServiceList(SLtext, errs, log_prefix=null) {
 		this.#numRequests++;
 		if (!SLtext) {
 			errs.addError({
