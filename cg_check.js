@@ -26,7 +26,7 @@ import { cg_InvalidHrefValue, NoChildElement, keys } from "./common_errors.js";
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.js";
 import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./multilingual_element.js";
 import { writeOut } from "./validator.js";
-import { CURRENT, OLD } from "./sl_check.js";
+import { CURRENT, OLD } from "./globals.js";
 import {
 	LoadGenres,
 	LoadRatings,

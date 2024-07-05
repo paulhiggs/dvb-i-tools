@@ -14,7 +14,7 @@ import { elementize, quote } from "./phlib/phlib.js";
 import { tva, tvaEA } from "./TVA_definitions.js";
 import { sats } from "./DVB_definitions.js";
 import { dvbi, dvbiEC, dvbEA, XMLdocumentType } from "./DVB-I_definitions.js";
-
+import { OLD, DRAFT, ETSI, CURRENT } from "./globals.js";
 import ErrorList, { WARNING, APPLICATION } from "./error_list.js";
 import { isTAGURI } from "./URI_checks.js";
 import { xPath, xPathM, isIn, unEntity, getElementByTagName, DuplicatedValue } from "./utils.js";
@@ -64,11 +64,6 @@ const SCHEMA_r0 = 0,
 	SCHEMA_r5 = 5,
 	SCHEMA_r6 = 6,
 	SCHEMA_unknown = -1;
-
-export const DRAFT = 0x01,
-	OLD = 0x02,
-	ETSI = 0x04,
-	CURRENT = 0x08;
 
 let SchemaVersions = [
 	// schema property is loaded from specified filename
