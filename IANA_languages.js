@@ -3,7 +3,7 @@
  * 
  * Load and check language identifiers
  */
-import { readFile } from "fs";
+import { readFile, readFileSync } from "fs";
 
 import chalk from "chalk";
 
@@ -12,6 +12,7 @@ import { datatypeIs } from "./phlib/phlib.js";
 import { handleErrors } from "./fetch_err_handler.js";
 import { isIn, isIni } from "./utils.js";
 import { isHTTPURL } from "./pattern_checks.js";
+import fetchS from "sync-fetch";
 
 export default class IANAlanguages {
 	#languagesList;
@@ -126,19 +127,25 @@ export default class IANAlanguages {
 	 * @param {String}  languagesFile   the file name to load
 	 * @param {boolean} purge           erase the existing values before loading new
 	 */
-	#loadLanguagesFromFile(languagesFile, purge = false) {
+	#loadLanguagesFromFile(languagesFile, purge = false, async = true) {
 		console.log(chalk.yellow(`reading languages from ${languagesFile}`));
 		if (purge) this.empty();
 
-		readFile(
-			languagesFile,
-			{ encoding: "utf-8" },
-			function (err, data) {
-				if (!err) {
-					this.#processLanguageData(data);
-				} else console.log(chalk.red(`error loading languages ${err}`));
-			}.bind(this)
-		);
+		if (async) {
+			readFile(
+				languagesFile,
+				{ encoding: "utf-8" },
+				function (err, data) {
+					if (!err) {
+						this.#processLanguageData(data);
+					} else console.log(chalk.red(`error loading languages ${err}`));
+				}.bind(this)
+			);
+		}
+		else {
+			let langs = readFileSync(languagesFile, { encoding: "utf-8" } ).toString();
+			this.#processLanguageData(langs);
+		}
 	}
 
 	/**
@@ -147,25 +154,40 @@ export default class IANAlanguages {
 	 * @param {String}  languagesURL   the URL to load
 	 * @param {boolean} purge          erase the existing values before loading new
 	 */
-	#loadLanguagesFromURL(languagesURL, purge = false) {
+	#loadLanguagesFromURL(languagesURL, purge = false, async = true) {
 		let isHTTPurl = isHTTPURL(languagesURL);
 		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving languages from ${languagesURL} using fetch()`));
 		if (!isHTTPurl) return;
 
 		if (purge) this.empty();
-		fetch(languagesURL)
-			.then(handleErrors)
-			.then((response) => response.text())
-			.then((responseText) => this.#processLanguageData(responseText))
-			.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${languagesURL}`)));
+
+		if (async) 
+			fetch(languagesURL)
+				.then(handleErrors)
+				.then((response) => response.text())
+				.then((responseText) => this.#processLanguageData(responseText))
+				.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${languagesURL}`)));
+		else {
+			let resp = null;
+			try {
+				resp = fetchS(languagesURL);
+			} catch (error) {
+				console.log(chalk.red(error.message));
+			}
+			if (resp) {
+				if (resp.ok) 
+					this.#processLanguageData(response.text);
+				else console.log(chalk.red(`error (${error}) retrieving ${languagesURL}`));
+			}
+		}
 	}
 
-	loadLanguages(options) {
+	loadLanguages(options, async=true) {
 		if (!options) options = {};
 		if (!Object.prototype.hasOwnProperty.call(options, "purge")) options.purge = false;
 
-		if (options.file) this.#loadLanguagesFromFile(options.file, options.purge);
-		else if (options.url) this.#loadLanguagesFromURL(options.url, options.purge);
+		if (options.file) this.#loadLanguagesFromFile(options.file, options.purge, async);
+		else if (options.url) this.#loadLanguagesFromURL(options.url, options.purge, async);
 	}
 
 	/**

@@ -277,22 +277,22 @@ export default class ContentGuideCheck {
 	#subtitleCodings;
 	#subtitlePurposes;
 
-	constructor(useURLs, opts) {
+	constructor(useURLs, opts, async=true) {
 		this.#numRequests = 0;
-		this.#knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs);
-		this.#allowedGenres = opts?.genres ? opts.genres : LoadGenres(useURLs);
-		this.#allowedVideoSchemes = opts?.videofmts ? opts.videofmts : LoadVideoCodecCS(useURLs);
-		this.#allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs);
+		this.#knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs, async);
+		this.#allowedGenres = opts?.genres ? opts.genres : LoadGenres(useURLs, async);
+		this.#allowedVideoSchemes = opts?.videofmts ? opts.videofmts : LoadVideoCodecCS(useURLs, async);
+		this.#allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs, async);
 
-		this.#audioPresentationCSvalues = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs);
-		this.#allowedCreditItemRoles = opts?.credits ? opts.credits : LoadCredits(useURLs);
-		this.#allowedRatings = opts?.ratings ? opts.ratings : LoadRatings(useURLs);
-		this.#knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs);
-		this.#accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs);
-		this.#audioPurposes = opts?.audiopurps ? opts.audiopurps : LoadAudioPurpose(useURLs);
-		this.#subtitleCarriages = opts?.stcarriage ? opts.stcarriage : LoadSubtitleCarriages(useURLs);
-		this.#subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs);
-		this.#subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs);
+		this.#audioPresentationCSvalues = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs, async);
+		this.#allowedCreditItemRoles = opts?.credits ? opts.credits : LoadCredits(useURLs, async);
+		this.#allowedRatings = opts?.ratings ? opts.ratings : LoadRatings(useURLs, async);
+		this.#knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs, async);
+		this.#accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs, async);
+		this.#audioPurposes = opts?.audiopurps ? opts.audiopurps : LoadAudioPurpose(useURLs, async);
+		this.#subtitleCarriages = opts?.stcarriage ? opts.stcarriage : LoadSubtitleCarriages(useURLs, async);
+		this.#subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs, async);
+		this.#subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs, async);
 
 		SchemaVersions.forEach((version) => {
 			process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));

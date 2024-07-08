@@ -369,7 +369,7 @@ export default class ServiceListCheck {
 	#allowedVideoSchemes;
 	#allowedAudioSchemes;
 	#knownCountries;
-	#AudioPresentationCSvalues;
+	#audioPresentations;
 	#accessibilityPurposes;
 	#audioPurposes;
 	#subtitleCarriages;
@@ -382,10 +382,8 @@ export default class ServiceListCheck {
 	#allowedVideoConformancePoints;
 	#RecordingInfoCSvalues;
 
-	constructor(useURLs, opts) {
+	constructor(useURLs, opts, async=true) {
 		this.#numRequests = 0;
-
-		this.#knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs);
 
 		console.log(chalk.yellow.underline("loading service list schemas..."));
 		SchemaVersions.forEach((version) => {
@@ -394,41 +392,46 @@ export default class ServiceListCheck {
 			console.log(version.schema ? chalk.green("OK") : chalk.red.bold("FAIL"));
 		});
 
+		this.#knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs, async);
+		this.#knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs, async);
+
 		console.log(chalk.yellow.underline("loading classification schemes..."));
-		this.#allowedGenres = opts?.genres ? opts.genres : LoadGenres(useURLs);
-		this.#allowedVideoSchemes = opts?.videofmts ? opts.videofmts : LoadVideoCodecCS(useURLs);
-		this.#allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs);
-		this.#AudioPresentationCSvalues = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs);
-		this.#accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs);
-		this.#audioPurposes = opts?.audiopurp ? opts.audiopurp : LoadAudioPurpose(useURLs);
-		this.#subtitleCarriages = opts?.stcarriage ? opts.stcarriage : LoadSubtitleCarriages(useURLs);
-		this.#subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs);
-		this.#subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs);
-		this.#knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs);
+		this.#allowedGenres = opts?.genres ? opts.genres : LoadGenres(useURLs, async);
+		this.#allowedVideoSchemes = opts?.videofmts ? opts.videofmts : LoadVideoCodecCS(useURLs, async);
+		this.#allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs, async);
+		this.#audioPresentations = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs, async);
+		this.#accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs, async);
+		this.#audioPurposes = opts?.audiopurp ? opts.audiopurp : LoadAudioPurpose(useURLs, async);
+		this.#subtitleCarriages = opts?.stcarriage ? opts.stcarriage : LoadSubtitleCarriages(useURLs, async);
+		this.#subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs, async);
+		this.#subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs, async);
 
-		this.#allowedPictureFormats = LoadPictureFormatCS(useURLs);
-		this.#allowedColorimetry = LoadColorimetryCS(useURLs);
-		this.#allowedServiceTypes = LoadServiceTypeCS(useURLs);
+		this.#allowedPictureFormats = LoadPictureFormatCS(useURLs, async);
+		this.#allowedColorimetry = LoadColorimetryCS(useURLs, async);
+		this.#allowedServiceTypes = LoadServiceTypeCS(useURLs, async);
 
-		this.#allowedAudioConformancePoints = LoadAudioConformanceCS(useURLs);
-		this.#allowedVideoConformancePoints = LoadVideoConformanceCS(useURLs);
-		this.#RecordingInfoCSvalues = LoadRecordingInfoCS(useURLs);
+		this.#allowedAudioConformancePoints = LoadAudioConformanceCS(useURLs, async);
+		this.#allowedVideoConformancePoints = LoadVideoConformanceCS(useURLs, async);
+		this.#RecordingInfoCSvalues = LoadRecordingInfoCS(useURLs, async);
 	}
+
 
 	stats() {
 		let res = {};
 		res.numRequests = this.#numRequests;
-		res.numAllowedGenres = this.#allowedGenres.count();
-		res.numKnownCountries = this.#knownCountries.count();
-		this.#knownLanguages.stats(res);
-		res.numAllowedPictureFormats = this.#allowedPictureFormats.count();
-		res.numAllowedColorimetry = this.#allowedColorimetry.count();
-		res.numAllowedServiceTypes = this.#allowedServiceTypes.count();
-		res.numAllowedAudioSchemes = this.#allowedAudioSchemes.count();
-		res.numAllowedVideoSchemes = this.#allowedVideoSchemes.count();
-		res.numAllowedVideoConformancePoints = this.#allowedVideoConformancePoints.count();
-		res.numAudioPresentationCSvalues = this.#AudioPresentationCSvalues.count();
-		res.numAudioPurporses = this.#audioPurposes.count();
+		res.numAllowedGenres = this.#allowedGenres?.count();
+		res.numKnownCountries = this.#knownCountries?.count();
+		this.#knownLanguages?.stats(res);
+		res.numAllowedPictureFormats = this.#allowedPictureFormats?.count();
+		res.numAllowedColorimetry = this.#allowedColorimetry?.count();
+		res.numAllowedServiceTypes = this.#allowedServiceTypes?.count();
+		res.numAllowedAudioSchemes = this.#allowedAudioSchemes?.count();
+		res.numAllowedVideoSchemes = this.#allowedVideoSchemes?.count();
+		res.numAllowedVideoConformancePoints = this.#allowedVideoConformancePoints?.count();
+		res.numAllowedAudioConformancePoints = this.#allowedAudioConformancePoints?.count();
+		res.numAudioPresentations = this.#audioPresentations?.count();
+		res.numAudioPurporses = this.#audioPurposes?.count();
+		res.numRecordingInfoValues = this.#RecordingInfoCSvalues?.count();
 		return res;
 	}
 
@@ -909,7 +912,7 @@ export default class ServiceListCheck {
 					SubtitleCodingFormatCS: this.#subtitleCodings,
 					SubtitlePurposeTypeCS: this.#subtitlePurposes,
 					KnownLanguages: this.#knownLanguages,
-					AudioPresentationCS: this.#AudioPresentationCSvalues,
+					AudioPresentationCS: this.#audioPresentations,
 				},
 				errs,
 				`${errCode}-51`
@@ -1412,10 +1415,10 @@ export default class ServiceListCheck {
 								break;
 							case tva.e_MixType:
 								// taken from MPEG-7 AudioPresentationCS
-								if (child.attr(dvbi.a_href) && !this.#AudioPresentationCSvalues.isIn(child.attr(dvbi.a_href).value()))
+								if (child.attr(dvbi.a_href) && !this.#audioPresentations.isIn(child.attr(dvbi.a_href).value()))
 									errs.addError({
 										code: "SI055",
-										message: `invalid ${dvbi.a_href.attribute(child.name())} value for (${child.attr(dvbi.a_href).value()}) ${this.#AudioPresentationCSvalues.valuesRange()}`,
+										message: `invalid ${dvbi.a_href.attribute(child.name())} value for (${child.attr(dvbi.a_href).value()}) ${this.#audioPresentations.valuesRange()}`,
 										fragment: child,
 										key: "audio codec",
 									});
@@ -1526,7 +1529,7 @@ export default class ServiceListCheck {
 						SubtitleCodingFormatCS: this.#subtitleCodings,
 						SubtitlePurposeTypeCS: this.#subtitlePurposes,
 						KnownLanguages: this.#knownLanguages,
-						AudioPresentationCS: this.#AudioPresentationCSvalues,
+						AudioPresentationCS: this.#audioPresentations,
 					},
 					errs,
 					"SI112"
@@ -2286,15 +2289,13 @@ export default class ServiceListCheck {
 	}
 
 	/*private*/ #doSchemaVerification(ServiceList, props, errs, errCode) {
-		let rc = true;
-
 		let x = SchemaVersions.find((s) => s.namespace == props.namespace);
 		if (x && x.schema) {
 			SchemaCheck(ServiceList, x.schema, errs, `${errCode}:${SchemaVersion(props.namespace)}`);
 			SchemaVersionCheck(props, ServiceList, x.status, errs, `${errCode}a`);
-		} else rc = false;
-
-		return rc;
+			return true;
+		}
+		return false;
 	}
 
 	/**

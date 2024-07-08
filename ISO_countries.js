@@ -3,9 +3,10 @@
  * 
  * Load and check country codes
  */
-import { readFile } from "fs";
+import { readFile, readFileSync } from "fs";
 
 import chalk from "chalk";
+import fetchS from "sync-fetch";
 
 import { handleErrors } from "./fetch_err_handler.js";
 import { isHTTPURL } from "./pattern_checks.js";
@@ -53,17 +54,22 @@ export default class ISOcountries {
 	 * @param {String}  countriesFile   the file name to load
 	 * @param {boolean} purge           erase the existing values before loading new
 	 */
-	#loadCountriesFromFile(countriesFile, purge = false) {
+	#loadCountriesFromFile(countriesFile, purge = false, async = true) {
 		console.log(chalk.yellow(`reading countries from ${countriesFile}`));
 		if (purge) this.reset();
-		readFile(
-			countriesFile,
-			{ encoding: "utf-8" },
-			function (err, data) {
-				if (!err) this.#countriesList = loadCountryData(data);
-				else console.log(chalk.red(err.error));
-			}.bind(this)
-		);
+		if (async)
+			readFile(
+				countriesFile,
+				{ encoding: "utf-8" },
+				function (err, data) {
+					if (!err) this.#countriesList = loadCountryData(data);
+					else console.log(chalk.red(err.error));
+				}.bind(this)
+			);
+		else {
+			let langs = readFileSync(countriesFile, { encoding: "utf-8" } ).toString();
+			this.#countriesList = loadCountryData(langs);
+		}
 	}
 
 	/**
@@ -72,25 +78,39 @@ export default class ISOcountries {
 	 * @param {String}  countriesURL  the URL to the file to load
 	 * @param {boolean} purge         erase the existing values before loading new
 	 */
-	#loadCountriesFromURL(countriesURL, purge = false) {
+	#loadCountriesFromURL(countriesURL, purge = false, async = true) {
 		let isHTTPurl = isHTTPURL(countriesURL);
 		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving countries from ${countriesURL} using fetch()`));
 		if (!isHTTPurl) return;
 
 		if (purge) this.reset();
-		fetch(countriesURL)
-			.then(handleErrors)
-			.then((response) => response.text())
-			.then((responseText) => (this.#countriesList = loadCountryData(responseText)))
-			.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${countriesURL}`)));
+		if (async)
+			fetch(countriesURL)
+				.then(handleErrors)
+				.then((response) => response.text())
+				.then((responseText) => (this.#countriesList = loadCountryData(responseText)))
+				.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${countriesURL}`)));
+			else {
+				let resp = null;
+				try {
+					resp = fetchS(countriesURL);
+				} catch (error) {
+					console.log(chalk.red(error.message));
+				}
+				if (resp) {
+					if (resp.ok) 
+						this.#countriesList = loadCountryData(response.text)
+					else console.log(chalk.red(`error (${error}) retrieving ${languagesURL}`));
+				}
+			}
 	}
 
-	loadCountries(options) {
+	loadCountries(options, async=true) {
 		if (!options) options = {};
 		if (!options.purge) options.purge = true;
 
-		if (options.file) this.#loadCountriesFromFile(options.file, options.purge);
-		else if (options.url) this.#loadCountriesFromURL(options.url, options.purge);
+		if (options.file) this.#loadCountriesFromFile(options.file, options.purge, async);
+		else if (options.url) this.#loadCountriesFromURL(options.url, options.purge, async);
 	}
 
 	reset() {
