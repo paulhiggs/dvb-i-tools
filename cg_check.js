@@ -279,6 +279,8 @@ export default class ContentGuideCheck {
 
 	constructor(useURLs, opts, async=true) {
 		this.#numRequests = 0;
+		this.supportedRequests = supportedRequests;
+
 		this.#knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs, async);
 		this.#allowedGenres = opts?.genres ? opts.genres : LoadGenres(useURLs, async);
 		this.#allowedVideoSchemes = opts?.videofmts ? opts.videofmts : LoadVideoCodecCS(useURLs, async);
@@ -294,13 +296,13 @@ export default class ContentGuideCheck {
 		this.#subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs, async);
 		this.#subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs, async);
 
+		// TODO - change this to support sync/asyna and file/url reading
+		console.log(chalk.yellow.underline("loading content guide schemas..."));
 		SchemaVersions.forEach((version) => {
 			process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
 			version.schema = parseXmlString(readFileSync(version.filename));
 			console.log(version.schema ? chalk.green("OK") : chalk.red.bold("FAIL"));
 		});
-
-		this.supportedRequests = supportedRequests;
 	}
 
 	stats() {

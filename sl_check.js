@@ -385,13 +385,6 @@ export default class ServiceListCheck {
 	constructor(useURLs, opts, async=true) {
 		this.#numRequests = 0;
 
-		console.log(chalk.yellow.underline("loading service list schemas..."));
-		SchemaVersions.forEach((version) => {
-			process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
-			version.schema = parseXmlString(readFileSync(version.filename));
-			console.log(version.schema ? chalk.green("OK") : chalk.red.bold("FAIL"));
-		});
-
 		this.#knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs, async);
 		this.#knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs, async);
 
@@ -413,6 +406,14 @@ export default class ServiceListCheck {
 		this.#allowedAudioConformancePoints = LoadAudioConformanceCS(useURLs, async);
 		this.#allowedVideoConformancePoints = LoadVideoConformanceCS(useURLs, async);
 		this.#RecordingInfoCSvalues = LoadRecordingInfoCS(useURLs, async);
+
+		// TODO - change this to support sync/asyna and file/url reading
+		console.log(chalk.yellow.underline("loading service list schemas..."));
+		SchemaVersions.forEach((version) => {
+			process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
+			version.schema = parseXmlString(readFileSync(version.filename));
+			console.log(version.schema ? chalk.green("OK") : chalk.red.bold("FAIL"));
+		});
 	}
 
 
