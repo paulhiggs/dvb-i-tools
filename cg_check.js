@@ -15,7 +15,7 @@ import { mpeg7 } from "./MPEG7_definitions.js";
 import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
 import { dvbi } from "./DVB-I_definitions.js";
 
-import { TVAschema } from "./data_locations.js";
+import { TVAschema, __dirname_linux } from "./data_locations.js";
 
 import ErrorList, { WARNING, APPLICATION } from "./error_list.js";
 import { isCRIDURI, isTAGURI } from "./URI_checks.js";
@@ -300,7 +300,8 @@ export default class ContentGuideCheck {
 		console.log(chalk.yellow.underline("loading content guide schemas..."));
 		SchemaVersions.forEach((version) => {
 			process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
-			version.schema = parseXmlString(readFileSync(version.filename));
+			let schema = readFileSync(version.filename).toString().replace(`schemaLocation="./`, `schemaLocation="${__dirname_linux}/`);
+			version.schema = parseXmlString(schema);
 			console.log(version.schema ? chalk.green("OK") : chalk.red.bold("FAIL"));
 		});
 	}

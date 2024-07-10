@@ -8,8 +8,6 @@ import { join, sep } from "path";
 import { createServer } from "https";
 import os from "node:os";
 import process from "process";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
 
 import chalk from "chalk";
 import cors from "cors";
@@ -21,7 +19,7 @@ import favicon from "serve-favicon";
 import fetchS from "sync-fetch";
 
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.js";
-import { Default_SLEPR } from "./data_locations.js";
+import { Default_SLEPR, __dirname } from "./data_locations.js";
 import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults } from "./ui.js";
 import ErrorList from "./error_list.js";
 import { isHTTPURL } from "./pattern_checks.js";
@@ -42,9 +40,6 @@ import {
 import ServiceListCheck from "./sl_check.js";
 import ContentGuideCheck from "./cg_check.js";
 import SLEPR from "./slepr.js";
-
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export const MODE_UNSPECIFIED = "none",
 	MODE_SL = "sl",

@@ -14,12 +14,12 @@
 	<!ENTITY Hex8 "&HexDigit;{1,2}">
 ]>
 <schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2024" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2024" targetNamespace="urn:dvb:metadata:servicediscovery:2024" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<import namespace="urn:dvb:metadata:servicediscovery-types:2023" schemaLocation="dvbi_types_v1.0.xsd"/>
-	<import namespace="urn:tva:metadata:2024" schemaLocation="tva_metadata_3-1_2024.xsd"/>
-	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
-	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
-	<import namespace="vnd:apple:mpegurl" schemaLocation="hls-url-6.0.xsd"/>
-	<import namespace="urn:hbbtv:dvbi:schema:2021" schemaLocation="hbbtv-ext-6.0.xsd"/>
+	<import namespace="urn:dvb:metadata:servicediscovery-types:2023" schemaLocation="./dvbi_types_v1.0.xsd"/>
+	<import namespace="urn:tva:metadata:2024" schemaLocation="./tva_metadata_3-1_2024.xsd"/>
+	<import namespace="urn:tva:mpeg7:2008" schemaLocation="./tva_mpeg7.xsd"/>
+	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="./xml.xsd"/>
+	<import namespace="vnd:apple:mpegurl" schemaLocation="./hls-url-6.0.xsd"/>
+	<import namespace="urn:hbbtv:dvbi:schema:2021" schemaLocation="./hbbtv-ext-6.0.xsd"/>
 	<element name="ServiceList" type="dvbisd:ServiceListType"/>
 	<element name="Playlist" type="dvbisd:DASHPlaylistType"/>
 	<complexType name="ServiceListType">

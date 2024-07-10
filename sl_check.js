@@ -6,6 +6,8 @@
 import { readFileSync } from "fs";
 import process from "process";
 
+
+
 import chalk from "chalk";
 import { parseXmlString } from "libxmljs2";
 
@@ -19,7 +21,7 @@ import ErrorList, { WARNING, APPLICATION } from "./error_list.js";
 import { isTAGURI } from "./URI_checks.js";
 import { xPath, xPathM, isIn, unEntity, getElementByTagName, DuplicatedValue } from "./utils.js";
 import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isDomainName, isRTSPURL } from "./pattern_checks.js";
-import { DVBI_ServiceListSchema } from "./data_locations.js";
+import { DVBI_ServiceListSchema, __dirname_linux } from "./data_locations.js";
 import { checkValidLogos } from "./related_material_checks.js";
 import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys } from "./common_errors.js";
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./multilingual_element.js";
@@ -411,7 +413,8 @@ export default class ServiceListCheck {
 		console.log(chalk.yellow.underline("loading service list schemas..."));
 		SchemaVersions.forEach((version) => {
 			process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
-			version.schema = parseXmlString(readFileSync(version.filename));
+			let schema = readFileSync(version.filename).toString().replace(`schemaLocation="./`, `schemaLocation="${__dirname_linux}/`);
+			version.schema = parseXmlString(schema);
 			console.log(version.schema ? chalk.green("OK") : chalk.red.bold("FAIL"));
 		});
 	}

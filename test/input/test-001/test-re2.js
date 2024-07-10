@@ -13,7 +13,7 @@ import {
 	isURN,
 	isHTTPURL,
 	validZuluTimeType,
-} from "../pattern_checks.js";
+} from "../../../pattern_checks.js";
 
 const ConsoleColours = {
 		Reset: "\x1b[0m",

@@ -3,31 +3,37 @@
  * 
  * paths and URLs to various files used by the validation toole
  */
-import { join } from "path";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+
+export const __dirname =dirname(fileURLToPath(import.meta.url));
+export const __dirname_linux = __dirname.replace(/\\/g, "/");
 
 const REPO_RAW = "https://raw.githubusercontent.com/paulhiggs/dvb-i-tools/main/";
 const DVB_METADATA = "https://dvb.org/metadata/";
 
-const pathDVBCS = "dvb/cs/",
-	pathDVBI = "dvbi",
-	pathISO = "iso",
-	pathMPEG7 = "mpeg7",
-	pathTVA = "tva",
-	path2007CS = `${pathDVBCS}2007`,
+const pathDVBCS = join(__dirname, "dvb/cs"),
+	pathDVBI = join(__dirname, "dvbi"),
+	pathIANA = join(__dirname, "iana"),
+	pathISO = join(__dirname, "iso"),
+	pathMPEG7 = join(__dirname, "mpeg7"),
+	pathTVA = join(__dirname, "tva");
+
+const path2007CS = join(pathDVBCS, "2007"),
 	url2007CS = "cs/2007",
-	path2017CS = `${pathDVBCS}2017`,
+	path2017CS = join(pathDVBCS, "2017"),
 	url2017CS = "cs/2017",
-	path2019CS = `${pathDVBCS}2019`,
+	path2019CS = join(pathDVBCS, "2019"),
 	url2019CS = "cs/2019",
-	path2020CS = `${pathDVBCS}2020`,
+	path2020CS = join(pathDVBCS, "2020"),
 	url2020CS = "cs/2020",
-	path2021CS = `${pathDVBCS}2021`,
+	path2021CS = join(pathDVBCS, "2021"),
 	url2021CS = "cs/2021",
-	path2022CS = `${pathDVBCS}2022`,
+	path2022CS = join(pathDVBCS, "2022"),
 	url2022CS = "cs/2022";
 
 // SLEPR == Service List Entry Point Registry
-const SLEPR_Dir = "registries",
+const SLEPR_Dir = join(__dirname, "registries"),
 	SLEPR_File = "slepr-main.xml";
 export const Default_SLEPR = { file: join(SLEPR_Dir, SLEPR_File), url: `${REPO_RAW}${SLEPR_Dir}/${SLEPR_File}` };
 
@@ -126,14 +132,14 @@ export const TVAschema = {
 };
 
 export const DVBI_ServiceListSchema = {
-	r0: { file: join(".", "dvbi_v1.0.xsd") },
-	r1: { file: join(".", "dvbi_v2.0.xsd") },
-	r2: { file: join(".", "dvbi_v3.0.xsd") },
-	r3: { file: join(".", "dvbi_v3.1.xsd") },
-	r4: { file: join(".", "dvbi_v4.0-with-hls-hbbtv.xsd") },
-	r5: { file: join(".", "dvbi_v5.0-with-hls-hbbtv.xsd") },
-	r6: { file: join(".", "dvbi_v6.0-with-hls-hbbtv.xsd") },
+	r0: { file: join(__dirname, "dvbi_v1.0.xsd") },
+	r1: { file: join(__dirname, "dvbi_v2.0.xsd") },
+	r2: { file: join(__dirname, "dvbi_v3.0.xsd") },
+	r3: { file: join(__dirname, "dvbi_v3.1.xsd") },
+	r4: { file: join(__dirname, "dvbi_v4.0-with-hls-hbbtv.xsd") },
+	r5: { file: join(__dirname, "dvbi_v5.0-with-hls-hbbtv.xsd") },
+	r6: { file: join(__dirname, "dvbi_v6.0-with-hls-hbbtv.xsd") },
 };
 
 const languagesFilename = "language-subtag-registry";
-export const IANA_Subtag_Registry = { file: join("iana", languagesFilename), url: `https://www.iana.org/assignments/language-subtag-registry/${languagesFilename}` };
+export const IANA_Subtag_Registry = { file: join(pathIANA, languagesFilename), url: `https://www.iana.org/assignments/language-subtag-registry/${languagesFilename}` };

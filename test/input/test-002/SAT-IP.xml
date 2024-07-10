@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServiceList version="1" xml:lang="en" id="tag:dvb.org,2023:example-sat-ip" xmlns="urn:dvb:metadata:servicediscovery:2024" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023" xmlns:tva="urn:tva:metadata:2024" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:dvb:metadata:servicediscovery:2024 ../dvbi_v6.0.xsd" >
+	<Name>Germany FTA Example</Name>
+	<ProviderName>SES</ProviderName>
+	<RegionList version="1">
+		<Region countryCodes="DEU" regionID="Deutschland">
+			<Region regionID="Saarland">
+				<PostcodeRange from="66111" to="66133"/>
+				<Postcode>66265</Postcode>
+				<Postcode>66271</Postcode>
+				<Postcode>66280</Postcode>
+				<Postcode>66287</Postcode>
+				<Postcode>66292</Postcode>
+				<Postcode>66299</Postcode>
+				<Postcode>66333</Postcode>
+				<Postcode>66346</Postcode>
+				<Postcode>66352</Postcode>
+				<Postcode>66359</Postcode>
+				<Postcode>66386</Postcode>
+				<Postcode>66399</Postcode>
+				<Postcode>66424</Postcode>
+				<Postcode>66440</Postcode>
+				<Postcode>66450</Postcode>
+				<Postcode>66453</Postcode>
+				<Postcode>66459</Postcode>
+				<PostcodeRange from="66538" to="66540"/>
+				<Postcode>66557</Postcode>
+				<Postcode>66564</Postcode>
+				<Postcode>66571</Postcode>
+				<Postcode>66578</Postcode>
+				<Postcode>66583</Postcode>
+				<Postcode>66589</Postcode>
+				<Postcode>66606</Postcode>
+				<Postcode>66620</Postcode>
+				<Postcode>66625</Postcode>
+				<Postcode>66629</Postcode>
+				<Postcode>66636</Postcode>
+				<Postcode>66640</Postcode>
+				<Postcode>66646</Postcode>
+				<Postcode>66649</Postcode>
+				<Postcode>66663</Postcode>
+				<Postcode>66679</Postcode>
+				<Postcode>66687</Postcode>
+				<Postcode>66693</Postcode>
+				<Postcode>66701</Postcode>
+				<Postcode>66706</Postcode>
+				<Postcode>66709</Postcode>
+				<Postcode>66740</Postcode>
+				<Postcode>66763</Postcode>
+				<Postcode>66773</Postcode>
+				<Postcode>66780</Postcode>
+				<Postcode>66787</Postcode>
+				<Postcode>66793</Postcode>
+				<Postcode>66798</Postcode>
+				<Postcode>66802</Postcode>
+				<Postcode>66806</Postcode>
+				<Postcode>66809</Postcode>
+				<Postcode>66822</Postcode>
+				<Postcode>66839</Postcode>
+			</Region>
+		</Region>
+	</RegionList>
+	<LCNTableList>
+		<LCNTable>
+			<TargetRegion>Deutschland</TargetRegion>
+			<LCN channelNumber="1" serviceRef="tag:daserste.de,2019:DasErste"/>
+		</LCNTable>
+		<LCNTable>
+			<TargetRegion>Saarland</TargetRegion>
+			<LCN channelNumber="1" serviceRef="tag:daserste.de,2019:DasErste"/>
+		</LCNTable>
+	</LCNTableList>
+	<Service version="1">
+		<UniqueIdentifier>tag:daserste.de,2019:DasErste</UniqueIdentifier>
+		<ServiceInstance priority="1">
+			<DisplayName>Das Erste HD</DisplayName>
+			<ContentAttributes>
+				<AudioAttributes>
+					<tva:Coding href="urn:dvb:metadata:cs:AudioCodecCS:2007:3.1">
+						<tva:Name>AC3</tva:Name>
+					</tva:Coding>
+				</AudioAttributes>
+				<VideoAttributes>
+					<tva:Coding href="urn:dvb:metadata:cs:VideoCodecCS:2007:1.4.12">
+						<tva:Name>H264 High Profile @ Level 4.0</tva:Name>
+					</tva:Coding>
+				</VideoAttributes>
+			</ContentAttributes>
+			<DVBSDeliveryParameters>
+				<DVBTriplet origNetId="1" tsId="1019" serviceId="10301"/>
+				<OrbitalPosition>19.2</OrbitalPosition>
+				<Frequency>1149400</Frequency>
+				<Polarization>horizontal</Polarization>
+			</DVBSDeliveryParameters>
+			<SATIPDeliveryParameters>
+				<QueryParameters>freq=11494&amp;pol=h&amp;ro=0.35&amp;msys=dvbs2&amp;mtype=8psk&amp;plts=on&amp;sr=22000&amp;fec=23&amp;pids=0,17,18,5100,5101,5102,5104</QueryParameters>
+			</SATIPDeliveryParameters>
+		</ServiceInstance>
+		<ServiceInstance priority="2">
+			<DisplayName>Das Erste</DisplayName>
+			<ContentAttributes>
+				<AudioAttributes>
+					<tva:Coding href="urn:mpeg:mpeg7:cs:AudioCodingFormatCS:2001:3.2">
+						<tva:Name>MPEG-1 Audio Layer II</tva:Name>
+					</tva:Coding>
+				</AudioAttributes>
+				<AudioAttributes>
+					<tva:Coding href="urn:dvb:metadata:cs:AudioCodecCS:2007:3.1">
+						<tva:Name>AC3</tva:Name>
+					</tva:Coding>
+				</AudioAttributes>
+				<VideoAttributes>
+					<tva:Coding href="urn:mpeg:mpeg7:cs:VisualCodingFormatCS:2001:2.2.2">
+						<tva:Name>MPEG-2 Video Main Profile @ Main Level</tva:Name>
+					</tva:Coding>
+				</VideoAttributes>
+			</ContentAttributes>
+			<DVBSDeliveryParameters>
+				<DVBTriplet origNetId="1" tsId="1101" serviceId="28106"/>
+				<OrbitalPosition>19.2</OrbitalPosition>
+				<Frequency>1183600</Frequency>
+				<Polarization>horizontal</Polarization>
+			</DVBSDeliveryParameters>
+			<SATIPDeliveryParameters>
+				<QueryParameters>freq=11836&amp;pol=h&amp;ro=0.35&amp;msys=dvbs&amp;mtype=8psk&amp;plts=off&amp;sr=27500&amp;fec=34&amp;pids=0,17,18,100,101,102,104</QueryParameters>
+			</SATIPDeliveryParameters>
+		</ServiceInstance>
+		<ServiceInstance priority="3">
+			<DisplayName>Das Erste</DisplayName>
+			<DASHDeliveryParameters>
+				<UriBasedLocation contentType="application/dash+xml">
+					<dvbi-types:URI>https://live.daserste.de/0001-Das%20Erste.mpd</dvbi-types:URI>
+				</UriBasedLocation>
+			</DASHDeliveryParameters>
+		</ServiceInstance>
+		<ServiceName>Das Erste</ServiceName>
+		<ProviderName>ARD</ProviderName>
+		<ServiceType href="urn:dvb:metadata:cs:ServiceTypeCS:2019:linear"/>
+	</Service>
+</ServiceList>
