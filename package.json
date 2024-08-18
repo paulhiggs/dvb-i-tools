@@ -21,7 +21,9 @@
 		"morgan": "^1.10.0",
 		"serve-favicon": "^2.5.0",
 		"sync-fetch": "^0.5.2",
-		"xml-formatter": "^3.6.2"
+		"xml-formatter": "^3.6.2",
+		"xmllint": "^0.1.1",
+		"xsd-schema-validator": "^0.9.0"
 	},
 	"engines": {
 		"node": ">= 20.10.0",
