@@ -7,7 +7,7 @@ services:
     environment:
       - no_proxy=localhost,127.0.0.1
     volumes:
-      - ./:/usr/src/app
+      - "${GIT_CLONE_PATH:-./}:/usr/src/app"
       - node_modules:/usr/src/app/node_modules
     ports:
       - "3030:3030"
