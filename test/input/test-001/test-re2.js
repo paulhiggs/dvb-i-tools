@@ -13,13 +13,18 @@ import {
 	isURN,
 	isHTTPURL,
 	validZuluTimeType,
+	isUTCDateTime,
 } from "../../../pattern_checks.js";
 
+<<<<<<< HEAD
 const AVCregex = /[a-z0-9!\"#$%&'()*+,./:;<=>?@[\] ^_`{|}~-]{4}\.[a-f0-9]{6}/i;
 const AC4regex = /ac-4(\.[a-fA-F\d]{1,2}){3}/;
 const VP9regex = /^vp09(\.\d{2}){3}(\.(\d{2})?){0,5}$/;
 
 const AV1regex = /^av01\.\d\.\d+[MH]\.\d{1,2}((\.\d?)(\.(\d{3})?(\.(\d{2})?(.(\d{2})?(.(\d{2})?(.\d?)?)?)?)?)?)?$/;
+=======
+import {isTAGURI} from "../../../URI_checks.js";
+>>>>>>> 719265c9b8bd33848f29523b9ccfc41214d2c544
 
 const ConsoleColours = {
 		Reset: "\x1b[0m",
@@ -202,6 +207,18 @@ const tests0 = [
 	{ item: "ztime-52", fn: validZuluTimeType, evaluate: "09:30-05:00", expect: false },
 	{ item: "ztime-53", fn: validZuluTimeType, evaluate: "09:30+08:30", expect: false },
 	{ item: "ztime-54", fn: validZuluTimeType, evaluate: "09:30+12", expect: false },
+
+	{item: "ztime-55", fn:isUTCDateTime, evaluate: "2024-08-20T12:45:15.000Z", expect: true},
+	{item: "ztime-56", fn:isUTCDateTime, evaluate: "2024-08-20T12:45:15Z", expect: true},
+	{item: "ztime-57", fn:isUTCDateTime, evaluate: "2014-07-15T20:42:30Z", expect: true},
+
+	{item: "taguri-1", fn: isTAGURI, evaluate: "tag:sandt.com:uk,2023:SandT‑Service‑1", expect: false},
+	{item: "taguri-2", fn: isTAGURI, evaluate: "tag:sandt.com.uk,2023:SandT‑Service‑1", expect: false},
+	{item: "taguri-3", fn: isTAGURI, evaluate: "tag:sandt.com.uk,2023:SandT-Service-1", expect: true},
+	{item: "taguri-4", fn: isTAGURI, evaluate: "tag:sandt.com.uk,2023:SandT‑Service‑1‑The Legend of Boggy Creek (1972)", expect: false},
+	{item: "taguri-5", fn: isTAGURI, evaluate: "tag:sandt.com.uk,2023:SandT-Service-1-The%20Legend%20of%20Boggy%20Creek%20(1972)", expect: true},
+	
+
 ];
 
 const tests1 = [
