@@ -15,6 +15,12 @@ import {
 	validZuluTimeType,
 } from "../../../pattern_checks.js";
 
+const AVCregex = /[a-z0-9!\"#$%&'()*+,./:;<=>?@[\] ^_`{|}~-]{4}\.[a-f0-9]{6}/i;
+const AC4regex = /ac-4(\.[a-fA-F\d]{1,2}){3}/;
+const VP9regex = /^vp09(\.\d{2}){3}(\.(\d{2})?){0,5}$/;
+
+const AV1regex = /^av01\.\d\.\d+[MH]\.\d{1,2}((\.\d?)(\.(\d{3})?(\.(\d{2})?(.(\d{2})?(.(\d{2})?(.\d?)?)?)?)?)?)?$/;
+
 const ConsoleColours = {
 		Reset: "\x1b[0m",
 		Bright: "\x1b[1m",
@@ -151,7 +157,7 @@ const tests0 = [
 	{
 		item: "url-05b",
 		fn: isURL,
-		evaluate: "mailto:someone@yoursite.com?cc=someoneelse@theirsite.com,%20another@thatsite.com,%20me@mysite.com&bcc=lastperson@theirsite.com&subject=Big%20News",
+		evaluate:  "mailto:someone@yoursite.com?cc=someoneelse@theirsite.com,%20another@thatsite.com,%20me@mysite.com&bcc=lastperson@theirsite.com&subject=Big%20News",
 		expect: true,
 	},
 	{
@@ -163,8 +169,7 @@ const tests0 = [
 	{
 		item: "url-06b",
 		fn: isURL,
-		evaluate:
-			"mailto:someone@yoursite.com?cc=someoneelse@theirsite.com,%20another@thatsite.com,%20me@mysite.com&bcc=lastperson@theirsite.com&subject=Big%20News&body=Body-goes-here",
+		evaluate: 	"mailto:someone@yoursite.com?cc=someoneelse@theirsite.com,%20another@thatsite.com,%20me@mysite.com&bcc=lastperson@theirsite.com&subject=Big%20News&body=Body-goes-here",
 		expect: true,
 	},
 
@@ -199,15 +204,26 @@ const tests0 = [
 	{ item: "ztime-54", fn: validZuluTimeType, evaluate: "09:30+12", expect: false },
 ];
 
+const tests1 = [
+	{item: "AVC regexp1", expression: AVCregex, evaluate: "avc1.001122", expect: true },
+	{item: "AC-4 regexp1", expression: AC4regex, evaluate: "ac-4.00.11.22", expect: true },
+	{item: "VP9 regex1", expression: VP9regex, evaluate: "vp09.00.11.22", expect: true },
+	{item: "VP9 regex2", expression: VP9regex, evaluate: "vp09.00.11.22..12.03..", expect: true },
+	{item: "AV1 regex1", expression: AV1regex, evaluate: "av01.0.04M.10.0.112.09.16.09.0", expect:true },
+	{item: "AV1 regex2", expression: AV1regex, evaluate: "av01.0.04M.12", expect:true },
+	{item: "AV1 regex3", expression: AV1regex, evaluate: "av01.0.04H.8..112....0", expect:true },
+];
+
 function doTest(test) {
-	function showOutput(testNo, value, result, expected) {
+
+	let showOutput = (testNo, value, result, expected) => {
 		console.log(
 			result == expected ? ConsoleGreen : ConsoleRed,
-			`test ${testNo}(${value}) expect ${expected} --> ${result} ${result != expected ? "FAIL!!" : "OK"}`,
+			`test ${testNo}(${value}) expect ${expected} --> ${result} ${result == expected ? "OK" : "FAIL!!"}`,
 			ConsoleColours.Reset
-		);
-	}
-
+		);		
+	};
+	
 	if (Object.prototype.hasOwnProperty.call(test, "pattern")) {
 		let re = new RegExp(`^${test.pattern}$`),
 			res = re.test(test.evaluate);
@@ -217,5 +233,11 @@ function doTest(test) {
 		let res = test.fn(test.evaluate);
 		showOutput(test.item, test.evaluate, res, test.expect);
 	}
+	if (Object.prototype.hasOwnProperty.call(test, "expression")) {
+		let res = test.expression.test(test.evaluate);
+		showOutput(test.item, test.evaluate, res, test.expect);
+	}
 }
+
 tests0.forEach((test) => doTest(test));
+tests1.forEach((test) => doTest(test));
