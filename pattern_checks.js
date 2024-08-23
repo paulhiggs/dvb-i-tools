@@ -76,7 +76,7 @@ export let isRatioType = (str) => (datatypeIs(str, "string") ? ratioRegex.test(s
  * @param {string} str string contining the UTC time
  * @returns {boolean}  true if the argment is formatted according to UTC ("Zulu") time
  */
-const UTCregex = new RegExp(/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\\.[0-9]+)?(Z)?$/);
+const UTCregex = new RegExp(/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]{1,3})?Z?$/);
 export let isUTCDateTime = (str) => (datatypeIs(str, "string") ? UTCregex.test(str.trim()) : false);
 
 /**
