@@ -14,7 +14,7 @@ import { datatypeIs } from "./phlib/phlib.js";
 // RFC 4151 compliant - https://tools.ietf.org/html/rfc4151
 // tagURI = "tag:" taggingEntity ":" specific [ "#" fragment ]
 const TagRegex = new RegExp(
-	"^tag:(([\\da-z\\-\\._]+@)?[\\da-z][\\da-z-]*[\\da-z]*(\\.[\\da-z][\\da-z\\-]*[\\da-z]*)*),\\d{4}(\\-\\d{2}(\\-\\d{2})?)?:(['a-z\\d-\\._~!$&\\(\\)\\*\\+,;=:@\\?/]|%[0-9a-f]{2})*(#(['a-z0-9\\-\\._~!$&\\(\\)\\*\\+,;=:@\\?/]|%[0-9a-f]{2})*)?$",
+	/^tag:(([\da-z\-._]+@)?[\da-z][\da-z-]*[\da-z]*(\.[\da-z][\da-z-]*[\da-z]*)*),\d{4}(-\d{2}(\-\d{2})?)?:(['a-z\d-._~!$&()*+,;=:@?/]|%[0-9a-f]{2})*(#(['a-z0-9\-._~!$&()*+,;=:@\\?/]|%[0-9a-f]{2})*)?$/,
 	"i"
 );
 export let isTAGURI = (identifier) => (datatypeIs(identifier, "string") ? TagRegex.test(identifier.trim()) : false);
