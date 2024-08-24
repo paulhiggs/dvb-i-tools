@@ -1,6 +1,6 @@
 /**
  * IANA_languages.js
- * 
+ *
  * Load and check language identifiers
  */
 import { readFile, readFileSync } from "fs";
@@ -46,6 +46,9 @@ export default class IANAlanguages {
 	stats(res) {
 		res.numLanguages = this.#languagesList.length;
 		res.numRedundantLanguages = this.#redundantLanguagesList.length;
+		let t = [];
+		this.#redundantLanguagesList.forEach((e) => t.push(`${e.tag}${e.preferred ? `~${e.preferred}` : ""}`));
+		res.RedundantLanguages = t.join(", ");
 		res.numLanguageRanges = this.#languageRanges.length;
 		res.numSignLanguages = this.#signLanguagesList.length;
 		if (this.#languageFileDate) res.languageFileDate = this.#languageFileDate;
@@ -66,9 +69,7 @@ export default class IANAlanguages {
 		 * @return {boolean} true if the language subtag is a sign language
 		 */
 		function isSignLanguage(items) {
-			for (let i = 0; i < items.length; i++)
-				 if (items[i].startsWith("Description") && items[i].toLowerCase().includes("sign")) 
-						return true;
+			for (let i = 0; i < items.length; i++) if (items[i].startsWith("Description") && items[i].toLowerCase().includes("sign")) return true;
 			return false;
 		}
 
@@ -141,9 +142,8 @@ export default class IANAlanguages {
 					} else console.log(chalk.red(`error loading languages ${err}`));
 				}.bind(this)
 			);
-		}
-		else {
-			let langs = readFileSync(languagesFile, { encoding: "utf-8" } ).toString();
+		} else {
+			let langs = readFileSync(languagesFile, { encoding: "utf-8" }).toString();
 			this.#processLanguageData(langs);
 		}
 	}
@@ -161,7 +161,7 @@ export default class IANAlanguages {
 
 		if (purge) this.empty();
 
-		if (async) 
+		if (async)
 			fetch(languagesURL)
 				.then(handleErrors)
 				.then((response) => response.text())
@@ -175,14 +175,13 @@ export default class IANAlanguages {
 				console.log(chalk.red(error.message));
 			}
 			if (resp) {
-				if (resp.ok) 
-					this.#processLanguageData(response.text);
-				else console.log(chalk.red(`error (${error}) retrieving ${languagesURL}`));
+				if (resp.ok) this.#processLanguageData(resp.text);
+				else console.log(chalk.red(`error (${resp.error}) retrieving ${languagesURL}`));
 			}
 		}
 	}
 
-	loadLanguages(options, async=true) {
+	loadLanguages(options, async = true) {
 		if (!options) options = {};
 		if (!Object.prototype.hasOwnProperty.call(options, "purge")) options.purge = false;
 
@@ -202,6 +201,13 @@ export default class IANAlanguages {
 		if (datatypeIs(value, "string")) {
 			if (this.#languageRanges.find((range) => range.start <= value && value <= range.end)) return { resp: this.languageKnown };
 
+			let found = this.#redundantLanguagesList.find((e) => e.tag.toLowerCase() == value.toLowerCase());
+			if (found) {
+				let res = { resp: this.languageRedundant };
+				if (found?.preferred) res.pref = found.preferred;
+				return res;
+			}
+
 			if (value.indexOf("-") != -1) {
 				let matches = true;
 				let parts = value.split("-");
@@ -212,15 +218,6 @@ export default class IANAlanguages {
 			}
 
 			if (isIni(this.#languagesList, value)) return { resp: this.languageKnown };
-
-			let lc = value.toLowerCase();
-			let found = this.#redundantLanguagesList.find((e) => e.tag.toLowerCase() == lc);
-			if (found) {
-				let res = { resp: this.languageRedundant };
-				if (found?.preferred) res.pref = found.preferred;
-				[];
-				return res;
-			}
 
 			return { resp: this.languageUnknown };
 		}

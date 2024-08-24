@@ -1274,12 +1274,14 @@ export default class ContentGuideCheck {
 			const titleLang = GetNodeLanguage(Title, false, errs, `${errCode}-2`, this.#knownLanguages);
 			const titleStr = unEntity(Title.text());
 
-			if (titleStr.length > dvbi.MAX_TITLE_LENGTH)
+			if (titleStr.length > dvbi.MAX_TITLE_LENGTH) {
 				errs.addError({
 					code: `${errCode}-11`,
 					message: `${tva.e_Title.elementize()} length exceeds ${dvbi.MAX_TITLE_LENGTH} characters`,
 					fragment: Title,
 				});
+				errs.errorDescription({code:`${errCode}-11`, description: "refer clause 6.10.5 in A177"})
+			}
 			switch (titleType) {
 				case mpeg7.TITLE_TYPE_MAIN:
 					if (mainTitles.find((e) => e.lang == titleLang))
@@ -1310,6 +1312,8 @@ export default class ContentGuideCheck {
 						message: `${tva.a_type.attribute()} must be ${mpeg7.TITLE_TYPE_MAIN.quote()} or ${mpeg7.TITLE_TYPE_SECONDARY.quote()} for ${tva.e_Title.elementize()}`,
 						fragment: Title,
 					});
+					errs.errorDescription({code:`${errCode}-15`, description: "refer to the relevant subsection of clause 6.10.5 in A177"});
+					break;
 			}
 		}
 		secondaryTitles.forEach((item) => {
@@ -1522,6 +1526,12 @@ export default class ContentGuideCheck {
 		}
 	}
 
+	/*private*/ #NotCRIDFormat(errs, error)
+	{
+		errs.addError(error);
+		errs.errorDescription({code: error?.code, description: "format if a CRID is defined in clause 8 of ETSI TS 102 822"})
+	}
+
 	/**
 	 * validate the <ProgramInformation> element against the profile for the given request/response type
 	 *
@@ -1573,7 +1583,7 @@ export default class ContentGuideCheck {
 		if (ProgramInformation.attr(tva.a_programId)) {
 			programCRID = ProgramInformation.attr(tva.a_programId).value();
 			if (!isCRIDURI(programCRID))
-				errs.addError({
+				this.#NotCRIDFormat(errs, {
 					code: "PI011",
 					message: `${tva.a_programId.attribute(ProgramInformation.name())} is not a valid CRID (${programCRID})`,
 					line: ProgramInformation.line(),
@@ -1617,7 +1627,7 @@ export default class ContentGuideCheck {
 									fragment: child,
 								});
 							else if (!isCRIDURI(foundCRID))
-								errs.addError({
+								this.#NotCRIDFormat(errs, {
 									code: "PI033",
 									message: `${tva.a_crid.attribute(`${ProgramInformation.name()}.${tva.e_EpisodeOf}`)}=${foundCRID.quote()} is not a valid CRID`,
 									fragment: child,
@@ -1652,7 +1662,7 @@ export default class ContentGuideCheck {
 									fragment: child,
 								});
 							else if (!isCRIDURI(foundCRID))
-								errs.addError({
+								this.#NotCRIDFormat(errs,{
 									code: "PI045",
 									message: `${tva.a_crid.attribute(`${ProgramInformation.name()}.${tva.e_MemberOf}`)}=${foundCRID.quote()} is not a valid CRID`,
 									fragment: child,
@@ -1951,7 +1961,7 @@ export default class ContentGuideCheck {
 		if (GroupInformation.attr(tva.a_groupId)) {
 			const groupId = GroupInformation.attr(tva.a_groupId).value();
 			if (!isCRIDURI(groupId))
-				errs.addError({
+				this.#NotCRIDFormat(errs, {
 					code: "GIM003",
 					message: `${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is not a valid CRID`,
 					line: GroupInformation.line(),
@@ -2974,12 +2984,13 @@ export default class ContentGuideCheck {
 
 				let ProgramCRID = Program.attr(tva.a_crid);
 				if (ProgramCRID) {
-					if (!isCRIDURI(ProgramCRID.value()))
-						errs.addError({
+					if (!isCRIDURI(ProgramCRID.value())) {
+						this.#NotCRIDFormat(errs, {
 							code: "SE011",
 							message: `${tva.a_crid.attribute(tva.e_Program)} is not a valid CRID (${ProgramCRID.value()})`,
 							fragment: Program,
 						});
+					}
 					if (!isIni(programCRIDs, ProgramCRID.value()))
 						errs.addError({
 							code: "SE012",

@@ -1,12 +1,10 @@
 /**
  * sl_check.js
- * 
+ *
  * Check a service list
  */
 import { readFileSync } from "fs";
 import process from "process";
-
-
 
 import chalk from "chalk";
 import { parseXmlString } from "libxmljs2";
@@ -384,7 +382,7 @@ export default class ServiceListCheck {
 	#allowedVideoConformancePoints;
 	#RecordingInfoCSvalues;
 
-	constructor(useURLs, opts, async=true) {
+	constructor(useURLs, opts, async = true) {
 		this.#numRequests = 0;
 
 		this.#knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs, async);
@@ -418,7 +416,6 @@ export default class ServiceListCheck {
 			console.log(version.schema ? chalk.green("OK") : chalk.red.bold("FAIL"));
 		});
 	}
-
 
 	stats() {
 		let res = {};
@@ -1347,9 +1344,7 @@ export default class ServiceListCheck {
 					if (nestedCAsystemid) {
 						CASystemID_value = nestedCAsystemid.text();
 					}
-				} 
-				else 
-					CASystemID_value = CASystemID.text();
+				} else CASystemID_value = CASystemID.text();
 				if (CASystemID_value) {
 					let CASid_value = parseInt(CASystemID_value, 10);
 					if (isNaN(CASid_value)) {
@@ -1385,8 +1380,7 @@ export default class ServiceListCheck {
 					if (nestedDRMsystemid) {
 						DRMSystemID_value = nestedDRMsystemid.text().toLowerCase();
 					}
-				} 
-				else DRMSystemID_value = DRMSystemID.text().toLowerCase();
+				} else DRMSystemID_value = DRMSystemID.text().toLowerCase();
 				if (DRMSystemID_value && ContentProtectionIDs.find((el) => el.id == DRMSystemID_value || el.id.substring(el.id.lastIndexOf(":") + 1) == DRMSystemID_value) == undefined) {
 					errs.addError({
 						code: "SI033",
@@ -1781,7 +1775,7 @@ export default class ServiceListCheck {
 							fragment: element,
 						});
 				};
-				let DisallowedElement = (element, childElementName, modulation, suffix="-0") => {
+				let DisallowedElement = (element, childElementName, modulation, suffix = "-0") => {
 					if (hasChild(element, childElementName))
 						errs.addError({
 							code: `SI204${suffix}`,
@@ -1805,7 +1799,7 @@ export default class ServiceListCheck {
 						checkElement(ModulationType, dvbi.e_ModulationType, sats.S2_Modulation, sats.MODULATION_S2, "SI202b");
 						checkElement(FEC, dvbi.e_FEC, sats.S2_FEC, sats.MODULATION_S2, "SI203b");
 						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodMode, sats.MODULATION_S2, "k");
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S2, 'l');
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S2, "l");
 						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S2, "m");
 						break;
 					case sats.MODULATION_S2X:
@@ -1959,13 +1953,15 @@ export default class ServiceListCheck {
 		let uID = service.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
 		if (uID) {
 			thisServiceId = uID.text();
-			if (!validServiceIdentifier(thisServiceId))
+			if (!validServiceIdentifier(thisServiceId)) {
 				errs.addError({
 					code: "SL110",
 					message: `${thisServiceId.quote()} is not a valid service identifier`,
 					fragment: uID,
 					key: "invalid tag",
 				});
+				errs.errorDescription({ code: "SL110", description: "service identifier should be a tag: URI according to IETF RFC 4151" });
+			}
 			if (!uniqueServiceIdentifier(thisServiceId, knownServices))
 				errs.addError({
 					code: "SL111",
@@ -1995,7 +1991,7 @@ export default class ServiceListCheck {
 					type: WARNING,
 					code: "SL131",
 					key: "duplicate value",
-					message: `duplicate value (${TargetRegion.value}) specified for ${dvbi.e_TargetRegion.elementize()}`,
+					message: `duplicate value (${TargetRegion.text()}) specified for ${dvbi.e_TargetRegion.elementize()}`,
 					fragment: TargetRegion,
 				});
 			}
@@ -2309,7 +2305,7 @@ export default class ServiceListCheck {
 	 * @param {Class}  errs        Errors found in validaton
 	 * @param {String} log_prefix  the first part of the logging location (or null if no logging)
 	 */
-	/*public*/ doValidateServiceList(SLtext, errs, log_prefix=null) {
+	/*public*/ doValidateServiceList(SLtext, errs, log_prefix = null) {
 		this.#numRequests++;
 		if (!SLtext) {
 			errs.addError({
@@ -2682,13 +2678,20 @@ export default class ServiceListCheck {
 							key: "undefined region",
 						});
 					else {
-						if (foundRegion.selectable == false)
+						if (foundRegion.selectable == false) {
 							errs.addError({
 								code: "SL242",
 								message: `${dvbi.e_TargetRegion.elementize()} ${TargetRegion.text().quote()} in ${dvbi.e_LCNTable.elementize()} is not selectable`,
 								fragment: TargetRegion,
 								key: "unselectable region",
 							});
+							errs.errorDescription({
+								code: "SL242",
+								description: `the region ID specified in the ${dvbi.e_TargetRegion.elementize()} is defined with ${
+									dvbi.a_selectable
+								}=false in the ${dvbi.e_RegionList.elementize()} `,
+							});
+						}
 						foundRegion.used = true;
 					}
 
@@ -2821,7 +2824,7 @@ export default class ServiceListCheck {
 				errs.errorDescription({
 					code: "SL282",
 					clause: "see A177 table 14",
-					description: `lanugages used in ${tva.e_AudioAttributes.elementize()}${tva.e_AudioLanguage.elementize()} should be announced in ${dvbi.e_LanguageList.elementize()}`,
+					description: `only lanugages used in ${tva.e_AudioAttributes.elementize()}${tva.e_AudioLanguage.elementize()} should be announced in ${dvbi.e_LanguageList.elementize()}`,
 				});
 			}
 		});

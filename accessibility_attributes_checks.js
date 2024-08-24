@@ -1,7 +1,7 @@
 /**
  * accessibility_attribites_checks.js
- * 
- * Checks the value space of the <AccessibilityAttributes> element against the rules and 
+ *
+ * Checks the value space of the <AccessibilityAttributes> element against the rules and
  * values provided in DVB A177.
  */
 import { datatypeIs } from "./phlib/phlib.js";
@@ -13,6 +13,7 @@ import { APPLICATION, WARNING } from "./error_list.js";
 import { checkTopElementsAndCardinality } from "./schema_checks.js";
 import { CS_URI_DELIMITER } from "./classification_scheme.js";
 
+import { DumpString } from "./utils.js";
 
 export function CheckAccessibilityAttributes(AccessibilityAttributes, cs, errs, errCode) {
 	const ACCESSIBILITY_CHECK_KEY = "accessibility attributes";
@@ -126,23 +127,27 @@ export function CheckAccessibilityAttributes(AccessibilityAttributes, cs, errs, 
 	};
 
 	let checkCS = (elem, childName, cs, errNum, storage = null) => {
-		let children = elem.childNodes();
+		let rc = true,
+			children = elem.childNodes();
 		if (children)
 			children.forEachSubElement((e) => {
 				if (e.name() == childName) {
 					let href = e.attr(tva.a_href) ? e.attr(tva.a_href).value() : null;
-					if (href && !cs.isIn(href))
+					if (href && !cs.isIn(href)) {
 						errs.addError({
 							code: `${errCode}-${errNum}`,
 							fragment: e,
 							message: `"${href}" is not valid for ${e.name().elementize()} in ${elem.name().elementize()}`,
 							key: ACCESSIBILITY_CHECK_KEY,
 						});
+						rc = false;
+					}
 					if (storage && datatypeIs(storage, "array") && href) {
 						storage.push(href);
 					}
 				}
 			});
+		return rc;
 	};
 
 	let checkSignLanguage = (elem, childName, errNum) => {
@@ -150,13 +155,31 @@ export function CheckAccessibilityAttributes(AccessibilityAttributes, cs, errs, 
 		if (children)
 			children.forEachSubElement((e) => {
 				if (e.name() == childName) {
-					if (cs.KnownLanguages.checkSignLanguage(e.text()) != cs.KnownLanguages.languageKnown)
+					let languageCode = e.text();
+					let lState = cs.KnownLanguages.isKnown(languageCode);
+					if (lState.resp == cs.KnownLanguages.languageRedundant) {
 						errs.addError({
-							code: `${errCode}-${errNum}`,
+							code: `${errCode}-${errNum}a`,
 							fragment: e,
-							message: `"${e.text()}" is not a valid sign language for ${e.name().elementize()} in ${elem.name().elementize()}`,
+							message: `sign language ${languageCode.quote()} is redundant${lState.pref ? `, use ${lState.pref.quote()} instead` : ""}`,
+							key: "deprecated language",
+							type: WARNING,
+						});
+						if (lState.pref) languageCode = lState.pref;
+					}
+
+					if (cs.KnownLanguages.checkSignLanguage(languageCode) != cs.KnownLanguages.languageKnown) {
+						errs.addError({
+							code: `${errCode}-${errNum}b`,
+							fragment: e,
+							message: `${languageCode.quote()} is not a valid sign language for ${e.name().elementize()} in ${elem.name().elementize()}`,
 							key: ACCESSIBILITY_CHECK_KEY,
 						});
+						errs.errorDescription({
+							code: `${errCode}-${errNum}b`,
+							description: `language used for ${e.name().elementize()}} must be a sign language in the IANA language-subtag-regostry`,
+						});
+					}
 				}
 			});
 	};
@@ -323,7 +346,8 @@ export function CheckAccessibilityAttributes(AccessibilityAttributes, cs, errs, 
 						`${errCode}-71`
 					);
 					checkAppInformation(elem, 72);
-					checkCS(elem, tva.e_Coding, cs.VideoCodecCS, 73);
+					if (!checkCS(elem, tva.e_Coding, cs.VideoCodecCS, 73))
+						errs.errorDescription({ code: `${errCode}-73`, description: `value for ${tva.e_Coding.elementize()} is not taken from the VideoCodecCS` });
 					checkSignLanguage(elem, tva.e_SignLanguage, 74);
 					break;
 				case tva.e_DialogueEnhancementAttributes:
