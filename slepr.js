@@ -19,7 +19,7 @@ import { hasChild } from "./schema_checks.js";
 import { datatypeIs } from "./phlib/phlib.js";
 
 var masterSLEPR = "";
-const EMPTY_SLEPR = '<ServiceListEntryPoints xmlns="urn:dvb:metadata:servicelistdiscovery:2021"></ServiceListEntryPoints>';
+const EMPTY_SLEPR = '<ServiceListEntryPoints xmlns="urn:dvb:metadata:servicelistdiscovery:2024"></ServiceListEntryPoints>';
 
 const RFC2397_PREFIX = "data:";
 
@@ -143,14 +143,10 @@ export default class SLEPR {
 			// check for any erronous arguments
 			for (var key in req.query) if (!isIn(allowed_arguments, key, false)) req.parseErr.push(`invalid argument [${key}]`);
 
-			//regulatorListFlag needs to be a boolean, "true" or "false" only
-			if (req.query.regulatorListFlag) {
-				if (!datatypeIs(req.query.regulatorListFlag, "string")) req.parseErr.push(`invalid type for ${dvbi.a_regulatorListFlag} [${typeof req.query.regulatorListFlag}]`);
-
-				if (!["true", "false"].includes(req.query.regulatorListFlag.toLowerCase()))
-					req.parseErr.push(`invalid value for ${dvbi.a_regulatorListFlag} [${req.query.regulatorListFlag}]`);
-			}
-
+			var checkBoolean = (bool) => ["true", "false"].includes(bool);
+			checkIt(req.query.regulatorListFlag, dvbi.a_regulatorListFlag, checkBoolean);
+			checkIt(req.query.inlineImages, dvbi.q_inlineImages, checkBoolean);
+			
 			//TargetCountry(s)
 			var checkTargetCountry = (country) => this.#knownCountries.isISO3166code(country, false);
 			checkIt(req.query.TargetCountry, dvbi.e_TargetCountry, checkTargetCountry);

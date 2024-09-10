@@ -127,6 +127,7 @@ export const DVBI_ServiceListSchema = {
 	r4: { file: join(".", "dvbi_v4.0-with-hls-hbbtv.xsd") },
 	r5: { file: join(".", "dvbi_v5.0-with-hls-hbbtv.xsd") },
 	r6: { file: join(".", "dvbi_v6.0-with-hls-hbbtv.xsd") },
+	r7: { file: join(".", "dvbi_v7.0-with-hls-hbbtv.xsd") },
 };
 
 const languagesFilename = "language-subtag-registry";

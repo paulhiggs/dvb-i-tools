@@ -1,4 +1,6 @@
 import chalk from "chalk";
+
+// marudor/libxmljs2 is no longer maintained
 import { parseXmlString } from "libxmljs2";
 
 import { readFileSync } from "fs";
@@ -69,6 +71,7 @@ const SCHEMA_r0 = 0,
 	SCHEMA_r4 = 4,
 	SCHEMA_r5 = 5,
 	SCHEMA_r6 = 6,
+	SCHEMA_r7 = 7,
 	SCHEMA_unknown = -1;
 
 export const DRAFT = 0x01,
@@ -78,6 +81,14 @@ export const DRAFT = 0x01,
 
 var SchemaVersions = [
 	// schema property is loaded from specified filename
+	{
+		namespace: dvbi.A177r7_Namespace,
+		version: SCHEMA_r7,
+		filename: DVBI_ServiceListSchema.r7.file,
+		schema: null,
+		status: DRAFT,
+		specVersion: "A177r7",
+	},
 	{
 		namespace: dvbi.A177r6_Namespace,
 		version: SCHEMA_r6,
@@ -1788,7 +1799,7 @@ export default class ServiceListCheck {
 							fragment: element,
 						});
 				};
-				let DisallowedElement = (element, childElementName, modulation, suffix="-0") => {
+				let DisallowedElement = (element, childElementName, modulation, suffix = "-0") => {
 					if (hasChild(element, childElementName))
 						errs.addError({
 							code: `SI204${suffix}`,
@@ -1812,7 +1823,7 @@ export default class ServiceListCheck {
 						checkElement(ModulationType, dvbi.e_ModulationType, sats.S2_Modulation, sats.MODULATION_S2, "SI202b");
 						checkElement(FEC, dvbi.e_FEC, sats.S2_FEC, sats.MODULATION_S2, "SI203b");
 						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodMode, sats.MODULATION_S2, "k");
-						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S2, 'l');
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S2, "l");
 						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S2, "m");
 						break;
 					case sats.MODULATION_S2X:
