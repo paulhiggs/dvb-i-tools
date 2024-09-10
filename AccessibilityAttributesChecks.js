@@ -206,9 +206,21 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 		if (children)
 			children.forEachSubElement((e) => {
 				if (e.name() == childName) {
+					checkTopElementsAndCardinality(
+						e,
+						[
+							{ name: tva.e_Coding, minOccurs: 0 },
+							{ name: tva.e_MixType, minOccurs: 0 },
+							{ name: tva.e_AudioLanguage, minOccurs: 0 },
+						],
+						tvaEC.AudioAttributes,
+						false,
+						errs,
+						`${errCode}-${errNum}a`
+					);
 					// AccessibilityAttributes.*.AudioAttribites.AudioLanguage
-					checkLanguage(e, tva.e_AudioLanguage, `${errNum}a`);
-					checkLanguagePurpose(e, tva.e_AudioLanguage, `${errNum}b`);
+					checkLanguage(e, tva.e_AudioLanguage, `${errNum}b`);
+					checkLanguagePurpose(e, tva.e_AudioLanguage, `${errNum}c`);
 					let c2 = e.childNodes();
 					if (c2)
 						c2.forEachSubElement((e2) => {
@@ -217,7 +229,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 									// AccessibilityAttributes.*.AudioAttribites.Coding
 									if (e2.attr(tva.a_href) && !cs.AudioCodecCS.isIn(e2.attr(tva.a_href).value()))
 										errs.addError({
-											code: `${errCode}-${errNum}c`,
+											code: `${errCode}-${errNum}d`,
 											fragment: e2,
 											message: `"${e2.attr(tva.a_href).value()}" not not valid for ${elem.name().elementize()}${e.name().elementize()}${e2.name().elementize()}`,
 											key: ACCESSIBILITY_CHECK_KEY,
@@ -227,7 +239,7 @@ export function CheckAccessibilityAttributes(props, AccessibilityAttributes, cs,
 									// AccessibilityAttributes.*.AudioAttribites.MixType
 									if (e2.attr(tva.a_href) && !cs.AudioPresentationCS.isIn(e2.attr(tva.a_href).value()))
 										errs.addError({
-											code: `${errCode}-${errNum}d`,
+											code: `${errCode}-${errNum}e`,
 											fragment: e2,
 											message: `"${e2.attr(tva.a_href).value()}" not not valid for ${elem.name().elementize()}${e.name().elementize()}${e2.name().elementize()}`,
 											key: ACCESSIBILITY_CHECK_KEY,
