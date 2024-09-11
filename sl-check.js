@@ -148,6 +148,7 @@ var SchemaVersions = [
 ];
 
 const OutOfScheduledHoursBanners = [
+	{ ver: SCHEMA_r7, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
 	{ ver: SCHEMA_r6, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
 	{ ver: SCHEMA_r5, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
 	{ ver: SCHEMA_r4, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
@@ -157,6 +158,7 @@ const OutOfScheduledHoursBanners = [
 	{ ver: SCHEMA_r0, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v1 },
 ];
 const ContentFinishedBanners = [
+	{ ver: SCHEMA_r7, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
 	{ ver: SCHEMA_r6, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
 	{ ver: SCHEMA_r5, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
 	{ ver: SCHEMA_r4, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
@@ -165,6 +167,7 @@ const ContentFinishedBanners = [
 	{ ver: SCHEMA_r1, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
 ];
 const ServiceListLogos = [
+	{ ver: SCHEMA_r7, val: dvbi.LOGO_SERVICE_LIST_v3 },
 	{ ver: SCHEMA_r6, val: dvbi.LOGO_SERVICE_LIST_v3 },
 	{ ver: SCHEMA_r5, val: dvbi.LOGO_SERVICE_LIST_v3 },
 	{ ver: SCHEMA_r4, val: dvbi.LOGO_SERVICE_LIST_v3 },
@@ -174,6 +177,7 @@ const ServiceListLogos = [
 	{ ver: SCHEMA_r0, val: dvbi.LOGO_SERVICE_LIST_v1 },
 ];
 const ServiceLogos = [
+	{ ver: SCHEMA_r7, val: dvbi.LOGO_SERVICE_v3 },
 	{ ver: SCHEMA_r6, val: dvbi.LOGO_SERVICE_v3 },
 	{ ver: SCHEMA_r5, val: dvbi.LOGO_SERVICE_v3 },
 	{ ver: SCHEMA_r4, val: dvbi.LOGO_SERVICE_v3 },
@@ -183,6 +187,7 @@ const ServiceLogos = [
 	{ ver: SCHEMA_r0, val: dvbi.LOGO_SERVICE_v1 },
 ];
 const ServiceBanners = [
+	{ ver: SCHEMA_r7, val: dvbi.SERVICE_BANNER_v4 },
 	{ ver: SCHEMA_r6, val: dvbi.SERVICE_BANNER_v4 },
 	{ ver: SCHEMA_r5, val: dvbi.SERVICE_BANNER_v4 },
 	{ ver: SCHEMA_r4, val: dvbi.SERVICE_BANNER_v4 },
@@ -190,6 +195,7 @@ const ServiceBanners = [
 	{ ver: SCHEMA_r2, val: dvbi.SERVICE_BANNER_v4 },
 ];
 const ContentGuideSourceLogos = [
+	{ ver: SCHEMA_r7, val: dvbi.LOGO_CG_PROVIDER_v3 },
 	{ ver: SCHEMA_r6, val: dvbi.LOGO_CG_PROVIDER_v3 },
 	{ ver: SCHEMA_r5, val: dvbi.LOGO_CG_PROVIDER_v3 },
 	{ ver: SCHEMA_r4, val: dvbi.LOGO_CG_PROVIDER_v3 },
@@ -249,16 +255,34 @@ let uniqueServiceIdentifier = (identifier, identifiers) => !isIn(identifiers, id
 let validServiceControlApplication = (hrefType, schemaVersion) => {
 	let appTypes = [dvbi.APP_IN_PARALLEL, dvbi.APP_IN_CONTROL];
 	if (schemaVersion >= SCHEMA_r6) appTypes.push(dvbi.APP_SERVICE_PROVIDER);
+	if (schemaVersion >= SCHEMA_r7) appTypes.push(dvbi.APP_IN_SERIES);
 	return appTypes.includes(hrefType);
+};
+
+/**
+ * determines if the identifer provided refers to a validconsent application type
+ *
+ * @param {String}  hrefType       The type of the service application
+ * @param {integer} schemaVersion  The schema version of the XML document
+ * @returns {boolean} true if this is a valid application being used with the service else false
+ */
+let validConsentApplication = (hrefType, schemaVersion) => {
+	let appTypes = [dvbi.APP_LIST_INSTALLATION, dvbi.APP_WITHDRAW_AGREEMENT, dvbi.APP_RENEW_CONSENT];
+	return schemaVersion >= SCHEMA_r7 && appTypes.includes(hrefType);
 };
 
 /**
  * determines if the identifer provided refers to a valid application being used with the service instance
  *
  * @param {String} hrefType  The type of the service application
+ * @param {integer} schemaVersion  The schema version of the XML document
  * @returns {boolean} true if this is a valid application being used with the service else false
  */
-let validServiceInstanceControlApplication = (hrefType) => [dvbi.APP_IN_PARALLEL, dvbi.APP_IN_CONTROL].includes(hrefType);
+let validServiceInstanceControlApplication = (hrefType, schemaVersion) => {
+	let appTypes = [dvbi.APP_IN_PARALLEL, dvbi.APP_IN_CONTROL];
+	if (schemaVersion >= SCHEMA_r7) appTypes.push(dvbi.APP_IN_SERIES);
+	return appTypes.includes(hrefType);
+};
 
 /**
  * determines if the identifer provided refers to a valid application to be launched when a service is unavailable
@@ -657,6 +681,10 @@ export default class ServiceListCheck {
 		return this.#match(ServiceListLogos, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null);
 	}
 
+	/*private*/ #validServiceInstallApp(HowRelated, namespace) {
+		return HowRelated.attr(dvbi.a_href) ? validConsentApplication(HowRelated, SchemaVersion(namespace)) : false;
+	}
+
 	/**
 	 * determines if the identifer provided refers to a valid service logo
 	 *
@@ -843,6 +871,8 @@ export default class ServiceListCheck {
 					if (this.#validServiceListLogo(HowRelated, props.namespace)) {
 						rc = HowRelated.attr(dvbi.a_href).value();
 						checkValidLogos(RelatedMaterial, errs, `${errCode}-10`, Location, this.#knownLanguages);
+					} else if (this.#validServiceInstallApp(HowRelated, props.namespace)) {
+						/* */
 					} else errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-11`));
 					break;
 				case SERVICE_RM:
