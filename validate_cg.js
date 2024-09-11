@@ -1,11 +1,13 @@
+/**
+ * validate_cg.js
+ * 
+ * An standalone runner for the content guide validator
+ */
 import chalk from "chalk";
-
-// command line arguments - https://github.com/75lb/command-line-args
 import commandLineArgs from "command-line-args";
 
 import { HTTPPort } from "./globals.js";
-
-import validator from "./Validator.js";
+import validator from "./validator.js";
 
 // command line options
 const optionDefinitions = [

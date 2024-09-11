@@ -1,21 +1,19 @@
 /**
- * ClassificationScheme.js
+ * classification_scheme.js
  *
  * Manages Classification Scheme loading and checking
- *
  */
+import { readFile, readFileSync } from "fs";
+
 import chalk from "chalk";
-import { readFile } from "fs";
-import { parseXmlString } from "libxmljs2";
-
-import { handleErrors } from "./fetch-err-handler.js";
-
 import { AvlTree } from "@datastructures-js/binary-search-tree";
-
-import { hasChild } from "./schema_checks.js";
-import { isHTTPURL } from "./pattern_checks.js";
+import { parseXmlString } from "libxmljs2";
+import fetchS from "sync-fetch";
 
 import { dvb } from "./DVB_definitions.js";
+import { handleErrors } from "./fetch_err_handler.js";
+import { hasChild } from "./schema_checks.js";
+import { isHTTPURL } from "./pattern_checks.js";
 
 export const CS_URI_DELIMITER = ":";
 
@@ -47,7 +45,7 @@ function loadClassificationScheme(xmlCS, leafNodesOnly = false) {
 	let rc = { uri: null, vals: [] };
 	if (!xmlCS) return rc;
 
-	let CSnamespace = xmlCS.root().attr(dvb.a_uri);
+	const CSnamespace = xmlCS.root().attr(dvb.a_uri);
 	if (!CSnamespace) return rc;
 	rc.uri = CSnamespace.value();
 	let t = 0,
@@ -91,22 +89,41 @@ export default class ClassificationScheme {
 	 * @param {String} csURL URL to the classification scheme
 
 	 */
-	#loadFromURL(csURL) {
-		let isHTTPurl = isHTTPURL(csURL);
+	#loadFromURL(csURL, async=true) {
+		const isHTTPurl = isHTTPURL(csURL);
 		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving CS (${this.#leafsOnly ? "leaf" : "all"} nodes) from ${csURL} via fetch()`));
 		if (!isHTTPurl) return;
 
-		fetch(csURL)
-			.then(handleErrors)
-			.then((response) => response.text())
-			.then((strXML) => loadClassificationScheme(parseXmlString(strXML), this.#leafsOnly))
-			.then((res) => {
-				res.vals.forEach((e) => {
-					this.insertValue(e, true);
-				});
-				this.#schemes.push(res.uri);
-			})
-			.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${csURL}`)));
+		if (async)
+			fetch(csURL)
+				.then(handleErrors)
+				.then((response) => response.text())
+				.then((strXML) => loadClassificationScheme(parseXmlString(strXML), this.#leafsOnly))
+				.then((res) => {
+					res.vals.forEach((e) => {
+						this.insertValue(e, true);
+					});
+					this.#schemes.push(res.uri);
+				})
+				.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${csURL}`)));
+		else {
+			let resp = null;
+			try {
+				resp = fetchS(csURL);
+			} catch (error) {
+				console.log(chalk.red(error.message));
+			}
+			if (resp) {
+				if (resp.ok) {
+					let CStext = loadClassificationScheme(parseXmlString(resp.text()), this.#leafsOnly);
+					CStext.vals.forEach((e) => {
+						this.insertValue(e, true);
+					});
+					this.#schemes.push(CStext.uri);
+				}
+				else console.log(chalk.red(`error (${resp.status}:${resp.statusText}) handling ${ref}`));
+			}
+		}
 	}
 
 	/**
@@ -114,29 +131,39 @@ export default class ClassificationScheme {
 	 *
 	 * @param {String} classificationScheme the filename of the classification scheme
 	 */
-	#loadFromFile(classificationScheme) {
+	#loadFromFile(classificationScheme, async=true) {
 		console.log(chalk.yellow(`reading CS (${this.#leafsOnly ? "leaf" : "all"} nodes) from ${classificationScheme}`));
 
-		readFile(classificationScheme, { encoding: "utf-8" }, (err, data) => {
-			if (!err) {
-				let res = loadClassificationScheme(parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm, "")), this.#leafsOnly);
-				res.vals.forEach((e) => {
-					this.insertValue(e, true);
-				});
-				this.#schemes.push(res.uri);
-			} else console.log(chalk.red(err));
-		});
+		if (async)
+			readFile(classificationScheme, { encoding: "utf-8" }, (err, data) => {
+				if (!err) {
+					let res = loadClassificationScheme(parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm, "")), this.#leafsOnly);
+					res.vals.forEach((e) => {
+						this.insertValue(e, true);
+					});
+					this.#schemes.push(res.uri);
+				} else console.log(chalk.red(err));
+			});
+		else {
+			let buff = readFileSync(classificationScheme, { encoding: "utf-8" });
+			let data = buff.toString();
+			let res = loadClassificationScheme(parseXmlString(data.replace(/(\r\n|\n|\r|\t)/gm, "")), this.#leafsOnly);
+			res.vals.forEach((e) => {
+				this.insertValue(e, true);
+			});
+			this.#schemes.push(res.uri);
+		}
 	}
 
-	loadCS(options) {
+	loadCS(options, async=true) {
 		if (!options) options = {};
 		if (!Object.prototype.hasOwnProperty.call(options, "leafNodesOnly")) options.leafNodesOnly = false;
 		this.#leafsOnly = options.leafNodesOnly;
 
-		if (options.file) this.#loadFromFile(options.file);
-		if (options.files) options.files.forEach((file) => this.#loadFromFile(file));
-		if (options.url) this.#loadFromURL(options.url);
-		if (options.urls) options.urls.forEach((url) => this.#loadFromURL(url));
+		if (options.file) this.#loadFromFile(options.file, async);
+		if (options.files) options.files.forEach((file) => this.#loadFromFile(file, async));
+		if (options.url) this.#loadFromURL(options.url, async);
+		if (options.urls) options.urls.forEach((url) => this.#loadFromURL(url, async));
 	}
 
 	/**
@@ -155,7 +182,7 @@ export default class ClassificationScheme {
 	 * @returns {boolean}
 	 */
 	hasScheme(term) {
-		let pos = term.lastIndexOf(CS_URI_DELIMITER);
+		const pos = term.lastIndexOf(CS_URI_DELIMITER);
 		if (pos == -1) return false;
 		return this.#schemes.includes(term.slice(0, pos));
 	}
@@ -166,4 +193,5 @@ export default class ClassificationScheme {
 			if (prefix == "" || node.getValue().beginsWith(prefix)) console.log(node.getValue());
 		});
 	}
+
 }

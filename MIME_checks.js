@@ -1,3 +1,9 @@
+/**
+ * MIME_checks.js
+ * 
+ * useful routines to check MIME types that could be used in DVB-I documents
+ */
+
 const JPEG_MIME = "image/jpeg",
 	PNG_MIME = "image/png",
 	WebP_MIME = "image/WebP"; // BUG2937 - https://bugzilla.dvb.org/show_bug.cgi?id=2937
@@ -11,7 +17,7 @@ const allowedImageTypes = [JPEG_MIME, PNG_MIME, WebP_MIME];
  * @param {String} val the MIME type
  * @return {boolean} true if the MIME type represents a JPEG image, otherwise false
  */
-export var isJPEGmime = (val) => (val ? val == JPEG_MIME : false);
+export let isJPEGmime = (val) => (val ? val == JPEG_MIME : false);
 
 /**
  * determines if the value is a valid PNG MIME type
@@ -19,7 +25,7 @@ export var isJPEGmime = (val) => (val ? val == JPEG_MIME : false);
  * @param {String} val the MIME type
  * @return {boolean} true if the MIME type represents a PNG image, otherwise false
  */
-export var isPNGmime = (val) => (val ? val == PNG_MIME : false);
+export let isPNGmime = (val) => (val ? val == PNG_MIME : false);
 
 /** BUG2937 - https://bugzilla.dvb.org/show_bug.cgi?id=2937
  * determines if the value is a valid WebP MIME type

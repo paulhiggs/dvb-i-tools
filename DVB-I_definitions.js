@@ -1,8 +1,14 @@
+/**
+ * DVB-I_defintions.js
+ * 
+ * Defintions made in DVB A177 Bluebooks
+ */
+import { tva, tvaEA, tvaEC, TVA_CSmetadata } from "./TVA_definitions.js";
+
 const DVB_metadata = "urn:dvb:metadata";
 const DVB_CSmetadata = `${DVB_metadata}:cs`,
 	FVC_CSmetadata = "urn:fvc:metadata:cs";
 
-import { tva, tvaEA, tvaEC, TVA_CSmetadata } from "./TVA_definitions.js";
 
 const PaginationPrefix = `${FVC_CSmetadata}:HowRelatedCS:2015-12:pagination`,
 	NowNextCRIDPrefix = "crid://dvb.org/metadata/schedules/now-next";

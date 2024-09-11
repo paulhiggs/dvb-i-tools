@@ -1,3 +1,9 @@
+/**
+ * MPEG7_defintions.js
+ * 
+ * Defintion made in MPEG-&, ISO/IEC 15938-5
+ */
+
 const FILE_FORMAT_CS = "urn:mpeg:mpeg7:cs:FileFormatCS:2001";
 const AUDIO_PRESENTATION_CS = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001";
 

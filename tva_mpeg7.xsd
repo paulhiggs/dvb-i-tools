@@ -42,7 +42,7 @@
 			user description only and Module 4 contains datatypes only used by the ETSI TS 102
 			822-3-3 extended Metadata Schema. </documentation>
 	</annotation>
-	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
+	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="./xml.xsd"/>
 	<!-- #################################################################### -->
 	<annotation>
 		<documentation> MODULE 1. MPEG-7 SCHEMA COMPONENTS USED BY TVA BOTH FOR CONTENT DESCRIPTION

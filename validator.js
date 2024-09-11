@@ -1,41 +1,28 @@
-// express framework - https://expressjs.com/en/4x/api.html
-import express from "express";
-import session from "express-session";
-
-import { existsSync, writeFile } from "fs";
-import { join, sep } from "path";
-
-import chalk from "chalk";
-
-import cors from "cors";
+/**
+ * validator.js
+ *
+ *
+ */
+import { join } from "path";
 import { createServer } from "https";
-
 import os from "node:os";
-
-// morgan - https://github.com/expressjs/morgan
-import morgan, { token } from "morgan";
-
-// file upload for express - https://github.com/richardgirges/express-fileupload
-import fileupload from "express-fileupload";
-
-// favourite icon - https://www.npmjs.com/package/serve-favicon
-import favicon from "serve-favicon";
-
 import process from "process";
 
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
+import chalk from "chalk";
+import cors from "cors";
+import express from "express";
+import session from "express-session";
+import morgan, { token } from "morgan";
+import fileupload from "express-fileupload";
+import favicon from "serve-favicon";
 import fetchS from "sync-fetch";
 
-import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults } from "./ui.js";
-import ErrorList from "./ErrorList.js";
-import { isHTTPURL } from "./pattern_checks.js";
-import { Default_SLEPR } from "./data-locations.js";
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.js";
-
+import { Default_SLEPR, __dirname } from "./data_locations.js";
+import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults } from "./ui.js";
+import ErrorList from "./error_list.js";
+import { isHTTPURL } from "./pattern_checks.js";
+import { readmyfile } from "./utils.js";
 import {
 	LoadGenres,
 	LoadRatings,
@@ -48,61 +35,17 @@ import {
 	LoadSubtitlePurposes,
 	LoadLanguages,
 	LoadCountries,
-} from "./CSLoaders.js";
-
-export const MODE_UNSPECIFIED = "none",
-	MODE_SL = "sl",
-	MODE_CG = "cg",
-	MODE_URL = "url",
-	MODE_FILE = "file";
-
-// the service list validation
-import ServiceListCheck from "./sl-check.js";
-
-// the content guide validation
-import ContentGuideCheck from "./cg-check.js";
-
-// the service list registrt
+} from "./classification_scheme_loaders.js";
+import ServiceListCheck from "./sl_check.js";
+import ContentGuideCheck from "./cg_check.js";
 import SLEPR from "./slepr.js";
-var csr = null;
+import { createPrefix, writeOut } from "./logger.js";
+import { MODE_URL, MODE_FILE, MODE_SL, MODE_CG, MODE_UNSPECIFIED } from "./ui.js";
 
-import { readmyfile } from "./utils.js";
+let csr = null;
+
 const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
-
-export function writeOut(errs, filebase, markup, req = null) {
-	if (!filebase || errs.markupXML?.length == 0) return;
-
-	let outputLines = [];
-	if (markup && req?.body?.XMLurl) outputLines.push(`<!-- source: ${req.body.XMLurl} -->`);
-	errs.markupXML.forEach((line) => {
-		outputLines.push(line.value);
-		if (markup && line.validationErrors)
-			line.validationErrors.forEach((error) => {
-				outputLines.push(`<!--${error.replace(/[\n]/g, "")}-->`);
-			});
-	});
-	let filename = markup ? `${filebase}.mkup.txt` : `${filebase}.raw.txt`;
-	writeFile(filename, outputLines.join("\n"), (err) => {
-		if (err) console.log(chalk.red(err));
-	});
-}
-
-function createPrefix(req) {
-	const logDir = join(".", "arch");
-
-	if (!existsSync(logDir)) return null;
-
-	const getDate = (d) => {
-		const fillZero = (t) => (t < 10 ? `0${t}` : t);
-		return `${d.getFullYear()}-${fillZero(d.getMonth() + 1)}-${fillZero(d.getDate())} ${fillZero(d.getHours())}.${fillZero(d.getMinutes())}.${fillZero(d.getSeconds())}`;
-	};
-
-	let fname = req.body.doclocation == MODE_URL ? req.body.XMLurl.substr(req.body.XMLurl.lastIndexOf("/") + 1) : req?.files?.XMLfile?.name;
-	if (!fname) return null;
-
-	return `${logDir}${sep}${getDate(new Date())} (${req.body.testtype == MODE_SL ? "SL" : req.body.requestType}) ${fname.replace(/[/\\?%*:|"<>]/g, "-")}`;
-}
 
 function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasCG, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
 	if (!req.session.data) {
@@ -129,7 +72,7 @@ function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasC
 		else if (req.body.doclocation == MODE_URL && req.body.XMLurl.length == 0) req.parseErr = "URL not specified";
 		else if (req.body.doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) req.parseErr = "File not provided";
 
-		let log_prefix = createPrefix(req, res);
+		const log_prefix = createPrefix(req);
 		if (!req.parseErr)
 			switch (req.body.doclocation) {
 				case MODE_URL:
@@ -186,9 +129,10 @@ function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasC
 
 function validateServiceList(req, res, slcheck) {
 	let errs = new ErrorList();
-	let resp, VVxml = null;
-	let log_prefix = createPrefix(req, res);
-	if(req.method == "GET") {
+	let resp,
+		VVxml = null;
+	const log_prefix = createPrefix(req);
+	if (req.method == "GET") {
 		try {
 			resp = fetchS(req.query.url);
 		} catch (error) {
@@ -198,9 +142,8 @@ function validateServiceList(req, res, slcheck) {
 			if (resp.ok) VVxml = resp.text();
 			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
 		}
-	}
-	else if(req.method == "POST") {
-		VVxml = req.body
+	} else if (req.method == "POST") {
+		VVxml = req.body;
 	}
 	slcheck.doValidateServiceList(VVxml, errs, log_prefix);
 	drawResults(req, res, req.parseErr, errs);
@@ -211,9 +154,10 @@ function validateServiceList(req, res, slcheck) {
 
 function validateServiceListJson(req, res, slcheck) {
 	let errs = new ErrorList();
-	let resp, VVxml = null;
-	let log_prefix = createPrefix(req, res);
-	if(req.method == "GET") {
+	let resp,
+		VVxml = null;
+	const log_prefix = createPrefix(req);
+	if (req.method == "GET") {
 		try {
 			resp = fetchS(req.query.url);
 		} catch (error) {
@@ -223,16 +167,18 @@ function validateServiceListJson(req, res, slcheck) {
 			if (resp.ok) VVxml = resp.text();
 			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
 		}
-	}
-	else if(req.method == "POST") {
-		VVxml = req.body
+	} else if (req.method == "POST") {
+		VVxml = req.body;
 	}
 	slcheck.doValidateServiceList(VVxml, errs, log_prefix);
 	res.setHeader("Content-Type", "application/json");
-	if (req.parseErr) 
-		res.write(JSON.stringify({parseErr:req.parseErr}));
-	else 
-		res.write(JSON.stringify( (req.query.results && req.query.results == "all") ? { errs } : { errors: errs.errors.length, warnings : errs.warnings.length, informationals: errs.informationals.length }));
+	if (req.parseErr) res.write(JSON.stringify({ parseErr: req.parseErr }));
+	else
+		res.write(
+			JSON.stringify(
+				req.query.results && req.query.results == "all" ? { errs } : { errors: errs.errors.length, warnings: errs.warnings.length, informationals: errs.informationals.length }
+			)
+		);
 
 	writeOut(errs, log_prefix, true, req);
 	res.end();
@@ -387,25 +333,25 @@ export default function validator(options) {
 			validateServiceListJson(req, res, slcheck);
 		});
 
-		app.post("/validate_sl",express.text({type: "application/xml",limit: '2mb'}), function (req, res) {
-			validateServiceList(req, res,slcheck);
+		app.post("/validate_sl", express.text({ type: "application/xml", limit: "2mb" }), function (req, res) {
+			validateServiceList(req, res, slcheck);
 		});
 
-		app.post("/validate_sl_json",express.text({type: "application/xml",limit: '2mb'}), function (req, res) {
-			validateServiceListJson(req, res,slcheck);
+		app.post("/validate_sl_json", express.text({ type: "application/xml", limit: "2mb" }), function (req, res) {
+			validateServiceListJson(req, res, slcheck);
 		});
 	}
 
 	const SLEPR_query_route = "/query",
 		SLEPR_reload_route = "/reload";
 
-	let manualCORS = function (res, req, next) {
+	let manualCORS = function (/* eslint-disable no-unused-vars*/ res, req, /* eslint-enable */ next) {
 		next();
 	};
 	if (options.CORSmode == CORSlibrary) {
 		app.options("*", cors());
 	} else if (options.CORSmode == CORSmanual) {
-		manualCORS = function (req, res, next) {
+		manualCORS = function (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res, next) {
 			let opts = res.getHeader("X-Frame-Options");
 			if (opts) {
 				if (!opts.includes("SAMEORIGIN")) opts.push("SAMEORIGIN");
@@ -459,13 +405,13 @@ export default function validator(options) {
 			res.end();
 		});
 
-		app.get(SLEPR_reload_route, function (req, res) {
+		app.get(SLEPR_reload_route, function (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) {
 			csr.loadServiceListRegistry(options.CSRfile);
 			res.status(200).end();
 		});
 	}
 
-	app.get("/stats", function (req, res) {
+	app.get("/stats", function (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) {
 		stats_header(res);
 		tabulate(res, "System", {
 			host: os.hostname(),
@@ -480,11 +426,11 @@ export default function validator(options) {
 		slcheck && tabulate(res, "SL", slcheck.stats());
 		cgcheck && tabulate(res, "CG", cgcheck.stats());
 		stats_footer(res);
-		res.status(4200).end();
+		res.status(200).end();
 	});
 
 	// dont handle any other requests
-	app.get("*", function (req, res) {
+	app.get("*", function (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) {
 		res.status(404).end();
 	});
 

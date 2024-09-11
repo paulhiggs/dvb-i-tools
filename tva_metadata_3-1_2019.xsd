@@ -13,8 +13,8 @@
 		<documentation xml:lang="en"> 5. New isSkippable and isPrintable attributes in SegmentInformationType</documentation>
 		<documentation xml:lang="en"> 6. New type attribute in TVAMainType to define a type of xml document</documentation>
 	</annotation>
-	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
-	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
+	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="./xml.xsd"/>
+	<import namespace="urn:tva:mpeg7:2008" schemaLocation="./tva_mpeg7.xsd"/>
 	<annotation>
 		<documentation xml:lang="en">Section 6.3.3 BASIC TYPES</documentation>
 	</annotation>

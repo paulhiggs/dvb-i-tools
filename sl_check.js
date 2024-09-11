@@ -1,36 +1,30 @@
-import chalk from "chalk";
-
-// marudor/libxmljs2 is no longer maintained
-import { parseXmlString } from "libxmljs2";
-
+/**
+ * sl_check.js
+ *
+ * Check a service list
+ */
 import { readFileSync } from "fs";
 import process from "process";
 
+import chalk from "chalk";
+import { parseXmlString } from "libxmljs2";
+
 import { elementize, quote } from "./phlib/phlib.js";
 
-import ErrorList, { WARNING, APPLICATION } from "./ErrorList.js";
-
+import { tva, tvaEA } from "./TVA_definitions.js";
 import { sats } from "./DVB_definitions.js";
 import { dvbi, dvbiEC, dvbEA, XMLdocumentType } from "./DVB-I_definitions.js";
-
-import { tva, tvaEA } from "./TVA_definitions.js";
+import { OLD, DRAFT, ETSI, CURRENT } from "./globals.js";
+import ErrorList, { WARNING, APPLICATION } from "./error_list.js";
 import { isTAGURI } from "./URI_checks.js";
-
 import { xPath, xPathM, isIn, unEntity, getElementByTagName, DuplicatedValue } from "./utils.js";
-
 import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isDomainName, isRTSPURL } from "./pattern_checks.js";
-
-import { DVBI_ServiceListSchema } from "./data-locations.js";
-
-import { checkValidLogos } from "./RelatedMaterialChecks.js";
-import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement } from "./CommonErrors.js";
-
-import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./MultilingualElement.js";
+import { DVBI_ServiceListSchema, __dirname_linux } from "./data_locations.js";
+import { checkValidLogos } from "./related_material_checks.js";
+import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys } from "./common_errors.js";
+import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./multilingual_element.js";
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.js";
-
-import { writeOut } from "./Validator.js";
-import { keys } from "./CommonErrors.js";
-
+import { writeOut } from "./logger.js";
 import {
 	LoadGenres,
 	LoadVideoCodecCS,
@@ -49,10 +43,8 @@ import {
 	LoadServiceTypeCS,
 	LoadLanguages,
 	LoadCountries,
-} from "./CSLoaders.js";
-
-import { CheckAccessibilityAttributes } from "./AccessibilityAttributesChecks.js";
-
+} from "./classification_scheme_loaders.js";
+import { CheckAccessibilityAttributes } from "./accessibility_attributes_checks.js";
 import { DASH_IF_Content_Protection_List, ContentProtectionIDs, CA_SYSTEM_ID_REGISTRY, CASystemIDs } from "./identifiers.js";
 
 const ANY_NAMESPACE = "$%$!!";
@@ -74,12 +66,7 @@ const SCHEMA_r0 = 0,
 	SCHEMA_r7 = 7,
 	SCHEMA_unknown = -1;
 
-export const DRAFT = 0x01,
-	OLD = 0x02,
-	ETSI = 0x04,
-	CURRENT = 0x08;
-
-var SchemaVersions = [
+let SchemaVersions = [
 	// schema property is loaded from specified filename
 	{
 		namespace: dvbi.A177r7_Namespace,
@@ -212,12 +199,12 @@ const ContentGuideSourceLogos = [
  * @returns {integer} Representation of the schema version or error code if unknown
  */
 let SchemaVersion = (namespace) => {
-	let x = SchemaVersions.find((ver) => ver.namespace == namespace);
+	const x = SchemaVersions.find((ver) => ver.namespace == namespace);
 	return x ? x.version : SCHEMA_unknown;
 };
 
 let SchemaSpecVersion = (namespace) => {
-	let x = SchemaVersions.find((ver) => ver.namespace == namespace);
+	const x = SchemaVersions.find((ver) => ver.namespace == namespace);
 	return x ? x.specVersion : "r?";
 };
 
@@ -415,7 +402,7 @@ export default class ServiceListCheck {
 	#allowedVideoSchemes;
 	#allowedAudioSchemes;
 	#knownCountries;
-	#AudioPresentationCSvalues;
+	#audioPresentations;
 	#accessibilityPurposes;
 	#audioPurposes;
 	#subtitleCarriages;
@@ -428,52 +415,57 @@ export default class ServiceListCheck {
 	#allowedVideoConformancePoints;
 	#RecordingInfoCSvalues;
 
-	constructor(useURLs, opts) {
+	constructor(useURLs, opts, async = true) {
 		this.#numRequests = 0;
 
-		this.#knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs);
+		this.#knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs, async);
+		this.#knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs, async);
 
+		console.log(chalk.yellow.underline("loading classification schemes..."));
+		this.#allowedGenres = opts?.genres ? opts.genres : LoadGenres(useURLs, async);
+		this.#allowedVideoSchemes = opts?.videofmts ? opts.videofmts : LoadVideoCodecCS(useURLs, async);
+		this.#allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs, async);
+		this.#audioPresentations = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs, async);
+		this.#accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs, async);
+		this.#audioPurposes = opts?.audiopurp ? opts.audiopurp : LoadAudioPurpose(useURLs, async);
+		this.#subtitleCarriages = opts?.stcarriage ? opts.stcarriage : LoadSubtitleCarriages(useURLs, async);
+		this.#subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs, async);
+		this.#subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs, async);
+
+		this.#allowedPictureFormats = LoadPictureFormatCS(useURLs, async);
+		this.#allowedColorimetry = LoadColorimetryCS(useURLs, async);
+		this.#allowedServiceTypes = LoadServiceTypeCS(useURLs, async);
+
+		this.#allowedAudioConformancePoints = LoadAudioConformanceCS(useURLs, async);
+		this.#allowedVideoConformancePoints = LoadVideoConformanceCS(useURLs, async);
+		this.#RecordingInfoCSvalues = LoadRecordingInfoCS(useURLs, async);
+
+		// TODO - change this to support sync/asyna and file/url reading
 		console.log(chalk.yellow.underline("loading service list schemas..."));
 		SchemaVersions.forEach((version) => {
 			process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
-			version.schema = parseXmlString(readFileSync(version.filename));
+			let schema = readFileSync(version.filename).toString().replace(`schemaLocation="./`, `schemaLocation="${__dirname_linux}/`);
+			version.schema = parseXmlString(schema);
 			console.log(version.schema ? chalk.green("OK") : chalk.red.bold("FAIL"));
 		});
-
-		console.log(chalk.yellow.underline("loading classification schemes..."));
-		this.#allowedGenres = opts?.genres ? opts.genres : LoadGenres(useURLs);
-		this.#allowedVideoSchemes = opts?.videofmts ? opts.videofmts : LoadVideoCodecCS(useURLs);
-		this.#allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs);
-		this.#AudioPresentationCSvalues = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs);
-		this.#accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs);
-		this.#audioPurposes = opts?.audiopurp ? opts.audiopurp : LoadAudioPurpose(useURLs);
-		this.#subtitleCarriages = opts?.stcarriage ? opts.stcarriage : LoadSubtitleCarriages(useURLs);
-		this.#subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs);
-		this.#subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs);
-		this.#knownCountries = opts?.countries ? opts.countries : LoadCountries(useURLs);
-
-		this.#allowedPictureFormats = LoadPictureFormatCS(useURLs);
-		this.#allowedColorimetry = LoadColorimetryCS(useURLs);
-		this.#allowedServiceTypes = LoadServiceTypeCS(useURLs);
-
-		this.#allowedAudioConformancePoints = LoadAudioConformanceCS(useURLs);
-		this.#allowedVideoConformancePoints = LoadVideoConformanceCS(useURLs);
-		this.#RecordingInfoCSvalues = LoadRecordingInfoCS(useURLs);
 	}
 
 	stats() {
 		let res = {};
 		res.numRequests = this.#numRequests;
-		res.numAllowedGenres = this.#allowedGenres.count();
-		res.numKnownCountries = this.#knownCountries.count();
-		this.#knownLanguages.stats(res);
-		res.numAllowedPictureFormats = this.#allowedPictureFormats.count();
-		res.numAllowedColorimetry = this.#allowedColorimetry.count();
-		res.numAllowedServiceTypes = this.#allowedServiceTypes.count();
-		res.numAllowedAudioSchemes = this.#allowedAudioSchemes.count();
-		res.numAllowedVideoSchemes = this.#allowedVideoSchemes.count();
-		res.numAllowedVideoConformancePoints = this.#allowedVideoConformancePoints.count();
-		res.numAudioPresentationCSvalues = this.#AudioPresentationCSvalues.count();
+		res.numAllowedGenres = this.#allowedGenres?.count();
+		res.numKnownCountries = this.#knownCountries?.count();
+		this.#knownLanguages?.stats(res);
+		res.numAllowedPictureFormats = this.#allowedPictureFormats?.count();
+		res.numAllowedColorimetry = this.#allowedColorimetry?.count();
+		res.numAllowedServiceTypes = this.#allowedServiceTypes?.count();
+		res.numAllowedAudioSchemes = this.#allowedAudioSchemes?.count();
+		res.numAllowedVideoSchemes = this.#allowedVideoSchemes?.count();
+		res.numAllowedVideoConformancePoints = this.#allowedVideoConformancePoints?.count();
+		res.numAllowedAudioConformancePoints = this.#allowedAudioConformancePoints?.count();
+		res.numAudioPresentations = this.#audioPresentations?.count();
+		res.numAudioPurporses = this.#audioPurposes?.count();
+		res.numRecordingInfoValues = this.#RecordingInfoCSvalues?.count();
 		return res;
 	}
 
@@ -950,7 +942,6 @@ export default class ServiceListCheck {
 
 		AccessibilityAttribiutes.forEach((aa) => {
 			CheckAccessibilityAttributes(
-				props,
 				aa,
 				{
 					AccessibilityPurposeCS: this.#accessibilityPurposes,
@@ -962,7 +953,7 @@ export default class ServiceListCheck {
 					SubtitleCodingFormatCS: this.#subtitleCodings,
 					SubtitlePurposeTypeCS: this.#subtitlePurposes,
 					KnownLanguages: this.#knownLanguages,
-					AudioPresentationCS: this.#AudioPresentationCSvalues,
+					AudioPresentationCS: this.#audioPresentations,
 				},
 				errs,
 				`${errCode}-51`
@@ -1308,9 +1299,9 @@ export default class ServiceListCheck {
 		}
 
 		function checkMulticastDeliveryParams(params, errs, errCode) {
-			let IPMulticastAddress = params.get(xPath(props.prefix, dvbi.e_IPMulticastAddress), props.schema);
+			const IPMulticastAddress = params.get(xPath(props.prefix, dvbi.e_IPMulticastAddress), props.schema);
 			if (IPMulticastAddress) {
-				let CNAME = IPMulticastAddress.get(xPath(props.prefix, dvbi.e_CNAME), props.schema);
+				const CNAME = IPMulticastAddress.get(xPath(props.prefix, dvbi.e_CNAME), props.schema);
 				if (CNAME && !isDomainName(CNAME.text()))
 					errs.addError({
 						code: `${errCode}-1`,
@@ -1358,7 +1349,7 @@ export default class ServiceListCheck {
 			controlApps = [],
 			RelatedMaterial;
 		while ((RelatedMaterial = ServiceInstance.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
-			let foundHref = this.#validateRelatedMaterial(props, RelatedMaterial, errs, `service instance of ${thisServiceId.quote()}`, SERVICE_INSTANCE_RM, "SI020");
+			const foundHref = this.#validateRelatedMaterial(props, RelatedMaterial, errs, `service instance of ${thisServiceId.quote()}`, SERVICE_INSTANCE_RM, "SI020");
 			if (foundHref != "" && validServiceInstanceControlApplication(foundHref)) controlApps.push(RelatedMaterial);
 			if (foundHref == dvbi.APP_IN_CONTROL) {
 				// Application controlling playback SHOULD NOT have any service delivery parameters
@@ -1396,16 +1387,13 @@ export default class ServiceListCheck {
 				CASystemID;
 			while ((CASystemID = ContentProtection.get(xPath(props.prefix, dvbi.e_CASystemId, ++ca), props.schema)) != null) {
 				let CASystemID_value = null;
-
 				if (SchemaVersion(props.namespace) <= SCHEMA_r1) {
 					// first two versions of the schema were 'incorrect' - has nested <CASystemId> elements.
 					let nestedCAsystemid = CASystemID.get(xPath(props.prefix, dvbi.e_CASystemId), props.schema);
 					if (nestedCAsystemid) {
 						CASystemID_value = nestedCAsystemid.text();
 					}
-				} else {
-					CASystemID_value = CASystemID.text();
-				}
+				} else CASystemID_value = CASystemID.text();
 				if (CASystemID_value) {
 					let CASid_value = parseInt(CASystemID_value, 10);
 					if (isNaN(CASid_value)) {
@@ -1441,9 +1429,7 @@ export default class ServiceListCheck {
 					if (nestedDRMsystemid) {
 						DRMSystemID_value = nestedDRMsystemid.text().toLowerCase();
 					}
-				} else {
-					DRMSystemID_value = DRMSystemID.text().toLowerCase();
-				}
+				} else DRMSystemID_value = DRMSystemID.text().toLowerCase();
 				if (DRMSystemID_value && ContentProtectionIDs.find((el) => el.id == DRMSystemID_value || el.id.substring(el.id.lastIndexOf(":") + 1) == DRMSystemID_value) == undefined) {
 					errs.addError({
 						code: "SI033",
@@ -1456,7 +1442,7 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><ContentAttributes>
-		let ContentAttributes = ServiceInstance.get(xPath(props.prefix, dvbi.e_ContentAttributes), props.schema);
+		const ContentAttributes = ServiceInstance.get(xPath(props.prefix, dvbi.e_ContentAttributes), props.schema);
 		if (ContentAttributes) {
 			// Check ContentAttributes/AudioAttributes - other subelements are checked with schema based validation
 			let cp = 0,
@@ -1476,10 +1462,10 @@ export default class ServiceListCheck {
 								break;
 							case tva.e_MixType:
 								// taken from MPEG-7 AudioPresentationCS
-								if (child.attr(dvbi.a_href) && !this.#AudioPresentationCSvalues.isIn(child.attr(dvbi.a_href).value()))
+								if (child.attr(dvbi.a_href) && !this.#audioPresentations.isIn(child.attr(dvbi.a_href).value()))
 									errs.addError({
 										code: "SI055",
-										message: `invalid ${dvbi.a_href.attribute(child.name())} value for (${child.attr(dvbi.a_href).value()}) ${this.#AudioPresentationCSvalues.valuesRange()}`,
+										message: `invalid ${dvbi.a_href.attribute(child.name())} value for (${child.attr(dvbi.a_href).value()}) ${this.#audioPresentations.valuesRange()}`,
 										fragment: child,
 										key: "audio codec",
 									});
@@ -1576,10 +1562,9 @@ export default class ServiceListCheck {
 				checkLanguage(this.#knownLanguages, conf.text(), tva.e_SignLanguage.elementize(), conf, errs, "SI111");
 
 			// Check ContentAttributes/AccessibilityAttributes
-			let aa = ContentAttributes.get(xPath(props.prefix, tva.e_AccessibilityAttributes), props.schema);
+			const aa = ContentAttributes.get(xPath(props.prefix, tva.e_AccessibilityAttributes), props.schema);
 			if (aa) {
 				CheckAccessibilityAttributes(
-					props,
 					aa,
 					{
 						AccessibilityPurposeCS: this.#accessibilityPurposes,
@@ -1591,7 +1576,7 @@ export default class ServiceListCheck {
 						SubtitleCodingFormatCS: this.#subtitleCodings,
 						SubtitlePurposeTypeCS: this.#subtitlePurposes,
 						KnownLanguages: this.#knownLanguages,
-						AudioPresentationCS: this.#AudioPresentationCSvalues,
+						AudioPresentationCS: this.#audioPresentations,
 					},
 					errs,
 					"SI112"
@@ -1600,14 +1585,14 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><Availability>
-		let Availability = ServiceInstance.get(xPath(props.prefix, dvbi.e_Availability), props.schema);
+		const Availability = ServiceInstance.get(xPath(props.prefix, dvbi.e_Availability), props.schema);
 		if (Availability) {
 			let Period,
 				p = 0;
 			while ((Period = Availability.get(xPath(props.prefix, dvbi.e_Period, ++p), props.schema)) != null)
 				if (Period.attr(dvbi.a_validFrom) && Period.attr(dvbi.a_validTo)) {
 					// validTo should be >= validFrom
-					let fr = new Date(Period.attr(dvbi.a_validFrom).value()),
+					const fr = new Date(Period.attr(dvbi.a_validFrom).value()),
 						to = new Date(Period.attr(dvbi.a_validTo).value());
 
 					if (to.getTime() < fr.getTime())
@@ -1626,7 +1611,7 @@ export default class ServiceListCheck {
 			SubscriptionPackage;
 		while ((SubscriptionPackage = ServiceInstance.get(xPath(props.prefix, dvbi.e_SubscriptionPackage, ++sp), props.schema)) != null) {
 			if (SchemaVersion(props.namespace) >= SCHEMA_r3) {
-				let pkg = localizedSubscriptionPackage(SubscriptionPackage);
+				const pkg = localizedSubscriptionPackage(SubscriptionPackage);
 				if (!declaredSubscriptionPackages.includes(pkg))
 					errs.addError({
 						code: "SI130",
@@ -1641,7 +1626,7 @@ export default class ServiceListCheck {
 
 		// note that the <SourceType> element becomes optional and in A177r1, but if specified then the relevant
 		// delivery parameters also need to be specified
-		let SourceType = ServiceInstance.get(xPath(props.prefix, dvbi.e_SourceType), props.schema);
+		const SourceType = ServiceInstance.get(xPath(props.prefix, dvbi.e_SourceType), props.schema);
 		if (SourceType) {
 			let v1Params = false;
 			switch (SourceType.text()) {
@@ -1683,7 +1668,7 @@ export default class ServiceListCheck {
 					} else {
 						// no xxxxDeliveryParameters is signalled
 						// check for appropriate Service.RelatedMaterial or Service.ServiceInstance.RelatedMaterial
-						let service = ServiceInstance.parent();
+						const service = ServiceInstance.parent();
 						if (!this.#hasSignalledApplication(props.schema, props.prefix, service) && !this.#hasSignalledApplication(props.schema, props.prefix, ServiceInstance)) {
 							errs.addError({
 								code: "SI157a",
@@ -1751,11 +1736,11 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><DASHDeliveryParameters>
-		let DASHDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DASHDeliveryParameters), props.schema);
+		const DASHDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DASHDeliveryParameters), props.schema);
 		if (DASHDeliveryParameters) {
-			let URIBasedLocation = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_UriBasedLocation), props.schema);
+			const URIBasedLocation = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_UriBasedLocation), props.schema);
 			if (URIBasedLocation) {
-				let uriContentType = URIBasedLocation.attr(dvbi.a_contentType);
+				const uriContentType = URIBasedLocation.attr(dvbi.a_contentType);
 				if (uriContentType && !validDASHcontentType(uriContentType.value()))
 					errs.addError({
 						code: "SI173",
@@ -1764,7 +1749,7 @@ export default class ServiceListCheck {
 						key: `no ${dvbi.a_contentType.attribute()} for DASH`,
 					});
 
-				let uri = getElementByTagName(URIBasedLocation, dvbi.e_URI);
+				const uri = getElementByTagName(URIBasedLocation, dvbi.e_URI);
 				if (uri && !isHTTPURL(uri.text()))
 					errs.addError({
 						code: "SI174",
@@ -1775,7 +1760,7 @@ export default class ServiceListCheck {
 			}
 
 			// <DASHDeliveryParameters><MulticastTSDeliveryParameters>
-			let MulticastTSDeliveryParameters = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_MulticastTSDeliveryParameters), props.schema);
+			const MulticastTSDeliveryParameters = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_MulticastTSDeliveryParameters), props.schema);
 			if (MulticastTSDeliveryParameters) {
 				checkMulticastDeliveryParams(MulticastTSDeliveryParameters, errs, "SI176");
 			}
@@ -2017,13 +2002,15 @@ export default class ServiceListCheck {
 		let uID = service.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
 		if (uID) {
 			thisServiceId = uID.text();
-			if (!validServiceIdentifier(thisServiceId))
+			if (!validServiceIdentifier(thisServiceId)) {
 				errs.addError({
 					code: "SL110",
 					message: `${thisServiceId.quote()} is not a valid service identifier`,
 					fragment: uID,
 					key: "invalid tag",
 				});
+				errs.errorDescription({ code: "SL110", description: "service identifier should be a tag: URI according to IETF RFC 4151" });
+			}
 			if (!uniqueServiceIdentifier(thisServiceId, knownServices))
 				errs.addError({
 					code: "SL111",
@@ -2053,7 +2040,7 @@ export default class ServiceListCheck {
 					type: WARNING,
 					code: "SL131",
 					key: "duplicate value",
-					message: `duplicate value (${TargetRegion.value}) specified for ${dvbi.e_TargetRegion.elementize()}`,
+					message: `duplicate value (${TargetRegion.text()}) specified for ${dvbi.e_TargetRegion.elementize()}`,
 					fragment: TargetRegion,
 				});
 			}
@@ -2351,15 +2338,13 @@ export default class ServiceListCheck {
 	}
 
 	/*private*/ #doSchemaVerification(ServiceList, props, errs, errCode) {
-		let rc = true;
-
 		let x = SchemaVersions.find((s) => s.namespace == props.namespace);
 		if (x && x.schema) {
 			SchemaCheck(ServiceList, x.schema, errs, `${errCode}:${SchemaVersion(props.namespace)}`);
 			SchemaVersionCheck(props, ServiceList, x.status, errs, `${errCode}a`);
-		} else rc = false;
-
-		return rc;
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -2369,7 +2354,7 @@ export default class ServiceListCheck {
 	 * @param {Class}  errs        Errors found in validaton
 	 * @param {String} log_prefix  the first part of the logging location (or null if no logging)
 	 */
-	/*public*/ doValidateServiceList(SLtext, errs, log_prefix) {
+	/*public*/ doValidateServiceList(SLtext, errs, log_prefix = null) {
 		this.#numRequests++;
 		if (!SLtext) {
 			errs.addError({
@@ -2742,13 +2727,20 @@ export default class ServiceListCheck {
 							key: "undefined region",
 						});
 					else {
-						if (foundRegion.selectable == false)
+						if (foundRegion.selectable == false) {
 							errs.addError({
 								code: "SL242",
 								message: `${dvbi.e_TargetRegion.elementize()} ${TargetRegion.text().quote()} in ${dvbi.e_LCNTable.elementize()} is not selectable`,
 								fragment: TargetRegion,
 								key: "unselectable region",
 							});
+							errs.errorDescription({
+								code: "SL242",
+								description: `the region ID specified in the ${dvbi.e_TargetRegion.elementize()} is defined with ${
+									dvbi.a_selectable
+								}=false in the ${dvbi.e_RegionList.elementize()} `,
+							});
+						}
 						foundRegion.used = true;
 					}
 
@@ -2881,7 +2873,7 @@ export default class ServiceListCheck {
 				errs.errorDescription({
 					code: "SL282",
 					clause: "see A177 table 14",
-					description: `lanugages used in ${tva.e_AudioAttributes.elementize()}${tva.e_AudioLanguage.elementize()} should be announced in ${dvbi.e_LanguageList.elementize()}`,
+					description: `only lanugages used in ${tva.e_AudioAttributes.elementize()}${tva.e_AudioLanguage.elementize()} should be announced in ${dvbi.e_LanguageList.elementize()}`,
 				});
 			}
 		});

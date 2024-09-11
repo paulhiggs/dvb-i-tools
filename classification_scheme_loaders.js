@@ -1,16 +1,12 @@
 /**
- CSLoaders.js
+ * classification_scheme_loaders.js
 
- Load Classification Schemes and other File related resources
-*/
+ * Load Classification Schemes and other File related resources
+ */
 import chalk from "chalk";
 
-import ClassificationScheme from "./ClassificationScheme.js";
-//import Role from "./Role.js";
-
-import IANAlanguages from "./IANAlanguages.js";
-import ISOcountries from "./ISOcountries.js";
-
+import IANAlanguages from "./IANA_languages.js";
+import ISOcountries from "./ISO_countries.js";
 import {
 	IANA_Subtag_Registry,
 	TVA_ContentCS,
@@ -35,16 +31,18 @@ import {
 	TVA_SubitlePurposeCS,
 	TVA_ContentAlertCS,
 	DVBI_ParentalGuidanceCS,
-} from "./data-locations.js";
+} from "./data_locations.js";
+import ClassificationScheme from "./classification_scheme.js";
 
-export function LoadCountries(useURLs) {
+
+export function LoadCountries(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading countries..."));
 	let c = new ISOcountries(false, true);
-	c.loadCountries(useURLs ? { url: ISO3166.url } : { file: ISO3166.file });
+	c.loadCountries(useURLs ? { url: ISO3166.url } : { file: ISO3166.file }, async);
 	return c;
 }
 
-export function LoadLanguages(useURLs) {
+export function LoadLanguages(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading languages..."));
 	let l = new IANAlanguages();
 	l.loadLanguages(
@@ -56,12 +54,13 @@ export function LoadLanguages(useURLs) {
 			: {
 					file: IANA_Subtag_Registry.file,
 					purge: true,
-			  }
+			  },
+		async
 	);
 	return l;
 }
 
-export function LoadVideoCodecCS(useURLs) {
+export function LoadVideoCodecCS(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading Video Codecs..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(
@@ -73,12 +72,13 @@ export function LoadVideoCodecCS(useURLs) {
 			: {
 					files: [DVB_VideoCodecCS.y2007.file, DVB_VideoCodecCS.y2021.file, DVB_VideoCodecCS.y2022.file, MPEG7_VisualCodingFormatCS.file],
 					leafNodesOnly: true,
-			  }
+			  },
+		async
 	);
 	return cs;
 }
 
-export function LoadAudioCodecCS(useURLs) {
+export function LoadAudioCodecCS(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading Audio Codecs..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(
@@ -90,14 +90,15 @@ export function LoadAudioCodecCS(useURLs) {
 			: {
 					files: [DVB_AudioCodecCS.y2007.file, DVB_AudioCodecCS.y2020.file, MPEG7_AudioCodingFormatCS.file],
 					leafNodesOnly: true,
-			  }
+			  },
+		async
 	);
 	return cs;
 }
 
-export function LoadGenres(useURLs) {
-	let cs = new ClassificationScheme();
+export function LoadGenres(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading Genres ..."));
+	let cs = new ClassificationScheme();
 	cs.loadCS(
 		useURLs
 			? {
@@ -105,53 +106,55 @@ export function LoadGenres(useURLs) {
 			  }
 			: {
 					files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file],
-			  }
+			  },
+		async
 	);
 	return cs;
 }
 
-export function LoadAccessibilityPurpose(useURLs) {
+export function LoadAccessibilityPurpose(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading Accessibility Purposes..."));
 	let cs = new ClassificationScheme();
-	cs.loadCS(useURLs ? { url: TVA_AccessibilityPurposeCS.url, leafNodesOnly: true } : { file: TVA_AccessibilityPurposeCS.file, leafNodesOnly: true });
+	cs.loadCS(useURLs ? { url: TVA_AccessibilityPurposeCS.url, leafNodesOnly: true } : { file: TVA_AccessibilityPurposeCS.file, leafNodesOnly: true }, async);
 	return cs;
 }
 
-export function LoadAudioPurpose(useURLs) {
+export function LoadAudioPurpose(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading Audio Purposes..."));
 	let cs = new ClassificationScheme();
-	cs.loadCS(useURLs ? { url: TVA_AudioPurposeCS.url, leafNodesOnly: true } : { file: TVA_AudioPurposeCS.file, leafNodesOnly: true });
+	cs.loadCS(useURLs ? { url: TVA_AudioPurposeCS.url, leafNodesOnly: true } : { file: TVA_AudioPurposeCS.file, leafNodesOnly: true }, async);
 	return cs;
 }
 
-export function LoadSubtitleCarriages(useURLs) {
+export function LoadSubtitleCarriages(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading Subtitle Carriages..."));
 	let cs = new ClassificationScheme();
-	cs.loadCS(useURLs ? { url: TVA_SubitleCarriageCS.url } : { file: TVA_SubitleCarriageCS.file });
+	cs.loadCS(useURLs ? { url: TVA_SubitleCarriageCS.url } : { file: TVA_SubitleCarriageCS.file }, async);
 	return cs;
 }
 
-export function LoadSubtitleCodings(useURLs) {
+export function LoadSubtitleCodings(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading Subtitle Codings..."));
 	let cs = new ClassificationScheme();
-	cs.loadCS(useURLs ? { url: TVA_SubitleCodingFormatCS.url } : { file: TVA_SubitleCodingFormatCS.file });
+	cs.loadCS(useURLs ? { url: TVA_SubitleCodingFormatCS.url } : { file: TVA_SubitleCodingFormatCS.file }, async);
 	return cs;
 }
 
-export function LoadSubtitlePurposes(useURLs) {
+export function LoadSubtitlePurposes(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading Subtitle Purposes..."));
 	let cs = new ClassificationScheme();
-	cs.loadCS(useURLs ? { url: TVA_SubitlePurposeCS.url } : { file: TVA_SubitlePurposeCS.file });
+	cs.loadCS(useURLs ? { url: TVA_SubitlePurposeCS.url } : { file: TVA_SubitlePurposeCS.file }, async);
 	return cs;
 }
 
-export function LoadAudioConformanceCS(useURLs) {
+export function LoadAudioConformanceCS(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading Audio Conformance Points..."));
 	let cs = new ClassificationScheme();
-	cs.loadCS(useURLs ? { url: DVB_AudioConformanceCS.url, leafNodesOnly: true } : { file: DVB_AudioConformanceCS.file, leafNodesOnly: true });
+	cs.loadCS(useURLs ? { url: DVB_AudioConformanceCS.url, leafNodesOnly: true } : { file: DVB_AudioConformanceCS.file, leafNodesOnly: true }, async);
 	return cs;
 }
-export function LoadVideoConformanceCS(useURLs) {
+
+export function LoadVideoConformanceCS(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading Video Conformance Points..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(
@@ -163,43 +166,45 @@ export function LoadVideoConformanceCS(useURLs) {
 			: {
 					files: [DVB_VideoConformanceCS.y2017.file, DVB_VideoConformanceCS.y2021.file, DVB_VideoConformanceCS.y2022.file],
 					leafNodesOnly: true,
-			  }
+			  },
+		async
 	);
 	return cs;
 }
 
-export function LoadAudioPresentationCS(useURLs) {
+export function LoadAudioPresentationCS(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading AudioPresentation..."));
 	let cs = new ClassificationScheme();
-	cs.loadCS(useURLs ? { url: MPEG7_AudioPresentationCS.url } : { file: MPEG7_AudioPresentationCS.file });
+	cs.loadCS(useURLs ? { url: MPEG7_AudioPresentationCS.url } : { file: MPEG7_AudioPresentationCS.file }, async);
 	return cs;
 }
 
-export function LoadRecordingInfoCS(useURLs) {
+export function LoadRecordingInfoCS(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading Recording Info..."));
 	let cs = new ClassificationScheme();
-	cs.loadCS(useURLs ? { url: DVBI_RecordingInfoCS.url } : { file: DVBI_RecordingInfoCS.file });
+	cs.loadCS(useURLs ? { url: DVBI_RecordingInfoCS.url } : { file: DVBI_RecordingInfoCS.file }, async);
 	return cs;
 }
 
-export function LoadPictureFormatCS(useURLs) {
+
+export function LoadPictureFormatCS(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading PictureFormats..."));
 	let cs = new ClassificationScheme();
-	cs.loadCS(useURLs ? { url: TVA_PictureFormatCS.url } : { file: TVA_PictureFormatCS.file });
+	cs.loadCS(useURLs ? { url: TVA_PictureFormatCS.url } : { file: TVA_PictureFormatCS.file }, async);
 	return cs;
 }
 
-export function LoadColorimetryCS(useURLs) {
+export function LoadColorimetryCS(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading Colorimetry..."));
 	let cs = new ClassificationScheme();
-	cs.loadCS(useURLs ? { url: DVB_ColorimetryCS.y2020.url, leafNodesOnly: true } : { file: DVB_ColorimetryCS.y2020.file, leafNodesOnly: true });
+	cs.loadCS(useURLs ? { url: DVB_ColorimetryCS.y2020.url, leafNodesOnly: true } : { file: DVB_ColorimetryCS.y2020.file, leafNodesOnly: true }, async);
 	return cs;
 }
 
-export function LoadServiceTypeCS(useURLs) {
+export function LoadServiceTypeCS(useURLs, async=true) {
 	console.log(chalk.yellow.underline("loading ServiceTypes..."));
 	let cs = new ClassificationScheme();
-	cs.loadCS(useURLs ? { url: DVBI_ServiceTypeCS.url } : { file: DVBI_ServiceTypeCS.file });
+	cs.loadCS(useURLs ? { url: DVBI_ServiceTypeCS.url } : { file: DVBI_ServiceTypeCS.file }, async);
 	return cs;
 }
 

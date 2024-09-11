@@ -1,3 +1,9 @@
+/**
+ * identifiers.js
+ * 
+ * various identifiers and their meaningful names
+ */
+
 export const DASH_IF_Content_Protection_List = "https://dashif.org/identifiers/content_protection/";
 export const ContentProtectionIDs = [
 	{ id: "urn:mpeg:mp4protection:2011", description: "ISO/IEC 14496-12 with CENC" },

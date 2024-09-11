@@ -1,14 +1,15 @@
 /**
+ * role.js
+ * 
  * Manages Classification Scheme checking based in a flat list of roles
- *
  */
 import chalk from "chalk";
 import { readFile } from "fs";
 
-import { handleErrors } from "./fetch-err-handler.js";
+import { handleErrors } from "./fetch_err_handler.js";
 import { isHTTPURL } from "./pattern_checks.js";
 
-import ClassificationScheme from "./ClassificationScheme.js";
+import ClassificationScheme from "./classification_scheme.js";
 
 export default class Role extends ClassificationScheme {
 	constructor() {
@@ -21,7 +22,7 @@ export default class Role extends ClassificationScheme {
 	 * @param {String} rolesURL URL to the classification scheme
 	 */
 	#loadFromURL(rolesURL) {
-		let isHTTPurl = isHTTPURL(rolesURL);
+		const isHTTPurl = isHTTPURL(rolesURL);
 		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving Roles from ${rolesURL} via fetch()`));
 		if (!isHTTPurl) return;
 

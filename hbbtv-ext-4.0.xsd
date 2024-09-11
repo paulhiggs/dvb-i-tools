@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:hbbtv:dvbi:schema:2021" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2022b" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<import namespace="urn:dvb:metadata:servicediscovery:2022b" schemaLocation="dvbi_v4.0-with-hls.xsd"/>
+	<import namespace="urn:dvb:metadata:servicediscovery:2022b" schemaLocation="./dvbi_v4.0-with-hls.xsd"/>
 	<complexType name="ServiceIdentifierTriplet">
 		<complexContent>
 			<extension base="dvbisd:ExtensionBaseType">

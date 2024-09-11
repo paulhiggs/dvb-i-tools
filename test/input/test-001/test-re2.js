@@ -13,7 +13,15 @@ import {
 	isURN,
 	isHTTPURL,
 	validZuluTimeType,
-} from "../pattern_checks.js";
+	isUTCDateTime,
+} from "../../../pattern_checks.js";
+
+import {isTAGURI} from "../../../URI_checks.js";
+
+const AVCregex = /[a-z0-9!"#$%&'()*+,./:;<=>?@[\] ^_`{|}~-]{4}\.[a-f0-9]{6}/i;
+const AC4regex = /ac-4(\.[a-fA-F\d]{1,2}){3}/;
+const VP9regex = /^vp09(\.\d{2}){3}(\.(\d{2})?){0,5}$/;
+const AV1regex = /^av01\.\d\.\d+[MH]\.\d{1,2}((\.\d?)(\.(\d{3})?(\.(\d{2})?(.(\d{2})?(.(\d{2})?(.\d?)?)?)?)?)?)?$/;
 
 const ConsoleColours = {
 		Reset: "\x1b[0m",
@@ -151,7 +159,7 @@ const tests0 = [
 	{
 		item: "url-05b",
 		fn: isURL,
-		evaluate: "mailto:someone@yoursite.com?cc=someoneelse@theirsite.com,%20another@thatsite.com,%20me@mysite.com&bcc=lastperson@theirsite.com&subject=Big%20News",
+		evaluate:  "mailto:someone@yoursite.com?cc=someoneelse@theirsite.com,%20another@thatsite.com,%20me@mysite.com&bcc=lastperson@theirsite.com&subject=Big%20News",
 		expect: true,
 	},
 	{
@@ -163,8 +171,7 @@ const tests0 = [
 	{
 		item: "url-06b",
 		fn: isURL,
-		evaluate:
-			"mailto:someone@yoursite.com?cc=someoneelse@theirsite.com,%20another@thatsite.com,%20me@mysite.com&bcc=lastperson@theirsite.com&subject=Big%20News&body=Body-goes-here",
+		evaluate: 	"mailto:someone@yoursite.com?cc=someoneelse@theirsite.com,%20another@thatsite.com,%20me@mysite.com&bcc=lastperson@theirsite.com&subject=Big%20News&body=Body-goes-here",
 		expect: true,
 	},
 
@@ -197,17 +204,38 @@ const tests0 = [
 	{ item: "ztime-52", fn: validZuluTimeType, evaluate: "09:30-05:00", expect: false },
 	{ item: "ztime-53", fn: validZuluTimeType, evaluate: "09:30+08:30", expect: false },
 	{ item: "ztime-54", fn: validZuluTimeType, evaluate: "09:30+12", expect: false },
+
+	{item: "ztime-55", fn:isUTCDateTime, evaluate: "2024-08-20T12:45:15.000Z", expect: true},
+	{item: "ztime-56", fn:isUTCDateTime, evaluate: "2024-08-20T12:45:15Z", expect: true},
+	{item: "ztime-57", fn:isUTCDateTime, evaluate: "2014-07-15T20:42:30Z", expect: true},
+
+	{item: "taguri-1", fn: isTAGURI, evaluate: "tag:sandt.com:uk,2023:SandT‑Service‑1", expect: false},
+	{item: "taguri-2", fn: isTAGURI, evaluate: "tag:sandt.com.uk,2023:SandT‑Service‑1", expect: false},
+	{item: "taguri-3", fn: isTAGURI, evaluate: "tag:sandt.com.uk,2023:SandT-Service-1", expect: true},
+	{item: "taguri-4", fn: isTAGURI, evaluate: "tag:sandt.com.uk,2023:SandT‑Service‑1‑The Legend of Boggy Creek (1972)", expect: false},
+	{item: "taguri-5", fn: isTAGURI, evaluate: "tag:sandt.com.uk,2023:SandT-Service-1-The%20Legend%20of%20Boggy%20Creek%20(1972)", expect: true},
+];
+
+const tests1 = [
+	{item: "AVC regexp1", expression: AVCregex, evaluate: "avc1.001122", expect: true },
+	{item: "AC-4 regexp1", expression: AC4regex, evaluate: "ac-4.00.11.22", expect: true },
+	{item: "VP9 regex1", expression: VP9regex, evaluate: "vp09.00.11.22", expect: true },
+	{item: "VP9 regex2", expression: VP9regex, evaluate: "vp09.00.11.22..12.03..", expect: true },
+	{item: "AV1 regex1", expression: AV1regex, evaluate: "av01.0.04M.10.0.112.09.16.09.0", expect:true },
+	{item: "AV1 regex2", expression: AV1regex, evaluate: "av01.0.04M.12", expect:true },
+	{item: "AV1 regex3", expression: AV1regex, evaluate: "av01.0.04H.8..112....0", expect:true },
 ];
 
 function doTest(test) {
-	function showOutput(testNo, value, result, expected) {
+
+	let showOutput = (testNo, value, result, expected) => {
 		console.log(
 			result == expected ? ConsoleGreen : ConsoleRed,
-			`test ${testNo}(${value}) expect ${expected} --> ${result} ${result != expected ? "FAIL!!" : "OK"}`,
+			`test ${testNo}(${value}) expect ${expected} --> ${result} ${result == expected ? "OK" : "FAIL!!"}`,
 			ConsoleColours.Reset
-		);
-	}
-
+		);		
+	};
+	
 	if (Object.prototype.hasOwnProperty.call(test, "pattern")) {
 		let re = new RegExp(`^${test.pattern}$`),
 			res = re.test(test.evaluate);
@@ -217,5 +245,11 @@ function doTest(test) {
 		let res = test.fn(test.evaluate);
 		showOutput(test.item, test.evaluate, res, test.expect);
 	}
+	if (Object.prototype.hasOwnProperty.call(test, "expression")) {
+		let res = test.expression.test(test.evaluate);
+		showOutput(test.item, test.evaluate, res, test.expect);
+	}
 }
+
 tests0.forEach((test) => doTest(test));
+tests1.forEach((test) => doTest(test));

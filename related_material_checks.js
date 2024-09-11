@@ -1,16 +1,18 @@
-// RelatedMaterialChecks.js
-
+/**
+ * related_material_checks.js
+ * 
+ * Checks performed in <RelatedMaterial> elements for based on their use in DVB-I
+ */
 import { mpeg7 } from "./MPEG7_definitions.js";
-import { dvbi, dvbEA } from "./DVB-I_definitions.js";
 import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
+import { dvbi, dvbEA } from "./DVB-I_definitions.js";
 
-import { APPLICATION, WARNING } from "./ErrorList.js";
-
-import { checkLanguage } from "./MultilingualElement.js";
+import { APPLICATION, WARNING } from "./error_list.js";
+import { checkLanguage } from "./multilingual_element.js";
 import { checkAttributes, checkTopElementsAndCardinality } from "./schema_checks.js";
 import { isJPEGmime, isPNGmime, isWebPmime, validImageSet, isAllowedImageMime } from "./MIME_checks.js";
 import { isHTTPURL } from "./pattern_checks.js";
-import { cg_InvalidHrefValue, InvalidURL, keys } from "./CommonErrors.js";
+import { cg_InvalidHrefValue, InvalidURL, keys } from "./common_errors.js";
 
 /**
  * verifies if the specified RelatedMaterial contains a image of the specified type(s). Only a single image is permitted and the format
@@ -112,7 +114,7 @@ function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, 
 				hasMediaURI = true;
 				checkAttributes(child, [tva.a_contentType], [], tvaEA.MediaUri, errs, `${errCode}-22`);
 				if (child.attr(tva.a_contentType)) {
-					let contentType = child.attr(tva.a_contentType).value();
+					const contentType = child.attr(tva.a_contentType).value();
 					if (!isAllowedImageMime(contentType))
 						errs.addError({
 							code: `${errCode}-23`,

@@ -1,11 +1,13 @@
-// command line arguments - https://github.com/75lb/command-line-args
+/**
+ * all-in-one.js
+ * 
+ * runner for all three DVB-I V&V tools 
+ */
 import commandLineArgs from "command-line-args";
 
-import { Default_SLEPR } from "./data-locations.js";
-
 import { CORSlibrary, HTTPPort } from "./globals.js";
-
-import validator from "./Validator.js";
+import { Default_SLEPR } from "./data_locations.js";
+import validator from "./validator.js";
 
 // parse command line options
 const optionDefinitions = [

@@ -1,4 +1,6 @@
 /**
+ * fetch_error_handler.js
+ * 
  * Throw a nice error is there is a problem fetching the information
  *
  * @param {*} response

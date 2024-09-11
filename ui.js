@@ -1,9 +1,23 @@
+/**
+ * ui.js
+ *
+ * Drive the HTML user interface
+ */
+import { readFileSync } from "fs";
+
 import { HTMLize } from "./phlib/phlib.js";
-import { ERROR, WARNING } from "./ErrorList.js";
-import { MODE_URL, MODE_FILE } from "./Validator.js";
+import { ERROR, WARNING } from "./error_list.js";
+
+export const MODE_UNSPECIFIED = "none",
+	MODE_SL = "sl",
+	MODE_CG = "cg",
+	MODE_URL = "url",
+	MODE_FILE = "file";
 
 const MESSAGES_IN_ORDER = true; // when true outputs the errors, warnings and informations in the 'document order'. false==ouotput in order found
 const SHOW_LINE_NUMBER = false; // include the line number in the XML document where the error was found
+
+let pkg = JSON.parse(readFileSync("./package.json", { encoding: "utf-8" }).toString());
 
 export function PAGE_TOP(pageTitle, label = null) {
 	const TABLE_STYLE =
@@ -14,14 +28,14 @@ export function PAGE_TOP(pageTitle, label = null) {
 	const METAS = '<meta name="google" content="notranslate"/><meta charset="utf-8">';
 	const HEAD = `<head>${METAS}${TABLE_STYLE}${XML_STYLE}${MARKUP_TABLE_STYLE}<title>${pageTitle}</title></head>`;
 	const PG = `<html lang="en" xml:lang="en">\n${HEAD}<body>`;
-	const PH = label ? `<h1>${label}</h1>` : "";
+	const PH = label ? `<h1>${label}</h1><p>${pkg.name} v${pkg.version} by ${HTMLize(pkg.author)}</p>` : "";
 	return `${PG}${PH}`;
 }
 
 const BREAK = "<br/>",
 	LINE = "<hr/>";
 
-export const PAGE_BOTTOM = `${BREAK}${LINE}<p><i>Submit issues at </i><a href="https://github.com/paulhiggs/dvb-i-tools/issues">https://github.com/paulhiggs/dvb-i-tools/issues</a></p></body></html>`;
+export const PAGE_BOTTOM = `${BREAK}${LINE}<p><i>Submit issues at </i><a href="${pkg?.bugs?.url}">${pkg?.bugs?.url}</a></p></body></html>`;
 
 function tabulateResults(source, res, error, errs) {
 	const RESULT_WITH_INSTRUCTION = `${BREAK}<p><i>Results:</i> ${source}</p>`;
