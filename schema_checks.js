@@ -99,7 +99,12 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 			count = namedChildren.length;
 
 		if (count == 0 && min != 0) {
-			errs.addError({ code: `${errCode}-1`, line: parentElement.line(), message: `Mandatory element ${elem.name.elementize()} not specified in ${thisElem}` });
+			errs.addError({
+				code: `${errCode}-1`,
+				line: parentElement.line(),
+				message: `Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`,
+				key: "missing element",
+			});
 			rv = false;
 		} else {
 			if (count < min || count > max) {
@@ -108,6 +113,7 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 						code: `${errCode}-2`,
 						line: child.line(),
 						message: `Cardinality of ${elem.name.elementize()} in ${thisElem} is not in the range ${min}..${max == Infinity ? "unbounded" : max}`,
+						key: "wrong element count",
 					})
 				);
 				rv = false;
@@ -127,9 +133,15 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 			let childName = child.name();
 			if (!findElementIn(childElements, childName)) {
 				if (isIn(excludedChildren, childName))
-					errs.addError({ type: INFORMATION, code: `${errCode}-10`, message: `Element ${childName.elementize()} in ${thisElem} is not included in DVB-I`, line: child.line() });
+					errs.addError({
+						type: INFORMATION,
+						code: `${errCode}-10`,
+						message: `Element ${childName.elementize()} in ${thisElem} is not included in DVB-I`,
+						line: child.line(),
+						key: "profiled out",
+					});
 				else if (!allowOtherElements) {
-					errs.addError({ code: `${errCode}-11`, line: child.line(), message: `Element ${childName.elementize()} is not permitted in ${thisElem}` });
+					errs.addError({ code: `${errCode}-11`, line: child.line(), message: `Element ${childName.elementize()} is not permitted in ${thisElem}`, key: "element not allowed" });
 					rv = false;
 				}
 			}
