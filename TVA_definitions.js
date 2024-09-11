@@ -204,6 +204,7 @@ export const tva = {
 	a_purpose: "purpose",
 	a_role: "role",
 	a_serviceIDRef: "serviceIDRef",
+	a_serviceInstanceId: "serviceInstanceId",
 	a_start: "start",
 	a_supplemental: "supplemental",
 	a_translation: "translation",

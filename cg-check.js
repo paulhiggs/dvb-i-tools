@@ -2475,6 +2475,15 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                  errors found in validaton
 	 */
 	/* private */ #ValidateInstanceDescription(props, VerifyType, InstanceDescription, isCurrentProgram, errs) {
+		if (!InstanceDescription) {
+			errs.addError({
+				type: APPLICATION,
+				code: "ID000",
+				message: "ValidateInstanceDescription() called with InstanceDescription==null",
+			});
+			return;
+		}
+
 		function checkGenre(genre, errs, errcode) {
 			if (!genre) return null;
 			checkAttributes(genre, [tva.a_href], [tva.a_type], tvaEA.Genre, errs, `${errcode}-1`);
@@ -2485,17 +2494,7 @@ export default class ContentGuideCheck {
 					message: `${tva.a_type.attribute(`${genre.parent().name()}.${+genre.name()}`)} must contain ${tva.GENRE_TYPE_OTHER.quote()}`,
 					fragment: genre,
 				});
-
 			return genre.attr(tva.a_href) ? genre.attr(tva.a_href).value() : null;
-		}
-
-		if (!InstanceDescription) {
-			errs.addError({
-				type: APPLICATION,
-				code: "ID000",
-				message: "ValidateInstanceDescription() called with InstanceDescription==null",
-			});
-			return;
 		}
 
 		let isMediaAvailability = (str) => [dvbi.MEDIA_AVAILABLE, dvbi.MEDIA_UNAVAILABLE].includes(str);
@@ -2547,6 +2546,15 @@ export default class ContentGuideCheck {
 					message: `message:ValidateInstanceDescription() called with VerifyType=${VerifyType}`,
 				});
 		}
+
+		// @serviceInstanceId
+		if (InstanceDescription.attr(tva.a_serviceInstanceId) && InstanceDescription.attr(tva.a_serviceInstanceId).value().length == 0)
+			errs.addError({
+				code: "ID009",
+				message: `${tva.a_serviceInstanceId.attribute()} should not be empty is specified`,
+				line: InstanceDescription.line(),
+				key: "empty ID",
+			});
 
 		let restartGenre = null,
 			restartRelatedMaterial = null;

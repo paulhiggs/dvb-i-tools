@@ -266,8 +266,8 @@ let validServiceControlApplication = (hrefType, schemaVersion) => {
  * @param {integer} schemaVersion  The schema version of the XML document
  * @returns {boolean} true if this is a valid application being used with the service else false
  */
-let validConsentApplication = (hrefType, schemaVersion) => {
-	let appTypes = [dvbi.APP_LIST_INSTALLATION, dvbi.APP_WITHDRAW_AGREEMENT, dvbi.APP_RENEW_CONSENT];
+let validAgreementApplication = (hrefType, schemaVersion) => {
+	let appTypes = [dvbi.APP_LIST_INSTALLATION, dvbi.APP_WITHDRAW_AGREEMENT, dvbi.APP_RENEW_AGREEMENT];
 	return schemaVersion >= SCHEMA_r7 && appTypes.includes(hrefType);
 };
 
@@ -681,8 +681,8 @@ export default class ServiceListCheck {
 		return this.#match(ServiceListLogos, SchemaVersion(namespace), HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null);
 	}
 
-	/*private*/ #validServiceInstallApp(HowRelated, namespace) {
-		return HowRelated.attr(dvbi.a_href) ? validConsentApplication(HowRelated, SchemaVersion(namespace)) : false;
+	/*private*/ #validServiceAgreementApp(HowRelated, namespace) {
+		return HowRelated.attr(dvbi.a_href) ? validAgreementApplication(HowRelated.attr(dvbi.a_href).value(), SchemaVersion(namespace)) : false;
 	}
 
 	/**
@@ -871,8 +871,9 @@ export default class ServiceListCheck {
 					if (this.#validServiceListLogo(HowRelated, props.namespace)) {
 						rc = HowRelated.attr(dvbi.a_href).value();
 						checkValidLogos(RelatedMaterial, errs, `${errCode}-10`, Location, this.#knownLanguages);
-					} else if (this.#validServiceInstallApp(HowRelated, props.namespace)) {
-						/* */
+					} else if (this.#validServiceAgreementApp(HowRelated, props.namespace)) {
+						rc = HowRelated.attr(dvbi.a_href).value();
+						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, errs, Location, rc));
 					} else errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-11`));
 					break;
 				case SERVICE_RM:
@@ -1339,6 +1340,15 @@ export default class ServiceListCheck {
 					key: `negative ${dvbi.a_priority.attribute()}`,
 				});
 		}
+
+		//<ServiceInstance@id>
+		if (ServiceInstance.attr(dvbi.a_id) && ServiceInstance.attr(dvbi.a_id).value().length == 0)
+			errs.addError({
+				code: "SI012",
+				message: `${dvbi.a_id.attribute()} should not be empty is specified`,
+				line: ServiceInstance.line(),
+				key: "empty ID",
+			});
 
 		//<ServiceInstance><DisplayName>
 		checkXMLLangs(dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010", this.#knownLanguages);
