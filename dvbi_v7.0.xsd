@@ -13,7 +13,7 @@
 	<!ENTITY Hex16 "&HexDigit;{1,4}">
 	<!ENTITY Hex8 "&HexDigit;{1,2}">
 ]>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2024x" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2024" targetNamespace="urn:dvb:metadata:servicediscovery:2024x" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2025" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2024" targetNamespace="urn:dvb:metadata:servicediscovery:2025" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<import namespace="urn:dvb:metadata:servicediscovery-types:2023" schemaLocation="dvbi_types_v1.0.xsd"/>
 	<import namespace="urn:tva:metadata:2024" schemaLocation="tva_metadata_3-1_2024.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
@@ -224,18 +224,28 @@
 		</simpleContent>
 	</complexType>
 	<complexType name="ParentalRatingType">
-		<sequence>
-			<element name="MinimumAge" maxOccurs="unbounded">
-				<complexType>
-					<simpleContent>
-						<extension base="nonNegativeInteger">
-							<attribute name="countryCodes" type="tva:ISO-3166-List" use="optional"/>
-						</extension>
-					</simpleContent>
-				</complexType>
-			</element>
-		</sequence>
+			<sequence>
+					<element name="MinimumAge" maxOccurs="unbounded">
+							<complexType>
+									<simpleContent>
+											<extension base="dvbisd:RatingConstrainedAgeType">
+													<attribute name="countryCodes" type="tva:ISO-3166-List" use="optional"/>
+											</extension>
+									</simpleContent>
+							</complexType>
+					</element>
+			</sequence>
 	</complexType>
+	<simpleType name="RatingConstrainedAgeType">
+			<annotation><documentation>
+					Representation of the minimum age rating values specifed in DVB-SI
+					0x01 = 4, 0xF = 18
+			</documentation></annotation>
+			<restriction base="nonNegativeInteger">
+					<minExclusive value="3"/>
+					<maxInclusive value="18"/>
+			</restriction>
+	</simpleType>
 	<complexType name="DVBTDeliveryParametersType">
 		<sequence>
 			<element name="DVBTriplet" type="dvbi-types:DVBTripletType"/>

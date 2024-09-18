@@ -1,6 +1,6 @@
 /**
  * slepr.js
- * 
+ *
  * SLEPR - Service List End Point Resolver
  */
 import { readFile } from "fs";
@@ -13,7 +13,7 @@ import { datatypeIs } from "./phlib/phlib.js";
 import { tva } from "./TVA_definitions.js";
 import { dvbi } from "./DVB-I_definitions.js";
 
-import { handleErrors } from "./fetch_err_handler.js";
+import handleErrors from "./fetch_err_handler.js";
 import { xPath, isIn } from "./utils.js";
 import { IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data_locations.js";
 import { hasChild } from "./schema_checks.js";
@@ -145,7 +145,7 @@ export default class SLEPR {
 			var checkBoolean = (bool) => ["true", "false"].includes(bool);
 			checkIt(req.query.regulatorListFlag, dvbi.a_regulatorListFlag, checkBoolean);
 			checkIt(req.query.inlineImages, dvbi.q_inlineImages, checkBoolean);
-			
+
 			//TargetCountry(s)
 			var checkTargetCountry = (country) => this.#knownCountries.isISO3166code(country, false);
 			checkIt(req.query.TargetCountry, dvbi.e_TargetCountry, checkTargetCountry);
@@ -182,9 +182,8 @@ export default class SLEPR {
 			res.type("text/plain");
 			res.write("urn:paulhiggs,2024-06:BabelFish#ja,zh,mi\nurn:ibm.com,1981:CTrlAtlDel\n");
 			res.status(200);
-			return true; 
+			return true;
 		}
-
 
 		if (!this.checkQuery(req)) {
 			if (req.parseErr) res.write(`[${req.parseErr.join(",\n\t")}]`);

@@ -24,7 +24,7 @@ import { checkValidLogos } from "./related_material_checks.js";
 import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys } from "./common_errors.js";
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./multilingual_element.js";
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.js";
-import { writeOut } from "./logger.js";
+import writeOut from "./logger.js";
 import {
 	LoadGenres,
 	LoadVideoCodecCS,
@@ -44,7 +44,7 @@ import {
 	LoadLanguages,
 	LoadCountries,
 } from "./classification_scheme_loaders.js";
-import { CheckAccessibilityAttributes } from "./accessibility_attributes_checks.js";
+import CheckAccessibilityAttributes from "./accessibility_attributes_checks.js";
 import { DASH_IF_Content_Protection_List, ContentProtectionIDs, CA_SYSTEM_ID_REGISTRY, CASystemIDs } from "./identifiers.js";
 
 const ANY_NAMESPACE = "$%$!!";

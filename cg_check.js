@@ -25,7 +25,7 @@ import { ValidatePromotionalStillImage } from "./related_material_checks.js";
 import { cg_InvalidHrefValue, NoChildElement, keys } from "./common_errors.js";
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.js";
 import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./multilingual_element.js";
-import { writeOut } from "./logger.js";
+import writeOut from "./logger.js";
 import { CURRENT, OLD } from "./globals.js";
 import {
 	LoadGenres,
@@ -42,7 +42,7 @@ import {
 	LoadCountries,
 } from "./classification_scheme_loaders.js";
 import { LoadCredits } from "./role_loader.js";
-import { CheckAccessibilityAttributes } from "./accessibility_attributes_checks.js";
+import CheckAccessibilityAttributes from "./accessibility_attributes_checks.js";
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";
@@ -664,7 +664,7 @@ export default class ContentGuideCheck {
 							case tva.e_MinimumAge:
 								checkAttributes(pgChild, [], [], tvaEA.MinimumAge, errs, `${errCode}-10`);
 								if (thisCountry.MinimumAge) {
-									// only one minimum age value is premitted per country
+									// only one minimum age value is permitted per country
 									errs.addError({
 										code: `${errCode}-11`,
 										key: keys.k_ParentalGuidance,
@@ -675,6 +675,14 @@ export default class ContentGuideCheck {
 									});
 								}
 								thisCountry.MinimumAge = pgChild;
+								let age = pgChild.text().parseInt();
+								if ((age < 4 || age > 18) && age != 255)
+									errs.addError({
+										code: `${errCode}-12`,
+										key: keys.k_ParentalGuidance,
+										message: `value of ${tva.e_MinimumAge.elementize()} must be between 4 and 18 (to align with parental_rating_descriptor) or be 255`,
+										fragment: pgChild,
+									});
 								break;
 							case tva.e_ParentalRating:
 								checkAttributes(pgChild, [tva.a_href], [], tvaEA.ParentalRating, errs, `${errCode}-20`);
@@ -2723,15 +2731,7 @@ export default class ContentGuideCheck {
 			errs.addError({ type: APPLICATION, code: "PA000a", message: "CheckPlayerApplication() called with node==null" });
 			return;
 		}
-		if (!Array.isArray(allowedContentTypes)) {
-			errs.addError({
-				type: APPLICATION,
-				code: "PA000b",
-				message: "CheckPlayerApplication() called with incorrect type for allowedContentTypes",
-			});
-			return;
-		}
-
+		let allowedTypes = Array.isArray(allowedContentTypes) ? allowedContentTypes : [].concat(allowedContentTypes);
 		if (!node.attr(tva.a_contentType)) {
 			errs.addError({
 				code: `${errcode}-1`,
@@ -2742,20 +2742,20 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		if (allowedContentTypes.includes(node.attr(tva.a_contentType).value())) {
+		if (allowedTypes.includes(node.attr(tva.a_contentType).value())) {
 			switch (node.attr(tva.a_contentType).value()) {
 				case dvbi.XML_AIT_CONTENT_TYPE:
 					if (!isHTTPURL(node.text()))
 						errs.addError({
 							code: `${errcode}-2`,
-							message: `${node.name().elementize()}=${node.text().quote()} is not a valid AIT URL`,
+							message: `${node.name().elementize()}=${node.text().quote()} is not a valid HTTP or HTTP URL`,
 							key: keys.k_InvalidURL,
 							fragment: node,
 						});
 					break;
 				/*			case dvbi.HTML5_APP:
 				case dvbi.XHTML_APP:
-					if (!patterns.isHTTPURL(node.text()))
+					if (!isHTTPURL(node.text()))
 						errs.addError({code:`${errcode}-3`, message:`${node.name().elementize()}=${node.text().quote()} is not a valid URL`, key:"invalid URL", fragment:node});		
 					break;
 				*/
@@ -2890,7 +2890,7 @@ export default class ContentGuideCheck {
 
 		// <ProgramURL>
 		let ProgramURL = OnDemandProgram.get(xPath(props.prefix, tva.e_ProgramURL), props.schema);
-		if (ProgramURL) this.#CheckPlayerApplication(ProgramURL, [dvbi.XML_AIT_CONTENT_TYPE], errs, "OD020");
+		if (ProgramURL) this.#CheckPlayerApplication(ProgramURL, dvbi.XML_AIT_CONTENT_TYPE, errs, "OD020");
 
 		// <AuxiliaryURL>
 		let AuxiliaryURL = OnDemandProgram.get(xPath(props.prefix, tva.e_AuxiliaryURL), props.schema);

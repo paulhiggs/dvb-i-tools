@@ -9,7 +9,7 @@ import chalk from "chalk";
 
 import { datatypeIs } from "./phlib/phlib.js";
 
-import { handleErrors } from "./fetch_err_handler.js";
+import handleErrors from "./fetch_err_handler.js";
 import { isIn, isIni } from "./utils.js";
 import { isHTTPURL } from "./pattern_checks.js";
 import fetchS from "sync-fetch";

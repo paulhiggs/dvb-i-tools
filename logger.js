@@ -25,7 +25,7 @@ export function createPrefix(req) {
 	return `${logDir}${sep}${getDate(new Date())} (${req.body.testtype == MODE_SL ? "SL" : req.body.requestType}) ${fname.replace(/[/\\?%*:|"<>]/g, "-")}`;
 }
 
-export function writeOut(errs, filebase, markup, req = null) {
+export default function writeOut(errs, filebase, markup, req = null) {
 	if (!filebase || errs.markupXML?.length == 0) return;
 
 	let outputLines = [];

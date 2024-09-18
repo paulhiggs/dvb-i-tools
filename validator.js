@@ -39,7 +39,7 @@ import {
 import ServiceListCheck from "./sl_check.js";
 import ContentGuideCheck from "./cg_check.js";
 import SLEPR from "./slepr.js";
-import { createPrefix, writeOut } from "./logger.js";
+import writeOut, { createPrefix } from "./logger.js";
 import { MODE_URL, MODE_FILE, MODE_SL, MODE_CG, MODE_UNSPECIFIED } from "./ui.js";
 
 let csr = null;

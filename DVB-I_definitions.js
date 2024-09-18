@@ -1,6 +1,6 @@
 /**
  * DVB-I_defintions.js
- * 
+ *
  * Defintions made in DVB A177 Bluebooks
  */
 import { tva, tvaEA, tvaEC, TVA_CSmetadata } from "./TVA_definitions.js";
@@ -8,7 +8,6 @@ import { tva, tvaEA, tvaEC, TVA_CSmetadata } from "./TVA_definitions.js";
 const DVB_metadata = "urn:dvb:metadata";
 const DVB_CSmetadata = `${DVB_metadata}:cs`,
 	FVC_CSmetadata = "urn:fvc:metadata:cs";
-
 
 const PaginationPrefix = `${FVC_CSmetadata}:HowRelatedCS:2015-12:pagination`,
 	NowNextCRIDPrefix = "crid://dvb.org/metadata/schedules/now-next";
@@ -43,7 +42,7 @@ export const dvbi = {
 	A177r4_Namespace: `${DVB_metadata}:servicediscovery:2022b`,
 	A177r5_Namespace: `${DVB_metadata}:servicediscovery:2023`,
 	A177r6_Namespace: `${DVB_metadata}:servicediscovery:2024`,
-	A177r7_Namespace: `${DVB_metadata}:servicediscovery:2024x`,
+	A177r7_Namespace: `${DVB_metadata}:servicediscovery:2025`,
 
 	ApplicationStandards: [
 		`${HbbTVStandardPrefix}:1.2.1`,

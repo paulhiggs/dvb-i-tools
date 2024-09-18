@@ -15,7 +15,7 @@ import { CS_URI_DELIMITER } from "./classification_scheme.js";
 
 import { DumpString } from "./utils.js";
 
-export function CheckAccessibilityAttributes(AccessibilityAttributes, cs, errs, errCode) {
+export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs, errs, errCode) {
 	const ACCESSIBILITY_CHECK_KEY = "accessibility attributes";
 
 	if (!AccessibilityAttributes) {
