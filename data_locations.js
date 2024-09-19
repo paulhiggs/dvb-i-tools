@@ -1,23 +1,30 @@
-/** 
+/**
  * data_locations.js
- * 
+ *
  * paths and URLs to various files used by the validation toole
  */
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
-export const __dirname =dirname(fileURLToPath(import.meta.url));
+export const __dirname = dirname(fileURLToPath(import.meta.url));
 export const __dirname_linux = __dirname.replace(/\\/g, "/");
 
 const REPO_RAW = "https://raw.githubusercontent.com/paulhiggs/dvb-i-tools/main/";
 const DVB_METADATA = "https://dvb.org/metadata/";
 
-const pathDVBCS = join(__dirname, "dvb/cs"),
-	pathDVBI = join(__dirname, "dvbi"),
-	pathIANA = join(__dirname, "iana"),
-	pathISO = join(__dirname, "iso"),
-	pathMPEG7 = join(__dirname, "mpeg7"),
-	pathTVA = join(__dirname, "tva");
+const subdirDVBCS = "dvb/cs",
+	subdirDVBI = "dvbi",
+	subdirIANA = "iana",
+	subdirISO = "iso",
+	subdirMPEG7 = "mpeg7",
+	subdirTVA = "tva";
+
+const pathDVBCS = join(__dirname, subdirDVBCS),
+	pathDVBI = join(__dirname, subdirDVBI),
+	pathIANA = join(__dirname, subdirIANA),
+	pathISO = join(__dirname, subdirISO),
+	pathMPEG7 = join(__dirname, subdirMPEG7),
+	pathTVA = join(__dirname, subdirTVA);
 
 const path2007CS = join(pathDVBCS, "2007"),
 	url2007CS = "cs/2007",
@@ -30,39 +37,42 @@ const path2007CS = join(pathDVBCS, "2007"),
 	path2021CS = join(pathDVBCS, "2021"),
 	url2021CS = "cs/2021",
 	path2022CS = join(pathDVBCS, "2022"),
-	url2022CS = "cs/2022";
+	url2022CS = "cs/2022",
+	path2024CS = join(pathDVBCS, "2024"),
+	url2024CS = "cs/2024";
 
 // SLEPR == Service List Entry Point Registry
-const SLEPR_Dir = join(__dirname, "registries"),
+const SLEPR_subDir = "registries",
+	SLEPR_Dir = join(__dirname, SLEPR_subDir),
 	SLEPR_File = "slepr-main.xml";
-export const Default_SLEPR = { file: join(SLEPR_Dir, SLEPR_File), url: `${REPO_RAW}${SLEPR_Dir}/${SLEPR_File}` };
+export const Default_SLEPR = { file: join(SLEPR_Dir, SLEPR_File), url: `${REPO_RAW}${SLEPR_subDir}/${SLEPR_File}` };
 
 const idTVA_ContentCS = "ContentCS.xml";
-export const TVA_ContentCS = { file: join(pathTVA, idTVA_ContentCS), url: `${REPO_RAW}${pathTVA}/${idTVA_ContentCS}` };
+export const TVA_ContentCS = { file: join(pathTVA, idTVA_ContentCS), url: `${REPO_RAW}${subdirTVA}/${idTVA_ContentCS}` };
 
 const idTVA_FormatCS = "FormatCS.xml";
-export const TVA_FormatCS = { file: join(pathTVA, idTVA_FormatCS), url: `${REPO_RAW}${pathTVA}/${idTVA_FormatCS}` };
+export const TVA_FormatCS = { file: join(pathTVA, idTVA_FormatCS), url: `${REPO_RAW}${subdirTVA}/${idTVA_FormatCS}` };
 
 const idTVA_PictureCS = "PictureFormatCS.xml";
-export const TVA_PictureFormatCS = { file: join(pathTVA, idTVA_PictureCS), url: `${REPO_RAW}${pathTVA}/${idTVA_PictureCS}` };
+export const TVA_PictureFormatCS = { file: join(pathTVA, idTVA_PictureCS), url: `${REPO_RAW}${subdirTVA}/${idTVA_PictureCS}` };
 
 const idTVA_ContentAlertCS = "ContentAlertCS.xml";
-export const TVA_ContentAlertCS = { file: join(pathTVA, idTVA_ContentAlertCS), url: `${REPO_RAW}${pathTVA}/${idTVA_ContentAlertCS}` };
+export const TVA_ContentAlertCS = { file: join(pathTVA, idTVA_ContentAlertCS), url: `${REPO_RAW}${subdirTVA}/${idTVA_ContentAlertCS}` };
 
 const idTVA_AccessibilityPurposeCS = "AccessibilityPurposeCS.xml";
-export const TVA_AccessibilityPurposeCS = { file: join(pathTVA, idTVA_AccessibilityPurposeCS), url: `${REPO_RAW}${pathTVA}/${idTVA_AccessibilityPurposeCS}` };
+export const TVA_AccessibilityPurposeCS = { file: join(pathTVA, idTVA_AccessibilityPurposeCS), url: `${REPO_RAW}${subdirTVA}/${idTVA_AccessibilityPurposeCS}` };
 
 const idTVA_AudioPurposeCS = "AudioPurposeCS.xml";
-export const TVA_AudioPurposeCS = { file: join(pathTVA, idTVA_AudioPurposeCS), url: `${REPO_RAW}${pathTVA}/${idTVA_AudioPurposeCS}` };
+export const TVA_AudioPurposeCS = { file: join(pathTVA, idTVA_AudioPurposeCS), url: `${REPO_RAW}${subdirTVA}/${idTVA_AudioPurposeCS}` };
 
 const idTVA_SubtitleCarriageCS = "SubtitleCarriageCS.xml";
-export const TVA_SubitleCarriageCS = { file: join(pathTVA, idTVA_SubtitleCarriageCS), url: `${REPO_RAW}${pathTVA}/${idTVA_SubtitleCarriageCS}` };
+export const TVA_SubitleCarriageCS = { file: join(pathTVA, idTVA_SubtitleCarriageCS), url: `${REPO_RAW}${subdirTVA}/${idTVA_SubtitleCarriageCS}` };
 
 const idTVA_SubtitleCodingFormatCS = "SubtitleCodingFormatCS.xml";
-export const TVA_SubitleCodingFormatCS = { file: join(pathTVA, idTVA_SubtitleCodingFormatCS), url: `${REPO_RAW}${pathTVA}/${idTVA_SubtitleCodingFormatCS}` };
+export const TVA_SubitleCodingFormatCS = { file: join(pathTVA, idTVA_SubtitleCodingFormatCS), url: `${REPO_RAW}${subdirTVA}/${idTVA_SubtitleCodingFormatCS}` };
 
 const idTVA_SubtitlePurposeCS = "SubtitlePurposeCS.xml";
-export const TVA_SubitlePurposeCS = { file: join(pathTVA, idTVA_SubtitlePurposeCS), url: `${REPO_RAW}${pathTVA}/${idTVA_SubtitlePurposeCS}` };
+export const TVA_SubitlePurposeCS = { file: join(pathTVA, idTVA_SubtitlePurposeCS), url: `${REPO_RAW}${subdirTVA}/${idTVA_SubtitlePurposeCS}` };
 
 const idDVB_ContentSubjectCS = "DVBContentSubjectCS-2019.xml";
 export const DVBI_ContentSubject = { file: join(pathDVBI, idDVB_ContentSubjectCS), url: `${DVB_METADATA}${url2019CS}/${idDVB_ContentSubjectCS}` };
@@ -74,6 +84,7 @@ const idDVB_AudioCodecCS = "AudioCodecCS.xml";
 export const DVB_AudioCodecCS = {
 	y2007: { file: join(path2007CS, idDVB_AudioCodecCS), url: `${DVB_METADATA}${url2007CS}/${idDVB_AudioCodecCS}` },
 	y2020: { file: join(path2020CS, idDVB_AudioCodecCS), url: `${DVB_METADATA}${url2020CS}/${idDVB_AudioCodecCS}` },
+	y2024: { file: join(path2024CS, idDVB_AudioCodecCS), url: `${REPO_RAW}${url2024CS}/${idDVB_AudioCodecCS}` /*`${DVB_METADATA}${url2024CS}/${idDVB_AudioCodecCS}`*/ },
 };
 
 const idDVB_VideoCodecCS = "VideoCodecCS.xml";
@@ -89,13 +100,13 @@ export const DVB_ColorimetryCS = {
 };
 
 const idMPEG_AudioCodingFormatCS = "AudioCodingFormatCS.xml";
-export const MPEG7_AudioCodingFormatCS = { file: join(pathMPEG7, idMPEG_AudioCodingFormatCS), url: `${REPO_RAW}${pathMPEG7}/${idMPEG_AudioCodingFormatCS}` };
+export const MPEG7_AudioCodingFormatCS = { file: join(pathMPEG7, idMPEG_AudioCodingFormatCS), url: `${REPO_RAW}${subdirMPEG7}/${idMPEG_AudioCodingFormatCS}` };
 
 const idMPEG7_VisualCodingFormatCS = "VisualCodingFormatCS.xml";
-export const MPEG7_VisualCodingFormatCS = { file: join(pathMPEG7, idMPEG7_VisualCodingFormatCS), url: `${REPO_RAW}${pathMPEG7}/${idMPEG7_VisualCodingFormatCS}` };
+export const MPEG7_VisualCodingFormatCS = { file: join(pathMPEG7, idMPEG7_VisualCodingFormatCS), url: `${REPO_RAW}${subdirMPEG7}/${idMPEG7_VisualCodingFormatCS}` };
 
 const idMPEG7_AudioPresentationCS = "AudioPresentationCS.xml";
-export const MPEG7_AudioPresentationCS = { file: join(pathMPEG7, idMPEG7_AudioPresentationCS), url: `${REPO_RAW}${pathMPEG7}/${idMPEG7_AudioPresentationCS}` };
+export const MPEG7_AudioPresentationCS = { file: join(pathMPEG7, idMPEG7_AudioPresentationCS), url: `${REPO_RAW}${subdirMPEG7}/${idMPEG7_AudioPresentationCS}` };
 
 const idDVB_AudioConformanceCS = "AudioConformancePointsCS.xml";
 export const DVB_AudioConformanceCS = { file: join(path2017CS, idDVB_AudioConformanceCS), url: `${DVB_METADATA}${url2017CS}/${idDVB_AudioConformanceCS}` };
@@ -108,16 +119,16 @@ export const DVB_VideoConformanceCS = {
 };
 
 const idISO3166 = "iso3166-countries.json";
-export const ISO3166 = { file: join(pathISO, idISO3166), url: `${REPO_RAW}${pathISO}/${idISO3166}` };
+export const ISO3166 = { file: join(pathISO, idISO3166), url: `${REPO_RAW}${subdirISO}/${idISO3166}` };
 
 const idDVBI_RecordingInfoCS = "DVBRecordingInfoCS-2019.xml";
-export const DVBI_RecordingInfoCS = { file: join(pathDVBI, idDVBI_RecordingInfoCS), url: `${REPO_RAW}${pathDVBI}/${idDVBI_RecordingInfoCS}` };
+export const DVBI_RecordingInfoCS = { file: join(pathDVBI, idDVBI_RecordingInfoCS), url: `${REPO_RAW}${subdirDVBI}/${idDVBI_RecordingInfoCS}` };
 
 const v1Credits = "CreditsItem@role-values.txt";
-export const DVBI_CreditsItemRoles = { file: join(pathDVBI, v1Credits), url: `${REPO_RAW}${pathDVBI}/${v1Credits}` };
+export const DVBI_CreditsItemRoles = { file: join(pathDVBI, v1Credits), url: `${REPO_RAW}${subdirDVBI}/${v1Credits}` };
 
 const v2Credits = "CreditsItem@role-values-v2.txt";
-export const DVBIv2_CreditsItemRoles = { file: join(pathDVBI, v2Credits), url: `${REPO_RAW}${pathDVBI}/${v2Credits}` };
+export const DVBIv2_CreditsItemRoles = { file: join(pathDVBI, v2Credits), url: `${REPO_RAW}${subdirDVBI}/${v2Credits}` };
 
 const idDVB_ParentalGuidanceCS = "ParentalGuidanceCS.xml";
 export const DVBI_ParentalGuidanceCS = { file: join(path2007CS, idDVB_ParentalGuidanceCS), url: `${DVB_METADATA}${url2007CS}/${idDVB_ParentalGuidanceCS}` };
