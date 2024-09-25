@@ -440,7 +440,7 @@ export default class ServiceListCheck {
 		this.#allowedVideoConformancePoints = LoadVideoConformanceCS(useURLs, async);
 		this.#RecordingInfoCSvalues = LoadRecordingInfoCS(useURLs, async);
 
-		// TODO - change this to support sync/asyna and file/url reading
+		// TODO - change this to support sync/async and file/url reading
 		console.log(chalk.yellow.underline("loading service list schemas..."));
 		SchemaVersions.forEach((version) => {
 			process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
@@ -2213,81 +2213,72 @@ export default class ServiceListCheck {
 				PE,
 				known = [];
 			while ((PE = ProminenceList.get(xPath(props.prefix, dvbi.e_Prominence, ++p), props.schema)) != null) {
-				if (!PE.attr(dvbi.a_country) && !PE.attr(dvbi.a_region) && !PE.attr(dvbi.a_ranking)) {
-					errs.addError({
-						code: "SL228",
-						message: `one of ${dvbi.a_country.attribute()},  ${dvbi.a_region.attribute()} or ${dvbi.a_ranking.attribute()} must be provided`,
-						fragment: PE,
-						key: "missing value",
-					});
-				} else {
-					// if @region is used, it must be in the RegionList
-					if (PE.attr(dvbi.a_region)) {
-						let prominenceRegion = PE.attr(dvbi.a_region).value();
-						let found = knownRegionIDs.find((r) => r.region == prominenceRegion);
-						if (found === undefined)
-							errs.addError({
-								code: "SL229",
-								message: `regionID ${prominenceRegion.quote()} not specified in ${dvbi.e_RegionList.elementize()}`,
-								fragment: PE,
-								key: keys.k_InvalidRegion,
-							});
-						else found.used = true;
-					}
-					// if @country and @region are used, they must be per the region list
-					if (PE.attr(dvbi.a_country) && PE.attr(dvbi.a_region)) {
-						let prominenceRegion = PE.attr(dvbi.a_region).value();
-						let prominenceCountry = PE.attr(dvbi.a_country).value();
-						let found = knownRegionIDs.find((r) => r.region == prominenceRegion);
-						if (found !== undefined && Object.prototype.hasOwnProperty.call(found, "countries")) {
-							if (found.countries.length) {
-								if (found.countries.find((c) => c == prominenceCountry) === undefined)
-									errs.addError({
-										code: "SL230",
-										message: `regionID ${prominenceRegion.quote()} not specified for country ${prominenceCountry.quote()} in ${dvbi.e_RegionList.elementize()}`,
-										fragment: PE,
-										key: keys.k_InvalidRegion,
-									});
-								else found.used = true;
-							}
+				// if @region is used, it must be in the RegionList
+				if (PE.attr(dvbi.a_region)) {
+					let prominenceRegion = PE.attr(dvbi.a_region).value();
+					let found = knownRegionIDs.find((r) => r.region == prominenceRegion);
+					if (found === undefined)
+						errs.addError({
+							code: "SL229",
+							message: `regionID ${prominenceRegion.quote()} not specified in ${dvbi.e_RegionList.elementize()}`,
+							fragment: PE,
+							key: keys.k_InvalidRegion,
+						});
+					else found.used = true;
+				}
+				// if @country and @region are used, they must be per the region list
+				if (PE.attr(dvbi.a_country) && PE.attr(dvbi.a_region)) {
+					let prominenceRegion = PE.attr(dvbi.a_region).value();
+					let prominenceCountry = PE.attr(dvbi.a_country).value();
+					let found = knownRegionIDs.find((r) => r.region == prominenceRegion);
+					if (found !== undefined && Object.prototype.hasOwnProperty.call(found, "countries")) {
+						if (found.countries.length) {
+							if (found.countries.find((c) => c == prominenceCountry) === undefined)
+								errs.addError({
+									code: "SL230",
+									message: `regionID ${prominenceRegion.quote()} not specified for country ${prominenceCountry.quote()} in ${dvbi.e_RegionList.elementize()}`,
+									fragment: PE,
+									key: keys.k_InvalidRegion,
+								});
+							else found.used = true;
 						}
 					}
-
-					// if @country is specified, it must be valid
-					if (PE.attr(dvbi.a_country) && !this.#knownCountries.isISO3166code(PE.attr(dvbi.a_country).value())) {
-						errs.addError({
-							code: "SL244",
-							message: InvalidCountryCode(PE.attr(dvbi.a_country).value(), null, `service ${thisServiceId.quote()}`),
-							fragment: PE,
-							key: keys.k_InvalidCountryCode,
-						});
-					}
-
-					// for exact match
-					let hash1 = `c:${PE.attr(dvbi.a_country) ? PE.attr(dvbi.a_country).value() : "**"} re:${PE.attr(dvbi.a_region) ? PE.attr(dvbi.a_region).value() : "**"}  ra:${
-						PE.attr(dvbi.a_ranking) ? PE.attr(dvbi.a_ranking).value() : "**"
-					}`;
-					if (!isIn(known, hash1)) known.push(hash1);
-					else {
-						let country = `${PE.attr(dvbi.a_country) ? `country:${PE.attr(dvbi.a_country).value}` : ""}`,
-							region = `${PE.attr(dvbi.a_region) ? `region:${PE.attr(dvbi.a_region).value}` : ""}`,
-							ranking = `${PE.attr(dvbi.a_ranking) ? `ranking:${PE.attr(dvbi.a_ranking).value}` : ""}`;
-						errs.addError({
-							code: "SL245",
-							message: `duplicate ${dvbi.e_Prominence.elementize()} for ${country} ${region} ${ranking}`,
-							fragment: PE,
-							key: `duplicate ${dvbi.e_Prominence}`,
-						});
-					}
-					// for multiple @ranking in same country/region pair
+				}
+				// if @country is specified, it must be valid
+				if (PE.attr(dvbi.a_country) && !this.#knownCountries.isISO3166code(PE.attr(dvbi.a_country).value())) {
+					errs.addError({
+						code: "SL244",
+						message: InvalidCountryCode(PE.attr(dvbi.a_country).value(), null, `service ${thisServiceId.quote()}`),
+						fragment: PE,
+						key: keys.k_InvalidCountryCode,
+					});
+				}
+				// for exact match
+				let hash1 = `c:${PE.attr(dvbi.a_country) ? PE.attr(dvbi.a_country).value() : "**"} re:${PE.attr(dvbi.a_region) ? PE.attr(dvbi.a_region).value() : "**"}  ra:${
+					PE.attr(dvbi.a_ranking) ? PE.attr(dvbi.a_ranking).value() : "**"
+				}`;
+				if (!isIn(known, hash1)) known.push(hash1);
+				else {
+					let country = `${PE.attr(dvbi.a_country) ? `country:${PE.attr(dvbi.a_country).value()}` : ""}`,
+						region = `${PE.attr(dvbi.a_region) ? `region:${PE.attr(dvbi.a_region).value()}` : ""}`,
+						ranking = `${PE.attr(dvbi.a_ranking) ? `ranking:${PE.attr(dvbi.a_ranking).value()}` : ""}`;
+					errs.addError({
+						code: "SL245",
+						message: `duplicate ${dvbi.e_Prominence.elementize()} ${country.length || region.length || ranking.length ? "for" : ""} ${country} ${region} ${ranking}`,
+						fragment: PE,
+						key: `duplicate ${dvbi.e_Prominence}`,
+					});
+				}
+				// for multiple @ranking in same country/region pair
+				if (PE.attr(dvbi.a_ranking)) {
 					let hash2 = `c:${PE.attr(dvbi.a_country) ? PE.attr(dvbi.a_country).value() : "**"} re:${PE.attr(dvbi.a_region) ? PE.attr(dvbi.a_region).value() : "**"}`;
 					if (!isIn(known, hash2)) known.push(hash2);
 					else {
-						let country = `${PE.attr(dvbi.a_country) ? `country:${PE.attr(dvbi.a_country).value}` : ""}`,
-							region = `${PE.attr(dvbi.a_region) ? `region:${PE.attr(dvbi.a_region).value}` : ""}`;
+						let country = `${PE.attr(dvbi.a_country) ? `country:${PE.attr(dvbi.a_country).value()}` : ""}`,
+							region = `${PE.attr(dvbi.a_region) ? `region:${PE.attr(dvbi.a_region).value()}` : ""}`;
 						errs.addError({
 							code: "SL246",
-							message: `multiple ${dvbi.a_ranking.attribute()} ${country || region ? "for" : ""} ${country} ${region}`,
+							message: `multiple ${dvbi.a_ranking.attribute()} ${country.length || region.length ? "for" : ""} ${country} ${region}`,
 							fragment: PE,
 							key: `duplicate ${dvbi.e_Prominence}`,
 						});
@@ -2295,6 +2286,7 @@ export default class ServiceListCheck {
 				}
 			}
 		}
+
 		// check <ParentalRating>
 		let ParentalRating = service.get(xPath(props.prefix, "ParentalRating"), props.schema);
 		if (ParentalRating) {
