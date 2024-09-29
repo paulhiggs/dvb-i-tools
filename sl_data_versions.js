@@ -320,7 +320,7 @@ export function validServiceBanner(HowRelated, namespace) {
  */
 export function validContentGuideSourceLogo(HowRelated, namespace) {
 	// return true if val is a valid CS value Service Logo (A177 5.2.6.3)
-	return match(ContentGuideSourceLogos, namespace, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null);
+	return match(ContentGuideSourceLogos, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : nul, namespace);
 }
 
 // TODO - change this to support sync/async and file/url reading
