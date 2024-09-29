@@ -9,6 +9,8 @@
 # start it
 # #sudo service dvb-i-tools start
 #
+# get the status with 
+# $journalctl -lf -u dvb-i-tools
 
 [Unit]
 Description=DVB-I validator
