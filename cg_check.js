@@ -3020,8 +3020,21 @@ export default class ContentGuideCheck {
 					});
 
 			// <InstanceDescription>
-			let InstanceDescription = ScheduleEvent.get(xPath(props.prefix, tva.e_InstanceDescription), props.schema);
-			if (InstanceDescription) this.#ValidateInstanceDescription(props, tva.e_ScheduleEvent, InstanceDescription, isCurrentProgram, errs);
+			let id = 0,
+				thisInstanceDescription,
+				serviceIDs = [];
+			while ((thisInstanceDescription = ScheduleEvent.get(xPath(props.prefix, tva.e_InstanceDescription, ++id), props.schema)) != null) {
+				this.#ValidateInstanceDescription(props, tva.e_ScheduleEvent, thisInstanceDescription, isCurrentProgram, errs);
+				let instanceServiceID = thisInstanceDescription.attr(a_serviceInstanceId) ? thisInstanceDescription.attr(a_serviceInstanceId).value() : "dflt";
+				if (isIn(serviceIDs, instanceServiceID))
+					errs.addError({
+						code: "SE031",
+						line: thisInstanceDescription.line(),
+						message: instanceServiceID == "dflt" ? "Default instance description is already specified" : `Instance description for ${instanceServiceID} is already specidied`,
+						tag: "dulicate instance",
+					});
+				else serviceIDs.push(instanceServiceID);
+			}
 
 			// <PublishedStartTime> and <PublishedDuration>
 			let pstElem = ScheduleEvent.get(xPath(props.prefix, tva.e_PublishedStartTime), props.schema);
