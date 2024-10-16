@@ -3025,7 +3025,7 @@ export default class ContentGuideCheck {
 				serviceIDs = [];
 			while ((thisInstanceDescription = ScheduleEvent.get(xPath(props.prefix, tva.e_InstanceDescription, ++id), props.schema)) != null) {
 				this.#ValidateInstanceDescription(props, tva.e_ScheduleEvent, thisInstanceDescription, isCurrentProgram, errs);
-				let instanceServiceID = thisInstanceDescription.attr(a_serviceInstanceId) ? thisInstanceDescription.attr(a_serviceInstanceId).value() : "dflt";
+				let instanceServiceID = thisInstanceDescription.attr(tva.a_serviceInstanceId) ? thisInstanceDescription.attr(tva.a_serviceInstanceId).value() : "dflt";
 				if (isIn(serviceIDs, instanceServiceID))
 					errs.addError({
 						code: "SE031",
