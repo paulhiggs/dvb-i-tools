@@ -1,6 +1,6 @@
 /**
  * TVA_defintions.js
- * 
+ *
  * Definitions made by TV0Anytime in versions of ETSI TS 102 822-3-1
  */
 
@@ -210,7 +210,7 @@ export const tva = {
 	a_purpose: "purpose",
 	a_role: "role",
 	a_serviceIDRef: "serviceIDRef",
-	a_serviceInstanceId: "serviceInstanceId",
+	a_serviceInstanceID: "serviceInstanceID",
 	a_start: "start",
 	a_supplemental: "supplemental",
 	a_translation: "translation",

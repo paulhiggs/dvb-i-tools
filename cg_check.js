@@ -2565,10 +2565,10 @@ export default class ContentGuideCheck {
 		}
 
 		// @serviceInstanceId
-		if (InstanceDescription.attr(tva.a_serviceInstanceId) && InstanceDescription.attr(tva.a_serviceInstanceId).value().length == 0)
+		if (InstanceDescription.attr(tva.a_serviceInstanceID) && InstanceDescription.attr(tva.a_serviceInstanceID).value().length == 0)
 			errs.addError({
 				code: "ID009",
-				message: `${tva.a_serviceInstanceId.attribute()} should not be empty is specified`,
+				message: `${tva.a_serviceInstanceID.attribute()} should not be empty is specified`,
 				line: InstanceDescription.line(),
 				key: "empty ID",
 			});
@@ -2916,6 +2916,7 @@ export default class ContentGuideCheck {
 					code: "OD062",
 					message: `${tva.e_StartOfAvailability.elementize()} must be earlier than ${tva.e_EndOfAvailability.elementize()}`,
 					multiElementError: [soa, eoa],
+					tag: "bad timing",
 				});
 		}
 
@@ -2931,9 +2932,8 @@ export default class ContentGuideCheck {
 		}
 
 		// <Free>
-		let fr = 0,
-			Free;
-		while ((Free = OnDemandProgram.get(xPath(props.prefix, tva.e_Free, ++fr), props.schema)) != null) TrueValue(Free, tva.a_value, "OD080", errs);
+		let Free = OnDemandProgram.get(xPath(props.prefix, tva.e_Free), props.schema);
+		if (Free) TrueValue(Free, tva.a_value, "OD080", errs);
 	}
 
 	/**
@@ -2970,7 +2970,7 @@ export default class ContentGuideCheck {
 				[
 					{ name: tva.e_Program },
 					{ name: tva.e_ProgramURL, minOccurs: 0 },
-					{ name: tva.e_InstanceDescription, minOccurs: 0 },
+					{ name: tva.e_InstanceDescription, minOccurs: 0, maxOccurs: Infinity },
 					{ name: tva.e_PublishedStartTime },
 					{ name: tva.e_PublishedDuration },
 					{ name: tva.e_ActualStartTime, minOccurs: 0 },
@@ -3025,10 +3025,10 @@ export default class ContentGuideCheck {
 				serviceIDs = [];
 			while ((thisInstanceDescription = ScheduleEvent.get(xPath(props.prefix, tva.e_InstanceDescription, ++id), props.schema)) != null) {
 				this.#ValidateInstanceDescription(props, tva.e_ScheduleEvent, thisInstanceDescription, isCurrentProgram, errs);
-				let instanceServiceID = thisInstanceDescription.attr(tva.a_serviceInstanceId) ? thisInstanceDescription.attr(tva.a_serviceInstanceId).value() : "dflt";
+				let instanceServiceID = thisInstanceDescription.attr(tva.a_serviceInstanceID) ? thisInstanceDescription.attr(tva.a_serviceInstanceID).value() : "dflt";
 				if (isIn(serviceIDs, instanceServiceID))
 					errs.addError({
-						code: "SE031",
+						code: instanceServiceID == "dflt" ? "SE031" : "SE032",
 						line: thisInstanceDescription.line(),
 						message: instanceServiceID == "dflt" ? "Default instance description is already specified" : `Instance description for ${instanceServiceID} is already specidied`,
 						tag: "dulicate instance",
