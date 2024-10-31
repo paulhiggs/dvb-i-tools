@@ -159,11 +159,11 @@ export function LoadVideoConformanceCS(useURLs, async = true) {
 	cs.loadCS(
 		useURLs
 			? {
-					urls: [DVB_VideoConformanceCS.y2017.url, DVB_VideoConformanceCS.y2021.url, DVB_VideoConformanceCS.y2022.url],
+					urls: [DVB_VideoConformanceCS.y2017.url, DVB_VideoConformanceCS.y2021.url, DVB_VideoConformanceCS.y2022.url, DVB_VideoConformanceCS.y2024.url],
 					leafNodesOnly: true,
 			  }
 			: {
-					files: [DVB_VideoConformanceCS.y2017.file, DVB_VideoConformanceCS.y2021.file, DVB_VideoConformanceCS.y2022.file],
+					files: [DVB_VideoConformanceCS.y2017.file, DVB_VideoConformanceCS.y2021.file, DVB_VideoConformanceCS.y2022.file, DVB_VideoConformanceCS.y2024.file],
 					leafNodesOnly: true,
 			  },
 		async

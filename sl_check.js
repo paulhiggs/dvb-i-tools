@@ -1250,18 +1250,43 @@ export default class ServiceListCheck {
 						}
 					});
 
+			// HDR DMI terms are in the 2.3 series
+			let isHDRDMISystem = (CSterm) => CSterm.substring(CSterm.lastIndexOf(":") + 1).startsWith("2.3.");
+
 			// Check @href of ContentAttributes/VideoConformancePoints
 			cp = 0;
-			while ((conf = ContentAttributes.get(xPath(props.prefix, dvbi.e_VideoConformancePoint, ++cp), props.schema)) != null)
-				if (conf.attr(dvbi.a_href) && !this.#allowedVideoConformancePoints.isIn(conf.attr(dvbi.a_href).value()))
-					errs.addError({
-						code: "SI091",
-						message: `invalid ${dvbi.a_href.attribute(dvbi.e_VideoConformancePoint)} value (${conf
-							.attr(dvbi.a_href)
-							.value()}) ${this.#allowedVideoConformancePoints.valuesRange()}`,
-						fragment: conf,
-						key: "video conf point",
-					});
+			let codec_count = 0,
+				conf_points = [];
+			while ((conf = ContentAttributes.get(xPath(props.prefix, dvbi.e_VideoConformancePoint, ++cp), props.schema)) != null) {
+				if (conf.attr(dvbi.a_href)) {
+					let conformanceVal = conf.attr(dvbi.a_href).value();
+					if (!this.#allowedVideoConformancePoints.isIn(conformanceVal))
+						errs.addError({
+							code: "SI091",
+							message: `invalid ${dvbi.a_href.attribute(dvbi.e_VideoConformancePoint)} value (${conformanceVal}) ${this.#allowedVideoConformancePoints.valuesRange()}`,
+							fragment: conf,
+							key: "video conf point",
+						});
+					else if (!isHDRDMISystem(conformanceVal)) {
+						codec_count++;
+						if (codec_count > 1)
+							errs.addError({
+								code: "SI092",
+								message: "only a single conformance point for the codec can be specified",
+								fragment: conf,
+								key: "video conf point",
+							});
+					}
+					if (isIn(conf_points, conformanceVal))
+						errs.addError({
+							code: "SI093",
+							message: `duplicated value for ${dvbi.e_VideoConformancePoint.elementize()}`,
+							fragment: conf,
+							key: "duplicate conformance point",
+						});
+					else conf_points.push(conformanceVal);
+				}
+			}
 
 			// Check ContentAttributes/CaptionLanguage
 			cp = 0;

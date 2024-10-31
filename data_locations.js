@@ -116,6 +116,7 @@ export const DVB_VideoConformanceCS = {
 	y2017: { file: join(path2017CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2017CS}/${idDVB_VideoConformanceCS}` },
 	y2021: { file: join(path2021CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2021CS}/${idDVB_VideoConformanceCS}` },
 	y2022: { file: join(path2022CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2022CS}/${idDVB_VideoConformanceCS}` },
+	y2024: { file: join(path2024CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2024CS}/${idDVB_VideoConformanceCS}` },
 };
 
 const idISO3166 = "iso3166-countries.json";
