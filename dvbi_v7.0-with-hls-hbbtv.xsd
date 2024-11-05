@@ -413,6 +413,7 @@
 		<sequence>
 			<element name="UriBasedLocation" type="dvbi-types:ExtendedURIType"/>
 			<element name="MinimumBitRate" type="unsignedInt" minOccurs="0"/>
+			<element name="CMCD" type="dvbisd:CMCDInitialisationType" minOccurs="0"/>
 			<element name="Extension" type="dvbi-types:ExtensionBaseType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 	</complexType>
@@ -422,6 +423,39 @@
 				<attribute name="contentType" type="mpeg7:mimeType"/>
 			</extension>
 		</simpleContent>
+	</complexType>
+	<complexType name="CMCDInitialisationType">
+		<attribute name="reportingMode" use="required">
+			<simpleType>
+				<restriction base="string">
+					<enumeration value="urn:dvb:metadata:cmcd:delivery:request"/>
+				</restriction>
+			</simpleType>
+		</attribute>
+		<attribute name="reportingMethod" use="required">
+			<simpleType>
+				<restriction base="string">
+					<enumeration value="urn:dvb:metadata:cmcd:delivery:customHTTPHeader"/>
+					<enumeration value="urn:dvb:metadata:cmcd:delivery:queryArguments"/>
+				</restriction>
+			</simpleType>
+		</attribute>
+		<attribute name="contentId">
+			<simpleType>
+				<restriction base="string">
+					<maxLength value="64"/>
+				</restriction>
+			</simpleType>
+		</attribute>
+		<attribute name="enabledKeys" type="string"/>
+		<attribute name="probability" default="1000">
+			<simpleType>
+				<restriction base="unsignedInt">
+					<minInclusive value="1"/>
+					<maxInclusive value="1000"/>
+				</restriction>
+			</simpleType>
+		</attribute> 
 	</complexType>
 	<complexType name="ServiceAvailabilityType">
 		<sequence>

@@ -74,6 +74,7 @@ import {
 	validServiceBanner,
 	validContentGuideSourceLogo,
 } from "./sl_data_versions.js";
+import { CMCD_keys, checkCMCDkeys } from "./CMCD.js";
 
 const LCN_TABLE_NO_TARGETREGION = "unspecifiedRegion",
 	LCN_TABLE_NO_SUBSCRIPTION = "unspecifiedPackage";
@@ -1496,17 +1497,29 @@ export default class ServiceListCheck {
 					});
 			}
 
-			// <DASHDeliveryParameters><MulticastTSDeliveryParameters>
-			const MulticastTSDeliveryParameters = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_MulticastTSDeliveryParameters), props.schema);
-			if (MulticastTSDeliveryParameters) {
-				checkMulticastDeliveryParams(MulticastTSDeliveryParameters, errs, "SI176");
+			// <DASHDeliveryParameters><CMCD>  -- !! EXPERIMENTAL
+			const CMCDinit = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_CMCD), props.schema);
+			if (CMCDinit) {
+				console.log("have CMCD");
+				const enabledKeys = CMCDinit.attr(dvbi.a_enabledKeys);
+				if (enabledKeys) {
+					const keys = enabledKeys.value().split(" ");
+					if (isIn(keys, CMCD_keys.content_id) && !CMCDinit.attr(dvbi.a_contentId))
+						errs.addError({
+							code: "SI175",
+							message: `${dvbi.a_contentId.attribute()} must be specified when ${dvbi.a_enabledKeys.attribute()} contains '${CMCD_keys.content_id}'`,
+							fragment: CMCDinit,
+							key: "CMCD",
+						});
+					checkCMCDkeys(enabledKeys, errs, "SL176");
+				}
 			}
 
 			// <DASHDeliveryParameters><Extension>
 			let e = 0,
 				Extension;
 			while ((Extension = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_Extension, ++e), props.schema)) != null) {
-				this.#CheckExtension(Extension, EXTENSION_LOCATION_DASH_INSTANCE, errs, "SI175");
+				this.#CheckExtension(Extension, EXTENSION_LOCATION_DASH_INSTANCE, errs, "SI179");
 			}
 		}
 
