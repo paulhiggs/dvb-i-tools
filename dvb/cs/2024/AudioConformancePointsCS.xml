@@ -67,7 +67,7 @@
             </Term>
             <Term termID="1.2.8">
                 <Name>urn:dvb:broadcast:bitstream:audio:AVS3P3</Name>
-                <Definition>Channel, Object, Channel+Object or HOA coded aution according to AVS3 Part 3 Audio, T/AI 109.3</Definition>
+                <Definition>Channel, Object, Channel+Object or HOA coded audio according to AVS3 Part 3 Audio, T/AI 109.3</Definition>
             </Term>
         </Term>    
     </Term>

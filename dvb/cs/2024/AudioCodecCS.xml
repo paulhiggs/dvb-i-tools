@@ -150,25 +150,24 @@
 			<Definition>AVS3P3 Lossless bitstream as specified in T/AI 109.3</Definition>
 		</Term>
 		<Term termID="7.2">
-<Name>AVS3P3 General Full Rate</Name>
-<Definition>AVS3P3 General Full Rate bitstream as specified in T/AI 109.3</Definition>
-<Term id="7.2.1">
-	<Name>AVS3P3 Channel-based</Name>
-	<Description>AVS3P3 channel based bitstream</Description>
-</Term>
-<Term id="7.2.2">
-	<Name> AVS3P3 Object-based </Name>
-	<Description>AVS3P3 object based bitstream</Description>
-</Term>
- 
-<Term id="7.2.3">
-	<Name> AVS3P3 Channel and Object-based </Name>
-	<Description>AVS3P3 Combined channel and object bitstream </Description>
-</Term>
-<Term id="7.2.4">
-	<Name>AVS3P3 HOA</Name>
-	<Description>AVS3P3 High Order Ambisonic bitstream</Description>
-</Term>
+			<Name>AVS3P3 General Full Rate</Name>
+			<Definition>AVS3P3 General Full Rate bitstream as specified in T/AI 109.3</Definition>
+			<Term id="7.2.1">
+				<Name>AVS3P3 Channel-based</Name>
+				<Description>AVS3P3 channel based bitstream</Description>
+			</Term>
+			<Term id="7.2.2">
+				<Name> AVS3P3 Object-based </Name>
+				<Description>AVS3P3 object based bitstream</Description>
+			</Term>
+			<Term id="7.2.3">
+				<Name> AVS3P3 Channel and Object-based </Name>
+				<Description>AVS3P3 Combined channel and object bitstream </Description>
+			</Term>
+			<Term id="7.2.4">
+				<Name>AVS3P3 HOA</Name>
+				<Description>AVS3P3 High Order Ambisonic bitstream</Description>
+			</Term>
 		</Term>
 	</Term>
 </ClassificationScheme>
