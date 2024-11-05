@@ -1498,20 +1498,28 @@ export default class ServiceListCheck {
 			}
 
 			// <DASHDeliveryParameters><CMCD>  -- !! EXPERIMENTAL
-			const CMCDinit = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_CMCD), props.schema);
-			if (CMCDinit) {
-				console.log("have CMCD");
-				const enabledKeys = CMCDinit.attr(dvbi.a_enabledKeys);
+			let cc = 0,
+				CMCDelem;
+			while ((CMCDelem = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_CMCD, ++cc), props.schema)) != null) {
+				const enabledKeys = CMCDelem.attr(dvbi.a_enabledKeys);
 				if (enabledKeys) {
 					const keys = enabledKeys.value().split(" ");
-					if (isIn(keys, CMCD_keys.content_id) && !CMCDinit.attr(dvbi.a_contentId))
+					if (!CMCDelem.attr(dvbi.a_contentId) && isIn(keys, CMCD_keys.content_id))
 						errs.addError({
 							code: "SI175",
 							message: `${dvbi.a_contentId.attribute()} must be specified when ${dvbi.a_enabledKeys.attribute()} contains '${CMCD_keys.content_id}'`,
-							fragment: CMCDinit,
+							fragment: CMCDelem,
 							key: "CMCD",
 						});
-					checkCMCDkeys(enabledKeys, errs, "SL176");
+					else if (CMCDelem.attr(dvbi.a_contentId) && !isIn(keys, CMCD_keys.content_id))
+						errs.addError({
+							type: WARNING,
+							code: "SI176",
+							message: `${dvbi.a_contentId.attribute()} is specified by key '${CMCD_keys.content_id}' not requested for reporting`,
+							fragment: CMCDelem,
+							key: "CMCD",
+						});
+					checkCMCDkeys(CMCDelem, errs, "SL177");
 				}
 			}
 

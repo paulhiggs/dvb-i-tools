@@ -34,6 +34,14 @@ const HbbTVStandardPrefix = "urn:hbbtv:appinformation:standardversion:hbbtv";
 const HbbTVFeaturePrefix = "urn:hbbtv:appinformation:optionalfeature:hbbtv";
 const CTAStandardPrefix = "urn:cta:wave:appinformation:standardversion";
 
+const CMCDterm = `${DVB_metadata}:cmcd`;
+export const CMCD_MODE_REQUEST = `${CMCDterm}:delivery:request`,
+	CMCD_MODE_RESPONSE = `${CMCDterm}:delivery:response`,
+	CMCD_MODE_INTERVAL = `${CMCDterm}:delivery:interval`;
+
+export const CMCD_METHOD_HTTP_HEADER = `${CMCDterm}:delivery:customHTTPHeader`,
+	CMCD_METHOD_QUERY_ARGUMENT = `${CMCDterm}:delivery:queryArguments`;
+
 export const dvbi = {
 	A177_Namespace: `${DVB_metadata}:servicediscovery:2019`,
 	A177r1_Namespace: `${DVB_metadata}:servicediscovery:2020`,
@@ -236,6 +244,8 @@ export const dvbi = {
 	a_region: "region",
 	a_regionID: "regionID",
 	a_regulatorListFlag: "regulatorListFlag",
+	a_reportingMethod: "reportingMethod",
+	a_reportingMode: "reportingMode",
 	a_responseStatus: "responseStatus",
 	a_rtcp_bandwidth: "rtcp-bandwidth",
 	a_rtcp_mux: "rtcp-mux",
