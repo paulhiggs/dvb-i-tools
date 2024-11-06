@@ -15,13 +15,13 @@ import {
 	validZuluTimeType,
 	isUTCDateTime,
 } from "../../../pattern_checks.js";
+
 import {isTAGURI} from "../../../URI_checks.js";
 
-const AVCregex = /[a-z0-9!\"#$%&'()*+,./:;<=>?@[\] ^_`{|}~-]{4}\.[a-f0-9]{6}/i;
+const AVCregex = /[a-z0-9!"#$%&'()*+,./:;<=>?@[\] ^_`{|}~-]{4}\.[a-f0-9]{6}/i;
 const AC4regex = /ac-4(\.[a-fA-F\d]{1,2}){3}/;
 const VP9regex = /^vp09(\.\d{2}){3}(\.(\d{2})?){0,5}$/;
 const AV1regex = /^av01\.\d\.\d+[MH]\.\d{1,2}((\.\d?)(\.(\d{3})?(\.(\d{2})?(.(\d{2})?(.(\d{2})?(.\d?)?)?)?)?)?)?$/;
-
 
 const ConsoleColours = {
 		Reset: "\x1b[0m",

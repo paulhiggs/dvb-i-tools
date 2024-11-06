@@ -1,18 +1,23 @@
 /**
  * ui.js
- * 
+ *
  * Drive the HTML user interface
  */
 import { readFileSync } from "fs";
 
 import { HTMLize } from "./phlib/phlib.js";
 import { ERROR, WARNING } from "./error_list.js";
-import { MODE_URL, MODE_FILE } from "./validator.js";
+
+export const MODE_UNSPECIFIED = "none",
+	MODE_SL = "sl",
+	MODE_CG = "cg",
+	MODE_URL = "url",
+	MODE_FILE = "file";
 
 const MESSAGES_IN_ORDER = true; // when true outputs the errors, warnings and informations in the 'document order'. false==ouotput in order found
 const SHOW_LINE_NUMBER = false; // include the line number in the XML document where the error was found
 
-let pkg = JSON.parse(readFileSync("./package.json", { encoding: "utf-8" } ).toString());
+let pkg = JSON.parse(readFileSync("./package.json", { encoding: "utf-8" }).toString());
 
 export function PAGE_TOP(pageTitle, label = null) {
 	const TABLE_STYLE =
@@ -69,7 +74,10 @@ function tabulateResults(source, res, error, errs) {
 				return res.write(`<tr><td>${HTMLize(i)}</td><td>${errs.countsErr[i]}</td></tr>`);
 			});
 			Object.keys(errs.countsWarn).forEach(function (i) {
-				return res.write(`<tr><td><i>${HTMLize(i)}</i></td><td>${errs.countsWarn[i]}</td></tr>`);
+				return res.write(`<tr><td><i>W: ${HTMLize(i)}</i></td><td>${errs.countsWarn[i]}</td></tr>`);
+			});
+			Object.keys(errs.countsInfo).forEach(function (i) {
+				return res.write(`<tr><td><i>I: ${HTMLize(i)}</i></td><td>${errs.countsInfo[i]}</td></tr>`);
 			});
 			resultsShown = true;
 			res.write(TABLE_FOOTER);
@@ -127,7 +135,7 @@ function tabulateResults(source, res, error, errs) {
 			WARN = "warnings",
 			INFO = "info",
 			style = (name, colour) => `<style>.${name} {position:relative; cursor:pointer; color:${colour};} .${name}[title]:hover:after {opacity:1; transition-delay:.1s; }</style>`;
-		res.write(`${style(ERR, "red")}${style(WARN, "blue")}${style(INFO, "green")}<pre>`);
+		res.write(`${style(ERR, "red")}${style(WARN, "blue")}${style(INFO, "orange")}<pre>`);
 		errs.markupXML.forEach((line) => {
 			let cla = "",
 				tip = line.validationErrors ? line.validationErrors.map((err) => HTMLize(err)).join("&#10;") : null;
@@ -208,10 +216,9 @@ export function drawForm(deprecateTo, req, res, modes, supportedRequests, error 
 export function drawResults(req, res, error = null, errs = null) {
 	res.setHeader("Content-Type", "text/html");
 	res.write(PAGE_TOP("DVB-I Validator", "DVB-I Validator"));
-	tabulateResults(req.query.url? req.query.url : "uploaded list" , res, error, errs);
+	tabulateResults(req.query.url ? req.query.url : "uploaded list", res, error, errs);
 	res.write(PAGE_BOTTOM);
 	return new Promise((resolve, /* eslint-disable no-unused-vars */ reject /* eslint-enable */) => {
 		resolve(res);
 	});
-
 }

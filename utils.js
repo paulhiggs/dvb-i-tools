@@ -1,6 +1,6 @@
 /**
  * utils.js
- * 
+ *
  * some usefule utility functions that may be used by more than one class
  */
 import { statSync, readFileSync } from "fs";
@@ -34,7 +34,7 @@ export function getElementByTagName(element, childElementName, index = null) {
 			if (!index) return getFirstElementByTagName(element, childElementName);
 
 			let cnt = 0;
-		  const ch1 = element.childNodes();
+			const ch1 = element.childNodes();
 			for (let i = 0; i < ch1.length; i++) {
 				if (ch1[i].type() == "element" && ch1[i].name() == childElementName) cnt++;
 				if (cnt >= index) return ch1[i];
@@ -199,4 +199,10 @@ export function DuplicatedValue(found, val) {
 	const f = found.includes(val);
 	if (!f) found.push(val);
 	return f;
+}
+
+export function DumpString(str) {
+	let t = [];
+	for (let i = 0; i < str.length; i++) t.push(str.charCodeAt(i).toString(16));
+	return `"${str}" --> ${t.join(" ")}`;
 }

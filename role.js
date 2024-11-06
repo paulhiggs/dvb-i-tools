@@ -1,12 +1,12 @@
 /**
  * role.js
- * 
+ *
  * Manages Classification Scheme checking based in a flat list of roles
  */
 import chalk from "chalk";
 import { readFile } from "fs";
 
-import { handleErrors } from "./fetch_err_handler.js";
+import handleErrors from "./fetch_err_handler.js";
 import { isHTTPURL } from "./pattern_checks.js";
 
 import ClassificationScheme from "./classification_scheme.js";

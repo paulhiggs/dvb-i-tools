@@ -11,7 +11,7 @@ import { parseXmlString } from "libxmljs2";
 import fetchS from "sync-fetch";
 
 import { dvb } from "./DVB_definitions.js";
-import { handleErrors } from "./fetch_err_handler.js";
+import handleErrors from "./fetch_err_handler.js";
 import { hasChild } from "./schema_checks.js";
 import { isHTTPURL } from "./pattern_checks.js";
 
@@ -89,7 +89,7 @@ export default class ClassificationScheme {
 	 * @param {String} csURL URL to the classification scheme
 
 	 */
-	#loadFromURL(csURL, async=true) {
+	#loadFromURL(csURL, async = true) {
 		const isHTTPurl = isHTTPURL(csURL);
 		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving CS (${this.#leafsOnly ? "leaf" : "all"} nodes) from ${csURL} via fetch()`));
 		if (!isHTTPurl) return;
@@ -120,8 +120,7 @@ export default class ClassificationScheme {
 						this.insertValue(e, true);
 					});
 					this.#schemes.push(CStext.uri);
-				}
-				else console.log(chalk.red(`error (${resp.status}:${resp.statusText}) handling ${ref}`));
+				} else console.log(chalk.red(`error (${resp.status}:${resp.statusText}) handling ${ref}`));
 			}
 		}
 	}
@@ -131,7 +130,7 @@ export default class ClassificationScheme {
 	 *
 	 * @param {String} classificationScheme the filename of the classification scheme
 	 */
-	#loadFromFile(classificationScheme, async=true) {
+	#loadFromFile(classificationScheme, async = true) {
 		console.log(chalk.yellow(`reading CS (${this.#leafsOnly ? "leaf" : "all"} nodes) from ${classificationScheme}`));
 
 		if (async)
@@ -155,7 +154,7 @@ export default class ClassificationScheme {
 		}
 	}
 
-	loadCS(options, async=true) {
+	loadCS(options, async = true) {
 		if (!options) options = {};
 		if (!Object.prototype.hasOwnProperty.call(options, "leafNodesOnly")) options.leafNodesOnly = false;
 		this.#leafsOnly = options.leafNodesOnly;
@@ -193,5 +192,4 @@ export default class ClassificationScheme {
 			if (prefix == "" || node.getValue().beginsWith(prefix)) console.log(node.getValue());
 		});
 	}
-
 }

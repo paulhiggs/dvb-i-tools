@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<sld:ServiceListEntryPoints xmlns:sld="urn:dvb:metadata:servicelistdiscovery:2021" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2021" xmlns:tva="urn:tva:metadata:2023" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:dvb:metadata:servicelistdiscovery:2021 dvbi_service_list_discovery_v1.1.xsd">
+<sld:ServiceListEntryPoints xml:lang="en" xmlns:sld="urn:dvb:metadata:servicelistdiscovery:2024" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2024" 
+		xmlns:tva="urn:tva:metadata:2024" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+		xsi:schemaLocation="urn:dvb:metadata:servicelistdiscovery:2024 dvbi_service_list_discovery_v1.6.xsd">
 	<sld:ServiceListRegistryEntity regulatorFlag="false">
 		<mpeg7:Icon>
 			<mpeg7:MediaUri>http://dvb.org/img/f/dvb-logo.png</mpeg7:MediaUri>
@@ -36,16 +39,17 @@
 			</sld:ElectronicAddress>
 		</sld:Provider>
 		<sld:ServiceListOffering regulatorListFlag="true">
-			<sld:ServiceListName>Italian Trusted Services</sld:ServiceListName>
-			<sld:ServiceListURI contentType="application/xml">
-				<dvbisd:URI>http://dvbi.italian-authority.it/trusted-services.xml</dvbisd:URI>
-			</sld:ServiceListURI>
-			<sld:Delivery>
-				<sld:DASHDelivery required="false"/>
-				<sld:DVBTDelivery required="true"/>
-			</sld:Delivery>
-			<sld:Language>it</sld:Language>
-			<sld:TargetCountry>ITA,SMR</sld:TargetCountry>
+			<dvbi-types:ServiceListName>Italian Trusted Services</dvbi-types:ServiceListName>
+			<dvbi-types:ServiceListURI contentType="application/xml">
+				<dvbi-types:URI>http://dvbi.italian-authority.it/trusted-services.xml</dvbi-types:URI>
+			</dvbi-types:ServiceListURI>
+			<dvbi-types:Delivery>
+				<dvbi-types:DASHDelivery required="false"/>
+				<dvbi-types:DVBTDelivery required="true"/>
+			</dvbi-types:Delivery>
+			<dvbi-types:Language>it</dvbi-types:Language>
+			<dvbi-types:TargetCountry>ITA,SMR</dvbi-types:TargetCountry>
+			<dvbi-types:ServiceListId>it1</dvbi-types:ServiceListId>
 		</sld:ServiceListOffering>
 	</sld:ProviderOffering>
 	<sld:ProviderOffering>
@@ -64,32 +68,34 @@
 			</sld:ElectronicAddress>
 		</sld:Provider>
 		<sld:ServiceListOffering>
-			<sld:ServiceListName xml:lang="en">TV services from the world in English</sld:ServiceListName>		
-			<sld:ServiceListName xml:lang="de">Fernsehen aus ter Welt in Englisch</sld:ServiceListName>
-			<sld:ServiceListName xml:lang="fr">Télévision du monde en anglais</sld:ServiceListName>
-			<sld:ServiceListName xml:lang="it">TV del mondo in inglese</sld:ServiceListName>
-			<sld:ServiceListURI contentType="application/xml">
-				<dvbisd:URI>http://dvbi.TVfromTheWorld.com/engTVservices.xml</dvbisd:URI>
-			</sld:ServiceListURI>
-			<sld:Delivery>
-				<sld:DASHDelivery required="true"/>
-			</sld:Delivery>
-			<sld:Language>en</sld:Language>
+			<dvbi-types:ServiceListName xml:lang="en">TV services from the world in English</dvbi-types:ServiceListName>		
+			<dvbi-types:ServiceListName xml:lang="de">Fernsehen aus ter Welt in Englisch</dvbi-types:ServiceListName>
+			<dvbi-types:ServiceListName xml:lang="fr">Télévision du monde en anglais</dvbi-types:ServiceListName>
+			<dvbi-types:ServiceListName xml:lang="it">TV del mondo in inglese</dvbi-types:ServiceListName>
+			<dvbi-types:ServiceListURI contentType="application/xml">
+				<dvbi-types:URI>http://dvbi.TVfromTheWorld.com/engTVservices.xml</dvbi-types:URI>
+			</dvbi-types:ServiceListURI>
+			<dvbi-types:Delivery>
+				<dvbi-types:DASHDelivery required="true"/>
+			</dvbi-types:Delivery>
+			<dvbi-types:Language>en</dvbi-types:Language>
 			<!-- Assumption: if TargetCountry is not specified, the service list is assumed to be targeted to any country -->
+			<dvbi-types:ServiceListId>world1</dvbi-types:ServiceListId>
 		</sld:ServiceListOffering>
 		<sld:ServiceListOffering>
-			<sld:ServiceListName xml:lang="de">TV aus Deutschland</sld:ServiceListName>
-			<sld:ServiceListName xml:lang="en">TV from Germany</sld:ServiceListName>
-			<sld:ServiceListURI contentType="application/xml">
-				<dvbisd:URI>http://dvbi.TVfromTheWorld.com/TVservices_Germany.xml</dvbisd:URI>
-			</sld:ServiceListURI>
-			<sld:Delivery>
-				<sld:DASHDelivery required="true"/>
-				<sld:DVBTDelivery required="false"/>
-			</sld:Delivery>
-			<sld:Language>de</sld:Language>
-			<sld:Language>en</sld:Language>
-			<sld:TargetCountry>DEU</sld:TargetCountry>
+			<dvbi-types:ServiceListName xml:lang="de">TV aus Deutschland</dvbi-types:ServiceListName>
+			<dvbi-types:ServiceListName xml:lang="en">TV from Germany</dvbi-types:ServiceListName>
+			<dvbi-types:ServiceListURI contentType="application/xml">
+				<dvbi-types:URI>http://dvbi.TVfromTheWorld.com/TVservices_Germany.xml</dvbi-types:URI>
+			</dvbi-types:ServiceListURI>
+			<dvbi-types:Delivery>
+				<dvbi-types:DASHDelivery required="true"/>
+				<dvbi-types:DVBTDelivery required="false"/>
+			</dvbi-types:Delivery>
+			<dvbi-types:Language>de</dvbi-types:Language>
+			<dvbi-types:Language>en</dvbi-types:Language>
+			<dvbi-types:TargetCountry>DEU</dvbi-types:TargetCountry>
+			<dvbi-types:ServiceListId>germany1</dvbi-types:ServiceListId>
 		</sld:ServiceListOffering>
 	</sld:ProviderOffering>
 	<sld:ProviderOffering>
@@ -107,26 +113,27 @@
 			</sld:ElectronicAddress>
 		</sld:Provider>
 		<sld:ServiceListOffering>
-			<sld:ServiceListName>Documentaries</sld:ServiceListName>
-			<sld:ServiceListURI contentType="application/xml">
-				<dvbisd:URI>
+			<dvbi-types:ServiceListName>Documentaries</dvbi-types:ServiceListName>
+			<dvbi-types:ServiceListURI contentType="application/xml">
+				<dvbi-types:URI>
 					http://www.british-service-list-provider.co.uk/documentaries.xml
-				</dvbisd:URI>
-			</sld:ServiceListURI>
-			<sld:ServiceListURI contentType="application/xml">
-				<dvbisd:URI>
+				</dvbi-types:URI>
+			</dvbi-types:ServiceListURI>
+			<dvbi-types:ServiceListURI contentType="application/xml">
+				<dvbi-types:URI>
 					http://alt.british-service-list-provider.co.uk/documentaries.xml
-				</dvbisd:URI>
-			</sld:ServiceListURI>
-			<sld:Delivery>
-				<sld:DASHDelivery required="true"/>
-			</sld:Delivery>
-			<sld:Language>en</sld:Language>
-			<sld:TargetCountry>GBR</sld:TargetCountry>
-			<sld:TargetCountry>FRA</sld:TargetCountry>
-			<sld:TargetCountry>ITA</sld:TargetCountry>
-			<sld:TargetCountry>DEU</sld:TargetCountry>
-			<sld:TargetCountry>AUT</sld:TargetCountry>
+				</dvbi-types:URI>
+			</dvbi-types:ServiceListURI>
+			<dvbi-types:Delivery>
+				<dvbi-types:DASHDelivery required="true"/>
+			</dvbi-types:Delivery>
+			<dvbi-types:Language>en</dvbi-types:Language>
+			<dvbi-types:TargetCountry>GBR</dvbi-types:TargetCountry>
+			<dvbi-types:TargetCountry>FRA</dvbi-types:TargetCountry>
+			<dvbi-types:TargetCountry>ITA</dvbi-types:TargetCountry>
+			<dvbi-types:TargetCountry>DEU</dvbi-types:TargetCountry>
+			<dvbi-types:TargetCountry>AUT</dvbi-types:TargetCountry>
+			<dvbi-types:ServiceListId>uk1</dvbi-types:ServiceListId>
 		</sld:ServiceListOffering>
 	</sld:ProviderOffering>
 	<sld:ProviderOffering>
@@ -144,27 +151,32 @@
 			</sld:ElectronicAddress>
 		</sld:Provider>
 		<sld:ServiceListOffering>
-			<sld:ServiceListName>Germany FTA</sld:ServiceListName>
-			<sld:ServiceListURI contentType="application/xml">
-				<dvbisd:URI>
+			<dvbi-types:ServiceListName>Germany FTA</dvbi-types:ServiceListName>
+			<dvbi-types:ServiceListURI contentType="application/xml">
+				<dvbi-types:URI>
 					http://www.satip.info/sites/satip/files/files/ASTRA_19_2_E.xml
-				</dvbisd:URI>
-			</sld:ServiceListURI>
-			<sld:Delivery>
-				<sld:DASHDelivery required="false"/>
-				<sld:DVBSDelivery required="true"/>
-			</sld:Delivery>
-			<sld:TargetCountry>DEU</sld:TargetCountry>
-			<sld:RelatedMaterial>
-				<sld:HowRelated href="urn:dvb:metadata:cs:HowRelatedCS:1001.1"/> <!-- service list logo -->
-				<sld:MediaLocator>
+				</dvbi-types:URI>
+			</dvbi-types:ServiceListURI>
+			<dvbi-types:Delivery>
+				<dvbi-types:DASHDelivery required="false"/>
+				<dvbi-types:DVBSDelivery required="true">
+					<dvbi-types:OrbitalPosition>12</dvbi-types:OrbitalPosition>
+				</dvbi-types:DVBSDelivery>
+			</dvbi-types:Delivery>
+			<dvbi-types:TargetCountry>DEU</dvbi-types:TargetCountry>
+			<dvbi-types:RelatedMaterial>
+				<tva:HowRelated href="urn:dvb:metadata:cs:HowRelatedCS:1001.1"/> <!-- service list logo -->
+				<tva:MediaLocator>
 					<tva:MediaUri contentType="image/jpeg">https://www.satip.info/wp-content/themes/afina-child/images/satip-spacer.jpg</tva:MediaUri>
 					<!-- 120 x 45 -->
-				</sld:MediaLocator>
-				<sld:MediaLocator>
-					<tva:MediaUri contentType="image/jpeg">data:image/jpeg;base64,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</tva:MediaUri>
-				</sld:MediaLocator>
-			</sld:RelatedMaterial>
+				</tva:MediaLocator>
+				<tva:MediaLocator>
+					<tva:MediaUri contentType="image/jpeg">
+data:image/jpeg;base64,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
+					</tva:MediaUri>
+				</tva:MediaLocator>
+			</dvbi-types:RelatedMaterial>
+			<dvbi-types:ServiceListId>img1</dvbi-types:ServiceListId>
 		</sld:ServiceListOffering>
 	</sld:ProviderOffering>
 	<sld:ProviderOffering>
@@ -182,14 +194,72 @@
 			</sld:ElectronicAddress>
 		</sld:Provider>
 		<sld:ServiceListOffering regulatorListFlag="false">
-			<sld:ServiceListName>DVB-I Reference Client service list </sld:ServiceListName>
-			<sld:ServiceListURI contentType="application/xml">
-				<dvbisd:URI>https://raw.githubusercontent.com/DVBproject/DVB-I-Reference-Client/master/backend/servicelists/example.xml</dvbisd:URI>
-			</sld:ServiceListURI>
-			<sld:Delivery>
-				<sld:DASHDelivery required="true"/>
-				<sld:DVBTDelivery required="false"/>
-			</sld:Delivery>
+			<dvbi-types:ServiceListName>DVB-I Reference Client service list </dvbi-types:ServiceListName>
+			<dvbi-types:ServiceListURI contentType="application/xml">
+				<dvbi-types:URI>https://raw.githubusercontent.com/DVBproject/DVB-I-Reference-Client/master/backend/servicelists/example.xml</dvbi-types:URI>
+			</dvbi-types:ServiceListURI>
+			<dvbi-types:Delivery>
+				<dvbi-types:DASHDelivery required="true"/>
+				<dvbi-types:DVBTDelivery required="false"/>
+			</dvbi-types:Delivery>
+			<dvbi-types:ServiceListId>ex1</dvbi-types:ServiceListId>
+		</sld:ServiceListOffering>
+	</sld:ProviderOffering>
+	<sld:ProviderOffering>
+		<sld:Provider>
+			<sld:Name>Paul</sld:Name>
+			<sld:Address>
+				<mpeg7:Name>Paul</mpeg7:Name>
+				<mpeg7:PostalAddress>
+					<mpeg7:AddressLine>Reading</mpeg7:AddressLine>
+				</mpeg7:PostalAddress>
+			</sld:Address>
+			<sld:ElectronicAddress>
+				<mpeg7:Telephone>+44 00000000</mpeg7:Telephone>
+				<mpeg7:Email>paul@dvb.org</mpeg7:Email>
+			</sld:ElectronicAddress>
+		</sld:Provider>
+		<sld:ServiceListOffering regulatorListFlag="false">
+			<dvbi-types:ServiceListName>DVB-I Reference Client service list (inline images) </dvbi-types:ServiceListName>
+			<dvbi-types:ServiceListURI contentType="application/xml">
+				<dvbi-types:URI>https://raw.githubusercontent.com/DVBproject/DVB-I-Reference-Client/master/backend/servicelists/example.xml</dvbi-types:URI>
+			</dvbi-types:ServiceListURI>
+			<dvbi-types:Delivery>
+				<dvbi-types:DASHDelivery required="false"/>
+			</dvbi-types:Delivery>
+			<dvbi-types:RelatedMaterial>
+				<tva:HowRelated href="urn:dvb:metadata:cs:HowRelatedCS:2021:1001.1"/>
+				<tva:MediaLocator>
+					<tva:MediaUri contentType="image/jpeg">
+data:image/jpeg;base64,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
+					</tva:MediaUri>
+				</tva:MediaLocator>
+			</dvbi-types:RelatedMaterial>
+			<dvbi-types:ServiceListId>image-inline111</dvbi-types:ServiceListId>
+		</sld:ServiceListOffering>
+		<sld:ServiceListOffering regulatorListFlag="false">
+			<dvbi-types:ServiceListName>DVB-I Reference Client service list (linked images) </dvbi-types:ServiceListName>
+			<dvbi-types:ServiceListURI contentType="application/xml">
+				<dvbi-types:URI>https://raw.githubusercontent.com/DVBproject/DVB-I-Reference-Client/master/backend/servicelists/example.xml</dvbi-types:URI>
+			</dvbi-types:ServiceListURI>
+			<dvbi-types:Delivery>
+				<dvbi-types:DASHDelivery required="false"/>
+			</dvbi-types:Delivery>
+			<dvbi-types:RelatedMaterial>
+				<tva:HowRelated href="urn:dvb:metadata:cs:HowRelatedCS:2021:1001.1"/>
+				<tva:MediaLocator>
+					<tva:MediaUri contentType="image/jpeg">
+					  https://github.com/paulhiggs/phlib/blob/e7ea54d8f82fec95899d954ed7fb9f933ae8f342/ph-icon.jpg
+					</tva:MediaUri>
+				</tva:MediaLocator>
+				<tva:MediaLocator>
+					<tva:MediaUri contentType="image/png">
+					  https://github.com/paulhiggs/phlib/blob/e7ea54d8f82fec95899d954ed7fb9f933ae8f342/ph-icon.png
+					</tva:MediaUri>
+				</tva:MediaLocator>
+			</dvbi-types:RelatedMaterial>
+			<dvbi-types:ServiceListId>image-ref111</dvbi-types:ServiceListId>
 		</sld:ServiceListOffering>
 	</sld:ProviderOffering>
 </sld:ServiceListEntryPoints>
+

@@ -1,6 +1,6 @@
-/** 
+/**
  * ISO_countries.js
- * 
+ *
  * Load and check country codes
  */
 import { readFile, readFileSync } from "fs";
@@ -8,7 +8,7 @@ import { readFile, readFileSync } from "fs";
 import chalk from "chalk";
 import fetchS from "sync-fetch";
 
-import { handleErrors } from "./fetch_err_handler.js";
+import handleErrors from "./fetch_err_handler.js";
 import { isHTTPURL } from "./pattern_checks.js";
 
 /**
@@ -67,7 +67,7 @@ export default class ISOcountries {
 				}.bind(this)
 			);
 		else {
-			let langs = readFileSync(countriesFile, { encoding: "utf-8" } ).toString();
+			let langs = readFileSync(countriesFile, { encoding: "utf-8" }).toString();
 			this.#countriesList = loadCountryData(langs);
 		}
 	}
@@ -90,22 +90,21 @@ export default class ISOcountries {
 				.then((response) => response.text())
 				.then((responseText) => (this.#countriesList = loadCountryData(responseText)))
 				.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${countriesURL}`)));
-			else {
-				let resp = null;
-				try {
-					resp = fetchS(countriesURL);
-				} catch (error) {
-					console.log(chalk.red(error.message));
-				}
-				if (resp) {
-					if (resp.ok) 
-						this.#countriesList = loadCountryData(response.text)
-					else console.log(chalk.red(`error (${error}) retrieving ${languagesURL}`));
-				}
+		else {
+			let resp = null;
+			try {
+				resp = fetchS(countriesURL);
+			} catch (error) {
+				console.log(chalk.red(error.message));
 			}
+			if (resp) {
+				if (resp.ok) this.#countriesList = loadCountryData(response.text);
+				else console.log(chalk.red(`error (${error}) retrieving ${languagesURL}`));
+			}
+		}
 	}
 
-	loadCountries(options, async=true) {
+	loadCountries(options, async = true) {
 		if (!options) options = {};
 		if (!options.purge) options.purge = true;
 

@@ -1,6 +1,6 @@
 /**
  * cg_check.js
- * 
+ *
  * Validate content guide metadata
  */
 import process from "process";
@@ -25,7 +25,7 @@ import { ValidatePromotionalStillImage } from "./related_material_checks.js";
 import { cg_InvalidHrefValue, NoChildElement, keys } from "./common_errors.js";
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.js";
 import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./multilingual_element.js";
-import { writeOut } from "./validator.js";
+import writeOut from "./logger.js";
 import { CURRENT, OLD } from "./globals.js";
 import {
 	LoadGenres,
@@ -42,7 +42,7 @@ import {
 	LoadCountries,
 } from "./classification_scheme_loaders.js";
 import { LoadCredits } from "./role_loader.js";
-import { CheckAccessibilityAttributes } from "./accessibility_attributes_checks.js";
+import CheckAccessibilityAttributes from "./accessibility_attributes_checks.js";
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";
@@ -277,7 +277,7 @@ export default class ContentGuideCheck {
 	#subtitleCodings;
 	#subtitlePurposes;
 
-	constructor(useURLs, opts, async=true) {
+	constructor(useURLs, opts, async = true) {
 		this.#numRequests = 0;
 		this.supportedRequests = supportedRequests;
 
@@ -664,7 +664,7 @@ export default class ContentGuideCheck {
 							case tva.e_MinimumAge:
 								checkAttributes(pgChild, [], [], tvaEA.MinimumAge, errs, `${errCode}-10`);
 								if (thisCountry.MinimumAge) {
-									// only one minimum age value is premitted per country
+									// only one minimum age value is permitted per country
 									errs.addError({
 										code: `${errCode}-11`,
 										key: keys.k_ParentalGuidance,
@@ -675,6 +675,14 @@ export default class ContentGuideCheck {
 									});
 								}
 								thisCountry.MinimumAge = pgChild;
+								let age = pgChild.text().parseInt();
+								if ((age < 4 || age > 18) && age != 255)
+									errs.addError({
+										code: `${errCode}-12`,
+										key: keys.k_ParentalGuidance,
+										message: `value of ${tva.e_MinimumAge.elementize()} must be between 4 and 18 (to align with parental_rating_descriptor) or be 255`,
+										fragment: pgChild,
+									});
 								break;
 							case tva.e_ParentalRating:
 								checkAttributes(pgChild, [tva.a_href], [], tvaEA.ParentalRating, errs, `${errCode}-20`);
@@ -1274,12 +1282,14 @@ export default class ContentGuideCheck {
 			const titleLang = GetNodeLanguage(Title, false, errs, `${errCode}-2`, this.#knownLanguages);
 			const titleStr = unEntity(Title.text());
 
-			if (titleStr.length > dvbi.MAX_TITLE_LENGTH)
+			if (titleStr.length > dvbi.MAX_TITLE_LENGTH) {
 				errs.addError({
 					code: `${errCode}-11`,
 					message: `${tva.e_Title.elementize()} length exceeds ${dvbi.MAX_TITLE_LENGTH} characters`,
 					fragment: Title,
 				});
+				errs.errorDescription({ code: `${errCode}-11`, description: "refer clause 6.10.5 in A177" });
+			}
 			switch (titleType) {
 				case mpeg7.TITLE_TYPE_MAIN:
 					if (mainTitles.find((e) => e.lang == titleLang))
@@ -1310,6 +1320,8 @@ export default class ContentGuideCheck {
 						message: `${tva.a_type.attribute()} must be ${mpeg7.TITLE_TYPE_MAIN.quote()} or ${mpeg7.TITLE_TYPE_SECONDARY.quote()} for ${tva.e_Title.elementize()}`,
 						fragment: Title,
 					});
+					errs.errorDescription({ code: `${errCode}-15`, description: "refer to the relevant subsection of clause 6.10.5 in A177" });
+					break;
 			}
 		}
 		secondaryTitles.forEach((item) => {
@@ -1522,6 +1534,11 @@ export default class ContentGuideCheck {
 		}
 	}
 
+	/*private*/ #NotCRIDFormat(errs, error) {
+		errs.addError(error);
+		errs.errorDescription({ code: error?.code, description: "format if a CRID is defined in clause 8 of ETSI TS 102 822" });
+	}
+
 	/**
 	 * validate the <ProgramInformation> element against the profile for the given request/response type
 	 *
@@ -1573,7 +1590,7 @@ export default class ContentGuideCheck {
 		if (ProgramInformation.attr(tva.a_programId)) {
 			programCRID = ProgramInformation.attr(tva.a_programId).value();
 			if (!isCRIDURI(programCRID))
-				errs.addError({
+				this.#NotCRIDFormat(errs, {
 					code: "PI011",
 					message: `${tva.a_programId.attribute(ProgramInformation.name())} is not a valid CRID (${programCRID})`,
 					line: ProgramInformation.line(),
@@ -1617,7 +1634,7 @@ export default class ContentGuideCheck {
 									fragment: child,
 								});
 							else if (!isCRIDURI(foundCRID))
-								errs.addError({
+								this.#NotCRIDFormat(errs, {
 									code: "PI033",
 									message: `${tva.a_crid.attribute(`${ProgramInformation.name()}.${tva.e_EpisodeOf}`)}=${foundCRID.quote()} is not a valid CRID`,
 									fragment: child,
@@ -1652,7 +1669,7 @@ export default class ContentGuideCheck {
 									fragment: child,
 								});
 							else if (!isCRIDURI(foundCRID))
-								errs.addError({
+								this.#NotCRIDFormat(errs, {
 									code: "PI045",
 									message: `${tva.a_crid.attribute(`${ProgramInformation.name()}.${tva.e_MemberOf}`)}=${foundCRID.quote()} is not a valid CRID`,
 									fragment: child,
@@ -1951,7 +1968,7 @@ export default class ContentGuideCheck {
 		if (GroupInformation.attr(tva.a_groupId)) {
 			const groupId = GroupInformation.attr(tva.a_groupId).value();
 			if (!isCRIDURI(groupId))
-				errs.addError({
+				this.#NotCRIDFormat(errs, {
 					code: "GIM003",
 					message: `${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is not a valid CRID`,
 					line: GroupInformation.line(),
@@ -2475,6 +2492,15 @@ export default class ContentGuideCheck {
 	 * @param {Class}   errs                  errors found in validaton
 	 */
 	/* private */ #ValidateInstanceDescription(props, VerifyType, InstanceDescription, isCurrentProgram, errs) {
+		if (!InstanceDescription) {
+			errs.addError({
+				type: APPLICATION,
+				code: "ID000",
+				message: "ValidateInstanceDescription() called with InstanceDescription==null",
+			});
+			return;
+		}
+
 		function checkGenre(genre, errs, errcode) {
 			if (!genre) return null;
 			checkAttributes(genre, [tva.a_href], [tva.a_type], tvaEA.Genre, errs, `${errcode}-1`);
@@ -2485,17 +2511,7 @@ export default class ContentGuideCheck {
 					message: `${tva.a_type.attribute(`${genre.parent().name()}.${+genre.name()}`)} must contain ${tva.GENRE_TYPE_OTHER.quote()}`,
 					fragment: genre,
 				});
-
 			return genre.attr(tva.a_href) ? genre.attr(tva.a_href).value() : null;
-		}
-
-		if (!InstanceDescription) {
-			errs.addError({
-				type: APPLICATION,
-				code: "ID000",
-				message: "ValidateInstanceDescription() called with InstanceDescription==null",
-			});
-			return;
 		}
 
 		let isMediaAvailability = (str) => [dvbi.MEDIA_AVAILABLE, dvbi.MEDIA_UNAVAILABLE].includes(str);
@@ -2547,6 +2563,15 @@ export default class ContentGuideCheck {
 					message: `message:ValidateInstanceDescription() called with VerifyType=${VerifyType}`,
 				});
 		}
+
+		// @serviceInstanceId
+		if (InstanceDescription.attr(tva.a_serviceInstanceID) && InstanceDescription.attr(tva.a_serviceInstanceID).value().length == 0)
+			errs.addError({
+				code: "ID009",
+				message: `${tva.a_serviceInstanceID.attribute()} should not be empty is specified`,
+				line: InstanceDescription.line(),
+				key: "empty ID",
+			});
 
 		let restartGenre = null,
 			restartRelatedMaterial = null;
@@ -2706,15 +2731,7 @@ export default class ContentGuideCheck {
 			errs.addError({ type: APPLICATION, code: "PA000a", message: "CheckPlayerApplication() called with node==null" });
 			return;
 		}
-		if (!Array.isArray(allowedContentTypes)) {
-			errs.addError({
-				type: APPLICATION,
-				code: "PA000b",
-				message: "CheckPlayerApplication() called with incorrect type for allowedContentTypes",
-			});
-			return;
-		}
-
+		let allowedTypes = Array.isArray(allowedContentTypes) ? allowedContentTypes : [].concat(allowedContentTypes);
 		if (!node.attr(tva.a_contentType)) {
 			errs.addError({
 				code: `${errcode}-1`,
@@ -2725,20 +2742,20 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		if (allowedContentTypes.includes(node.attr(tva.a_contentType).value())) {
+		if (allowedTypes.includes(node.attr(tva.a_contentType).value())) {
 			switch (node.attr(tva.a_contentType).value()) {
 				case dvbi.XML_AIT_CONTENT_TYPE:
 					if (!isHTTPURL(node.text()))
 						errs.addError({
 							code: `${errcode}-2`,
-							message: `${node.name().elementize()}=${node.text().quote()} is not a valid AIT URL`,
+							message: `${node.name().elementize()}=${node.text().quote()} is not a valid HTTP or HTTP URL`,
 							key: keys.k_InvalidURL,
 							fragment: node,
 						});
 					break;
 				/*			case dvbi.HTML5_APP:
 				case dvbi.XHTML_APP:
-					if (!patterns.isHTTPURL(node.text()))
+					if (!isHTTPURL(node.text()))
 						errs.addError({code:`${errcode}-3`, message:`${node.name().elementize()}=${node.text().quote()} is not a valid URL`, key:"invalid URL", fragment:node});		
 					break;
 				*/
@@ -2873,7 +2890,7 @@ export default class ContentGuideCheck {
 
 		// <ProgramURL>
 		let ProgramURL = OnDemandProgram.get(xPath(props.prefix, tva.e_ProgramURL), props.schema);
-		if (ProgramURL) this.#CheckPlayerApplication(ProgramURL, [dvbi.XML_AIT_CONTENT_TYPE], errs, "OD020");
+		if (ProgramURL) this.#CheckPlayerApplication(ProgramURL, dvbi.XML_AIT_CONTENT_TYPE, errs, "OD020");
 
 		// <AuxiliaryURL>
 		let AuxiliaryURL = OnDemandProgram.get(xPath(props.prefix, tva.e_AuxiliaryURL), props.schema);
@@ -2899,6 +2916,7 @@ export default class ContentGuideCheck {
 					code: "OD062",
 					message: `${tva.e_StartOfAvailability.elementize()} must be earlier than ${tva.e_EndOfAvailability.elementize()}`,
 					multiElementError: [soa, eoa],
+					tag: "bad timing",
 				});
 		}
 
@@ -2914,9 +2932,8 @@ export default class ContentGuideCheck {
 		}
 
 		// <Free>
-		let fr = 0,
-			Free;
-		while ((Free = OnDemandProgram.get(xPath(props.prefix, tva.e_Free, ++fr), props.schema)) != null) TrueValue(Free, tva.a_value, "OD080", errs);
+		let Free = OnDemandProgram.get(xPath(props.prefix, tva.e_Free), props.schema);
+		if (Free) TrueValue(Free, tva.a_value, "OD080", errs);
 	}
 
 	/**
@@ -2953,7 +2970,7 @@ export default class ContentGuideCheck {
 				[
 					{ name: tva.e_Program },
 					{ name: tva.e_ProgramURL, minOccurs: 0 },
-					{ name: tva.e_InstanceDescription, minOccurs: 0 },
+					{ name: tva.e_InstanceDescription, minOccurs: 0, maxOccurs: Infinity },
 					{ name: tva.e_PublishedStartTime },
 					{ name: tva.e_PublishedDuration },
 					{ name: tva.e_ActualStartTime, minOccurs: 0 },
@@ -2974,12 +2991,13 @@ export default class ContentGuideCheck {
 
 				let ProgramCRID = Program.attr(tva.a_crid);
 				if (ProgramCRID) {
-					if (!isCRIDURI(ProgramCRID.value()))
-						errs.addError({
+					if (!isCRIDURI(ProgramCRID.value())) {
+						this.#NotCRIDFormat(errs, {
 							code: "SE011",
 							message: `${tva.a_crid.attribute(tva.e_Program)} is not a valid CRID (${ProgramCRID.value()})`,
 							fragment: Program,
 						});
+					}
 					if (!isIni(programCRIDs, ProgramCRID.value()))
 						errs.addError({
 							code: "SE012",
@@ -3002,8 +3020,21 @@ export default class ContentGuideCheck {
 					});
 
 			// <InstanceDescription>
-			let InstanceDescription = ScheduleEvent.get(xPath(props.prefix, tva.e_InstanceDescription), props.schema);
-			if (InstanceDescription) this.#ValidateInstanceDescription(props, tva.e_ScheduleEvent, InstanceDescription, isCurrentProgram, errs);
+			let id = 0,
+				thisInstanceDescription,
+				serviceIDs = [];
+			while ((thisInstanceDescription = ScheduleEvent.get(xPath(props.prefix, tva.e_InstanceDescription, ++id), props.schema)) != null) {
+				this.#ValidateInstanceDescription(props, tva.e_ScheduleEvent, thisInstanceDescription, isCurrentProgram, errs);
+				let instanceServiceID = thisInstanceDescription.attr(tva.a_serviceInstanceID) ? thisInstanceDescription.attr(tva.a_serviceInstanceID).value() : "dflt";
+				if (isIn(serviceIDs, instanceServiceID))
+					errs.addError({
+						code: instanceServiceID == "dflt" ? "SE031" : "SE032",
+						line: thisInstanceDescription.line(),
+						message: instanceServiceID == "dflt" ? "Default instance description is already specified" : `Instance description for ${instanceServiceID} is already specidied`,
+						tag: "dulicate instance",
+					});
+				else serviceIDs.push(instanceServiceID);
+			}
 
 			// <PublishedStartTime> and <PublishedDuration>
 			let pstElem = ScheduleEvent.get(xPath(props.prefix, tva.e_PublishedStartTime), props.schema);

@@ -1,10 +1,9 @@
 /**
  * validator.js
- * 
- * 
+ *
+ *
  */
-import { existsSync, writeFile } from "fs";
-import { join, sep } from "path";
+import { join } from "path";
 import { createServer } from "https";
 import os from "node:os";
 import process from "process";
@@ -40,51 +39,13 @@ import {
 import ServiceListCheck from "./sl_check.js";
 import ContentGuideCheck from "./cg_check.js";
 import SLEPR from "./slepr.js";
-
-export const MODE_UNSPECIFIED = "none",
-	MODE_SL = "sl",
-	MODE_CG = "cg",
-	MODE_URL = "url",
-	MODE_FILE = "file";
+import writeOut, { createPrefix } from "./logger.js";
+import { MODE_URL, MODE_FILE, MODE_SL, MODE_CG, MODE_UNSPECIFIED } from "./ui.js";
 
 let csr = null;
 
 const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
-
-export function writeOut(errs, filebase, markup, req = null) {
-	if (!filebase || errs.markupXML?.length == 0) return;
-
-	let outputLines = [];
-	if (markup && req?.body?.XMLurl) outputLines.push(`<!-- source: ${req.body.XMLurl} -->`);
-	errs.markupXML.forEach((line) => {
-		outputLines.push(line.value);
-		if (markup && line.validationErrors)
-			line.validationErrors.forEach((error) => {
-				outputLines.push(`<!--${error.replace(/[\n]/g, "")}-->`);
-			});
-	});
-	const filename = markup ? `${filebase}.mkup.txt` : `${filebase}.raw.txt`;
-	writeFile(filename, outputLines.join("\n"), (err) => {
-		if (err) console.log(chalk.red(err));
-	});
-}
-
-function createPrefix(req) {
-	const logDir = join(".", "arch");
-
-	if (!existsSync(logDir)) return null;
-
-	const getDate = (d) => {
-		const fillZero = (t) => (t < 10 ? `0${t}` : t);
-		return `${d.getFullYear()}-${fillZero(d.getMonth() + 1)}-${fillZero(d.getDate())} ${fillZero(d.getHours())}.${fillZero(d.getMinutes())}.${fillZero(d.getSeconds())}`;
-	};
-
-	const fname = req.body.doclocation == MODE_URL ? req.body.XMLurl.substr(req.body.XMLurl.lastIndexOf("/") + 1) : req?.files?.XMLfile?.name;
-	if (!fname) return null;
-
-	return `${logDir}${sep}${getDate(new Date())} (${req.body.testtype == MODE_SL ? "SL" : req.body.requestType}) ${fname.replace(/[/\\?%*:|"<>]/g, "-")}`;
-}
 
 function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasCG, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
 	if (!req.session.data) {
@@ -111,7 +72,7 @@ function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasC
 		else if (req.body.doclocation == MODE_URL && req.body.XMLurl.length == 0) req.parseErr = "URL not specified";
 		else if (req.body.doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) req.parseErr = "File not provided";
 
-		let log_prefix = createPrefix(req, res);
+		const log_prefix = createPrefix(req);
 		if (!req.parseErr)
 			switch (req.body.doclocation) {
 				case MODE_URL:
@@ -168,9 +129,10 @@ function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasC
 
 function validateServiceList(req, res, slcheck) {
 	let errs = new ErrorList();
-	let resp, VVxml = null;
-	const log_prefix = createPrefix(req, res);
-	if(req.method == "GET") {
+	let resp,
+		VVxml = null;
+	const log_prefix = createPrefix(req);
+	if (req.method == "GET") {
 		try {
 			resp = fetchS(req.query.url);
 		} catch (error) {
@@ -180,9 +142,8 @@ function validateServiceList(req, res, slcheck) {
 			if (resp.ok) VVxml = resp.text();
 			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
 		}
-	}
-	else if(req.method == "POST") {
-		VVxml = req.body
+	} else if (req.method == "POST") {
+		VVxml = req.body;
 	}
 	slcheck.doValidateServiceList(VVxml, errs, log_prefix);
 	drawResults(req, res, req.parseErr, errs);
@@ -193,9 +154,10 @@ function validateServiceList(req, res, slcheck) {
 
 function validateServiceListJson(req, res, slcheck) {
 	let errs = new ErrorList();
-	let resp, VVxml = null;
-	const log_prefix = createPrefix(req, res);
-	if(req.method == "GET") {
+	let resp,
+		VVxml = null;
+	const log_prefix = createPrefix(req);
+	if (req.method == "GET") {
 		try {
 			resp = fetchS(req.query.url);
 		} catch (error) {
@@ -205,16 +167,18 @@ function validateServiceListJson(req, res, slcheck) {
 			if (resp.ok) VVxml = resp.text();
 			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
 		}
-	}
-	else if(req.method == "POST") {
+	} else if (req.method == "POST") {
 		VVxml = req.body;
 	}
 	slcheck.doValidateServiceList(VVxml, errs, log_prefix);
 	res.setHeader("Content-Type", "application/json");
-	if (req.parseErr) 
-		res.write(JSON.stringify({parseErr:req.parseErr}));
-	else 
-		res.write(JSON.stringify((req.query.results && req.query.results == "all") ? {errs} : {errors: errs.errors.length, warnings : errs.warnings.length, informationals: errs.informationals.length}));
+	if (req.parseErr) res.write(JSON.stringify({ parseErr: req.parseErr }));
+	else
+		res.write(
+			JSON.stringify(
+				req.query.results && req.query.results == "all" ? { errs } : { errors: errs.errors.length, warnings: errs.warnings.length, informationals: errs.informationals.length }
+			)
+		);
 
 	writeOut(errs, log_prefix, true, req);
 	res.end();
@@ -288,7 +252,7 @@ export default function validator(options) {
 
 	app.use(morgan(":remote-addr :protocol :method :url :status :res[content-length] :counts - :response-time ms :agent :parseErr :location"));
 
-	app.use(express.urlencoded({extended: true}));
+	app.use(express.urlencoded({ extended: true }));
 
 	app.set("trust proxy", 1);
 	app.use(
@@ -296,7 +260,7 @@ export default function validator(options) {
 			secret: "keyboard car",
 			resave: false,
 			saveUninitialized: true,
-			cookie: {maxAge: 60000},
+			cookie: { maxAge: 60000 },
 		})
 	);
 
@@ -369,12 +333,12 @@ export default function validator(options) {
 			validateServiceListJson(req, res, slcheck);
 		});
 
-		app.post("/validate_sl",express.text({type: "application/xml", limit: '2mb'}), function (req, res) {
-			validateServiceList(req, res,slcheck);
+		app.post("/validate_sl", express.text({ type: "application/xml", limit: "2mb" }), function (req, res) {
+			validateServiceList(req, res, slcheck);
 		});
 
-		app.post("/validate_sl_json",express.text({type: "application/xml", limit: '2mb'}), function (req, res) {
-			validateServiceListJson(req, res,slcheck);
+		app.post("/validate_sl_json", express.text({ type: "application/xml", limit: "2mb" }), function (req, res) {
+			validateServiceListJson(req, res, slcheck);
 		});
 	}
 

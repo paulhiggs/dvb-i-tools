@@ -1,6 +1,6 @@
 /**
  * slepr.js
- * 
+ *
  * SLEPR - Service List End Point Resolver
  */
 import { readFile } from "fs";
@@ -13,7 +13,7 @@ import { datatypeIs } from "./phlib/phlib.js";
 import { tva } from "./TVA_definitions.js";
 import { dvbi } from "./DVB-I_definitions.js";
 
-import { handleErrors } from "./fetch_err_handler.js";
+import handleErrors from "./fetch_err_handler.js";
 import { xPath, isIn } from "./utils.js";
 import { IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data_locations.js";
 import { hasChild } from "./schema_checks.js";
@@ -23,7 +23,7 @@ import ClassificationScheme from "./classification_scheme.js";
 import ISOcountries from "./ISO_countries.js";
 
 var masterSLEPR = "";
-const EMPTY_SLEPR = '<ServiceListEntryPoints xmlns="urn:dvb:metadata:servicelistdiscovery:2021"></ServiceListEntryPoints>';
+const EMPTY_SLEPR = '<ServiceListEntryPoints xmlns="urn:dvb:metadata:servicelistdiscovery:2024"></ServiceListEntryPoints>';
 
 const RFC2397_PREFIX = "data:";
 
@@ -142,13 +142,9 @@ export default class SLEPR {
 			// check for any erronous arguments
 			for (var key in req.query) if (!isIn(allowed_arguments, key, false)) req.parseErr.push(`invalid argument [${key}]`);
 
-			//regulatorListFlag needs to be a boolean, "true" or "false" only
-			if (req.query.regulatorListFlag) {
-				if (!datatypeIs(req.query.regulatorListFlag, "string")) req.parseErr.push(`invalid type for ${dvbi.a_regulatorListFlag} [${typeof req.query.regulatorListFlag}]`);
-
-				if (!["true", "false"].includes(req.query.regulatorListFlag.toLowerCase()))
-					req.parseErr.push(`invalid value for ${dvbi.a_regulatorListFlag} [${req.query.regulatorListFlag}]`);
-			}
+			var checkBoolean = (bool) => ["true", "false"].includes(bool);
+			checkIt(req.query.regulatorListFlag, dvbi.a_regulatorListFlag, checkBoolean);
+			checkIt(req.query.inlineImages, dvbi.q_inlineImages, checkBoolean);
 
 			//TargetCountry(s)
 			var checkTargetCountry = (country) => this.#knownCountries.isISO3166code(country, false);
@@ -186,9 +182,8 @@ export default class SLEPR {
 			res.type("text/plain");
 			res.write("urn:paulhiggs,2024-06:BabelFish#ja,zh,mi\nurn:ibm.com,1981:CTrlAtlDel\n");
 			res.status(200);
-			return true; 
+			return true;
 		}
-
 
 		if (!this.checkQuery(req)) {
 			if (req.parseErr) res.write(`[${req.parseErr.join(",\n\t")}]`);

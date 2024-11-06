@@ -1,0 +1,25 @@
+#
+# run as a Service
+#
+# link this file to /usr/lib/systemd/system/dvb-i-tools.service
+# $sudo ln -s dvb-i-tools.service  /usr/lib/systemd/system/dvb-i-tools.service
+#
+# modify the ExecStart location to the install directory 
+#
+# start it
+# #sudo service dvb-i-tools start
+#
+# get the status with 
+# $journalctl -lf -u dvb-i-tools
+
+[Unit]
+Description=DVB-I validator
+After=network-online.target
+
+[Service]
+Restart=on-failure
+WorkingDirectory=/home/paul/dvb-i-tools/
+ExecStart=/usr/bin/node /home/paul/dvb-i-tools/all-in-one.js
+
+[Install]
+WantedBy=multi-user.target

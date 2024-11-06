@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassificationScheme xmlns="urn:dvb:metadata:schema:dvbCSschema:2007"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    uri="urn:dvb:metadata:cs:AudioConformancePointsCS:2024">
+    <Term termID="1">
+        <Name>Broadcast Conformance Points</Name>
+        <Term termID="1.1">
+            <Name>Broadcast Receiver Conformance Points</Name>
+            <Term termID="1.1.1">
+                <Name>urn:dvb:broadcast:ird:audio:MPEG-1_and_MPEG-2_backwards_compatible</Name>
+                <Definition>MPEG-1 and MPEG-2 backwards compatible audio as defined in clause 6.1 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.2">
+                <Name>urn:dvb:broadcast:ird:audio:AC-3_and_enhanced_AC-3</Name>
+                <Definition>AC-3 and enhanced AC-3 audio as defined in clause 6.2 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.3">
+                <Name>urn:dvb:broadcast:ird:audio:DTS</Name>
+                <Definition>DTS audio as defined in clause 6.3 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.4">
+                <Name>urn:dvb:broadcast:ird:audio:MPEG-4_AAC_family</Name>
+                <Definition>MPEG-4 AAC, MPEG-4 HE AAC and MPEG-4 HE AAC v2 audio as defined in clause 6.4 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.5">
+                <Name>urn:dvb:broadcast:ird:audio:AC-4_channel_based</Name>
+                <Definition>AC-4 channel based audio as defined in clause 6.6 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.6">
+                <Name>urn:dvb:broadcast:ird:audio:AC-4_channel_based_immersive_personalized</Name>
+                <Definition>AC-4 for channel-based, immersive and personalized audio as defined in clause 6.7 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.1.7">
+                <Name>urn:dvb:broadcast:ird:audio:MPEG-H</Name>
+                <Definition>MPEG-H audio as defined in clause 6.8 of ETSI TS 101 154</Definition>
+            </Term>
+        </Term>
+        <Term termID="1.2">
+            <Name>Broadcast Bitstream Conformance Points</Name>
+            <Term termID="1.2.1">
+                <Name>urn:dvb:broadcast:bitstream:audio:MPEG-1_and_MPEG-2_backwards_compatible</Name>
+                <Definition>MPEG-1 and MPEG-2 backwards compatible audio as defined in clause 6.1 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.2.2">
+                <Name>urn:dvb:broadcast:bitstream:audio:AC-3_and_enhanced_AC-3</Name>
+                <Definition>AC-3 and enhanced AC-3 audio as defined in clause 6.2 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.2.3">
+                <Name>urn:dvb:broadcast:bitstream:audio:DTS</Name>
+                <Definition>DTS audio as defined in clause 6.3 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.2.4">
+                <Name>urn:dvb:broadcast:bitstream:audio:MPEG-4_AAC_family</Name>
+                <Definition>MPEG-4 AAC, MPEG-4 HE AAC and MPEG-4 HE AAC v2 audio as defined in clause 6.4 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.2.5">
+                <Name>urn:dvb:broadcast:bitstream:audio:AC-4_channel_based</Name>
+                <Definition>AC-4 channel based audio as defined in clause 6.6 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.2.6">
+                <Name>urn:dvb:broadcast:bitstream:audio:AC-4_channel_based_immersive_personalized</Name>
+                <Definition>AC-4 for channel-based, immersive and personalized audio as defined in clause 6.7 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.2.7">
+                <Name>urn:dvb:broadcast:bitstream:audio:MPEG-H</Name>
+                <Definition>MPEG-H audio as defined in clause 6.8 of ETSI TS 101 154</Definition>
+            </Term>
+            <Term termID="1.2.8">
+                <Name>urn:dvb:broadcast:bitstream:audio:AVS3P3</Name>
+                <Definition>Channel, Object, Channel+Object or HOA coded audio according to AVS3 Part 3 Audio, T/AI 109.3</Definition>
+            </Term>
+        </Term>    
+    </Term>
+    <Term termID="2">
+        <Name>DASH Conformance Points</Name>
+        <Term termID="2.1">
+            <Name>DASH Player Conformance Points</Name>
+        </Term>
+        <Term termID="2.2">
+            <Name>DASH Bitstream Conformance Points</Name>
+        </Term>
+    </Term>
+</ClassificationScheme>

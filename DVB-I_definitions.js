@@ -1,6 +1,6 @@
 /**
  * DVB-I_defintions.js
- * 
+ *
  * Defintions made in DVB A177 Bluebooks
  */
 import { tva, tvaEA, tvaEC, TVA_CSmetadata } from "./TVA_definitions.js";
@@ -8,7 +8,6 @@ import { tva, tvaEA, tvaEC, TVA_CSmetadata } from "./TVA_definitions.js";
 const DVB_metadata = "urn:dvb:metadata";
 const DVB_CSmetadata = `${DVB_metadata}:cs`,
 	FVC_CSmetadata = "urn:fvc:metadata:cs";
-
 
 const PaginationPrefix = `${FVC_CSmetadata}:HowRelatedCS:2015-12:pagination`,
 	NowNextCRIDPrefix = "crid://dvb.org/metadata/schedules/now-next";
@@ -35,6 +34,14 @@ const HbbTVStandardPrefix = "urn:hbbtv:appinformation:standardversion:hbbtv";
 const HbbTVFeaturePrefix = "urn:hbbtv:appinformation:optionalfeature:hbbtv";
 const CTAStandardPrefix = "urn:cta:wave:appinformation:standardversion";
 
+const CMCDterm = `${DVB_metadata}:cmcd`;
+export const CMCD_MODE_REQUEST = `${CMCDterm}:delivery:request`,
+	CMCD_MODE_RESPONSE = `${CMCDterm}:delivery:response`,
+	CMCD_MODE_INTERVAL = `${CMCDterm}:delivery:interval`;
+
+export const CMCD_METHOD_HTTP_HEADER = `${CMCDterm}:delivery:customHTTPHeader`,
+	CMCD_METHOD_QUERY_ARGUMENT = `${CMCDterm}:delivery:queryArguments`;
+
 export const dvbi = {
 	A177_Namespace: `${DVB_metadata}:servicediscovery:2019`,
 	A177r1_Namespace: `${DVB_metadata}:servicediscovery:2020`,
@@ -43,6 +50,7 @@ export const dvbi = {
 	A177r4_Namespace: `${DVB_metadata}:servicediscovery:2022b`,
 	A177r5_Namespace: `${DVB_metadata}:servicediscovery:2023`,
 	A177r6_Namespace: `${DVB_metadata}:servicediscovery:2024`,
+	A177r7_Namespace: `${DVB_metadata}:servicediscovery:2025`,
 
 	ApplicationStandards: [
 		`${HbbTVStandardPrefix}:1.2.1`,
@@ -164,6 +172,12 @@ export const dvbi = {
 	APP_OUTSIDE_AVAILABILITY: `${LINKED_APLICATION_CS}:2`,
 	APP_SERVICE_PROVIDER: `${LINKED_APLICATION_CS}:3`,
 
+	// A177r7
+	APP_IN_SERIES: `${LINKED_APLICATION_CS}:1.3`,
+	APP_LIST_INSTALLATION: `${LINKED_APLICATION_CS}:4.1`,
+	APP_WITHDRAW_AGREEMENT: `${LINKED_APLICATION_CS}:4.2`,
+	APP_RENEW_AGREEMENT: `${LINKED_APLICATION_CS}:4.3`,
+
 	NVOD_MODE_REFERENCE: "reference",
 	NVOD_MODE_TIMESHIFTED: "timeshifted",
 
@@ -180,6 +194,7 @@ export const dvbi = {
 	a_Address: "Address",
 	a_CGSID: "CGSID",
 	a_channelNumber: "channelNumber",
+	a_contentId: "contentId",
 	a_contentLanguage: tva.a_contentLanguage,
 	a_contentType: tva.a_contentType,
 	a_controlRemoteAccessOverInternet: "controlRemoteAccessOverInternet",
@@ -202,6 +217,7 @@ export const dvbi = {
 	a_dvb_ssrc_upstream_client: "dvb-ssrc-upstream-client",
 	a_dvb_t_wait_max: "dvb-t-wait-max",
 	a_dvb_t_wait_min: "dvb-t-wait-min",
+	a_enabledKeys: "enabledKeys",
 	a_encryptionScheme: "encryptionScheme",
 	a_endTime: "endTime",
 	a_extensionName: "extensionName",
@@ -228,6 +244,8 @@ export const dvbi = {
 	a_region: "region",
 	a_regionID: "regionID",
 	a_regulatorListFlag: "regulatorListFlag",
+	a_reportingMethod: "reportingMethod",
+	a_reportingMode: "reportingMode",
 	a_responseStatus: "responseStatus",
 	a_rtcp_bandwidth: "rtcp-bandwidth",
 	a_rtcp_mux: "rtcp-mux",
@@ -260,6 +278,7 @@ export const dvbi = {
 	e_Availability: "Availability",
 	e_CASystemId: "CASystemId",
 	e_ChannelBonding: "ChannelBonding",
+	e_CMCD: "CMCD",
 	e_CNAME: "CNAME",
 	e_Colorimetry: "Colorimetry",
 	e_ContentAttributes: "ContentAttributes",

@@ -1,13 +1,10 @@
 version: '1.0'
-volumes:
-  node_modules:
 services:
   dvb-i-tools:
+    # Comment build and uncomment image if you want to use prebuilt image rather than build from the source code
     build: .
+    #image: ghcr.io/ccma-enginyeria/dvb-i-tools/dvb-i-tools:latest
     environment:
       - no_proxy=localhost,127.0.0.1
-    volumes:
-      - "${GIT_CLONE_PATH:-./}:/usr/src/app"
-      - node_modules:/usr/src/app/node_modules
     ports:
       - "3030:3030"
