@@ -9,7 +9,7 @@ import { elementize, quote } from "./phlib/phlib.js";
 
 import { tva, tvaEA } from "./TVA_definitions.js";
 import { sats } from "./DVB_definitions.js";
-import { dvbi, dvbiEC, dvbEA, XMLdocumentType } from "./DVB-I_definitions.js";
+import { dvbi, dvbiEC, dvbEA, XMLdocumentType, CMCD_MODE_RESPONSE, CMCD_MODE_INTERVAL } from "./DVB-I_definitions.js";
 
 import ErrorList, { WARNING, APPLICATION } from "./error_list.js";
 import { isTAGURI } from "./URI_checks.js";
@@ -74,7 +74,7 @@ import {
 	validServiceBanner,
 	validContentGuideSourceLogo,
 } from "./sl_data_versions.js";
-import { CMCD_keys, checkCMCDkeys } from "./CMCD.js";
+import { check_CMCD } from "./CMCD.js";
 
 const LCN_TABLE_NO_TARGETREGION = "unspecifiedRegion",
 	LCN_TABLE_NO_SUBSCRIPTION = "unspecifiedPackage";
@@ -1499,27 +1499,21 @@ export default class ServiceListCheck {
 
 			// <DASHDeliveryParameters><CMCD>  -- !! EXPERIMENTAL
 			let cc = 0,
+				modes = {},
 				CMCDelem;
+			modes[CMCD_MODE_REQUEST] = modes[CMCD_MODE_RESPONSE] = modes[CMCD_MODE_INTERVAL] = 0;
 			while ((CMCDelem = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_CMCD, ++cc), props.schema)) != null) {
-				const enabledKeys = CMCDelem.attr(dvbi.a_enabledKeys);
-				if (enabledKeys) {
-					const keys = enabledKeys.value().split(" ");
-					if (!CMCDelem.attr(dvbi.a_contentId) && isIn(keys, CMCD_keys.content_id))
+				check_CMCD(CMCDelem, errs, "SI175");
+				let this_mode = CMCDele.attr(dvbi.a_reportingMode) ? CMCD.attr(dvbi.a_reportingMode).value() : null;
+				if (this_mode) {
+					if (modes[this_mode]) {
 						errs.addError({
-							code: "SI175",
-							message: `${dvbi.a_contentId.attribute()} must be specified when ${dvbi.a_enabledKeys.attribute()} contains '${CMCD_keys.content_id}'`,
-							fragment: CMCDelem,
-							key: "CMCD",
-						});
-					else if (CMCDelem.attr(dvbi.a_contentId) && !isIn(keys, CMCD_keys.content_id))
-						errs.addError({
-							type: WARNING,
 							code: "SI176",
-							message: `${dvbi.a_contentId.attribute()} is specified by key '${CMCD_keys.content_id}' not requested for reporting`,
+							message: "only a single reporting mode for each type can be specified",
 							fragment: CMCDelem,
 							key: "CMCD",
 						});
-					checkCMCDkeys(CMCDelem, errs, "SL177");
+					} else modes[this_mode] = true;
 				}
 			}
 
