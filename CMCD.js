@@ -10,7 +10,9 @@ import { CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_INTERVAL } from "./DVB
 import { APPLICATION, WARNING } from "./error_list.js";
 import { isIn } from "./utils.js";
 
-export const CMCD_keys = {
+const CMCD_VERSION = 1;
+
+const CMCD_keys = {
 	encoded_bitrate: "br",
 	buffer_length: "bl",
 	buffer_starvation: "bs",
@@ -45,6 +47,7 @@ export const CMCD_keys = {
 	playhead_position: "pp",
 	player_error_code: "ec",
 	media_start_delay: "msd",
+	event: "e",
 	cmcd_version: "v",
 };
 
@@ -75,7 +78,7 @@ const CMCDv2_keys = CMCDv1_keys.concat([
 	{ key: CMCD_keys.cdn_id, allow_modes: all_reporting_modes },
 	{ ley: CMCD_keys.live_stream_latency, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.response_code, allow_modes: [CMCD_MODE_RESPONSE] },
-	{ key: CMCD_keys.interstitial, allow_modes: [] },
+	{ key: CMCD_keys.interstitial, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.state, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.time_to_first_byte, allow_modes: [CMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.time_to_first_body_byte, allow_modes: [CMCD_MODE_RESPONSE] },
@@ -88,47 +91,103 @@ const CMCDv2_keys = CMCDv1_keys.concat([
 	{ key: CMCD_keys.playhead_position, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.player_error_code, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.media_start_delay, allow_modes: all_reporting_modes },
+	{ key: CMCD_keys.event, allow_modes: all_reporting_modes },
 ]);
 
 const isCustomKey = (key) => key.includes("-");
 const reportingMode = (mode) => (mode.includes(":") ? mode.substring(mode.lastIndexOf(":") + 1) : "***");
 
-export function checkCMCDkeys(CMCD, errs, errCode) {
+const error_key = "CMCD";
+const keys_to_use = CMCD_VERSION == 2 ? CMCDv2_keys : CMCDv1_keys;
+
+function checkCMCDkeys(CMCD, errs, errCode) {
 	if (!CMCD) {
 		errs.addError({ type: APPLICATION, code: `${errCode}-00`, message: "checkCMCDkeys() called with CMCD=null" });
 		return;
 	}
 	const keys = CMCD.attr(dvbi.a_enabledKeys)?.value().split(" ");
-	const reporting_mode = CMCD.attr(dvbi.a_reportingMode).value();
+	const reporting_mode = CMCD.attr(dvbi.a_reportingMode)?.value() | "undefined";
 	if (keys) {
 		keys.forEach((key) => {
-			const reserved_key = CMCDv1_keys.find((e) => e.key == key);
+			const reserved_key = keys_to_use.find((e) => e.key == key);
 			if (reserved_key) {
 				if (!isIn(reserved_key.allow_modes, reporting_mode))
 					errs.addError({
-						code: `${errCode}-01`,
+						code: `${errCode}a`,
 						message: `${key.quote()} is not allowed for the specified reporting mode (${reportingMode(reporting_mode)})`,
 						fragment: CMCD,
+						key: error_key,
 					});
 			} else if (isCustomKey(key))
 				errs.addError({
 					type: WARNING,
-					code: `${errCode}-02`,
+					code: `${errCode}b`,
 					message: `custom CMCD key ${key.quote()} in use`,
 					fragment: CMCD,
+					key: error_key,
 				});
 			else
 				errs.addError({
-					code: `${errCode}-03`,
-					message: `${key.quote()} is not a reserved CMCDv1 key or the correct format for a custom key`,
+					code: `${errCode}c`,
+					message: `${key.quote()} is not a reserved CMCDv${CMCD_VERSION} key or the correct format for a custom key`,
 					fragment: CMCD,
+					key: error_key,
 				});
 		});
 	}
 	if (reporting_mode == CMCD_MODE_INTERVAL && !isIn(keys, CMCD_keys.timestamp))
 		errs.addError({
-			code: `${errCode}-04`,
+			code: `${errCode}d`,
 			message: `the key ${CMCD_keys.timestamp.quote()} is required to be specified for ${reportingMode(reporting_mode)} reporting`,
 			fragment: CMCD,
+			key: error_key,
 		});
+
+	let unprovided_key = (report_type, key) => ({
+		code: `${errCode}e`,
+		message: `${report_type} mode report will include "${key}" - it is not specified here`,
+		fragment: CMCD,
+		key: error_key,
+	});
+
+	if (reporting_mode == CMCD_MODE_RESPONSE) {
+		if (!isIn(keys, CMCD_keys.request_url)) errs.addError(unprovided_key("response", CMCD_keys.request_url));
+		if (!isIn(keys, CMCD_keys.timestamp)) errs.addError(unprovided_key("response", CMCD_keys.timestamp));
+	} else if (reporting_mode == CMCD_MODE_INTERVAL) {
+		if (!isIn(keys, CMCD_keys.timestamp)) errs.addError(unprovided_key("interval", CMCD_keys.timestamp));
+	}
+}
+
+export function check_CMCD(CMCDelem, errs, errCode) {
+	const enabledKeys = CMCDelem.attr(dvbi.a_enabledKeys);
+	if (enabledKeys) {
+		const keys = enabledKeys.value().split(" ");
+		if (!CMCDelem.attr(dvbi.a_contentId) && isIn(keys, CMCD_keys.content_id))
+			errs.addError({
+				code: `${errCode}-1`,
+				message: `${dvbi.a_contentId.attribute()} must be specified when ${dvbi.a_enabledKeys.attribute()} contains '${CMCD_keys.content_id}'`,
+				fragment: CMCDelem,
+				key: error_key,
+			});
+		else if (CMCDelem.attr(dvbi.a_contentId) && !isIn(keys, CMCD_keys.content_id))
+			errs.addError({
+				type: WARNING,
+				code: `${errCode}-2`,
+				message: `${dvbi.a_contentId.attribute()} is specified by key '${CMCD_keys.content_id}' not requested for reporting`,
+				fragment: CMCDelem,
+				key: error_key,
+			});
+		checkCMCDkeys(CMCDelem, errs, `${errCode}-3`);
+	}
+	/* TODO
+		if (CMCD_VERSION == 2) {
+			const reporting_mode = CMCDelem.attr(dvbi.a_reportingMode)?.value();
+			if (reporting_mode == CMCD_MODE_REQUEST) {
+				// there should be an @beaconURL attribute for reporting
+			}
+			if (reporting_mode == CMCD_MODE_INTERVAL) {
+				// there should be an @beaconURL attribute for reporting, there may be an @interval attribute for batch size
+			}
+		}
+*/
 }
