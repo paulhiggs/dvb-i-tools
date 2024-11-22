@@ -2504,11 +2504,11 @@ export default class ContentGuideCheck {
 		function checkGenre(genre, errs, errcode) {
 			if (!genre) return null;
 			checkAttributes(genre, [tva.a_href], [tva.a_type], tvaEA.Genre, errs, `${errcode}-1`);
-			let GenreType = genre.attr(tva.a_type) ? genre.attr(tva.a_type).value() : tva.GENRE_TYPE_OTHER;
+			let GenreType = genre.attr(tva.a_type) ? genre.attr(tva.a_type).value() : tva.DEFAULT_GENRE_TYPE;
 			if (GenreType != tva.GENRE_TYPE_OTHER)
 				errs.addError({
 					code: `${errcode}-2`,
-					message: `${tva.a_type.attribute(`${genre.parent().name()}.${+genre.name()}`)} must contain ${tva.GENRE_TYPE_OTHER.quote()}`,
+					message: `${tva.a_type.attribute(`${genre.parent().name()}.${genre.name()}`)} must contain ${tva.GENRE_TYPE_OTHER.quote()}`,
 					fragment: genre,
 				});
 			return genre.attr(tva.a_href) ? genre.attr(tva.a_href).value() : null;
@@ -2619,13 +2619,13 @@ export default class ContentGuideCheck {
 							if (Genre.attr(tva.a_type) && Genre.attr(tva.a_type).value() != tva.GENRE_TYPE_OTHER)
 								errs.addError({
 									code: "ID018",
-									message: `${tva.a_type.attribute(Genre.name())} must be ${tva.GENRE_TYPE_OTHER.quote()} or omitted`,
+									message: `${tva.a_type.attribute(Genre.name())} must be ${tva.GENRE_TYPE_OTHER.quote()}`,
 									fragment: Genre,
 								});
 						} else
 							errs.addError({
 								code: "ID017",
-								message: `${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a restart link indicator`,
+								message: `${elementize(`${InstanceDescription.name()}.${tva.e_Genre}`)} must contain a restart link indicator`,
 								line: InstanceDescription.line(),
 							});
 					}
