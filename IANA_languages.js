@@ -84,7 +84,7 @@ export default class IANAlanguages {
 				let tl = items[0].split(":");
 				this.#languageFileDate = tl[1];
 			}
-			if (isIn(items, "Type: language") || isIn(items, "Type: extlang"))
+			if (isIn(items, "Type: language") || isIn(items, "Type: extlang")) {
 				for (let i = 0; i < items.length; i++)
 					if (items[i].startsWith("Subtag:")) {
 						let subtag = items[i].split(":")[1].trim();
@@ -102,7 +102,7 @@ export default class IANAlanguages {
 							if (isSignLanguage(items)) this.#signLanguagesList.push(subtag);
 						}
 					}
-			if (isIn(items, "Type: variant")) {
+			} else if (isIn(items, "Type: variant")) {
 				let subtag = null;
 				for (let i = 0; i < items.length; i++) if (items[i].startsWith("Subtag:")) subtag = items[i].split(":")[1].trim();
 				if (subtag) {
@@ -112,16 +112,14 @@ export default class IANAlanguages {
 							this.#languagesList.push(`${items[i].split(":")[1].trim()}-${subtag}`); // prefix-suffix is allowed
 						}
 				}
-			}
-			if (isIn(items, "Type: redundant")) {
+			} else if (isIn(items, "Type: redundant")) {
 				let redund = {};
 				for (let i = 0; i < items.length; i++) {
 					if (items[i].startsWith("Tag:")) redund.tag = items[i].split(":")[1].trim();
 					else if (items[i].startsWith("Preferred-Value:")) redund.preferred = items[i].split(":")[1].trim();
 				}
 				if (redund.tag) this.#redundantLanguagesList.push(redund);
-			}
-			if (isIn(items, "Type: region")) {
+			} else if (isIn(items, "Type: region")) {
 				for (let i = 0; i < items.length; i++) if (items[i].startsWith("Subtag:")) this.#regionsList.push(items[i].split(":")[1].trim());
 			}
 		});
