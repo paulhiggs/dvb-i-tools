@@ -429,6 +429,8 @@
 			<simpleType>
 				<restriction base="string">
 					<enumeration value="urn:dvb:metadata:cmcd:delivery:request"/>
+					<!-- <enumeration value="urn:dvb:metadata:cmcd:delivery:response"/> -->
+					<!-- <enumeration value="urn:dvb:metadata:cmcd:delivery:event"/> -->
 				</restriction>
 			</simpleType>
 		</attribute>
@@ -437,6 +439,7 @@
 				<restriction base="string">
 					<enumeration value="urn:dvb:metadata:cmcd:delivery:customHTTPHeader"/>
 					<enumeration value="urn:dvb:metadata:cmcd:delivery:queryArguments"/>
+					<!-- <enumeration value="urn:dvb:metadata:cmcd:delivery:JSON"/> -->
 				</restriction>
 			</simpleType>
 		</attribute>
@@ -455,7 +458,11 @@
 					<maxInclusive value="1000"/>
 				</restriction>
 			</simpleType>
-		</attribute> 
+		</attribute>
+		<!--
+			<attribute name="beaconURL" type="anyURI"/>
+			<attribute name="interval" type="anyURI"/>
+		-->
 	</complexType>
 	<complexType name="ServiceAvailabilityType">
 		<sequence>
