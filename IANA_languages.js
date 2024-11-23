@@ -19,6 +19,7 @@ export default class IANAlanguages {
 	#redundantLanguagesList;
 	#languageRanges;
 	#signLanguagesList;
+	#regionsList;
 	#languageFileDate;
 
 	constructor() {
@@ -36,6 +37,7 @@ export default class IANAlanguages {
 		this.#redundantLanguagesList = [];
 		this.#languageRanges = [];
 		this.#signLanguagesList = [];
+		this.#regionsList = [];
 		this.#languageFileDate = null;
 	}
 
@@ -51,6 +53,7 @@ export default class IANAlanguages {
 		res.RedundantLanguages = t.join(", ");
 		res.numLanguageRanges = this.#languageRanges.length;
 		res.numSignLanguages = this.#signLanguagesList.length;
+		res.numRegions = this.#regionsList.length;
 		if (this.#languageFileDate) res.languageFileDate = this.#languageFileDate;
 	}
 
@@ -117,6 +120,9 @@ export default class IANAlanguages {
 					else if (items[i].startsWith("Preferred-Value:")) redund.preferred = items[i].split(":")[1].trim();
 				}
 				if (redund.tag) this.#redundantLanguagesList.push(redund);
+			}
+			if (isIn(items, "Type: region")) {
+				for (let i = 0; i < items.length; i++) if (items[i].startsWith("Subtag:")) this.#regionsList.push(items[i].split(":")[1].trim());
 			}
 		});
 	}
