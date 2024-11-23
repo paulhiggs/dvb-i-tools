@@ -37,10 +37,11 @@ const CTAStandardPrefix = "urn:cta:wave:appinformation:standardversion";
 const CMCDterm = `${DVB_metadata}:cmcd`;
 export const CMCD_MODE_REQUEST = `${CMCDterm}:delivery:request`,
 	CMCD_MODE_RESPONSE = `${CMCDterm}:delivery:response`,
-	CMCD_MODE_INTERVAL = `${CMCDterm}:delivery:interval`;
+	CMCD_MODE_EVENT = `${CMCDterm}:delivery:event`;
 
 export const CMCD_METHOD_HTTP_HEADER = `${CMCDterm}:delivery:customHTTPHeader`,
-	CMCD_METHOD_QUERY_ARGUMENT = `${CMCDterm}:delivery:queryArguments`;
+	CMCD_METHOD_QUERY_ARGUMENT = `${CMCDterm}:delivery:queryArguments`,
+	CMCD_METHOD_JSON = `${CMCDterm}:delivery:JSON`;
 
 export const dvbi = {
 	A177_Namespace: `${DVB_metadata}:servicediscovery:2019`,
@@ -192,6 +193,7 @@ export const dvbi = {
 
 	// A177 defined elements and attributes
 	a_Address: "Address",
+	a_beaconURL: "beaconURL",
 	a_CGSID: "CGSID",
 	a_channelNumber: "channelNumber",
 	a_contentId: "contentId",
@@ -228,6 +230,7 @@ export const dvbi = {
 	a_GroupAddress: "GroupAddress",
 	a_href: tva.a_href,
 	a_id: "id",
+	a_interval: "interval",
 	a_MaxBitrate: "MaxBitrate",
 	a_mode: "mode",
 	a_minimumMetadataUpdatePeriod: "minimumMetadataUpdatePeriod",
@@ -386,11 +389,12 @@ export const dvbi = {
 	q_inlineImages: "inlineImages",
 };
 
-export const dvbEA = {
+export const dvbiEA = {
 	// EA = Element-Attributes - the attributes that are defiend for each element
-	MediaLocator: [dvbi.a_contentLanguage].concat(tvaEA.mediaLocator),
+	MediaLocator: [dvbi.a_contentLanguage].concat(tvaEA.MediaLocator),
 	NVOD: [dvbi.a_mode, dvbi.a_reference, dvbi.a_offset],
 	ServiceList: [dvbi.a_version, tva.a_lang, dvbi.a_responseStatus, dvbi.a_id],
+	CMCD: [dvbi.a_reportingMode, dvbi.a_reportingMethod, dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability, dvbi.a_beaconURL, dvbi.a_interval],
 };
 
 export const dvbiEC = {

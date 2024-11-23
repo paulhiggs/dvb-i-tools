@@ -6,11 +6,12 @@
  */
 
 import { dvbi } from "./DVB-I_definitions.js";
-import { CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_INTERVAL } from "./DVB-I_definitions.js";
+import { CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_EVENT, dvbiEA } from "./DVB-I_definitions.js";
 import { APPLICATION, WARNING } from "./error_list.js";
+import { checkAttributes } from "./schema_checks.js";
 import { isIn } from "./utils.js";
 
-const CMCD_VERSION = 1;
+const CMCD_VERSION_SUPPORTED = 1;
 
 const CMCD_keys = {
 	encoded_bitrate: "br",
@@ -51,7 +52,7 @@ const CMCD_keys = {
 	cmcd_version: "v",
 };
 
-const all_reporting_modes = [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_INTERVAL];
+const all_reporting_modes = [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_EVENT];
 const CMCDv1_keys = [
 	{ key: CMCD_keys.encoded_bitrate, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.buffer_length, allow_modes: all_reporting_modes },
@@ -95,10 +96,10 @@ const CMCDv2_keys = CMCDv1_keys.concat([
 ]);
 
 const isCustomKey = (key) => key.includes("-");
-const reportingMode = (mode) => (mode.includes(":") ? mode.substring(mode.lastIndexOf(":") + 1) : "***");
+const reportingMode = (mode) => (mode.indexOf(":") != -1 ? mode.substring(mode.lastIndexOf(":") + 1) : "***");
 
 const error_key = "CMCD";
-const keys_to_use = CMCD_VERSION == 2 ? CMCDv2_keys : CMCDv1_keys;
+const keys_to_use = CMCD_VERSION_SUPPORTED == 2 ? CMCDv2_keys : CMCDv1_keys;
 
 function checkCMCDkeys(CMCD, errs, errCode) {
 	if (!CMCD) {
@@ -106,11 +107,12 @@ function checkCMCDkeys(CMCD, errs, errCode) {
 		return;
 	}
 	const keys = CMCD.attr(dvbi.a_enabledKeys)?.value().split(" ");
-	const reporting_mode = CMCD.attr(dvbi.a_reportingMode)?.value() | "undefined";
+	const reporting_mode = CMCD.attr(dvbi.a_reportingMode) ? CMCD.attr(dvbi.a_reportingMode).value() : "undefined";
 	if (keys) {
 		keys.forEach((key) => {
 			const reserved_key = keys_to_use.find((e) => e.key == key);
 			if (reserved_key) {
+				console.log(`reporting_mode=${reporting_mode}`);
 				if (!isIn(reserved_key.allow_modes, reporting_mode))
 					errs.addError({
 						code: `${errCode}a`,
@@ -129,13 +131,13 @@ function checkCMCDkeys(CMCD, errs, errCode) {
 			else
 				errs.addError({
 					code: `${errCode}c`,
-					message: `${key.quote()} is not a reserved CMCDv${CMCD_VERSION} key or the correct format for a custom key`,
+					message: `${key.quote()} is not a reserved CMCDv${CMCD_VERSION_SUPPORTED} key or the correct format for a custom key`,
 					fragment: CMCD,
 					key: error_key,
 				});
 		});
 	}
-	if (reporting_mode == CMCD_MODE_INTERVAL && !isIn(keys, CMCD_keys.timestamp))
+	if (reporting_mode == CMCD_MODE_EVENT && !isIn(keys, CMCD_keys.timestamp))
 		errs.addError({
 			code: `${errCode}d`,
 			message: `the key ${CMCD_keys.timestamp.quote()} is required to be specified for ${reportingMode(reporting_mode)} reporting`,
@@ -153,18 +155,45 @@ function checkCMCDkeys(CMCD, errs, errCode) {
 	if (reporting_mode == CMCD_MODE_RESPONSE) {
 		if (!isIn(keys, CMCD_keys.request_url)) errs.addError(unprovided_key("response", CMCD_keys.request_url));
 		if (!isIn(keys, CMCD_keys.timestamp)) errs.addError(unprovided_key("response", CMCD_keys.timestamp));
-	} else if (reporting_mode == CMCD_MODE_INTERVAL) {
-		if (!isIn(keys, CMCD_keys.timestamp)) errs.addError(unprovided_key("interval", CMCD_keys.timestamp));
+	} else if (reporting_mode == CMCD_MODE_EVENT) {
+		if (!isIn(keys, CMCD_keys.timestamp)) errs.addError(unprovided_key("event", CMCD_keys.timestamp));
 	}
 }
 
 export function check_CMCD(CMCDelem, errs, errCode) {
+	const reporting_mode = CMCDelem.attr(dvbi.a_reportingMode)?.value();
+	switch (reporting_mode) {
+		case CMCD_MODE_REQUEST:
+			checkAttributes(CMCDelem, [dvbi.a_reportingMode, dvbi.a_reportingMethod], [dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability], dvbiEA.CMCD, errs, `${errCode}-1`);
+			break;
+		case CMCD_MODE_RESPONSE:
+			checkAttributes(
+				CMCDelem,
+				[dvbi.a_reportingMode, dvbi.a_reportingMethod, dvbi.a_beaconURL],
+				[dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability],
+				dvbiEA.CMCD,
+				errs,
+				`${errCode}-2`
+			);
+			break;
+		case CMCD_MODE_EVENT:
+			checkAttributes(
+				CMCDelem,
+				[dvbi.a_reportingMode, dvbi.a_reportingMethod, dvbi.a_beaconURL],
+				[dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability, dvbi.a_interval],
+				dvbiEA.CMCD,
+				errs,
+				`${errCode}-3`
+			);
+			break;
+	}
+
 	const enabledKeys = CMCDelem.attr(dvbi.a_enabledKeys);
 	if (enabledKeys) {
 		const keys = enabledKeys.value().split(" ");
 		if (!CMCDelem.attr(dvbi.a_contentId) && isIn(keys, CMCD_keys.content_id))
 			errs.addError({
-				code: `${errCode}-1`,
+				code: `${errCode}-11`,
 				message: `${dvbi.a_contentId.attribute()} must be specified when ${dvbi.a_enabledKeys.attribute()} contains '${CMCD_keys.content_id}'`,
 				fragment: CMCDelem,
 				key: error_key,
@@ -172,22 +201,11 @@ export function check_CMCD(CMCDelem, errs, errCode) {
 		else if (CMCDelem.attr(dvbi.a_contentId) && !isIn(keys, CMCD_keys.content_id))
 			errs.addError({
 				type: WARNING,
-				code: `${errCode}-2`,
+				code: `${errCode}-12`,
 				message: `${dvbi.a_contentId.attribute()} is specified by key '${CMCD_keys.content_id}' not requested for reporting`,
 				fragment: CMCDelem,
 				key: error_key,
 			});
-		checkCMCDkeys(CMCDelem, errs, `${errCode}-3`);
+		checkCMCDkeys(CMCDelem, errs, `${errCode}-13`);
 	}
-	/* TODO
-		if (CMCD_VERSION == 2) {
-			const reporting_mode = CMCDelem.attr(dvbi.a_reportingMode)?.value();
-			if (reporting_mode == CMCD_MODE_REQUEST) {
-				// there should be an @beaconURL attribute for reporting
-			}
-			if (reporting_mode == CMCD_MODE_INTERVAL) {
-				// there should be an @beaconURL attribute for reporting, there may be an @interval attribute for batch size
-			}
-		}
-*/
 }
