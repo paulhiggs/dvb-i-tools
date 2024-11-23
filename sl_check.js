@@ -9,7 +9,7 @@ import { elementize, quote } from "./phlib/phlib.js";
 
 import { tva, tvaEA } from "./TVA_definitions.js";
 import { sats } from "./DVB_definitions.js";
-import { dvbi, dvbiEC, dvbEA, XMLdocumentType, CMCD_MODE_RESPONSE, CMCD_MODE_INTERVAL } from "./DVB-I_definitions.js";
+import { dvbi, dvbiEC, dvbiEA, XMLdocumentType, CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_EVENT } from "./DVB-I_definitions.js";
 
 import ErrorList, { WARNING, APPLICATION } from "./error_list.js";
 import { isTAGURI } from "./URI_checks.js";
@@ -1501,10 +1501,10 @@ export default class ServiceListCheck {
 			let cc = 0,
 				modes = {},
 				CMCDelem;
-			modes[CMCD_MODE_REQUEST] = modes[CMCD_MODE_RESPONSE] = modes[CMCD_MODE_INTERVAL] = 0;
+			modes[CMCD_MODE_REQUEST] = modes[CMCD_MODE_RESPONSE] = modes[CMCD_MODE_EVENT] = false;
 			while ((CMCDelem = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_CMCD, ++cc), props.schema)) != null) {
 				check_CMCD(CMCDelem, errs, "SI175");
-				let this_mode = CMCDele.attr(dvbi.a_reportingMode) ? CMCD.attr(dvbi.a_reportingMode).value() : null;
+				let this_mode = CMCDelem.attr(dvbi.a_reportingMode) ? CMCDelem.attr(dvbi.a_reportingMode).value() : null;
 				if (this_mode) {
 					if (modes[this_mode]) {
 						errs.addError({
@@ -1907,7 +1907,7 @@ export default class ServiceListCheck {
 					});
 			}
 			if (NVOD.attr(dvbi.a_mode) && NVOD.attr(dvbi.a_mode).value() == dvbi.NVOD_MODE_TIMESHIFTED) {
-				checkAttributes(NVOD, [dvbi.a_mode, dvbi.a_reference], [dvbi.a_offset], dvbEA.NVOD, errs, "SL223");
+				checkAttributes(NVOD, [dvbi.a_mode, dvbi.a_reference], [dvbi.a_offset], dvbiEA.NVOD, errs, "SL223");
 
 				if (NVOD.attr(dvbi.a_reference)) {
 					// check to see if there is a service whose <UniqueIdentifier> equals NVOD@reference and has a NVOD@mode==reference
@@ -2166,7 +2166,7 @@ export default class ServiceListCheck {
 		let slRequiredAttributes = [dvbi.a_version];
 		if (SchemaVersion(props.namespace) >= SCHEMA_r3) slRequiredAttributes.push(tva.a_lang);
 		if (SchemaVersion(props.namespace) >= SCHEMA_r6) slRequiredAttributes.push(dvbi.a_id);
-		checkAttributes(SL.root(), slRequiredAttributes, [dvbi.a_responseStatus, "schemaLocation"], dvbEA.ServiceList, errs, "SL011");
+		checkAttributes(SL.root(), slRequiredAttributes, [dvbi.a_responseStatus, "schemaLocation"], dvbiEA.ServiceList, errs, "SL011");
 
 		// check ServiceList@version
 		// validated by schema

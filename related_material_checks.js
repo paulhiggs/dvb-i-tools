@@ -1,11 +1,11 @@
 /**
  * related_material_checks.js
- * 
+ *
  * Checks performed in <RelatedMaterial> elements for based on their use in DVB-I
  */
 import { mpeg7 } from "./MPEG7_definitions.js";
 import { tva, tvaEA, tvaEC } from "./TVA_definitions.js";
-import { dvbi, dvbEA } from "./DVB-I_definitions.js";
+import { dvbi, dvbiEA } from "./DVB-I_definitions.js";
 
 import { APPLICATION, WARNING } from "./error_list.js";
 import { checkLanguage } from "./multilingual_element.js";
@@ -180,7 +180,7 @@ export function checkValidLogos(RelatedMaterial, errs, errCode, location, langua
 		RelatedMaterial.childNodes().forEachSubElement((MediaLocator) => {
 			if (MediaLocator.name() == tva.e_MediaLocator) {
 				checkTopElementsAndCardinality(MediaLocator, [{ name: tva.e_MediaUri }], tvaEC.MediaLocator, false, errs, `${errCode}-1`);
-				checkAttributes(MediaLocator, [], [dvbi.a_contentLanguage], dvbEA.MediaLocator, errs, `${errCode}-2`);
+				checkAttributes(MediaLocator, [], [dvbi.a_contentLanguage], dvbiEA.MediaLocator, errs, `${errCode}-2`);
 
 				if (languageValidator && MediaLocator.attr(dvbi.a_contentLanguage))
 					checkLanguage(languageValidator, MediaLocator.attr(dvbi.a_contentLanguage).value(), location, MediaLocator, errs, `${errCode}-3`);
