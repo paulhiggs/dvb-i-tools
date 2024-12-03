@@ -1499,23 +1499,10 @@ export default class ServiceListCheck {
 
 			// <DASHDeliveryParameters><CMCD>  -- !! EXPERIMENTAL
 			let cc = 0,
-				modes = {},
+				mode_counts = {},		// counts of each request tyoe
 				CMCDelem;
-			modes[CMCD_MODE_REQUEST] = modes[CMCD_MODE_RESPONSE] = modes[CMCD_MODE_EVENT] = false;
-			while ((CMCDelem = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_CMCD, ++cc), props.schema)) != null) {
-				check_CMCD(CMCDelem, errs, "SI175");
-				let this_mode = CMCDelem.attr(dvbi.a_reportingMode) ? CMCDelem.attr(dvbi.a_reportingMode).value() : null;
-				if (this_mode) {
-					if (modes[this_mode]) {
-						errs.addError({
-							code: "SI176",
-							message: "only a single reporting mode for each type can be specified",
-							fragment: CMCDelem,
-							key: "CMCD",
-						});
-					} else modes[this_mode] = true;
-				}
-			}
+			while ((CMCDelem = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_CMCD, ++cc), props.schema)) != null)
+				check_CMCD(CMCDelem, mode_counts, errs, "SI175");
 
 			// <DASHDeliveryParameters><Extension>
 			let e = 0,

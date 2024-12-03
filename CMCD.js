@@ -10,12 +10,15 @@ import { CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_EVENT, dvbiEA } from "
 import { APPLICATION, WARNING } from "./error_list.js";
 import { checkAttributes } from "./schema_checks.js";
 import { isIn } from "./utils.js";
+import { isObjectEmpty } from "./phlib/phlib.js"
 
 const CMCD_VERSION_SUPPORTED = 1;
 
 const CMCD_keys = {
 	encoded_bitrate: "br",
+	aggregate_encoded_bitrate: "ab",
 	buffer_length: "bl",
+	target_buffer_length: "tbl",
 	buffer_starvation: "bs",
 	buffer_starvation_duration: "bsd",
 	cdn_id: "cdn",
@@ -45,7 +48,7 @@ const CMCD_keys = {
 	top_aggregated_encoded_bitrate: "tab",
 	lowest_aggregated_encoded_bitrate: "lab",
 	request_url: "url",
-	playhead_position: "pp",
+	playhead_time: "pt",
 	player_error_code: "ec",
 	media_start_delay: "msd",
 	event: "e",
@@ -62,7 +65,6 @@ const CMCDv1_keys = [
 	{ key: CMCD_keys.deadline, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.measured_throughput, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.next_object_request, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
-	{ key: CMCD_keys.next_range_request, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.object_type, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.playback_rate, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.requested_maximum_throughput, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
@@ -74,7 +76,13 @@ const CMCDv1_keys = [
 	{ key: CMCD_keys.cmcd_version, allow_modes: all_reporting_modes },
 ];
 
+const deprecated_CMCDv1_keys = [
+	{ key: CMCD_keys.next_range_request, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
+];
+
 const CMCDv2_keys = CMCDv1_keys.concat([
+	{ key: CMCD_keys.aggregate_encoded_bitrate, allow_modes: all_reporting_modes },
+	{ key: CMCD_keys.target_buffer_length, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.buffer_starvation_duration, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.cdn_id, allow_modes: all_reporting_modes },
 	{ ley: CMCD_keys.live_stream_latency, allow_modes: all_reporting_modes },
@@ -89,7 +97,7 @@ const CMCDv2_keys = CMCDv1_keys.concat([
 	{ key: CMCD_keys.top_aggregated_encoded_bitrate, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.lowest_aggregated_encoded_bitrate, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.request_url, allow_modes: [CMCD_MODE_RESPONSE] },
-	{ key: CMCD_keys.playhead_position, allow_modes: all_reporting_modes },
+	{ key: CMCD_keys.playhead_time, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.player_error_code, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.media_start_delay, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.event, allow_modes: all_reporting_modes },
@@ -99,7 +107,7 @@ const isCustomKey = (key) => key.includes("-");
 const reportingMode = (mode) => (mode.indexOf(":") != -1 ? mode.substring(mode.lastIndexOf(":") + 1) : "***");
 
 const error_key = "CMCD";
-const keys_to_use = CMCD_VERSION_SUPPORTED == 2 ? CMCDv2_keys : CMCDv1_keys;
+const keys_to_use = CMCD_VERSION_SUPPORTED == 2 ? CMCDv2_keys : CMCDv1_keys.concat(deprecated_CMCDv1_keys);
 
 function checkCMCDkeys(CMCD, errs, errCode) {
 	if (!CMCD) {
@@ -160,7 +168,10 @@ function checkCMCDkeys(CMCD, errs, errCode) {
 	}
 }
 
-export function check_CMCD(CMCDelem, errs, errCode) {
+export function check_CMCD(CMCDelem, counts, errs, errCode) {
+	if (isObjectEmpty(counts)) {
+		counts[reportingMode(CMCD_MODE_REQUEST)] = counts[reportingMode(CMCD_MODE_RESPONSE)] = counts[reportingMode(CMCD_MODE_EVENT)] = 0;
+	}
 	const reporting_mode = CMCDelem.attr(dvbi.a_reportingMode)?.value();
 	switch (reporting_mode) {
 		case CMCD_MODE_REQUEST:
@@ -207,5 +218,16 @@ export function check_CMCD(CMCDelem, errs, errCode) {
 				key: error_key,
 			});
 		checkCMCDkeys(CMCDelem, errs, `${errCode}-13`);
+	}
+
+	if (Object.prototype.hasOwnProperty.call(counts, reportingMode(reporting_mode))) {
+		counts[reportingMode(reporting_mode)]++;
+		if (counts[reportingMode(CMCD_MODE_REQUEST)] > 1) 
+			errs.addError({
+				code: `${errCode}-20`,
+				message: "only a single reporting configuration for Request Mode can be specified",
+				fragment: CMCDelem,
+				key: error_key,
+			});
 	}
 }
