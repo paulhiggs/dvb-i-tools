@@ -47,7 +47,7 @@ let csr = null;
 const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
 
-function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasCG, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
+function DVB_I_check(req, res, slcheck, cgcheck, hasSL, hasCG, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
 	if (!req.session.data) {
 		// setup defaults
 		req.session.data = {};
@@ -63,7 +63,7 @@ function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasC
 	}
 
 	let FormArguments = { cg: MODE_CG, sl: MODE_SL, file: MODE_FILE, url: MODE_URL, hasSL: hasSL, hasCG: hasCG };
-	if (!req.body.testtype) drawForm(deprecationWarning ? "/check" : null, req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, null, null);
+	if (!req.body.testtype) drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, null, null);
 	else {
 		let VVxml = null;
 		req.parseErr = null;
@@ -115,7 +115,7 @@ function DVB_I_check(deprecationWarning, req, res, slcheck, cgcheck, hasSL, hasC
 		req.session.data.mode = req.body.testtype;
 		req.session.data.entry = req.body.doclocation;
 		if (req.body.requestType) req.session.data.cgmode = req.body.requestType;
-		drawForm(deprecationWarning ? "/check" : null, req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, req.parseErr, errs);
+		drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, req.parseErr, errs);
 
 		req.diags = {};
 		req.diags.countErrors = errs.numErrors();
@@ -305,26 +305,6 @@ export default function validator(options) {
 	});
 
 	if (!options.nosl) {
-		// handle HTTP POST requests to /checkSL
-		app.post("/checkSL", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_SL, MODE_URL);
-		});
-
-		// handle HTTP GET requests to /checkSL
-		app.get("/checkSL", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_SL, MODE_URL);
-		});
-
-		// handle HTTP POST requests to /checkSLFile
-		app.post("/checkSLFile", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_SL, MODE_FILE);
-		});
-
-		// handle HTTP GET requests to /checkSLFile
-		app.get("/checkSLFile", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_SL, MODE_FILE);
-		});
-
 		app.get("/validate_sl", function (req, res) {
 			validateServiceList(req, res, slcheck);
 		});
@@ -362,34 +342,12 @@ export default function validator(options) {
 		};
 	}
 
-	if (!options.nocg) {
-		// handle HTTP POST requests to /checkCG
-		app.post("/checkCG", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_CG, MODE_URL);
-		});
-
-		// handle HTTP GET requests to /checkCG
-		app.get("/checkCG", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_CG, MODE_URL);
-		});
-
-		// handle HTTP POST requests to /checkCGFile
-		app.post("/checkCGFile", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_CG, MODE_FILE);
-		});
-
-		// handle HTTP GET requests to /checkCGFile
-		app.get("/checkCGFile", function (req, res) {
-			DVB_I_check(true, req, res, slcheck, cgcheck, !options.nosl, !options.nocg, MODE_CG, MODE_FILE);
-		});
-	}
-
 	if (!options.nosl || !options.nocg) {
 		app.get("/check", function (req, res) {
-			DVB_I_check(false, req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
+			DVB_I_check(req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
 		});
 		app.post("/check", function (req, res) {
-			DVB_I_check(false, req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
+			DVB_I_check(req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
 		});
 	}
 

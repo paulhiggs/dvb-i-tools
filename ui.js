@@ -151,12 +151,11 @@ function tabulateResults(source, res, error, errs) {
 	}
 }
 
-export function drawForm(deprecateTo, req, res, modes, supportedRequests, error = null, errs = null) {
+export function drawForm(req, res, modes, supportedRequests, error = null, errs = null) {
 	const ENTRY_FORM_REQUEST_TYPE_ID = "requestType";
 
 	res.setHeader("Content-Type", "text/html");
 	res.write(PAGE_TOP("DVB-I Validator", "DVB-I Validator"));
-	if (deprecateTo) res.write(`<p style="color:orange;">This endpoint is deprecated, use ${deprecateTo} instead</p><br>`);
 	res.write(`
 	<script>
 	function redrawForm() {
