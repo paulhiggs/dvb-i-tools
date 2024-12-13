@@ -16,8 +16,7 @@ The application works by reading in a reference/master XML document and then pru
 - Language
 - Genre
 - ProviderName
-- *inlineImages* default is "false"
-
+- _inlineImages_ default is "false"
 
 These parameter names are case sensitive and the comparisons made with their values are also case sensitive against the master Service List Entry Points Registy (SLEPR)
 
@@ -49,11 +48,15 @@ The server can be reloaded with an updated `slepr-master.xml` file by invoking i
 
 If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
 
-## validate_sl.js
+## all-in-one.js
 
-DVB-I Service List validator
+Implements csr.js, validate_cg.js and validate_sl.js in a single node
 
 ### Description
+
+Validates DVB-I service list and content guide metadata according to DVB Bluebook A177
+
+#### Service List checks (non-exhaustive)
 
 Validates the value space of the instance document, validation against the schema should be performed seperately (for now) Supports
 
@@ -103,15 +106,18 @@ Checks performed:
 - unigue global and national parental rating values for services and program metadata
 - correct use of accessibility features and applications signalling
 
-### Use
+#### Content Guide checks (non-exhaustive)
 
-&lt;server&gt;/check gives a basic/primitive UI. Enter the URL to your service list or a local filename and press "Submit" button. Await results!
+Validates the value space of the instance document
+
+- ensure only the permitted elements are present in &lt;ProgramDescription&gt;
+- &lt;BasicDescription&gt; sub-elements (&lt;Title&gt;, &lt;Synopsis&gt;, &lt;Keyword&gt;, &lt;Genre&gt;, &lt;CreditsList&gt;, &lt;ParentalGuidance&gt;, &lt;RelatedMaterial&gt;) in &lt;ProgramInformation&gt;
 
 ### Installation
 
 1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
 1. Install necessary libraries (express, libxmljs, morgan) `npm install`
-1. run it - `node validate_sl [--port 3010] [--sport 3011]`
+1. run it - `node all-in-one [--urls] [--port 3020] [--sport 3021]`
 
 If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
 
@@ -120,53 +126,8 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 #### Command Line Arguments
 
 - --urls [-u] forces the classification scheme, country and language values to be read from the internet. Default is to load values from local files.
-- --port [-p] set the HTTP listening port (default: 3010)
-- --sport [-s] set the HTTPS listening port (default: 3011)
-
-## validate_cg.js
-
-DVB-I Content Guide validator
-
-### Description
-
-Validates the value space of the instance document, validation against the schema should be performed seperately (for now)
-
-Checks performed:
-
-- ensure only the permitted elements are present in &lt;ProgramDescription&gt;
-- &lt;BasicDescription&gt; sub-elements (&lt;Title&gt;, &lt;Synopsis&gt;, &lt;Keyword&gt;, &lt;Genre&gt;, &lt;CreditsList&gt;, &lt;ParentalGuidance&gt;, &lt;RelatedMaterial&gt;) in &lt;ProgramInformation&gt;
-
-### Use
-
-#### URL based validation
-
-&lt;server&gt;/check gives a basic/primitive UI. Enter the URL for a content guide query and the type of query/response from the endpoint. Press "Submit" button and await results!
-
-#### File based validation
-
-&lt;server&gt;/checkFile gives a basic/primitive UI. Select the file containing a DVB-I content guide metadata fragment and the type of response from the endpoint. Press "Submit" button and await results!
-
-### Installation
-
-1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
-1. Install necessary libraries (express, libxmljs, morgan) `npm install`
-1. run it - `node validate_cg [--urls] [--port 3020] [--sport 3021]`
-
-If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
-
-#### Command Line Arguments
-
-- --urls [-u] forces the classification scheme, country and language values to be read from the internet. Default is to load values from local files.
 - --port [-p] set the HTTP listening port (default: 3020)
 - --sport [-s] set the HTTPS listening port (default: 3021)
-
-## all-in-one.js
-
-Implements csr.js, validate_cg.js and validate_sl.js in a single node
-
-### Description
-
-Same as for the individual applications
 
 ### Use
 
@@ -174,49 +135,59 @@ Same as for the individual applications
 
 &lt;server&gt;/validate_sl?url=&lt;service_list_url&gt; gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the servicelist in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML
 
-&lt;server&gt;/validate_sl_json?url=&lt;service_list_url&gt; valdiates the list in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml"  instead of the url query parameter. Example response:
+&lt;server&gt;/validate_sl_json?url=&lt;service_list_url&gt; valdiates the list in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. Example response:
+
 ```json
 {
-  "errors":1,
-  "warnings":0,
-  "informationals":0
+	"errors": 1,
+	"warnings": 0,
+	"informationals": 0
 }
 ```
+
 &lt;server&gt;/validate_sl_json?url=&lt;service_list_url&gt;&results=all valdiates the list "url"-parameter and gives the complete validation results as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. Example response:
+
 ```json
 {
-  "errs":
-    {
-    "countsErr":[],
-    "countsWarn":[],
-    "countsInfo":[],
-    "errors":[
-      {
-      "code":"SL005:6",
-      "message":"Error: Element '{urn:dvb:metadata:servicediscovery:2024}Service': Missing child element(s). Expected is one of ( {urn:dvb:metadata:servicediscovery:2024}ServiceName, {urn:dvb:metadata:servicediscovery:2024}ProviderName ).\n",
-      "element":"    <Service version=\"1\">","line":3
-      }
-    ],
-    "warnings":[],
-    "informationals":[],
-    "markupXML":[
-      {"value":"<?xml version=\"1.0\" encoding=\"UTF-8\"?>","ix":1},{"value":"<ServiceList xmlns=\"urn:dvb:metadata:servicediscovery:2024\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema‑instance\" id=\"tag:example.com,2024:list1\" version=\"20240611115822\" xml:lang=\"en\">","ix":2},
-      {"value":"  <Name>List</Name>","ix":3},
-      {"value":"  <ProviderName>Provider</ProviderName>","ix":4},
-      {"value":"  <Service version=\"1\">","ix":5,
-        "validationErrors":[
-          "(E) SL005:6: Error: Element '{urn:dvb:metadata:servicediscovery:2024}Service': Missing child element(s). Expected is one of ( {urn:dvb:metadata:servicediscovery:2024}ServiceName, {urn:dvb:metadata:servicediscovery:2024}ProviderName ).\n"
-          ]
-      },
-      {"value":"   <UniqueIdentifier>tag:example.com,2024:ch1</UniqueIdentifier>","ix":6},
-      {"value":"   <ServiceName>Service</ServiceName>","ix":7},
-      {"value":" </Service>","ix":8},
-      {"value":"</ServiceList>","ix":9}
-    ],
-    "errorDescriptions":[]
-  }
+	"errs": {
+		"countsErr": [],
+		"countsWarn": [],
+		"countsInfo": [],
+		"errors": [
+			{
+				"code": "SL005:6",
+				"message": "Error: Element '{urn:dvb:metadata:servicediscovery:2024}Service': Missing child element(s). Expected is one of ( {urn:dvb:metadata:servicediscovery:2024}ServiceName, {urn:dvb:metadata:servicediscovery:2024}ProviderName ).\n",
+				"element": "    <Service version=\"1\">",
+				"line": 3
+			}
+		],
+		"warnings": [],
+		"informationals": [],
+		"markupXML": [
+			{ "value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "ix": 1 },
+			{
+				"value": "<ServiceList xmlns=\"urn:dvb:metadata:servicediscovery:2024\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema‑instance\" id=\"tag:example.com,2024:list1\" version=\"20240611115822\" xml:lang=\"en\">",
+				"ix": 2
+			},
+			{ "value": "  <Name>List</Name>", "ix": 3 },
+			{ "value": "  <ProviderName>Provider</ProviderName>", "ix": 4 },
+			{
+				"value": "  <Service version=\"1\">",
+				"ix": 5,
+				"validationErrors": [
+					"(E) SL005:6: Error: Element '{urn:dvb:metadata:servicediscovery:2024}Service': Missing child element(s). Expected is one of ( {urn:dvb:metadata:servicediscovery:2024}ServiceName, {urn:dvb:metadata:servicediscovery:2024}ProviderName ).\n"
+				]
+			},
+			{ "value": "   <UniqueIdentifier>tag:example.com,2024:ch1</UniqueIdentifier>", "ix": 6 },
+			{ "value": "   <ServiceName>Service</ServiceName>", "ix": 7 },
+			{ "value": " </Service>", "ix": 8 },
+			{ "value": "</ServiceList>", "ix": 9 }
+		],
+		"errorDescriptions": []
+	}
 }
 ```
+
 ### Installation
 
 1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
@@ -242,3 +213,11 @@ If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `s
 
 1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
 2. run it - `docker compose up`
+
+## validate_sl.js
+
+This standalone app is now removed. Use `all-in-one.js --nocsr --nocg` instead.
+
+## validate_cg.js
+
+This standalone app is now removed. Use `all-in-one.js --nocsr --nosl` instead.

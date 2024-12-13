@@ -264,45 +264,53 @@ export default function validator(options) {
 		})
 	);
 
+	let slcheck = null,
+		cgcheck = null;
+
 	if (options.urls && options.CSRfile == Default_SLEPR.file) options.CSRfile = Default_SLEPR.url;
 
-	let knownLanguages = LoadLanguages(options.urls);
-	let knownGenres = LoadGenres(options.urls);
-	let knownRatings = LoadRatings(options.urls);
-	let accessibilityPurposes = LoadAccessibilityPurpose(options.urls);
-	let audioPurposes = LoadAudioPurpose(options.urls);
-	let subtitleCodings = LoadSubtitleCodings(options.urls);
-	let subtitlePurposes = LoadSubtitlePurposes(options.urls);
-	let isoCountries = LoadCountries(options.urls);
-	let videoFormats = LoadVideoCodecCS(options.urls);
-	let audioFormats = LoadAudioCodecCS(options.urls);
-	let audioPresentation = LoadAudioPresentationCS(options.urls);
+	if (!options.nosl || !options.nocg) {
+		let knownLanguages = LoadLanguages(options.urls);
+		let knownGenres = LoadGenres(options.urls);
+		let knownRatings = LoadRatings(options.urls);
+		let accessibilityPurposes = LoadAccessibilityPurpose(options.urls);
+		let audioPurposes = LoadAudioPurpose(options.urls);
+		let subtitleCodings = LoadSubtitleCodings(options.urls);
+		let subtitlePurposes = LoadSubtitlePurposes(options.urls);
+		let isoCountries = LoadCountries(options.urls);
+		let videoFormats = LoadVideoCodecCS(options.urls);
+		let audioFormats = LoadAudioCodecCS(options.urls);
+		let audioPresentation = LoadAudioPresentationCS(options.urls);
 
-	let slcheck = new ServiceListCheck(options.urls, {
-		languagess: knownLanguages,
-		genres: knownGenres,
-		countries: isoCountries,
-		accessibilities: accessibilityPurposes,
-		audiopurps: audioPurposes,
-		stcodings: subtitleCodings,
-		stpurposes: subtitlePurposes,
-		videofmts: videoFormats,
-		audiofmts: audioFormats,
-		audiopres: audioPresentation,
-	});
-	let cgcheck = new ContentGuideCheck(options.urls, {
-		languages: knownLanguages,
-		genres: knownGenres,
-		ratings: knownRatings,
-		countries: isoCountries,
-		accessibilities: accessibilityPurposes,
-		audiopurps: audioPurposes,
-		stcodings: subtitleCodings,
-		stpurposes: subtitlePurposes,
-		videofmts: videoFormats,
-		audiofmts: audioFormats,
-		audiopres: audioPresentation,
-	});
+		if (!options.nosl)
+			slcheck = new ServiceListCheck(options.urls, {
+				languagess: knownLanguages,
+				genres: knownGenres,
+				countries: isoCountries,
+				accessibilities: accessibilityPurposes,
+				audiopurps: audioPurposes,
+				stcodings: subtitleCodings,
+				stpurposes: subtitlePurposes,
+				videofmts: videoFormats,
+				audiofmts: audioFormats,
+				audiopres: audioPresentation,
+			});
+
+		if (!options.nocg)
+			cgcheck = new ContentGuideCheck(options.urls, {
+				languages: knownLanguages,
+				genres: knownGenres,
+				ratings: knownRatings,
+				countries: isoCountries,
+				accessibilities: accessibilityPurposes,
+				audiopurps: audioPurposes,
+				stcodings: subtitleCodings,
+				stpurposes: subtitlePurposes,
+				videofmts: videoFormats,
+				audiofmts: audioFormats,
+				audiopres: audioPresentation,
+			});
+	}
 
 	if (!options.nosl) {
 		app.get("/validate_sl", function (req, res) {
