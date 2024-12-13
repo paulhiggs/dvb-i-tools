@@ -269,15 +269,16 @@ export default function validator(options) {
 
 	if (options.urls && options.CSRfile == Default_SLEPR.file) options.CSRfile = Default_SLEPR.url;
 
+	let knownLanguages = LoadLanguages(options.urls);
+	let isoCountries = LoadCountries(options.urls);
+	let knownGenres = LoadGenres(options.urls);
+
 	if (!options.nosl || !options.nocg) {
-		let knownLanguages = LoadLanguages(options.urls);
-		let knownGenres = LoadGenres(options.urls);
 		let knownRatings = LoadRatings(options.urls);
 		let accessibilityPurposes = LoadAccessibilityPurpose(options.urls);
 		let audioPurposes = LoadAudioPurpose(options.urls);
 		let subtitleCodings = LoadSubtitleCodings(options.urls);
 		let subtitlePurposes = LoadSubtitlePurposes(options.urls);
-		let isoCountries = LoadCountries(options.urls);
 		let videoFormats = LoadVideoCodecCS(options.urls);
 		let audioFormats = LoadAudioCodecCS(options.urls);
 		let audioPresentation = LoadAudioPresentationCS(options.urls);
@@ -311,7 +312,6 @@ export default function validator(options) {
 				audiopres: audioPresentation,
 			});
 	}
-
 	if (!options.nosl) {
 		app.get("/validate_sl", function (req, res) {
 			validateServiceList(req, res, slcheck);
