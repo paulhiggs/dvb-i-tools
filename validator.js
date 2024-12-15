@@ -380,7 +380,10 @@ export default function validator(options) {
 	app.get("/stats", function (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) {
 		stats_header(res);
 		tabulate(res, "System", {
+			arch: os.arch(),
+			endianness: os.endianness(),
 			host: os.hostname(),
+			os: os.type(),
 			numCPUs: os.cpus().length,
 			machine: os.machine(),
 			platform: os.platform(),
