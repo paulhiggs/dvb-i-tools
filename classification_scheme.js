@@ -14,6 +14,7 @@ import { dvb } from "./DVB_definitions.js";
 import handleErrors from "./fetch_err_handler.js";
 import { hasChild } from "./schema_checks.js";
 import { isHTTPURL } from "./pattern_checks.js";
+import { datatypeIs } from "./phlib/phlib.js";
 
 export const CS_URI_DELIMITER = ":";
 
@@ -154,7 +155,7 @@ export default class ClassificationScheme {
 		}
 	}
 
-	loadCS(options, async = true) {
+	loadCS(options, async = true, extra_vals = null) {
 		if (!options) options = {};
 		if (!Object.prototype.hasOwnProperty.call(options, "leafNodesOnly")) options.leafNodesOnly = false;
 		this.#leafsOnly = options.leafNodesOnly;
@@ -163,6 +164,12 @@ export default class ClassificationScheme {
 		if (options.files) options.files.forEach((file) => this.#loadFromFile(file, async));
 		if (options.url) this.#loadFromURL(options.url, async);
 		if (options.urls) options.urls.forEach((url) => this.#loadFromURL(url, async));
+
+		if (extra_vals && datatypeIs(extra_vals, "array")) {
+			extra_vals.forEach((v) => {
+				if (datatypeIs(v, "string")) this.insertValue(v, true);
+			});
+		}
 	}
 
 	/**

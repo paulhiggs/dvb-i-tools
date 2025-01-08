@@ -1497,12 +1497,11 @@ export default class ServiceListCheck {
 					});
 			}
 
-			// <DASHDeliveryParameters><CMCD>  -- !! EXPERIMENTAL
+			// <DASHDeliveryParameters><CMCD>
 			let cc = 0,
-				mode_counts = {},		// counts of each request tyoe
+				mode_counts = {}, // counts of each request tyoe
 				CMCDelem;
-			while ((CMCDelem = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_CMCD, ++cc), props.schema)) != null)
-				check_CMCD(CMCDelem, mode_counts, errs, "SI175");
+			while ((CMCDelem = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_CMCD, ++cc), props.schema)) != null) check_CMCD(CMCDelem, mode_counts, errs, "SI175");
 
 			// <DASHDeliveryParameters><Extension>
 			let e = 0,

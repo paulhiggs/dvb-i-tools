@@ -1,11 +1,12 @@
 /**
  * MPEG7_defintions.js
- * 
+ *
  * Defintion made in MPEG-&, ISO/IEC 15938-5
  */
 
-const FILE_FORMAT_CS = "urn:mpeg:mpeg7:cs:FileFormatCS:2001";
-const AUDIO_PRESENTATION_CS = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001";
+const MPEG7_CS = "urn:mpeg:mpeg7:cs";
+const FILE_FORMAT_CS = `${MPEG7_CS}:FileFormatCS:2001`;
+const AUDIO_PRESENTATION_CS = `${MPEG7_CS}:AudioPresentationCS:2001`;
 
 export const mpeg7 = {
 	// A177 6.11.1 - Audio Mix Type
@@ -36,3 +37,5 @@ export const mpeg7 = {
 	a_supplemental: "supplemental",
 	a_type: "type",
 };
+
+export const MPEG1_layer_2 = `${MPEG7_CS}:AudioCodingFormatCS:2001:3:2`;

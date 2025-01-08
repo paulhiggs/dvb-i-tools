@@ -99,9 +99,6 @@ export const DVB_ColorimetryCS = {
 	y2020: { file: join(path2020CS, idDVB_ColorimetryCS), url: `${DVB_METADATA}${url2020CS}/${idDVB_ColorimetryCS}` },
 };
 
-const idMPEG_AudioCodingFormatCS = "AudioCodingFormatCS.xml";
-export const MPEG7_AudioCodingFormatCS = { file: join(pathMPEG7, idMPEG_AudioCodingFormatCS), url: `${REPO_RAW}${subdirMPEG7}/${idMPEG_AudioCodingFormatCS}` };
-
 const idMPEG7_VisualCodingFormatCS = "VisualCodingFormatCS.xml";
 export const MPEG7_VisualCodingFormatCS = { file: join(pathMPEG7, idMPEG7_VisualCodingFormatCS), url: `${REPO_RAW}${subdirMPEG7}/${idMPEG7_VisualCodingFormatCS}` };
 

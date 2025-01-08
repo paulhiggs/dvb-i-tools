@@ -16,7 +16,6 @@ import {
 	TVA_PictureFormatCS,
 	DVBI_ServiceTypeCS,
 	DVB_AudioCodecCS,
-	MPEG7_AudioCodingFormatCS,
 	DVB_AudioConformanceCS,
 	DVB_VideoCodecCS,
 	MPEG7_VisualCodingFormatCS,
@@ -32,6 +31,7 @@ import {
 	TVA_ContentAlertCS,
 	DVBI_ParentalGuidanceCS,
 } from "./data_locations.js";
+import { MPEG1_layer_2 } from "./MPEG7_definitions.js";
 import ClassificationScheme from "./classification_scheme.js";
 
 export function LoadCountries(useURLs, async = true) {
@@ -83,14 +83,15 @@ export function LoadAudioCodecCS(useURLs, async = true) {
 	cs.loadCS(
 		useURLs
 			? {
-					urls: [DVB_AudioCodecCS.y2007.url, DVB_AudioCodecCS.y2020.url, DVB_AudioCodecCS.y2024.url, MPEG7_AudioCodingFormatCS.url],
+					urls: [DVB_AudioCodecCS.y2007.url, DVB_AudioCodecCS.y2020.url, DVB_AudioCodecCS.y2024.url],
 					leafNodesOnly: true,
 			  }
 			: {
-					files: [DVB_AudioCodecCS.y2007.file, DVB_AudioCodecCS.y2020.file, DVB_AudioCodecCS.y2024.file, MPEG7_AudioCodingFormatCS.file],
+					files: [DVB_AudioCodecCS.y2007.file, DVB_AudioCodecCS.y2020.file, DVB_AudioCodecCS.y2024.file],
 					leafNodesOnly: true,
 			  },
-		async
+		async,
+		[MPEG1_layer_2]
 	);
 	return cs;
 }
