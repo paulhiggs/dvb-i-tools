@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools",
-	"version": "1.7.3",
+	"version": "1.7.4",
 	"description": "DVB-I V&V Tools - up to A177r7",
 	"main": "all-in-one.js",
 	"type": "module",
@@ -11,7 +11,7 @@
 	},
 	"dependencies": {
 		"@datastructures-js/binary-search-tree": "^5.3.2",
-		"chalk": "^5.3.0",
+		"chalk": "^5.4.1",
 		"command-line-args": "^6.0.1",
 		"command-line-usage": "^7.0.3",
 		"cors": "^2.8.5",
@@ -22,7 +22,7 @@
 		"morgan": "^1.10.0",
 		"serve-favicon": "^2.5.0",
 		"sync-fetch": "^0.6.0-2",
-		"xml-formatter": "^3.6.3",
+		"xml-formatter": "^3.6.4",
 		"xmllint": "^0.1.1"
 	},
 	"engines": {
