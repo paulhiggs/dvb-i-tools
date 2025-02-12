@@ -9,7 +9,7 @@ import { elementize, quote } from "./phlib/phlib.js";
 
 import { tva, tvaEA } from "./TVA_definitions.js";
 import { sats } from "./DVB_definitions.js";
-import { dvbi, dvbiEC, dvbiEA, XMLdocumentType, CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_EVENT } from "./DVB-I_definitions.js";
+import { dvbi, dvbiEC, dvbiEA, XMLdocumentType } from "./DVB-I_definitions.js";
 
 import ErrorList, { WARNING, APPLICATION } from "./error_list.js";
 import { isTAGURI } from "./URI_checks.js";

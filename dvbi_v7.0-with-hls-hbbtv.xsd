@@ -460,6 +460,14 @@
 			</simpleType>
 		</attribute>
 		<!--
+			<attribute name="version" default="1">
+				<simpleType>
+					<restriction base="positiveInteger">
+						<minInclusive="1"/>
+						<maxInclusive="2"/>
+					</restriction>
+				</simpleType>
+			</attribute>
 			<attribute name="beaconURL" type="anyURI"/>
 			<attribute name="interval" type="anyURI"/>
 		-->

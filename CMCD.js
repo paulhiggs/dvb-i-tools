@@ -10,9 +10,7 @@ import { CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_EVENT, dvbiEA } from "
 import { APPLICATION, WARNING } from "./error_list.js";
 import { checkAttributes } from "./schema_checks.js";
 import { isIn } from "./utils.js";
-import { isObjectEmpty } from "./phlib/phlib.js"
-
-const CMCD_VERSION_SUPPORTED = 1;
+import { isObjectEmpty } from "./phlib/phlib.js";
 
 const CMCD_keys = {
 	encoded_bitrate: "br",
@@ -77,9 +75,7 @@ const CMCDv1_keys = [
 	{ key: CMCD_keys.cmcd_version, allow_modes: all_reporting_modes },
 ];
 
-const deprecated_CMCDv1_keys = [
-	{ key: CMCD_keys.next_range_request, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
-];
+const deprecated_CMCDv1_keys = [{ key: CMCD_keys.next_range_request, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] }];
 
 const CMCDv2_keys = CMCDv1_keys.concat([
 	{ key: CMCD_keys.aggregate_encoded_bitrate, allow_modes: all_reporting_modes },
@@ -109,13 +105,14 @@ const isCustomKey = (key) => key.includes("-");
 const reportingMode = (mode) => (mode.indexOf(":") != -1 ? mode.substring(mode.lastIndexOf(":") + 1) : "***");
 
 const error_key = "CMCD";
-const keys_to_use = CMCD_VERSION_SUPPORTED == 2 ? CMCDv2_keys : CMCDv1_keys.concat(deprecated_CMCDv1_keys);
 
 function checkCMCDkeys(CMCD, errs, errCode) {
 	if (!CMCD) {
 		errs.addError({ type: APPLICATION, code: `${errCode}-00`, message: "checkCMCDkeys() called with CMCD=null" });
 		return;
 	}
+	const version = CMCD.attr(dvbi.a_version) ? CMCD.attr(dvbi.a_version).value() : 1;
+	const keys_to_use = version == 2 ? CMCDv2_keys : CMCDv1_keys.concat(deprecated_CMCDv1_keys);
 	const keys = CMCD.attr(dvbi.a_enabledKeys)?.value().split(" ");
 	const reporting_mode = CMCD.attr(dvbi.a_reportingMode) ? CMCD.attr(dvbi.a_reportingMode).value() : "undefined";
 	if (keys) {
@@ -141,7 +138,7 @@ function checkCMCDkeys(CMCD, errs, errCode) {
 			else
 				errs.addError({
 					code: `${errCode}c`,
-					message: `${key.quote()} is not a reserved CMCDv${CMCD_VERSION_SUPPORTED} key or the correct format for a custom key`,
+					message: `${key.quote()} is not a reserved CMCDv${version} key or the correct format for a custom key`,
 					fragment: CMCD,
 					key: error_key,
 				});
@@ -224,7 +221,7 @@ export function check_CMCD(CMCDelem, counts, errs, errCode) {
 
 	if (Object.prototype.hasOwnProperty.call(counts, reportingMode(reporting_mode))) {
 		counts[reportingMode(reporting_mode)]++;
-		if (counts[reportingMode(CMCD_MODE_REQUEST)] > 1) 
+		if (counts[reportingMode(CMCD_MODE_REQUEST)] > 1)
 			errs.addError({
 				code: `${errCode}-20`,
 				message: "only a single reporting configuration for Request Mode can be specified",
