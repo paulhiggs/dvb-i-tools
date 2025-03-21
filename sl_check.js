@@ -21,6 +21,7 @@ import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys } from "./comm
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./multilingual_element.js";
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.js";
 import writeOut from "./logger.js";
+import { ValidateLanguage } from "./IANA_languages.js";
 import {
 	LoadGenres,
 	LoadVideoCodecCS,
@@ -566,9 +567,14 @@ export default class ServiceListCheck {
 			return rc;
 		}
 
+
 		checkAttributes(HowRelated, [dvbi.a_href], [], tvaEA.HowRelated, errs, `${errCode}-2`);
 
 		if (HowRelated.attr(dvbi.a_href)) {
+			let RMErrorDescription = (_code, _elem, _table) => ({
+				code: _code,
+				desciption: `The application type indicated by the specified ${dvbi.a_href.attribute()} value is not permitted in a ${_elem.elementize()}. Refer to the semantic defintiion of ${dvbi.e_RelatedMaterial.elementize()} in table ${_table} of A177.`
+			});
 			switch (LocationType) {
 				case SERVICE_LIST_RM:
 					if (validServiceListLogo(HowRelated, props.namespace)) {
@@ -577,7 +583,10 @@ export default class ServiceListCheck {
 					} else if (validServiceAgreementApp(HowRelated, props.namespace)) {
 						rc = HowRelated.attr(dvbi.a_href).value();
 						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, errs, Location, rc));
-					} else errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-11`));
+					} else {
+						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-11`));
+						errs.errorDescription(RMErrorDescription(`${errCode}-14`, dvbi.e_ServiceList, 14));
+					}
 					break;
 
 				case SERVICE_RM:
@@ -599,19 +608,21 @@ export default class ServiceListCheck {
 					} else if (this.#validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
 						rc = HowRelated.attr(dvbi.a_href).value();
 						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, errs, Location, rc));
-					} else errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-24`));
+					} else {
+						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-24`));
+						errs.errorDescription(RMErrorDescription(`${errCode}-24`, dvbi.e_Service, 15));
+					}
 					break;
 
 				case SERVICE_INSTANCE_RM:
-					if (validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && SchemaVersion(props.namespace) == SCHEMA_r0)
+					if (validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && SchemaVersion(props.namespace) == SCHEMA_r0) 
 						errs.addError({
 							code: `${errCode}-31`,
 							message: `${HowRelated.attr(dvbi.href).value().quote()} not permitted for ${props.namespace.quote()} in ${Location}`,
 							key: "invalid CS value",
 							fragment: HowRelated,
 						});
-
-					if (validContentFinishedBanner(HowRelated, props.namespace) || validServiceLogo(HowRelated, props.namespace)) {
+					else if (validContentFinishedBanner(HowRelated, props.namespace) || validServiceLogo(HowRelated, props.namespace)) {
 						rc = HowRelated.attr(dvbi.a_href).value();
 						checkValidLogos(RelatedMaterial, errs, `${errCode}-32`, Location, this.#knownLanguages);
 					} else if (validOutScheduleHours(HowRelated, ANY_NAMESPACE) && SchemaVersion(props.namespace) >= SCHEMA_r6) {
@@ -641,14 +652,20 @@ export default class ServiceListCheck {
 					} else if (this.#validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
 						rc = HowRelated.attr(dvbi.a_href).value();
 						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, errs, Location, rc));
-					} else errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-34`));
+					} else {
+						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-34`));
+						errs.errorDescription(RMErrorDescription(`${errCode}-34`, dvbi.e_ServiceInstace, 16));
+					}
 					break;
 
 				case CONTENT_GUIDE_RM:
 					if (validContentGuideSourceLogo(HowRelated, props.namespace)) {
 						rc = HowRelated.attr(dvbi.a_href).value();
 						checkValidLogos(RelatedMaterial, errs, `${errCode}-41`, Location, this.#knownLanguages);
-					} else errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-42`));
+					} else {
+						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-42`));
+						errs.errorDescription(RMErrorDescription(`${errCode}-42`, dvbi.e_ContentGuideSource, 20));
+					}
 					break;
 			}
 		}
@@ -2159,48 +2176,7 @@ export default class ServiceListCheck {
 
 		// check ServiceList@lang
 		if (SL.root().attr(tva.a_lang)) {
-			let serviceListLang = SL.root().attr(tva.a_lang).value();
-			if (this.#knownLanguages) {
-				let validatorResp = this.#knownLanguages.isKnown(serviceListLang);
-				if (validatorResp.resp != this.#knownLanguages.languageKnown) {
-					switch (validatorResp.resp) {
-						case this.#knownLanguages.languageUnknown:
-							errs.addError({
-								code: "SL012",
-								message: `${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is invalid`,
-								line: SL.root().line(),
-								key: keys.k_InvalidLanguage,
-							});
-							break;
-						case this.#knownLanguages.languageRedundant:
-							let msg = `${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is deprecated`;
-							if (validatorResp?.pref) msg += `(use ${validatorResp.pref.quote()} instead)`;
-							errs.addError({
-								code: "SL013",
-								message: msg,
-								line: SL.root().line(),
-								key: "deprecated language",
-							});
-							break;
-						case this.#knownLanguages.languageNotSpecified:
-							errs.addError({
-								code: "SL014",
-								message: `${dvbi.e_ServiceList} xml:${tva.a_lang} value is not provided`,
-								line: SL.root().line(),
-								key: keys.k_UnspecifiedLanguage,
-							});
-							break;
-						case this.#knownLanguages.languageInvalidType:
-							errs.addError({
-								code: "SL015",
-								message: `${dvbi.e_ServiceList} xml:${tva.a_lang} value ${serviceListLang.quote()} is invalid`,
-								line: SL.root().line(),
-								key: keys.k_InvalidLanguage,
-							});
-							break;
-					}
-				}
-			}
+			ValidateLanguage(this.#knownLanguages, SL.root().attr(tva.a_lang).value(), errs, "SL012", dvbi.e_ServiceList, SL.root().line());
 		}
 
 		// check ServiceList@responseStatus

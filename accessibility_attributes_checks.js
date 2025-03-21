@@ -155,19 +155,6 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 		if (children)
 			children.forEachSubElement((e) => {
 				if (e.name() == childName) {
-					let languageCode = e.text();
-					let lState = cs.KnownLanguages.isKnown(languageCode);
-					if (lState.resp == cs.KnownLanguages.languageRedundant) {
-						errs.addError({
-							code: `${errCode}-${errNum}a`,
-							fragment: e,
-							message: `sign language ${languageCode.quote()} is redundant${lState.pref ? `, use ${lState.pref.quote()} instead` : ""}`,
-							key: "deprecated language",
-							type: WARNING,
-						});
-						if (lState.pref) languageCode = lState.pref;
-					}
-
 					if (cs.KnownLanguages.checkSignLanguage(languageCode) != cs.KnownLanguages.languageKnown) {
 						errs.addError({
 							code: `${errCode}-${errNum}b`,
@@ -185,29 +172,18 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 	};
 
 	let checkLanguage = (elem, childName, errNum) => {
-		if (!cs.KnownLanguages) return;
 		let children = elem.childNodes();
 		if (children)
 			children.forEachSubElement((e) => {
 				if (e.name() == childName) {
-					let res = cs.KnownLanguages.isKnown(e.text()).resp;
-					if (res == cs.KnownLanguages.languageRedundant) {
-						let msg = `language value ${e.text().quote()} is deprecated`;
-						if (res?.pref) msg += ` (use ${res.pref.quote()} instead)`;
+					if (!isValidLangFormat(e.text())) {
 						errs.addError({
 							code: `${errCode}-${errNum}a`,
+							key: "invalid lang format",
 							fragment: e,
-							message: msg,
-							key: ACCESSIBILITY_CHECK_KEY,
-							type: WARNING,
+							message: `xml:${tva.a_lang} value ${e.text().quote()} does not match format for Language-Tag in BCP47`,
 						});
-					} else if (res != cs.KnownLanguages.languageKnown)
-						errs.addError({
-							code: `${errCode}-${errNum}b`,
-							fragment: e,
-							message: `"${e.text()}" is not a valid language for ${e.name().elementize()} in ${elem.name().elementize()} (res=${res})`,
-							key: ACCESSIBILITY_CHECK_KEY,
-						});
+					}
 				}
 			});
 	};

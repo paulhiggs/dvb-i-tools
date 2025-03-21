@@ -1,6 +1,6 @@
 /**
  * multilingual_element.js
- * 
+ *
  * check that multiple elements for expressing multilingual values match DVB-I requirments
  */
 import { datatypeIs } from "./phlib/phlib.js";
@@ -25,39 +25,16 @@ const NO_DOCUMENT_LANGUAGE = "**"; // this should not be needed as @xml:lang is 
  * @returns {boolean} true if the specified language is valid
  */
 export function checkLanguage(validator, lang, loc, element, errs, errCode) {
-	if (!validator) {
-		errs.addError({ type: APPLICATION, code: "CL000", message: `cannot validate language ${lang.quote()}${loc ? ` for ${loc.elementize()}` : ""}`, key: "no language validator" });
+	if (!isValidLangFormat(lang)) {
+		errs.addError({
+			code: `${errCode}-100`,
+			key: "invalid format",
+			fragment: element,
+			message: `xml:${tva.a_lang} value ${lang.quote()} does not match format for Language-Tag in BCP47`,
+		});
 		return false;
 	}
-
-	const validatorResp = validator.isKnown(lang);
-	let	langOK = false;
-	switch (validatorResp.resp) {
-		case validator.languageKnown:
-			langOK = true;
-			break;
-		case validator.languageUnknown:
-			errs.addError({ code: `${errCode}-1`, message: `${loc ? loc : "language"} value ${lang.quote()} is invalid`, fragment: element, key: keys.k_InvalidLanguage });
-			break;
-		case validator.languageRedundant:
-			let msg = `${loc ? loc : "language"} value ${lang.quote()} is deprecated`;
-			if (validatorResp?.pref) msg += ` (use ${validatorResp.pref.quote()} instead)`;
-			errs.addError({
-				type: WARNING,
-				code: `${errCode}-2`,
-				message: msg,
-				fragment: element,
-				key: "deprecated language",
-			});
-			break;
-		case validator.languageNotSpecified:
-			errs.addError({ code: `${errCode}-3`, message: `${loc ? loc : "language"} value is not provided`, fragment: element, key: keys.k_UnspecifiedLanguage });
-			break;
-		case validator.languageInvalidType:
-			errs.addError({ code: `${errCode}-4`, message: `language is not a String, its "${datatypeIs(lang)}"`, fragment: element, key: keys.k_InvalidLanguage });
-			break;
-	}
-	return langOK;
+	return true;
 }
 
 /**
@@ -92,7 +69,7 @@ export function checkXMLLangs(elementName, elementLocation, node, errs, errCode,
 	}
 
 	let childElems = node.childNodes();
-	if ( CountChildElements(node, elementName) > 1) {
+	if (CountChildElements(node, elementName) > 1) {
 		childElems.forEachSubElement((elem) => {
 			if (elem.name() == elementName) {
 				if (!elem.attr(tva.a_lang))

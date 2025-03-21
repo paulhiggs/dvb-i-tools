@@ -11,7 +11,7 @@ import { datatypeIs } from "./phlib/phlib.js";
 
 import handleErrors from "./fetch_err_handler.js";
 import { isIn, isIni } from "./utils.js";
-import { isHTTPURL } from "./pattern_checks.js";
+import { isHTTPURL, BCP47_Language_Tag } from "./pattern_checks.js";
 import fetchS from "sync-fetch";
 
 export default class IANAlanguages {
@@ -21,6 +21,12 @@ export default class IANAlanguages {
 	#signLanguagesList;
 	#regionsList;
 	#languageFileDate;
+
+	#languages;
+	#extended_languages;
+	#scripts;
+	#regions;
+	#variants;
 
 	constructor() {
 		this.languageUnknown = 0;
@@ -221,9 +227,7 @@ export default class IANAlanguages {
 				if (matches) return { resp: this.languageKnown };
 			}
 
-			if (isIni(this.#languagesList, value)) return { resp: this.languageKnown };
-
-			return { resp: this.languageUnknown };
+			return { resp: isIni(this.#languagesList, value) ? this.languageKnown : this.languageUnknown };
 		}
 		return { resp: this.languageInvalidType };
 	}
@@ -234,19 +238,74 @@ export default class IANAlanguages {
 	 * @param {String} value The value to check for existance in the list of known signing languages
 	 * @return {integer} indicating the "known" state of the language
 	 */
-	/* private function */
 	checkSignLanguage(language) {
-		if (this.#signLanguagesList.find((lang) => lang.toLowerCase() == language)) return this.languageKnown;
-
-		return this.languageUnknown;
+		return this.#signLanguagesList.find((lang) => lang.toLowerCase() == language) ? this.languageKnown : this.languageUnknown;
 	}
 
 	isKnownSignLanguage(value) {
 		let lcValue = value.toLowerCase();
 		let res = this.checkSignLanguage(lcValue);
-
 		if (res == this.languageUnknown) res = this.checkSignLanguage("sgn-" + lcValue);
-
 		return res;
 	}
+}
+
+// return true is @lang is formatted according to BCP47 Language-Tag
+const BCP47langauetag_exp = new RegExp(`^${BCP47_Language_Tag}$`);
+export let isValidLangFormat = (lang) => (datatypeIs(lang, "string") ? BCP47langauetag_exp.test(lang) : false);
+
+export function ValidateLanguage(validator, lang, errs, errCode, elem, errLoc) {
+	// language format check
+	if (!isValidLangFormat(lang)) {
+		errs.addError({
+			code: `${errCode}-11`,
+			key: "invalid lang format",
+			line: errLoc,
+			message: `xml:${tva.a_lang} value ${lang.quote()} does not match format for Language-Tag in BCP47`,
+		});
+	}
+	/*
+	// language value check
+	if (validator) {
+		let validatorResp = validator.isKnown(lang);
+		if (validatorResp.resp != validator.languageKnown) {
+			switch (validatorResp.resp) {
+				case validator.languageUnknown:
+					errs.addError({
+						code: `${errCode}-12`,
+						message: `${elem} xml:${tva.a_lang} value ${lang.quote()} is invalid`,
+						line: errLoc,
+						key: keys.k_InvalidLanguage,
+					});
+					break;
+				case validator.languageRedundant:
+					let msg = `${elem} xml:${tva.a_lang} value ${lang.quote()} is deprecated`;
+					if (validatorResp?.pref) msg += `(use ${validatorResp.pref.quote()} instead)`;
+					errs.addError({
+						code: `${errCode}-13`,
+						message: msg,
+						line: errLoc,
+						key: "deprecated language",
+					});
+					break;
+				case validator.languageNotSpecified:
+					errs.addError({
+						code: `${errCode}-14`,
+						message: `${elem} xml:${tva.a_lang} value is not provided`,
+						line: errLoc,
+						key: keys.k_UnspecifiedLanguage,
+					});
+					break;
+				case validator.languageInvalidType:
+					errs.addError({
+						code: `${errCode}-15`,
+						message: `${elem} xml:${tva.a_lang} value ${lang.quote()} is invalid`,
+						line: errLoc,
+						key: keys.k_InvalidLanguage,
+					});
+					break;
+			}
+		}
+	}
+	*/
 }
