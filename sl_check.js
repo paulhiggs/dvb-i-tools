@@ -567,7 +567,6 @@ export default class ServiceListCheck {
 			return rc;
 		}
 
-
 		checkAttributes(HowRelated, [dvbi.a_href], [], tvaEA.HowRelated, errs, `${errCode}-2`);
 
 		if (HowRelated.attr(dvbi.a_href)) {
@@ -1547,7 +1546,7 @@ export default class ServiceListCheck {
 		// <ServiceInstance><DVBCDeliveryParameters>
 		let DVBCDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DVBCDeliveryParameters), props.schema);
 		if (DVBCDeliveryParameters) {
-			let DVBCtargetCountry = ServiceInstance.get(xPathM(props.prefix, [dvbi.e_DVBCDeliveryParameters, dvbi.e_TargetCountry]), props.schema);
+			let DVBCtargetCountry = DVBCDeliveryParameters.get(xPathM(props.prefix, dvbi.e_TargetCountry), props.schema);
 			if (DVBCtargetCountry) {
 				if (!this.#knownCountries.isISO3166code(DVBCtargetCountry.text()))
 					errs.addError({
@@ -1557,6 +1556,23 @@ export default class ServiceListCheck {
 						key: keys.k_InvalidCountryCode,
 					});
 				if (SchemaVersion(props.namespace) >= SCHEMA_r6) errs.addError(DeprecatedElement(DVBCtargetCountry, SchemaSpecVersion(props.namespace), "SI192"));
+			}
+			if (SchemaVersion(props.namespace) >= SCHEMA_r7) {
+				// prior to A177r7 only a single value for <DVBCDeliveryParameters><NetworkID> was specified
+				 let n=0, NetworkID, knownIDs=[];
+				 while ((NetworkID = DVBCDeliveryParameters.get(xPath(props.prefix, dvbi.e_NetworkID, ++n), props.schema)) != null) {
+					let nid = NetworkID.value();
+					if (isIn(knownIDs, nid)) {
+						errs.addError({
+							code: "SI193",
+							type: WARNING,
+							key: keys.k_DuplicateValue,
+							fragment: NetworkID,
+							message: "duplicated Network ID value"
+						})
+					}
+					else knownIDs.push(nid);
+				 }
 			}
 		}
 

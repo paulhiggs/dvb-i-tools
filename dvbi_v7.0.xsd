@@ -390,7 +390,7 @@
 					<documentation>The use of this element is deprecated.</documentation>
 				</annotation>
 			</element>
-			<element name="NetworkID" type="dvbi-types:NetworkIdType"/>
+			<element name="NetworkID" type="dvbi-types:NetworkIdType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 	</complexType>
 	<complexType name="RTSPDeliveryParametersType">

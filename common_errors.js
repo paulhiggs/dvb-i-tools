@@ -11,6 +11,7 @@ export const keys = {
 	k_InvalidTag: "invalid tag",
 	k_LengthError: "length error",
 	k_DuplicatedSynopsisLength: "duplicted synopsis length",
+	k_DuplicateValue: "duplicated value",
 	k_MissingSynopsisLength: "missing synopsis length",
 	k_InvalidKeywordType: "invalid keyword type",
 	k_ParentalGuidance: "parental guidance",
