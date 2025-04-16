@@ -26,14 +26,13 @@ const CMCD_keys = {
 	live_stream_latency: "ltc",
 	measured_throughput: "mtp",
 	next_object_request: "nor",
-	next_range_request: "nrr",
+	next_range_request: "nrr",		// removed from CMCDv2
 	object_type: "ot",
 	playback_rate: "pr",
 	requested_maximum_throughput: "rtp",
 	response_code: "rc",
 	streaming_format: "sf",
 	session_id: "sid",
-	interstitial: "int",
 	backgrounded: "bg",
 	state: "sta",
 	stream_type: "st",
@@ -42,6 +41,7 @@ const CMCD_keys = {
 	time_to_first_body_byte: "ttfbb",
 	time_to_last_byte: "ttlb",
 	timestamp: "ts",
+	top_playable_bitrate: "tpb",
 	top_encoded_bitrate: "tb",
 	lowest_encoded_bitrate: "lb",
 	top_aggregated_encoded_bitrate: "tab",
@@ -51,7 +51,9 @@ const CMCD_keys = {
 	player_error_code: "ec",
 	media_start_delay: "msd",
 	event: "e",
-	cmcd_version: "v",
+	CMSD_dynamic_header: "cmsdd",
+	CMSD_static_header: "cmsds",
+	CMCD_version: "v",
 };
 
 const all_reporting_modes = [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_EVENT];
@@ -72,7 +74,7 @@ const CMCDv1_keys = [
 	{ key: CMCD_keys.stream_type, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.startup, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.top_encoded_bitrate, allow_modes: all_reporting_modes },
-	{ key: CMCD_keys.cmcd_version, allow_modes: all_reporting_modes },
+	{ key: CMCD_keys.CMCD_version, allow_modes: all_reporting_modes },
 ];
 
 const deprecated_CMCDv1_keys = [{ key: CMCD_keys.next_range_request, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] }];
@@ -84,13 +86,13 @@ const CMCDv2_keys = CMCDv1_keys.concat([
 	{ key: CMCD_keys.cdn_id, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.live_stream_latency, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.response_code, allow_modes: [CMCD_MODE_RESPONSE] },
-	{ key: CMCD_keys.interstitial, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.backgrounded, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.state, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.time_to_first_byte, allow_modes: [CMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.time_to_first_body_byte, allow_modes: [CMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.time_to_last_byte, allow_modes: [CMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.timestamp, allow_modes: all_reporting_modes },
+	{ key: CMCD_keys.top_playable_bitrate, allow_modes: all_reporting_modes }, 
 	{ key: CMCD_keys.lowest_encoded_bitrate, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.top_aggregated_encoded_bitrate, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.lowest_aggregated_encoded_bitrate, allow_modes: all_reporting_modes },
@@ -99,6 +101,8 @@ const CMCDv2_keys = CMCDv1_keys.concat([
 	{ key: CMCD_keys.player_error_code, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.media_start_delay, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.event, allow_modes: all_reporting_modes },
+	{ key: CMCD_keys.CMSD_dynamic_header, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE]},
+	{ key: CMCD_keys.CMSD_static_header, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE]},
 ]);
 
 const isCustomKey = (key) => key.includes("-");
