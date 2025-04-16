@@ -2937,6 +2937,193 @@ export default class ContentGuideCheck {
 	}
 
 	/**
+	 * validate any <ScheduleEvent> or <BroadcastEvent> elements
+	 *
+	 * @param {object}  props               Metadata of the XML document
+	 * @param {XMLnode} Event               the <BroadcastEvent> or <ScheduleEvent> element to be checked
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {array}   programCRIDs        array of program crids defined in <ProgramInformationTable>
+	 * @param {array}   plCRIDs             array of program crids defined in <ProgramLocationTable>
+	 * @param {string}  currentProgramCRID  CRID of the currently airing program
+	 * @param {XMLnode} Schedule            the parent node of a <ScheduleEvent>
+	 */
+	/* private */ #ValidateEvent(props, Event, errs, programCRIDs, plCRIDs, currentProgramCRID, Schedule=null) {
+		let prefix = "";
+		if (Event.name() == tva.e_BroadcastEvent)
+			prefix="BE";
+		else if (Event.name() == tva.e_ScheduleEvent)
+			prefix="SE";
+		else {
+			errs.addError({
+				type: APPLICATION,
+				code: "VE000",
+				message: "ValidateEvent() called with something other than a BroadcastEvent or ScheduleEvent",
+			});
+			return;
+		}
+	
+	let startSchedule = Schedule ? Schedule.attr(tva.a_start) : null,
+		fr = null,
+		endSchedule = Schedule ? Schedule.attr(tva.a_end) : null,
+		to = null;
+	if (startSchedule) fr = new Date(startSchedule.value());
+	if (endSchedule) to = new Date(endSchedule.value());
+
+		let isCurrentProgram = false;
+		GetNodeLanguage(Event, false, errs, `${prefix}001`, this.#knownLanguages);
+		checkAttributes(Event, [], [], tvaEA.ScheduleEvent, errs, `${prefix}002`);
+		checkTopElementsAndCardinality(
+			Event,
+			[
+				{ name: tva.e_Program },
+				{ name: tva.e_ProgramURL, minOccurs: 0 },
+				{ name: tva.e_InstanceDescription, minOccurs: 0, maxOccurs: Infinity },
+				{ name: tva.e_PublishedStartTime },
+				{ name: tva.e_PublishedDuration },
+				{ name: tva.e_ActualStartTime, minOccurs: 0 },
+				{ name: tva.e_ActualDuration, minOccurs: 0 },
+				{ name: tva.e_FirstShowing, minOccurs: 0 },
+				{ name: tva.e_Free, minOccurs: 0 },
+			],
+			tvaEC.ScheduleEvent,
+			false,
+			errs,
+			`${prefix}003`
+		);
+
+		// <Program>
+		let Program = Event.get(xPath(props.prefix, tva.e_Program), props.schema);
+		if (Program) {
+			checkAttributes(Program, [tva.a_crid], [], tvaEA.Program, errs, `${prefix}010`);
+
+			let ProgramCRID = Program.attr(tva.a_crid);
+			if (ProgramCRID) {
+				if (!isCRIDURI(ProgramCRID.value())) {
+					this.#NotCRIDFormat(errs, {
+						code: `${prefix}011`,
+						message: `${tva.a_crid.attribute(tva.e_Program)} is not a valid CRID (${ProgramCRID.value()})`,
+						fragment: Program,
+					});
+				}
+				if (!isIni(programCRIDs, ProgramCRID.value()))
+					errs.addError({
+						code: `${prefix}012`,
+						message: `${tva.a_crid.attribute(tva.e_Program)}=${ProgramCRID.value().quote()} does not refer to a program in the ${tva.e_ProgramInformationTable.elementize()}`,
+						fragment: Program,
+					});
+				plCRIDs.push(ProgramCRID.value());
+				isCurrentProgram = ProgramCRID.value() == currentProgramCRID;
+			}
+		}
+
+		// <ProgramURL>
+		let ProgramURL = Event.get(xPath(props.prefix, tva.e_ProgramURL), props.schema);
+		if (ProgramURL)
+			if (!isDVBLocator(ProgramURL.text()))
+				errs.addError({
+					code: `${prefix}021`,
+					message: `${Event.name()}.${tva.e_ProgramURL} (${ProgramURL.text()}) is not a valid DVB locator`,
+					fragment: ProgramURL,
+				});
+
+		// <InstanceDescription>
+		let id = 0,
+			thisInstanceDescription,
+			serviceIDs = [];
+		while ((thisInstanceDescription = Event.get(xPath(props.prefix, tva.e_InstanceDescription, ++id), props.schema)) != null) {
+			this.#ValidateInstanceDescription(props, Event.name(), thisInstanceDescription, isCurrentProgram, errs);
+			let instanceServiceID = thisInstanceDescription.attr(tva.a_serviceInstanceID) ? thisInstanceDescription.attr(tva.a_serviceInstanceID).value() : "dflt";
+			if (isIn(serviceIDs, instanceServiceID))
+				errs.addError({
+					code: instanceServiceID == "dflt" ? `${prefix}031` : `${prefix}032`,
+					line: thisInstanceDescription.line(),
+					message: instanceServiceID == "dflt" ? "Default instance description is already specified" : `Instance description for ${instanceServiceID} is already specified`,
+					tag: "duplicate instance",
+				});
+			else serviceIDs.push(instanceServiceID);
+		}
+
+		// <PublishedStartTime> and <PublishedDuration>
+		let pstElem = Event.get(xPath(props.prefix, tva.e_PublishedStartTime), props.schema);
+		if (pstElem) {
+			if (isUTCDateTime(pstElem.text())) {
+				let PublishedStartTime = new Date(pstElem.text());
+
+				if (scheduleStart && PublishedStartTime < scheduleStart)
+					errs.addError({
+						code: `${prefix}041`,
+						message: `${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is earlier than ${tva.a_start.attribute(tva.e_Schedule)}`,
+						multiElementError: [Schedule, pstElem],
+					});
+				if (scheduleEnd && PublishedStartTime > scheduleEnd)
+					errs.addError({
+						code: `${prefix}042`,
+						message: `${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is after ${tva.a_end.attribute(tva.e_Schedule)}`,
+						multiElementError: [Schedule, pstElem],
+					});
+
+				let pdElem = Event.get(xPath(props.prefix, tva.e_PublishedDuration), props.schema);
+				if (pdElem && scheduleEnd) {
+					let parsedPublishedDuration = parseISOduration(pdElem.text());
+					if (parsedPublishedDuration.add(PublishedStartTime) > scheduleEnd)
+						errs.addError({
+							code: `${prefix}043`,
+							message: `${tva.e_PublishedStartTime}+${tva.e_PublishedDuration} of event is after ${tva.a_end.attribute(tva.e_Schedule)}`,
+							multiElementError: [Schedule, pdElem],
+						});
+				}
+			} else
+				errs.addError({
+					code: `${prefix}049`,
+					message: `${tva.e_PublishedStartTime.elementize()} is not expressed in UTC format (${pstElem.text()})`,
+					fragment: pstElem,
+				});
+		}
+
+		// <ActualStartTime>
+		let astElem = Event.get(xPath(props.prefix, tva.e_ActualStartTime), props.schema);
+		if (astElem && !isUTCDateTime(astElem.text()))
+			errs.addError({
+				code: `${prefix}051`,
+				message: `${tva.e_ActualStartTime.elementize()} is not expressed in UTC format (${astElem.text()})`,
+				fragment: astElem,
+			});
+
+		// <FirstShowing>
+		let FirstShowing = Event.get(xPath(props.prefix, tva.e_FirstShowing), props.schema);
+		if (FirstShowing) BooleanValue(FirstShowing, tva.a_value, `${prefix}061`, errs);
+
+		// <Free>
+		let Free = Event.get(xPath(props.prefix, tva.e_Free), props.schema);
+		if (Free) BooleanValue(Free, tva.a_value, `${prefix}071`, errs);
+	}
+
+
+	/**
+	 * validate a <BroadcastEvent> elements in the <ProgramLocationTable>
+	 *
+	 * @param {object}  props                Metadata of the XML document
+	 * @param {XMLnode} BroadcastEvent       the node containing the <BroadcastEvent> being checked
+	 * @param {array}   programCRIDs         array of program crids defined in <ProgramInformationTable>
+	 * @param {array}   plCRIDs              array of program crids defined in <ProgramLocationTable>
+	 * @param {string}  currentProgramCRID   CRID of the currently airing program
+	 * @param {string}  requestType          the type of content guide request being checked
+	 * @param {Class}   errs                 errors found in validaton
+	 */
+	/* private */ #ValidateBroadcastEvent(props, BroadcastEvent, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs) {
+		if (!BroadcastEvent) {
+			errs.addError({
+				type: APPLICATION,
+				code: "BE000",
+				message: "ValidateBroadcastEvent() called with BroadcastEvent==null",
+			});
+			return;
+		}
+		this.#checkTAGUri(BroadcastEvent, errs, "BE999");
+		this.#ValidateEvent(BroadcastEvent, errs, programCRIDs, plCRIDs, currentProgramCRID, null);
+	}
+
+	/**
 	 * validate any <ScheduleEvent> elements in the <ProgramLocationTable.Schedule>
 	 *
 	 * @param {object}  props               Metadata of the XML document
@@ -2948,7 +3135,7 @@ export default class ContentGuideCheck {
 	 * @param {Date}    scheduleEnd         Date representation of Schedule@end
 	 * @param {Class}   errs                errors found in validaton
 	 */
-	/* private */ #ValidateScheduleEvents(props, Schedule, programCRIDs, plCRIDs, currentProgramCRID, scheduleStart, scheduleEnd, errs) {
+	/* private */ #ValidateScheduleEvents(props, Schedule, programCRIDs, plCRIDs, currentProgramCRID, errs) {
 		if (!Schedule) {
 			errs.addError({
 				type: APPLICATION,
@@ -2958,137 +3145,10 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		let isCurrentProgram = false;
 		let se = 0,
 			ScheduleEvent;
 		while ((ScheduleEvent = Schedule.get(xPath(props.prefix, tva.e_ScheduleEvent, ++se), props.schema)) != null) {
-			GetNodeLanguage(ScheduleEvent, false, errs, "SE001", this.#knownLanguages);
-			checkAttributes(ScheduleEvent, [], [], tvaEA.ScheduleEvent, errs, "SE002");
-
-			checkTopElementsAndCardinality(
-				ScheduleEvent,
-				[
-					{ name: tva.e_Program },
-					{ name: tva.e_ProgramURL, minOccurs: 0 },
-					{ name: tva.e_InstanceDescription, minOccurs: 0, maxOccurs: Infinity },
-					{ name: tva.e_PublishedStartTime },
-					{ name: tva.e_PublishedDuration },
-					{ name: tva.e_ActualStartTime, minOccurs: 0 },
-					{ name: tva.e_ActualDuration, minOccurs: 0 },
-					{ name: tva.e_FirstShowing, minOccurs: 0 },
-					{ name: tva.e_Free, minOccurs: 0 },
-				],
-				tvaEC.ScheduleEvent,
-				false,
-				errs,
-				"SE003"
-			);
-
-			// <Program>
-			let Program = ScheduleEvent.get(xPath(props.prefix, tva.e_Program), props.schema);
-			if (Program) {
-				checkAttributes(Program, [tva.a_crid], [], tvaEA.Program, errs, "SE010");
-
-				let ProgramCRID = Program.attr(tva.a_crid);
-				if (ProgramCRID) {
-					if (!isCRIDURI(ProgramCRID.value())) {
-						this.#NotCRIDFormat(errs, {
-							code: "SE011",
-							message: `${tva.a_crid.attribute(tva.e_Program)} is not a valid CRID (${ProgramCRID.value()})`,
-							fragment: Program,
-						});
-					}
-					if (!isIni(programCRIDs, ProgramCRID.value()))
-						errs.addError({
-							code: "SE012",
-							message: `${tva.a_crid.attribute(tva.e_Program)}=${ProgramCRID.value().quote()} does not refer to a program in the ${tva.e_ProgramInformationTable.elementize()}`,
-							fragment: Program,
-						});
-					plCRIDs.push(ProgramCRID.value());
-					isCurrentProgram = ProgramCRID.value() == currentProgramCRID;
-				}
-			}
-
-			// <ProgramURL>
-			let ProgramURL = ScheduleEvent.get(xPath(props.prefix, tva.e_ProgramURL), props.schema);
-			if (ProgramURL)
-				if (!isDVBLocator(ProgramURL.text()))
-					errs.addError({
-						code: "SE021",
-						message: `${tva.e_ScheduleEvent}.${tva.e_ProgramURL} (${ProgramURL.text()}) is not a valid DVB locator`,
-						fragment: ProgramURL,
-					});
-
-			// <InstanceDescription>
-			let id = 0,
-				thisInstanceDescription,
-				serviceIDs = [];
-			while ((thisInstanceDescription = ScheduleEvent.get(xPath(props.prefix, tva.e_InstanceDescription, ++id), props.schema)) != null) {
-				this.#ValidateInstanceDescription(props, tva.e_ScheduleEvent, thisInstanceDescription, isCurrentProgram, errs);
-				let instanceServiceID = thisInstanceDescription.attr(tva.a_serviceInstanceID) ? thisInstanceDescription.attr(tva.a_serviceInstanceID).value() : "dflt";
-				if (isIn(serviceIDs, instanceServiceID))
-					errs.addError({
-						code: instanceServiceID == "dflt" ? "SE031" : "SE032",
-						line: thisInstanceDescription.line(),
-						message: instanceServiceID == "dflt" ? "Default instance description is already specified" : `Instance description for ${instanceServiceID} is already specidied`,
-						tag: "dulicate instance",
-					});
-				else serviceIDs.push(instanceServiceID);
-			}
-
-			// <PublishedStartTime> and <PublishedDuration>
-			let pstElem = ScheduleEvent.get(xPath(props.prefix, tva.e_PublishedStartTime), props.schema);
-			if (pstElem) {
-				if (isUTCDateTime(pstElem.text())) {
-					let PublishedStartTime = new Date(pstElem.text());
-
-					if (scheduleStart && PublishedStartTime < scheduleStart)
-						errs.addError({
-							code: "SE041",
-							message: `${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is earlier than ${tva.a_start.attribute(tva.e_Schedule)}`,
-							multiElementError: [Schedule, pstElem],
-						});
-					if (scheduleEnd && PublishedStartTime > scheduleEnd)
-						errs.addError({
-							code: "SE042",
-							message: `${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is after ${tva.a_end.attribute(tva.e_Schedule)}`,
-							multiElementError: [Schedule, pstElem],
-						});
-
-					let pdElem = ScheduleEvent.get(xPath(props.prefix, tva.e_PublishedDuration), props.schema);
-					if (pdElem && scheduleEnd) {
-						let parsedPublishedDuration = parseISOduration(pdElem.text());
-						if (parsedPublishedDuration.add(PublishedStartTime) > scheduleEnd)
-							errs.addError({
-								code: "SE043",
-								message: `${tva.e_PublishedStartTime}+${tva.e_PublishedDuration} of event is after ${tva.a_end.attribute(tva.e_Schedule)}`,
-								multiElementError: [Schedule, pdElem],
-							});
-					}
-				} else
-					errs.addError({
-						code: "SE049",
-						message: `${tva.e_PublishedStartTime.elementize()} is not expressed in UTC format (${pstElem.text()})`,
-						fragment: pstElem,
-					});
-			}
-
-			// <ActualStartTime>
-			let astElem = ScheduleEvent.get(xPath(props.prefix, tva.e_ActualStartTime), props.schema);
-			if (astElem && !isUTCDateTime(astElem.text()))
-				errs.addError({
-					code: "SE051",
-					message: `${tva.e_ActualStartTime.elementize()} is not expressed in UTC format (${astElem.text()})`,
-					fragment: astElem,
-				});
-
-			// <FirstShowing>
-			let FirstShowing = ScheduleEvent.get(xPath(props.prefix, tva.e_FirstShowing), props.schema);
-			if (FirstShowing) BooleanValue(FirstShowing, tva.a_value, "SE060", errs);
-
-			// <Free>
-			let Free = ScheduleEvent.get(xPath(props.prefix, tva.e_Free), props.schema);
-			if (Free) BooleanValue(Free, tva.a_value, "SE070", errs);
+			this.#ValidateEvent(ScheduleEvent, errs, programCRIDs, plCRIDs, currentProgramCRID, Schedule);
 		}
 	}
 
@@ -3107,7 +3167,7 @@ export default class ContentGuideCheck {
 	/* private */ #ValidateSchedule(props, Schedule, programCRIDS, plCRIDs, currentProgramCRID, requestType, errs) {
 		if (!Schedule) {
 			errs.addError({ type: APPLICATION, code: "VS000", message: "ValidateSchedule() called with Schedule==null" });
-			return;
+			return null;
 		}
 
 		checkTopElementsAndCardinality(Schedule, [{ name: tva.e_ScheduleEvent, minOccurs: 0, maxOccurs: Infinity }], tvaEC.Schedule, false, errs, "VS001");
@@ -3131,7 +3191,7 @@ export default class ContentGuideCheck {
 					fragment: Schedule,
 				});
 
-		this.#ValidateScheduleEvents(props, Schedule, programCRIDS, plCRIDs, currentProgramCRID, fr, to, errs);
+		this.#ValidateScheduleEvents(props, Schedule, programCRIDS, plCRIDs, currentProgramCRID, errs);
 
 		return serviceIdRef;
 	}
@@ -3165,7 +3225,8 @@ export default class ContentGuideCheck {
 		checkTopElementsAndCardinality(
 			ProgramLocationTable,
 			[
-				{ name: tva.e_Schedule, minOccurs: 0, maxOccurs: Infinity },
+//				{ name: tva.e_Schedule, minOccurs: 0, maxOccurs: Infinity },
+				{ name: tva.e_BroadcastEvent, minOccurs: 0, maxOccurs: Infinity },
 				{ name: tva.e_OnDemandProgram, minOccurs: 0, maxOccurs: Infinity },
 			],
 			tvaEC.ProgramLocationTable,
@@ -3178,7 +3239,7 @@ export default class ContentGuideCheck {
 		GetNodeLanguage(ProgramLocationTable, false, errs, "PL012", this.#knownLanguages);
 
 		let cntODP = 0,
-			cntSE = 0,
+			CNTbe = 0,
 			foundServiceIds = [],
 			plCRIDs = [];
 
@@ -3189,6 +3250,12 @@ export default class ContentGuideCheck {
 						this.#ValidateOnDemandProgram(props, child, programCRIDs, plCRIDs, requestType, errs);
 						cntODP++;
 						break;
+					case tva.e_BroadcastEvent:
+						this.#ValidateBroadcastEvent(props, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
+						cntBE++;
+						break;
+/* 
+replaced in A177r7 with BroadcastEvent 
 					case tva.e_Schedule:
 						let thisServiceIdRef = this.#ValidateSchedule(props, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
 						if (thisServiceIdRef.length)
@@ -3199,12 +3266,12 @@ export default class ContentGuideCheck {
 								});
 							else foundServiceIds.push(thisServiceIdRef);
 						cntSE++;
-						break;
+						break; */
 				}
 			});
 
 		if (o && o.childCount != 0) {
-			if (o.childCount != cntODP + cntSE)
+			if (o.childCount != cntODP + cntBE)
 				errs.addError({
 					code: "PL021",
 					message: `number of items (${cntODP + cntSE}) in the ${tva.e_ProgramLocationTable.elementize()} does not match ${tva.a_numOfItems.attribute(
@@ -3214,7 +3281,7 @@ export default class ContentGuideCheck {
 		}
 
 		if (requestType == CG_REQUEST_PROGRAM) {
-			if (cntODP > 1 || cntSE != 0)
+			if (cntODP > 1 || cntBE != 0)
 				errs.addError({
 					code: "PL023",
 					message: `The ${tva.e_ProgramLocationTable.elementize()} may only contain a single OnDemandProgram element representing the current On Demand availability of this programme`,
