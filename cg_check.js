@@ -2962,18 +2962,29 @@ export default class ContentGuideCheck {
 			return;
 		}
 	
-	let startSchedule = Schedule ? Schedule.attr(tva.a_start) : null,
-		fr = null,
-		endSchedule = Schedule ? Schedule.attr(tva.a_end) : null,
-		to = null;
-	if (startSchedule) fr = new Date(startSchedule.value());
-	if (endSchedule) to = new Date(endSchedule.value());
+		let startSchedule = Schedule ? Schedule.attr(tva.a_start) : null,
+			fr = null,
+			endSchedule = Schedule ? Schedule.attr(tva.a_end) : null,
+			to = null;
+		if (startSchedule) fr = new Date(startSchedule.value());
+		if (endSchedule) to = new Date(endSchedule.value());
 
 		let isCurrentProgram = false;
 		GetNodeLanguage(Event, false, errs, `${prefix}001`, this.#knownLanguages);
-		checkAttributes(Event, [], [], tvaEA.ScheduleEvent, errs, `${prefix}002`);
+		checkAttributes(Event, prefix == "BE" ? [tva.a_serviceIDRef] : [], [], tvaEA.ScheduleEvent, errs, `${prefix}002`);
 		checkTopElementsAndCardinality(
 			Event,
+			prefix == "BE" ? [
+				{ name: tva.e_Program },
+				{ name: tva.e_ProgramURL, minOccurs: 0 },
+				{ name: tva.e_InstanceDescription, minOccurs: 0, maxOccurs: Infinity },
+				{ name: tva.e_PublishedStartTime, minOccurs: 0 },
+				{ name: tva.e_PublishedDuration, minOccurs: 0 },
+				{ name: tva.e_ActualStartTime, minOccurs: 0 },
+				{ name: tva.e_ActualDuration, minOccurs: 0 },
+				{ name: tva.e_FirstShowing, minOccurs: 0 },
+				{ name: tva.e_Free, minOccurs: 0 },
+			] :
 			[
 				{ name: tva.e_Program },
 				{ name: tva.e_ProgramURL, minOccurs: 0 },
@@ -3063,7 +3074,7 @@ export default class ContentGuideCheck {
 					});
 
 				let pdElem = Event.get(xPath(props.prefix, tva.e_PublishedDuration), props.schema);
-				if (pdElem && scheduleEnd) {
+				if (scheduleEnd && pdElem) {
 					let parsedPublishedDuration = parseISOduration(pdElem.text());
 					if (parsedPublishedDuration.add(PublishedStartTime) > scheduleEnd)
 						errs.addError({
