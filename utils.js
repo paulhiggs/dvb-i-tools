@@ -20,6 +20,16 @@ import { datatypeIs } from "./phlib/phlib.js";
 export let xPath = (SCHEMA_PREFIX, elementName, index = null) => `${SCHEMA_PREFIX}:${elementName}${index ? `[${index}]` : ""}`;
 
 /**
+ * constructs an XPath based on the provided arguments
+ *
+ * @param {string} SCHEMA_PREFIX    Used when constructing Xpath queries
+ * @param {array}  elementNames     the name of the element to be searched for
+ * @returns {string} the XPath selector
+ */
+export let xPathM = (SCHEMA_PREFIX, elementNames) => datatypeIs(elemebtNames, "array") ? `${SCHEMA_PREFIX}:${elementNames.join(`/${SCHEMA_PREFIX}:`)}` : xPath(SCHEMA_PREFIX, elementNames);
+
+
+/**
  * Finds the first named child element
  *
  * @param {*} element 								The containing parent element
@@ -49,15 +59,6 @@ export function getElementByTagName(element, childElementName, index = null) {
 	}
 	return undefined;
 }
-
-/**
- * constructs an XPath based on the provided arguments
- *
- * @param {string} SCHEMA_PREFIX    Used when constructing Xpath queries
- * @param {array}  elementNames     the name of the element to be searched for
- * @returns {string} the XPath selector
- */
-export let xPathM = (SCHEMA_PREFIX, elementNames) => `${SCHEMA_PREFIX}:${elementNames.join(`/${SCHEMA_PREFIX}:`)}`;
 
 /* local */ function findInSet(values, value, caseSensitive) {
 	if (!values || !value || !datatypeIs(value, "string")) return false;
