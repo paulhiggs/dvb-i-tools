@@ -1546,7 +1546,7 @@ export default class ServiceListCheck {
 		// <ServiceInstance><DVBCDeliveryParameters>
 		let DVBCDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DVBCDeliveryParameters), props.schema);
 		if (DVBCDeliveryParameters) {
-			let DVBCtargetCountry = DVBCDeliveryParameters.get(xPathM(props.prefix, dvbi.e_TargetCountry), props.schema);
+			let DVBCtargetCountry = DVBCDeliveryParameters.get(xPath(props.prefix, dvbi.e_TargetCountry), props.schema);
 			if (DVBCtargetCountry) {
 				if (!this.#knownCountries.isISO3166code(DVBCtargetCountry.text()))
 					errs.addError({
