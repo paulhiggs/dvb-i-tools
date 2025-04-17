@@ -63,7 +63,7 @@ function DVB_I_check(req, res, slcheck, cgcheck, hasSL, hasCG, mode = MODE_UNSPE
 	}
 
 	let FormArguments = { cg: MODE_CG, sl: MODE_SL, file: MODE_FILE, url: MODE_URL, hasSL: hasSL, hasCG: hasCG };
-	if (!req.body.testtype) drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, null, null);
+	if (!req.body?.testtype) drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, null, null);
 	else {
 		let VVxml = null;
 		req.parseErr = null;
@@ -240,7 +240,7 @@ export default function validator(options) {
 		return req.parseErr ? `(${req.parseErr})` : "";
 	});
 	token("location", function getCheckedLocation(req) {
-		return req.body.testtype
+		return req?.body?.testtype
 			? `${req.body.testtype}::[${req.body.testtype == MODE_CG ? `(${req.body.requestType})` : ""}${
 					req.body.doclocation == MODE_FILE ? (req.files?.XMLfile ? req.files.XMLfile.name : "unnamed") : req.body.XMLurl
 			  }]`
@@ -337,7 +337,7 @@ export default function validator(options) {
 		next();
 	};
 	if (options.CORSmode == CORSlibrary) {
-		app.options("*", cors());
+		app.use(cors());
 	} else if (options.CORSmode == CORSmanual) {
 		manualCORS = function (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res, next) {
 			let opts = res.getHeader("X-Frame-Options");
@@ -396,11 +396,6 @@ export default function validator(options) {
 		cgcheck && tabulate(res, "CG", cgcheck.stats());
 		stats_footer(res);
 		res.status(200).end();
-	});
-
-	// dont handle any other requests
-	app.get("*", function (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) {
-		res.status(404).end();
 	});
 
 	// start the HTTP server

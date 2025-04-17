@@ -196,7 +196,7 @@ export function drawForm(req, res, modes, supportedRequests, error = null, errs 
 	</form>
 	`);
 	let source = "";
-	switch (req.body.doclocation) {
+	switch (req.body?.doclocation) {
 		case MODE_URL:
 			source = req.body?.XMLurl ? req.body?.XMLurl : "";
 			break;
