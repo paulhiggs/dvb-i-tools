@@ -3375,7 +3375,7 @@ export default class ContentGuideCheck {
 			case CG_REQUEST_BS_CONTENTS:
 				// box set contents response (6.8.4.3) has <ProgramInformationTable>, <GroupInformationTable> and <ProgramLocationTable> elements
 				if (
-					checkTopElementsAndCardinality(
+					!checkTopElementsAndCardinality(
 						ProgramDescription,
 						[{ name: tva.e_ProgramLocationTable }, { name: tva.e_ProgramInformationTable }, { name: tva.e_GroupInformationTable }],
 						tvaEC.ProgramDescription,
