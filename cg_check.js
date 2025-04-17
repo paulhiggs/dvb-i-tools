@@ -3236,7 +3236,6 @@ export default class ContentGuideCheck {
 		checkTopElementsAndCardinality(
 			ProgramLocationTable,
 			[
-//				{ name: tva.e_Schedule, minOccurs: 0, maxOccurs: Infinity },
 				{ name: tva.e_BroadcastEvent, minOccurs: 0, maxOccurs: Infinity },
 				{ name: tva.e_OnDemandProgram, minOccurs: 0, maxOccurs: Infinity },
 			],
@@ -3250,7 +3249,7 @@ export default class ContentGuideCheck {
 		GetNodeLanguage(ProgramLocationTable, false, errs, "PL012", this.#knownLanguages);
 
 		let cntODP = 0,
-			CNTbe = 0,
+			cntBE = 0,
 			foundServiceIds = [],
 			plCRIDs = [];
 
@@ -3265,19 +3264,6 @@ export default class ContentGuideCheck {
 						this.#ValidateBroadcastEvent(props, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
 						cntBE++;
 						break;
-/* 
-replaced in A177r7 with BroadcastEvent 
-					case tva.e_Schedule:
-						let thisServiceIdRef = this.#ValidateSchedule(props, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
-						if (thisServiceIdRef.length)
-							if (isIni(foundServiceIds, thisServiceIdRef))
-								errs.addError({
-									code: "PL020",
-									message: `A ${tva.e_Schedule.elementize()} element with ${tva.a_serviceIDRef.attribute()}=${thisServiceIdRef.quote()} is already specified`,
-								});
-							else foundServiceIds.push(thisServiceIdRef);
-						cntSE++;
-						break; */
 				}
 			});
 
