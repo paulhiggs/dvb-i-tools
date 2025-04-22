@@ -354,7 +354,7 @@ export default function validator(options) {
 		app.get("/check", function (req, res) {
 			DVB_I_check(req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
 		});
-		app.post("/check", function (req, res) {
+		app.post("/check", express.text({ type: "application/xml", limit: "10mb" }), function (req, res) {
 			DVB_I_check(req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
 		});
 	}
