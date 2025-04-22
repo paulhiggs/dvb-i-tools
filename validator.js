@@ -321,11 +321,11 @@ export default function validator(options) {
 			validateServiceListJson(req, res, slcheck);
 		});
 
-		app.post("/validate_sl", express.text({ type: "application/xml", limit: "2mb" }), function (req, res) {
+		app.post("/validate_sl", express.text({ type: "application/xml", limit: "10mb" }), function (req, res) {
 			validateServiceList(req, res, slcheck);
 		});
 
-		app.post("/validate_sl_json", express.text({ type: "application/xml", limit: "2mb" }), function (req, res) {
+		app.post("/validate_sl_json", express.text({ type: "application/xml", limit: "10mb" }), function (req, res) {
 			validateServiceListJson(req, res, slcheck);
 		});
 	}
