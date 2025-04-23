@@ -192,13 +192,13 @@ if (cluster.isPrimary) {
 	const SLEPR_query_route = "/query",
 		SLEPR_reload_route = "/reload",
 		SLEPR_stats_route = "/stats";
-	let manualCORS = function (res, req, next) {
+	let manualCORS = function (/* eslint-disable no-unused-vars */res, req, /* eslint-enable */ next) {
 		next();
 	};
 	if (options.CORSmode == CORSlibrary) {
 		app.options("*", cors());
 	} else if (options.CORSmode == CORSmanual) {
-		manualCORS = function (req, res, next) {
+		manualCORS = function (/* eslint-disable no-unused-vars */ req, /* eslint-enable */ res, next) {
 			let opts = res.getHeader("X-Frame-Options");
 			if (opts) {
 				if (!opts.includes("SAMEORIGIN")) opts.push("SAMEORIGIN");
@@ -214,21 +214,21 @@ if (cluster.isPrimary) {
 	app.use(favicon(join("phlib", "ph-icon.ico")));
 	if (options.CORSmode == CORSlibrary) app.options(SLEPR_query_route, cors());
 	else if (options.CORSmode == CORSmanual) app.options(SLEPR_query_route, manualCORS);
-	app.get(SLEPR_query_route, function (req, res) {
+	app.get(SLEPR_query_route, (req, res) => {
 		process.send({ topic: INCR_REQUESTS });
 		if (!csr.processServiceListRequest(req, res)) process.send({ topic: INCR_FAILURES });
 		res.end();
 	});
-	app.get(SLEPR_reload_route, function (req, res) {
+	app.get(SLEPR_reload_route, (req, res) => {
 		process.send({ topic: RELOAD });
 		res.status(404).end();
 	});
-	app.get(SLEPR_stats_route, function (req, res) {
+	app.get(SLEPR_stats_route, (req, res) => {
 		process.send({ topic: STATS });
 		res.status(404).end();
 	});
 
-	app.get("*", function (req, res) {
+	app.get("*", (/* eslint-disable no-unused-vars */ req, /* eslint-enable */ res) => {
 		res.status(404).end();
 	});
 
@@ -247,7 +247,10 @@ if (cluster.isPrimary) {
 			}
 	});
 	// start the HTTP server
-	let http_server = app.listen(options.port, function () {
+	let http_server = app.listen(options.port, (error) => {
+		if (error) {
+			throw error;
+		}
 		console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}, PID=${process.pid}`));
 	});
 	// start the HTTPS server
@@ -260,7 +263,10 @@ if (cluster.isPrimary) {
 		if (options.sport == options.port) options.sport = options.port + 1;
 
 		let https_server = createServer(https_options, app);
-		https_server.listen(options.sport, function () {
+		https_server.listen(options.sport, (error) => {
+			if (error) {
+				throw error;
+			}
 			console.log(chalk.cyan(`HTTPS listening on port number ${https_server.address().port}, PID=${process.pid}`));
 		});
 	}

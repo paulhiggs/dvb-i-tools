@@ -313,19 +313,19 @@ export default function validator(options) {
 			});
 	}
 	if (!options.nosl) {
-		app.get("/validate_sl", function (req, res) {
+		app.get("/validate_sl", (req, res) => {
 			validateServiceList(req, res, slcheck);
 		});
 
-		app.get("/validate_sl_json", function (req, res) {
+		app.get("/validate_sl_json", (req, res) => {
 			validateServiceListJson(req, res, slcheck);
 		});
 
-		app.post("/validate_sl", express.text({ type: "application/xml", limit: "10mb" }), function (req, res) {
+		app.post("/validate_sl", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
 			validateServiceList(req, res, slcheck);
 		});
 
-		app.post("/validate_sl_json", express.text({ type: "application/xml", limit: "10mb" }), function (req, res) {
+		app.post("/validate_sl_json", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
 			validateServiceListJson(req, res, slcheck);
 		});
 	}
@@ -351,10 +351,10 @@ export default function validator(options) {
 	}
 
 	if (!options.nosl || !options.nocg) {
-		app.get("/check", function (req, res) {
+		app.get("/check", (req, res) => {
 			DVB_I_check(req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
 		});
-		app.post("/check", express.text({ type: "application/xml", limit: "10mb" }), function (req, res) {
+		app.post("/check", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
 			DVB_I_check(req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
 		});
 	}
@@ -366,18 +366,18 @@ export default function validator(options) {
 		if (options.CORSmode == "manual") {
 			app.options(SLEPR_query_route, manualCORS);
 		}
-		app.get(SLEPR_query_route, manualCORS, function (req, res) {
+		app.get(SLEPR_query_route, manualCORS, (req, res) => {
 			csr.processServiceListRequest(req, res);
 			res.end();
 		});
 
-		app.get(SLEPR_reload_route, function (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) {
+		app.get(SLEPR_reload_route, (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) => {
 			csr.loadServiceListRegistry(options.CSRfile);
 			res.status(200).end();
 		});
 	}
 
-	app.get("/stats", function (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) {
+	app.get("/stats", (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) => {
 		stats_header(res);
 		tabulate(res, "System", {
 			arch: os.arch(),
