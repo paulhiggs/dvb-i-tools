@@ -175,17 +175,17 @@ if (cluster.isPrimary) {
 } else {
 	let app = express();
 	app.use(cors());
-	token("pid", function getPID(/* eslint-disable no-unused-vars */ req /* eslint-enable */) {
+	token("pid", () => {
 		return process.pid;
 	});
-	token("protocol", function getProtocol(req) {
+	token("protocol", (req) => {
 		return req.protocol;
 	});
-	token("parseErr", function getParseErr(req) {
+	token("parseErr", (req) => {
 		if (req.parseErr?.length > 0) return `(query errors=${req.parseErr.length})`;
 		return "";
 	});
-	token("agent", function getAgent(req) {
+	token("agent", (req) => {
 		return `(${req.headers["user-agent"]})`;
 	});
 
