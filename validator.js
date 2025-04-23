@@ -230,23 +230,23 @@ export default function validator(options) {
 	app.use(fileupload());
 	app.use(favicon(join("phlib", "ph-icon.ico")));
 
-	token("protocol", function getProtocol(req) {
+	token("protocol", (req) => {
 		return req.protocol;
 	});
-	token("agent", function getAgent(req) {
+	token("agent", (req) => {
 		return `(${req.headers["user-agent"]})`;
 	});
-	token("parseErr", function getParseErr(req) {
+	token("parseErr", (req) => {
 		return req.parseErr ? `(${req.parseErr})` : "";
 	});
-	token("location", function getCheckedLocation(req) {
+	token("location", (req) => {
 		return req?.body?.testtype
 			? `${req.body.testtype}::[${req.body.testtype == MODE_CG ? `(${req.body.requestType})` : ""}${
 					req.body.doclocation == MODE_FILE ? (req.files?.XMLfile ? req.files.XMLfile.name : "unnamed") : req.body.XMLurl
 			  }]`
 			: "[*]";
 	});
-	token("counts", function getCounts(req) {
+	token("counts", (req) => {
 		return req.diags ? `(${req.diags.countErrors},${req.diags.countWarnings},${req.diags.countInforms})` : "[-]";
 	});
 
