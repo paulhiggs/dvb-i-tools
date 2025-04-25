@@ -2546,6 +2546,17 @@ export default class ServiceListCheck {
 								fragment: LCN,
 							});
 						else LCNNumbers.push(chanNum);
+						let chanNumV =  parseInt(chanNum, 10);
+						if (chanNumV < 1 || chanNumV > 9999) {
+							errs.addError({
+								code: "SL264",
+								message: `Channel number must be in the range 1..9999, found ${chanNumV}`,
+								key: "invalid value",
+								fragment:LCN,
+								clause: "A177 table 23",
+								description: `${dvbi.a_channelNumber.attribute()} has the same semantics as logical_channel_number in ciplus_service_descriptor`
+							});
+						}
 					}
 
 					// LCN@serviceRef
@@ -2555,9 +2566,6 @@ export default class ServiceListCheck {
 							message: `LCN reference to unknown service ${LCN.attr(dvbi.a_serviceRef).value()}`,
 							key: "LCN unknown services",
 							fragment: LCN,
-						});
-						errs.errorDescription({
-							code: "SL263",
 							clause: "A177 table 23",
 							description: `The value of ${dvbi.a_serviceRef.attribute(
 								dvbi.e_LCN

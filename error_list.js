@@ -122,6 +122,8 @@ export default class ErrorList {
 	 * @param {string}                   e.key       (optional)The category of the message
 	 * @param {string or libxmljs2:Node} e.fragment  (optional) The XML fragment (or node in the XML document) triggering the error
 	 * @param {integer}                  e.line      (optional) the line number of the element in the XML document that triggered the error
+	 * @param {string}                   e.description (optional) a description of the error
+	 * @param {string}                   e.clause      (optional) the specification clause/section that is violated (only used with @e.description is provided)
 	 */
 	addError(e) {
 		const _INVALID_CALL = "invalid addError call";
@@ -200,6 +202,8 @@ export default class ErrorList {
 			}
 			if (e.reportInTable) this.#insertErrorData(e.type, e.key, newError);
 		}
+		if (e.description)
+			this.errorDescription({code:e.code, description: e.description, clause: e.clause});
 	}
 
 	numErrors() {
@@ -227,6 +231,7 @@ export default class ErrorList {
 	 *
 	 * @param {string}  e.code         Error code, should be the same as @e.code passed to addError
 	 * @param {string}  e.description  A long form description of the stated error code
+	 * @param {string}  e.clause      (optional) the specification clause/section that is violated (only used with @e.description is provided)
 	 */
 	errorDescription(e) {
 		if (!e.code || !e.description) return;

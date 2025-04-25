@@ -212,18 +212,24 @@ export function SchemaVersionCheck(props, document, publication_state, errs, err
  * @returns {Document}  an XML document structure for use with libxmljs2
  */
 export function SchemaLoad(document, errs, errcode) {
-	let tmp = null,
+	let tmp = null, prettyXML=null;
+	try {
 		prettyXML = format(document.replace(/(\n\t)/gm, "\n"), { collapseContent: true, lineSeparator: "\n" });
-
+	}
+	catch (err) {
+		console.dir(err);
+		errs.addError({ code: `${errcode}-1`, message: `XML format failed: ${err.cause}`, key: "malformed XML" });
+		return null;
+	}
 	try {
 		tmp = parseXmlString(prettyXML);
 	} catch (err) {
-		errs.addError({ code: `${errcode}-1`, message: `XML parsing failed: ${err.message}`, key: "malformed XML" });
+		errs.addError({ code: `${errcode}-11`, message: `XML parsing failed: ${err.message}`, key: "malformed XML" });
 		errs.loadDocument(prettyXML);
 		return null;
 	}
 	if (!tmp || !tmp.root()) {
-		errs.addError({ code: `${errcode}-2`, message: "XML document is empty", key: "malformed XML" });
+		errs.addError({ code: `${errcode}-21`, message: "XML document is empty", key: "malformed XML" });
 		errs.loadDocument(prettyXML);
 		return null;
 	}
