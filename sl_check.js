@@ -584,7 +584,7 @@ export default class ServiceListCheck {
 						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, errs, Location, rc));
 					} else {
 						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-11`));
-						errs.errorDescription(RMErrorDescription(`${errCode}-14`, dvbi.e_ServiceList, 14));
+						errs.errorDescription(RMErrorDescription(`${errCode}-11`, dvbi.e_ServiceList, 14));
 					}
 					break;
 
@@ -1767,15 +1767,14 @@ export default class ServiceListCheck {
 		let uID = service.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
 		if (uID) {
 			thisServiceId = uID.text();
-			if (!validServiceIdentifier(thisServiceId)) {
+			if (!validServiceIdentifier(thisServiceId))
 				errs.addError({
 					code: "SL110",
 					message: `${thisServiceId.quote()} is not a valid service identifier`,
 					fragment: uID,
 					key: "invalid tag",
+					description: "service identifier should be a tag: URI according to IETF RFC 4151"
 				});
-				errs.errorDescription({ code: "SL110", description: "service identifier should be a tag: URI according to IETF RFC 4151" });
-			}
 			if (!uniqueServiceIdentifier(thisServiceId, knownServices))
 				errs.addError({
 					code: "SL111",

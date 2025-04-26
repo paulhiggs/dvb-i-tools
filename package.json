@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools",
-	"version": "1.7.8",
+	"version": "1.7.9",
 	"description": "DVB-I V&V Tools - up to A177r7",
 	"main": "all-in-one.js",
 	"type": "module",
