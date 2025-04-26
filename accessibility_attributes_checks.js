@@ -155,18 +155,14 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 		if (children)
 			children.forEachSubElement((e) => {
 				if (e.name() == childName) {
-					if (cs.KnownLanguages.checkSignLanguage(languageCode) != cs.KnownLanguages.languageKnown) {
+					if (cs.KnownLanguages.checkSignLanguage(languageCode) != cs.KnownLanguages.languageKnown)
 						errs.addError({
 							code: `${errCode}-${errNum}b`,
 							fragment: e,
 							message: `${languageCode.quote()} is not a valid sign language for ${e.name().elementize()} in ${elem.name().elementize()}`,
 							key: ACCESSIBILITY_CHECK_KEY,
-						});
-						errs.errorDescription({
-							code: `${errCode}-${errNum}b`,
 							description: `language used for ${e.name().elementize()}} must be a sign language in the IANA language-subtag-regostry`,
 						});
-					}
 				}
 			});
 	};

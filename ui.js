@@ -123,7 +123,7 @@ function tabulateResults(source, res, error, errs) {
 		errs.errorDescriptions.forEach((desc) => {
 			res.write(`<tr><td>${desc.code}</td>`);
 			res.write(`<td>${HTMLize(desc.description).replace(/\n/, BREAK)}`);
-			if (desc.clause && desc.clause.lentgh) res.write(`${BREAK}reference: ${desc.clause}`);
+			if (desc.clause && desc.clause.length) res.write(`${BREAK}reference: ${desc.clause}`);
 			res.write("</td></tr>");
 		});
 		res.write(TABLE_FOOTER);
