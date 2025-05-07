@@ -115,10 +115,10 @@ function checkCMCDkeys(CMCD, errs, errCode) {
 		errs.addError({ type: APPLICATION, code: `${errCode}-00`, message: "checkCMCDkeys() called with CMCD=null" });
 		return;
 	}
-	const version = CMCD.attr(dvbi.a_version) ? CMCD.attr(dvbi.a_version).value() : 1;
+	const version = CMCD.attr(dvbi.a_version) ? CMCD.attr(dvbi.a_version).value : 1;
 	const keys_to_use = version == 2 ? CMCDv2_keys : CMCDv1_keys.concat(deprecated_CMCDv1_keys);
-	const keys = CMCD.attr(dvbi.a_enabledKeys)?.value().split(" ");
-	const reporting_mode = CMCD.attr(dvbi.a_reportingMode) ? CMCD.attr(dvbi.a_reportingMode).value() : "undefined";
+	const keys = CMCD.attr(dvbi.a_enabledKeys)?.value.split(" ");
+	const reporting_mode = CMCD.attr(dvbi.a_reportingMode) ? CMCD.attr(dvbi.a_reportingMode).value : "undefined";
 	if (keys) {
 		keys.forEach((key) => {
 			const reserved_key = keys_to_use.find((e) => e.key == key);
@@ -175,7 +175,7 @@ export function check_CMCD(CMCDelem, counts, errs, errCode) {
 	if (isObjectEmpty(counts)) {
 		counts[reportingMode(CMCD_MODE_REQUEST)] = counts[reportingMode(CMCD_MODE_RESPONSE)] = counts[reportingMode(CMCD_MODE_EVENT)] = 0;
 	}
-	const reporting_mode = CMCDelem.attr(dvbi.a_reportingMode)?.value();
+	const reporting_mode = CMCDelem.attr(dvbi.a_reportingMode)?.value;
 	switch (reporting_mode) {
 		case CMCD_MODE_REQUEST:
 			checkAttributes(CMCDelem, [dvbi.a_reportingMode, dvbi.a_reportingMethod], [dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability], dvbiEA.CMCD, errs, `${errCode}-1`);
@@ -204,7 +204,7 @@ export function check_CMCD(CMCDelem, counts, errs, errCode) {
 
 	const enabledKeys = CMCDelem.attr(dvbi.a_enabledKeys);
 	if (enabledKeys) {
-		const keys = enabledKeys.value().split(" ");
+		const keys = enabledKeys.value.split(" ");
 		if (!CMCDelem.attr(dvbi.a_contentId) && isIn(keys, CMCD_keys.content_id))
 			errs.addError({
 				code: `${errCode}-11`,

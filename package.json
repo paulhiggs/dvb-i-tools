@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools",
-	"version": "1.7.7",
+	"version": "1.8.0",
 	"description": "DVB-I V&V Tools - up to A177r7",
 	"main": "all-in-one.js",
 	"type": "module",
@@ -18,6 +18,7 @@
 		"express": "^5.1.0",
 		"express-fileupload": "^1.5.1",
 		"express-session": "^1.18.1",
+		"libxml2-wasm": "^0.5.0",
 		"morgan": "^1.10.0",
 		"serve-favicon": "^2.5.0",
 		"sync-fetch": "^0.6.0-2",

@@ -157,7 +157,7 @@ export default class ErrorList {
 			 */
 			this.#insertErrorData(e.type, e.key, { code: e.code, message: e.message });
 			e.multiElementError.forEach((fragment) => {
-				if (fragment && !datatypeIs(fragment, "string")) this.#setError(e.type, e.code, e.message, fragment.line());
+				if (fragment && !datatypeIs(fragment, "string")) this.#setError(e.type, e.code, e.message, fragment.line);
 			});
 		} else if (e.fragments) {
 			// note that the line of the error is derived from the fragment -- e.line is only used with the fragment is already a string
@@ -172,8 +172,8 @@ export default class ErrorList {
 							newError.line = e.line - 2;
 						}
 					} else {
-						this.#setError(e.type, e.code, e.message, fragment.line());
-						newError.line = fragment.line() - 2;
+						this.#setError(e.type, e.code, e.message, fragment.line);
+						newError.line = fragment.line - 2;
 					}
 					if (e.reportInTable) this.#insertErrorData(e.type, e.key, newError);
 				}
@@ -188,8 +188,8 @@ export default class ErrorList {
 					newError.line = e.line - 2;
 				}
 			} else {
-				this.#setError(e.type, e.code, e.message, e.fragment.line());
-				newError.line = e.fragment.line() - 2;
+				this.#setError(e.type, e.code, e.message, e.fragment.line);
+				newError.line = e.fragment.line - 2;
 			}
 			if (e.reportInTable) this.#insertErrorData(e.type, e.key, newError);
 		} else {

@@ -174,7 +174,7 @@ export default class IANAlanguages {
 		if (async)
 			fetch(languagesURL)
 				.then(handleErrors)
-				.then((response) => response.text())
+				.then((response) => response.content)
 				.then((responseText) => this.#processLanguageData(responseText))
 				.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${languagesURL}`)));
 		else {

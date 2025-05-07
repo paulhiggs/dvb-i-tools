@@ -8,7 +8,7 @@ import { readFileSync } from "fs";
 import process from "process";
 
 import chalk from "chalk";
-import { parseXmlString } from "libxmljs2";
+import { XmlDocument } from 'libxml2-wasm';
 
 import { OLD, DRAFT, ETSI, CURRENT } from "./globals.js";
 import { dvbi } from "./DVB-I_definitions.js";
@@ -255,7 +255,7 @@ function match(permittedValues, value, version = ANY_NAMESPACE) {
  */
 export function validOutScheduleHours(HowRelated, namespace) {
 	// return true if val is a valid CS value for Out of Service Banners (A177 5.2.5.3)
-	return match(OutOfScheduledHoursBanners, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null, namespace);
+	return match(OutOfScheduledHoursBanners, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value : null, namespace);
 }
 
 /**
@@ -268,7 +268,7 @@ export function validOutScheduleHours(HowRelated, namespace) {
  */
 export function validContentFinishedBanner(HowRelated, namespace) {
 	// return true if val is a valid CS value for Content Finished Banner (A177 5.2.7.3)
-	return match(ContentFinishedBanners, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null, namespace);
+	return match(ContentFinishedBanners, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value : null, namespace);
 }
 
 /**
@@ -280,11 +280,11 @@ export function validContentFinishedBanner(HowRelated, namespace) {
  */
 export function validServiceListLogo(HowRelated, namespace) {
 	// return true if HowRelated@href is a valid CS value Service List Logo (A177 5.2.6.1)
-	return match(ServiceListLogos, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null, namespace);
+	return match(ServiceListLogos, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value : null, namespace);
 }
 
 export function validServiceAgreementApp(HowRelated, namespace) {
-	return HowRelated.attr(dvbi.a_href) ? validAgreementApplication(HowRelated.attr(dvbi.a_href).value(), SchemaVersion(namespace)) : false;
+	return HowRelated.attr(dvbi.a_href) ? validAgreementApplication(HowRelated.attr(dvbi.a_href).value, SchemaVersion(namespace)) : false;
 }
 
 /**
@@ -296,7 +296,7 @@ export function validServiceAgreementApp(HowRelated, namespace) {
  */
 export function validServiceLogo(HowRelated, namespace) {
 	// return true if val is a valid CS value Service Logo (A177 5.2.6.2)
-	return match(ServiceLogos, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null, namespace);
+	return match(ServiceLogos, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value : null, namespace);
 }
 
 /**
@@ -308,7 +308,7 @@ export function validServiceLogo(HowRelated, namespace) {
  */
 export function validServiceBanner(HowRelated, namespace) {
 	// return true if val is a valid CS value Service Banner (A177 5.2.6.x)
-	return match(ServiceBanners, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : null, namespace);
+	return match(ServiceBanners, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value : null, namespace);
 }
 
 /**
@@ -320,7 +320,7 @@ export function validServiceBanner(HowRelated, namespace) {
  */
 export function validContentGuideSourceLogo(HowRelated, namespace) {
 	// return true if val is a valid CS value Service Logo (A177 5.2.6.3)
-	return match(ContentGuideSourceLogos, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : nul, namespace);
+	return match(ContentGuideSourceLogos, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value : nul, namespace);
 }
 
 // TODO - change this to support sync/async and file/url reading
@@ -328,6 +328,6 @@ console.log(chalk.yellow.underline("loading service list schemas..."));
 SchemaVersions.forEach((version) => {
 	process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
 	let schema = readFileSync(version.filename).toString().replace(`schemaLocation="./`, `schemaLocation="${__dirname_linux}/`);
-	version.schema = parseXmlString(schema);
+	version.schema = XmlDocument.fromString(schema);
 	console.log(version.schema ? chalk.green("OK") : chalk.red.bold("FAIL"));
 });

@@ -84,7 +84,7 @@ function DVB_I_check(req, res, slcheck, cgcheck, hasSL, hasCG, mode = MODE_UNSPE
 							req.parseErr = error.message;
 						}
 						if (resp) {
-							if (resp.ok) VVxml = resp.text();
+							if (resp.ok) VVxml = resp.content;
 							else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
 						}
 					} else req.parseErr = `${req.body.XMLurl} is not an HTTP(S) URL`;
@@ -139,7 +139,7 @@ function validateServiceList(req, res, slcheck) {
 			req.parseErr = error.message;
 		}
 		if (resp) {
-			if (resp.ok) VVxml = resp.text();
+			if (resp.ok) VVxml = resp.content;
 			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
 		}
 	} else if (req.method == "POST") {
@@ -164,7 +164,7 @@ function validateServiceListJson(req, res, slcheck) {
 			req.parseErr = error.message;
 		}
 		if (resp) {
-			if (resp.ok) VVxml = resp.text();
+			if (resp.ok) VVxml = resp.content;
 			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
 		}
 	} else if (req.method == "POST") {

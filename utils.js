@@ -4,8 +4,8 @@
  * some usefule utility functions that may be used by more than one class
  */
 import { statSync, readFileSync } from "fs";
-
 import chalk from "chalk";
+import { XmlXPath, XmlElement } from 'libxml2-wasm';
 
 import { datatypeIs } from "./phlib/phlib.js";
 
@@ -17,7 +17,9 @@ import { datatypeIs } from "./phlib/phlib.js";
  * @param {int}    index           The instance of the named element to be searched for (if specified)
  * @returns {string}  the XPath selector
  */
-export let xPath = (SCHEMA_PREFIX, elementName, index = null) => `${SCHEMA_PREFIX}:${elementName}${index ? `[${index}]` : ""}`;
+//export let xPath = (SCHEMA_PREFIX, elementName, index = null) => `${SCHEMA_PREFIX}:${elementName}${index ? `[${index}]` : ""}`;
+//export let xPath = (SCHEMA_PREFIX, elementName, index = null) => XmlXPath.compile(`${SCHEMA_PREFIX.length ? SCHEMA_PREFIX + ":" : ""}${elementName}${index ? `[${index}]` : ""}`);
+export let xPath = (SCHEMA_PREFIX, elementName, index = null) => `${elementName}${index ? `[${index}]` : ""}`;
 
 /**
  * constructs an XPath based on the provided arguments
@@ -26,8 +28,9 @@ export let xPath = (SCHEMA_PREFIX, elementName, index = null) => `${SCHEMA_PREFI
  * @param {array}  elementNames     the name of the element to be searched for
  * @returns {string} the XPath selector
  */
-export let xPathM = (SCHEMA_PREFIX, elementNames) => datatypeIs(elemebtNames, "array") ? `${SCHEMA_PREFIX}:${elementNames.join(`/${SCHEMA_PREFIX}:`)}` : xPath(SCHEMA_PREFIX, elementNames);
-
+//export let xPathM = (SCHEMA_PREFIX, elementNames) => datatypeIs(elementNames, "array") ? `${SCHEMA_PREFIX}:${elementNames.join(`/${SCHEMA_PREFIX}:`)}` : xPath(SCHEMA_PREFIX, elementNames);
+//export let xPathM = (SCHEMA_PREFIX, elementNames) => datatypeIs(elementNames, "array") ? XmlXPath.compile(`${SCHEMA_PREFIX.length ? SCHEMA_PREFIX + ":" : ""}${elementNames.join(`/${SCHEMA_PREFIX}:`)}`) : xPath(SCHEMA_PREFIX, elementNames);
+export let xPathM = (SCHEMA_PREFIX, elementNames) => datatypeIs(elementNames, "array") ? `${elementNames.join(`/`)}` : xPath(SCHEMA_PREFIX, elementNames);
 
 /**
  * Finds the first named child element
@@ -36,7 +39,7 @@ export let xPathM = (SCHEMA_PREFIX, elementNames) => datatypeIs(elemebtNames, "a
  * @param {string} childElementName 	The name of the child element to find
  * @returns the named child element or undefined if not present
  */
-let getFirstElementByTagName = (element, childElementName) => element.childNodes()?.find((c) => c.type() == "element" && c.name() == childElementName);
+let getFirstElementByTagName = (element, childElementName) => element.childNodes()?.find((c) => (c instanceof XmlElement) && c.name == childElementName);
 
 export function getElementByTagName(element, childElementName, index = null) {
 	switch (datatypeIs(childElementName)) {
@@ -46,7 +49,7 @@ export function getElementByTagName(element, childElementName, index = null) {
 			let cnt = 0;
 			const ch1 = element.childNodes();
 			for (let i = 0; i < ch1.length; i++) {
-				if (ch1[i].type() == "element" && ch1[i].name() == childElementName) cnt++;
+				if ((ch1[i] instanceof XmlElement) && ch1[i].name == childElementName) cnt++;
 				if (cnt >= index) return ch1[i];
 			}
 			break;
@@ -184,7 +187,7 @@ export function CountChildElements(node, childElementName) {
 	const childElems = node ? node.childNodes() : null;
 	if (childElems)
 		childElems.forEachSubElement((elem) => {
-			if (elem.name() == childElementName) r++;
+			if (elem.name == childElementName) r++;
 		});
 	return r;
 }

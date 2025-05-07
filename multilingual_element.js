@@ -3,6 +3,8 @@
  *
  * check that multiple elements for expressing multilingual values match DVB-I requirments
  */
+import { XmlDocument, XmlElement, XmlComment } from 'libxml2-wasm';
+
 import { datatypeIs } from "./phlib/phlib.js";
 
 import { tva } from "./TVA_definitions.js";
@@ -45,11 +47,9 @@ export function checkLanguage(validator, lang, loc, element, errs, errCode) {
  * @returns {String} the value of the xml:lang attribute for the element, or the teh closest ancestor
  */
 export function mlLanguage(node) {
-	if (node.type() != "element") return NO_DOCUMENT_LANGUAGE;
-
-	if (node.attr(tva.a_lang)) return node.attr(tva.a_lang).value();
-
-	return mlLanguage(node.parent());
+	if (!(node instanceof XmlElement)) return NO_DOCUMENT_LANGUAGE;
+	if (node.attr(tva.a_lang)) return node.attr(tva.a_lang).value;
+	return mlLanguage(node.parent);
 }
 
 /**
@@ -57,7 +57,7 @@ export function mlLanguage(node) {
  *
  * @param {String}  elementName      The multilingual XML element to check
  * @param {String}  elementLocation  The descriptive location of the element being checked (for reporting)
- * @param {XMLnode} node             The XML tree node containing the element being checked
+ * @param {} node             The XML tree node containing the element being checked
  * @param {Object}  errs             The class where errors and warnings relating to the service list processing are stored
  * @param {String}  errCode          The error code to be reported
  * @param {Object}  validator        The validation class for check the value of the language, or null if no check is to be performed
@@ -71,7 +71,7 @@ export function checkXMLLangs(elementName, elementLocation, node, errs, errCode,
 	let childElems = node.childNodes();
 	if (CountChildElements(node, elementName) > 1) {
 		childElems.forEachSubElement((elem) => {
-			if (elem.name() == elementName) {
+			if (elem.name == elementName) {
 				if (!elem.attr(tva.a_lang))
 					errs.addError({
 						code: `${errCode}-1`,
@@ -85,7 +85,7 @@ export function checkXMLLangs(elementName, elementLocation, node, errs, errCode,
 
 	let elementLanguages = [];
 	childElems.forEachSubElement((elem) => {
-		if (elem.name() == elementName) {
+		if (elem.name == elementName) {
 			let lang = mlLanguage(elem);
 			if (isIn(elementLanguages, lang))
 				errs.addError({
@@ -96,10 +96,10 @@ export function checkXMLLangs(elementName, elementLocation, node, errs, errCode,
 				});
 			else elementLanguages.push(lang);
 
-			if (elem.text().length == 0)
+			if (elem.content.length == 0) //!!
 				errs.addError({
 					code: `${errCode}-3`,
-					message: `value must be specified for ${elem.parent().name().elementize()}${elem.name().elementize()}`,
+					message: `value must be specified for ${elem.parent.name.elementize()}${elem.name.elementize()}`,
 					fragment: elem,
 					key: "empty value",
 				});
@@ -124,10 +124,10 @@ export function checkXMLLangs(elementName, elementLocation, node, errs, errCode,
 export function GetNodeLanguage(node, isRequired, errs, errCode, validator = null) {
 	if (!node) return NO_DOCUMENT_LANGUAGE;
 	if (isRequired && !node.attr(tva.a_lang))
-		errs.addError({ code: `${errCode}-1`, message: `${tva.a_lang.attribute()} is required for ${node.name().quote()}`, key: "unspecified language", line: node.line() });
+		errs.addError({ code: `${errCode}-1`, message: `${tva.a_lang.attribute()} is required for ${node.name.quote()}`, key: "unspecified language", line: node.line });
 
 	let localLang = mlLanguage(node);
 
-	if (validator && node.attr(tva.a_lang) && localLang != NO_DOCUMENT_LANGUAGE) checkLanguage(validator, localLang, node.name(), node, errs, `${errCode}-2`);
+	if (validator && node.attr(tva.a_lang) && localLang != NO_DOCUMENT_LANGUAGE) checkLanguage(validator, localLang, node.name, node, errs, `${errCode}-2`);
 	return localLang;
 }

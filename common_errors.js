@@ -37,8 +37,8 @@ import { WARNING } from "./error_list.js";
  */
 export var NoChildElement = (missingElement, parentElement, schemaLocation, errCode) => ({
 	code: errCode,
-	message: `${missingElement} element not specified for ${parentElement.name().elementize()}${schemaLocation ? " in " + schemaLocation : ""}`,
-	line: parentElement.line(),
+	message: `${missingElement} element not specified for ${parentElement.name.elementize()}${schemaLocation ? " in " + schemaLocation : ""}`,
+	line: parentElement.line,
 });
 
 /**
@@ -52,15 +52,15 @@ export var NoChildElement = (missingElement, parentElement, schemaLocation, errC
  */
 export var cg_InvalidHrefValue = (value, element, loc, errCode) => ({
 	code: errCode,
-	message: `invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${element.name().elementize()} in ${loc}`,
-	line: element.line(),
+	message: `invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${element.name.elementize()} in ${loc}`,
+	line: element.line,
 	key: "invalid href",
 });
 
 export var sl_InvalidHrefValue = (value, element, src, loc, errCode) => ({
 	code: errCode,
 	fragment: element,
-	line: element.line(),
+	line: element.line,
 	message: `invalid ${dvbi.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`,
 	key: "invalid href",
 });
@@ -68,7 +68,7 @@ export var sl_InvalidHrefValue = (value, element, src, loc, errCode) => ({
 export var InvalidURL = (value, element, src, errCode) => ({
 	code: errCode,
 	fragment: element,
-	line: element.line(),
+	line: element.line,
 	message: `invalid URL "${value}" specified for ${src.elementize()}`,
 	key: keys.k_InvalidURL,
 });
@@ -77,16 +77,16 @@ export var DeprecatedElement = (what, when, errCode) => ({
 	type: WARNING,
 	code: errCode,
 	fragment: what,
-	line: what.line(),
-	message: `${what.name().elementize()} in ${what.parent().name().elementize()} is deprecated in ${when}`,
+	line: what.line,
+	message: `${what.name.elementize()} in ${what.parent.name.elementize()} is deprecated in ${when}`,
 	keys: "deprecated element",
 });
 
 export var DeprecatedAttribute = (what, when, errCode) => ({
 	type: WARNING,
 	code: errCode,
-	fragment: what.parent(),
-	line: what.parent().line(),
-	message: `${what.name().elementize(what.parent().name)} is deprecated in ${when}`,
+	fragment: what.parent,
+	line: what.parent.line,
+	message: `${what.name.elementize(what.parent.name)} is deprecated in ${when}`,
 	keys: "deprecated attribute",
 });

@@ -43,7 +43,7 @@ if (options.mode.toLowerCase() == "sl") {
 				console.log(chalk.red(error.message));
 			}
 			if (resp) {
-				if (resp.ok) SLtext = resp.text();
+				if (resp.ok) SLtext = resp.content;
 				else console.log(chalk.red(`error (${resp.status}:${resp.statusText}) handling ${ref}`));
 			}
 		}
@@ -78,7 +78,7 @@ else if (options.mode.toLowerCase("cg")) {
 				console.log(chalk.red(error.message));
 			}
 			if (resp) {
-				if (resp.ok) CGtext = resp.text();
+				if (resp.ok) CGtext = resp.content;
 				else console.log(chalk.red(`error (${resp.status}:${resp.statusText}) handling ${ref}`));
 			}
 		}
