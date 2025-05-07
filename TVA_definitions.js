@@ -344,7 +344,7 @@ export const tvaEC = {
 		tva.e_ImmediateViewing,
 		tva.e_DeliveryMode,
 		tva.e_ContentVersion,
-		tva.e_ExpiryDate,
+		tva.e_ExpiryTime,
 		tva.e_EarlyPlayout,
 		tva.e_Free,
 		tva.e_ExpiryTimeAfterFirstStart,
