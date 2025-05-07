@@ -17,9 +17,9 @@ import { datatypeIs } from "./phlib/phlib.js";
  * @param {int}    index           The instance of the named element to be searched for (if specified)
  * @returns {string}  the XPath selector
  */
-//export let xPath = (SCHEMA_PREFIX, elementName, index = null) => `${SCHEMA_PREFIX}:${elementName}${index ? `[${index}]` : ""}`;
+export let xPath = (SCHEMA_PREFIX, elementName, index = null) => `${SCHEMA_PREFIX}:${elementName}${index ? `[${index}]` : ""}`;
 //export let xPath = (SCHEMA_PREFIX, elementName, index = null) => XmlXPath.compile(`${SCHEMA_PREFIX.length ? SCHEMA_PREFIX + ":" : ""}${elementName}${index ? `[${index}]` : ""}`);
-export let xPath = (SCHEMA_PREFIX, elementName, index = null) => `${elementName}${index ? `[${index}]` : ""}`;
+//export let xPath = (SCHEMA_PREFIX, elementName, index = null) => `${elementName}${index ? `[${index}]` : ""}`;
 
 /**
  * constructs an XPath based on the provided arguments

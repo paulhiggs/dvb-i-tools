@@ -162,7 +162,7 @@ if (!XmlElement.prototype.childNodes) {
 			throw new TypeError("XmlElement.prototype.childNodes called on null or undefined");
 		}
 		let res = [];
-		let child = this.root.firstChild;
+		let child = this.firstChild;
 		while (child) {
 			if (child instanceof XmlElement)
 				res.push(child);
@@ -172,6 +172,7 @@ if (!XmlElement.prototype.childNodes) {
 	}
 }
 
+/*
 if (!XmlNode.prototype.childNodes) {
 	XmlNode.prototype.childNodes = function () {
 		if (this == null) {
@@ -187,6 +188,7 @@ if (!XmlNode.prototype.childNodes) {
 		return res;
 	}
 }
+*/
 
 if (!XmlDocument.prototype.childNodes) {
 	XmlDocument.prototype.childNodes = function () {
@@ -2208,7 +2210,14 @@ export default class ServiceListCheck {
 		let SL_SCHEMA = {},
 			SCHEMA_PREFIX = SL.root.namespacePrefix,
 			SCHEMA_NAMESPACE = SL.root.namespaceUri;
-		SL_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
+
+			SL_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
+		if (SCHEMA_PREFIX == '') {
+			SCHEMA_PREFIX="__RANDOM__";
+			SL_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE; 
+			SL.root.addNsDeclaration(SCHEMA_NAMESPACE, SCHEMA_PREFIX);
+
+		}
 
 		let props = {
 			schema: SL_SCHEMA,
@@ -2262,7 +2271,7 @@ export default class ServiceListCheck {
 
 		//check <ServiceList><LanguageList>
 		let announcedAudioLanguages = [];
-		let LanguageList = SL.get(xPath(props.prefix, dvbi.e_LanguageList), props.schema);
+		let LanguageList = SL.get("//" + xPath(props.prefix, dvbi.e_LanguageList), props.schema);
 		if (LanguageList) {
 			let l = 0,
 				Language;
@@ -2285,7 +2294,7 @@ export default class ServiceListCheck {
 		let rm = 0,
 			countControlApps = 0,
 			RelatedMaterial;
-		while ((RelatedMaterial = SL.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
+		while ((RelatedMaterial = SL.get("//" + xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
 			let foundHref = this.#validateRelatedMaterial(props, RelatedMaterial, errs, "service list", SERVICE_LIST_RM, "SL040");
 			if (foundHref != "" && validServiceControlApplication(foundHref, SchemaVersion(props.namespace))) countControlApps++;
 		}
@@ -2299,7 +2308,7 @@ export default class ServiceListCheck {
 
 		// check <ServiceList><RegionList> and remember regionID values
 		let knownRegionIDs = [],
-			RegionList = SL.get(dvbi.e_RegionList);
+			RegionList = SL.get("//" + xPath(props.prefix,dvbi.e_RegionList), props.schema);
 		if (RegionList) {
 			// recurse the regionlist - Regions can be nested in Regions
 			let r = 0,
@@ -2311,7 +2320,7 @@ export default class ServiceListCheck {
 		let tr = 0,
 			TargetRegion,
 			rBuf = [];
-		while ((TargetRegion = SL.get(xPath(props.prefix, dvbi.e_TargetRegion, ++tr), props.schema)) != null) {
+		while ((TargetRegion = SL.get("//" + xPath(props.prefix, dvbi.e_TargetRegion, ++tr), props.schema)) != null) {
 			let found = knownRegionIDs.find((r) => r.region == TargetRegion.content);
 			if (found == undefined) errs.addError(UnspecifiedTargetRegion(TargetRegion.content, "service list", "SL051"));
 			else if (!found.selectable)
@@ -2335,7 +2344,7 @@ export default class ServiceListCheck {
 
 		// check <ServiceList><SubscriptionPackageList>
 		let declaredSubscriptionPackages = [];
-		let SubscriptionPackageList = SL.get(xPath(props.prefix, dvbi.e_SubscriptionPackageList), props.schema);
+		let SubscriptionPackageList = SL.get("//" + xPath(props.prefix, dvbi.e_SubscriptionPackageList), props.schema);
 		if (SubscriptionPackageList) {
 			let sp = 0,
 				SubscriptionPackage;
@@ -2357,7 +2366,7 @@ export default class ServiceListCheck {
 
 		//check service list <ContentGuideSourceList>
 		let ContentGuideSourceIDs = [],
-			CGSourceList = SL.get(xPath(props.prefix, dvbi.e_ContentGuideSourceList), props.schema);
+			CGSourceList = SL.get("//" + xPath(props.prefix, dvbi.e_ContentGuideSourceList), props.schema);
 		if (CGSourceList) {
 			let cgs = 0,
 				CGSource;
@@ -2378,7 +2387,7 @@ export default class ServiceListCheck {
 		}
 
 		// check  elements in <ServiceList><ContentGuideSource>
-		let slGCS = SL.get(xPath(props.prefix, dvbi.e_ContentGuideSource), props.schema);
+		let slGCS = SL.get(xPath("//" + props.prefix, dvbi.e_ContentGuideSource), props.schema);
 		if (slGCS) this.#validateAContentGuideSource(props, slGCS, errs, `${dvbi.e_ServiceList}.${dvbi.e_ContentGuideSource}`, "SL080");
 
 		errs.setW("num services", 0);
@@ -2387,7 +2396,7 @@ export default class ServiceListCheck {
 		let s = 0,
 			service,
 			knownServices = [];
-		while ((service = SL.get(xPath(props.prefix, dvbi.e_Service, ++s), props.schema)) != null) {
+		while ((service = SL.get("//" + xPath(props.prefix, dvbi.e_Service, ++s), props.schema)) != null) {
 			// for each service
 			errs.setW("num services", s);
 			this.#validateService(
@@ -2410,7 +2419,7 @@ export default class ServiceListCheck {
 			// check <TestService>
 			let ts = 0,
 				testService;
-			while ((testService = SL.get(xPath(props.prefix, dvbi.e_TestService, ++ts), props.schema)) != null) {
+			while ((testService = SL.get("//" + xPath(props.prefix, dvbi.e_TestService, ++ts), props.schema)) != null) {
 				// for each service
 				errs.setW("num test services", ts);
 				this.#validateService(
