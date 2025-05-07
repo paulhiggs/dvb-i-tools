@@ -13,6 +13,8 @@ import { WARNING, APPLICATION } from "./error_list.js";
 import { isIn, CountChildElements } from "./utils.js";
 import { keys } from "./common_errors.js";
 
+import { isValidLangFormat } from "./IANA_language.js";
+
 const NO_DOCUMENT_LANGUAGE = "**"; // this should not be needed as @xml:lang is required in <ServiceList> and <TVAMain> root elements
 
 /**
