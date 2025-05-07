@@ -230,23 +230,23 @@ export default function validator(options) {
 	app.use(fileupload());
 	app.use(favicon(join("phlib", "ph-icon.ico")));
 
-	token("protocol", function getProtocol(req) {
+	token("protocol", (req) => {
 		return req.protocol;
 	});
-	token("agent", function getAgent(req) {
+	token("agent", (req) => {
 		return `(${req.headers["user-agent"]})`;
 	});
-	token("parseErr", function getParseErr(req) {
+	token("parseErr", (req) => {
 		return req.parseErr ? `(${req.parseErr})` : "";
 	});
-	token("location", function getCheckedLocation(req) {
+	token("location", (req) => {
 		return req?.body?.testtype
 			? `${req.body.testtype}::[${req.body.testtype == MODE_CG ? `(${req.body.requestType})` : ""}${
 					req.body.doclocation == MODE_FILE ? (req.files?.XMLfile ? req.files.XMLfile.name : "unnamed") : req.body.XMLurl
 			  }]`
 			: "[*]";
 	});
-	token("counts", function getCounts(req) {
+	token("counts", (req) => {
 		return req.diags ? `(${req.diags.countErrors},${req.diags.countWarnings},${req.diags.countInforms})` : "[-]";
 	});
 
@@ -313,19 +313,19 @@ export default function validator(options) {
 			});
 	}
 	if (!options.nosl) {
-		app.get("/validate_sl", function (req, res) {
+		app.get("/validate_sl", (req, res) => {
 			validateServiceList(req, res, slcheck);
 		});
 
-		app.get("/validate_sl_json", function (req, res) {
+		app.get("/validate_sl_json", (req, res) => {
 			validateServiceListJson(req, res, slcheck);
 		});
 
-		app.post("/validate_sl", express.text({ type: "application/xml", limit: "2mb" }), function (req, res) {
+		app.post("/validate_sl", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
 			validateServiceList(req, res, slcheck);
 		});
 
-		app.post("/validate_sl_json", express.text({ type: "application/xml", limit: "2mb" }), function (req, res) {
+		app.post("/validate_sl_json", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
 			validateServiceListJson(req, res, slcheck);
 		});
 	}
@@ -351,10 +351,10 @@ export default function validator(options) {
 	}
 
 	if (!options.nosl || !options.nocg) {
-		app.get("/check", function (req, res) {
+		app.get("/check", (req, res) => {
 			DVB_I_check(req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
 		});
-		app.post("/check", function (req, res) {
+		app.post("/check", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
 			DVB_I_check(req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
 		});
 	}
@@ -366,18 +366,18 @@ export default function validator(options) {
 		if (options.CORSmode == "manual") {
 			app.options(SLEPR_query_route, manualCORS);
 		}
-		app.get(SLEPR_query_route, manualCORS, function (req, res) {
+		app.get(SLEPR_query_route, manualCORS, (req, res) => {
 			csr.processServiceListRequest(req, res);
 			res.end();
 		});
 
-		app.get(SLEPR_reload_route, function (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) {
+		app.get(SLEPR_reload_route, (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) => {
 			csr.loadServiceListRegistry(options.CSRfile);
 			res.status(200).end();
 		});
 	}
 
-	app.get("/stats", function (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) {
+	app.get("/stats", (/* eslint-disable no-unused-vars*/ req, /* eslint-enable */ res) => {
 		stats_header(res);
 		tabulate(res, "System", {
 			arch: os.arch(),

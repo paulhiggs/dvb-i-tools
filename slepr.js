@@ -111,10 +111,9 @@ export default class SLEPR {
 					console.log(chalk.red(`error (${error}) retrieving ${filename}`));
 					masterSLEPR = EMPTY_SLEPR;
 				});
-			masterSLEPR = fetch(filename);
 		} else
 			readFile(filename, { encoding: "utf-8" }, function (err, data) {
-				if (!err) masterSLEPR = data.replace(/(\r\n|\n|\r|\t)/gm, "");
+				if (!err) masterSLEPR = data;
 				else console.log(chalk.red(err));
 			});
 	}
@@ -190,7 +189,7 @@ export default class SLEPR {
 			res.status(400);
 			return false;
 		}
-		let slepr = XmlDocument.fromString(masterSLEPR);
+		let slepr = parseXmlString(masterSLEPR);
 
 		let SLEPR_SCHEMA = {},
 			SCHEMA_PREFIX = slepr.root.namespacePrefix,

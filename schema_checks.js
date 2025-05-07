@@ -244,13 +244,19 @@ export function SchemaVersionCheck(props, document, publication_state, errs, err
  * @returns {XMLDocument}  an XML document structure
  */
 export function SchemaLoad(document, errs, errcode) {
-	let tmp = null,
+	let tmp = null, prettyXML=null;
+	try {
 		prettyXML = format(document.replace(/(\n\t)/gm, "\n"), { collapseContent: true, lineSeparator: "\n" });
-
+	}
+	catch (err) {
+		console.dir(err);
+		errs.addError({ code: `${errcode}-1`, message: `XML format failed: ${err.cause}`, key: "malformed XML" });
+		return null;
+	}
 	try {
 		tmp = XmlDocument.fromString(prettyXML);
 	} catch (err) {
-		errs.addError({ code: `${errcode}-1`, message: `XML parsing failed: ${err.message}`, key: "malformed XML" });
+		errs.addError({ code: `${errcode}-11`, message: `XML parsing failed: ${err.message}`, key: "malformed XML" });
 		errs.loadDocument(prettyXML);
 		return null;
 	}
