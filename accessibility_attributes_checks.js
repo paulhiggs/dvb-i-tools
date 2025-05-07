@@ -13,7 +13,7 @@ import { APPLICATION, WARNING } from "./error_list.js";
 import { checkTopElementsAndCardinality } from "./schema_checks.js";
 import { CS_URI_DELIMITER } from "./classification_scheme.js";
 
-import { isValidLangFormat } from "./IANA_language.js";
+import { isValidLangFormat } from "./IANA_languages.js";
 
 import { DumpString } from "./utils.js";
 
