@@ -636,7 +636,7 @@ export default class ServiceListCheck {
 						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, errs, Location, rc));
 					} else {
 						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value, HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-11`));
-						errs.errorDescription(RMErrorDescription(`${errCode}-14`, dvbi.e_ServiceList, 14));
+						errs.errorDescription(RMErrorDescription(`${errCode}-11`, dvbi.e_ServiceList, 14));
 					}
 					break;
 
