@@ -21,10 +21,11 @@ export const dvb = {
 const _S_RollOff = ["0.35"];  
 
 // ETSI EN 300 421 table 3
-const _S_FEC = ["1/2", "3/5", "2/3", "3/4", "4/5", "5/6", "8/9", "9/10"]; 
+const _S_FEC = ["1/2", "2/3", "3/4", "5/6", "7/8"]; 
 
 // ETSI EN 300 421 clause 4.5
 const _S_Modulation = ["QPSK"]; 
+
 
 // ETSI EN 300 468 table 39
 const _S2_RollOff = ["0.25", "0.20"].concat(_S_RollOff);
@@ -36,7 +37,7 @@ const _S2_Modulation = ["8PSK"].concat(_S_Modulation);
 const _S2X_RollOff = ["0.15", "0.10", "0.05"].concat(_S2_RollOff);
 
 // ETSI EN 302 307-2 V1.4.1 table 1
-const _S2X_FEC = ["1/3", "1/4", "2/5", "5/9", "7/8", "7/9", "8/15", "9/20", "11/15", "11/20", "13/18", "13/45", "23/36", "25/36", "26/45", "28/45", "32/45", "77/90"].concat(_S_FEC);
+const _S2X_FEC = ["1/3", "1/4", "2/5", "3/5", "4/5", "5/9", "7/9", "8/9", "8/15", "9/10", "9/20", "11/15", "11/20", "13/18", "13/45", "23/36", "25/36", "26/45", "28/45", "32/45", "77/90"].concat(_S_FEC);
 
 // other FEC values found in ETSI EN 302 307-2 V1.4.1 table 1 but not included in A177r6
 // 2/9, 1/5, 4/15, 11/45, 29/45, 31/45
