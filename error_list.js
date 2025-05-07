@@ -85,11 +85,15 @@ export default class ErrorList {
 		this.#numCountsI++;
 	}
 
-	/* private method */ #prettyPrint(node) {
+	/* private method */ #prettyPrint_old(node) {
 		// clean up and redo formatting
 		const tmp = node.toString({ declaration: false, format: true });
 		const maxLen = nthIndexOf(tmp, "\n", MAX_FRAGMENT_LINES);
 		return maxLen == -1 ? tmp : `${tmp.slice(0, maxLen)}\n....\n`;
+	}
+
+	/* private method */ #prettyPrint(node) {
+		if (!node) return "";
 	}
 
 	/* private method */ #insertErrorData(type, key, err) {
