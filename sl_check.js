@@ -1817,7 +1817,7 @@ export default class ServiceListCheck {
 		let uID = service.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
 		if (uID) {
 			thisServiceId = uID.content;
-			if (!validServiceIdentifier(thisServiceId)) {
+			if (!validServiceIdentifier(thisServiceId)) 
 				errs.addError({
 					code: "SL110",
 					message: `${thisServiceId.quote()} is not a valid service identifier`,
@@ -2244,7 +2244,7 @@ export default class ServiceListCheck {
 		// check ServiceList@id
 		if (SL.root.attr(dvbi.a_id)) {
 			let thisServiceListId = SL.root.attr(dvbi.a_id).value;
-			if (!validServiceListIdentifier(thisServiceListId)) {
+			if (!validServiceListIdentifier(thisServiceListId))
 				errs.addError({
 					code: "SL016",
 					message: `${thisServiceListId.quote()} is not a valid service list identifier`,
