@@ -7,7 +7,9 @@ import process from "process";
 import { readFileSync } from "fs";
 
 import chalk from "chalk";
-import { XmlDocument, XmlElement } from 'libxml2-wasm';
+import { XmlDocument, XmlElement } from "libxml2-wasm";
+import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
+xmlRegisterFsInputProviders();
 
 import { attribute, elementize, quote } from "./phlib/phlib.js";
 
@@ -338,7 +340,7 @@ export default class ContentGuideCheck {
 	 */
 	/* private */ #hasElement(node, elementName) {
 		if (!node) return false;
-		return node.childNodes().find((c) => (c instanceof XmlElement) && c.name == elementName);
+		return node.childNodes().find((c) => c instanceof XmlElement && c.name == elementName);
 	}
 
 	/**
@@ -1279,7 +1281,7 @@ export default class ContentGuideCheck {
 					code: `${errCode}-11`,
 					message: `${tva.e_Title.elementize()} length exceeds ${dvbi.MAX_TITLE_LENGTH} characters`,
 					fragment: Title,
-					description: "refer clause 6.10.5 in A177"
+					description: "refer clause 6.10.5 in A177",
 				});
 			switch (titleType) {
 				case mpeg7.TITLE_TYPE_MAIN:
@@ -1310,7 +1312,7 @@ export default class ContentGuideCheck {
 						code: `${errCode}-15`,
 						message: `${tva.a_type.attribute()} must be ${mpeg7.TITLE_TYPE_MAIN.quote()} or ${mpeg7.TITLE_TYPE_SECONDARY.quote()} for ${tva.e_Title.elementize()}`,
 						fragment: Title,
-						description: "refer to the relevant subsection of clause 6.10.5 in A177"
+						description: "refer to the relevant subsection of clause 6.10.5 in A177",
 					});
 					break;
 			}
@@ -1866,9 +1868,9 @@ export default class ContentGuideCheck {
 				if (MemberOf.attr(tva.a_crid) && MemberOf.attr(tva.a_crid).value != categoryCRID)
 					errs.addError({
 						code: "GIB045",
-						message: `${tva.a_crid.attribute(`${GroupInformation.name}.${tva.e_MemberOf}`)} (${MemberOf.attr(
-							tva.a_crid
-						).value}) does not match the ${CATEGORY_GROUP_NAME} crid (${categoryCRID})`,
+						message: `${tva.a_crid.attribute(`${GroupInformation.name}.${tva.e_MemberOf}`)} (${
+							MemberOf.attr(tva.a_crid).value
+						}) does not match the ${CATEGORY_GROUP_NAME} crid (${categoryCRID})`,
 						fragment: MemberOf,
 					});
 			} else
@@ -2940,12 +2942,10 @@ export default class ContentGuideCheck {
 	 * @param {string}  currentProgramCRID  CRID of the currently airing program
 	 * @param {XMLnode} Schedule            the parent node of a <ScheduleEvent>
 	 */
-	/* private */ #ValidateEvent(props, Event, errs, programCRIDs, plCRIDs, currentProgramCRID, Schedule=null) {
+	/* private */ #ValidateEvent(props, Event, errs, programCRIDs, plCRIDs, currentProgramCRID, Schedule = null) {
 		let prefix = "";
-		if (Event.name == tva.e_BroadcastEvent)
-			prefix="BE";
-		else if (Event.name == tva.e_ScheduleEvent)
-			prefix="SE";
+		if (Event.name == tva.e_BroadcastEvent) prefix = "BE";
+		else if (Event.name == tva.e_ScheduleEvent) prefix = "SE";
 		else {
 			errs.addError({
 				type: APPLICATION,
@@ -2954,7 +2954,7 @@ export default class ContentGuideCheck {
 			});
 			return;
 		}
-	
+
 		let startSchedule = Schedule ? Schedule.attr(tva.a_start) : null,
 			fr = null,
 			endSchedule = Schedule ? Schedule.attr(tva.a_end) : null,
@@ -2967,28 +2967,29 @@ export default class ContentGuideCheck {
 		checkAttributes(Event, prefix == "BE" ? [tva.a_serviceIDRef] : [], [], tvaEA.ScheduleEvent, errs, `${prefix}002`);
 		checkTopElementsAndCardinality(
 			Event,
-			prefix == "BE" ? [
-				{ name: tva.e_Program },
-				{ name: tva.e_ProgramURL, minOccurs: 0 },
-				{ name: tva.e_InstanceDescription, minOccurs: 0, maxOccurs: Infinity },
-				{ name: tva.e_PublishedStartTime, minOccurs: 0 },
-				{ name: tva.e_PublishedDuration, minOccurs: 0 },
-				{ name: tva.e_ActualStartTime, minOccurs: 0 },
-				{ name: tva.e_ActualDuration, minOccurs: 0 },
-				{ name: tva.e_FirstShowing, minOccurs: 0 },
-				{ name: tva.e_Free, minOccurs: 0 },
-			] :
-			[
-				{ name: tva.e_Program },
-				{ name: tva.e_ProgramURL, minOccurs: 0 },
-				{ name: tva.e_InstanceDescription, minOccurs: 0, maxOccurs: Infinity },
-				{ name: tva.e_PublishedStartTime },
-				{ name: tva.e_PublishedDuration },
-				{ name: tva.e_ActualStartTime, minOccurs: 0 },
-				{ name: tva.e_ActualDuration, minOccurs: 0 },
-				{ name: tva.e_FirstShowing, minOccurs: 0 },
-				{ name: tva.e_Free, minOccurs: 0 },
-			],
+			prefix == "BE"
+				? [
+						{ name: tva.e_Program },
+						{ name: tva.e_ProgramURL, minOccurs: 0 },
+						{ name: tva.e_InstanceDescription, minOccurs: 0, maxOccurs: Infinity },
+						{ name: tva.e_PublishedStartTime, minOccurs: 0 },
+						{ name: tva.e_PublishedDuration, minOccurs: 0 },
+						{ name: tva.e_ActualStartTime, minOccurs: 0 },
+						{ name: tva.e_ActualDuration, minOccurs: 0 },
+						{ name: tva.e_FirstShowing, minOccurs: 0 },
+						{ name: tva.e_Free, minOccurs: 0 },
+				  ]
+				: [
+						{ name: tva.e_Program },
+						{ name: tva.e_ProgramURL, minOccurs: 0 },
+						{ name: tva.e_InstanceDescription, minOccurs: 0, maxOccurs: Infinity },
+						{ name: tva.e_PublishedStartTime },
+						{ name: tva.e_PublishedDuration },
+						{ name: tva.e_ActualStartTime, minOccurs: 0 },
+						{ name: tva.e_ActualDuration, minOccurs: 0 },
+						{ name: tva.e_FirstShowing, minOccurs: 0 },
+						{ name: tva.e_Free, minOccurs: 0 },
+				  ],
 			tvaEC.ScheduleEvent,
 			false,
 			errs,
@@ -3101,7 +3102,6 @@ export default class ContentGuideCheck {
 		let Free = Event.get(xPath(props.prefix, tva.e_Free), props.schema);
 		if (Free) BooleanValue(Free, tva.a_value, `${prefix}071`, errs);
 	}
-
 
 	/**
 	 * validate a <BroadcastEvent> elements in the <ProgramLocationTable>
@@ -3453,7 +3453,7 @@ export default class ContentGuideCheck {
 				break;
 		}
 
-		CG.dispose();		
+		CG.dispose();
 	}
 
 	/**

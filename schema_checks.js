@@ -2,12 +2,14 @@
  * schema_checks.js
  */
 import { XmlDocument, XsdValidator, XmlValidateError } from "libxml2-wasm";
+import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
+xmlRegisterFsInputProviders();
+
 import format from "xml-formatter";
 
 import { elementize, datatypeIs } from "./phlib/phlib.js";
 
 import { dvbi } from "./DVB-I_definitions.js";
-
 import { APPLICATION, INFORMATION, WARNING, DEBUG } from "./error_list.js";
 import { OLD, DRAFT } from "./globals.js";
 import { isIn, xPath } from "./utils.js";

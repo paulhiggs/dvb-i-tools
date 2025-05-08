@@ -8,7 +8,7 @@ import { readFileSync } from "fs";
 import process from "process";
 
 import chalk from "chalk";
-import { XmlDocument } from 'libxml2-wasm';
+import { XmlDocument } from "libxml2-wasm";
 
 import { OLD, DRAFT, ETSI, CURRENT } from "./globals.js";
 import { dvbi } from "./DVB-I_definitions.js";
@@ -327,7 +327,8 @@ export function validContentGuideSourceLogo(HowRelated, namespace) {
 console.log(chalk.yellow.underline("loading service list schemas..."));
 SchemaVersions.forEach((version) => {
 	process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
-	let schema = readFileSync(version.filename).toString().replace(`schemaLocation="./`, `schemaLocation="${__dirname_linux}/`);
-	version.schema = XmlDocument.fromString(schema);
+	//	let schema = readFileSync(version.filename).toString().replace(`schemaLocation="./`, `schemaLocation="${__dirname_linux}/`);
+	//	version.schema = XmlDocument.fromString(schema);
+	version.schema = XmlDocument.fromBuffer(readFileSync(version.filename));
 	console.log(version.schema ? chalk.green("OK") : chalk.red.bold("FAIL"));
 });
