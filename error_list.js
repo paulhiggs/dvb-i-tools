@@ -3,6 +3,7 @@
  *
  * Manages errors and warnings for the application
  */
+import { XmlSimpleNode, XmlElement } from "libxml2-wasm";
 import { datatypeIs } from "./phlib/phlib.js";
 
 export const ERROR = "(E)",
@@ -92,8 +93,31 @@ export default class ErrorList {
 		return maxLen == -1 ? tmp : `${tmp.slice(0, maxLen)}\n....\n`;
 	}
 
-	/* private method */ #prettyPrint(node) {
+	/* private method */ #qualifyName(node) {
+		return (node.namespacePrefix && node.namespacePrefix.length ? `${node.namespacePrefix}:` : "") + node.name;
+	}
+
+	/* private method */ #prettyPrint(node, indent = "") {
 		if (!node) return "";
+		
+		let t =  indent + "<" + this.#qualifyName(node);
+		if (node.attrs) node.attrs.forEach((a) => {
+			t += " " + this.#qualifyName(a) + '="' + a.value +	'"'
+		});
+		let hasChildren = false, isSimple = false, child = node.firstChild;
+		while (child) {
+			hasChildren = true;
+			if (child instanceof XmlSimpleNode) {
+				t += ">" + child.content;
+				isSimple = true;
+			}
+			if (child instanceof XmlElement)
+				t += "\n" + this.#prettyPrint(child, indent + "  ");
+
+			child = child.next;
+		}
+		t += (hasChildren) ? `${isSimple?"":"\n"}</${this.#qualifyName(node)}>` : "/>"
+		return t;
 	}
 
 	/* private method */ #insertErrorData(type, key, err) {
