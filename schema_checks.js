@@ -1,14 +1,14 @@
 /**
  * schema_checks.js
  */
-import { XmlDocument, XsdValidator, XmlValidateError } from 'libxml2-wasm';
+import { XmlDocument, XsdValidator, XmlValidateError } from "libxml2-wasm";
 import format from "xml-formatter";
 
 import { elementize, datatypeIs } from "./phlib/phlib.js";
 
 import { dvbi } from "./DVB-I_definitions.js";
 
-import { APPLICATION, INFORMATION, WARNING } from "./error_list.js";
+import { APPLICATION, INFORMATION, WARNING, DEBUG } from "./error_list.js";
 import { OLD, DRAFT } from "./globals.js";
 import { isIn, xPath } from "./utils.js";
 import { keys } from "./common_errors.js";
@@ -161,8 +161,7 @@ export function hasChild(elem, childElementName) {
 	if (!elem) return false;
 	let term = elem.firstChild;
 	while (term) {
-		if (term?.name?.endsWith(childElementName))
-			return true;
+		if (term?.name?.endsWith(childElementName)) return true;
 		term = term.next;
 	}
 }
@@ -176,19 +175,19 @@ export function hasChild(elem, childElementName) {
  * @param {string}   errCode     the error code to report with each error
  */
 export function SchemaCheck(XML, XSD, errs, errCode) {
-	
 	let validator = null;
 	try {
 		validator = XsdValidator.fromDoc(XSD);
+	} catch (err) {
+		let x = err.details;
+		x.forEach((e) => {
+			errs.addError({ code: "LS000", type: DEBUG, message: JSON.stringify(e) });
+		});
 	}
-	catch (err) {
-		let x = err.details
-	};
 
-	try {	
+	try {
 		validator.validate(XML);
-	}
-	catch (err) {
+	} catch (err) {
 		//console.log(err.message)
 		if (err instanceof XmlValidateError) {
 			let lines = format(XML.toString(), { collapseContent: true, lineSeparator: "\n", strictMode: true }).split("\n");
@@ -198,7 +197,7 @@ export function SchemaCheck(XML, XSD, errs, errCode) {
 		}
 	}
 
-/*
+	/*
 	if (!XML.validate(XSD)) {
 		let prettyXML = format(XML.toString(), { collapseContent: true, lineSeparator: "\n", strictMode: true });
 		let lines = prettyXML.split("\n");
@@ -244,11 +243,11 @@ export function SchemaVersionCheck(props, document, publication_state, errs, err
  * @returns {XMLDocument}  an XML document structure
  */
 export function SchemaLoad(document, errs, errcode) {
-	let tmp = null, prettyXML=null;
+	let tmp = null,
+		prettyXML = null;
 	try {
 		prettyXML = format(document.replace(/(\n\t)/gm, "\n"), { collapseContent: true, lineSeparator: "\n" });
-	}
-	catch (err) {
+	} catch (err) {
 		console.dir(err);
 		errs.addError({ code: `${errcode}-1`, message: `XML format failed: ${err.cause}`, key: "malformed XML" });
 		return null;

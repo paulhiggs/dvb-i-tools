@@ -49,8 +49,9 @@ function tabulateResults(source, res, error, errs) {
 	}</script>`;
 	let DETAIL_FORM_HEADER = (mode) => `${scrollFunc}<table><tr>${SHOW_LINE_NUMBER ? "<th>line</th>" : ""}<th>code</th><th>${mode}</th></tr>`;
 	let DESCRIPTION_TABLE_HEDER = () => `<table><tr><th>code</th><th>description</th></tr>`;
+	let DEBUG_FORM_HEADER = (mode) => `${scrollFunc}<table><tr><th>code</th><th>${mode}</th></tr>`;
 
-	let TABLE_FOOTER = `</table>${BREAK}`;
+	const TABLE_FOOTER = `</table>${BREAK}`;
 
 	function tabluateMessage(value) {
 		res.write("<tr>");
@@ -60,6 +61,10 @@ function tabulateResults(source, res, error, errs) {
 		res.write(`<td>${value.message ? HTMLize(value.message) : ""}`);
 		res.write(`${value.element ? `<br/><span class="xmlfont"><pre>${HTMLize(value.element)}</pre></span>` : ""}</td>`);
 		res.write("</tr>");
+	}
+
+	function simpleMessage(value) {
+		res.write(`<tr><td>${value.code}</td><td>${value.message}</td><tr>`);
 	}
 
 	res.write(RESULT_WITH_INSTRUCTION);
@@ -112,6 +117,13 @@ function tabulateResults(source, res, error, errs) {
 					return a?.line > b?.line;
 				});
 			errs.informationals.forEach(tabluateMessage);
+			resultsShown = true;
+			res.write(TABLE_FOOTER);
+		}
+
+		if (errs.debugs.length > 0) {
+			res.write(DEBUG_FORM_HEADER("debug"));
+			errs.debugs.forEach(simpleMessage);
 			resultsShown = true;
 			res.write(TABLE_FOOTER);
 		}

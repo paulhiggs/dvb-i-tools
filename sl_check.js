@@ -4,7 +4,7 @@
  * Check a service list
  */
 import chalk from "chalk";
-import { XmlDocument, XmlNode, XmlElement } from 'libxml2-wasm';
+import { XmlDocument, XmlNode, XmlElement } from "libxml2-wasm";
 
 import { elementize, quote } from "./phlib/phlib.js";
 
@@ -155,7 +155,6 @@ let NoDeliveryParams = (source, serviceId, element, errCode) => ({
 	key: "no delivery params",
 });
 
-
 if (!XmlElement.prototype.childNodes) {
 	XmlElement.prototype.childNodes = function () {
 		if (this == null) {
@@ -164,12 +163,11 @@ if (!XmlElement.prototype.childNodes) {
 		let res = [];
 		let child = this.firstChild;
 		while (child) {
-			if (child instanceof XmlElement)
-				res.push(child);
+			if (child instanceof XmlElement) res.push(child);
 			child = child.next;
 		}
 		return res;
-	}
+	};
 }
 
 /*
@@ -198,12 +196,11 @@ if (!XmlDocument.prototype.childNodes) {
 		let res = [];
 		let child = this.root.firstChild;
 		while (child) {
-			if (child instanceof XmlElement)
-				res.push(child);
+			if (child instanceof XmlElement) res.push(child);
 			child = child.next;
 		}
 		return res;
-	}
+	};
 }
 
 if (!Array.prototype.forEachSubElement) {
@@ -506,8 +503,7 @@ export default class ServiceListCheck {
 								code: "SA003",
 								message: `${tva.a_contentType.attribute()} ${child
 									.attr(tva.a_contentType)
-									.value
-									.quote()} is not supported application type for ${tva.e_RelatedMaterial.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`,
+									.value.quote()} is not supported application type for ${tva.e_RelatedMaterial.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`,
 								fragment: child,
 								key: `invalid ${tva.a_contentType.attribute(tva.e_MediaUri)}`,
 							});
@@ -624,7 +620,7 @@ export default class ServiceListCheck {
 		if (HowRelated.attr(dvbi.a_href)) {
 			let RMErrorDescription = (_code, _elem, _table) => ({
 				code: _code,
-				desciption: `The application type indicated by the specified ${dvbi.a_href.attribute()} value is not permitted in a ${_elem.elementize()}. Refer to the semantic defintiion of ${dvbi.e_RelatedMaterial.elementize()} in table ${_table} of A177.`
+				desciption: `The application type indicated by the specified ${dvbi.a_href.attribute()} value is not permitted in a ${_elem.elementize()}. Refer to the semantic defintiion of ${dvbi.e_RelatedMaterial.elementize()} in table ${_table} of A177.`,
 			});
 			switch (LocationType) {
 				case SERVICE_LIST_RM:
@@ -666,7 +662,7 @@ export default class ServiceListCheck {
 					break;
 
 				case SERVICE_INSTANCE_RM:
-					if (validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && SchemaVersion(props.namespace) == SCHEMA_r0) 
+					if (validContentFinishedBanner(HowRelated, ANY_NAMESPACE) && SchemaVersion(props.namespace) == SCHEMA_r0)
 						errs.addError({
 							code: `${errCode}-31`,
 							message: `${HowRelated.attr(dvbi.href).value.quote()} not permitted for ${props.namespace.quote()} in ${Location}`,
@@ -694,7 +690,7 @@ export default class ServiceListCheck {
 							clause: "A177 table 16",
 							description: `Service banner is not permitted in the ${tva.e_RelatedMaterial.elementize()} element of a ${dvbi.e_ServiceInstance.elementize()}`,
 						});
-				 	else if (this.#validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
+					else if (this.#validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
 						rc = HowRelated.attr(dvbi.a_href).value;
 						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, errs, Location, rc));
 					} else {
@@ -865,7 +861,7 @@ export default class ServiceListCheck {
 	 * @param {string}  parentLanguage	   the xml:lang of the parent element
 	 * @param {Class}   errs               errors found in validaton
 	 * @param {string}  errCode            error code prefix to be used in reports
-	 */7
+	 */ 7;
 	/*private*/ #ValidateSynopsisType(props, Element, ElementName, requiredLengths, optionalLengths, parentLanguage, errs, errCode) {
 		if (!Element) {
 			errs.addError({
@@ -1605,8 +1601,10 @@ export default class ServiceListCheck {
 			}
 			if (SchemaVersion(props.namespace) >= SCHEMA_r7) {
 				// prior to A177r7 only a single value for <DVBCDeliveryParameters><NetworkID> was specified
-				 let n=0, NetworkID, knownIDs=[];
-				 while ((NetworkID = DVBCDeliveryParameters.get(xPath(props.prefix, dvbi.e_NetworkID, ++n), props.schema)) != null) {
+				let n = 0,
+					NetworkID,
+					knownIDs = [];
+				while ((NetworkID = DVBCDeliveryParameters.get(xPath(props.prefix, dvbi.e_NetworkID, ++n), props.schema)) != null) {
 					let nid = NetworkID.value;
 					if (isIn(knownIDs, nid)) {
 						errs.addError({
@@ -1614,11 +1612,10 @@ export default class ServiceListCheck {
 							type: WARNING,
 							key: keys.k_DuplicateValue,
 							fragment: NetworkID,
-							message: "duplicated Network ID value"
-						})
-					}
-					else knownIDs.push(nid);
-				 }
+							message: "duplicated Network ID value",
+						});
+					} else knownIDs.push(nid);
+				}
 			}
 		}
 
@@ -1819,13 +1816,13 @@ export default class ServiceListCheck {
 		let uID = service.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
 		if (uID) {
 			thisServiceId = uID.content;
-			if (!validServiceIdentifier(thisServiceId)) 
+			if (!validServiceIdentifier(thisServiceId))
 				errs.addError({
 					code: "SL110",
 					message: `${thisServiceId.quote()} is not a valid service identifier`,
 					fragment: uID,
 					key: "invalid tag",
-					description: "service identifier should be a tag: URI according to IETF RFC 4151"
+					description: "service identifier should be a tag: URI according to IETF RFC 4151",
 				});
 			if (!uniqueServiceIdentifier(thisServiceId, knownServices))
 				errs.addError({
@@ -1890,9 +1887,9 @@ export default class ServiceListCheck {
 			if (ServiceGenre.attr(dvbi.a_href) && !this.#allowedGenres.isIn(ServiceGenre.attr(dvbi.a_href).value))
 				errs.addError({
 					code: "SL162",
-					message: `service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} value ${ServiceGenre.attr(dvbi.a_href)
-						.value
-						.quote()} (must be content genre)`,
+					message: `service ${thisServiceId.quote()} has an invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)} value ${ServiceGenre.attr(
+						dvbi.a_href
+					).value.quote()} (must be content genre)`,
 					fragment: ServiceGenre,
 					key: `invalid ${dvbi.a_href.attribute(dvbi.e_ServiceGenre)}`,
 				});
@@ -1924,9 +1921,9 @@ export default class ServiceListCheck {
 		if (RecordingInfo && RecordingInfo.attr(dvbi.a_href) && !this.#RecordingInfoCSvalues.isIn(RecordingInfo.attr(dvbi.a_href).value))
 			errs.addError({
 				code: "SL180",
-				message: `invalid ${dvbi.e_RecordingInfo.elementize()} value ${RecordingInfo.attr(dvbi.a_href)
-					.value
-					.quote()} for service ${thisServiceId} ${this.#RecordingInfoCSvalues.valuesRange()}`,
+				message: `invalid ${dvbi.e_RecordingInfo.elementize()} value ${RecordingInfo.attr(
+					dvbi.a_href
+				).value.quote()} for service ${thisServiceId} ${this.#RecordingInfoCSvalues.valuesRange()}`,
 				fragment: RecordingInfo,
 				key: `invalid ${dvbi.a_href.attribute(dvbi.e_RecordingInfo)}`,
 			});
@@ -1979,7 +1976,7 @@ export default class ServiceListCheck {
 						service2,
 						referredService = null;
 
-					while ((service2 = SL.get(xPath(props.prefix, dvbi.e_Service, ++s2), props.schema)) != null && !referredService) {
+					while ((service2 = SL.get("//" + xPath(props.prefix, dvbi.e_Service, ++s2), props.schema)) != null && !referredService) {
 						let ui = service2.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
 						if (ui && ui.content == NVOD.attr(dvbi.a_reference).value) referredService = service2;
 					}
@@ -2211,12 +2208,11 @@ export default class ServiceListCheck {
 			SCHEMA_PREFIX = SL.root.namespacePrefix,
 			SCHEMA_NAMESPACE = SL.root.namespaceUri;
 
+		SL_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
+		if (SCHEMA_PREFIX == "") {
+			SCHEMA_PREFIX = "__RANDOM__";
 			SL_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
-		if (SCHEMA_PREFIX == '') {
-			SCHEMA_PREFIX="__RANDOM__";
-			SL_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE; 
 			SL.root.addNsDeclaration(SCHEMA_NAMESPACE, SCHEMA_PREFIX);
-
 		}
 
 		let props = {
@@ -2308,7 +2304,7 @@ export default class ServiceListCheck {
 
 		// check <ServiceList><RegionList> and remember regionID values
 		let knownRegionIDs = [],
-			RegionList = SL.get("//" + xPath(props.prefix,dvbi.e_RegionList), props.schema);
+			RegionList = SL.get("//" + xPath(props.prefix, dvbi.e_RegionList), props.schema);
 		if (RegionList) {
 			// recurse the regionlist - Regions can be nested in Regions
 			let r = 0,
@@ -2387,7 +2383,7 @@ export default class ServiceListCheck {
 		}
 
 		// check  elements in <ServiceList><ContentGuideSource>
-		let slGCS = SL.get(xPath("//" + props.prefix, dvbi.e_ContentGuideSource), props.schema);
+		let slGCS = SL.get("//" + xPath(props.prefix, dvbi.e_ContentGuideSource), props.schema);
 		if (slGCS) this.#validateAContentGuideSource(props, slGCS, errs, `${dvbi.e_ServiceList}.${dvbi.e_ContentGuideSource}`, "SL080");
 
 		errs.setW("num services", 0);
@@ -2588,15 +2584,15 @@ export default class ServiceListCheck {
 								fragment: LCN,
 							});
 						else LCNNumbers.push(chanNum);
-						let chanNumV =  parseInt(chanNum, 10);
+						let chanNumV = parseInt(chanNum, 10);
 						if (chanNumV < 1 || chanNumV > 9999) {
 							errs.addError({
 								code: "SL264",
 								message: `Channel number must be in the range 1..9999, found ${chanNumV}`,
 								key: "invalid value",
-								fragment:LCN,
+								fragment: LCN,
 								clause: "A177 table 23",
-								description: `${dvbi.a_channelNumber.attribute()} has the same semantics as logical_channel_number in ciplus_service_descriptor`
+								description: `${dvbi.a_channelNumber.attribute()} has the same semantics as logical_channel_number in ciplus_service_descriptor`,
 							});
 						}
 					}

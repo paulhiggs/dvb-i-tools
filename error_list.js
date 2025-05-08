@@ -7,6 +7,7 @@ import { XmlSimpleNode, XmlElement } from "libxml2-wasm";
 import { datatypeIs } from "./phlib/phlib.js";
 
 export const ERROR = "(E)",
+	DEBUG = "(D)",
 	WARNING = "(W)",
 	INFORMATION = "(I)",
 	APPLICATION = "(A)";
@@ -36,6 +37,7 @@ export default class ErrorList {
 		this.#numCountsI = 0;
 		this.errors = [];
 		this.warnings = [];
+		this.debugs = [];
 		this.informationals = [];
 		this.markupXML = [];
 		this.errorDescriptions = [];
@@ -99,24 +101,26 @@ export default class ErrorList {
 
 	/* private method */ #prettyPrint(node, indent = "") {
 		if (!node) return "";
-		
-		let t =  indent + "<" + this.#qualifyName(node);
-		if (node.attrs) node.attrs.forEach((a) => {
-			t += " " + this.#qualifyName(a) + '="' + a.value +	'"'
-		});
-		let hasChildren = false, isSimple = false, child = node.firstChild;
+
+		let t = indent + "<" + this.#qualifyName(node);
+		if (node.attrs)
+			node.attrs.forEach((a) => {
+				t += " " + this.#qualifyName(a) + '="' + a.value + '"';
+			});
+		let hasChildren = false,
+			isSimple = false,
+			child = node.firstChild;
 		while (child) {
 			hasChildren = true;
 			if (child instanceof XmlSimpleNode) {
 				t += ">" + child.content;
 				isSimple = true;
 			}
-			if (child instanceof XmlElement)
-				t += "\n" + this.#prettyPrint(child, indent + "  ");
+			if (child instanceof XmlElement) t += "\n" + this.#prettyPrint(child, indent + "  ");
 
 			child = child.next;
 		}
-		t += (hasChildren) ? `${isSimple?"":"\n"}</${this.#qualifyName(node)}>` : "/>"
+		t += hasChildren ? `${isSimple ? "" : "\n"}</${this.#qualifyName(node)}>` : "/>";
 		return t;
 	}
 
@@ -141,6 +145,10 @@ export default class ErrorList {
 		}
 	}
 
+	/* private method */ #debugMessage(err) {
+		this.debugs.push(err);
+	}
+
 	/**
 	 * log an error from the service list or program metadata analysis
 	 *
@@ -159,7 +167,7 @@ export default class ErrorList {
 		if (!Object.prototype.hasOwnProperty.call(e, "type")) e.type = ERROR;
 		if (!Object.prototype.hasOwnProperty.call(e, "reportInTable")) e.reportInTable = true;
 
-		if (![ERROR, WARNING, INFORMATION, APPLICATION].includes(e.type)) {
+		if (![ERROR, WARNING, INFORMATION, APPLICATION, DEBUG].includes(e.type)) {
 			this.errors.push({ code: "ERR000", message: `addError() called with invalid type property (${e.type})` });
 			this.#increment(_INVALID_CALL);
 			argsOK = false;
@@ -179,7 +187,9 @@ export default class ErrorList {
 
 		if (!argsOK) return;
 
-		if (e.multiElementError) {
+		if (e.type == DEBUG) {
+			this.#debugMessage({ code: e.code, message: e.message });
+		} else if (e.multiElementError) {
 			/**
 			 * this type of error involves multiple elements, for example when the cardinality exceeds a specified limit.
 			 * each element of multiElementError is an element that is marked up, but the error message is
@@ -230,8 +240,7 @@ export default class ErrorList {
 			}
 			if (e.reportInTable) this.#insertErrorData(e.type, e.key, newError);
 		}
-		if (e.description)
-			this.errorDescription({code:e.code, description: e.description, clause: e.clause});
+		if (e.description) this.errorDescription({ code: e.code, description: e.description, clause: e.clause });
 	}
 
 	numErrors() {
