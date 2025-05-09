@@ -16,14 +16,29 @@ import { isIn, xPath } from "./utils.js";
 import { keys } from "./common_errors.js";
 
 /**
+ * 
+ * @param {XmlElement} node      The element to check for the named attribute
+ * @param {string}     attrName  The attribute whose name, without qualifying namespace, to find in @node
+ * @returns true if an attribute named @attrName is defined for @node, otherwise false
+ */
+let attrAnyNamespace = (node, attrName) => {
+	let found = false;
+	node.attrs.forEach((attr) => {
+		if (attr.name == attrName)
+			found = true;
+	});
+	return found;
+}
+
+/**
  * check that the specified child elements are in the parent element
  *
  * @param {XmlElement} checkElement       the element whose attributes should be checked
- * @param {Array}  requiredAttributes the element names permitted within the parent
- * @param {Array}  optionalAttributes the element names permitted within the parent
- * @param {Array}  definedAttributes  attributes that defined in the schema, whether requited, optional or profiled out
- * @param {Class}  errs               errors found in validaton
- * @param {string} errCode            error code to be used in reports,
+ * @param {Array}      requiredAttributes the element names permitted within the parent
+ * @param {Array}      optionalAttributes the element names permitted within the parent
+ * @param {Array}      definedAttributes  attributes that defined in the schema, whether requited, optional or profiled out
+ * @param {Class}      errs               errors found in validaton
+ * @param {string}     errCode            error code to be used in reports,
  */
 export function checkAttributes(checkElement, requiredAttributes, optionalAttributes, definedAttributes, errs, errCode) {
 	if (!checkElement || !requiredAttributes) {
@@ -38,7 +53,7 @@ export function checkAttributes(checkElement, requiredAttributes, optionalAttrib
 	}
 
 	requiredAttributes.forEach((attributeName) => {
-		if (!checkElement.attr(attributeName))
+		if (!attrAnyNamespace(checkElement, attributeName))
 			errs.addError({ code: `${errCode}-1`, message: `${attributeName.attribute(`${p}`)} is a required attribute`, key: "missing attribute", line: checkElement.line });
 	});
 
@@ -49,7 +64,7 @@ export function checkAttributes(checkElement, requiredAttributes, optionalAttrib
 
 	definedAttributes.forEach((attribute) => {
 		if (!isIn(requiredAttributes, attribute) && !isIn(optionalAttributes, attribute))
-			if (checkElement.attr(attribute))
+			if (attrAnyNamespace(checkElement, attribute))
 				errs.addError({
 					type: INFORMATION,
 					code: `${errCode}-3`,
@@ -155,8 +170,8 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 /**
  * check if the element contains the named child element
  *
- * @param {XmlElementt} elem                 the element to check
- * @param {string} childElementName     the name of the child element to look for
+ * @param {XmlElement} elem                 the element to check
+ * @param {string}     childElementName     the name of the child element to look for
  * @returns {boolean} true if the element contains the named child element(s) otherwise false
  */
 export function hasChild(elem, childElementName) {
@@ -191,7 +206,7 @@ export function SchemaCheck(XML, XSD, errs, errCode) {
 		validator.validate(XML);
 	} catch (err) {
 		//console.log(err.message)
-		if (err instanceof XmlValidateError) {
+		if (err.details) {
 			let lines = format(XML.toString(), { collapseContent: true, lineSeparator: "\n", strictMode: true }).split("\n");
 			err.details.forEach((ve) => {
 				errs.addError({ code: errCode, message: ve.message, fragment: lines[ve.line], line: ve.line, key: keys.k_XSDValidation });
