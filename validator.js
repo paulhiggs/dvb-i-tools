@@ -400,7 +400,10 @@ export default function validator(options) {
 
 	// start the HTTP server
 	var http_server = app.listen(options.port, function () {
-		console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}`));
+		if (http_server.address()?.port)
+			console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}`));
+		else 
+			console.log(chalk.red(`HTTP port ${options.port} already in use -- HTTP server not started`));
 	});
 
 	// start the HTTPS server
