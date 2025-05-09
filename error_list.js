@@ -3,7 +3,8 @@
  *
  * Manages errors and warnings for the application
  */
-import { XmlSimpleNode, XmlElement } from "libxml2-wasm";
+import { XmlSimpleNode, XmlTreeNode, XmlElement, XmlText } from "libxml2-wasm";
+import { xmlSaveFormatFileTo } from "libxml2-wasm/lib/libxml2.mjs";
 import { datatypeIs } from "./phlib/phlib.js";
 
 export const ERROR = "(E)",
@@ -88,40 +89,43 @@ export default class ErrorList {
 		this.#numCountsI++;
 	}
 
-	/* private method */ #prettyPrint_old(node) {
-		// clean up and redo formatting
-		const tmp = node.toString({ declaration: false, format: true });
-		const maxLen = nthIndexOf(tmp, "\n", MAX_FRAGMENT_LINES);
-		return maxLen == -1 ? tmp : `${tmp.slice(0, maxLen)}\n....\n`;
-	}
-
-	/* private method */ #qualifyName(node) {
-		return (node.namespacePrefix && node.namespacePrefix.length ? `${node.namespacePrefix}:` : "") + node.name;
-	}
-
 	/* private method */ #prettyPrint(node, indent = "") {
-		if (!node) return "";
+    if (!node || !node?.name) return "";
+		let qualifyName = (node) => (node.namespacePrefix && node.namespacePrefix.length ? `${node.namespacePrefix}:` : "") + node.name;
+		let isStructureElement = (node) => (node.__proto__.constructor.name == "XmlElement");
+		// to be a leaf node, all child nodes must be textual
+		let isLeafElement = (node) => {
+			let leaf=true, kid = node.firstChild;
+			while (leaf && kid) {
+				if (kid.__proto__.constructor.name != "XmlText")
+					leaf = false;
+				kid = kid.next;
+			}
+			return leaf;
+		}
 
-		let t = indent + "<" + this.#qualifyName(node);
+		let t = indent + "<" + qualifyName(node);
 		if (node.attrs)
 			node.attrs.forEach((a) => {
-				t += " " + this.#qualifyName(a) + '="' + a.value + '"';
+				t += ` ${qualifyName(a)}="${a.value}"`;
 			});
-		let hasChildren = false,
-			isSimple = false,
-			child = node.firstChild;
+		if (isLeafElement(node)) {
+			t += node.content.length ? `>${node.content}</${qualifyName(node)}>` : "/>";
+		}
+		else
+			t += (node.firstChild ? ">" : "/>");
+		let child = node.firstChild;
 		while (child) {
-			hasChildren = true;
-			if (child instanceof XmlSimpleNode) {
-				t += ">" + child.content;
-				isSimple = true;
-			}
-			if (child instanceof XmlElement) t += "\n" + this.#prettyPrint(child, indent + "  ");
-
+			if (child.__proto__.constructor.name == "XmlComment")
+				t += `\n${indent}<!--${child.content}-->`;
+			else if (isStructureElement(child))
+				t += "\n" + this.#prettyPrint(child, indent + "  ");
 			child = child.next;
 		}
-		t += hasChildren ? `${isSimple ? "" : "\n"}</${this.#qualifyName(node)}>` : "/>";
-		return t;
+		t += !isLeafElement(node) ? `\n${indent}</${qualifyName(node)}>` : ""; 
+
+		const maxLen = nthIndexOf(t, "\n", MAX_FRAGMENT_LINES);
+		return maxLen == -1 ? t : `${t.slice(0, maxLen)}\n....\n`;
 	}
 
 	/* private method */ #insertErrorData(type, key, err) {
@@ -209,11 +213,11 @@ export default class ErrorList {
 					if (datatypeIs(fragment, "string")) {
 						if (Object.prototype.hasOwnProperty.call(e, "line")) {
 							this.#setError(e.type, e.code, e.message, e.line);
-							newError.line = e.line - 2;
+							newError.line = e.line;
 						}
 					} else {
 						this.#setError(e.type, e.code, e.message, fragment.line);
-						newError.line = fragment.line - 2;
+						newError.line = fragment.line;
 					}
 					if (e.reportInTable) this.#insertErrorData(e.type, e.key, newError);
 				}
@@ -225,18 +229,18 @@ export default class ErrorList {
 			if (datatypeIs(e.fragment, "string")) {
 				if (Object.prototype.hasOwnProperty.call(e, "line")) {
 					this.#setError(e.type, e.code, e.message, e.line);
-					newError.line = e.line - 2;
+					newError.line = e.line;
 				}
 			} else {
 				this.#setError(e.type, e.code, e.message, e.fragment.line);
-				newError.line = e.fragment.line - 2;
+				newError.line = e.fragment.line;
 			}
 			if (e.reportInTable) this.#insertErrorData(e.type, e.key, newError);
 		} else {
 			let newError = { code: e.code, message: e.message, element: null };
 			if (e.line) {
 				this.#setError(e.type, e.code, e.message, e.line);
-				newError.line = e.line - 2;
+				newError.line = e.line;
 			}
 			if (e.reportInTable) this.#insertErrorData(e.type, e.key, newError);
 		}
