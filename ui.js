@@ -147,7 +147,10 @@ function tabulateResults(source, res, error, errs) {
 			WARN = "warnings",
 			INFO = "info",
 			style = (name, colour) => `<style>.${name} {position:relative; cursor:pointer; color:${colour};} .${name}[title]:hover:after {opacity:1; transition-delay:.1s; }</style>`;
+		let lineNum=0;
+		const maxLineNumLength = errs.markupXML.length.toString().length;
 		res.write(`${style(ERR, "red")}${style(WARN, "blue")}${style(INFO, "orange")}<pre>`);
+		
 		errs.markupXML.forEach((line) => {
 			let cla = "",
 				tip = line.validationErrors ? line.validationErrors.map((err) => HTMLize(err)).join("&#10;") : null;
@@ -157,6 +160,10 @@ function tabulateResults(source, res, error, errs) {
 				else cla = INFO;
 			}
 			let qualifier = tip ? ` class="${cla}" title="${tip}"` : "";
+			if (SHOW_LINE_NUMBER) {
+				lineNum++;
+				res.write(`<span>${lineNum.toString().padStart(maxLineNumLength)} : </span>`);
+			}
 			res.write(`<span id="line-${line.ix}"${qualifier}>${HTMLize(line.value)}</span>${BREAK}`);
 		});
 		res.write(`</pre>${LINE}`);
