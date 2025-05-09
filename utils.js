@@ -26,8 +26,8 @@ export let xPath = (SCHEMA_PREFIX, elementName, index = null) => `${SCHEMA_PREFI
  * @param {array}  elementNames     the name of the element to be searched for
  * @returns {string} the XPath selector
  */
-export let xPathM = (SCHEMA_PREFIX, elementNames) => datatypeIs(elemebtNames, "array") ? `${SCHEMA_PREFIX}:${elementNames.join(`/${SCHEMA_PREFIX}:`)}` : xPath(SCHEMA_PREFIX, elementNames);
-
+export let xPathM = (SCHEMA_PREFIX, elementNames) =>
+	datatypeIs(elementNames, "array") ? `${SCHEMA_PREFIX}:${elementNames.join(`/${SCHEMA_PREFIX}:`)}` : xPath(SCHEMA_PREFIX, elementNames);
 
 /**
  * Finds the first named child element
