@@ -16,21 +16,6 @@ import { isIn, xPath } from "./utils.js";
 import { keys } from "./common_errors.js";
 
 /**
- * 
- * @param {XmlElement} node      The element to check for the named attribute
- * @param {string}     attrName  The attribute whose name, without qualifying namespace, to find in @node
- * @returns the attribute named @attrName if defined for @node, otherwise false
- */
-export let attrAnyNamespace = (node, attrName) => {
-	let found = false;
-	node.attrs.forEach((attr) => {
-		if (attr.name == attrName)
-			found = attr;
-	});
-	return found;
-}
-
-/**
  * check that the specified child elements are in the parent element
  *
  * @param {XmlElement} checkElement       the element whose attributes should be checked
@@ -53,7 +38,7 @@ export function checkAttributes(checkElement, requiredAttributes, optionalAttrib
 	}
 
 	requiredAttributes.forEach((attributeName) => {
-		if (!attrAnyNamespace(checkElement, attributeName))
+		if (!checkElement.attrAnyNs(attributeName))
 			errs.addError({ code: `${errCode}-1`, message: `${attributeName.attribute(`${p}`)} is a required attribute`, key: "missing attribute", line: checkElement.line });
 	});
 
@@ -64,7 +49,7 @@ export function checkAttributes(checkElement, requiredAttributes, optionalAttrib
 
 	definedAttributes.forEach((attribute) => {
 		if (!isIn(requiredAttributes, attribute) && !isIn(optionalAttributes, attribute))
-			if (attrAnyNamespace(checkElement, attribute))
+			if (checkElement.attrAnyNs(attribute))
 				errs.addError({
 					type: INFORMATION,
 					code: `${errCode}-3`,
