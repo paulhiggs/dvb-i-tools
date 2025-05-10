@@ -6,13 +6,13 @@
 import { readFile, readFileSync } from "fs";
 
 import chalk from "chalk";
+import fetchS from "sync-fetch";
 
 import { datatypeIs } from "./phlib/phlib.js";
 
 import handleErrors from "./fetch_err_handler.js";
 import { isIn, isIni } from "./utils.js";
 import { isHTTPURL, BCP47_Language_Tag } from "./pattern_checks.js";
-import fetchS from "sync-fetch";
 
 export default class IANAlanguages {
 	#languagesList;

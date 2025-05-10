@@ -17,6 +17,8 @@ import fileupload from "express-fileupload";
 import favicon from "serve-favicon";
 import fetchS from "sync-fetch";
 
+import { Libxml2_wasm_init } from './libxml2-wasm-extensions.js';
+
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.js";
 import { Default_SLEPR, __dirname } from "./data_locations.js";
 import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults } from "./ui.js";

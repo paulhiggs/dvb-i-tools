@@ -116,7 +116,7 @@ let SchemaVersion = (namespace) => {
  * @param {string} str    string contining the decimal value
  * @returns {integer}  the decimal representation of the string, or 0 is non-digits are included
  */
-function valUnsignedInt(str) {
+let valUnsignedInt = (str) => {
 	const intRegex = /[\d]+/;
 	let s = str.match(intRegex);
 	return s[0] === str ? parseInt(str, 10) : 0;
@@ -165,9 +165,7 @@ function AllowedValue(elem, attrName, errCode, errs, allowed, isRequired = true)
  * @param {Class}   errs       errors found in validaton
  * @param {boolean} isRequired true if the specificed attribued is required to be specified for the element
  */
-function BooleanValue(elem, attrName, errCode, errs, isRequired = true) {
-	AllowedValue(elem, attrName, errCode, errs, ["true", "false"], isRequired);
-}
+let BooleanValue = (elem, attrName, errCode, errs, isRequired = true) => AllowedValue(elem, attrName, errCode, errs, ["true", "false"], isRequired);
 
 /**
  * checks is the specified element (elem) has an attribute named attrName and that its value is "true"
@@ -178,9 +176,7 @@ function BooleanValue(elem, attrName, errCode, errs, isRequired = true) {
  * @param {Class}   errs       errors found in validaton
  * @param {boolean} isRequired true if the specificed attribued is required to be specified for the element
  */
-function TrueValue(elem, attrName, errCode, errs, isRequired = true) {
-	AllowedValue(elem, attrName, errCode, errs, ["true"], isRequired);
-}
+let TrueValue = (elem, attrName, errCode, errs, isRequired = true) => AllowedValue(elem, attrName, errCode, errs, ["true"], isRequired);
 
 /**
  * checks is the specified element (elem) has an attribute named attrName and that its value is "false"
@@ -191,77 +187,13 @@ function TrueValue(elem, attrName, errCode, errs, isRequired = true) {
  * @param {Class}   errs       errors found in validaton
  * @param {boolean} isRequired true if the specificed attribued is required to be specified for the element
  */
-function FalseValue(elem, attrName, errCode, errs, isRequired = true) {
-	AllowedValue(elem, attrName, errCode, errs, ["false"], isRequired);
-}
-
-if (!Array.prototype.forEachSubElement) {
-	// based on the polyfill at https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
-	/*
-	 * alternate to Array.prototype.forEach that only returns XML tree nodes that are elements
-	 */
-
-	Array.prototype.forEachSubElement = function (callback, thisArg) {
-		if (this == null) {
-			throw new TypeError("Array.prototype.forEachSubElement called on null or undefined");
-		}
-
-		var T, k;
-		// 1. Let O be the result of calling toObject() passing the
-		// |this| value as the argument.
-		var O = Object(this);
-
-		// 2. Let lenValue be the result of calling the Get() internal
-		// method of O with the argument "length".
-		// 3. Let len be toUint32(lenValue).
-		var len = O.length >>> 0;
-
-		// 4. If isCallable(callback) is false, throw a TypeError exception.
-		// See: https://es5.github.com/#x9.11
-		if (typeof callback !== "function") {
-			throw new TypeError(`${callback} is not a function`);
-		}
-
-		// 5. If thisArg was supplied, let T be thisArg; else let
-		// T be undefined.
-		if (arguments.length > 1) {
-			T = thisArg;
-		}
-
-		// 6. Let k be 0
-		k = 0;
-
-		// 7. Repeat, while k < len
-		while (k < len) {
-			var kValue;
-
-			// a. Let Pk be ToString(k).
-			//    This is implicit for LHS operands of the in operator
-			// b. Let kPresent be the result of calling the HasProperty
-			//    internal method of O with argument Pk.
-			//    This step can be combined with c
-			// c. If kPresent is true, then
-			if (k in O) {
-				// i. Let kValue be the result of calling the Get internal
-				// method of O with argument Pk.
-				kValue = O[k];
-
-				// ii. Call the Call internal method of callback with T as
-				// the this value and argument list containing kValue, k, and O.
-				if (kValue instanceof XmlElement) callback.call(T, kValue, k, O);
-			}
-			// d. Increase k by 1.
-			k++;
-		}
-		// 8. return undefined
-	};
-}
+let FalseValue = (elem, attrName, errCode, errs, isRequired = true) => AllowedValue(elem, attrName, errCode, errs, ["false"], isRequired);
 
 /**
  * @param {string} genre the value to check as being a restart availability genre
  * @retuwns {boolean} trus id the value provided is a valid restart availability genre
  */
-export var isRestartAvailability = (genre) => [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(genre);
+export let isRestartAvailability = (genre) => [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(genre);
 
 export default class ContentGuideCheck {
 	#numRequests;
@@ -1348,7 +1280,7 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		const isParentGroup = parentElement == categoryGroup;
+		const isParentGroup = parentElement.line == categoryGroup.line;
 		const BasicDescription = parentElement.get(xPath(props.prefix, tva.e_BasicDescription), props.schema);
 		if (!BasicDescription) {
 			errs.addError(NoChildElement(tva.e_BasicDescription.elementize(), parentElement, null, "BD001"));
@@ -1550,7 +1482,7 @@ export default class ContentGuideCheck {
 		if (!ProgramInformation) {
 			errs.addError({
 				type: APPLICATION,
-				code: "PI000",
+				code: "PIV000",
 				message: "ValidateProgramInformation() called with ProgramInformation==null",
 			});
 			return null;
@@ -1644,7 +1576,7 @@ export default class ContentGuideCheck {
 						} else checkAttributes(child, [tva.a_type, tva.a_index, tva.a_crid], [], tvaEA.MemberOf, errs, "PI042");
 
 						// <ProgramInformation><MemberOf>@xsi:type
-						if (child.attr(tva.a_type) && child.attr(tva.a_type).value != tva.t_MemberOfType)
+						if (child.attrAnyNs(tva.a_type) && child.attrAnyNs(tva.a_type).value != tva.t_MemberOfType)
 							errs.addError({
 								code: "PI043",
 								message: `${attribute(`xsi:${tva.a_type}`)} must be ${tva.t_MemberOfType.quote()} for ${ProgramInformation.name}.${tva.e_MemberOf}`,
@@ -1706,7 +1638,7 @@ export default class ContentGuideCheck {
 		if (!ProgramDescription) {
 			errs.addError({
 				type: APPLICATION,
-				code: "PI100",
+				code: "CPI000",
 				message: "CheckProgramInformation() called with ProgramDescription==null",
 			});
 			return null;
@@ -1764,7 +1696,7 @@ export default class ContentGuideCheck {
 			});
 			return;
 		}
-		let isParentGroup = GroupInformation == categoryGroup;
+		const isParentGroup = GroupInformation.line == categoryGroup.line;
 
 		switch (requestType) {
 			case CG_REQUEST_BS_CATEGORIES:
@@ -1839,7 +1771,7 @@ export default class ContentGuideCheck {
 			const MemberOf = GroupInformation.get(xPath(props.prefix, tva.e_MemberOf), props.schema);
 			if (MemberOf) {
 				checkAttributes(MemberOf, [tva.a_type, tva.a_index, tva.a_crid], [], tvaEA.MemberOf, errs, "GIB041");
-				if (MemberOf.attr(tva.a_type) && MemberOf.attr(tva.a_type).value != tva.t_MemberOfType)
+				if (MemberOf.attrAnyNs(tva.a_type) && MemberOf.attrAnyNs(tva.a_type).value != tva.t_MemberOfType)
 					errs.addError({
 						code: "GIB042",
 						message: `${GroupInformation.name}.${tva.e_MemberOf}@xsi:${tva.a_type} is invalid (${MemberOf.attr(tva.a_type).value.quote()})`,
@@ -1977,7 +1909,7 @@ export default class ContentGuideCheck {
 		if (GroupType) {
 			checkAttributes(GroupType, [tva.a_type, tva.a_value], [], tvaEA.GroupType, errs, "GIM011");
 
-			if (GroupType.attr(tva.a_type) && GroupType.attr(tva.a_type).value != tva.t_ProgramGroupTypeType)
+			if (GroupType.attrAnyNs(tva.a_type) && GroupType.attrAnyNs(tva.a_type).value != tva.t_ProgramGroupTypeType)
 				errs.addError({
 					code: "GIM012",
 					message: `${tva.e_GroupType}@xsi:${tva.a_type} must be ${tva.t_ProgramGroupTypeType.quote()}`,
@@ -2040,7 +1972,8 @@ export default class ContentGuideCheck {
 
 		const GroupType = GroupInformation.get(xPath(props.prefix, tva.e_GroupType), props.schema);
 		if (GroupType) {
-			if (!(GroupType.attr(tva.a_type) && GroupType.attr(tva.a_type).value == tva.t_ProgramGroupTypeType))
+			let _type = GroupType.attrAnyNs(tva.a_type);
+			if (!(_type && _type.value == tva.t_ProgramGroupTypeType))
 				errs.addError({
 					code: "GI011",
 					message: `${tva.e_GroupType}@xsi:${tva.a_type}=${tva.t_ProgramGroupTypeType.quote()} is required`,
@@ -2074,18 +2007,18 @@ export default class ContentGuideCheck {
 		if (!ProgramDescription) {
 			errs.addError({
 				type: APPLICATION,
-				code: "GI100",
+				code: "GI000",
 				message: "CheckGroupInformation() called with ProgramDescription==null",
 			});
 			return;
 		}
 		let gi, GroupInformation;
 		const GroupInformationTable = ProgramDescription.get(xPath(props.prefix, tva.e_GroupInformationTable), props.schema);
-
 		if (!GroupInformationTable) {
 			//errs.addError({code:"GI101", message:`${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name.elementize()}`, line:ProgramDescription.line});
 			return;
 		}
+		
 		GetNodeLanguage(GroupInformationTable, false, errs, "GI102", this.#knownLanguages);
 
 		// find which GroupInformation element is the "category group"
@@ -2118,7 +2051,7 @@ export default class ContentGuideCheck {
 		gi = 0;
 		while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
 			this.#ValidateGroupInformation(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupIds);
-			if (GroupInformation != categoryGroup) giCount++;
+			if (GroupInformation.line != categoryGroup.line) giCount++;
 		}
 		if (categoryGroup) {
 			let numOfItems = categoryGroup.attr(tva.a_numOfItems) ? valUnsignedInt(categoryGroup.attr(tva.a_numOfItems).value) : 0;
@@ -2127,6 +2060,7 @@ export default class ContentGuideCheck {
 					code: "GI113",
 					message: `${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${numOfItems}) does match the number of items (${giCount})`,
 					line: categoryGroup.line,
+					key: "mismatch count",
 				});
 
 			if (o) o.childCount = numOfItems;
@@ -2723,7 +2657,7 @@ export default class ContentGuideCheck {
 	 */
 	/* private */ #CheckPlayerApplication(node, allowedContentTypes, errs, errcode) {
 		if (!node) {
-			errs.addError({ type: APPLICATION, code: "PA000a", message: "CheckPlayerApplication() called with node==null" });
+			errs.addError({ type: APPLICATION, code: "PA000", message: "CheckPlayerApplication() called with node==null" });
 			return;
 		}
 		let allowedTypes = Array.isArray(allowedContentTypes) ? allowedContentTypes : [].concat(allowedContentTypes);
@@ -3319,9 +3253,15 @@ export default class ContentGuideCheck {
 		}
 
 		let CG_SCHEMA = {},
-			SCHEMA_PREFIX = CG.root.namespacePrefix.length ? CG.root.namespacePrefix : "*",
+			SCHEMA_PREFIX = CG.root.namespacePrefix.length ? CG.root.namespacePrefix : "",
 			SCHEMA_NAMESPACE = CG.root.namespaceUri;
+
 		CG_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
+		if (SCHEMA_PREFIX == "") {
+			SCHEMA_PREFIX = "__RANDOM__";
+			CG_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
+			CG.root.addNsDeclaration(SCHEMA_NAMESPACE, SCHEMA_PREFIX);
+		}
 
 		let props = {
 			schema: CG_SCHEMA,
@@ -3353,7 +3293,6 @@ export default class ContentGuideCheck {
 					errs,
 					"CG011"
 				);
-
 				this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, null, requestType, errs);
 				this.#CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs);
 				break;
@@ -3367,7 +3306,6 @@ export default class ContentGuideCheck {
 					errs,
 					"CG021"
 				);
-
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
 				if (this.#hasElement(ProgramDescription, tva.e_GroupInformationTable)) this.#CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs);
 				let currentProgramCRIDnn = this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs);
@@ -3382,7 +3320,6 @@ export default class ContentGuideCheck {
 					errs,
 					"CG031"
 				);
-
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
 				if (this.#hasElement(ProgramDescription, tva.e_GroupInformationTable)) this.#CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs);
 				let currentProgramCRIDsw = this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs);
@@ -3398,7 +3335,6 @@ export default class ContentGuideCheck {
 					errs,
 					"CG041"
 				);
-
 				this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, null, requestType, errs);
 				this.#CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs);
 				break;
@@ -3412,7 +3348,6 @@ export default class ContentGuideCheck {
 					errs,
 					"CG051"
 				);
-
 				this.#CheckGroupInformation(props, ProgramDescription, requestType, groupIds, errs, o);
 				this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs, o);
 				this.#CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs, o);
@@ -3420,13 +3355,11 @@ export default class ContentGuideCheck {
 			case CG_REQUEST_BS_CATEGORIES:
 				// box set categories response (6.8.2.3) has <GroupInformationTable> element
 				checkTopElementsAndCardinality(ProgramDescription, [{ name: tva.e_GroupInformationTable }], tvaEC.ProgramDescription, false, errs, "CG061");
-
 				this.#CheckGroupInformation(props, ProgramDescription, requestType, null, errs, null);
 				break;
 			case CG_REQUEST_BS_LISTS:
 				// box set lists response (6.8.3.3) has <GroupInformationTable> element
 				checkTopElementsAndCardinality(ProgramDescription, [{ name: tva.e_GroupInformationTable }], tvaEC.ProgramDescription, false, errs, "CG071");
-
 				this.#CheckGroupInformation(props, ProgramDescription, requestType, null, errs, null);
 				break;
 			case CG_REQUEST_BS_CONTENTS:
@@ -3446,7 +3379,6 @@ export default class ContentGuideCheck {
 						clause: "A177 clause 6.8.4.3",
 						descripition: `the required child elements of ${tva.e_ProgramDescription.elementize()} for Box Set Contents need to be provied`,
 					});
-
 				this.#CheckGroupInformation(props, ProgramDescription, requestType, groupIds, errs, o);
 				this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs, o);
 				this.#CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs, o);

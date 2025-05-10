@@ -19,13 +19,13 @@ import { keys } from "./common_errors.js";
  * 
  * @param {XmlElement} node      The element to check for the named attribute
  * @param {string}     attrName  The attribute whose name, without qualifying namespace, to find in @node
- * @returns true if an attribute named @attrName is defined for @node, otherwise false
+ * @returns the attribute named @attrName if defined for @node, otherwise false
  */
-let attrAnyNamespace = (node, attrName) => {
+export let attrAnyNamespace = (node, attrName) => {
 	let found = false;
 	node.attrs.forEach((attr) => {
 		if (attr.name == attrName)
-			found = true;
+			found = attr;
 	});
 	return found;
 }

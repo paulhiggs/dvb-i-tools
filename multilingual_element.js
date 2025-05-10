@@ -50,7 +50,8 @@ export function checkLanguage(validator, lang, loc, element, errs, errCode) {
  */
 export function mlLanguage(node) {
 	if (!(node instanceof XmlElement)) return NO_DOCUMENT_LANGUAGE;
-	if (node.attr(tva.a_lang)) return node.attr(tva.a_lang).value;
+	let langAttr = node.attrAnyNs(tva.a_lang);
+	if (langAttr) return langAttr.value;
 	return mlLanguage(node.parent);
 }
 
@@ -122,14 +123,14 @@ export function checkXMLLangs(elementName, elementLocation, node, errs, errCode,
  * @param {object}  validator  the validation class to use
  * @returns {string} the @lang attribute of the node element of the parentLang if it does not exist of is not specified
  */
-
 export function GetNodeLanguage(node, isRequired, errs, errCode, validator = null) {
 	if (!node) return NO_DOCUMENT_LANGUAGE;
-	if (isRequired && !node.attr(tva.a_lang))
+	if (isRequired && !node.attrAnyNs(tva.a_lang))
 		errs.addError({ code: `${errCode}-1`, message: `${tva.a_lang.attribute()} is required for ${node.name.quote()}`, key: "unspecified language", line: node.line });
 
 	let localLang = mlLanguage(node);
 
-	if (validator && node.attr(tva.a_lang) && localLang != NO_DOCUMENT_LANGUAGE) checkLanguage(validator, localLang, node.name, node, errs, `${errCode}-2`);
+	if (validator && node.attrAnyNs(tva.a_lang) && localLang != NO_DOCUMENT_LANGUAGE) 
+		checkLanguage(validator, localLang, node.name, node, errs, `${errCode}-2`);
 	return localLang;
 }
