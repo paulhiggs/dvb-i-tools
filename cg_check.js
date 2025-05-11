@@ -601,7 +601,7 @@ export default class ContentGuideCheck {
 									});
 								}
 								thisCountry.MinimumAge = pgChild;
-								let age = pgChild.content.parseInt();
+								let age = parseInt(pgChild.content);
 								if ((age < 4 || age > 18) && age != 255)
 									errs.addError({
 										code: `${errCode}-12`,
@@ -1280,7 +1280,7 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		const isParentGroup = parentElement.line == categoryGroup.line;
+		const isParentGroup = categoryGroup ? (parentElement.line == categoryGroup.line) : null;
 		const BasicDescription = parentElement.get(xPath(props.prefix, tva.e_BasicDescription), props.schema);
 		if (!BasicDescription) {
 			errs.addError(NoChildElement(tva.e_BasicDescription.elementize(), parentElement, null, "BD001"));
@@ -2051,7 +2051,7 @@ export default class ContentGuideCheck {
 		gi = 0;
 		while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
 			this.#ValidateGroupInformation(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupIds);
-			if (GroupInformation.line != categoryGroup.line) giCount++;
+			if (categoryGroup && GroupInformation.line != categoryGroup.line) giCount++;
 		}
 		if (categoryGroup) {
 			let numOfItems = categoryGroup.attr(tva.a_numOfItems) ? valUnsignedInt(categoryGroup.attr(tva.a_numOfItems).value) : 0;
@@ -2924,7 +2924,7 @@ export default class ContentGuideCheck {
 						{ name: tva.e_FirstShowing, minOccurs: 0 },
 						{ name: tva.e_Free, minOccurs: 0 },
 				  ],
-			tvaEC.ScheduleEvent,
+			prefix == "BE" ? tvaEC.BroadcastEvent : tvaEC.ScheduleEvent,
 			false,
 			errs,
 			`${prefix}003`
@@ -2988,13 +2988,13 @@ export default class ContentGuideCheck {
 			if (isUTCDateTime(pstElem.content)) {
 				let PublishedStartTime = new Date(pstElem.content);
 
-				if (scheduleStart && PublishedStartTime < scheduleStart)
+				if (startSchedule && PublishedStartTime < startSchedule)
 					errs.addError({
 						code: `${prefix}041`,
 						message: `${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is earlier than ${tva.a_start.attribute(tva.e_Schedule)}`,
 						multiElementError: [Schedule, pstElem],
 					});
-				if (scheduleEnd && PublishedStartTime > scheduleEnd)
+				if (endSchedule && PublishedStartTime > endSchedule)
 					errs.addError({
 						code: `${prefix}042`,
 						message: `${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is after ${tva.a_end.attribute(tva.e_Schedule)}`,
@@ -3002,9 +3002,9 @@ export default class ContentGuideCheck {
 					});
 
 				let pdElem = Event.get(xPath(props.prefix, tva.e_PublishedDuration), props.schema);
-				if (scheduleEnd && pdElem) {
+				if (endSchedule && pdElem) {
 					let parsedPublishedDuration = parseISOduration(pdElem.content);
-					if (parsedPublishedDuration.add(PublishedStartTime) > scheduleEnd)
+					if (parsedPublishedDuration.add(PublishedStartTime) > endSchedule)
 						errs.addError({
 							code: `${prefix}043`,
 							message: `${tva.e_PublishedStartTime}+${tva.e_PublishedDuration} of event is after ${tva.a_end.attribute(tva.e_Schedule)}`,
@@ -3058,7 +3058,7 @@ export default class ContentGuideCheck {
 			return;
 		}
 		this.#checkTAGUri(BroadcastEvent, errs, "BE999");
-		this.#ValidateEvent(BroadcastEvent, errs, programCRIDs, plCRIDs, currentProgramCRID, null);
+		this.#ValidateEvent(props, BroadcastEvent, errs, programCRIDs, plCRIDs, currentProgramCRID, null);
 	}
 
 	/**
@@ -3069,8 +3069,6 @@ export default class ContentGuideCheck {
 	 * @param {array}   programCRIDs        array of program crids defined in <ProgramInformationTable>
 	 * @param {array}   plCRIDs             array of program crids defined in <ProgramLocationTable>
 	 * @param {string}  currentProgramCRID  CRID of the currently airing program
-	 * @param {Date}    scheduleStart       Date representation of Schedule@start
-	 * @param {Date}    scheduleEnd         Date representation of Schedule@end
 	 * @param {Class}   errs                errors found in validaton
 	 */
 	/* private */ #ValidateScheduleEvents(props, Schedule, programCRIDs, plCRIDs, currentProgramCRID, errs) {
@@ -3177,7 +3175,6 @@ export default class ContentGuideCheck {
 
 		let cntODP = 0,
 			cntBE = 0,
-			foundServiceIds = [],
 			plCRIDs = [];
 
 		if (ProgramLocationTable.childNodes())
@@ -3198,7 +3195,7 @@ export default class ContentGuideCheck {
 			if (o.childCount != cntODP + cntBE)
 				errs.addError({
 					code: "PL021",
-					message: `number of items (${cntODP + cntSE}) in the ${tva.e_ProgramLocationTable.elementize()} does not match ${tva.a_numOfItems.attribute(
+					message: `number of items (${cntODP + cntBE}) in the ${tva.e_ProgramLocationTable.elementize()} does not match ${tva.a_numOfItems.attribute(
 						tva.e_GroupInformation
 					)} specified in ${CATEGORY_GROUP_NAME} (${o.childCount})`,
 				});
