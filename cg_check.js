@@ -2004,6 +2004,10 @@ export default class ContentGuideCheck {
 	 * @param {integer} o.childCount        the value from the @numItems attribute of the "category group"
 	 */
 	/* private */ #CheckGroupInformation(props, ProgramDescription, requestType, groupIds, errs, o) {
+		if (requestType == CG_REQUEST_BS_CONTENTS) {
+			this.#CheckGroupInformationBoxsetContents(props, ProgramDescription, requestType, groupIds, errs, o);
+			return;
+		}
 		if (!ProgramDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -2023,7 +2027,7 @@ export default class ContentGuideCheck {
 
 		// find which GroupInformation element is the "category group"
 		let categoryGroup = null;
-		if ([CG_REQUEST_BS_LISTS, CG_REQUEST_BS_CATEGORIES, CG_REQUEST_BS_CONTENTS].includes(requestType)) {
+		if ([CG_REQUEST_BS_LISTS, CG_REQUEST_BS_CATEGORIES].includes(requestType)) {
 			gi = 0;
 			while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
 				// this GroupInformation element is the "category group" if it does not contain a <MemberOf> element
@@ -2051,19 +2055,19 @@ export default class ContentGuideCheck {
 		gi = 0;
 		while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
 			this.#ValidateGroupInformation(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupIds);
-			if (categoryGroup && GroupInformation.line != categoryGroup.line) giCount++;
+			if (categoryGroup && GroupInformation.line == categoryGroup.line)
+				giCount++;
 		}
 		if (categoryGroup) {
-			let numOfItems = categoryGroup.attr(tva.a_numOfItems) ? valUnsignedInt(categoryGroup.attr(tva.a_numOfItems).value) : 0;
-			if (requestType != CG_REQUEST_BS_CONTENTS && numOfItems != giCount)
-				errs.addError({
-					code: "GI113",
-					message: `${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${numOfItems}) does match the number of items (${giCount})`,
-					line: categoryGroup.line,
-					key: "mismatch count",
-				});
-
-			if (o) o.childCount = numOfItems;
+				let numOfItems = categoryGroup.attr(tva.a_numOfItems) ? valUnsignedInt(categoryGroup.attr(tva.a_numOfItems).value) : 0;
+				if (requestType != CG_REQUEST_BS_CONTENTS && numOfItems != giCount)
+					errs.addError({
+						code: "GI113",
+						message: `${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${numOfItems}) does match the number of items (${giCount})`,
+						line: g.line,
+						key: "mismatch count",
+					});
+				if (o) o.childCount = numOfItems;
 		}
 
 		if (requestType == CG_REQUEST_MORE_EPISODES && giCount > 1)
@@ -2072,6 +2076,105 @@ export default class ContentGuideCheck {
 				message: `only one ${tva.e_GroupInformation.elementize()} element is premitted for this request type`,
 				line: GroupInformationTable.line,
 			});
+	}
+
+	/**
+	 * find and validate any <GroupInformation> elements in the <GroupInformationTable> for a Boxset Contents response
+	 *
+	 * @param {object}  props               Metadata of the XML document
+	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
+	 * @param {string}  requestType         the type of content guide request being checked
+	 * @param {array}   groupIds            buffer to recieve the group ids parsed (null if not needed)
+	 * @param {Class}   errs                errors found in validaton
+	 * @param {integer} o.childCount        the value from the @numItems attribute of the "category group"
+	 */
+	/* private */ #CheckGroupInformationBoxsetContents(props, ProgramDescription, requestType, groupIds, errs, o) {
+		if (!ProgramDescription) {
+			errs.addError({
+				type: APPLICATION,
+				code: "GIC000",
+				message: "CheckGroupInformationBoxsetContents() called with ProgramDescription==null",
+			});
+			return;
+		}
+		if (requestType != CG_REQUEST_BS_CONTENTS) {
+			errs.addError({
+				type: APPLICATION,
+				code: "GIC001",
+				message: `CheckGroupInformationBoxsetContents() called invalid requestType (${requestType})`,
+			});
+			return;
+		}
+		const GroupInformationTable = ProgramDescription.get(xPath(props.prefix, tva.e_GroupInformationTable), props.schema);
+		if (!GroupInformationTable) {
+			//errs.addError({code:"GIC101", message:`${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name.elementize()}`, line:ProgramDescription.line});
+			return;
+		}
+		const ERROR_KEY = "boxset contents";
+
+		GetNodeLanguage(GroupInformationTable, false, errs, "GIC102", this.#knownLanguages);
+
+		// Check all category groups (main and descendant)
+		// find which GroupInformation element is the "category group"
+		let contentsGroup = null, gi = 0, GroupInformation;
+		while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
+			// this GroupInformation element is the "contents group" if it does not contain a <MemberOf> element
+			if (CountChildElements(GroupInformation, tva.e_MemberOf) == 0) {
+				// this GroupInformation element is not a member of another GroupInformation so it must be the "contents group"
+				checkTopElementsAndCardinality(GroupInformation,
+					[{name: tva.e_GroupType},
+					 {name: tva.e_BasicDescription},],
+					tvaEC.GroupInformation, false, errs, "GIC111");
+				if (contentsGroup)
+					errs.addError({
+						code: "GIC112",
+						message: `only a single Contents group (a ${tva.e_GroupInformation} without a ${tva.e_MemberOf} child element) can be present in ${tva.e_GroupInformationTable.elementize()}`,
+						line: GroupInformation.line,
+						key: ERROR_KEY,
+					});
+				else
+					contentsGroup = GroupInformation;
+			}
+			else 
+				checkTopElementsAndCardinality(GroupInformation,
+					[{name: tva.e_GroupType},
+					 {name: tva.e_BasicDescription},
+					 {name: tva.e_MemberOf},
+					],
+					tvaEC.GroupInformation, false, errs, "GIC113");
+		}
+		if (!contentsGroup)
+			errs.addError({
+				code: "GIC115",
+				message: `a Contents group (a ${tva.e_GroupInformation} without a ${tva.e_MemberOf} child element) must be specified in ${tva.e_GroupInformationTable.elementize()} for this request type`,
+				line: GroupInformation.line,
+				key: ERROR_KEY,
+			});
+
+		// each series group (GroupInformation that includes a <Memberof> child element) must descend from the Contents group
+		if (contentsGroup) {
+			const cgCRID = contentsGroup.attrAnyNs(tva.a_crid) ? contentsGroup.attrAnyNs(tva.a_crid).value : "none";
+			while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
+				if (GroupInformation.line != contentsGroup.line) {
+					let MemberOf = GroupInformation.get(xPath(props.prefix, tva.e_MemberOf), props.schema);
+					if (MemberOf) {
+						if (MemberOf.attrAnyNs(tva.a_crid) && MemberOf.attrAnyNs(tva.a_crid).value != cgCRID)
+							errs.addError({
+								code:"GIC120",
+								message: `series group must have ${tva.a_crid.attribute(tva.e_MemberOf)} referring to the category group`,
+								fragment: MemberOf, 
+								key: ERROR_KEY,
+							});
+						if (MemberOf.anyAttrNS(tva.a_type) && MemberOf.anyAttrNs(tva.a_type).value != tva.t_MemberOfType)
+								errs.addError({
+									code: "GIC121",
+									message: `${attribute(`xsi:${tva.a_type}`)} must be ${tva.t_MemberOfType.quote()} for ${GroupInformation.name}.${MemberOf.name}`,
+									fragment: MemberOf,
+								});
+					}
+				}
+			}
+		}
 	}
 
 	/**
