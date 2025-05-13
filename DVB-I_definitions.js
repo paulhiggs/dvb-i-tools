@@ -372,6 +372,7 @@ export const dvbi = {
 	e_SourceMediaReference: "SourceMediaReference",
 	e_SourceType: "SourceType",
 	e_ssrc: "ssrc",
+	e_StandardVersion: "StandardVersion",
 	e_StillPictureFormat: "StillPictureFormat",
 	e_SubscriptionPackage: "SubscriptionPackage",
 	e_SubscriptionPackageList: "SubscriptionPackageList",

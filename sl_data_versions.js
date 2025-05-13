@@ -35,6 +35,7 @@ let SchemaVersions = [
 		schema: null,
 		status: DRAFT,
 		specVersion: "A177r7",
+		URN: "urn:dvb:metadata:dvbi:standardversion:7",
 	},
 	{
 		namespace: dvbi.A177r6_Namespace,
@@ -43,6 +44,7 @@ let SchemaVersions = [
 		schema: null,
 		status: CURRENT,
 		specVersion: "A177r6",
+		URN: "urn:dvb:metadata:dvbi:standardversion:6",
 	},
 	{
 		namespace: dvbi.A177r5_Namespace,
@@ -322,6 +324,14 @@ export function validContentGuideSourceLogo(HowRelated, namespace) {
 	// return true if val is a valid CS value Service Logo (A177 5.2.6.3)
 	return match(ContentGuideSourceLogos, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value() : nul, namespace);
 }
+
+/**
+ * determines if the provided URN is associated with a A177 specification verison
+ * 
+ * @param {String} urn   The URN to check
+ * @returns {bool} true is the specified URN is used to identify an A177 specification version, else false
+ */
+export let isA177specification_URN = (urn) => (SchemaVersions.find((v) => v?.URN == urn) != undefined);
 
 // TODO - change this to support sync/async and file/url reading
 console.log(chalk.yellow.underline("loading service list schemas..."));

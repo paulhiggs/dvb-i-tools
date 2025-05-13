@@ -58,6 +58,7 @@ import {
 	SCHEMA_r6,
 	SCHEMA_r7,
 	SCHEMA_unknown,
+	isA177specification_URN,
 } from "./sl_data_versions.js";
 import {
 	validServiceControlApplication,
@@ -2132,7 +2133,7 @@ export default class ServiceListCheck {
 				line: SL.root().line(),
 				key: keys.k_XSDValidation,
 			});
-			errs.errorDescriprion({
+			errs.errorDescription({
 				code: "SL004",
 				clause: "A177 clause 5.5.1",
 				description: `the root element of the service list XML instance document must be ${dvbi.e_ServiceList.elementize()}`,
@@ -2201,6 +2202,20 @@ export default class ServiceListCheck {
 					key: "invalid tag",
 					clause: "A177 clause 5.2.2",
 					description: "Service identifiers should use a registered URI scheme, such as the 'tag' URI scheme defined in IETF RFC 4151",
+				});
+		}
+
+		//check <ServiceList><StandardVersion>
+		let sv = 0, StandardVersion;
+		while ((StandardVersion = SL.get(xPath(props.prefix, dvbi.e_StandardVersion, ++sv), props.schema)) != null) {
+			if (!isA177specification_URN(StandardVersion.text())) 
+				errs.addError({
+					code: "SL017",
+					message: `"${StandardVersion.text()} is not a recognised URN for an A177 specification version`,
+					key: "invalid identifier",
+					fragment: StandardVersion,
+					clause: "A177 clause 4.6.1.1",
+					description: "Specification URN that is used to indicate acompatable specification version for this service list"
 				});
 		}
 
