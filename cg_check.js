@@ -3406,8 +3406,9 @@ export default class ContentGuideCheck {
 
 		this.#doSchemaVerification(CG, props, errs, "CG003");
 
-		GetNodeLanguage(CG.root, true, errs, "CG005", this.#knownLanguages);
-		let ProgramDescription = CG.get(xPath(props.prefix, tva.e_ProgramDescription), props.schema);
+		let TVAMain = CG.root;
+		GetNodeLanguage(TVAMain, true, errs, "CG005", this.#knownLanguages);
+		let ProgramDescription = TVAMain.get(xPath(props.prefix, tva.e_ProgramDescription), props.schema);
 		if (!ProgramDescription) {
 			errs.addError({ code: "CG006", message: `No ${tva.e_ProgramDescription.elementize()} element specified.` });
 			return;

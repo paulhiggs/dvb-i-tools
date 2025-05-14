@@ -1682,7 +1682,6 @@ export default class ServiceListCheck {
 	 * validate a Service or TestService element
 	 *
 	 * @param {object}     props                         Metadata of the XML document
-	 * @param {XmlElement} SL                            the <ServiceList> being checked
 	 * @param {XmlElement} service                       the service or testservice element to check
 	 * @param {string}     thisServiceId                 the identifier of the service
 	 * @param {array}      knownServices                 services found and checked thus far
@@ -1694,7 +1693,6 @@ export default class ServiceListCheck {
 	 */
 	/*private*/ #validateService(
 		props,
-		SL,
 		service,
 		thisServiceId,
 		knownServices,
@@ -1862,13 +1860,15 @@ export default class ServiceListCheck {
 			if (NVOD.attrAnyNs(dvbi.a_mode) && NVOD.attrAnyNs(dvbi.a_mode).value == dvbi.NVOD_MODE_TIMESHIFTED) {
 				checkAttributes(NVOD, [dvbi.a_mode, dvbi.a_reference], [dvbi.a_offset], dvbiEA.NVOD, errs, "SL223");
 
+				let ServiceList = service.parent;
+
 				if (NVOD.attrAnyNs(dvbi.a_reference)) {
 					// check to see if there is a service whose <UniqueIdentifier> equals NVOD@reference and has a NVOD@mode==reference
 					let s2 = 0,
 						service2,
 						referredService = null;
 
-					while ((service2 = SL.get("//" + xPath(props.prefix, dvbi.e_Service, ++s2), props.schema)) != null && !referredService) {
+					while ((service2 = ServiceList.get(xPath(props.prefix, dvbi.e_Service, ++s2), props.schema)) != null && !referredService) {
 						let ui = service2.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
 						if (ui && ui.content == NVOD.attrAnyNs(dvbi.a_reference).value) referredService = service2;
 					}
@@ -2115,26 +2115,26 @@ export default class ServiceListCheck {
 			});
 			return;
 		}
-
+		let ServiceList = SL.root;
 		let slRequiredAttributes = [dvbi.a_version];
 		if (SchemaVersion(props.namespace) >= SCHEMA_r3) slRequiredAttributes.push(tva.a_lang);
 		if (SchemaVersion(props.namespace) >= SCHEMA_r6) slRequiredAttributes.push(dvbi.a_id);
-		checkAttributes(SL.root, slRequiredAttributes, [dvbi.a_responseStatus, "schemaLocation"], dvbiEA.ServiceList, errs, "SL011");
+		checkAttributes(ServiceList, slRequiredAttributes, [dvbi.a_responseStatus, "schemaLocation"], dvbiEA.ServiceList, errs, "SL011");
 
 		// check ServiceList@version
 		// validated by schema
 
 		// check ServiceList@lang
-		if (SL.root.attrAnyNs(tva.a_lang)) {
-			ValidateLanguage(this.#knownLanguages, SL.root.attrAnyNs(tva.a_lang).value, errs, "SL012", dvbi.e_ServiceList, SL.root.line);
+		if (ServiceList.attrAnyNs(tva.a_lang)) {
+			ValidateLanguage(this.#knownLanguages, ServiceList.attrAnyNs(tva.a_lang).value, errs, "SL012", dvbi.e_ServiceList, ServiceList.line);
 		}
 
 		// check ServiceList@responseStatus
 		// validated by schema
 
 		// check ServiceList@id
-		if (SL.root.attrAnyNs(dvbi.a_id)) {
-			let thisServiceListId = SL.root.attrAnyNs(dvbi.a_id).value;
+		if (ServiceList.attrAnyNs(dvbi.a_id)) {
+			let thisServiceListId = ServiceList.attrAnyNs(dvbi.a_id).value;
 			if (!validServiceListIdentifier(thisServiceListId))
 				errs.addError({
 					code: "SL016",
@@ -2147,7 +2147,7 @@ export default class ServiceListCheck {
 
 		//check <ServiceList><StandardVersion>
 		let sv = 0, StandardVersion;
-		while ((StandardVersion = SL.get(xPath(props.prefix, dvbi.e_StandardVersion, ++sv), props.schema)) != null) {
+		while ((StandardVersion = ServiceList.get(xPath(props.prefix, dvbi.e_StandardVersion, ++sv), props.schema)) != null) {
 			if (!isA177specification_URN(StandardVersion.content)) 
 				errs.addError({
 					code: "SL017",
@@ -2160,14 +2160,14 @@ export default class ServiceListCheck {
 		}
 
 		//check <ServiceList><Name>
-		checkXMLLangs(dvbi.e_Name, dvbi.e_ServiceList, SL, errs, "SL020", this.#knownLanguages);
+		checkXMLLangs(dvbi.e_Name, dvbi.e_ServiceList, ServiceList, errs, "SL020", this.#knownLanguages);
 
 		//check <ServiceList><ProviderName>
-		checkXMLLangs(dvbi.e_ProviderName, dvbi.e_ServiceList, SL, errs, "SL021", this.#knownLanguages);
+		checkXMLLangs(dvbi.e_ProviderName, dvbi.e_ServiceList, ServiceList, errs, "SL021", this.#knownLanguages);
 
 		//check <ServiceList><LanguageList>
 		let announcedAudioLanguages = [];
-		let LanguageList = SL.get("//" + xPath(props.prefix, dvbi.e_LanguageList), props.schema);
+		let LanguageList = ServiceList.get(xPath(props.prefix, dvbi.e_LanguageList), props.schema);
 		if (LanguageList) {
 			let l = 0,
 				Language;
@@ -2190,7 +2190,7 @@ export default class ServiceListCheck {
 		let rm = 0,
 			countControlApps = 0,
 			RelatedMaterial;
-		while ((RelatedMaterial = SL.get("//" + xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
+		while ((RelatedMaterial = ServiceList.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
 			let foundHref = this.#validateRelatedMaterial(props, RelatedMaterial, errs, "service list", SERVICE_LIST_RM, "SL040");
 			if (foundHref != "" && validServiceControlApplication(foundHref, SchemaVersion(props.namespace))) countControlApps++;
 		}
@@ -2204,7 +2204,7 @@ export default class ServiceListCheck {
 
 		// check <ServiceList><RegionList> and remember regionID values
 		let knownRegionIDs = [],
-			RegionList = SL.get("//" + xPath(props.prefix, dvbi.e_RegionList), props.schema);
+			RegionList = ServiceList.get(xPath(props.prefix, dvbi.e_RegionList), props.schema);
 		if (RegionList) {
 			// recurse the regionlist - Regions can be nested in Regions
 			let r = 0,
@@ -2216,7 +2216,7 @@ export default class ServiceListCheck {
 		let tr = 0,
 			TargetRegion,
 			rBuf = [];
-		while ((TargetRegion = SL.get("//" + xPath(props.prefix, dvbi.e_TargetRegion, ++tr), props.schema)) != null) {
+		while ((TargetRegion = ServiceList.get(xPath(props.prefix, dvbi.e_TargetRegion, ++tr), props.schema)) != null) {
 			let found = knownRegionIDs.find((r) => r.region == TargetRegion.content);
 			if (found == undefined) errs.addError(UnspecifiedTargetRegion(TargetRegion.content, "service list", "SL051"));
 			else if (!found.selectable)
@@ -2240,7 +2240,7 @@ export default class ServiceListCheck {
 
 		// check <ServiceList><SubscriptionPackageList>
 		let declaredSubscriptionPackages = [];
-		let SubscriptionPackageList = SL.get("//" + xPath(props.prefix, dvbi.e_SubscriptionPackageList), props.schema);
+		let SubscriptionPackageList = ServiceList.get(xPath(props.prefix, dvbi.e_SubscriptionPackageList), props.schema);
 		if (SubscriptionPackageList) {
 			let sp = 0,
 				SubscriptionPackage;
@@ -2262,7 +2262,7 @@ export default class ServiceListCheck {
 
 		//check service list <ContentGuideSourceList>
 		let ContentGuideSourceIDs = [],
-			CGSourceList = SL.get("//" + xPath(props.prefix, dvbi.e_ContentGuideSourceList), props.schema);
+			CGSourceList = ServiceList.get(xPath(props.prefix, dvbi.e_ContentGuideSourceList), props.schema);
 		if (CGSourceList) {
 			let cgs = 0,
 				CGSource;
@@ -2283,7 +2283,7 @@ export default class ServiceListCheck {
 		}
 
 		// check  elements in <ServiceList><ContentGuideSource>
-		let slGCS = SL.get("//" + xPath(props.prefix, dvbi.e_ContentGuideSource), props.schema);
+		let slGCS = ServiceList.get(xPath(props.prefix, dvbi.e_ContentGuideSource), props.schema);
 		if (slGCS) this.#validateAContentGuideSource(props, slGCS, errs, `${dvbi.e_ServiceList}.${dvbi.e_ContentGuideSource}`, "SL080");
 
 		errs.setW("num services", 0);
@@ -2292,12 +2292,11 @@ export default class ServiceListCheck {
 		let s = 0,
 			service,
 			knownServices = [];
-		while ((service = SL.get("//" + xPath(props.prefix, dvbi.e_Service, ++s), props.schema)) != null) {
+		while ((service = ServiceList.get(xPath(props.prefix, dvbi.e_Service, ++s), props.schema)) != null) {
 			// for each service
 			errs.setW("num services", s);
 			this.#validateService(
 				props,
-				SL,
 				service,
 				`service-${s}`, // use a default value in case <UniqueIdentifier> is not specified
 				knownServices,
@@ -2315,12 +2314,11 @@ export default class ServiceListCheck {
 			// check <TestService>
 			let ts = 0,
 				testService;
-			while ((testService = SL.get("//" + xPath(props.prefix, dvbi.e_TestService, ++ts), props.schema)) != null) {
+			while ((testService = ServiceList.get(xPath(props.prefix, dvbi.e_TestService, ++ts), props.schema)) != null) {
 				// for each service
 				errs.setW("num test services", ts);
 				this.#validateService(
 					props,
-					SL,
 					testService,
 					`testservice-${ts}`, // use a default value in case <UniqueIdentifier> is not specified,
 					knownServices,
@@ -2336,7 +2334,7 @@ export default class ServiceListCheck {
 		// check <Service><ContentGuideServiceRef>
 		// issues a warning if this is a reference to self
 		s = 0;
-		while ((service = SL.get("//" + xPath(props.prefix, dvbi.e_Service, ++s), props.schema)) != null) {
+		while ((service = ServiceList.get(xPath(props.prefix, dvbi.e_Service, ++s), props.schema)) != null) {
 			let CGSR = service.get(xPath(props.prefix, dvbi.e_ContentGuideServiceRef), props.schema);
 			if (CGSR) {
 				let uniqueID = service.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
@@ -2356,7 +2354,7 @@ export default class ServiceListCheck {
 			// issues a warning if this is a reference to self
 			let ts = 0,
 				testService;
-			while ((testService = SL.get("//" + xPath(props.prefix, dvbi.e_TestService, ++ts), props.schema)) != null) {
+			while ((testService = ServiceList.get(xPath(props.prefix, dvbi.e_TestService, ++ts), props.schema)) != null) {
 				let CGSR = testService.get(xPath(props.prefix, dvbi.e_ContentGuideServiceRef), props.schema);
 				if (CGSR) {
 					let uniqueID = testService.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
@@ -2372,7 +2370,7 @@ export default class ServiceListCheck {
 			}
 		}
 		// check <ServiceList><LCNTableList>
-		let LCNtableList = SL.get("//" + xPath(props.prefix, dvbi.e_LCNTableList), props.schema);
+		let LCNtableList = ServiceList.get(xPath(props.prefix, dvbi.e_LCNTableList), props.schema);
 		if (LCNtableList) {
 			let l = 0,
 				LCNTable,
