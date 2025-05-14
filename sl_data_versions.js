@@ -257,7 +257,8 @@ function match(permittedValues, value, version = ANY_NAMESPACE) {
  */
 export function validOutScheduleHours(HowRelated, namespace) {
 	// return true if val is a valid CS value for Out of Service Banners (A177 5.2.5.3)
-	return match(OutOfScheduledHoursBanners, HowRelated.attrAnyNs(dvbi.a_href) ? HowRelated.attrAnyNs(dvbi.a_href).value : null, namespace);
+	let HRhref = HowRelated.attrAnyNs(dvbi.a_href);
+	return match(OutOfScheduledHoursBanners, HRhref ? HRhref.value : null, namespace);
 }
 
 /**
@@ -270,7 +271,8 @@ export function validOutScheduleHours(HowRelated, namespace) {
  */
 export function validContentFinishedBanner(HowRelated, namespace) {
 	// return true if val is a valid CS value for Content Finished Banner (A177 5.2.7.3)
-	return match(ContentFinishedBanners, HowRelated.attrAnyNs(dvbi.a_href) ? HowRelated.attrAnyNs(dvbi.a_href).value : null, namespace);
+	let HRhref = HowRelated.attrAnyNs(dvbi.a_href);
+	return match(ContentFinishedBanners, HRhref ? HRhref.value : null, namespace);
 }
 
 /**
@@ -282,11 +284,13 @@ export function validContentFinishedBanner(HowRelated, namespace) {
  */
 export function validServiceListLogo(HowRelated, namespace) {
 	// return true if HowRelated@href is a valid CS value Service List Logo (A177 5.2.6.1)
-	return match(ServiceListLogos, HowRelated.attrAnyNs(dvbi.a_href) ? HowRelated.attrAnyNs(dvbi.a_href).value : null, namespace);
+	let HRhref = HowRelated.attrAnyNs(dvbi.a_href);
+	return match(ServiceListLogos, HRhref ? HRhref.value : null, namespace);
 }
 
 export function validServiceAgreementApp(HowRelated, namespace) {
-	return HowRelated.attrAnyNs(dvbi.a_href) ? validAgreementApplication(HowRelated.attrAnyNs(dvbi.a_href).value, SchemaVersion(namespace)) : false;
+	let HRhref = HowRelated.attrAnyNs(dvbi.a_href);
+	return HRhref ? validAgreementApplication(HRhref.value, SchemaVersion(namespace)) : false;
 }
 
 /**
@@ -298,7 +302,8 @@ export function validServiceAgreementApp(HowRelated, namespace) {
  */
 export function validServiceLogo(HowRelated, namespace) {
 	// return true if val is a valid CS value Service Logo (A177 5.2.6.2)
-	return match(ServiceLogos, HowRelated.attrAnyNs(dvbi.a_href) ? HowRelated.attrAnyNs(dvbi.a_href).value : null, namespace);
+	let HRhref = HowRelated.attrAnyNs(dvbi.a_href);
+	return match(ServiceLogos, HRhref ? HRhref.value : null, namespace);
 }
 
 /**
@@ -310,7 +315,8 @@ export function validServiceLogo(HowRelated, namespace) {
  */
 export function validServiceBanner(HowRelated, namespace) {
 	// return true if val is a valid CS value Service Banner (A177 5.2.6.x)
-	return match(ServiceBanners, HowRelated.attrAnyNs(dvbi.a_href) ? HowRelated.attrAnyNs(dvbi.a_href).value : null, namespace);
+	let HRhref = HowRelated.attrAnyNs(dvbi.a_href);
+	return match(ServiceBanners, HRhref ? HRhref.value : null, namespace);
 }
 
 /**
@@ -322,7 +328,8 @@ export function validServiceBanner(HowRelated, namespace) {
  */
 export function validContentGuideSourceLogo(HowRelated, namespace) {
 	// return true if val is a valid CS value Service Logo (A177 5.2.6.3)
-	return match(ContentGuideSourceLogos, HowRelated.attrAnyNs(dvbi.a_href) ? HowRelated.attrAnyNs(dvbi.a_href).value : nul, namespace);
+	let HRhref = HowRelated.attrAnyNs(dvbi.a_href);
+	return match(ContentGuideSourceLogos, HRhref ? HRhref.value : nul, namespace);
 }
 
 /**
