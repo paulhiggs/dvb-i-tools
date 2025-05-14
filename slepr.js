@@ -189,12 +189,17 @@ export default class SLEPR {
 			res.status(400);
 			return false;
 		}
-		let slepr = parseXmlString(masterSLEPR);
+		let slepr = XmlDocument.fromString(masterSLEPR); 
 
 		let SLEPR_SCHEMA = {},
 			SCHEMA_PREFIX = slepr.root.namespacePrefix,
 			SCHEMA_NAMESPACE = slepr.root.namespaceUri;
 		SLEPR_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
+		if (SCHEMA_PREFIX == "") {
+			SCHEMA_PREFIX = "__RANDOM__";
+			SLEPR_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
+			SL.root.addNsDeclaration(SCHEMA_NAMESPACE, SCHEMA_PREFIX);
+		}
 
 		let props = {
 			schema: SLEPR_SCHEMA,
@@ -231,7 +236,7 @@ export default class SLEPR {
 					// remove services that do not match the specified regulator list flag
 					if (req.query.regulatorListFlag) {
 						// The regulatorListFlag has been specified in the query, so it has to match. Default in instance document is "false"
-						let flag = serv.attr(dvbi.a_regulatorListFlag) ? serv.attr(dvbi.a_regulatorListFlag).value : "false";
+						let flag = serv.attrAnyNs(dvbi.a_regulatorListFlag) ? serv.attrAnyNs(dvbi.a_regulatorListFlag).value : "false";
 						if (req.query.regulatorListFlag != flag) removeService = true;
 					}
 

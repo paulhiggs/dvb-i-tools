@@ -18,8 +18,6 @@ import { datatypeIs } from "./phlib/phlib.js";
  * @returns {string}  the XPath selector
  */
 export let xPath = (SCHEMA_PREFIX, elementName, index = null) => `${SCHEMA_PREFIX}:${elementName}${index ? `[${index}]` : ""}`;
-//export let xPath = (SCHEMA_PREFIX, elementName, index = null) => XmlXPath.compile(`${SCHEMA_PREFIX.length ? SCHEMA_PREFIX + ":" : ""}${elementName}${index ? `[${index}]` : ""}`);
-//export let xPath = (SCHEMA_PREFIX, elementName, index = null) => `${elementName}${index ? `[${index}]` : ""}`;
 
 /**
  * constructs an XPath based on the provided arguments
@@ -29,14 +27,12 @@ export let xPath = (SCHEMA_PREFIX, elementName, index = null) => `${SCHEMA_PREFI
  * @returns {string} the XPath selector
  */
 export let xPathM = (SCHEMA_PREFIX, elementNames) => datatypeIs(elementNames, "array") ? `${SCHEMA_PREFIX}:${elementNames.join(`/${SCHEMA_PREFIX}:`)}` : xPath(SCHEMA_PREFIX, elementNames);
-//export let xPathM = (SCHEMA_PREFIX, elementNames) => datatypeIs(elementNames, "array") ? XmlXPath.compile(`${SCHEMA_PREFIX.length ? SCHEMA_PREFIX + ":" : ""}${elementNames.join(`/${SCHEMA_PREFIX}:`)}`) : xPath(SCHEMA_PREFIX, elementNames);
-//export let xPathM = (SCHEMA_PREFIX, elementNames) => datatypeIs(elementNames, "array") ? `${elementNames.join(`/`)}` : xPath(SCHEMA_PREFIX, elementNames);
 
 /**
  * Finds the first named child element
  *
- * @param {*} element 								The containing parent element
- * @param {string} childElementName 	The name of the child element to find
+ * @param {XmlElement} element           The containing parent element
+ * @param {string}    childElementName   The name of the child element to find
  * @returns the named child element or undefined if not present
  */
 let getFirstElementByTagName = (element, childElementName) => element.childNodes()?.find((c) => (c instanceof XmlElement) && c.name == childElementName);
@@ -178,8 +174,8 @@ export function parseISOduration(duration) {
 /**
  * counts the number of named elements in the specificed node
  * *
- * @param {XMLnode} node             the libxmljs node to check
- * @param {String}  childElementName the name of the child element to count
+ * @param {XmlElement} node             the libxmljs node to check
+ * @param {String}     childElementName the name of the child element to count
  * @returns {integer} the number of named child elments
  */
 export function CountChildElements(node, childElementName) {
@@ -193,9 +189,9 @@ export function CountChildElements(node, childElementName) {
 }
 
 /**
- * determines if the specified value is already in the array
+ * determines if the specified value is already in the array and adds it if it is not
  * *
- * @param {Array} found    the libxmljs node to check
+ * @param {Array} found    an array on non-duplicated values
  * @param {String}  val    the value whose existance is to be checked
  * @returns {boolean} true if @val is already present in @found, else false
  */

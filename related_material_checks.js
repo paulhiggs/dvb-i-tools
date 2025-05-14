@@ -62,10 +62,10 @@ function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, 
 	if (!HowRelated || !MediaLocator) return;
 	checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, `${errCode}-2`);
 
-	if (HowRelated.attr(tva.a_href) && !allowedHowRelated.includes(HowRelated.attr(tva.a_href).value)) {
+	if (HowRelated.attrAnyNs(tva.a_href) && !allowedHowRelated.includes(HowRelated.attrAnyNs(tva.a_href).value)) {
 		errs.addError({
 			code: `${errCode}-10`,
-			message: `${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value.quote()} ius not valid for this use`,
+			message: `${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attrAnyNs(tva.a_href).value.quote()} ius not valid for this use`,
 			fragment: HowRelated,
 		});
 		return;
@@ -83,8 +83,8 @@ function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, 
 					StillPictureFormat = child;
 					checkAttributes(child, [tva.a_horizontalSize, tva.a_verticalSize, tva.a_href], [], tvaEA.SillPictureFormat, errs, `${errCode}-12`);
 
-					if (child.attr(tva.a_href))
-						switch (child.attr(tva.a_href).value) {
+					if (child.attrAnyNs(tva.a_href))
+						switch (child.attrAnyNs(tva.a_href).value) {
 							case mpeg7.JPEG_IMAGE_CS_VALUE:
 								isJPEG = true;
 								break;
@@ -93,7 +93,7 @@ function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, 
 								break;
 							default:
 								cg_InvalidHrefValue(
-									child.attr(tva.a_href).value,
+									child.attrAnyNs(tva.a_href).value,
 									child,
 									`${RelatedMaterial.name}.${tva.e_Format}.${tva.e_StillPictureFormat}`,
 									location,
@@ -113,8 +113,8 @@ function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, 
 			if (child.name == tva.e_MediaUri) {
 				hasMediaURI = true;
 				checkAttributes(child, [tva.a_contentType], [], tvaEA.MediaUri, errs, `${errCode}-22`);
-				if (child.attr(tva.a_contentType)) {
-					const contentType = child.attr(tva.a_contentType).value;
+				if (child.attrAnyNs(tva.a_contentType)) {
+					const contentType = child.attrAnyNs(tva.a_contentType).value;
 					if (!isAllowedImageMime(contentType))
 						errs.addError({
 							code: `${errCode}-23`,
@@ -138,8 +138,8 @@ function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, 
 					});
 			}
 		});
-	if (languageValidator && MediaLocator.attr(dvbi.a_contentLanguage))
-		checkLanguage(languageValidator, MediaLocator.attr(dvbi.a_contentLanguage).value, MediaLocator.name, MediaLocator, errs, `${errCode}-27`);
+	if (languageValidator && MediaLocator.attrAnyNs(dvbi.a_contentLanguage))
+		checkLanguage(languageValidator, MediaLocator.attrAnyNs(dvbi.a_contentLanguage).value, MediaLocator.name, MediaLocator, errs, `${errCode}-27`);
 	if (!hasMediaURI)
 		errs.addError({
 			code: `${errCode}-26`,
@@ -182,16 +182,16 @@ export function checkValidLogos(RelatedMaterial, errs, errCode, location, langua
 				checkTopElementsAndCardinality(MediaLocator, [{ name: tva.e_MediaUri }], tvaEC.MediaLocator, false, errs, `${errCode}-1`);
 				checkAttributes(MediaLocator, [], [dvbi.a_contentLanguage], dvbiEA.MediaLocator, errs, `${errCode}-2`);
 
-				if (languageValidator && MediaLocator.attr(dvbi.a_contentLanguage))
-					checkLanguage(languageValidator, MediaLocator.attr(dvbi.a_contentLanguage).value, location, MediaLocator, errs, `${errCode}-3`);
+				if (languageValidator && MediaLocator.attrAnyNs(dvbi.a_contentLanguage))
+					checkLanguage(languageValidator, MediaLocator.attrAnyNs(dvbi.a_contentLanguage).value, location, MediaLocator, errs, `${errCode}-3`);
 
 				if (MediaLocator.childNodes())
 					MediaLocator.childNodes().forEachSubElement((MediaUri) => {
 						if (MediaUri.name == tva.e_MediaUri) {
 							checkAttributes(MediaUri, [tva.a_contentType], [], tvaEA.MediaUri, errs, `${errCode}-4`);
 
-							if (MediaUri.attr(tva.a_contentType)) {
-								let contentType = MediaUri.attr(tva.a_contentType).value;
+							if (MediaUri.attrAnyNs(tva.a_contentType)) {
+								let contentType = MediaUri.attrAnyNs(tva.a_contentType).value;
 
 								if (!isJPEGmime(contentType) && !isPNGmime(contentType) && !isWebPmime(contentType))
 									errs.addError({

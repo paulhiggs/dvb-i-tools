@@ -14,12 +14,8 @@ console.log(chalk.yellow('initialize extensions'));
  */
 if (!XmlElement.prototype.attrAnyNs) {
 	XmlElement.prototype.attrAnyNs = function (name) {
-		let rc = null;
-		this.attrs.forEach(function(a) { 
-			if (a.name == name) 
-				rc = a;
-			});
-		return rc;
+		let rc = this.attrs.find((a) => a.name == name)
+		return rc ? rc : null;
 	}
 }
 
@@ -38,6 +34,7 @@ if (!XmlElement.prototype.childNodes) {
 	};
 }
 
+
 if (!XmlDocument.prototype.childNodes) {
 	XmlDocument.prototype.childNodes = function () {
 		if (this == null) {
@@ -52,8 +49,6 @@ if (!XmlDocument.prototype.childNodes) {
 		return res;
 	};
 }
-
-
 
 
 if (!Array.prototype.forEachSubElement) {

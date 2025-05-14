@@ -24,6 +24,7 @@
 	<element name="Playlist" type="dvbisd:DASHPlaylistType"/>
 	<complexType name="ServiceListType">
 		<sequence>
+			<element name="StandardVersion" type="mpeg7:termReferenceType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="Name" type="mpeg7:TextualType" maxOccurs="unbounded"/>
 			<element name="ProviderName" type="mpeg7:TextualType" maxOccurs="unbounded"/>
 			<element name="LanguageList" type="dvbisd:LanguageListType" minOccurs="0"/>

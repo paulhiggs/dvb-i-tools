@@ -73,7 +73,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 		if (children)
 			children.forEachSubElement((e) => {
 				if (e.name == tva.e_Purpose) {
-					let href = e.attr(tva.a_href);
+					let href = e.attrAnyNs(tva.a_href);
 					if (href) {
 						let purposeTerm = href.value;
 						if (!cs.AccessibilityPurposeCS.isIn(purposeTerm))
@@ -136,7 +136,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 		if (children)
 			children.forEachSubElement((e) => {
 				if (e.name == childName) {
-					let href = e.attr(tva.a_href) ? e.attr(tva.a_href).value : null;
+					let href = e.attrAnyNs(tva.a_href) ? e.attrAnyNs(tva.a_href).value : null;
 					if (href && !cs.isIn(href)) {
 						errs.addError({
 							code: `${errCode}-${errNum}`,
@@ -159,6 +159,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 		if (children)
 			children.forEachSubElement((e) => {
 				if (e.name == childName) {
+					let languageCode = e.content;
 					if (cs.KnownLanguages.checkSignLanguage(languageCode) != cs.KnownLanguages.languageKnown)
 						errs.addError({
 							code: `${errCode}-${errNum}b`,
@@ -194,11 +195,11 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 		if (children)
 			children.forEachSubElement((e) => {
 				if (e.name == childName) {
-					if (e.attr(tva.a_purpose) && !cs.AudioPurposeCS.isIn(e.attr(tva.a_purpose).value))
+					if (e.attrAnyNs(tva.a_purpose) && !cs.AudioPurposeCS.isIn(e.attrAnyNs(tva.a_purpose).value))
 						errs.addError({
 							code: errNum,
 							fragment: e,
-							message: `"${e.attr(tva.a_purpose).value}" not not valid for ${elem.name.elementize()}${e.name.elementize()}`,
+							message: `"${e.attrAnyNs(tva.a_purpose).value}" not not valid for ${elem.name.elementize()}${e.name.elementize()}`,
 							key: ACCESSIBILITY_CHECK_KEY,
 						});
 				}
@@ -231,21 +232,21 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 							switch (e2.name) {
 								case tva.e_Coding:
 									// AccessibilityAttributes.*.AudioAttribites.Coding
-									if (e2.attr(tva.a_href) && !cs.AudioCodecCS.isIn(e2.attr(tva.a_href).value))
+									if (e2.attrAnyNs(tva.a_href) && !cs.AudioCodecCS.isIn(e2.attrAnyNs(tva.a_href).value))
 										errs.addError({
 											code: `${errCode}-${errNum}d`,
 											fragment: e2,
-											message: `"${e2.attr(tva.a_href).value}" not not valid for ${elem.name.elementize()}${e.name.elementize()}${e2.name.elementize()}`,
+											message: `"${e2.attrAnyNs(tva.a_href).value}" not not valid for ${elem.name.elementize()}${e.name.elementize()}${e2.name.elementize()}`,
 											key: ACCESSIBILITY_CHECK_KEY,
 										});
 									break;
 								case tva.e_MixType:
 									// AccessibilityAttributes.*.AudioAttribites.MixType
-									if (e2.attr(tva.a_href) && !cs.AudioPresentationCS.isIn(e2.attr(tva.a_href).value))
+									if (e2.attrAnyNs(tva.a_href) && !cs.AudioPresentationCS.isIn(e2.attrAnyNs(tva.a_href).value))
 										errs.addError({
 											code: `${errCode}-${errNum}e`,
 											fragment: e2,
-											message: `"${e2.attr(tva.a_href).value}" not not valid for ${elem.name.elementize()}${e.name.elementize()}${e2.name.elementize()}`,
+											message: `"${e2.attrAnyNs(tva.a_href).value}" not not valid for ${elem.name.elementize()}${e.name.elementize()}${e2.name.elementize()}`,
 											key: ACCESSIBILITY_CHECK_KEY,
 										});
 									break;

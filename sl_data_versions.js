@@ -35,6 +35,7 @@ let SchemaVersions = [
 		schema: null,
 		status: DRAFT,
 		specVersion: "A177r7",
+		URN: "urn:dvb:metadata:dvbi:standardversion:7",
 	},
 	{
 		namespace: dvbi.A177r6_Namespace,
@@ -43,6 +44,7 @@ let SchemaVersions = [
 		schema: null,
 		status: CURRENT,
 		specVersion: "A177r6",
+		URN: "urn:dvb:metadata:dvbi:standardversion:6",
 	},
 	{
 		namespace: dvbi.A177r5_Namespace,
@@ -255,7 +257,7 @@ function match(permittedValues, value, version = ANY_NAMESPACE) {
  */
 export function validOutScheduleHours(HowRelated, namespace) {
 	// return true if val is a valid CS value for Out of Service Banners (A177 5.2.5.3)
-	return match(OutOfScheduledHoursBanners, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value : null, namespace);
+	return match(OutOfScheduledHoursBanners, HowRelated.attrAnyNs(dvbi.a_href) ? HowRelated.attrAnyNs(dvbi.a_href).value : null, namespace);
 }
 
 /**
@@ -268,7 +270,7 @@ export function validOutScheduleHours(HowRelated, namespace) {
  */
 export function validContentFinishedBanner(HowRelated, namespace) {
 	// return true if val is a valid CS value for Content Finished Banner (A177 5.2.7.3)
-	return match(ContentFinishedBanners, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value : null, namespace);
+	return match(ContentFinishedBanners, HowRelated.attrAnyNs(dvbi.a_href) ? HowRelated.attrAnyNs(dvbi.a_href).value : null, namespace);
 }
 
 /**
@@ -280,11 +282,11 @@ export function validContentFinishedBanner(HowRelated, namespace) {
  */
 export function validServiceListLogo(HowRelated, namespace) {
 	// return true if HowRelated@href is a valid CS value Service List Logo (A177 5.2.6.1)
-	return match(ServiceListLogos, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value : null, namespace);
+	return match(ServiceListLogos, HowRelated.attrAnyNs(dvbi.a_href) ? HowRelated.attrAnyNs(dvbi.a_href).value : null, namespace);
 }
 
 export function validServiceAgreementApp(HowRelated, namespace) {
-	return HowRelated.attr(dvbi.a_href) ? validAgreementApplication(HowRelated.attr(dvbi.a_href).value, SchemaVersion(namespace)) : false;
+	return HowRelated.attrAnyNs(dvbi.a_href) ? validAgreementApplication(HowRelated.attrAnyNs(dvbi.a_href).value, SchemaVersion(namespace)) : false;
 }
 
 /**
@@ -296,7 +298,7 @@ export function validServiceAgreementApp(HowRelated, namespace) {
  */
 export function validServiceLogo(HowRelated, namespace) {
 	// return true if val is a valid CS value Service Logo (A177 5.2.6.2)
-	return match(ServiceLogos, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value : null, namespace);
+	return match(ServiceLogos, HowRelated.attrAnyNs(dvbi.a_href) ? HowRelated.attrAnyNs(dvbi.a_href).value : null, namespace);
 }
 
 /**
@@ -308,7 +310,7 @@ export function validServiceLogo(HowRelated, namespace) {
  */
 export function validServiceBanner(HowRelated, namespace) {
 	// return true if val is a valid CS value Service Banner (A177 5.2.6.x)
-	return match(ServiceBanners, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value : null, namespace);
+	return match(ServiceBanners, HowRelated.attrAnyNs(dvbi.a_href) ? HowRelated.attrAnyNs(dvbi.a_href).value : null, namespace);
 }
 
 /**
@@ -320,8 +322,16 @@ export function validServiceBanner(HowRelated, namespace) {
  */
 export function validContentGuideSourceLogo(HowRelated, namespace) {
 	// return true if val is a valid CS value Service Logo (A177 5.2.6.3)
-	return match(ContentGuideSourceLogos, HowRelated.attr(dvbi.a_href) ? HowRelated.attr(dvbi.a_href).value : nul, namespace);
+	return match(ContentGuideSourceLogos, HowRelated.attrAnyNs(dvbi.a_href) ? HowRelated.attrAnyNs(dvbi.a_href).value : nul, namespace);
 }
+
+/**
+ * determines if the provided URN is associated with a A177 specification verison
+ * 
+ * @param {String} urn   The URN to check
+ * @returns {bool} true is the specified URN is used to identify an A177 specification version, else false
+ */
+export let isA177specification_URN = (urn) => (SchemaVersions.find((v) => v?.URN == urn) != undefined);
 
 // TODO - change this to support sync/async and file/url reading
 console.log(chalk.yellow.underline("loading service list schemas..."));

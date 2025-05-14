@@ -22,15 +22,15 @@ export const CS_URI_DELIMITER = ":";
 /**
  * Constructs a linear list of terms from a heirarical clssification schemes which are read from an XML document and parsed by libxmljs
  *
- * @param {Array} vals             the array to add the CS term into
- * @param {String} CSuri           the classification scheme domian
- * @param {XmlTreeNode} term       the classification scheme term that may include nested subterms
- * @param {boolean} leafNodesOnly  flag to indicate if only the leaf <term> values are to be loaded
+ * @param {Array}      vals           the array to add the CS term into
+ * @param {String}     CSuri          the classification scheme domian
+ * @param {XmlElement} term           the classification scheme term that may include nested subterms
+ * @param {boolean}    leafNodesOnly  flag to indicate if only the leaf <term> values are to be loaded
  */
 function addCSTerm(vals, CSuri, term, leafNodesOnly = false) {
 	if (!(term instanceof XmlElement)) return;
 	if (term.name == dvb.e_Term) {
-		if (!leafNodesOnly || (leafNodesOnly && !hasChild(term, dvb.e_Term))) if (term.attr(dvb.a_termID)) vals.push(`${CSuri}${CS_URI_DELIMITER}${term.attr(dvb.a_termID).value}`);
+		if (!leafNodesOnly || (leafNodesOnly && !hasChild(term, dvb.e_Term))) if (term.attrAnyNs(dvb.a_termID)) vals.push(`${CSuri}${CS_URI_DELIMITER}${term.attrAnyNs(dvb.a_termID).value}`);
 		let subTerm = term.firstChild;
 		while (subTerm) {
 			addCSTerm(vals, CSuri, subTerm, leafNodesOnly);
@@ -50,7 +50,7 @@ function loadClassificationScheme(xmlCS, leafNodesOnly = false) {
 	let rc = { uri: null, vals: [] };
 	if (!xmlCS) return rc;
 
-	const CSnamespace = xmlCS.root.attr(dvb.a_uri);
+	const CSnamespace = xmlCS.root.attrAnyNs(dvb.a_uri);
 	if (!CSnamespace) return rc;
 	rc.uri = CSnamespace.value;
 	let term = xmlCS.root.firstChild;
@@ -93,8 +93,8 @@ export default class ClassificationScheme {
 	/**
 	 * read a classification scheme from a URL and load its hierarical values into a linear list 
 	 *
-	 * @param {String} csURL URL to the classification scheme
-
+	 * @param {String}  csURL URL to the classification scheme
+	 * @param {boolean} async
 	 */
 	#loadFromURL(csURL, async = true) {
 		const isHTTPurl = isHTTPURL(csURL);
@@ -136,6 +136,7 @@ export default class ClassificationScheme {
 	 * read a classification scheme from a local file and load its hierarical values into a linear list
 	 *
 	 * @param {String} classificationScheme the filename of the classification scheme
+	 * @param {boolean} async
 	 */
 	#loadFromFile(classificationScheme, async = true) {
 		console.log(chalk.yellow(`reading CS (${this.#leafsOnly ? "leaf" : "all"} nodes) from ${classificationScheme}`));

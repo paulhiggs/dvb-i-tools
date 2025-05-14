@@ -250,7 +250,6 @@ export function SchemaLoad(document, errs, errcode) {
 	try {
 		prettyXML = format(document.replace(/(\n\t)/gm, "\n"), { collapseContent: true, lineSeparator: "\n" });
 	} catch (err) {
-		console.dir(err);
 		errs.addError({ code: `${errcode}-1`, message: `XML format failed: ${err.cause}`, key: "malformed XML" });
 		return null;
 	}
