@@ -584,7 +584,7 @@ export default class ServiceListCheck {
 						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, errs, Location, rc));
 					} else {
 						errs.addError(sl_InvalidHrefValue(HowRelated.attr(dvbi.a_href).value(), HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-11`));
-						errs.errorDescription(RMErrorDescription(`${errCode}-14`, dvbi.e_ServiceList, 14));
+						errs.errorDescription(RMErrorDescription(`${errCode}-11`, dvbi.e_ServiceList, 14));
 					}
 					break;
 
@@ -624,31 +624,25 @@ export default class ServiceListCheck {
 					else if (validContentFinishedBanner(HowRelated, props.namespace) || validServiceLogo(HowRelated, props.namespace)) {
 						rc = HowRelated.attr(dvbi.a_href).value();
 						checkValidLogos(RelatedMaterial, errs, `${errCode}-32`, Location, this.#knownLanguages);
-					} else if (validOutScheduleHours(HowRelated, ANY_NAMESPACE) && SchemaVersion(props.namespace) >= SCHEMA_r6) {
+					} else if (validOutScheduleHours(HowRelated, ANY_NAMESPACE) && SchemaVersion(props.namespace) >= SCHEMA_r6)
 						errs.addError({
 							code: `${errCode}-35`,
 							message: "Out of Service Banner is not permitted in a Service Instance from A177r6",
 							key: "misplaced image type",
 							fragment: HowRelated,
-						});
-						errs.errorDescription({
-							code: `${errCode}-35`,
 							clause: "A177 table 16",
 							description: `Out of Service banner is not permitted in the ${tva.e_RelatedMaterial.elementize()} element of a ${dvbi.e_ServiceInstance.elementize()}`,
 						});
-					} else if (validServiceBanner(HowRelated, props.namespace)) {
+					else if (validServiceBanner(HowRelated, props.namespace))
 						errs.addError({
 							code: `${errCode}-33`,
 							message: "Service Banner is not permitted in a Service Instance",
 							key: "misplaced image type",
 							fragment: HowRelated,
-						});
-						errs.errorDescription({
-							code: `${errCode}-33`,
 							clause: "A177 table 16",
 							description: `Service banner is not permitted in the ${tva.e_RelatedMaterial.elementize()} element of a ${dvbi.e_ServiceInstance.elementize()}`,
 						});
-					} else if (this.#validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
+					else if (this.#validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
 						rc = HowRelated.attr(dvbi.a_href).value();
 						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, errs, Location, rc));
 					} else {
@@ -1773,15 +1767,14 @@ export default class ServiceListCheck {
 		let uID = service.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
 		if (uID) {
 			thisServiceId = uID.text();
-			if (!validServiceIdentifier(thisServiceId)) {
+			if (!validServiceIdentifier(thisServiceId))
 				errs.addError({
 					code: "SL110",
 					message: `${thisServiceId.quote()} is not a valid service identifier`,
 					fragment: uID,
 					key: "invalid tag",
+					description: "service identifier should be a tag: URI according to IETF RFC 4151"
 				});
-				errs.errorDescription({ code: "SL110", description: "service identifier should be a tag: URI according to IETF RFC 4151" });
-			}
 			if (!uniqueServiceIdentifier(thisServiceId, knownServices))
 				errs.addError({
 					code: "SL111",
@@ -2201,18 +2194,14 @@ export default class ServiceListCheck {
 		// check ServiceList@id
 		if (SL.root().attr(dvbi.a_id)) {
 			let thisServiceListId = SL.root().attr(dvbi.a_id).value();
-			if (!validServiceListIdentifier(thisServiceListId)) {
+			if (!validServiceListIdentifier(thisServiceListId))
 				errs.addError({
 					code: "SL016",
 					message: `${thisServiceListId.quote()} is not a valid service list identifier`,
 					key: "invalid tag",
-				});
-				errs.errorDescription({
-					code: "SL016",
 					clause: "A177 clause 5.2.2",
 					description: "Service identifiers should use a registered URI scheme, such as the 'tag' URI scheme defined in IETF RFC 4151",
 				});
-			}
 		}
 
 		//check <ServiceList><Name>
@@ -2449,20 +2438,14 @@ export default class ServiceListCheck {
 							key: "undefined region",
 						});
 					else {
-						if (foundRegion.selectable == false) {
+						if (foundRegion.selectable == false)
 							errs.addError({
 								code: "SL242",
 								message: `${dvbi.e_TargetRegion.elementize()} ${TargetRegion.text().quote()} in ${dvbi.e_LCNTable.elementize()} is not selectable`,
 								fragment: TargetRegion,
 								key: "unselectable region",
+								description: `the region ID specified in the ${dvbi.e_TargetRegion.elementize()} is defined with ${dvbi.a_selectable.attribute()}=false in the ${dvbi.e_RegionList.elementize()} `,
 							});
-							errs.errorDescription({
-								code: "SL242",
-								description: `the region ID specified in the ${dvbi.e_TargetRegion.elementize()} is defined with ${
-									dvbi.a_selectable
-								}=false in the ${dvbi.e_RegionList.elementize()} `,
-							});
-						}
 						foundRegion.used = true;
 					}
 
@@ -2546,6 +2529,17 @@ export default class ServiceListCheck {
 								fragment: LCN,
 							});
 						else LCNNumbers.push(chanNum);
+						let chanNumV =  parseInt(chanNum, 10);
+						if (chanNumV < 1 || chanNumV > 9999) {
+							errs.addError({
+								code: "SL264",
+								message: `Channel number must be in the range 1..9999, found ${chanNumV}`,
+								key: "invalid value",
+								fragment:LCN,
+								clause: "A177 table 23",
+								description: `${dvbi.a_channelNumber.attribute()} has the same semantics as logical_channel_number in ciplus_service_descriptor`
+							});
+						}
 					}
 
 					// LCN@serviceRef
@@ -2555,9 +2549,6 @@ export default class ServiceListCheck {
 							message: `LCN reference to unknown service ${LCN.attr(dvbi.a_serviceRef).value()}`,
 							key: "LCN unknown services",
 							fragment: LCN,
-						});
-						errs.errorDescription({
-							code: "SL263",
 							clause: "A177 table 23",
 							description: `The value of ${dvbi.a_serviceRef.attribute(
 								dvbi.e_LCN
@@ -2584,20 +2575,16 @@ export default class ServiceListCheck {
 
 		// report any languages in the <LanguageList> that are not used
 		announcedAudioLanguages.forEach((lang) => {
-			if (!lang.used) {
+			if (!lang.used)
 				errs.addError({
 					code: "SL282",
 					type: WARNING,
 					message: `audio language "${lang.language}" is defined in ${dvbi.e_LanguageList.elementize()} but not used`,
 					key: `unused ${dvbi.e_Language}`,
 					fragment: lang.fragment,
-				});
-				errs.errorDescription({
-					code: "SL282",
 					clause: "see A177 table 14",
 					description: `only lanugages used in ${tva.e_AudioAttributes.elementize()}${tva.e_AudioLanguage.elementize()} should be announced in ${dvbi.e_LanguageList.elementize()}`,
 				});
-			}
 		});
 	}
 

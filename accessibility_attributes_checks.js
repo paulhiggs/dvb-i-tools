@@ -13,6 +13,8 @@ import { APPLICATION, WARNING } from "./error_list.js";
 import { checkTopElementsAndCardinality } from "./schema_checks.js";
 import { CS_URI_DELIMITER } from "./classification_scheme.js";
 
+import { isValidLangFormat } from "./IANA_languages.js";
+
 import { DumpString } from "./utils.js";
 
 export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs, errs, errCode) {
@@ -155,18 +157,15 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 		if (children)
 			children.forEachSubElement((e) => {
 				if (e.name() == childName) {
-					if (cs.KnownLanguages.checkSignLanguage(languageCode) != cs.KnownLanguages.languageKnown) {
+					let languageCode = e.content;
+					if (cs.KnownLanguages.checkSignLanguage(languageCode) != cs.KnownLanguages.languageKnown)
 						errs.addError({
 							code: `${errCode}-${errNum}b`,
 							fragment: e,
 							message: `${languageCode.quote()} is not a valid sign language for ${e.name().elementize()} in ${elem.name().elementize()}`,
 							key: ACCESSIBILITY_CHECK_KEY,
-						});
-						errs.errorDescription({
-							code: `${errCode}-${errNum}b`,
 							description: `language used for ${e.name().elementize()}} must be a sign language in the IANA language-subtag-regostry`,
 						});
-					}
 				}
 			});
 	};

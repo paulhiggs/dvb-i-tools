@@ -584,34 +584,26 @@ export default class ContentGuideCheck {
 			Genre;
 		while ((Genre = BasicDescription.get(xPath(props.prefix, tva.e_Genre, ++g), props.schema)) != null) {
 			const genreType = Genre.attr(tva.a_type) ? Genre.attr(tva.a_type).value() : tva.DEFAULT_GENRE_TYPE;
-			if (genreType != tva.GENRE_TYPE_MAIN) {
+			if (genreType != tva.GENRE_TYPE_MAIN)
 				errs.addError({
 					code: `${errCode}-1`,
 					key: "disallowed genre type",
 					message: `${tva.a_type.attribute(tva.e_Genre)}=${genreType.quote()} not permitted for ${tva.e_Genre.elementize()}`,
 					fragment: Genre,
-				});
-				errs.errorDescription({
-					code: `${errCode}-1`,
 					clause: "A177 clause 6.10.5",
 					description: `${tva.a_type.attribute(tva.e_Genre)} must be "${tva.GENRE_TYPE_MAIN}", semantic definitions of ${tva.e_Genre.elementize()}`,
 				});
-			}
 
 			const genreValue = Genre.attr(tva.a_href) ? Genre.attr(tva.a_href).value() : "";
-			if (!this.#allowedGenres.isIn(genreValue)) {
+			if (!this.#allowedGenres.isIn(genreValue))
 				errs.addError({
 					code: `${errCode}-2`,
 					key: "invalid genre",
 					message: `invalid ${tva.a_href.attribute()} value ${genreValue.quote()} for ${tva.e_Genre.elementize()}`,
 					fragment: Genre,
-				});
-				errs.errorDescription({
-					code: `${errCode}-2`,
 					clause: "A177 clause 6.10.5",
 					description: `The value of ${tva.a_href.attribute(tva.e_Genre)} must be as specified in the semantic definitions of ${tva.e_Genre.elementize()}`,
 				});
-			}
 		}
 	}
 
@@ -1282,14 +1274,13 @@ export default class ContentGuideCheck {
 			const titleLang = GetNodeLanguage(Title, false, errs, `${errCode}-2`, this.#knownLanguages);
 			const titleStr = unEntity(Title.text());
 
-			if (titleStr.length > dvbi.MAX_TITLE_LENGTH) {
+			if (titleStr.length > dvbi.MAX_TITLE_LENGTH)
 				errs.addError({
 					code: `${errCode}-11`,
 					message: `${tva.e_Title.elementize()} length exceeds ${dvbi.MAX_TITLE_LENGTH} characters`,
 					fragment: Title,
+					description: "refer clause 6.10.5 in A177"
 				});
-				errs.errorDescription({ code: `${errCode}-11`, description: "refer clause 6.10.5 in A177" });
-			}
 			switch (titleType) {
 				case mpeg7.TITLE_TYPE_MAIN:
 					if (mainTitles.find((e) => e.lang == titleLang))
@@ -1319,8 +1310,8 @@ export default class ContentGuideCheck {
 						code: `${errCode}-15`,
 						message: `${tva.a_type.attribute()} must be ${mpeg7.TITLE_TYPE_MAIN.quote()} or ${mpeg7.TITLE_TYPE_SECONDARY.quote()} for ${tva.e_Title.elementize()}`,
 						fragment: Title,
+						description: "refer to the relevant subsection of clause 6.10.5 in A177"
 					});
-					errs.errorDescription({ code: `${errCode}-15`, description: "refer to the relevant subsection of clause 6.10.5 in A177" });
 					break;
 			}
 		}
@@ -1399,6 +1390,7 @@ export default class ContentGuideCheck {
 								{ name: tva.e_ParentalGuidance, minOccurs: 0, maxOccurs: Infinity },
 								{ name: tva.e_CreditsList, minOccurs: 0 },
 								{ name: tva.e_RelatedMaterial, minOccurs: 0 },
+								{ name: tva.e_ReleaseInformation, minOccurs: 0, maxOccurs: Infinity },
 							],
 							tvaEC.BasicDescription,
 							false,
@@ -1421,6 +1413,7 @@ export default class ContentGuideCheck {
 								{ name: tva.e_Synopsis, minOccurs: 0, maxOccurs: Infinity },
 								{ name: tva.e_ParentalGuidance, minOccurs: 0, maxOccurs: Infinity },
 								{ name: tva.e_RelatedMaterial, minOccurs: 0 },
+								{ name: tva.e_ReleaseInformation, minOccurs: 0, maxOccurs: Infinity },
 							],
 							tvaEC.BasicDescription,
 							false,
@@ -1535,8 +1528,8 @@ export default class ContentGuideCheck {
 	}
 
 	/*private*/ #NotCRIDFormat(errs, error) {
+		error.description = "format of a CRID is defined in clause 8 of ETSI TS 102 822";
 		errs.addError(error);
-		errs.errorDescription({ code: error?.code, description: "format if a CRID is defined in clause 8 of ETSI TS 102 822" });
 	}
 
 	/**
@@ -3236,7 +3229,6 @@ export default class ContentGuideCheck {
 		checkTopElementsAndCardinality(
 			ProgramLocationTable,
 			[
-//				{ name: tva.e_Schedule, minOccurs: 0, maxOccurs: Infinity },
 				{ name: tva.e_BroadcastEvent, minOccurs: 0, maxOccurs: Infinity },
 				{ name: tva.e_OnDemandProgram, minOccurs: 0, maxOccurs: Infinity },
 			],
@@ -3250,7 +3242,7 @@ export default class ContentGuideCheck {
 		GetNodeLanguage(ProgramLocationTable, false, errs, "PL012", this.#knownLanguages);
 
 		let cntODP = 0,
-			CNTbe = 0,
+			cntBE = 0,
 			foundServiceIds = [],
 			plCRIDs = [];
 
@@ -3265,19 +3257,6 @@ export default class ContentGuideCheck {
 						this.#ValidateBroadcastEvent(props, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
 						cntBE++;
 						break;
-/* 
-replaced in A177r7 with BroadcastEvent 
-					case tva.e_Schedule:
-						let thisServiceIdRef = this.#ValidateSchedule(props, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
-						if (thisServiceIdRef.length)
-							if (isIni(foundServiceIds, thisServiceIdRef))
-								errs.addError({
-									code: "PL020",
-									message: `A ${tva.e_Schedule.elementize()} element with ${tva.a_serviceIDRef.attribute()}=${thisServiceIdRef.quote()} is already specified`,
-								});
-							else foundServiceIds.push(thisServiceIdRef);
-						cntSE++;
-						break; */
 				}
 			});
 

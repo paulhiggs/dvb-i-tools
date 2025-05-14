@@ -106,15 +106,14 @@ export default class SLEPR {
 			fetch(filename)
 				.then(handleErrors)
 				.then((response) => response.text())
-				.then((responseText) => (masterSLEPR = responseText.replace(/(\r\n|\n|\r|\t)/gm, "")))
+				.then((responseText) => (masterSLEPR = responseText))
 				.catch((error) => {
 					console.log(chalk.red(`error (${error}) retrieving ${filename}`));
 					masterSLEPR = EMPTY_SLEPR;
 				});
-			masterSLEPR = fetch(filename);
 		} else
 			readFile(filename, { encoding: "utf-8" }, function (err, data) {
-				if (!err) masterSLEPR = data.replace(/(\r\n|\n|\r|\t)/gm, "");
+				if (!err) masterSLEPR = data;
 				else console.log(chalk.red(err));
 			});
 	}
@@ -190,6 +189,7 @@ export default class SLEPR {
 			res.status(400);
 			return false;
 		}
+		console.log(masterSLEPR)
 		let slepr = parseXmlString(masterSLEPR);
 
 		let SLEPR_SCHEMA = {},
