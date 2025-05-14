@@ -157,12 +157,12 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 		if (children)
 			children.forEachSubElement((e) => {
 				if (e.name() == childName) {
-					let languageCode = e.content;
+					let languageCode = e.text();
 					if (cs.KnownLanguages.checkSignLanguage(languageCode) != cs.KnownLanguages.languageKnown)
 						errs.addError({
 							code: `${errCode}-${errNum}b`,
 							fragment: e,
-							message: `"${languageCode}" is not a valid sign language for ${e.name().elementize()} in ${elem.name().elementize()}`,
+							message: `${languageCode.quote()} is not a valid sign language for ${e.name().elementize()} in ${elem.name().elementize()}`,
 							key: ACCESSIBILITY_CHECK_KEY,
 							description: `language used for ${e.name().elementize()}} must be a sign language in the IANA language-subtag-regostry`,
 						});
