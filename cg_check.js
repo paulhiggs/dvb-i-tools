@@ -667,7 +667,7 @@ export default class ContentGuideCheck {
 									});
 								}
 								thisCountry.MinimumAge = pgChild;
-								let age = pgChild.text().parseInt();
+								let age = parseInt(pgChild.text());
 								if ((age < 4 || age > 18) && age != 255)
 									errs.addError({
 										code: `${errCode}-12`,
@@ -1815,7 +1815,7 @@ export default class ContentGuideCheck {
 				checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_ordered, tva.a_numOfItems, tva.a_serviceIDRef], tvaEA.GroupInformation, errs, "GIB009");
 				checkTopElementsAndCardinality(
 					GroupInformation,
-					[{ name: tva.e_GroupType }, { name: tva.e_BasicDescription, minOccurs: 0 }],
+					[{ name: tva.e_GroupType }, { name: tva.e_BasicDescription, minOccurs: 0 }, { name: tva.e_MemberOf, minOccurs: 0 }],
 					tvaEC.GroupInformation,
 					false,
 					errs,
@@ -3053,13 +3053,13 @@ export default class ContentGuideCheck {
 			if (isUTCDateTime(pstElem.text())) {
 				let PublishedStartTime = new Date(pstElem.text());
 
-				if (scheduleStart && PublishedStartTime < scheduleStart)
+				if (startSchedule && PublishedStartTime < startSchedule)
 					errs.addError({
 						code: `${prefix}041`,
 						message: `${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is earlier than ${tva.a_start.attribute(tva.e_Schedule)}`,
 						multiElementError: [Schedule, pstElem],
 					});
-				if (scheduleEnd && PublishedStartTime > scheduleEnd)
+				if (endSchedule && PublishedStartTime > endSchedule)
 					errs.addError({
 						code: `${prefix}042`,
 						message: `${tva.e_PublishedStartTime.elementize()} (${PublishedStartTime}) is after ${tva.a_end.attribute(tva.e_Schedule)}`,
@@ -3067,9 +3067,9 @@ export default class ContentGuideCheck {
 					});
 
 				let pdElem = Event.get(xPath(props.prefix, tva.e_PublishedDuration), props.schema);
-				if (scheduleEnd && pdElem) {
+				if (endSchedule && pdElem) {
 					let parsedPublishedDuration = parseISOduration(pdElem.text());
-					if (parsedPublishedDuration.add(PublishedStartTime) > scheduleEnd)
+					if (parsedPublishedDuration.add(PublishedStartTime) > endSchedule)
 						errs.addError({
 							code: `${prefix}043`,
 							message: `${tva.e_PublishedStartTime}+${tva.e_PublishedDuration} of event is after ${tva.a_end.attribute(tva.e_Schedule)}`,
@@ -3124,7 +3124,7 @@ export default class ContentGuideCheck {
 			return;
 		}
 		this.#checkTAGUri(BroadcastEvent, errs, "BE999");
-		this.#ValidateEvent(BroadcastEvent, errs, programCRIDs, plCRIDs, currentProgramCRID, null);
+		this.#ValidateEvent(props, BroadcastEvent, errs, programCRIDs, plCRIDs, currentProgramCRID, null);
 	}
 
 	/**
