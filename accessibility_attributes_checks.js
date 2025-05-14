@@ -162,7 +162,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 						errs.addError({
 							code: `${errCode}-${errNum}b`,
 							fragment: e,
-							message: `${languageCode.quote()} is not a valid sign language for ${e.name().elementize()} in ${elem.name().elementize()}`,
+							message: `"${languageCode}" is not a valid sign language for ${e.name().elementize()} in ${elem.name().elementize()}`,
 							key: ACCESSIBILITY_CHECK_KEY,
 							description: `language used for ${e.name().elementize()}} must be a sign language in the IANA language-subtag-regostry`,
 						});
