@@ -19,7 +19,7 @@ const SHOW_LINE_NUMBER = false; // include the line number in the XML document w
 
 let pkg = JSON.parse(readFileSync("./package.json", { encoding: "utf-8" }).toString());
 
-export function PAGE_TOP(pageTitle, label = null) {
+export function PAGE_TOP(pageTitle, label = null, motd = null) {
 	const TABLE_STYLE =
 		"<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
 	const XML_STYLE = "<style>.xmlfont {font-family: Arial, Helvetica, sans-serif; font-size:90%;}</style>";
@@ -29,7 +29,8 @@ export function PAGE_TOP(pageTitle, label = null) {
 	const HEAD = `<head>${METAS}${TABLE_STYLE}${XML_STYLE}${MARKUP_TABLE_STYLE}<title>${pageTitle}</title></head>`;
 	const PG = `<html lang="en" xml:lang="en">\n${HEAD}<body>`;
 	const PH = label ? `<h1>${label}</h1><p>${pkg.name} v${pkg.version} by ${HTMLize(pkg.author)}</p>` : "";
-	return `${PG}${PH}`;
+	const MOTD = motd ? `<div>${motd}</div>` : "";
+	return `${PG}${PH}${MOTD}`;
 }
 
 const BREAK = "<br/>",
@@ -170,11 +171,11 @@ function tabulateResults(source, res, error, errs) {
 	}
 }
 
-export function drawForm(req, res, modes, supportedRequests, error = null, errs = null) {
+export function drawForm(req, res, modes, supportedRequests, motd = null, error = null, errs = null) {
 	const ENTRY_FORM_REQUEST_TYPE_ID = "requestType";
 
 	res.setHeader("Content-Type", "text/html");
-	res.write(PAGE_TOP("DVB-I Validator", "DVB-I Validator"));
+	res.write(PAGE_TOP("DVB-I Validator", "DVB-I Validator", motd));
 	res.write(`
 	<script>
 	function redrawForm() {
@@ -231,9 +232,9 @@ export function drawForm(req, res, modes, supportedRequests, error = null, errs 
 	});
 }
 
-export function drawResults(req, res, error = null, errs = null) {
+export function drawResults(req, res, motd = null, error = null, errs = null) {
 	res.setHeader("Content-Type", "text/html");
-	res.write(PAGE_TOP("DVB-I Validator", "DVB-I Validator"));
+	res.write(PAGE_TOP("DVB-I Validator", "DVB-I Validator", motd));
 	tabulateResults(req.query.url ? req.query.url : "uploaded list", res, error, errs);
 	res.write(PAGE_BOTTOM);
 	return new Promise((resolve, /* eslint-disable no-unused-vars */ reject /* eslint-enable */) => {

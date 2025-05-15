@@ -1,7 +1,7 @@
 {
 	"name": "dvb-i-tools",
 	"version": "1.8.0",
-	"description": "DVB-I V&V Tools - up to A177r7",
+	"description": "DVB-I V&V Tools - up to A177r7 (now using libxml2-wasm)",
 	"main": "all-in-one.js",
 	"type": "module",
 	"private": true,

@@ -1,6 +1,6 @@
 /**
  * globals.js
- * 
+ *
  * Useful global values
  */
 

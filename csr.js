@@ -1,6 +1,6 @@
 /**
  * csr.js
- * 
+ *
  * An standalone runner for a service list entry point registry (SLEPR) that can be used as a Central Service List Registry (CSR)
  */
 import { join } from "path";
@@ -89,8 +89,9 @@ const commandLineHelp = [
 	},
 ];
 
+let options = null;
 try {
-	let options = commandLineArgs(optionDefinitions);
+	options = commandLineArgs(optionDefinitions);
 } catch (err) {
 	console.log(commandLineUsage(commandLineHelp));
 	process.exit(1);
@@ -129,8 +130,8 @@ const RELOAD = "RELOAD",
 	STATS = "STATS";
 
 if (cluster.isPrimary) {
-	console.log(chalk.orange(`Number of CPUs is ${numCPUs}`));
-	console.log(chalk.orange(`Primary ${process.pid} is running`));
+	console.log(chalk.green(`Number of CPUs is ${numCPUs}`));
+	console.log(chalk.green(`Primary ${process.pid} is running`));
 
 	let metrics = {
 		numRequests: 0,
@@ -192,7 +193,7 @@ if (cluster.isPrimary) {
 	const SLEPR_query_route = "/query",
 		SLEPR_reload_route = "/reload",
 		SLEPR_stats_route = "/stats";
-	let manualCORS = function (/* eslint-disable no-unused-vars */res, req, /* eslint-enable */ next) {
+	let manualCORS = function (/* eslint-disable no-unused-vars */ res, req, /* eslint-enable */ next) {
 		next();
 	};
 	if (options.CORSmode == CORSlibrary) {
