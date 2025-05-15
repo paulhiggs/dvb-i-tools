@@ -60,13 +60,14 @@ Validates DVB-I service list and content guide metadata according to DVB Blueboo
 
 Validates the value space of the instance document, validation against the schema should be performed seperately (for now) Supports
 
-- the [:2019 schema](http://dvb.org/wp-content/uploads/2019/11/A177_DVB-I_Nov_2019.pdf)
-- the [:2020 schema](https://dvb.org/wp-content/uploads/2019/11/A177r1_Service-Discovery-and-Programme-Metadata-for-DVB-I_July-2020.pdf) with its classification scheme updates
-- the [:2021 schema](https://dvb.org/wp-content/uploads/2020/11/A177r2_Service-Discovery-and-Programme-Metadata-for-DVB-I_ts_103-770-v120_June-2021.pdf) with its classification scheme updates
-- the [:2022 schema](https://dvb.org/wp-content/uploads/2021/06/A177r3_Service-Discovery-and-Programme-Metadata-for-DVB-I_January-2022.pdf)
-- the [:2022b schema](https://dvb.org/wp-content/uploads/2022/01/A177r4_Service-Discovery-and-Programme-Metadata-for-DVB-I_Interim-Draft_TS-103-770-v121_September-2022.pdf)
-- the [:2023 schema](https://dvb.org/wp-content/uploads/2022/09/A177r5_Service-Discovery-and-Programme-Metadata-for-DVB-I_Interim-Draft_TS-103-770-v121_July-2023.pdf)
-- the [:2024 schema](https://dvb.org/wp-content/uploads/2023/07/A177r6_Service-Discovery-and-Programme-Metadata-for-DVB-I_Draft_TS-103-770-v121_February-2024.pdf) ([latest details](https://dvb.org/?standard=service-discovery-and-programme-metadata-for-dvb-i))
+- the original A177 [:2019 schema](http://dvb.org/wp-content/uploads/2019/11/A177_DVB-I_Nov_2019.pdf)
+- the A177r1 [:2020 schema](https://dvb.org/wp-content/uploads/2019/11/A177r1_Service-Discovery-and-Programme-Metadata-for-DVB-I_July-2020.pdf) with its classification scheme updates
+- the A177r2 [:2021 schema](https://dvb.org/wp-content/uploads/2020/11/A177r2_Service-Discovery-and-Programme-Metadata-for-DVB-I_ts_103-770-v120_June-2021.pdf) with its classification scheme updates
+- the A177r3 [:2022 schema](https://dvb.org/wp-content/uploads/2021/06/A177r3_Service-Discovery-and-Programme-Metadata-for-DVB-I_January-2022.pdf)
+- the A177r4 [:2022b schema](https://dvb.org/wp-content/uploads/2022/01/A177r4_Service-Discovery-and-Programme-Metadata-for-DVB-I_Interim-Draft_TS-103-770-v121_September-2022.pdf)
+- the A177r5 [:2023 schema](https://dvb.org/wp-content/uploads/2022/09/A177r5_Service-Discovery-and-Programme-Metadata-for-DVB-I_Interim-Draft_TS-103-770-v121_July-2023.pdf)
+- the A177r6 [:2024 schema](https://dvb.org/wp-content/uploads/2023/07/A177r6_Service-Discovery-and-Programme-Metadata-for-DVB-I_Draft_TS-103-770-v121_February-2024.pdf) ([latest details](https://dvb.org/?standard=service-discovery-and-programme-metadata-for-dvb-i))
+- the A177r7 schema - currently under development at DVB
 
 Checks performed:
 
@@ -117,7 +118,7 @@ Validates the value space of the instance document
 
 1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
 1. Install necessary libraries (express, libxmljs, morgan) `npm install`
-1. run it - `node all-in-one [--urls] [--port 3020] [--sport 3021]`
+1. run it - `node all-in-one [--urls] [--port 3030] [--sport 3031]`
 
 If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
 
@@ -126,8 +127,17 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 #### Command Line Arguments
 
 - --urls [-u] forces the classification scheme, country and language values to be read from the internet. Default is to load values from local files.
-- --port [-p] set the HTTP listening port (default: 3020)
-- --sport [-s] set the HTTPS listening port (default: 3021)
+- --port [-p] set the HTTP listening port (default: 3030)
+- --sport [-s] set the HTTPS listening port (default: 3031)
+- --motd [-m] file to read for Message of the Day (default: `motd.html`)
+- --nocsr flag to disable SLR operation (default: false)
+- --nocg flag to disable Content Guide validation (default: false)
+- --nosl flag to disable Service List validation (default: false)
+- --CORSmode [-c] select the type of CORS handling
+  - "library" - default mode - use the Express CORS library
+  - "manual" - do code based CORS header insertion (not fully implemented or tested)
+  - "none" - dont do any CORS handling
+- --CSRfile [-f] file to use for SLR responses (default: `lepr-main.xml`)
 
 ### Use
 

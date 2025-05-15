@@ -19,7 +19,7 @@ const optionDefinitions = [
 		type: Number,
 		defaultValue: HTTPPort.all_in_one,
 		typeLabel: "{underline ip-port}",
-		description: `The HTTP port to listen on. Default: ${HTTPPort.csr}`,
+		description: `The HTTP port to listen on. Default: ${HTTPPort.all_in_one}`,
 	},
 	{
 		name: "sport",
@@ -27,7 +27,7 @@ const optionDefinitions = [
 		type: Number,
 		defaultValue: HTTPPort.all_in_one + 1,
 		typeLabel: "{underline ip-port}",
-		description: `The HTTPS port to listen on. Default: ${HTTPPort.csr + 1}`,
+		description: `The HTTPS port to listen on. Default: ${HTTPPort.all_in_one + 1}`,
 	},
 	{ name: "nocsr", type: Boolean, defaultValue: false, typeLabel: "{underline flag}", description: "disallow SLR function" },
 	{ name: "nosl", type: Boolean, defaultValue: false, typeLabel: "{underline flag}", description: "disallow Service List validation" },
@@ -58,8 +58,8 @@ const commandLineHelp = [
 		header: "Options",
 		optionList: optionDefinitions,
 	},
-	/*	{
-		header: "Client Query",
+	{
+		header: "SLR Client Query",
 		content: "{underline <host>}:{underline <port>}/query[?{underline arg}={underline value}(&{underline arg}={underline value})*]",
 	},
 	{
@@ -73,7 +73,7 @@ const commandLineHelp = [
 			{ name: "Provider[]", summary: "Select only service lists that match one of the specified Provider names" },
 		],
 	},
-	{ content: "note that all query values except Provider are checked against constraints. An HTTP 400 response is returned with errors in the response body." }, */
+	{ content: "note that all query values except Provider are checked against constraints. An HTTP 400 response is returned with errors in the response body." },
 	{
 		header: "About",
 		content: "Project home: {underline https://github.com/paulhiggs/dvb-i-tools/}",
