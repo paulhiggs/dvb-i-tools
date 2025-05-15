@@ -118,10 +118,10 @@ export function isEmpty(obj) {
  * @param {String} filename  The name of the file to read
  * @returns {Buffer} the buffer containing the data from the file, or null if there is a problem reading
  */
-export function readmyfile(filename) {
+export function readmyfile(filename, options = null) {
 	try {
 		const stats = statSync(filename);
-		if (stats.isFile()) return readFileSync(filename);
+		if (stats.isFile()) return readFileSync(filename, options);
 	} catch (err) {
 		console.log(chalk.magenta(`${err.code}, ${err.path}`));
 	}
