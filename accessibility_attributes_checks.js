@@ -172,7 +172,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 			});
 	};
 
-	let checkLanguage = (elem, childName, errNum) => {
+	let checkLanguageFmt = (elem, childName, errNum) => {
 		let children = elem.childNodes();
 		if (children)
 			children.forEachSubElement((e) => {
@@ -224,7 +224,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 						`${errCode}-${errNum}a`
 					);
 					// AccessibilityAttributes.*.AudioAttribites.AudioLanguage
-					checkLanguage(e, tva.e_AudioLanguage, `${errNum}b`);
+					checkLanguageFmt(e, tva.e_AudioLanguage, `${errNum}b`);
 					checkLanguagePurpose(e, tva.e_AudioLanguage, `${errNum}c`);
 					let c2 = e.childNodes();
 					if (c2)
@@ -285,7 +285,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 					checkTopElementsAndCardinality(elem, ScreenReaderChildElements, tvaEC.ScreenReaderAttributes, false, errs, `${errCode}-31`);
 					checkAppInformation(elem, 32);
 					checkPurpose(elem, "3", 33);
-					checkLanguage(elem, tva.e_ScreenReaderLanguage, 34);
+					checkLanguageFmt(elem, tva.e_ScreenReaderLanguage, 34);
 					break;
 				case tva.e_ResponseToUserActionAttributes:
 					checkTopElementsAndCardinality(elem, allowedAppChildren, allAppChildren, false, errs, `${errCode}-41`);
@@ -310,7 +310,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 					hasAppInformation = checkAppInformation(elem, 52);
 					checkCS(elem, tva.e_Carriage, cs.SubtitleCarriageCS, 53, carriages);
 					checkCS(elem, tva.e_Coding, cs.SubtitleCodingFormatCS, 54, codings);
-					checkLanguage(elem, tva.e_SubtitleLanguage, 55);
+					checkLanguageFmt(elem, tva.e_SubtitleLanguage, 55);
 					checkCS(elem, tva.e_Purpose, cs.SubtitlePurposeTypeCS, 56);
 					break;
 				case tva.e_AudioDescriptionAttributes:

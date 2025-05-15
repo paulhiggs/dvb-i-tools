@@ -345,7 +345,7 @@ export default class ServiceListCheck {
 				line: Region.line,
 			});
 
-		checkXMLLangs(dvbi.e_RegionName, `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${displayRegionID}`, Region, errs, "AR041", this.#knownLanguages);
+		checkXMLLangs(dvbi.e_RegionName, `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${displayRegionID}`, Region, errs, "AR041");
 
 		// <Region><Postcode>
 		let pc = 0,
@@ -518,7 +518,7 @@ export default class ServiceListCheck {
 				case SERVICE_LIST_RM:
 					if (validServiceListLogo(HowRelated, props.namespace)) {
 						rc = HowRelated.attrAnyNs(dvbi.a_href).value;
-						checkValidLogos(RelatedMaterial, errs, `${errCode}-10`, Location, this.#knownLanguages);
+						checkValidLogos(RelatedMaterial, errs, `${errCode}-10`, Location);
 					} else if (validServiceAgreementApp(HowRelated, props.namespace)) {
 						rc = HowRelated.attrAnyNs(dvbi.a_href).value;
 						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, errs, Location, rc));
@@ -543,7 +543,7 @@ export default class ServiceListCheck {
 						validServiceBanner(HowRelated, props.namespace)
 					) {
 						rc = HowRelated.attrAnyNs(dvbi.a_href).value;
-						checkValidLogos(RelatedMaterial, errs, `${errCode}-22`, Location, this.#knownLanguages);
+						checkValidLogos(RelatedMaterial, errs, `${errCode}-22`, Location);
 					} else if (this.#validServiceApplication(HowRelated, SchemaVersion(props.namespace))) {
 						rc = HowRelated.attrAnyNs(dvbi.a_href).value;
 						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, errs, Location, rc));
@@ -563,7 +563,7 @@ export default class ServiceListCheck {
 						});
 					else if (validContentFinishedBanner(HowRelated, props.namespace) || validServiceLogo(HowRelated, props.namespace)) {
 						rc = HowRelated.attrAnyNs(dvbi.a_href).value;
-						checkValidLogos(RelatedMaterial, errs, `${errCode}-32`, Location, this.#knownLanguages);
+						checkValidLogos(RelatedMaterial, errs, `${errCode}-32`, Location);
 					} else if (validOutScheduleHours(HowRelated, ANY_NAMESPACE) && SchemaVersion(props.namespace) >= SCHEMA_r6)
 						errs.addError({
 							code: `${errCode}-35`,
@@ -594,7 +594,7 @@ export default class ServiceListCheck {
 				case CONTENT_GUIDE_RM:
 					if (validContentGuideSourceLogo(HowRelated, props.namespace)) {
 						rc = HowRelated.attrAnyNs(dvbi.a_href).value;
-						checkValidLogos(RelatedMaterial, errs, `${errCode}-41`, Location, this.#knownLanguages);
+						checkValidLogos(RelatedMaterial, errs, `${errCode}-41`, Location);
 					} else {
 						errs.addError(sl_InvalidHrefValue(HowRelated.attrAnyNs(dvbi.a_href).value, HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-42`));
 						errs.errorDescription(RMErrorDescription(`${errCode}-42`, dvbi.e_ContentGuideSource, 20));
@@ -691,8 +691,8 @@ export default class ServiceListCheck {
 		}
 		loc = loc ? loc : source.parent.name.elementize();
 
-		checkXMLLangs(dvbi.e_Name, loc, source, errs, `${errCode}-1`, this.#knownLanguages);
-		checkXMLLangs(dvbi.e_ProviderName, loc, source, errs, `${errCode}-2`, this.#knownLanguages);
+		checkXMLLangs(dvbi.e_Name, loc, source, errs, `${errCode}-1`);
+		checkXMLLangs(dvbi.e_ProviderName, loc, source, errs, `${errCode}-2`);
 
 		let rm = 0,
 			RelatedMaterial;
@@ -715,7 +715,6 @@ export default class ServiceListCheck {
 	/**
 	 * validate the language specified record any errors
 	 *
-	 * @param {object}     validator  the validation class to use
 	 * @param {Class}      errs       errors found in validaton
 	 * @param {XmlElement} node       the XML node whose @lang attribute should be checked
 	 * @param {string}     parentLang the language of the XML element which is the parent of node
@@ -723,7 +722,7 @@ export default class ServiceListCheck {
 	 * @param {string}     errCode    error number to use instead of local values
 	 * @returns {string} the @lang attribute of the node element of the parentLang if it does not exist of is not specified
 	 */
-	/* private */ #GetLanguage(validator, errs, node, parentLang, isRequired, errCode) {
+	/* private */ #GetLanguage(errs, node, parentLang, isRequired, errCode) {
 		if (!node) return parentLang;
 		if (!node.attrAnyNs(tva.a_lang) && isRequired) {
 			errs.addError({
@@ -738,7 +737,7 @@ export default class ServiceListCheck {
 		if (!node.attrAnyNs(tva.a_lang)) return parentLang;
 
 		let localLang = node.attrAnyNs(tva.a_lang).value;
-		if (validator && localLang) checkLanguage(validator, localLang, node.name, node, errs, errCode);
+		if (localLang) checkLanguage(localLang, node.name, node, errs, errCode);
 		return localLang;
 	}
 
@@ -783,7 +782,7 @@ export default class ServiceListCheck {
 			extendedLangs = [];
 		let ERROR_KEY = "synopsis";
 		while ((ste = Element.get(xPath(props.prefix, ElementName, ++s), props.schema)) != null) {
-			let synopsisLang = this.#GetLanguage(this.#knownLanguages, errs, ste, parentLanguage, false, `${errCode}-2`);
+			let synopsisLang = this.#GetLanguage(errs, ste, parentLanguage, false, `${errCode}-2`);
 			let synopsisLength = ste.attrAnyNs(tva.a_length) ? ste.attrAnyNs(tva.a_length).value : null;
 
 			if (synopsisLength) {
@@ -1005,7 +1004,7 @@ export default class ServiceListCheck {
 			});
 
 		//<ServiceInstance><DisplayName>
-		checkXMLLangs(dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010", this.#knownLanguages);
+		checkXMLLangs(dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010");
 
 		// check @href of <ServiceInstance><RelatedMaterial>
 		let rm = 0,
@@ -1242,12 +1241,12 @@ export default class ServiceListCheck {
 			// Check ContentAttributes/CaptionLanguage
 			cp = 0;
 			while ((conf = ContentAttributes.get(xPath(props.prefix, tva.e_CaptionLanguage, ++cp), props.schema)) != null)
-				checkLanguage(this.#knownLanguages, conf.content, tva.e_CaptionLanguage.elementize(), conf, errs, "SI101");
+				checkLanguage(conf.content, tva.e_CaptionLanguage.elementize(), conf, errs, "SI101");
 
 			// Check ContentAttributes/SignLanguage
 			cp = 0;
 			while ((conf = ContentAttributes.get(xPath(props.prefix, tva.e_SignLanguage, ++cp), props.schema)) != null)
-				checkLanguage(this.#knownLanguages, conf.content, tva.e_SignLanguage.elementize(), conf, errs, "SI111");
+				checkLanguage(conf.content, tva.e_SignLanguage.elementize(), conf, errs, "SI111");
 
 			// Check ContentAttributes/AccessibilityAttributes
 			const aa = ContentAttributes.get(xPath(props.prefix, tva.e_AccessibilityAttributes), props.schema);
@@ -1294,7 +1293,7 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><SubscriptionPackage>
-		checkXMLLangs(dvbi.e_SubscriptionPackage, ServiceInstance.name.elementize(), ServiceInstance, errs, "SI131", this.#knownLanguages);
+		checkXMLLangs(dvbi.e_SubscriptionPackage, ServiceInstance.name.elementize(), ServiceInstance, errs, "SI131");
 		let sp = 0,
 			SubscriptionPackage;
 		while ((SubscriptionPackage = ServiceInstance.get(xPath(props.prefix, dvbi.e_SubscriptionPackage, ++sp), props.schema)) != null) {
@@ -1750,10 +1749,10 @@ export default class ServiceListCheck {
 		}
 
 		//check <ServiceName>
-		checkXMLLangs(dvbi.e_ServiceName, `service ${thisServiceId.quote()}`, service, errs, "SL140", this.#knownLanguages);
+		checkXMLLangs(dvbi.e_ServiceName, `service ${thisServiceId.quote()}`, service, errs, "SL140");
 
 		//check <ProviderName>
-		checkXMLLangs(dvbi.e_ProviderName, `service ${thisServiceId.quote()}`, service, errs, "SL141", this.#knownLanguages);
+		checkXMLLangs(dvbi.e_ProviderName, `service ${thisServiceId.quote()}`, service, errs, "SL141");
 
 		//check <RelatedMaterial>
 		let rm = 0,
@@ -2126,7 +2125,7 @@ export default class ServiceListCheck {
 
 		// check ServiceList@lang
 		if (ServiceList.attrAnyNs(tva.a_lang)) {
-			ValidateLanguage(this.#knownLanguages, ServiceList.attrAnyNs(tva.a_lang).value, errs, "SL012", dvbi.e_ServiceList, ServiceList.line);
+			ValidateLanguage(ServiceList.attrAnyNs(tva.a_lang).value, errs, "SL012", ServiceList.line);
 		}
 
 		// check ServiceList@responseStatus
@@ -2160,10 +2159,10 @@ export default class ServiceListCheck {
 		}
 
 		//check <ServiceList><Name>
-		checkXMLLangs(dvbi.e_Name, dvbi.e_ServiceList, ServiceList, errs, "SL020", this.#knownLanguages);
+		checkXMLLangs(dvbi.e_Name, dvbi.e_ServiceList, ServiceList, errs, "SL020");
 
 		//check <ServiceList><ProviderName>
-		checkXMLLangs(dvbi.e_ProviderName, dvbi.e_ServiceList, ServiceList, errs, "SL021", this.#knownLanguages);
+		checkXMLLangs(dvbi.e_ProviderName, dvbi.e_ServiceList, ServiceList, errs, "SL021");
 
 		//check <ServiceList><LanguageList>
 		let announcedAudioLanguages = [];
@@ -2172,7 +2171,7 @@ export default class ServiceListCheck {
 			let l = 0,
 				Language;
 			while ((Language = LanguageList.get(xPath(props.prefix, tva.e_Language, ++l), props.schema)) != null) {
-				checkLanguage(this.#knownLanguages, Language.content, `language in ${tva.e_Language.elementize()}`, Language, errs, "SL030");
+				checkLanguage(Language.content, `language in ${tva.e_Language.elementize()}`, Language, errs, "SL030");
 				checkAttributes(Language, [], [], tvaEA.AudioLanguage, errs, "SL031");
 				let lang_lower = Language.content.toLowerCase();
 				if (isIn(announcedAudioLanguages, lang_lower))
@@ -2422,9 +2421,9 @@ export default class ServiceListCheck {
 					}
 					if (SubscriptionPackage.attrAnyNs(tva.a_lang)) {
 						packageLanguage = SubscriptionPackage.attrAnyNs(tva.a_lang).value;
-						checkLanguage(this.#knownLanguages, packageLanguage, `${dvbi.e_SubscriptionPackage} in ${dvbi.e_LCNTable}`, SubscriptionPackage, errs, "SL265");
+						checkLanguage(packageLanguage, `${dvbi.e_SubscriptionPackage} in ${dvbi.e_LCNTable}`, SubscriptionPackage, errs, "SL265");
 					} else if (SchemaVersion(props.namespace) >= SCHEMA_r3) {
-						packageLanguage = GetNodeLanguage(SubscriptionPackage, false, errs, "SL266", this.#knownLanguages);
+						packageLanguage = GetNodeLanguage(SubscriptionPackage, false, errs, "SL266");
 					}
 
 					let localSubscriptionPackage = localizedSubscriptionPackage(SubscriptionPackage, packageLanguage);

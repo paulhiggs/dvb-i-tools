@@ -113,5 +113,4 @@ if (!Array.prototype.forEachSubElement) {
 	};
 }
 
-
 export let  Libxml2_wasm_init = () => {};

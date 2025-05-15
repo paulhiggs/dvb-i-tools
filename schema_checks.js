@@ -198,20 +198,6 @@ export function SchemaCheck(XML, XSD, errs, errCode) {
 			});
 		}
 	}
-
-	/*
-	if (!XML.validate(XSD)) {
-		let prettyXML = format(XML.toString(), { collapseContent: true, lineSeparator: "\n", strictMode: true });
-		let lines = prettyXML.split("\n");
-		XML.validationErrors.forEach((ve) => {
-			// ignore errors related to duplicated schema imports (schema passed to this function vs that declared in instance document)
-			if (!(ve.domain == 16 && ve.code == 3083)) {
-				let splt = ve.toString().split("\r");
-				splt.forEach((err) => errs.addError({ code: errCode, message: err, fragment: lines[ve.line - 1], line: ve.line, key: keys.k_XSDValidation }));
-			}
-		});
-	}
-*/
 }
 
 /**
