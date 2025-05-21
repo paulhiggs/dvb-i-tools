@@ -11,8 +11,6 @@ import commandLineArgs from "command-line-args";
 import commandLineUsage from "command-line-usage";
 import fetchS from "sync-fetch";
 
-import { Libxml2_wasm_init } from '../libxml2-wasm-extensions.js';
-
 import ServiceListCheck from "../sl_check.js";
 import ContentGuideCheck from "../cg_check.js";
 import { isHTTPURL } from "../pattern_checks.js";
