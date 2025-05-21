@@ -2152,11 +2152,11 @@ export default class ServiceListCheck {
 			if (!isA177specification_URN(StandardVersion.content)) 
 				errs.addError({
 					code: "SL017",
-					message: `"${StandardVersion.content} is not a recognised URN for an A177 specification version`,
+					message: `"${StandardVersion.content}" is not a recognised URN for an A177 specification version`,
 					key: "invalid identifier",
 					fragment: StandardVersion,
 					clause: "A177 clause 4.6.1.1",
-					description: "Specification URN that is used to indicate acompatable specification version for this service list"
+					description: "Specification URN that is used to indicate a compatable specification version for this service list"
 				});
 		}
 
