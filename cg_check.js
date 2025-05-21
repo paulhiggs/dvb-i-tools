@@ -251,13 +251,14 @@ export default class ContentGuideCheck {
 		return res;
 	}
 
-	/*private*/ #doSchemaVerification(TVAdoc, props, errs, errCode) {
+	/*private*/ #doSchemaVerification(TVAdoc, props, errs, errCode, report_schema_version = true) {
 		let _rc = true;
 
 		let x = SchemaVersions.find((s) => s.namespace == props.namespace);
 		if (x && x.schema) {
 			SchemaCheck(TVAdoc, x.schema, errs, `${errCode}:${SchemaVersion(props.namespace)}`);
-			SchemaVersionCheck(props, TVAdoc, x.status, errs, `${errCode}a`);
+			if (report_schema_version)
+				SchemaVersionCheck(props, TVAdoc, x.status, errs, `${errCode}a`);
 		} else _rc = false;
 
 		return _rc;
@@ -334,7 +335,7 @@ export default class ContentGuideCheck {
 		while ((Synopsis = BasicDescription.get(xPath(props.prefix, tva.e_Synopsis, ++s), props.schema)) != null) {
 			checkAttributes(Synopsis, [tva.a_length], [tva.a_lang], tvaEA.Synopsis, errs, `${errCode}-1`);
 
-			const synopsisLang = GetNodeLanguage(Synopsis, false, errs, `${errCode}-2`, this.#knownLanguages);
+			const synopsisLang = GetNodeLanguage(Synopsis, false, errs, `${errCode}-2`);
 			const synopsisLength = Synopsis.attrAnyNs(tva.a_length) ? Synopsis.attrAnyNs(tva.a_length).value : null;
 
 			if (synopsisLength) {
@@ -466,7 +467,7 @@ export default class ContentGuideCheck {
 			checkAttributes(Keyword, [], [tva.a_lang, tva.a_type], tvaEA.Keyword, errs, `${errCode}-1`);
 
 			let keywordType = Keyword.attrAnyNs(tva.a_type) ? Keyword.attrAnyNs(tva.a_type).value : tva.DEFAULT_KEYWORD_TYPE;
-			let keywordLang = GetNodeLanguage(Keyword, false, errs, `${errCode}-2`, this.#knownLanguages);
+			let keywordLang = GetNodeLanguage(Keyword, false, errs, `${errCode}-2`);
 
 			if (counts[keywordLang] === undefined) counts[keywordLang] = [Keyword];
 			else counts[keywordLang].push(Keyword);
@@ -675,7 +676,7 @@ export default class ContentGuideCheck {
 								break;
 						}
 					});
-				checkXMLLangs(tva.e_ExplanatoryText, `${BasicDescription.name}.${tva.e_ParentalGuidance}`, ParentalGuidance, errs, `${errCode}-50`, this.#knownLanguages);
+				checkXMLLangs(tva.e_ExplanatoryText, `${BasicDescription.name}.${tva.e_ParentalGuidance}`, ParentalGuidance, errs, `${errCode}-50`);
 			});
 		}
 
@@ -794,15 +795,15 @@ export default class ContentGuideCheck {
 								foundPersonName.push(elem);
 								// required to have a GivenName optionally have a FamilyName
 								ValidateName(elem, errs, `${errCode}-11`);
-								checkXMLLangs(tva.e_GivenName, tva.e_PersonName, elem, errs, `${errCode}-12`, this.#knownLanguages);
-								checkXMLLangs(tva.e_FamilyName, tva.e_PersonName, elem, errs, `${errCode}-13`, this.#knownLanguages);
+								checkXMLLangs(tva.e_GivenName, tva.e_PersonName, elem, errs, `${errCode}-12`);
+								checkXMLLangs(tva.e_FamilyName, tva.e_PersonName, elem, errs, `${errCode}-13`);
 								break;
 							case tva.e_Character:
 								foundCharacter.push(elem);
 								// required to have a GivenName optionally have a FamilyName
 								ValidateName(elem, errs, `${errCode}-21`);
-								checkXMLLangs(tva.e_GivenName, tva.e_Character, elem, errs, `${errCode}-22`, this.#knownLanguages);
-								checkXMLLangs(tva.e_FamilyName, tva.e_Character, elem, errs, `${errCode}-23`, this.#knownLanguages);
+								checkXMLLangs(tva.e_GivenName, tva.e_Character, elem, errs, `${errCode}-22`);
+								checkXMLLangs(tva.e_FamilyName, tva.e_Character, elem, errs, `${errCode}-23`);
 								break;
 							case tva.e_OrganizationName:
 								foundOrganizationName.push(elem);
@@ -825,7 +826,7 @@ export default class ContentGuideCheck {
 						}
 					});
 				let singleElementError = (elementName, parentElementName) => `only a single ${elementName.elementize()} is permitted in ${parentElementName.elementize()}`;
-				checkXMLLangs(tva.e_OrganizationName, tva.e_CreditsItem, CreditsItem, errs, `${errCode}-11`, this.#knownLanguages);
+				checkXMLLangs(tva.e_OrganizationName, tva.e_CreditsItem, CreditsItem, errs, `${errCode}-11`);
 				if (foundPersonName.length > 1)
 					errs.addError({
 						code: `${errCode}-51`,
@@ -891,7 +892,7 @@ export default class ContentGuideCheck {
 		let rm = 0,
 			RelatedMaterial;
 		while ((RelatedMaterial = BasicDescription.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null)
-			ValidatePromotionalStillImage(RelatedMaterial, errs, "RMPSI001", BasicDescription.name.elementize(), this.#knownLanguages);
+			ValidatePromotionalStillImage(RelatedMaterial, errs, "RMPSI001", BasicDescription.name.elementize());
 	}
 
 	/**
@@ -1021,7 +1022,7 @@ export default class ContentGuideCheck {
 				let rm = 0,
 					RelatedMaterial;
 				while ((RelatedMaterial = BasicDescription.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null)
-					ValidatePromotionalStillImage(RelatedMaterial, errs, "RMME001", BasicDescription.name, this.#knownLanguages);
+					ValidatePromotionalStillImage(RelatedMaterial, errs, "RMME001", BasicDescription.name);
 				break;
 			case tva.e_GroupInformation:
 				this.#ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, "More Episodes");
@@ -1145,7 +1146,7 @@ export default class ContentGuideCheck {
 							break;
 						case tva.cs_PromotionalStillImage:
 							countImage.push(HowRelated);
-							ValidatePromotionalStillImage(RelatedMaterial, errs, "MB012", BasicDescription.name.elementize(), this.#knownLanguages);
+							ValidatePromotionalStillImage(RelatedMaterial, errs, "MB012", BasicDescription.name.elementize());
 							break;
 						default:
 							errs.addError(cg_InvalidHrefValue(hrHref, HowRelated, `${tva.e_RelatedMaterial.elementize()} in Box Set List`, "MB011"));
@@ -1205,7 +1206,7 @@ export default class ContentGuideCheck {
 			checkAttributes(Title, requiredAttributes, optionalAttributes, tvaEA.Title, errs, `${errCode}-1`);
 
 			const titleType = Title.attrAnyNs(tva.a_type) ? Title.attrAnyNs(tva.a_type).value : mpeg7.DEFAULT_TITLE_TYPE;
-			const titleLang = GetNodeLanguage(Title, false, errs, `${errCode}-2`, this.#knownLanguages);
+			const titleLang = GetNodeLanguage(Title, false, errs, `${errCode}-2`);
 			const titleStr = unEntity(Title.content);
 
 			if (titleStr.length > dvbi.MAX_TITLE_LENGTH)
@@ -1510,7 +1511,7 @@ export default class ContentGuideCheck {
 			"PI002"
 		);
 
-		GetNodeLanguage(ProgramInformation, false, errs, "PI010", this.#knownLanguages);
+		GetNodeLanguage(ProgramInformation, false, errs, "PI010");
 		let isCurrentProgram = false,
 			programCRID = null;
 
@@ -1650,7 +1651,7 @@ export default class ContentGuideCheck {
 			return null;
 		}
 		checkAttributes(ProgramInformationTable, [], [tva.a_lang], tvaEA.ProgramInformationTable, errs, "PI102");
-		GetNodeLanguage(ProgramInformationTable, false, errs, "PI103", this.#knownLanguages);
+		GetNodeLanguage(ProgramInformationTable, false, errs, "PI103");
 
 		let pi = 0,
 			ProgramInformation,
@@ -1953,7 +1954,7 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		GetNodeLanguage(GroupInformation, false, errs, "GI001", this.#knownLanguages);
+		GetNodeLanguage(GroupInformation, false, errs, "GI001");
 
 		switch (requestType) {
 			case CG_REQUEST_SCHEDULE_NOWNEXT:
@@ -2023,7 +2024,7 @@ export default class ContentGuideCheck {
 			return;
 		}
 		
-		GetNodeLanguage(GroupInformationTable, false, errs, "GI102", this.#knownLanguages);
+		GetNodeLanguage(GroupInformationTable, false, errs, "GI102");
 
 		let gi, GroupInformation;
 		// find which GroupInformation element is the "category group"
@@ -2113,7 +2114,7 @@ export default class ContentGuideCheck {
 		}
 		const ERROR_KEY = "boxset contents";
 
-		GetNodeLanguage(GroupInformationTable, false, errs, "GIC102", this.#knownLanguages);
+		GetNodeLanguage(GroupInformationTable, false, errs, "GIC102");
 
 		// Check all category groups (main and descendant)
 		// find which GroupInformation element is the "category group"
@@ -2280,7 +2281,7 @@ export default class ContentGuideCheck {
 			});
 			return;
 		}
-		GetNodeLanguage(GroupInformationTable, false, errs, "NM002", this.#knownLanguages);
+		GetNodeLanguage(GroupInformationTable, false, errs, "NM002");
 
 		let gi = 0,
 			GroupInformation;
@@ -2387,7 +2388,7 @@ export default class ContentGuideCheck {
 						});
 				}
 
-				validLanguage = checkLanguage(this.#knownLanguages, audioLang, `${tva.e_AudioAttributes}.${tva.e_AudioLanguage}`, AudioLanguage, errs, "AV015");
+				validLanguage = checkLanguage(audioLang, `${tva.e_AudioAttributes}.${tva.e_AudioLanguage}`, AudioLanguage, errs, "AV015");
 
 				if (validLanguage && validPurpose) {
 					if (audioCounts[audioLang] === undefined) audioCounts[audioLang] = [AudioLanguage];
@@ -2672,14 +2673,14 @@ export default class ContentGuideCheck {
 		// <CaptionLanguage>
 		let CaptionLanguage = InstanceDescription.get(xPath(props.prefix, tva.e_CaptionLanguage), props.schema);
 		if (CaptionLanguage) {
-			checkLanguage(this.#knownLanguages, CaptionLanguage.content, `${InstanceDescription.name}.${tva.e_CaptionLanguage}`, CaptionLanguage, errs, "ID021");
+			checkLanguage(CaptionLanguage.content, `${InstanceDescription.name}.${tva.e_CaptionLanguage}`, CaptionLanguage, errs, "ID021");
 			BooleanValue(CaptionLanguage, tva.a_closed, "ID022", errs);
 		}
 
 		// <SignLanguage>
 		let SignLanguage = InstanceDescription.get(xPath(props.prefix, tva.e_SignLanguage), props.schema);
 		if (SignLanguage) {
-			checkLanguage(this.#knownLanguages, SignLanguage.content, `${InstanceDescription.name}.${tva.e_SignLanguage}`, SignLanguage, errs, "ID031");
+			checkLanguage(SignLanguage.content, `${InstanceDescription.name}.${tva.e_SignLanguage}`, SignLanguage, errs, "ID031");
 			FalseValue(SignLanguage, tva.a_closed, "ID032", errs);
 			// check value is "sgn" according to ISO 639-2 or a sign language listed in ISO 639-3
 			if (SignLanguage.content != "sgn" && !this.#knownLanguages.isKnownSignLanguage(SignLanguage.content))
@@ -2895,7 +2896,7 @@ export default class ContentGuideCheck {
 		}
 
 		checkAttributes(OnDemandProgram, [tva.a_serviceIDRef], [tva.a_lang], tvaEA.OnDemandProgram, errs, "OD005");
-		GetNodeLanguage(OnDemandProgram, false, errs, "OD006", this.#knownLanguages);
+		GetNodeLanguage(OnDemandProgram, false, errs, "OD006");
 		this.#checkTAGUri(OnDemandProgram, errs, "OD007");
 
 		// <Program>
@@ -3004,7 +3005,7 @@ export default class ContentGuideCheck {
 		if (endSchedule) to = new Date(endSchedule.value);
 
 		let isCurrentProgram = false;
-		GetNodeLanguage(Event, false, errs, `${prefix}001`, this.#knownLanguages);
+		GetNodeLanguage(Event, false, errs, `${prefix}001`);
 		checkAttributes(Event, prefix == "BE" ? [tva.a_serviceIDRef] : [], [], tvaEA.ScheduleEvent, errs, `${prefix}002`);
 		checkTopElementsAndCardinality(
 			Event,
@@ -3216,7 +3217,7 @@ export default class ContentGuideCheck {
 		checkTopElementsAndCardinality(Schedule, [{ name: tva.e_ScheduleEvent, minOccurs: 0, maxOccurs: Infinity }], tvaEC.Schedule, false, errs, "VS001");
 		checkAttributes(Schedule, [tva.a_serviceIDRef, tva.a_start, tva.a_end], [], tvaEA.Schedule, errs, "VS002");
 
-		GetNodeLanguage(Schedule, false, errs, "VS003", this.#knownLanguages);
+		GetNodeLanguage(Schedule, false, errs, "VS003");
 		let serviceIdRef = this.#checkTAGUri(Schedule, errs, "VS004");
 		let startSchedule = Schedule.attrAnyNs(tva.a_start),
 			fr = null,
@@ -3296,7 +3297,7 @@ export default class ContentGuideCheck {
 		);
 		checkAttributes(ProgramLocationTable, [], [tva.a_lang], tvaEA.ProgramLocationTable, errs, "PL011");
 
-		GetNodeLanguage(ProgramLocationTable, false, errs, "PL012", this.#knownLanguages);
+		GetNodeLanguage(ProgramLocationTable, false, errs, "PL012");
 
 		let cntODP = 0,
 			cntSE = 0,
@@ -3363,9 +3364,11 @@ export default class ContentGuideCheck {
 	 * @param {String}    CGtext       the service list text to be validated
 	 * @param {String}    requestType  the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
 	 * @param {ErrorList} errs         errors found in validaton
-	 * @param {String}    log_prefix   the first part of the logging location (of null if no logging)
+	 * @param {Object} options 
+	 *                   options.log_prefix            the first part of the logging location (or null if no logging)
+	 *                   options.report_schema_version report the state of the schema in the error/warning list
 	 */
-	doValidateContentGuide(CGtext, requestType, errs, log_prefix) {
+	doValidateContentGuide(CGtext, requestType, errs, options = {}) {
 		this.#numRequests++;
 
 		if (!CGtext) {
@@ -3373,10 +3376,13 @@ export default class ContentGuideCheck {
 			return;
 		}
 
+		if (!Object.prototype.hasOwnProperty.call(options, "log_prefix")) options.log_prefix = null;
+		if (!Object.prototype.hasOwnProperty.call(options, "report_schema_version")) options.report_schema_version = true;
+
 		let CG = SchemaLoad(CGtext, errs, "CG001");
 		if (!CG) return;
 
-		writeOut(errs, log_prefix, false);
+		writeOut(errs, options.log_prefix, false);
 
 		if (CG.root.name != tva.e_TVAMain) {
 			errs.addError({
@@ -3404,10 +3410,10 @@ export default class ContentGuideCheck {
 			namespace: SCHEMA_NAMESPACE,
 		};
 
-		this.#doSchemaVerification(CG, props, errs, "CG003");
+		this.#doSchemaVerification(CG, props, errs, "CG003", options.report_schema_version);
 
 		let TVAMain = CG.root;
-		GetNodeLanguage(TVAMain, true, errs, "CG005", this.#knownLanguages);
+		GetNodeLanguage(TVAMain, true, errs, "CG005");
 		let ProgramDescription = TVAMain.get(xPath(props.prefix, tva.e_ProgramDescription), props.schema);
 		if (!ProgramDescription) {
 			errs.addError({ code: "CG006", message: `No ${tva.e_ProgramDescription.elementize()} element specified.` });
@@ -3533,7 +3539,7 @@ export default class ContentGuideCheck {
 	 */
 	validateContentGuide(CGtext, requestType) {
 		var errs = new ErrorList();
-		this.doValidateContentGuide(CGtext, requestType, errs);
+		this.doValidateContentGuide(CGtext, requestType, errs, {report_schema_version: true});
 
 		return new Promise((resolve, /* eslint-disable no-unused-vars*/ reject /* eslint-enable */) => {
 			resolve(errs);

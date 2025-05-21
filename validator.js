@@ -49,7 +49,7 @@ let csr = null;
 const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
 
-function DVB_I_check(req, res, slcheck, cgcheck, hasSL, hasCG, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
+function DVB_I_check(req, res, slcheck, cgcheck, hasSL, hasCG, motd, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
 	if (!req.session.data) {
 		// setup defaults
 		req.session.data = {};
@@ -65,7 +65,7 @@ function DVB_I_check(req, res, slcheck, cgcheck, hasSL, hasCG, mode = MODE_UNSPE
 	}
 
 	let FormArguments = { cg: MODE_CG, sl: MODE_SL, file: MODE_FILE, url: MODE_URL, hasSL: hasSL, hasCG: hasCG };
-	if (!req.body?.testtype) drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, null, null);
+	if (!req.body?.testtype) drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, motd, null, null);
 	else {
 		let VVxml = null;
 		req.parseErr = null;
@@ -107,17 +107,17 @@ function DVB_I_check(req, res, slcheck, cgcheck, hasSL, hasCG, mode = MODE_UNSPE
 		if (!req.parseErr)
 			switch (req.body.testtype) {
 				case MODE_CG:
-					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, log_prefix);
+					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, {log_prefix: log_prefix, report_schema_version:true});
 					break;
 				case MODE_SL:
-					if (slcheck) slcheck.doValidateServiceList(VVxml, errs, log_prefix);
+					if (slcheck) slcheck.doValidateServiceList(VVxml, errs, {log_prefix: log_prefix, report_schema_version:true});
 					break;
 			}
 
 		req.session.data.mode = req.body.testtype;
 		req.session.data.entry = req.body.doclocation;
 		if (req.body.requestType) req.session.data.cgmode = req.body.requestType;
-		drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, req.parseErr, errs);
+		drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, motd, req.parseErr, errs);
 
 		req.diags = {};
 		req.diags.countErrors = errs.numErrors();
@@ -129,7 +129,7 @@ function DVB_I_check(req, res, slcheck, cgcheck, hasSL, hasCG, mode = MODE_UNSPE
 	res.end();
 }
 
-function validateServiceList(req, res, slcheck) {
+function validateServiceList(req, res, slcheck, motd) {
 	let errs = new ErrorList();
 	let resp,
 		VVxml = null;
@@ -148,7 +148,7 @@ function validateServiceList(req, res, slcheck) {
 		VVxml = req.body;
 	}
 	slcheck.doValidateServiceList(VVxml, errs, log_prefix);
-	drawResults(req, res, req.parseErr, errs);
+	drawResults(req, res, motd, req.parseErr, errs);
 
 	writeOut(errs, log_prefix, true, req);
 	res.end();
@@ -220,6 +220,12 @@ export default function validator(options) {
 	else if (!CORSoptions.includes(options.CORSmode)) {
 		console.log(chalk.red(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`));
 		process.exit(1);
+	}
+
+	let motd = null;
+	if (Object.prototype.hasOwnProperty.call(options, "motd")) {
+		console.log(chalk.yellow("reading Message Of The Day from " + chalk.green(options.motd)));
+		motd = readmyfile(options.motd, { encoding: "utf-8", flag: "r" });
 	}
 
 	// initialize Express
@@ -316,7 +322,7 @@ export default function validator(options) {
 	}
 	if (!options.nosl) {
 		app.get("/validate_sl", (req, res) => {
-			validateServiceList(req, res, slcheck);
+			validateServiceList(req, res, slcheck, motd);
 		});
 
 		app.get("/validate_sl_json", (req, res) => {
@@ -324,7 +330,7 @@ export default function validator(options) {
 		});
 
 		app.post("/validate_sl", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
-			validateServiceList(req, res, slcheck);
+			validateServiceList(req, res, slcheck, motd);
 		});
 
 		app.post("/validate_sl_json", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
@@ -354,10 +360,10 @@ export default function validator(options) {
 
 	if (!options.nosl || !options.nocg) {
 		app.get("/check", (req, res) => {
-			DVB_I_check(req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
+			DVB_I_check(req, res, slcheck, cgcheck, !options.nosl, !options.nocg, motd);
 		});
 		app.post("/check", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
-			DVB_I_check(req, res, slcheck, cgcheck, !options.nosl, !options.nocg);
+			DVB_I_check(req, res, slcheck, cgcheck, !options.nosl, !options.nocg, motd);
 		});
 	}
 

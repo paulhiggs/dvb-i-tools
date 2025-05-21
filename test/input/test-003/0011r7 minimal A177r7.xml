@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServiceList xmlns="urn:dvb:metadata:servicediscovery:2025" id="tag:dvb.org,2025:A177r7" version="1" xml:lang="en">
+	<StandardVersion>urn:dvb:metadata:dvbi:standardversion:7</StandardVersion>
+	<Name>Empty A177r7 Service List</Name>
+	<ProviderName>Regression Test</ProviderName>
+</ServiceList>

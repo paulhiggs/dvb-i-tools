@@ -23,9 +23,8 @@ import { cg_InvalidHrefValue, InvalidURL, keys } from "./common_errors.js";
  * @param {String} errcode           Error code prefix for reporting
  * @param {string} location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
  * @param {array}  allowedHowRelated The set of permitted
- * @param {Object} languageValidator Validator class to check any @xml:lang
  */
-function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, allowedHowRelated, languageValidator = null) {
+function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, allowedHowRelated) {
 	if (!RelatedMaterial) {
 		errs.addError({ type: APPLICATION, code: "PS000", message: "validateImageRelatedMaterial() called with RelatedMaterial==null" });
 		return;
@@ -138,8 +137,8 @@ function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, 
 					});
 			}
 		});
-	if (languageValidator && MediaLocator.attrAnyNs(dvbi.a_contentLanguage))
-		checkLanguage(languageValidator, MediaLocator.attrAnyNs(dvbi.a_contentLanguage).value, MediaLocator.name, MediaLocator, errs, `${errCode}-27`);
+	if (MediaLocator.attrAnyNs(dvbi.a_contentLanguage))
+		checkLanguage(MediaLocator.attrAnyNs(dvbi.a_contentLanguage).value, MediaLocator.name, MediaLocator, errs, `${errCode}-27`);
 	if (!hasMediaURI)
 		errs.addError({
 			code: `${errCode}-26`,
@@ -157,10 +156,9 @@ function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, 
  * @param {Object} errs              The class where errors and warnings relating to the serivce list processing are stored
  * @param {String} errcode           Error code prefix for reporting
  * @param {string} location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
- * @param {Object} languageValidator Validator class to check any @xml:lang
  */
-export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, location, languageValidator = null) {
-	validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, [tva.cs_PromotionalStillImage], languageValidator);
+export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, location) {
+	validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, [tva.cs_PromotionalStillImage]);
 }
 
 /**
@@ -170,9 +168,8 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
  * @param {Object} errs               The class where errors and warnings relating to the service list processing are stored
  * @param {String} errCode            Error code prefix for reporting
  * @param {string} location           The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
- * @param {Object} languageValidator  The class that checks language codes
  */
-export function checkValidLogos(RelatedMaterial, errs, errCode, location, languageValidator = null) {
+export function checkValidLogos(RelatedMaterial, errs, errCode, location) {
 	if (!RelatedMaterial) return;
 
 	let specifiedMediaTypes = [];
@@ -182,8 +179,8 @@ export function checkValidLogos(RelatedMaterial, errs, errCode, location, langua
 				checkTopElementsAndCardinality(MediaLocator, [{ name: tva.e_MediaUri }], tvaEC.MediaLocator, false, errs, `${errCode}-1`);
 				checkAttributes(MediaLocator, [], [dvbi.a_contentLanguage], dvbiEA.MediaLocator, errs, `${errCode}-2`);
 
-				if (languageValidator && MediaLocator.attrAnyNs(dvbi.a_contentLanguage))
-					checkLanguage(languageValidator, MediaLocator.attrAnyNs(dvbi.a_contentLanguage).value, location, MediaLocator, errs, `${errCode}-3`);
+				if (MediaLocator.attrAnyNs(dvbi.a_contentLanguage))
+					checkLanguage(MediaLocator.attrAnyNs(dvbi.a_contentLanguage).value, location, MediaLocator, errs, `${errCode}-3`);
 
 				if (MediaLocator.childNodes())
 					MediaLocator.childNodes().forEachSubElement((MediaUri) => {
