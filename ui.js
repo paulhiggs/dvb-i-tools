@@ -74,17 +74,11 @@ function tabulateResults(source, res, error, errs) {
 	if (errs) {
 		res.write(`<style>span.${link_css} {} span.${link_css} {color: ${Dodger_Blue}; text-decoration: underline;} </style>`);
 
-		if (errs.numCountsErr() > 0 || errs.numCountsWarn() > 0) {
+		if (errs.numCountsErr() > 0 || errs.numCountsWarn() > 0 || errs.numCountsInfo() > 0) {
 			res.write(SUMMARY_FORM_HEADER);
-			Object.keys(errs.countsErr).forEach(function (i) {
-				return res.write(`<tr><td>${HTMLize(i)}</td><td>${errs.countsErr[i]}</td></tr>`);
-			});
-			Object.keys(errs.countsWarn).forEach(function (i) {
-				return res.write(`<tr><td><i>W: ${HTMLize(i)}</i></td><td>${errs.countsWarn[i]}</td></tr>`);
-			});
-			Object.keys(errs.countsInfo).forEach(function (i) {
-				return res.write(`<tr><td><i>I: ${HTMLize(i)}</i></td><td>${errs.countsInfo[i]}</td></tr>`);
-			});
+			Object.keys(errs.countsErr).forEach((e) => res.write(`<tr><td>${HTMLize(e.key)}</td><td>${e.count}</td></tr>`));
+			Object.keys(errs.countsWarn).forEach((w) => res.write(`<tr><td><i>W: ${HTMLize(w.key)}</i></td><td>${w.count}</td></tr>`));
+			Object.keys(errs.countsInfo).forEach((i) => res.write(`<tr><td><i>I: ${HTMLize(i.key)}</i></td><td>${i.count}</td></tr>`));
 			resultsShown = true;
 			res.write(TABLE_FOOTER);
 		}
