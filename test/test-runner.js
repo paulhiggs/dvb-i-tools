@@ -16,6 +16,8 @@ import { isHTTPURL } from "../pattern_checks.js";
 
 import ErrorList from "../error_list.js";
 
+import { Libxml2_wasm_init } from '../libxml2-wasm-extensions.js';
+
 // parse command line options
 const optionDefinitions = [
 	{ name: "urls", alias: "u", type: Boolean, defaultValue: false },
