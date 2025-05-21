@@ -38,4 +38,4 @@ export const mpeg7 = {
 	a_type: "type",
 };
 
-export const MPEG1_layer_2 = `${MPEG7_CS}:AudioCodingFormatCS:2001:3:2`;
+export const MPEG1_layer_2 = `${MPEG7_CS}:AudioCodingFormatCS:2001:3.2`;
