@@ -8,7 +8,10 @@ import process from "process";
 
 import chalk from "chalk";
 import commandLineArgs from "command-line-args";
+import commandLineUsage from "command-line-usage";
 import fetchS from "sync-fetch";
+
+import { Libxml2_wasm_init } from '../libxml2-wasm-extensions.js';
 
 import ServiceListCheck from "../sl_check.js";
 import ContentGuideCheck from "../cg_check.js";
@@ -16,16 +19,56 @@ import { isHTTPURL } from "../pattern_checks.js";
 
 import ErrorList from "../error_list.js";
 
-import { Libxml2_wasm_init } from '../libxml2-wasm-extensions.js';
-
 // parse command line options
 const optionDefinitions = [
-	{ name: "urls", alias: "u", type: Boolean, defaultValue: false },
-	{ name: "mode", alias: "m", type: String},
-	{ name: "src", type: String, multiple: true, defaultOption: true },
+	{ name: "urls", alias: "u", type: Boolean, defaultValue: false, description: "Load data files from network locations." },
+	{ name: "mode", alias: "m", type: String, typeLabel: "{underline type}", description: "Type of validation to perform on the specified sources"},
+	{ name: "src", type: String, multiple: true, defaultOption: true, typeLabel: "{underline filenames and/or URLs}", description: "Source files to validate"},
+	{ name: "help", alias: "h", type: Boolean, defaultValue: false, description: "This help" },
+];
+
+let SIdescription = (mode) => `Validate the source files as Schedule Information (${mode}) responses`;
+let BSdescription = (mode) => `Validate the source files as Box Set ${mode} responses`;
+
+const commandLineHelp = [
+	{
+		header: "Regression test of DVB Service List and Content Guide validator",
+		content: "Regression tests for syntax and semantic validation of XML documents defined in DVB Blueblook A177 (DVB-I)",
+	},
+	{
+		header: "Synopsis",
+		content: "$ node test-runner <options>",
+	},
+	{
+		header: "Options",
+		optionList: optionDefinitions,
+	},
+	{
+		header: "Values for mode",
+		content: [
+			{name: "sl", summary: "Validate source files as Service Lists"},
+			{name: "cg-Time", summary: SIdescription("time stamp")},
+			{name: "cg-NowNext", summary: SIdescription("now/next")},
+			{name: "cg-Window", summary: SIdescription("window")},
+			{name: "cg-ProgInfo", summary: "Validate the source files as Program Information responses"},
+			{name: "cg-MoreEpisosea", summary: "Validate the source files as More Episodes responses"},
+			{name: "cg-bsCategories", summary: BSdescription("Categories")},
+			{name: "cg-bsLists", summary: BSdescription("Lists")},
+			{name: "cg-bsContents", summary: BSdescription("Contents")},
+		],
+	},
+	{
+		header: "About",
+		content: "Project home: {underline https://github.com/paulhiggs/dvb-i-tools/}",
+	},
 ];
 
 const options = commandLineArgs(optionDefinitions);
+
+if (options.help) {
+	console.log(commandLineUsage(commandLineHelp));
+	process.exit(0);
+}
 
 if (!options.src || options.src.length == 0) {
 	console.log(chalk.red('no files specified to validate, exiting...'));
@@ -53,10 +96,11 @@ if (options.mode.toLowerCase() == "sl") {
 
 		let errs = new ErrorList();
 		sl.doValidateServiceList(SLtext, errs);
+		console.log(`\n${ref}\n${"".padStart(ref.length, "=")}\n`);
 		console.log(JSON.stringify({errs}, null, 2));
 	});
 }
-else if (options.mode.toLowerCase("cg")) {
+else if (options.mode.toLowerCase().substring(0,2) == "cg") {
 	// test a content guide frsagmet
 	if (options.mode.indexOf("-") == -1) {
 		console.log(chalk.red(`content guide request type must be specified`));
@@ -88,6 +132,7 @@ else if (options.mode.toLowerCase("cg")) {
 
 		let errs = new ErrorList();
 		cg.doValidateContentGuide(CGtext, cg_request, errs);
+		console.log(`\n${ref}\n${"".padStart(ref.length, "=")}\n`);
 		console.log(JSON.stringify({errs}, null, 2));
 	});
 }
