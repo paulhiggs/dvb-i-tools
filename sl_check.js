@@ -1120,6 +1120,8 @@ export default class ServiceListCheck {
 										message: `invalid ${dvbi.a_href.attribute(child.name)} value for (${child.attrAnyNs(dvbi.a_href).value}) ${this.#allowedAudioSchemes.valuesRange()}`,
 										fragment: child,
 										key: "audio codec",
+										description: `The value specified for ${dvbi.a_href.attribute(child.name)} is constrained in DVB-I.`,
+										clause: "A177 Table 56",
 									});
 								break;
 							case tva.e_MixType:
