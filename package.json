@@ -1,5 +1,5 @@
 {
-	"name": "dvb-i-tools",
+	"name": "dvb-i-tools (wasm)",
 	"version": "1.8.0",
 	"description": "DVB-I V&V Tools - up to A177r7",
 	"main": "all-in-one.js",
