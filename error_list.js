@@ -22,17 +22,11 @@ let nthIndexOf = (str, pat, n) => {
 };
 
 export default class ErrorList {
-	#numCountsE; // keep these counters as arrays constructed by
-	#numCountsW; // direct insertion do not maintain them
-	#numCountsI;
 
 	constructor() {
 		this.countsErr = [];
-		this.#numCountsE = 0;
 		this.countsWarn = [];
-		this.#numCountsW = 0;
 		this.countsInfo = [];
-		this.#numCountsI = 0;
 		this.errors = [];
 		this.warnings = [];
 		this.informationals = [];
@@ -61,28 +55,34 @@ export default class ErrorList {
 		}
 	}
 	/* private method*/ #increment(key) {
-		if (this.countsErr[key] === undefined) this.set(key);
-		else this.countsErr[key]++;
+		let c = this.countsErr.find((e) => e.key == key);
+		if (c) c.count++;
+		else this.countsErr.push({key: key, count: 1});
 	}
 	set(key, value = 1) {
-		this.countsErr[key] = value;
-		this.#numCountsE++;
+		let c = this.countsErr.find((e) => e.key == key);
+		if (c) c.count++;
+		else this.countsErr.push({key: key, count: value});
 	}
 	/* private method*/ #incrementW(key) {
-		if (this.countsWarn[key] === undefined) this.setW(key);
-		else this.countsWarn[key]++;
+		let c = this.countsWarn.find((e) => e.key == key);
+		if (c) c.count++;
+		else this.countsWarn.push({key: key, count: 1});
 	}
 	setW(key, value = 1) {
-		this.countsWarn[key] = value;
-		this.#numCountsW++;
+		let c = this.countsWarn.find((e) => e.key == key);
+		if (c) c.count++;
+		else this.countsWarn.push({key: key, count: value});
 	}
 	/* private method*/ #incrementI(key) {
-		if (this.countsInfo[key] === undefined) this.setI(key);
-		else this.countsInfo[key]++;
+		let c = this.countsInfo.find((e) => e.key == key);
+		if (c) c.count++;
+		else this.countsInfo.push({key: key, count: 1});
 	}
 	setI(key, value = 1) {
-		this.countsInfo[key] = value;
-		this.#numCountsI++;
+		let c = this.countsInfo.find((e) => e.key == key);
+		if (c) c.count++;
+		else this.countsInfo.push({key: key, count: value});
 	}
 
 	/* private method */ #prettyPrint(node) {
@@ -120,7 +120,7 @@ export default class ErrorList {
 	 * @param {string}                   e.code      Error code
 	 * @param {string}                   e.message   The error message
 	 * @param {string}                   e.key       (optional)The category of the message
-	 * @param {string or libxmljs2:Node} e.fragment  (optional) The XML fragment (or node in the XML document) triggering the error
+	 * @param {string or XmlElement}     e.fragment  (optional) The XML fragment (or node in the XML document) triggering the error
 	 * @param {integer}                  e.line      (optional) the line number of the element in the XML document that triggered the error
 	 * @param {string}                   e.description (optional) a description of the error
 	 * @param {string}                   e.clause      (optional) the specification clause/section that is violated (only used with @e.description is provided)
@@ -217,13 +217,13 @@ export default class ErrorList {
 	}
 
 	numCountsErr() {
-		return this.#numCountsE;
+		return this.countsErr.length;
 	}
 	numCountsWarn() {
-		return this.#numCountsW;
+		return this.countsWarn.length;
 	}
 	numCountsInfo() {
-		return this.#numCountsI;
+		return this.countsInfo.length;
 	}
 
 	/**
