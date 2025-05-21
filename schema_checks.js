@@ -231,23 +231,31 @@ export function SchemaVersionCheck(props, document, publication_state, errs, err
  * @returns {XMLDocument}  an XML document structure
  */
 export function SchemaLoad(document, errs, errcode) {
+	const _key = "malformed XML";
 	let tmp = null,
 		prettyXML = null;
+
+	try {
+		tmp = XmlDocument.fromString(document);
+	}
+	catch (err) {
+		errs.addError({ code: `${errcode}-1`, message: `Raw XML parsing failed: ${err.message}`, key: _key });
+	}
 	try {
 		prettyXML = format(document.replace(/(\n\t)/gm, "\n"), { collapseContent: true, lineSeparator: "\n" });
 	} catch (err) {
-		errs.addError({ code: `${errcode}-1`, message: `XML format failed: ${err.cause}`, key: "malformed XML" });
+		errs.addError({ code: `${errcode}-2`, message: `XML format failed: ${err.cause}`, key: _key });
 		return null;
 	}
 	try {
 		tmp = XmlDocument.fromString(prettyXML);
 	} catch (err) {
-		errs.addError({ code: `${errcode}-11`, message: `XML parsing failed: ${err.message}`, key: "malformed XML" });
+		errs.addError({ code: `${errcode}-11`, message: `XML parsing failed: ${err.message}`, key: _key });
 		errs.loadDocument(prettyXML);
 		return null;
 	}
 	if (!tmp || !tmp.root) {
-		errs.addError({ code: `${errcode}-2`, message: "XML document is empty", key: "malformed XML" });
+		errs.addError({ code: `${errcode}-12`, message: "XML document is empty", key: _key });
 		errs.loadDocument(prettyXML);
 		return null;
 	}
