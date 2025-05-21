@@ -2035,11 +2035,12 @@ export default class ServiceListCheck {
 		}
 	}
 
-	/*private*/ #doSchemaVerification(ServiceList, props, errs, errCode) {
+	/*private*/ #doSchemaVerification(ServiceList, props, errs, errCode, report_schema_version = true) {
 		let x = GetSchema(props.namespace);
 		if (x && x.schema) {
 			SchemaCheck(ServiceList, x.schema, errs, `${errCode}:${SchemaVersion(props.namespace)}`);
-			SchemaVersionCheck(props, ServiceList, x.status, errs, `${errCode}a`);
+			if (report_schema_version)
+					SchemaVersionCheck(props, ServiceList, x.status, errs, `${errCode}:`);
 			return true;
 		}
 		return false;
@@ -2050,9 +2051,11 @@ export default class ServiceListCheck {
 	 *
 	 * @param {String} SLtext      The service list text to be validated
 	 * @param {Class}  errs        Errors found in validaton
-	 * @param {String} log_prefix  the first part of the logging location (or null if no logging)
+	 * @param {Object} options 
+	 *                   options.log_prefix            the first part of the logging location (or null if no logging)
+	 *                   options.report_schema_version report the state of the schema in the error/warning list
 	 */
-	/*public*/ doValidateServiceList(SLtext, errs, log_prefix = null) {
+	/*public*/ doValidateServiceList(SLtext, errs, options = {}) {
 		this.#numRequests++;
 		if (!SLtext) {
 			errs.addError({
@@ -2063,9 +2066,12 @@ export default class ServiceListCheck {
 			return;
 		}
 
+		if (!Object.prototype.hasOwnProperty.call(options, "log_prefix")) options.log_prefix = null;
+		if (!Object.prototype.hasOwnProperty.call(options, "report_schema_version")) options.report_schema_version = true;
+
 		let SL = SchemaLoad(SLtext, errs, "SL001");
 		if (!SL) return;
-		writeOut(errs, log_prefix, false);
+		writeOut(errs, options.log_prefix, false);
 
 		if (SL.root.name !== dvbi.e_ServiceList) {
 			errs.addError({
@@ -2108,7 +2114,7 @@ export default class ServiceListCheck {
 			namespace: SCHEMA_NAMESPACE,
 		};
 
-		if (!this.#doSchemaVerification(SL, props, errs, "SL005")) {
+		if (!this.#doSchemaVerification(SL, props, errs, "SL005", options.report_schema_version)) {
 			errs.addError({
 				code: "SL010",
 				message: `Unsupported namespace ${props.namespace.quote()}`,

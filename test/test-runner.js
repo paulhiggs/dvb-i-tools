@@ -95,7 +95,7 @@ if (options.mode.toLowerCase() == "sl") {
 		else SLtext = readFileSync(ref, { encoding: 'utf8', flag: 'r' });
 
 		let errs = new ErrorList();
-		sl.doValidateServiceList(SLtext, errs);
+		sl.doValidateServiceList(SLtext, errs, {report_schema_version:false});
 		console.log(`\n${ref}\n${"".padStart(ref.length, "=")}\n`);
 		console.log(JSON.stringify({errs}, null, 2));
 	});
@@ -131,7 +131,7 @@ else if (options.mode.toLowerCase().substring(0,2) == "cg") {
 		else CGtext = readFileSync(ref, { encoding: 'utf8', flag: 'r' });
 
 		let errs = new ErrorList();
-		cg.doValidateContentGuide(CGtext, cg_request, errs);
+		cg.doValidateContentGuide(CGtext, cg_request, errs, {report_schema_version:false});
 		console.log(`\n${ref}\n${"".padStart(ref.length, "=")}\n`);
 		console.log(JSON.stringify({errs}, null, 2));
 	});

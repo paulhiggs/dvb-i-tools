@@ -107,10 +107,10 @@ function DVB_I_check(req, res, slcheck, cgcheck, hasSL, hasCG, motd, mode = MODE
 		if (!req.parseErr)
 			switch (req.body.testtype) {
 				case MODE_CG:
-					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, log_prefix);
+					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, {log_prefix: log_prefix, report_schema_version:true});
 					break;
 				case MODE_SL:
-					if (slcheck) slcheck.doValidateServiceList(VVxml, errs, log_prefix);
+					if (slcheck) slcheck.doValidateServiceList(VVxml, errs, {log_prefix: log_prefix, report_schema_version:true});
 					break;
 			}
 

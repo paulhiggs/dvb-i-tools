@@ -251,13 +251,14 @@ export default class ContentGuideCheck {
 		return res;
 	}
 
-	/*private*/ #doSchemaVerification(TVAdoc, props, errs, errCode) {
+	/*private*/ #doSchemaVerification(TVAdoc, props, errs, errCode, report_schema_version = true) {
 		let _rc = true;
 
 		let x = SchemaVersions.find((s) => s.namespace == props.namespace);
 		if (x && x.schema) {
 			SchemaCheck(TVAdoc, x.schema, errs, `${errCode}:${SchemaVersion(props.namespace)}`);
-			SchemaVersionCheck(props, TVAdoc, x.status, errs, `${errCode}a`);
+			if (report_schema_version)
+				SchemaVersionCheck(props, TVAdoc, x.status, errs, `${errCode}a`);
 		} else _rc = false;
 
 		return _rc;
@@ -3363,9 +3364,11 @@ export default class ContentGuideCheck {
 	 * @param {String}    CGtext       the service list text to be validated
 	 * @param {String}    requestType  the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
 	 * @param {ErrorList} errs         errors found in validaton
-	 * @param {String}    log_prefix   the first part of the logging location (of null if no logging)
+	 * @param {Object} options 
+	 *                   options.log_prefix            the first part of the logging location (or null if no logging)
+	 *                   options.report_schema_version report the state of the schema in the error/warning list
 	 */
-	doValidateContentGuide(CGtext, requestType, errs, log_prefix) {
+	doValidateContentGuide(CGtext, requestType, errs, options = {}) {
 		this.#numRequests++;
 
 		if (!CGtext) {
@@ -3373,10 +3376,13 @@ export default class ContentGuideCheck {
 			return;
 		}
 
+		if (!Object.prototype.hasOwnProperty.call(options, "log_prefix")) options.log_prefix = null;
+		if (!Object.prototype.hasOwnProperty.call(options, "report_schema_version")) options.report_schema_version = true;
+
 		let CG = SchemaLoad(CGtext, errs, "CG001");
 		if (!CG) return;
 
-		writeOut(errs, log_prefix, false);
+		writeOut(errs, options.log_prefix, false);
 
 		if (CG.root.name != tva.e_TVAMain) {
 			errs.addError({
@@ -3404,7 +3410,7 @@ export default class ContentGuideCheck {
 			namespace: SCHEMA_NAMESPACE,
 		};
 
-		this.#doSchemaVerification(CG, props, errs, "CG003");
+		this.#doSchemaVerification(CG, props, errs, "CG003", options.report_schema_version);
 
 		let TVAMain = CG.root;
 		GetNodeLanguage(TVAMain, true, errs, "CG005");
@@ -3533,7 +3539,7 @@ export default class ContentGuideCheck {
 	 */
 	validateContentGuide(CGtext, requestType) {
 		var errs = new ErrorList();
-		this.doValidateContentGuide(CGtext, requestType, errs);
+		this.doValidateContentGuide(CGtext, requestType, errs, {report_schema_version: true});
 
 		return new Promise((resolve, /* eslint-disable no-unused-vars*/ reject /* eslint-enable */) => {
 			resolve(errs);
