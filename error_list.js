@@ -89,41 +89,8 @@ export default class ErrorList {
 		else this.countsInfo.push({key: key, count: value});
 	}
 
-	/* private method */ #prettyPrint(node, indent = "") {
-    if (!node || !node?.name) return "";
-		let qualifyName = (node) => (node.namespacePrefix && node.namespacePrefix.length ? `${node.namespacePrefix}:` : "") + node.name;
-		let isStructureElement = (node) => (node.__proto__.constructor.name == "XmlElement");
-		// to be a leaf node, all child nodes must be textual
-		let isLeafElement = (node) => {
-			let leaf=true, kid = node.firstChild;
-			while (leaf && kid) {
-				if (kid.__proto__.constructor.name != "XmlText")
-					leaf = false;
-				kid = kid.next;
-			}
-			return leaf;
-		}
-
-		let t = indent + "<" + qualifyName(node);
-		if (node.attrs)
-			node.attrs.forEach((a) => {
-				t += ` ${qualifyName(a)}="${a.value}"`;
-			});
-		if (isLeafElement(node)) {
-			t += node.content.length ? `>${node.content}</${qualifyName(node)}>` : "/>";
-		}
-		else
-			t += (node.firstChild ? ">" : "/>");
-		let child = node.firstChild;
-		while (child) {
-			if (child.__proto__.constructor.name == "XmlComment")
-				t += `\n${indent}<!--${child.content}-->`;
-			else if (isStructureElement(child))
-				t += "\n" + this.#prettyPrint(child, indent + "  ");
-			child = child.next;
-		}
-		t += !isLeafElement(node) ? `\n${indent}</${qualifyName(node)}>` : ""; 
-
+	/* private method */ #prettyPrint(node) {
+		const t = node.prettyPrint();
 		const maxLen = nthIndexOf(t, "\n", MAX_FRAGMENT_LINES);
 		return maxLen == -1 ? t : `${t.slice(0, maxLen)}\n....\n`;
 	}

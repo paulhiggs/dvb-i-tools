@@ -51,6 +51,45 @@ if (!XmlDocument.prototype.childNodes) {
 }
 
 
+if (!XmlElement.prototype.prettyPrint) {
+	XmlElement.prototype.prettyPrint = function (indent = "") {
+		if (!this || !this?.name) return "";
+		let qualifyName = (_this) => (_this.namespacePrefix && _this.namespacePrefix.length ? `${_this.namespacePrefix}:` : "") + _this.name;
+		let isStructureElement = (_this) => (_this.__proto__.constructor.name == "XmlElement");
+		// to be a leaf node, all child nodes must be textual
+		let isLeafElement = (_this) => {
+			let leaf=true, kid = _this.firstChild;
+			while (leaf && kid) {
+				if (kid.__proto__.constructor.name != "XmlText")
+					leaf = false;
+				kid = kid.next;
+			}
+			return leaf;
+		}
+
+		let t = indent + "<" + qualifyName(this);
+		this.attrs?.forEach((a) => {
+			t += ` ${qualifyName(a)}="${a.value}"`;
+		});
+		if (isLeafElement(this))
+			t += this.content.length ? `>${this.content}</${qualifyName(this)}>` : "/>";
+		else
+			t += (this.firstChild ? ">" : "/>");
+		let child = this.firstChild;
+		while (child) {
+			if (child.__proto__.constructor.name == "XmlComment")
+				t += `\n${indent}<!--${child.content}-->`;
+			else if (isStructureElement(child))
+				t += "\n" + child.prettyPrint(indent + "  ");
+			child = child.next;
+		}
+		t += !isLeafElement(this) ? `\n${indent}</${qualifyName(this)}>` : ""; 
+
+		return t;
+	}
+}
+
+
 if (!Array.prototype.forEachSubElement) {
 	// based on the polyfill at https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
 	/*
