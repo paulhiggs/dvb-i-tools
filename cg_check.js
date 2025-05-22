@@ -8,6 +8,7 @@ import { readFileSync } from "fs";
 
 import chalk from "chalk";
 import { XmlDocument, XmlElement } from "libxml2-wasm";
+import { MakeDocumentProperties } from "./libxml2-wasm-extensions.js";
 import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
 xmlRegisterFsInputProviders();
 
@@ -3393,22 +3394,7 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		let CG_SCHEMA = {},
-			SCHEMA_PREFIX = CG.root.namespacePrefix.length ? CG.root.namespacePrefix : "",
-			SCHEMA_NAMESPACE = CG.root.namespaceUri;
-
-		CG_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
-		if (SCHEMA_PREFIX == "") {
-			SCHEMA_PREFIX = "__RANDOM__";
-			CG_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
-			CG.root.addNsDeclaration(SCHEMA_NAMESPACE, SCHEMA_PREFIX);
-		}
-
-		let props = {
-			schema: CG_SCHEMA,
-			prefix: SCHEMA_PREFIX,
-			namespace: SCHEMA_NAMESPACE,
-		};
+		let props = MakeDocumentProperties(CG.root);
 
 		this.#doSchemaVerification(CG, props, errs, "CG003", options.report_schema_version);
 

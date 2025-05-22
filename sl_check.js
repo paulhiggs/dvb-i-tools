@@ -5,6 +5,7 @@
  */
 import chalk from "chalk";
 import { XmlDocument, XmlNode, XmlElement } from "libxml2-wasm";
+import { MakeDocumentProperties } from "./libxml2-wasm-extensions.js";
 
 import { elementize, quote } from "./phlib/phlib.js";
 
@@ -2148,24 +2149,7 @@ export default class ServiceListCheck {
 			return;
 		}
 
-		let SL_SCHEMA = SL.root.namespaces,
-			SCHEMA_PREFIX = SL.root.namespacePrefix,
-			SCHEMA_NAMESPACE = SL.root.namespaceUri;
-
-		if (SCHEMA_PREFIX == "") {
-			SCHEMA_PREFIX = "__RANDOM__";
-			SL_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
-			SL.root.addNsDeclaration(SCHEMA_NAMESPACE, SCHEMA_PREFIX);
-		}
-
-		let props = {
-			schema: SL_SCHEMA,
-			prefix: SCHEMA_PREFIX,
-			namespace: SCHEMA_NAMESPACE,
-			tva_prefix: null,
-		};
-		let p = Object.getOwnPropertyNames(props.schema);
-		p.forEach( (p1) => {if (props.schema[p1].includes("urn:tva")) props.tva_prefix=p1});
+		let props = MakeDocumentProperties(SL.root);
 
 		if (!this.#doSchemaVerification(SL, props, errs, "SL005", options.report_schema_version)) {
 			errs.addError({

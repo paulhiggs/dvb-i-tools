@@ -90,6 +90,30 @@ if (!XmlElement.prototype.prettyPrint) {
 }
 
 
+export let MakeDocumentProperties = (element) => {
+	if (element.__proto__.constructor.name != "XmlElement") return {};
+	let res = {
+		schema: element.namespaces,
+		namespace: element.namespaceUri,
+		prefix: element.namespacePrefix,
+		datatypes_prefix: null,
+		tva_prefix: null,
+		mpeg7_prefix: null,
+	};
+	if (res.prefix == "") {
+		res.prefix = "__DeFaUlT__" 
+		res.schema[res.prefix] = res.namespace;
+		element.addNsDeclaration(res.namespace, res.prefix);
+	}
+	let p = Object.getOwnPropertyNames(res.schema);
+	p.forEach((prop) => {
+		if (res.schema[prop].includes("urn:tva")) res.tva_prefix = prop;
+		if (res.schema[prop].includes("servicediscovery-types")) res.datatypes_prefix = prop;
+		if (res.schema[prop].includes("tva:mpeg7")) res.mpeg7_prefix = prop;
+	});
+	return res;
+}
+
 if (!Array.prototype.forEachSubElement) {
 	// based on the polyfill at https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
 	/*
