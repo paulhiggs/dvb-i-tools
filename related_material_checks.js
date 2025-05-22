@@ -41,10 +41,11 @@ function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, 
 
 	let HowRelated = null,
 		Format = null,
-		MediaLocator = null;
+		MediaLocator = null,
+		kids = RelatedMaterial.childNodes();
 	// just use the first instance of any specified element
-	if (RelatedMaterial.childNodes())
-		RelatedMaterial.childNodes().forEachSubElement((elem) => {
+	if (kids)
+		kids.forEachSubElement((elem) => {
 			switch (elem.name) {
 				case tva.e_HowRelated:
 					if (!HowRelated) HowRelated = elem;
@@ -61,10 +62,11 @@ function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, 
 	if (!HowRelated || !MediaLocator) return;
 	checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, `${errCode}-2`);
 
-	if (HowRelated.attrAnyNs(tva.a_href) && !allowedHowRelated.includes(HowRelated.attrAnyNs(tva.a_href).value)) {
+	let hrHref = HowRelated.attrAnyNs(tva.a_href);
+	if (hrHref && !allowedHowRelated.includes(hrHref.value)) {
 		errs.addError({
 			code: `${errCode}-10`,
-			message: `${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attrAnyNs(tva.a_href).value.quote()} ius not valid for this use`,
+			message: `${tva.a_href.attribute(tva.e_HowRelated)}=${hrHref.value.quote()} ius not valid for this use`,
 			fragment: HowRelated,
 		});
 		return;
@@ -75,15 +77,15 @@ function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, 
 		StillPictureFormat = null;
 	if (Format) {
 		checkTopElementsAndCardinality(Format, [{ name: tva.e_StillPictureFormat }], tvaEC.Format, false, errs, `${errCode}-11`);
-
-		if (Format.childNodes())
-			Format.childNodes().forEachSubElement((child) => {
+		let kids = Format.childNodes();
+		if (kids)
+			kids.forEachSubElement((child) => {
 				if (child.name == tva.e_StillPictureFormat) {
 					StillPictureFormat = child;
 					checkAttributes(child, [tva.a_horizontalSize, tva.a_verticalSize, tva.a_href], [], tvaEA.SillPictureFormat, errs, `${errCode}-12`);
-
-					if (child.attrAnyNs(tva.a_href))
-						switch (child.attrAnyNs(tva.a_href).value) {
+					let childHref = child.attrAnyNs(tva.a_href);
+					if (childHref)
+						switch (childHref.value) {
 							case mpeg7.JPEG_IMAGE_CS_VALUE:
 								isJPEG = true;
 								break;
@@ -92,7 +94,7 @@ function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, 
 								break;
 							default:
 								cg_InvalidHrefValue(
-									child.attrAnyNs(tva.a_href).value,
+									childHref.value,
 									child,
 									`${RelatedMaterial.name}.${tva.e_Format}.${tva.e_StillPictureFormat}`,
 									location,
@@ -106,9 +108,10 @@ function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, 
 
 	checkTopElementsAndCardinality(MediaLocator, [{ name: tva.e_MediaUri }], tvaEC.MediaLocator, false, errs, `${errCode}-21`);
 
-	let hasMediaURI = false;
-	if (MediaLocator.childNodes())
-		MediaLocator.childNodes().forEachSubElement((child) => {
+	let hasMediaURI = false,
+		kids2 = MediaLocator.childNodes();
+	if (kids2)
+		kids2.forEachSubElement((child) => {
 			if (child.name == tva.e_MediaUri) {
 				hasMediaURI = true;
 				checkAttributes(child, [tva.a_contentType], [], tvaEA.MediaUri, errs, `${errCode}-22`);
@@ -172,18 +175,19 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 export function checkValidLogos(RelatedMaterial, errs, errCode, location) {
 	if (!RelatedMaterial) return;
 
-	let specifiedMediaTypes = [];
-	if (RelatedMaterial.childNodes())
-		RelatedMaterial.childNodes().forEachSubElement((MediaLocator) => {
+	let specifiedMediaTypes = [],
+		kids = RelatedMaterial.childNodes();
+	if (kids)
+		kids.forEachSubElement((MediaLocator) => {
 			if (MediaLocator.name == tva.e_MediaLocator) {
 				checkTopElementsAndCardinality(MediaLocator, [{ name: tva.e_MediaUri }], tvaEC.MediaLocator, false, errs, `${errCode}-1`);
 				checkAttributes(MediaLocator, [], [dvbi.a_contentLanguage], dvbiEA.MediaLocator, errs, `${errCode}-2`);
 
 				if (MediaLocator.attrAnyNs(dvbi.a_contentLanguage))
 					checkLanguage(MediaLocator.attrAnyNs(dvbi.a_contentLanguage).value, location, MediaLocator, errs, `${errCode}-3`);
-
-				if (MediaLocator.childNodes())
-					MediaLocator.childNodes().forEachSubElement((MediaUri) => {
+				let kids2 = MediaLocator.childNodes();
+				if (kids2)
+					kids2.forEachSubElement((MediaUri) => {
 						if (MediaUri.name == tva.e_MediaUri) {
 							checkAttributes(MediaUri, [tva.a_contentType], [], tvaEA.MediaUri, errs, `${errCode}-4`);
 
