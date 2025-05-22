@@ -56,5 +56,5 @@ export function validImageSet(MIMEs) {
 		else hasOther = true;
 	});
 
-	return hasRequired || (hasOther && !hasRequired);
+	return (hasOther && !hasRequired) ? false : hasRequired;
 }
