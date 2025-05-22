@@ -160,8 +160,17 @@ let NoDeliveryParams = (source, serviceId, element, errCode) => ({
 	key: "no delivery params",
 });
 
-let missingRequiredImageType = (_code, _where, _reference, _line = null) => ({
-	code: _code,
+/**
+ * Contruct an error message for a required image format is not specified in a Related Material element
+ * 
+ * @param {String} errCode    The error code to be reported 
+ * @param {String} _where     The location of the related material element
+ * @param {String} _reference Reference to the clause in A177 regarding the requirement to include the image format
+ * @param {number} _line      Line number of the RelatedMaterial element
+ * @returns 
+ */
+let missingRequiredImageType = (errCode, _where, _reference, _line = null) => ({
+	code: errCode,
 	message: `at least one ${_where} logo must be of type image/jpeg or image/png`,
 	key: "no standard image",
 	line: _line,
@@ -362,14 +371,13 @@ export default class ServiceListCheck {
 
 		// <Region><Postcode>
 		let pc = 0,
-			Postcode,
-			PostcodeErrorMessage = "invalid postcode";
+			Postcode;
 		while ((Postcode = Region.get(xPath(props.prefix, dvbi.e_Postcode, ++pc), props.schema)) != null)
 			if (!isPostcode(Postcode.content))
 				errs.addError({
 					code: "AR051",
 					message: `${Postcode.content.quote()} is not a valid postcode`,
-					key: PostcodeErrorMessage,
+					key: "invalid postcode",
 					fragment: Postcode,
 				});
 
