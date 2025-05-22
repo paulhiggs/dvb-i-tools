@@ -44,6 +44,7 @@ import {
 } from "./classification_scheme_loaders.js";
 import CheckAccessibilityAttributes from "./accessibility_attributes_checks.js";
 import { DASH_IF_Content_Protection_List, ContentProtectionIDs, CA_SYSTEM_ID_REGISTRY, CASystemIDs } from "./identifiers.js";
+import { isRequiredImageMime } from "./MIME_checks.js";
 
 import {
 	GetSchema,
@@ -131,14 +132,16 @@ let localizedSubscriptionPackage = (pkg, lang = null) => `${pkg.content}/lang=${
 /**
  * Construct	 an error message an unspecifed target region is used
  *
- * @param {String} region   The unspecified target region
- * @param {String} loc      The location of the element
- * @param {String} errCode  The error code to be reported
+ * @param {String} region      The unspecified target region
+ * @param {String} loc         The location of the element
+ * @param {String} errCode     The error code to be reported
+ * @param {XmlElement} element The element using an undefined region if
  */
-let UnspecifiedTargetRegion = (region, loc, errCode) => ({
+let UnspecifiedTargetRegion = (region, loc, errCode, element) => ({
 	code: errCode,
 	message: `${loc} has an unspecified ${dvbi.e_TargetRegion.elementize()} ${region.quote()}`,
 	key: "target region",
+	fragment: element,
 });
 
 /**
@@ -155,6 +158,15 @@ let NoDeliveryParams = (source, serviceId, element, errCode) => ({
 	fragment: element,
 	key: "no delivery params",
 });
+
+let missingRequiredImageType = (_code, _where, _reference, _line = null) => ({
+	code: _code,
+	message: `at least one ${_where} logo must be of type image/jpeg or image/png`,
+	key: "no standard image",
+	line: _line,
+	description: `At least one ${_where} logo shall be provided with the Media Type image/jpeg or image/png for compatibility purposes`,
+	clause: `A177 clause ${_reference}`,
+ });
 
 
 export default class ServiceListCheck {
@@ -650,11 +662,20 @@ export default class ServiceListCheck {
 	 * @param {object}     props         Metadata of the XML document
 	 * @param {XmlElement} source        The <ContentGuideSource> element to be checked
 	 * @param {Class}      errs          Errors found in validaton
-	 * @param {object}     loc			      The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
+	 * @param {object}     loc           The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
 	 * @param {string}     errCode       Error code prefix to be used in reports
 	 */
 	/*private*/ #validateAContentGuideSource(props, source, errs, loc, errCode) {
-		function CheckEndpoint(elementName, suffix, MustEndWithSlash = false) {
+		if (!source) {
+			errs.addError({
+				type: APPLICATION,
+				code: "GS000",
+				message: "validateAContentGuideSource() called with source==null",
+			});
+			return;
+		}
+
+		let CheckEndpoint = (elementName, suffix, MustEndWithSlash = false) => {
 			let ep = source.get(xPath(props.prefix, elementName), props.schema);
 			if (ep) {
 				let epURL = getElementByTagName(ep, dvbi.e_URI);
@@ -680,36 +701,49 @@ export default class ServiceListCheck {
 					});
 			}
 		}
-
-		if (!source) {
-			errs.addError({
-				type: APPLICATION,
-				code: "GS000",
-				message: "validateAContentGuideSource() called with source==null",
-			});
-			return;
-		}
 		loc = loc ? loc : source.parent.name.elementize();
 
 		checkXMLLangs(dvbi.e_Name, loc, source, errs, `${errCode}-1`);
 		checkXMLLangs(dvbi.e_ProviderName, loc, source, errs, `${errCode}-2`);
 
 		let rm = 0,
+			foundStandardImage = false,
+			haveRelatedMaterial = false,
 			RelatedMaterial;
-		while ((RelatedMaterial = source.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null)
-			this.#validateRelatedMaterial(props, RelatedMaterial, errs, loc, CONTENT_GUIDE_RM, `${errCode}-3`);
+		while ((RelatedMaterial = source.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
+			haveRelatedMaterial = true;
+			let href = this.#validateRelatedMaterial(props, RelatedMaterial, errs, loc, CONTENT_GUIDE_RM, `${errCode}-3`);
+			if (href) {
+				// its a valid Content Guide Source logo so find at least one JPEG or PNG 
+				let ml=0, MediaLocator;
+				while (!foundStandardImage && (MediaLocator = RelatedMaterial.get(xPath(props.tva_prefix, tva.e_MediaLocator, ++ml), props.schema)) != null) {
+					console.log('DIAG found media locator')
+					let MediaUri = MediaLocator.get(xPath(props.tva_prefix, tva.e_MediaUri), props.schema);
+					if (MediaUri) {
+						let _imageType = MediaUri.attrAnyNs(tva.a_contentType);
+						if (_imageType) console.log(`DIAG contentType="${_imageType.value}"`)  //DIAG
+						if (_imageType && isRequiredImageMime(_imageType.value))
+							foundStandardImage = true;
+					}
+				}
+			}
+		}
+
+		console.log(`DIAG haveRelatedMaterial=${haveRelatedMaterial}, foundStandardImage=${foundStandardImage}`)
+		if (haveRelatedMaterial && !foundStandardImage) 
+			errs.addError(missingRequiredImageType(`${errCode}-6`, "content guide source", "5.2.6.3", source.line));
 
 		// ContentGuideSourceType::ScheduleInfoEndpoint - should be a URL
-		CheckEndpoint(dvbi.e_ScheduleInfoEndpoint, 4);
+		CheckEndpoint(dvbi.e_ScheduleInfoEndpoint, 14);
 
 		// ContentGuideSourceType::ProgramInfoEndpoint - should be a URL
-		CheckEndpoint(dvbi.e_ProgramInfoEndpoint, 6);
+		CheckEndpoint(dvbi.e_ProgramInfoEndpoint, 16);
 
 		// ContentGuideSourceType::GroupInfoEndpoint - should be a URL and should end with a /
-		CheckEndpoint(dvbi.e_GroupInfoEndpoint, 8, SchemaVersion(props.namespace) >= SCHEMA_r5);
+		CheckEndpoint(dvbi.e_GroupInfoEndpoint, 18, SchemaVersion(props.namespace) >= SCHEMA_r5);
 
 		// ContentGuideSourceType::MoreEpisodesEndpoint - should be a URL
-		CheckEndpoint(dvbi.e_MoreEpisodesEndpoint, 10);
+		CheckEndpoint(dvbi.e_MoreEpisodesEndpoint, 20);
 	}
 
 	/**
@@ -1737,7 +1771,8 @@ export default class ServiceListCheck {
 			rBuf = [];
 		while ((TargetRegion = service.get(xPath(props.prefix, dvbi.e_TargetRegion, ++tr), props.schema)) != null) {
 			let found = knownRegionIDs.find((r) => r.region == TargetRegion.content);
-			if (found == undefined) errs.addError(UnspecifiedTargetRegion(TargetRegion.content, `service ${thisServiceId.quote()}`, "SL130"));
+			if (found == undefined) 
+				errs.addError(UnspecifiedTargetRegion(TargetRegion.content, `service ${thisServiceId.quote()}`, "SL130", TargetRegion));
 			else found.used = true;
 			if (DuplicatedValue(rBuf, TargetRegion.content)) {
 				errs.addError({
@@ -1758,9 +1793,28 @@ export default class ServiceListCheck {
 
 		//check <RelatedMaterial>
 		let rm = 0,
+			haveRelatedMaterial = false,
+			foundStandardImage = false,
 			RelatedMaterial;
-		while ((RelatedMaterial = service.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null)
-			this.#validateRelatedMaterial(props, RelatedMaterial, errs, `service ${thisServiceId.quote()}`, SERVICE_RM, "SL150");
+		while ((RelatedMaterial = service.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
+			haveRelatedMaterial = true;
+			let href = this.#validateRelatedMaterial(props, RelatedMaterial, errs, `service ${thisServiceId.quote()}`, SERVICE_RM, "SL150");
+			if (href) {
+				// its a valid Service logo so find at least one JPEG or PNG 
+				let ml=0, MediaLocator;
+				while (!foundStandardImage && (MediaLocator = RelatedMaterial.get(xPath(props.prefix, tva.e_MediaLocator, ++ml), props.schema)) != null) {
+					let MediaUri = MediaLocator.get(xPath(props.prefix, tva.e_MediaUri), props.schema);
+					if (MediaUri) {
+						let _imageType = MediaUri.attrAnyNs(tva.a_contentType);
+						if (_imageType && isRequiredImageMime(_imageType.value))
+							foundStandardImage = true;
+					}
+				}
+			}
+		}
+
+		if (haveRelatedMaterial && !foundStandardImage)
+			errs.addError(missingRequiredImageType("SL151", "service", "5.2.6.2"));
 
 		//check <ServiceGenre>
 		let sg = 0,
@@ -2097,11 +2151,10 @@ export default class ServiceListCheck {
 			return;
 		}
 
-		let SL_SCHEMA = {},
+		let SL_SCHEMA = SL.root.namespaces,
 			SCHEMA_PREFIX = SL.root.namespacePrefix,
 			SCHEMA_NAMESPACE = SL.root.namespaceUri;
 
-		SL_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
 		if (SCHEMA_PREFIX == "") {
 			SCHEMA_PREFIX = "__RANDOM__";
 			SL_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
@@ -2112,7 +2165,10 @@ export default class ServiceListCheck {
 			schema: SL_SCHEMA,
 			prefix: SCHEMA_PREFIX,
 			namespace: SCHEMA_NAMESPACE,
+			tva_prefix: null,
 		};
+		let p = Object.getOwnPropertyNames(props.schema);
+		p.forEach( (p1) => {if (props.schema[p1].includes("urn:tva")) props.tva_prefix=p1});
 
 		if (!this.#doSchemaVerification(SL, props, errs, "SL005", options.report_schema_version)) {
 			errs.addError({
@@ -2196,15 +2252,34 @@ export default class ServiceListCheck {
 		//check <ServiceList><RelatedMaterial>
 		let rm = 0,
 			countControlApps = 0,
+			haveRelatedMaterial = false,
+			foundStandardImage = false,
 			RelatedMaterial;
 		while ((RelatedMaterial = ServiceList.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
+			haveRelatedMaterial = true;
 			let foundHref = this.#validateRelatedMaterial(props, RelatedMaterial, errs, "service list", SERVICE_LIST_RM, "SL040");
 			if (foundHref != "" && validServiceControlApplication(foundHref, SchemaVersion(props.namespace))) countControlApps++;
+
+			if (foundHref) {
+				// its a valid Service List logo so find at least one JPEG or PNG 
+				let ml=0, MediaLocator;
+				while (!foundStandardImage && (MediaLocator = RelatedMaterial.get(xPath(props.prefix, tva.e_MediaLocator, ++ml), props.schema)) != null) {
+					let MediaUri = MediaLocator.get(xPath(props.prefix, tva.e_MediaUri), props.schema);
+					if (MediaUri) {
+						let _imageType = MediaUri.attrAnyNs(tva.a_contentType);
+						if (_imageType && isRequiredImageMime(_imageType.value))
+							foundStandardImage = true;
+					}
+				}
+			}
 		}
+
+		if (haveRelatedMaterial && !foundStandardImage)
+			errs.addError(missingRequiredImageType("SL041", "service list", "5.2.6.1"))
 
 		if (countControlApps > 1)
 			errs.addError({
-				code: "SL041",
+				code: "SL042",
 				message: "only a single service control application can be signalled in a service",
 				key: "multi apps",
 			});
@@ -2225,7 +2300,8 @@ export default class ServiceListCheck {
 			rBuf = [];
 		while ((TargetRegion = ServiceList.get(xPath(props.prefix, dvbi.e_TargetRegion, ++tr), props.schema)) != null) {
 			let found = knownRegionIDs.find((r) => r.region == TargetRegion.content);
-			if (found == undefined) errs.addError(UnspecifiedTargetRegion(TargetRegion.content, "service list", "SL051"));
+			if (found == undefined) 
+				errs.addError(UnspecifiedTargetRegion(TargetRegion.content, "service list", "SL051", TargetRegion));
 			else if (!found.selectable)
 				errs.addError({
 					code: "SL052",
