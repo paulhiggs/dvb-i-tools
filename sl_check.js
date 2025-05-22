@@ -717,11 +717,9 @@ export default class ServiceListCheck {
 				// its a valid Content Guide Source logo so find at least one JPEG or PNG 
 				let ml=0, MediaLocator;
 				while (!foundStandardImage && (MediaLocator = RelatedMaterial.get(xPath(props.tva_prefix, tva.e_MediaLocator, ++ml), props.schema)) != null) {
-					console.log('DIAG found media locator')
 					let MediaUri = MediaLocator.get(xPath(props.tva_prefix, tva.e_MediaUri), props.schema);
 					if (MediaUri) {
 						let _imageType = MediaUri.attrAnyNs(tva.a_contentType);
-						if (_imageType) console.log(`DIAG contentType="${_imageType.value}"`)  //DIAG
 						if (_imageType && isRequiredImageMime(_imageType.value))
 							foundStandardImage = true;
 					}
@@ -729,7 +727,6 @@ export default class ServiceListCheck {
 			}
 		}
 
-		console.log(`DIAG haveRelatedMaterial=${haveRelatedMaterial}, foundStandardImage=${foundStandardImage}`)
 		if (haveRelatedMaterial && !foundStandardImage) 
 			errs.addError(missingRequiredImageType(`${errCode}-6`, "content guide source", "5.2.6.3", source.line));
 
