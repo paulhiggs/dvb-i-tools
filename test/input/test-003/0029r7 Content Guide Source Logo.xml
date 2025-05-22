@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServiceList xmlns="urn:dvb:metadata:servicediscovery:2025" xmlns:tva="urn:tva:metadata:2024" xmlns:dt="urn:dvb:metadata:servicediscovery-types:2025" id="tag:dvb.org,2025:A177r7" version="1" xml:lang="en">
+	<StandardVersion>urn:dvb:metadata:dvbi:standardversion:7</StandardVersion>
+	<Name>Unspecified region identifier in service</Name>
+	<ProviderName>Regression Test</ProviderName>
+	<ContentGuideSource CGSID="dvb-epg">
+		<ProviderName>DVB</ProviderName>
+		<RelatedMaterial>
+			<!-- Content Guide Source Logo -->
+			<tva:HowRelated href="urn:dvb:metadata:cs:HowRelatedCS:2021:1002.1"/>
+			<tva:MediaLocator>
+				<tva:MediaUri contentType="image/jpeg">https://dvb.org/epg/epg.jpg</tva:MediaUri>
+			</tva:MediaLocator>
+		</RelatedMaterial>
+		<ScheduleInfoEndpoint contentType="application/xml">
+			<dt:URI>https://dvb.org/epg/sip.pl</dt:URI>
+		</ScheduleInfoEndpoint>
+	</ContentGuideSource>
+	<Service version="7" xml:lang="fr">
+		<UniqueIdentifier>tag:dvb.org,2025-05:svc1</UniqueIdentifier>
+		<ServiceName>Test 0029</ServiceName>
+		<ProviderName>DVB</ProviderName>
+	</Service>
+</ServiceList>
