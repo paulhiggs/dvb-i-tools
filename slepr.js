@@ -21,6 +21,7 @@ import { isHTTPURL, isTVAAudioLanguageType } from "./pattern_checks.js";
 import IANAlanguages from "./IANA_languages.js";
 import ClassificationScheme from "./classification_scheme.js";
 import ISOcountries from "./ISO_countries.js";
+import { MakeDocumentProperties } from "./libxml2-wasm-extensions.js";
 
 var masterSLEPR = "";
 const EMPTY_SLEPR = '<ServiceListEntryPoints xmlns="urn:dvb:metadata:servicelistdiscovery:2024"></ServiceListEntryPoints>';
@@ -189,23 +190,8 @@ export default class SLEPR {
 			res.status(400);
 			return false;
 		}
-		let slepr = XmlDocument.fromString(masterSLEPR); 
-
-		let SLEPR_SCHEMA = {},
-			SCHEMA_PREFIX = slepr.root.namespacePrefix,
-			SCHEMA_NAMESPACE = slepr.root.namespaceUri;
-		SLEPR_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
-		if (SCHEMA_PREFIX == "") {
-			SCHEMA_PREFIX = "__RANDOM__";
-			SLEPR_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
-			SL.root.addNsDeclaration(SCHEMA_NAMESPACE, SCHEMA_PREFIX);
-		}
-
-		let props = {
-			schema: SLEPR_SCHEMA,
-			prefix: SCHEMA_PREFIX,
-			namespace: SCHEMA_NAMESPACE,
-		};
+		const slepr = XmlDocument.fromString(masterSLEPR); 
+		const props = MakeDocumentProperties(slepr.root);
 
 		if (req.query.ProviderName) {
 			// if ProviderName is specified, remove any ProviderOffering entries that do not match the name
@@ -261,9 +247,8 @@ export default class SLEPR {
 							hasCountry = false;
 						while (!keepService && (targetCountry = serv.get(xPath(props.prefix, dvbi.e_TargetCountry, ++c), props.schema))) {
 							// note that the <TargetCountry> element can signal multiple values. Its XML pattern is "\c\c\c(,\c\c\c)*"
-							let countries = targetCountry.content.split(",");
 							/* jslint -W083 */
-							countries.forEach((country) => {
+							targetCountry.content.split(",").forEach((country) => {
 								if (isIn(req.query.TargetCountry, country)) keepService = true;
 							});
 							/* jslint +W083 */
@@ -287,7 +272,7 @@ export default class SLEPR {
 
 					// remove remaining services that do not have the requested delivery modes
 					if (!removeService && req.query.Delivery) {
-						let delivery = serv.get(xPath(props.prefix, dvbi.e_Delivery), props.schema);
+						const delivery = serv.get(xPath(props.prefix, dvbi.e_Delivery), props.schema);
 
 						if (!delivery) removeService = true;
 						else {
@@ -324,7 +309,7 @@ export default class SLEPR {
 		}
 		providersToRemove.forEach((provider) => provider.remove());
 
-		let removeImages = req.query?.inlineImages?.toLowerCase() == "true" ? true : false;
+		const removeImages = req.query?.inlineImages?.toLowerCase() == "true" ? true : false;
 		if (!removeImages) {
 			// remove any 'data:' URLs from RelatedMaterial elements. if there are no remaining MediaLocator elements, then remove the RelatedMaterial
 			let prov,

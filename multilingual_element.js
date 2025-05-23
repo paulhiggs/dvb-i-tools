@@ -3,16 +3,12 @@
  *
  * check that multiple elements for expressing multilingual values match DVB-I requirments
  */
-import { XmlDocument, XmlElement, XmlComment } from 'libxml2-wasm';
-
-import { datatypeIs } from "./phlib/phlib.js";
+import { XmlElement } from 'libxml2-wasm';
 
 import { tva } from "./TVA_definitions.js";
 
-import { WARNING, APPLICATION } from "./error_list.js";
-import { isIn, CountChildElements } from "./utils.js";
-import { keys } from "./common_errors.js";
-
+import { APPLICATION } from "./error_list.js";
+import { isIn } from "./utils.js";
 import { isValidLangFormat } from "./IANA_languages.js";
 
 const NO_DOCUMENT_LANGUAGE = "**"; // this should not be needed as @xml:lang is required in <ServiceList> and <TVAMain> root elements
@@ -49,7 +45,7 @@ export function checkLanguage(lang, loc, element, errs, errCode) {
  */
 export function mlLanguage(node) {
 	if (!(node instanceof XmlElement)) return NO_DOCUMENT_LANGUAGE;
-	let langAttr = node.attrAnyNs(tva.a_lang);
+	const langAttr = node.attrAnyNs(tva.a_lang);
 	if (langAttr) return langAttr.value;
 	return mlLanguage(node.parent);
 }
@@ -70,44 +66,38 @@ export function checkXMLLangs(elementName, elementLocation, node, errs, errCode)
 	}
 
 	let childElems = node.childNodes();
-	if (CountChildElements(node, elementName) > 1) {
-		childElems.forEachSubElement((elem) => {
-			if (elem.name == elementName) {
-				if (!elem.attrAnyNs(tva.a_lang))
-					errs.addError({
-						code: `${errCode}-1`,
-						message: `xml:lang must be declared for each multilingual element for ${elementName.elementize()} in ${elementLocation}`,
-						fragment: elem,
-						key: "required @xml:lang",
-					});
-			}
-		});
-	}
+	childElems?.forEachNamedSubElement(elementName, elem => {
+		if (!elem.attrAnyNs(tva.a_lang))
+			errs.addError({
+				code: `${errCode}-1`,
+				message: `xml:lang must be declared for each multilingual element for ${elementName.elementize()} in ${elementLocation}`,
+				fragment: elem,
+				key: "required @xml:lang",
+			});
+	});
 
 	let elementLanguages = [];
-	childElems.forEachSubElement((elem) => {
-		if (elem.name == elementName) {
-			let lang = mlLanguage(elem);
-			if (isIn(elementLanguages, lang))
-				errs.addError({
-					code: `${errCode}-2`,
-					message: `${lang == NO_DOCUMENT_LANGUAGE ? "default language" : `xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} in ${elementLocation}`,
-					fragment: elem,
-					key: "duplicate @xml:lang",
-				});
-			else elementLanguages.push(lang);
+	childElems?.forEachNamedSubElement(elementName, elem => {
+		let lang = mlLanguage(elem);
+		if (isIn(elementLanguages, lang))
+			errs.addError({
+				code: `${errCode}-2`,
+				message: `${lang == NO_DOCUMENT_LANGUAGE ? "default language" : `xml:lang=${lang.quote()}`} already specifed for ${elementName.elementize()} in ${elementLocation}`,
+				fragment: elem,
+				key: "duplicate @xml:lang",
+			});
+		else elementLanguages.push(lang);
 
-			if (elem.content.length == 0) //!!
-				errs.addError({
-					code: `${errCode}-3`,
-					message: `value must be specified for ${elem.parent.name.elementize()}${elem.name.elementize()}`,
-					fragment: elem,
-					key: "empty value",
-				});
+		if (elem.content.length == 0) //!!
+			errs.addError({
+				code: `${errCode}-3`,
+				message: `value must be specified for ${elem.parent.name.elementize()}${elem.name.elementize()}`,
+				fragment: elem,
+				key: "empty value",
+			});
 
-			// if lang is specified, validate the format and value of the attribute against BCP47 (RFC 5646)
-			if (elem.attrAnyNs(tva.a_lang) && lang != NO_DOCUMENT_LANGUAGE) checkLanguage(lang, `xml:lang in ${elementName}`, elem, errs, `${errCode}-4`);
-		}
+		// if lang is specified, validate the format and value of the attribute against BCP47 (RFC 5646)
+		if (elem.attrAnyNs(tva.a_lang) && lang != NO_DOCUMENT_LANGUAGE) checkLanguage(lang, `xml:lang in ${elementName}`, elem, errs, `${errCode}-4`);
 	});
 }
 
@@ -125,7 +115,7 @@ export function GetNodeLanguage(node, isRequired, errs, errCode) {
 	if (isRequired && !node.attrAnyNs(tva.a_lang))
 		errs.addError({ code: `${errCode}-1`, message: `${tva.a_lang.attribute()} is required for ${node.name.quote()}`, key: "unspecified language", line: node.line });
 
-	let localLang = mlLanguage(node);
+	const localLang = mlLanguage(node);
 
 	if (node.attrAnyNs(tva.a_lang) && localLang != NO_DOCUMENT_LANGUAGE) 
 		checkLanguage(localLang, node.name, node, errs, `${errCode}-2`);

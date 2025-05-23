@@ -87,17 +87,17 @@ export default class IANAlanguages {
 			const items = entry.replace(/(\r|\t)/gm, "").split("\n");
 
 			if (items[0].startsWith("File-Date")) {
-				let tl = items[0].split(":");
+				const tl = items[0].split(":");
 				this.#languageFileDate = tl[1];
 			}
 			if (isIn(items, "Type: language") || isIn(items, "Type: extlang")) {
 				for (let i = 0; i < items.length; i++)
 					if (items[i].startsWith("Subtag:")) {
-						let subtag = items[i].split(":")[1].trim();
+						const subtag = items[i].split(":")[1].trim();
 						if (isIn(items, "Scope: private-use")) {
 							if (subtag.indexOf("..") < 0) this.#languagesList.push(subtag);
 							else {
-								let range = subtag.split("..");
+								const range = subtag.split("..");
 								if (range[0].length == range[1].length) {
 									if (range[0] < range[1]) this.#languageRanges.push({ start: range[0], end: range[1] });
 									else this.#languageRanges.push({ start: range[1], end: range[0] });
@@ -153,7 +153,7 @@ export default class IANAlanguages {
 				}.bind(this)
 			);
 		} else {
-			let langs = readFileSync(languagesFile, { encoding: "utf-8" }).toString();
+			const langs = readFileSync(languagesFile, { encoding: "utf-8" }).toString();
 			this.#processLanguageData(langs);
 		}
 	}
@@ -165,7 +165,7 @@ export default class IANAlanguages {
 	 * @param {boolean} purge          erase the existing values before loading new
 	 */
 	#loadLanguagesFromURL(languagesURL, purge = false, async = true) {
-		let isHTTPurl = isHTTPURL(languagesURL);
+		const isHTTPurl = isHTTPURL(languagesURL);
 		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving languages from ${languagesURL} using fetch()`));
 		if (!isHTTPurl) return;
 
@@ -211,7 +211,7 @@ export default class IANAlanguages {
 		if (datatypeIs(value, "string")) {
 			if (this.#languageRanges.find((range) => range.start <= value && value <= range.end)) return { resp: this.languageKnown };
 
-			let found = this.#redundantLanguagesList.find((e) => e.tag.toLowerCase() == value.toLowerCase());
+			const found = this.#redundantLanguagesList.find((e) => e.tag.toLowerCase() == value.toLowerCase());
 			if (found) {
 				let res = { resp: this.languageRedundant };
 				if (found?.preferred) res.pref = found.preferred;
@@ -220,7 +220,7 @@ export default class IANAlanguages {
 
 			if (value.indexOf("-") != -1) {
 				let matches = true;
-				let parts = value.split("-");
+				const parts = value.split("-");
 				parts.forEach((p) => {
 					matches &= isIni(this.#languagesList, p);
 				});
@@ -243,7 +243,7 @@ export default class IANAlanguages {
 	}
 
 	isKnownSignLanguage(value) {
-		let lcValue = value.toLowerCase();
+		const lcValue = value.toLowerCase();
 		let res = this.checkSignLanguage(lcValue);
 		if (res == this.languageUnknown) res = this.checkSignLanguage("sgn-" + lcValue);
 		return res;

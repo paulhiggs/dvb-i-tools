@@ -1079,23 +1079,20 @@ export default class ContentGuideCheck {
 				if (MediaLocator.length != 0)
 					MediaLocator.forEach((ml) => {
 						let hasAuxiliaryURI = false;
-						if (ml.childNodes())
-							ml.childNodes().forEachSubElement((child) => {
-								if (child.name == tva.e_AuxiliaryURI) {
-									hasAuxiliaryURI = true;
-									checkAttributes(child, [tva.a_contentType], [], tvaEA.AuxiliaryURI, errs, "TA010");
-									if (child.attrAnyNs(tva.a_contentType)) {
-										let contentType = child.attrAnyNs(tva.a_contentType).value;
-										if (contentType != dvbi.XML_AIT_CONTENT_TYPE)
-											errs.addError({
-												code: "TA011",
-												message: `invalid ${tva.a_contentType.attribute()}=${contentType.quote()} specified for ${RelatedMaterial.name.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`,
-												fragment: child,
-												key: keys.k_InvalidValue,
-											});
-									}
+						ml.childNodes()?.forEachNamedSubElement(tva.e_AuxiliaryURI, child => {
+								hasAuxiliaryURI = true;
+								checkAttributes(child, [tva.a_contentType], [], tvaEA.AuxiliaryURI, errs, "TA010");
+								if (child.attrAnyNs(tva.a_contentType)) {
+									let contentType = child.attrAnyNs(tva.a_contentType).value;
+									if (contentType != dvbi.XML_AIT_CONTENT_TYPE)
+										errs.addError({
+											code: "TA011",
+											message: `invalid ${tva.a_contentType.attribute()}=${contentType.quote()} specified for ${RelatedMaterial.name.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`,
+											fragment: child,
+											key: keys.k_InvalidValue,
+										});
 								}
-							});
+						});
 						if (!hasAuxiliaryURI) errs.addError(NoChildElement(tva.e_AuxiliaryURI.elementize(), MediaLocator, Location, "TA012"));
 					});
 				else errs.addError(NoChildElement(tva.e_MediaLocator.elementize(), RelatedMaterial, Location, "TA013"));
@@ -1536,90 +1533,85 @@ export default class ContentGuideCheck {
 		// <ProgramInformation><BasicDescription>
 		this.#ValidateBasicDescription(props, ProgramInformation, requestType, errs, null);
 
-		if (ProgramInformation.childNodes())
-			ProgramInformation.childNodes().forEachSubElement((child) => {
-				switch (child.name) {
-					case tva.e_OtherIdentifier: // <ProgramInformation><OtherIdentifier>
-						checkAttributes(child, [], [], tvaEA.OtherIdentifier, errs, "PI021");
-						if (requestType == CG_REQUEST_MORE_EPISODES)
+		ProgramInformation.childNodes()?.forEachSubElement((child) => {
+			switch (child.name) {
+				case tva.e_OtherIdentifier: // <ProgramInformation><OtherIdentifier>
+					checkAttributes(child, [], [], tvaEA.OtherIdentifier, errs, "PI021");
+					if (requestType == CG_REQUEST_MORE_EPISODES)
+						errs.addError({
+							code: "PI022",
+							message: `${tva.e_OtherIdentifier.elementize()} is not permitted in this request type`,
+							fragment: child,
+						});
+					break;
+				case tva.e_EpisodeOf: // <ProgramInformation><EpisodeOf>
+					checkAttributes(child, [tva.a_crid], [tva.a_index], tvaEA.EpisodeOf, errs, "PI031");
+					// <ProgramInformation><EpisodeOf>@crid
+					if (child.attrAnyNs(tva.a_crid)) {
+						const foundCRID = child.attrAnyNs(tva.a_crid).value;
+						if (groupCRIDs && !isIni(groupCRIDs, foundCRID))
 							errs.addError({
-								code: "PI022",
-								message: `${tva.e_OtherIdentifier.elementize()} is not permitted in this request type`,
+								code: "PI032",
+								message: `${tva.a_crid.attribute(
+									`${ProgramInformation.name}.${tva.e_EpisodeOf}`
+								)}=${foundCRID.quote()} is not a defined Group CRID for ${tva.e_EpisodeOf.elementize()}`,
 								fragment: child,
 							});
-						break;
-					case tva.e_EpisodeOf: // <ProgramInformation><EpisodeOf>
-						checkAttributes(child, [tva.a_crid], [tva.a_index], tvaEA.EpisodeOf, errs, "PI031");
-
-						// <ProgramInformation><EpisodeOf>@crid
-						if (child.attrAnyNs(tva.a_crid)) {
-							const foundCRID = child.attrAnyNs(tva.a_crid).value;
-							if (groupCRIDs && !isIni(groupCRIDs, foundCRID))
-								errs.addError({
-									code: "PI032",
-									message: `${tva.a_crid.attribute(
-										`${ProgramInformation.name}.${tva.e_EpisodeOf}`
-									)}=${foundCRID.quote()} is not a defined Group CRID for ${tva.e_EpisodeOf.elementize()}`,
-									fragment: child,
-								});
-							else if (!isCRIDURI(foundCRID))
-								this.#NotCRIDFormat(errs, {
-									code: "PI033",
-									message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_EpisodeOf}`)}=${foundCRID.quote()} is not a valid CRID`,
-									fragment: child,
-								});
-						}
-						break;
-					case tva.e_MemberOf: // <ProgramInformation><MemberOf>
-						if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW].includes(requestType)) {
-							// xsi:type is optional for Now/Next
-							checkAttributes(child, [tva.a_index, tva.a_crid], [tva.a_type], tvaEA.MemberOf, errs, "PI041");
-							if (child.attrAnyNs(tva.a_crid) && child.attrAnyNs(tva.a_crid).value == dvbi.CRID_NOW) isCurrentProgram = true;
-						} else checkAttributes(child, [tva.a_type, tva.a_index, tva.a_crid], [], tvaEA.MemberOf, errs, "PI042");
-
-						// <ProgramInformation><MemberOf>@xsi:type
-						if (child.attrAnyNs(tva.a_type) && child.attrAnyNs(tva.a_type).value != tva.t_MemberOfType)
-							errs.addError({
-								code: "PI043",
-								message: `${attribute(`xsi:${tva.a_type}`)} must be ${tva.t_MemberOfType.quote()} for ${ProgramInformation.name}.${tva.e_MemberOf}`,
+						else if (!isCRIDURI(foundCRID))
+							this.#NotCRIDFormat(errs, {
+								code: "PI033",
+								message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_EpisodeOf}`)}=${foundCRID.quote()} is not a valid CRID`,
 								fragment: child,
 							});
-
-						// <ProgramInformation><MemberOf>@crid
-						let foundCRID = null;
-						if (child.attrAnyNs(tva.a_crid)) {
-							foundCRID = child.attrAnyNs(tva.a_crid).value;
-							if (groupCRIDs && !isIni(groupCRIDs, foundCRID))
-								errs.addError({
-									code: "PI044",
-									message: `${tva.a_crid.attribute(
-										`${ProgramInformation.name}.${tva.e_MemberOf}`
-									)}=${foundCRID.quote()} is not a defined Group CRID for ${tva.e_MemberOf.elementize()}`,
-									fragment: child,
-								});
-							else if (!isCRIDURI(foundCRID))
-								this.#NotCRIDFormat(errs, {
-									code: "PI045",
-									message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_MemberOf}`)}=${foundCRID.quote()} is not a valid CRID`,
-									fragment: child,
-								});
-						}
-
-						// <ProgramInformation><MemberOf>@index
-						if (child.attrAnyNs(tva.a_index)) {
-							const index = valUnsignedInt(child.attrAnyNs(tva.a_index).value);
-							const indexInCRID = `${foundCRID ? foundCRID : "noCRID"}(${index})`;
-							if (isIni(indexes, indexInCRID))
-								errs.addError({
-									code: "PI046",
-									message: `${tva.a_index.attribute(tva.e_MemberOf)}=${index} is in use by another ${ProgramInformation.name} element`,
-									fragment: child,
-								});
-							else indexes.push(indexInCRID);
-						}
-						break;
-				}
-			});
+					}
+					break;
+				case tva.e_MemberOf: // <ProgramInformation><MemberOf>
+					if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW].includes(requestType)) {
+						// xsi:type is optional for Now/Next
+						checkAttributes(child, [tva.a_index, tva.a_crid], [tva.a_type], tvaEA.MemberOf, errs, "PI041");
+						if (child.attrAnyNs(tva.a_crid) && child.attrAnyNs(tva.a_crid).value == dvbi.CRID_NOW) isCurrentProgram = true;
+					} else checkAttributes(child, [tva.a_type, tva.a_index, tva.a_crid], [], tvaEA.MemberOf, errs, "PI042");
+					// <ProgramInformation><MemberOf>@xsi:type
+					if (child.attrAnyNs(tva.a_type) && child.attrAnyNs(tva.a_type).value != tva.t_MemberOfType)
+						errs.addError({
+							code: "PI043",
+							message: `${attribute(`xsi:${tva.a_type}`)} must be ${tva.t_MemberOfType.quote()} for ${ProgramInformation.name}.${tva.e_MemberOf}`,
+							fragment: child,
+						});
+					// <ProgramInformation><MemberOf>@crid
+					let foundCRID = null;
+					if (child.attrAnyNs(tva.a_crid)) {
+						foundCRID = child.attrAnyNs(tva.a_crid).value;
+						if (groupCRIDs && !isIni(groupCRIDs, foundCRID))
+							errs.addError({
+								code: "PI044",
+								message: `${tva.a_crid.attribute(
+									`${ProgramInformation.name}.${tva.e_MemberOf}`
+								)}=${foundCRID.quote()} is not a defined Group CRID for ${tva.e_MemberOf.elementize()}`,
+								fragment: child,
+							});
+						else if (!isCRIDURI(foundCRID))
+							this.#NotCRIDFormat(errs, {
+								code: "PI045",
+								message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_MemberOf}`)}=${foundCRID.quote()} is not a valid CRID`,
+								fragment: child,
+							});
+					}
+					// <ProgramInformation><MemberOf>@index
+					if (child.attrAnyNs(tva.a_index)) {
+						const index = valUnsignedInt(child.attrAnyNs(tva.a_index).value);
+						const indexInCRID = `${foundCRID ? foundCRID : "noCRID"}(${index})`;
+						if (isIni(indexes, indexInCRID))
+							errs.addError({
+								code: "PI046",
+								message: `${tva.a_index.attribute(tva.e_MemberOf)}=${index} is in use by another ${ProgramInformation.name} element`,
+								fragment: child,
+							});
+						else indexes.push(indexInCRID);
+					}
+					break;
+			}
+		});
 
 		return isCurrentProgram ? programCRID : null;
 	}
@@ -1762,9 +1754,8 @@ export default class ContentGuideCheck {
 
 		if (GroupInformation.attrAnyNs(tva.a_groupId)) {
 			let groupId = GroupInformation.attrAnyNs(tva.a_groupId).value;
-			if (isCRIDURI(groupId)) {
+			if (isCRIDURI(groupId))
 				if (groupsFound) groupsFound.push(groupId);
-			}
 		}
 
 		const categoryCRID = categoryGroup && categoryGroup.attrAnyNs(tva.a_groupId) ? categoryGroup.attrAnyNs(tva.a_groupId).value : "";
@@ -1974,7 +1965,7 @@ export default class ContentGuideCheck {
 
 		const GroupType = GroupInformation.get(xPath(props.prefix, tva.e_GroupType), props.schema);
 		if (GroupType) {
-			let _type = GroupType.attrAnyNs(tva.a_type);
+			const _type = GroupType.attrAnyNs(tva.a_type);
 			if (!(_type && _type.value == tva.t_ProgramGroupTypeType))
 				errs.addError({
 					code: "GI011",
@@ -2146,7 +2137,7 @@ export default class ContentGuideCheck {
 					],
 					tvaEC.GroupInformation, false, errs, "GIC113");
 			if (GroupInformation.attrAnyNs(tva.a_groupId))
-					groupIds.push(GroupInformation.attrAnyNs(tva.a_groupId).value)
+				groupIds.push(GroupInformation.attrAnyNs(tva.a_groupId).value)
 		}
 		if (!contentsGroup)
 			errs.addError({
@@ -2162,7 +2153,7 @@ export default class ContentGuideCheck {
 			gi = 0;
 			while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
 				if (GroupInformation.line != contentsGroup.line) {
-					let MemberOf = GroupInformation.get(xPath(props.prefix, tva.e_MemberOf), props.schema);
+					const MemberOf = GroupInformation.get(xPath(props.prefix, tva.e_MemberOf), props.schema);
 					if (MemberOf) {
 						if (MemberOf.attrAnyNs(tva.a_crid) && MemberOf.attrAnyNs(tva.a_crid).value != cgCRID)
 							errs.addError({
@@ -3306,30 +3297,29 @@ export default class ContentGuideCheck {
 			foundServiceIds = [],
 			plCRIDs = [];
 
-		if (ProgramLocationTable.childNodes())
-			ProgramLocationTable.childNodes().forEachSubElement((child) => {
-				switch (child.name) {
-					case tva.e_OnDemandProgram:
-						this.#ValidateOnDemandProgram(props, child, programCRIDs, plCRIDs, requestType, errs);
-						cntODP++;
-						break;
-					case tva.e_BroadcastEvent:
-						this.#ValidateBroadcastEvent(props, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
-						cntBE++;
-						break;
-					case tva.e_Schedule:
-						let thisServiceIdRef = this.#ValidateSchedule(props, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
-						if (thisServiceIdRef.length)
-							if (isIni(foundServiceIds, thisServiceIdRef))
-								errs.addError({
-									code: "PL020",
-									message: `A ${tva.e_Schedule.elementize()} element with ${tva.a_serviceIDRef.attribute()}=${thisServiceIdRef.quote()} is already specified`,
-								});
-							else foundServiceIds.push(thisServiceIdRef);
-						cntSE++;
-						break;
-				}
-			});
+		ProgramLocationTable?.childNodes().forEachSubElement((child) => {
+			switch (child.name) {
+				case tva.e_OnDemandProgram:
+					this.#ValidateOnDemandProgram(props, child, programCRIDs, plCRIDs, requestType, errs);
+					cntODP++;
+					break;
+				case tva.e_BroadcastEvent:
+					this.#ValidateBroadcastEvent(props, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
+					cntBE++;
+					break;
+				case tva.e_Schedule:
+					let thisServiceIdRef = this.#ValidateSchedule(props, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
+					if (thisServiceIdRef.length)
+						if (isIni(foundServiceIds, thisServiceIdRef))
+							errs.addError({
+								code: "PL020",
+								message: `A ${tva.e_Schedule.elementize()} element with ${tva.a_serviceIDRef.attribute()}=${thisServiceIdRef.quote()} is already specified`,
+							});
+						else foundServiceIds.push(thisServiceIdRef);
+					cntSE++;
+					break;
+			}
+		});
 
 		if (o && o.childCount != 0) {
 			if (o.childCount != cntODP + cntBE + cntSE)

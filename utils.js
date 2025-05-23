@@ -35,7 +35,7 @@ export let xPathM = (SCHEMA_PREFIX, elementNames) => datatypeIs(elementNames, "a
  * @param {string}    childElementName   The name of the child element to find
  * @returns the named child element or undefined if not present
  */
-let getFirstElementByTagName = (element, childElementName) => element.childNodes()?.find((c) => (c instanceof XmlElement) && c.name == childElementName);
+let getFirstElementByTagName = (element, childElementName) => element.childNodes().find((c) => (c instanceof XmlElement) && c.name == childElementName);
 
 export function getElementByTagName(element, childElementName, index = null) {
 	switch (datatypeIs(childElementName)) {
@@ -180,11 +180,9 @@ export function parseISOduration(duration) {
  */
 export function CountChildElements(node, childElementName) {
 	let r = 0;
-	const childElems = node ? node.childNodes() : null;
-	if (childElems)
-		childElems.forEachSubElement((elem) => {
-			if (elem.name == childElementName) r++;
-		});
+	node?.childNodes().forEachNamedSubElement(childElementName, elem => {
+		r++;
+	});
 	return r;
 }
 

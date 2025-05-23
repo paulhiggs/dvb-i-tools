@@ -17,7 +17,7 @@ export const MODE_UNSPECIFIED = "none",
 const MESSAGES_IN_ORDER = true; // when true outputs the errors, warnings and informations in the 'document order'. false==ouotput in order found
 const SHOW_LINE_NUMBER = false; // include the line number in the XML document where the error was found
 
-let pkg = JSON.parse(readFileSync("./package.json", { encoding: "utf-8" }).toString());
+const pkg = JSON.parse(readFileSync("./package.json", { encoding: "utf-8" }).toString());
 
 export function PAGE_TOP(pageTitle, label = null, motd = null) {
 	const TABLE_STYLE =
@@ -44,7 +44,7 @@ function tabulateResults(source, res, error, errs) {
 	const Dodger_Blue = "#1E90FF",
 		link_css = "jump";
 
-	let scrollFunc = `<script>function myScrollTo(item){
+	const scrollFunc = `<script>function myScrollTo(item){
 		var itemPos = document.getElementById(item).getBoundingClientRect();
 		window.scrollTo(window.scrollX+itemPos.x, window.scrollY+itemPos.y);
 	}</script>`;
@@ -56,7 +56,7 @@ function tabulateResults(source, res, error, errs) {
 
 	function tabluateMessage(value) {
 		res.write("<tr>");
-		let anchor = Object.prototype.hasOwnProperty.call(value, "line") ? `line-${value.line}` : null;
+		const anchor = Object.prototype.hasOwnProperty.call(value, "line") ? `line-${value.line}` : null;
 		if (SHOW_LINE_NUMBER) res.write(`<td>${Object.prototype.hasOwnProperty.call(value, "line") ? value.line : ""}</td>`);
 		res.write(`<td>${anchor ? `<span class="${link_css}" onclick="myScrollTo('${anchor}')">` : ""}${value.code ? HTMLize(value.code) : ""}${anchor ? "</span>" : ""}</td>`);
 		res.write(`<td>${value.message ? HTMLize(value.message) : ""}`);
@@ -147,8 +147,8 @@ function tabulateResults(source, res, error, errs) {
 		res.write(`${style(ERR, "red")}${style(WARN, "blue")}${style(INFO, "orange")}<pre>`);
 		
 		errs.markupXML.forEach((line) => {
-			let cla = "",
-				tip = line.validationErrors ? line.validationErrors.map((err) => HTMLize(err)).join("&#10;") : null;
+			let cla = "";
+			const tip = line.validationErrors ? line.validationErrors.map((err) => HTMLize(err)).join("&#10;") : null;
 			if (tip) {
 				if (tip.includes(ERROR)) cla = ERR;
 				else if (tip.includes(WARNING)) cla = WARN;

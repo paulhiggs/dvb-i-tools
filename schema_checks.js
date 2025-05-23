@@ -1,7 +1,7 @@
 /**
  * schema_checks.js
  */
-import { XmlDocument, XsdValidator, XmlValidateError } from "libxml2-wasm";
+import { XmlDocument, XsdValidator } from "libxml2-wasm";
 import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
 xmlRegisterFsInputProviders();
 
@@ -79,25 +79,23 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 	var findElementIn = (elementList, elementName) => (datatypeIs(elementList, "array") ? elementList.find((element) => element.name == elementName) : false);
 
 	function getNamedChildElements(node, childElementName) {
-		let res = [],
-			childElems = node ? node.childNodes() : null;
-		if (childElems)
-			childElems.forEachSubElement((elem) => {
-				if (elem.name == childElementName) res.push(elem);
-			});
+		let res = [];
+		node?.childNodes().forEachNamedSubElement(childElementName, elem => {
+			res.push(elem);
+		});
 		return res;
 	}
 	if (!parentElement) {
 		errs.addError({ type: APPLICATION, code: "TE000", message: "checkTopElementsAndCardinality() called with a 'null' element to check" });
 		return false;
 	}
-	let rv = true,
-		thisElem = elementize(`${parentElement.parent.name}.${parentElement.name}`);
+	let rv = true;
+	const thisElem = elementize(`${parentElement.parent.name}.${parentElement.name}`);
 	// check that each of the specifid childElements exists
 	childElements.forEach((elem) => {
-		let min = Object.prototype.hasOwnProperty.call(elem, "minOccurs") ? elem.minOccurs : 1;
-		let max = Object.prototype.hasOwnProperty.call(elem, "maxOccurs") ? elem.maxOccurs : 1;
-		let namedChildren = getNamedChildElements(parentElement, elem.name),
+		const min = Object.prototype.hasOwnProperty.call(elem, "minOccurs") ? elem.minOccurs : 1;
+		const max = Object.prototype.hasOwnProperty.call(elem, "maxOccurs") ? elem.maxOccurs : 1;
+		const namedChildren = getNamedChildElements(parentElement, elem.name),
 			count = namedChildren.length;
 
 		if (count == 0 && min != 0) {
@@ -132,7 +130,7 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 		});
 
 		parentElement.childNodes().forEachSubElement((child) => {
-			let childName = child.name;
+			const childName = child.name;
 			if (!findElementIn(childElements, childName)) {
 				if (isIn(excludedChildren, childName))
 					errs.addError({
@@ -181,7 +179,7 @@ export function SchemaCheck(XML, XSD, errs, errCode) {
 	try {
 		validator = XsdValidator.fromDoc(XSD);
 	} catch (err) {
-		let x = err.details;
+		const x = err.details;
 		x.forEach((e) => {
 			errs.addError({ code: "LS000", type: DEBUG, message: JSON.stringify(e) });
 		});
@@ -192,7 +190,7 @@ export function SchemaCheck(XML, XSD, errs, errCode) {
 	} catch (err) {
 		//console.log(err.message)
 		if (err.details) {
-			let lines = format(XML.toString(), { collapseContent: true, lineSeparator: "\n", strictMode: true }).split("\n");
+			const lines = format(XML.toString(), { collapseContent: true, lineSeparator: "\n", strictMode: true }).split("\n");
 			err.details.forEach((ve) => {
 				errs.addError({ code: errCode, message: ve.message, fragment: lines[ve.line], line: ve.line, key: keys.k_XSDValidation });
 			});

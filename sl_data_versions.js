@@ -194,7 +194,7 @@ export let validServiceControlApplication = (hrefType, schemaVersion) => {
  * @returns {boolean} true if this is a valid application being used with the service else false
  */
 export let validAgreementApplication = (hrefType, schemaVersion) => {
-	let appTypes = [dvbi.APP_LIST_INSTALLATION, dvbi.APP_WITHDRAW_AGREEMENT, dvbi.APP_RENEW_AGREEMENT];
+	const appTypes = [dvbi.APP_LIST_INSTALLATION, dvbi.APP_WITHDRAW_AGREEMENT, dvbi.APP_RENEW_AGREEMENT];
 	return schemaVersion >= SCHEMA_r7 && appTypes.includes(hrefType);
 };
 
@@ -240,8 +240,8 @@ function match(permittedValues, value, version = ANY_NAMESPACE) {
 	if (permittedValues && value) {
 		if (version == ANY_NAMESPACE) return permittedValues.find((elem) => elem.val == value) != undefined;
 		else {
-			let _ver = SchemaVersion(version);
-			let i = permittedValues.find((elem) => elem.ver == _ver);
+			const _ver = SchemaVersion(version);
+			const i = permittedValues.find((elem) => elem.ver == _ver);
 			return i && i.val == value;
 		}
 	}
@@ -257,7 +257,7 @@ function match(permittedValues, value, version = ANY_NAMESPACE) {
  */
 export function validOutScheduleHours(HowRelated, namespace) {
 	// return true if val is a valid CS value for Out of Service Banners (A177 5.2.5.3)
-	let HRhref = HowRelated.attrAnyNs(dvbi.a_href);
+	const HRhref = HowRelated.attrAnyNs(dvbi.a_href);
 	return match(OutOfScheduledHoursBanners, HRhref ? HRhref.value : null, namespace);
 }
 
@@ -271,7 +271,7 @@ export function validOutScheduleHours(HowRelated, namespace) {
  */
 export function validContentFinishedBanner(HowRelated, namespace) {
 	// return true if val is a valid CS value for Content Finished Banner (A177 5.2.7.3)
-	let HRhref = HowRelated.attrAnyNs(dvbi.a_href);
+	const HRhref = HowRelated.attrAnyNs(dvbi.a_href);
 	return match(ContentFinishedBanners, HRhref ? HRhref.value : null, namespace);
 }
 
@@ -284,12 +284,12 @@ export function validContentFinishedBanner(HowRelated, namespace) {
  */
 export function validServiceListLogo(HowRelated, namespace) {
 	// return true if HowRelated@href is a valid CS value Service List Logo (A177 5.2.6.1)
-	let HRhref = HowRelated.attrAnyNs(dvbi.a_href);
+	const HRhref = HowRelated.attrAnyNs(dvbi.a_href);
 	return match(ServiceListLogos, HRhref ? HRhref.value : null, namespace);
 }
 
 export function validServiceAgreementApp(HowRelated, namespace) {
-	let HRhref = HowRelated.attrAnyNs(dvbi.a_href);
+	const HRhref = HowRelated.attrAnyNs(dvbi.a_href);
 	return HRhref ? validAgreementApplication(HRhref.value, SchemaVersion(namespace)) : false;
 }
 
@@ -302,7 +302,7 @@ export function validServiceAgreementApp(HowRelated, namespace) {
  */
 export function validServiceLogo(HowRelated, namespace) {
 	// return true if val is a valid CS value Service Logo (A177 5.2.6.2)
-	let HRhref = HowRelated.attrAnyNs(dvbi.a_href);
+	const HRhref = HowRelated.attrAnyNs(dvbi.a_href);
 	return match(ServiceLogos, HRhref ? HRhref.value : null, namespace);
 }
 
@@ -315,7 +315,7 @@ export function validServiceLogo(HowRelated, namespace) {
  */
 export function validServiceBanner(HowRelated, namespace) {
 	// return true if val is a valid CS value Service Banner (A177 5.2.6.x)
-	let HRhref = HowRelated.attrAnyNs(dvbi.a_href);
+	const HRhref = HowRelated.attrAnyNs(dvbi.a_href);
 	return match(ServiceBanners, HRhref ? HRhref.value : null, namespace);
 }
 
@@ -328,7 +328,7 @@ export function validServiceBanner(HowRelated, namespace) {
  */
 export function validContentGuideSourceLogo(HowRelated, namespace) {
 	// return true if val is a valid CS value Service Logo (A177 5.2.6.3)
-	let HRhref = HowRelated.attrAnyNs(dvbi.a_href);
+	const HRhref = HowRelated.attrAnyNs(dvbi.a_href);
 	return match(ContentGuideSourceLogos, HRhref ? HRhref.value : nul, namespace);
 }
 
@@ -344,8 +344,6 @@ export let isA177specification_URN = (urn) => (SchemaVersions.find((v) => v?.URN
 console.log(chalk.yellow.underline("loading service list schemas..."));
 SchemaVersions.forEach((version) => {
 	process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
-	//	let schema = readFileSync(version.filename).toString().replace(`schemaLocation="./`, `schemaLocation="${__dirname_linux}/`);
-	//	version.schema = XmlDocument.fromString(schema);
 	version.schema = XmlDocument.fromBuffer(readFileSync(version.filename));
 	console.log(version.schema ? chalk.green("OK") : chalk.red.bold("FAIL"));
 });

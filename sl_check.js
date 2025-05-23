@@ -4,7 +4,7 @@
  * Check a service list
  */
 import chalk from "chalk";
-import { XmlDocument, XmlNode, XmlElement } from "libxml2-wasm";
+import { XmlElement } from "libxml2-wasm";
 import { MakeDocumentProperties } from "./libxml2-wasm-extensions.js";
 
 import { elementize, quote } from "./phlib/phlib.js";
@@ -15,7 +15,7 @@ import { dvbi, dvbiEC, dvbiEA, XMLdocumentType } from "./DVB-I_definitions.js";
 
 import ErrorList, { WARNING, APPLICATION } from "./error_list.js";
 import { isTAGURI } from "./URI_checks.js";
-import { xPath, xPathM, isIn, unEntity, getElementByTagName, DuplicatedValue } from "./utils.js";
+import { xPath, isIn, unEntity, getElementByTagName, DuplicatedValue } from "./utils.js";
 import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isDomainName, isRTSPURL } from "./pattern_checks.js";
 import { __dirname_linux } from "./data_locations.js";
 import { checkValidLogos } from "./related_material_checks.js";
@@ -45,7 +45,6 @@ import {
 } from "./classification_scheme_loaders.js";
 import CheckAccessibilityAttributes from "./accessibility_attributes_checks.js";
 import { DASH_IF_Content_Protection_List, ContentProtectionIDs, CA_SYSTEM_ID_REGISTRY, CASystemIDs } from "./identifiers.js";
-import { isRequiredImageMime } from "./MIME_checks.js";
 
 import {
 	GetSchema,
@@ -160,24 +159,6 @@ let NoDeliveryParams = (source, serviceId, element, errCode) => ({
 	key: "no delivery params",
 });
 
-/**
- * Contruct an error message for a required image format is not specified in a Related Material element
- * 
- * @param {String} errCode    The error code to be reported 
- * @param {String} _where     The location of the related material element
- * @param {String} _reference Reference to the clause in A177 regarding the requirement to include the image format
- * @param {number} _line      Line number of the RelatedMaterial element
- * @returns 
- */
-let missingRequiredImageType = (errCode, _where, _reference, _line = null) => ({
-	code: errCode,
-	message: `at least one ${_where} logo must be of type image/jpeg or image/png`,
-	key: "no standard image",
-	line: _line,
-	description: `At least one ${_where} logo shall be provided with the Media Type image/jpeg or image/png for compatibility purposes`,
-	clause: `A177 clause ${_reference}`,
- });
-
 
 export default class ServiceListCheck {
 	#numRequests;
@@ -263,11 +244,11 @@ export default class ServiceListCheck {
 			});
 			return;
 		}
-		let schemaVersion = SchemaVersion(props.namespace);
-		let regionID = Region.attrAnyNs(dvbi.a_regionID) ? Region.attrAnyNs(dvbi.a_regionID).value : null;
-		let displayRegionID = regionID ? regionID.quote() : '"noID"';
-		let countriesSpecified = [],
-			countryCodesSpecified = Region.attrAnyNs(dvbi.a_countryCodes);
+		const schemaVersion = SchemaVersion(props.namespace);
+		const regionID = Region.attrAnyNs(dvbi.a_regionID) ? Region.attrAnyNs(dvbi.a_regionID).value : null;
+		const displayRegionID = regionID ? regionID.quote() : '"noID"';
+		let countriesSpecified = [];
+		const countryCodesSpecified = Region.attrAnyNs(dvbi.a_countryCodes);
 
 		// this check should not happen with schema version 5 or greater, as this becomes part of the syntax
 		if (depth != 0 && countryCodesSpecified)
@@ -293,7 +274,7 @@ export default class ServiceListCheck {
 		} else countriesSpecified = countries;
 
 		if (schemaVersion >= SCHEMA_r4) {
-			let selectable = Region.attrAnyNs(dvbi.a_selectable) ? Region.attrAnyNs(dvbi.a_selectable).value == "true" : true;
+			const selectable = Region.attrAnyNs(dvbi.a_selectable) ? Region.attrAnyNs(dvbi.a_selectable).value == "true" : true;
 
 			if (!selectable && depth == dvbi.MAX_SUBREGION_LEVELS)
 				errs.addError({
@@ -402,47 +383,45 @@ export default class ServiceListCheck {
 		if (!MediaLocator)
 			errs.addError({
 				code: "SA001",
-				message: `${tva.e_MediaLocator.elementize()} not specified for application ${tva.e_RelatedMaterialr.elementize()} in ${Location}`,
+				message: `${tva.e_MediaLocator.elementize()} not specified for application ${tva.e_RelatedMaterial.elementize()} in ${Location}`,
 				key: `no ${tva.e_MediaUri}`,
 			});
 		else {
 			let hasMediaURI = false;
-			if (MediaLocator.childNodes())
-				MediaLocator.childNodes().forEachSubElement((child) => {
-					if (child.name == tva.e_MediaUri) {
-						hasMediaURI = true;
-						if (child.attrAnyNs(tva.a_contentType) && !isValidApplicationType(child.attrAnyNs(tva.a_contentType).value))
-							errs.addError({
-								code: "SA003",
-								message: `${tva.a_contentType.attribute()} ${child
-									.attrAnyNs(tva.a_contentType)
-									.value.quote()} is not supported application type for ${tva.e_RelatedMaterial.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`,
-								fragment: child,
-								key: `invalid ${tva.a_contentType.attribute(tva.e_MediaUri)}`,
-							});
-						if (!isASCII(child.content))
-							errs.addError({
-								code: "SA014",
-								message: `URL ${child.content.quote()} contains non-ASCII characters in ${child.name.elementize()}`,
-								fragment: child,
-								key: "invalid resource URL",
-							});
-						if (!isHTTPURL(child.content))
-							errs.addError({
-								code: "SA004",
-								message: `invalid URL ${child.content.quote()} specified for ${child.name.elementize()}`,
-								fragment: child,
-								key: "invalid resource URL",
-							});
-						if (AppType == dvbi.APP_SERVICE_PROVIDER && child.attrAnyNs(tva.a_contentType) && child.attrAnyNs(tva.a_contentType).value != dvbi.XML_AIT_CONTENT_TYPE)
-							errs.addError({
-								code: "SA006",
-								message: `invalid application type ${child.attrAnyNs(tva.a_contentType).value.quote()} for Serivce Provider Application (only XMLAIT allowed)`,
-								fragment: child,
-								key: "invalid app type",
-							});
-					}
-				});
+			MediaLocator.childNodes().forEachNamedSubElement(tva.e_MediaUri, child => {
+				hasMediaURI = true;
+				if (child.attrAnyNs(tva.a_contentType) && !isValidApplicationType(child.attrAnyNs(tva.a_contentType).value))
+					errs.addError({
+						code: "SA003",
+						message: `${tva.a_contentType.attribute()} ${child
+							.attrAnyNs(tva.a_contentType)
+							.value.quote()} is not supported application type for ${tva.e_RelatedMaterial.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`,
+						fragment: child,
+						key: `invalid ${tva.a_contentType.attribute(tva.e_MediaUri)}`,
+					});
+				if (!isASCII(child.content))
+					errs.addError({
+						code: "SA014",
+						message: `URL ${child.content.quote()} contains non-ASCII characters in ${child.name.elementize()}`,
+						fragment: child,
+						key: "invalid resource URL",
+					});
+				if (!isHTTPURL(child.content))
+					errs.addError({
+						code: "SA004",
+						message: `invalid URL ${child.content.quote()} specified for ${child.name.elementize()}`,
+						fragment: child,
+						key: "invalid resource URL",
+					});
+				if (AppType == dvbi.APP_SERVICE_PROVIDER && child.attrAnyNs(tva.a_contentType) && child.attrAnyNs(tva.a_contentType).value != dvbi.XML_AIT_CONTENT_TYPE)
+					errs.addError({
+						code: "SA006",
+						message: `invalid application type ${child.attrAnyNs(tva.a_contentType).value.quote()} for Serivce Provider Application (only XMLAIT allowed)`,
+						fragment: child,
+						key: "invalid app type",
+					});
+
+			});
 			if (!hasMediaURI)
 				errs.addError({
 					code: "SA005",
@@ -464,7 +443,7 @@ export default class ServiceListCheck {
 		// return true if the HowRelated element has a 	valid CS value for Service Related Applications (A177 5.2.3)
 		// urn:dvb:metadata:cs:LinkedApplicationCS:2019
 		if (!HowRelated) return false;
-		let val = HowRelated.attrAnyNs(dvbi.a_href) ? HowRelated.attrAnyNs(dvbi.a_href).value : null;
+		const val = HowRelated.attrAnyNs(dvbi.a_href) ? HowRelated.attrAnyNs(dvbi.a_href).value : null;
 		if (!val) return false;
 		return validServiceControlApplication(val, schemaVersion) || validServiceUnavailableApplication(val);
 	}
@@ -503,20 +482,19 @@ export default class ServiceListCheck {
 		let HowRelated = null,
 			MediaLocator = [],
 			AccessibilityAttribiutes = [];
-		if (RelatedMaterial.childNodes())
-			RelatedMaterial.childNodes().forEachSubElement((elem) => {
-				switch (elem.name) {
-					case tva.e_HowRelated:
-						HowRelated = elem;
-						break;
-					case tva.e_MediaLocator:
-						MediaLocator.push(elem);
-						break;
-					case tva.e_AccessibilityAttributes:
-						AccessibilityAttribiutes.push(elem);
-						break;
-				}
-			});
+		RelatedMaterial.childNodes().forEachSubElement((elem) => {
+			switch (elem.name) {
+				case tva.e_HowRelated:
+					HowRelated = elem;
+					break;
+				case tva.e_MediaLocator:
+					MediaLocator.push(elem);
+					break;
+				case tva.e_AccessibilityAttributes:
+					AccessibilityAttribiutes.push(elem);
+					break;
+			}
+		});
 
 		if (!HowRelated) {
 			errs.addError({
@@ -608,7 +586,7 @@ export default class ServiceListCheck {
 						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, errs, Location, rc));
 					} else {
 						errs.addError(sl_InvalidHrefValue(HowRelated.attrAnyNs(dvbi.a_href).value, HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-34`));
-						errs.errorDescription(RMErrorDescription(`${errCode}-34`, dvbi.e_ServiceInstace, 16));
+						errs.errorDescription(RMErrorDescription(`${errCode}-34`, dvbi.e_ServiceInstance, 16));
 					}
 					break;
 
@@ -757,7 +735,7 @@ export default class ServiceListCheck {
 
 		if (!node.attrAnyNs(tva.a_lang)) return parentLang;
 
-		let localLang = node.attrAnyNs(tva.a_lang).value;
+		const localLang = node.attrAnyNs(tva.a_lang).value;
 		if (localLang) checkLanguage(localLang, node.name, node, errs, errCode);
 		return localLang;
 	}
@@ -801,13 +779,13 @@ export default class ServiceListCheck {
 			mediumLangs = [],
 			longLangs = [],
 			extendedLangs = [];
-		let ERROR_KEY = "synopsis";
+		const ERROR_KEY = "synopsis";
 		while ((ste = Element.get(xPath(props.prefix, ElementName, ++s), props.schema)) != null) {
-			let synopsisLang = this.#GetLanguage(errs, ste, parentLanguage, false, `${errCode}-2`);
-			let synopsisLength = ste.attrAnyNs(tva.a_length) ? ste.attrAnyNs(tva.a_length).value : null;
+			const synopsisLang = this.#GetLanguage(errs, ste, parentLanguage, false, `${errCode}-2`);
+			const synopsisLength = ste.attrAnyNs(tva.a_length) ? ste.attrAnyNs(tva.a_length).value : null;
 
 			if (synopsisLength) {
-				let cleanSynopsisLength = unEntity(ste.content).length; // replace ENTITY strings with a generic character
+				const cleanSynopsisLength = unEntity(ste.content).length; // replace ENTITY strings with a generic character
 				if (isIn(requiredLengths, synopsisLength) || isIn(optionalLengths, synopsisLength)) {
 					switch (synopsisLength) {
 						case tva.SYNOPSIS_BRIEF_LABEL:
@@ -1072,13 +1050,13 @@ export default class ServiceListCheck {
 				let CASystemID_value = null;
 				if (SchemaVersion(props.namespace) <= SCHEMA_r1) {
 					// first two versions of the schema were 'incorrect' - has nested <CASystemId> elements.
-					let nestedCAsystemid = CASystemID.get(xPath(props.prefix, dvbi.e_CASystemId), props.schema);
+					const nestedCAsystemid = CASystemID.get(xPath(props.prefix, dvbi.e_CASystemId), props.schema);
 					if (nestedCAsystemid) {
 						CASystemID_value = nestedCAsystemid.content;
 					}
 				} else CASystemID_value = CASystemID.content;
 				if (CASystemID_value) {
-					let CASid_value = parseInt(CASystemID_value, 10);
+					const CASid_value = parseInt(CASystemID_value, 10);
 					if (isNaN(CASid_value)) {
 						CASid_value = parseInt(CASystemID_value, 16);
 					}
@@ -1108,7 +1086,7 @@ export default class ServiceListCheck {
 
 				if (SchemaVersion(props.namespace) <= SCHEMA_r1) {
 					// first two versions of the schema were 'incorrect' - has nested <DRMSystemId> elements.
-					let nestedDRMsystemid = DRMSystemID.get(xPath(props.prefix, dvbi.e_DRMSystemId), props.schema);
+					const nestedDRMsystemid = DRMSystemID.get(xPath(props.prefix, dvbi.e_DRMSystemId), props.schema);
 					if (nestedDRMsystemid) {
 						DRMSystemID_value = nestedDRMsystemid.content.toLowerCase();
 					}
@@ -1131,48 +1109,47 @@ export default class ServiceListCheck {
 			let cp = 0,
 				conf;
 			while ((conf = ContentAttributes.get(xPath(props.prefix, tva.e_AudioAttributes, ++cp), props.schema)) != null)
-				if (conf.childNodes())
-					conf.childNodes().forEachSubElement((child) => {
-						switch (child.name) {
-							case tva.e_Coding:
-								if (child.attrAnyNs(dvbi.a_href) && !this.#allowedAudioSchemes.isIn(child.attrAnyNs(dvbi.a_href).value))
+				conf.childNodes().forEachSubElement((child) => {
+					switch (child.name) {
+						case tva.e_Coding:
+							if (child.attrAnyNs(dvbi.a_href) && !this.#allowedAudioSchemes.isIn(child.attrAnyNs(dvbi.a_href).value))
+								errs.addError({
+									code: "SI052",
+									message: `invalid ${dvbi.a_href.attribute(child.name)} value for (${child.attrAnyNs(dvbi.a_href).value}) ${this.#allowedAudioSchemes.valuesRange()}`,
+									fragment: child,
+									key: "audio codec",
+									description: `The value specified for ${dvbi.a_href.attribute(child.name)} is constrained in DVB-I.`,
+									clause: "A177 Table 56",
+								});
+							break;
+						case tva.e_MixType:
+							// taken from MPEG-7 AudioPresentationCS
+							if (child.attrAnyNs(dvbi.a_href) && !this.#audioPresentations.isIn(child.attrAnyNs(dvbi.a_href).value))
+								errs.addError({
+									code: "SI055",
+									message: `invalid ${dvbi.a_href.attribute(child.name)} value for (${child.attrAnyNs(dvbi.a_href).value}) ${this.#audioPresentations.valuesRange()}`,
+									fragment: child,
+									key: "audio codec",
+								});
+							break;
+						case tva.e_AudioLanguage:
+							// check if the specificed audio language is included in the LanguageList for the Service List
+							if (declaredAudioLanguages.length != 0) {
+								const audioLanguage = child.content.toLowerCase();
+								const found = declaredAudioLanguages.find((el) => (el.language = audioLanguage));
+								if (found == undefined) {
 									errs.addError({
-										code: "SI052",
-										message: `invalid ${dvbi.a_href.attribute(child.name)} value for (${child.attrAnyNs(dvbi.a_href).value}) ${this.#allowedAudioSchemes.valuesRange()}`,
+										type: WARNING,
+										code: "SI053",
+										message: `audio language "${child.content} is not defined in ${dvbi.e_LanguageList.elementize()}`,
 										fragment: child,
-										key: "audio codec",
-										description: `The value specified for ${dvbi.a_href.attribute(child.name)} is constrained in DVB-I.`,
-										clause: "A177 Table 56",
+										key: "audio language",
 									});
-								break;
-							case tva.e_MixType:
-								// taken from MPEG-7 AudioPresentationCS
-								if (child.attrAnyNs(dvbi.a_href) && !this.#audioPresentations.isIn(child.attrAnyNs(dvbi.a_href).value))
-									errs.addError({
-										code: "SI055",
-										message: `invalid ${dvbi.a_href.attribute(child.name)} value for (${child.attrAnyNs(dvbi.a_href).value}) ${this.#audioPresentations.valuesRange()}`,
-										fragment: child,
-										key: "audio codec",
-									});
-								break;
-							case tva.e_AudioLanguage:
-								// check if the specificed audio language is included in the LanguageList for the Service List
-								if (declaredAudioLanguages.length != 0) {
-									let audioLanguage = child.content.toLowerCase();
-									let found = declaredAudioLanguages.find((el) => (el.language = audioLanguage));
-									if (found == undefined) {
-										errs.addError({
-											type: WARNING,
-											code: "SI053",
-											message: `audio language "${child.content} is not defined in ${dvbi.e_LanguageList.elementize()}`,
-											fragment: child,
-											key: "audio language",
-										});
-									} else found.used = true;
-								}
-								break;
-						}
-					});
+								} else found.used = true;
+							}
+							break;
+					}
+				});
 
 			// Check @href of ContentAttributes/AudioConformancePoints
 			cp = 0;
@@ -1190,38 +1167,37 @@ export default class ServiceListCheck {
 			// Check ContentAttributes/VideoAttributes - other subelements are checked with schema based validation
 			cp = 0;
 			while ((conf = ContentAttributes.get(xPath(props.prefix, tva.e_VideoAttributes, ++cp), props.schema)) != null)
-				if (conf.childNodes())
-					conf.childNodes().forEachSubElement((child) => {
-						switch (child.name) {
-							case tva.e_Coding:
-								if (child.attrAnyNs(dvbi.a_href) && !this.#allowedVideoSchemes.isIn(child.attrAnyNs(dvbi.a_href).value))
-									errs.addError({
-										code: "SI072",
-										message: `invalid ${dvbi.a_href.attribute(tva.e_Coding)} (${child.attrAnyNs(dvbi.a_href).value}) ${this.#allowedVideoSchemes.valuesRange()}`,
-										fragment: child,
-										key: "video codec",
-									});
-								break;
-							case tva.e_PictureFormat:
-								if (child.attrAnyNs(dvbi.a_href) && !this.#allowedPictureFormats.isIn(child.attrAnyNs(dvbi.a_href).value))
-									errs.addError({
-										code: "SI082",
-										message: `invalid ${dvbi.a_href.attribute(tva.e_PictureFormat)} value (${child.attrAnyNs(dvbi.a_href).value}) ${this.#allowedPictureFormats.valuesRange()}`,
-										fragment: child,
-										key: tva.e_PictureFormat,
-									});
-								break;
-							case dvbi.e_Colorimetry:
-								if (child.attrAnyNs(dvbi.a_href) && !this.#allowedColorimetry.isIn(child.attrAnyNs(dvbi.a_href).value))
-									errs.addError({
-										code: "SI084",
-										message: `invalid ${dvbi.a_href.attribute(dvbi.e_Colorimetry)} value (${child.attrAnyNs(dvbi.a_href).value}) ${this.#allowedColorimetry.valuesRange()}`,
-										fragment: child,
-										key: dvbi.e_Colorimetry,
-									});
-								break;
-						}
-					});
+				conf.childNodes().forEachSubElement((child) => {
+					switch (child.name) {
+						case tva.e_Coding:
+							if (child.attrAnyNs(dvbi.a_href) && !this.#allowedVideoSchemes.isIn(child.attrAnyNs(dvbi.a_href).value))
+								errs.addError({
+									code: "SI072",
+									message: `invalid ${dvbi.a_href.attribute(tva.e_Coding)} (${child.attrAnyNs(dvbi.a_href).value}) ${this.#allowedVideoSchemes.valuesRange()}`,
+									fragment: child,
+									key: "video codec",
+								});
+							break;
+						case tva.e_PictureFormat:
+							if (child.attrAnyNs(dvbi.a_href) && !this.#allowedPictureFormats.isIn(child.attrAnyNs(dvbi.a_href).value))
+								errs.addError({
+									code: "SI082",
+									message: `invalid ${dvbi.a_href.attribute(tva.e_PictureFormat)} value (${child.attrAnyNs(dvbi.a_href).value}) ${this.#allowedPictureFormats.valuesRange()}`,
+									fragment: child,
+									key: tva.e_PictureFormat,
+								});
+							break;
+						case dvbi.e_Colorimetry:
+							if (child.attrAnyNs(dvbi.a_href) && !this.#allowedColorimetry.isIn(child.attrAnyNs(dvbi.a_href).value))
+								errs.addError({
+									code: "SI084",
+									message: `invalid ${dvbi.a_href.attribute(dvbi.e_Colorimetry)} value (${child.attrAnyNs(dvbi.a_href).value}) ${this.#allowedColorimetry.valuesRange()}`,
+									fragment: child,
+									key: dvbi.e_Colorimetry,
+								});
+							break;
+					}
+				});
 
 			// HDR DMI terms are in the 2.3 series
 			let isHDRDMISystem = (CSterm) => CSterm.substring(CSterm.lastIndexOf(":") + 1).startsWith("2.3.");
@@ -1232,7 +1208,7 @@ export default class ServiceListCheck {
 				conf_points = [];
 			while ((conf = ContentAttributes.get(xPath(props.prefix, dvbi.e_VideoConformancePoint, ++cp), props.schema)) != null) {
 				if (conf.attrAnyNs(dvbi.a_href)) {
-					let conformanceVal = conf.attrAnyNs(dvbi.a_href).value;
+					const conformanceVal = conf.attrAnyNs(dvbi.a_href).value;
 					if (!this.#allowedVideoConformancePoints.isIn(conformanceVal))
 						errs.addError({
 							code: "SI091",
@@ -1484,9 +1460,9 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><DVBTDeliveryParameters>
-		let DVBTDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DVBTDeliveryParameters), props.schema);
+		const DVBTDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DVBTDeliveryParameters), props.schema);
 		if (DVBTDeliveryParameters) {
-			let DVBTtargetCountry = DVBTDeliveryParameters.get(xPath(props.prefix, dvbi.e_TargetCountry), props.schema);
+			const DVBTtargetCountry = DVBTDeliveryParameters.get(xPath(props.prefix, dvbi.e_TargetCountry), props.schema);
 			if (DVBTtargetCountry) {
 				if (!this.#knownCountries.isISO3166code(DVBTtargetCountry.content))
 					errs.addError({
@@ -1500,9 +1476,9 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><DVBCDeliveryParameters>
-		let DVBCDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DVBCDeliveryParameters), props.schema);
+		const DVBCDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DVBCDeliveryParameters), props.schema);
 		if (DVBCDeliveryParameters) {
-			let DVBCtargetCountry = DVBCDeliveryParameters.get(xPath(props.prefix, dvbi.e_TargetCountry), props.schema);
+			const DVBCtargetCountry = DVBCDeliveryParameters.get(xPath(props.prefix, dvbi.e_TargetCountry), props.schema);
 			if (DVBCtargetCountry) {
 				if (!this.#knownCountries.isISO3166code(DVBCtargetCountry.content))
 					errs.addError({
@@ -1519,7 +1495,7 @@ export default class ServiceListCheck {
 					NetworkID,
 					knownIDs = [];
 				while ((NetworkID = DVBCDeliveryParameters.get(xPath(props.prefix, dvbi.e_NetworkID, ++n), props.schema)) != null) {
-					let nid = NetworkID.value;
+					const nid = NetworkID.value;
 					if (isIn(knownIDs, nid)) {
 						errs.addError({
 							code: "SI193",
@@ -1534,13 +1510,13 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><DVBSDeliveryParameters>
-		let DVBSDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DVBSDeliveryParameters), props.schema);
+		const DVBSDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_DVBSDeliveryParameters), props.schema);
 		if (DVBSDeliveryParameters) {
 			const ERROR_KEY = "satellite tuning";
-			let ModulationSystem = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_ModulationSystem), props.schema);
-			let RollOff = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_RollOff), props.schema);
-			let ModulationType = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_ModulationType), props.schema);
-			let FEC = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_FEC), props.schema);
+			const ModulationSystem = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_ModulationSystem), props.schema);
+			const RollOff = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_RollOff), props.schema);
+			const ModulationType = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_ModulationType), props.schema);
+			const FEC = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_FEC), props.schema);
 
 			if (ModulationSystem) {
 				let checkElement = (element, elementName, allowed, modulation, errCode) => {
@@ -1585,7 +1561,7 @@ export default class ServiceListCheck {
 						checkElement(FEC, dvbi.e_FEC, sats.S2X_FEC, sats.MODULATION_S2X, "SI203c");
 						// <ModcodMode> is value checked in schema verification
 						// <InputStreamIdentifier> is ranfe checked in schema verification
-						let ChannelBonding = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_ChannelBonding), props.schema);
+						const ChannelBonding = DVBSDeliveryParameters.get(xPath(props.prefix, dvbi.e_ChannelBonding), props.schema);
 						if (ChannelBonding) {
 							let fq = 0,
 								Frequency,
@@ -1622,9 +1598,9 @@ export default class ServiceListCheck {
 		// checked by schema validation
 
 		// <ServiceInstance><RTSPDeliveryParameters>
-		let RTSPDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_RTSPDeliveryParameters), props.schema);
+		const RTSPDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_RTSPDeliveryParameters), props.schema);
 		if (RTSPDeliveryParameters) {
-			let RTSPURL = RTSPDeliveryParameters.get(xPath(props.prefix, dvbi.e_RTSPURL), props.schema);
+			const RTSPURL = RTSPDeliveryParameters.get(xPath(props.prefix, dvbi.e_RTSPURL), props.schema);
 			if (RTSPURL && !isRTSPURL(RTSPURL.content))
 				errs.addError({
 					code: "SI223",
@@ -1635,16 +1611,14 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><MulticastTSDeliveryParameters>
-		let MulticastTSDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_MulticastTSDeliveryParameters), props.schema);
-		if (MulticastTSDeliveryParameters) {
+		const MulticastTSDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_MulticastTSDeliveryParameters), props.schema);
+		if (MulticastTSDeliveryParameters) 
 			checkMulticastDeliveryParams(MulticastTSDeliveryParameters, errs, "SI235");
-		}
 
 		// <ServiceInstance><OtherDeliveryParameters>
-		let OtherDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_OtherDeliveryParameters), props.schema);
-		if (OtherDeliveryParameters) {
+		const OtherDeliveryParameters = ServiceInstance.get(xPath(props.prefix, dvbi.e_OtherDeliveryParameters), props.schema);
+		if (OtherDeliveryParameters)
 			this.#CheckExtension(OtherDeliveryParameters, EXTENSION_LOCATION_OTHER_DELIVERY, errs, "SI237");
-		}
 	}
 
 	/*private*/ #CheckExtension(extn, extLoc, errs, errCode) {
@@ -1725,7 +1699,7 @@ export default class ServiceListCheck {
 		errs
 	) {
 		// check <UniqueIdentifier>
-		let uID = service.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
+		const uID = service.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
 		if (uID) {
 			thisServiceId = uID.content;
 			if (!validServiceIdentifier(thisServiceId))
@@ -1757,7 +1731,7 @@ export default class ServiceListCheck {
 			TargetRegion,
 			rBuf = [];
 		while ((TargetRegion = service.get(xPath(props.prefix, dvbi.e_TargetRegion, ++tr), props.schema)) != null) {
-			let found = knownRegionIDs.find((r) => r.region == TargetRegion.content);
+			const found = knownRegionIDs.find((r) => r.region == TargetRegion.content);
 			if (found == undefined) 
 				errs.addError(UnspecifiedTargetRegion(TargetRegion.content, `service ${thisServiceId.quote()}`, "SL130", TargetRegion));
 			else found.used = true;
@@ -1808,7 +1782,7 @@ export default class ServiceListCheck {
 				});
 		}
 		//check <ServiceType>
-		let ServiceType = service.get(xPath(props.prefix, dvbi.e_ServiceType), props.schema);
+		const ServiceType = service.get(xPath(props.prefix, dvbi.e_ServiceType), props.schema);
 		if (ServiceType && ServiceType.attrAnyNs(dvbi.a_href) && !this.#allowedServiceTypes.isIn(ServiceType.attrAnyNs(dvbi.a_href).value))
 			errs.addError({
 				code: "SL164",
@@ -1830,7 +1804,7 @@ export default class ServiceListCheck {
 		);
 
 		// check <RecordingInfo>
-		let RecordingInfo = service.get(xPath(props.prefix, dvbi.e_RecordingInfo), props.schema);
+		const RecordingInfo = service.get(xPath(props.prefix, dvbi.e_RecordingInfo), props.schema);
 		if (RecordingInfo && RecordingInfo.attrAnyNs(dvbi.a_href) && !this.#RecordingInfoCSvalues.isIn(RecordingInfo.attrAnyNs(dvbi.a_href).value))
 			errs.addError({
 				code: "SL180",
@@ -1842,11 +1816,11 @@ export default class ServiceListCheck {
 			});
 
 		// check <ContentGuideSource>
-		let sCG = service.get(xPath(props.prefix, dvbi.e_ContentGuideSource), props.schema);
+		const sCG = service.get(xPath(props.prefix, dvbi.e_ContentGuideSource), props.schema);
 		if (sCG) this.#validateAContentGuideSource(props, sCG, errs, `${dvbi.e_ContentGuideSource.elementize()} in service ${thisServiceId}`, "SL190");
 
 		//check <ContentGuideSourceRef>
-		let sCGref = service.get(xPath(props.prefix, dvbi.e_ContentGuideSourceRef), props.schema);
+		const sCGref = service.get(xPath(props.prefix, dvbi.e_ContentGuideSourceRef), props.schema);
 		if (sCGref && !isIn(ContentGuideSourceIDs, sCGref.content))
 			errs.addError({
 				code: "SL200",
@@ -1862,7 +1836,7 @@ export default class ServiceListCheck {
 			this.#CheckExtension(AdditionalParams, EXTENSION_LOCATION_SERVICE_ELEMENT, errs, "SL211");
 
 		// check <NVOD>
-		let NVOD = service.get(xPath(props.prefix, dvbi.e_NVOD), props.schema);
+		const NVOD = service.get(xPath(props.prefix, dvbi.e_NVOD), props.schema);
 		if (NVOD) {
 			if (NVOD.attrAnyNs(dvbi.a_mode) && NVOD.attrAnyNs(dvbi.a_mode).value == dvbi.NVOD_MODE_REFERENCE) {
 				if (NVOD.attrAnyNs(dvbi.a_reference))
@@ -1883,7 +1857,7 @@ export default class ServiceListCheck {
 			if (NVOD.attrAnyNs(dvbi.a_mode) && NVOD.attrAnyNs(dvbi.a_mode).value == dvbi.NVOD_MODE_TIMESHIFTED) {
 				checkAttributes(NVOD, [dvbi.a_mode, dvbi.a_reference], [dvbi.a_offset], dvbiEA.NVOD, errs, "SL223");
 
-				let ServiceList = service.parent;
+				const ServiceList = service.parent;
 
 				if (NVOD.attrAnyNs(dvbi.a_reference)) {
 					// check to see if there is a service whose <UniqueIdentifier> equals NVOD@reference and has a NVOD@mode==reference
@@ -1892,7 +1866,7 @@ export default class ServiceListCheck {
 						referredService = null;
 
 					while ((service2 = ServiceList.get(xPath(props.prefix, dvbi.e_Service, ++s2), props.schema)) != null && !referredService) {
-						let ui = service2.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
+						const ui = service2.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
 						if (ui && ui.content == NVOD.attrAnyNs(dvbi.a_reference).value) referredService = service2;
 					}
 					if (!referredService)
@@ -1903,7 +1877,7 @@ export default class ServiceListCheck {
 							key: "NVOD timeshift",
 						});
 					else {
-						let refNVOD = referredService.get(xPath(props.prefix, dvbi.e_NVOD), props.schema);
+						const refNVOD = referredService.get(xPath(props.prefix, dvbi.e_NVOD), props.schema);
 						if (!refNVOD)
 							errs.addError({
 								code: "SL225",
@@ -1923,7 +1897,7 @@ export default class ServiceListCheck {
 					}
 				}
 			}
-			let svcType = service.get(xPath(props.prefix, dvbi.e_ServiceType), props.schema);
+			const svcType = service.get(xPath(props.prefix, dvbi.e_ServiceType), props.schema);
 			if (svcType && svcType.attrAnyNs(dvbi.a_href) && !svcType.attrAnyNs(dvbi.a_href).value.endsWith("linear"))
 				// this is a biut of a hack, but sufficient to determine linear service type
 				errs.addError({
@@ -1935,7 +1909,7 @@ export default class ServiceListCheck {
 		}
 
 		// check <Prominence>
-		let ProminenceList = service.get(xPath(props.prefix, dvbi.e_ProminenceList), props.schema);
+		const ProminenceList = service.get(xPath(props.prefix, dvbi.e_ProminenceList), props.schema);
 		if (ProminenceList) {
 			let p = 0,
 				PE,
@@ -1943,8 +1917,8 @@ export default class ServiceListCheck {
 			while ((PE = ProminenceList.get(xPath(props.prefix, dvbi.e_Prominence, ++p), props.schema)) != null) {
 				// if @region is used, it must be in the RegionList
 				if (PE.attrAnyNs(dvbi.a_region)) {
-					let prominenceRegion = PE.attrAnyNs(dvbi.a_region).value;
-					let found = knownRegionIDs.find((r) => r.region == prominenceRegion);
+					const prominenceRegion = PE.attrAnyNs(dvbi.a_region).value;
+					const found = knownRegionIDs.find((r) => r.region == prominenceRegion);
 					if (found === undefined)
 						errs.addError({
 							code: "SL229",
@@ -1956,9 +1930,9 @@ export default class ServiceListCheck {
 				}
 				// if @country and @region are used, they must be per the region list
 				if (PE.attrAnyNs(dvbi.a_country) && PE.attrAnyNs(dvbi.a_region)) {
-					let prominenceRegion = PE.attrAnyNs(dvbi.a_region).value;
-					let prominenceCountry = PE.attrAnyNs(dvbi.a_country).value;
-					let found = knownRegionIDs.find((r) => r.region == prominenceRegion);
+					const prominenceRegion = PE.attrAnyNs(dvbi.a_region).value;
+					const prominenceCountry = PE.attrAnyNs(dvbi.a_country).value;
+					const found = knownRegionIDs.find((r) => r.region == prominenceRegion);
 					if (found !== undefined && Object.prototype.hasOwnProperty.call(found, "countries")) {
 						if (found.countries.length) {
 							if (found.countries.find((c) => c == prominenceCountry) === undefined)
@@ -1982,12 +1956,12 @@ export default class ServiceListCheck {
 					});
 				}
 				// for exact match
-				let hash1 = `c:${PE.attrAnyNs(dvbi.a_country) ? PE.attrAnyNs(dvbi.a_country).value : "**"} re:${PE.attrAnyNs(dvbi.a_region) ? PE.attrAnyNs(dvbi.a_region).value : "**"}  ra:${
+				const hash1 = `c:${PE.attrAnyNs(dvbi.a_country) ? PE.attrAnyNs(dvbi.a_country).value : "**"} re:${PE.attrAnyNs(dvbi.a_region) ? PE.attrAnyNs(dvbi.a_region).value : "**"}  ra:${
 					PE.attrAnyNs(dvbi.a_ranking) ? PE.attrAnyNs(dvbi.a_ranking).value : "**"
 				}`;
 				if (!isIn(known, hash1)) known.push(hash1);
 				else {
-					let country = `${PE.attrAnyNs(dvbi.a_country) ? `country:${PE.attrAnyNs(dvbi.a_country).value}` : ""}`,
+					const country = `${PE.attrAnyNs(dvbi.a_country) ? `country:${PE.attrAnyNs(dvbi.a_country).value}` : ""}`,
 						region = `${PE.attrAnyNs(dvbi.a_region) ? `region:${PE.attrAnyNs(dvbi.a_region).value}` : ""}`,
 						ranking = `${PE.attrAnyNs(dvbi.a_ranking) ? `ranking:${PE.attrAnyNs(dvbi.a_ranking).value}` : ""}`;
 					errs.addError({
@@ -1999,10 +1973,10 @@ export default class ServiceListCheck {
 				}
 				// for multiple @ranking in same country/region pair
 				if (PE.attrAnyNs(dvbi.a_ranking)) {
-					let hash2 = `c:${PE.attrAnyNs(dvbi.a_country) ? PE.attrAnyNs(dvbi.a_country).value : "**"} re:${PE.attrAnyNs(dvbi.a_region) ? PE.attrAnyNs(dvbi.a_region).value : "**"}`;
+					const hash2 = `c:${PE.attrAnyNs(dvbi.a_country) ? PE.attrAnyNs(dvbi.a_country).value : "**"} re:${PE.attrAnyNs(dvbi.a_region) ? PE.attrAnyNs(dvbi.a_region).value : "**"}`;
 					if (!isIn(known, hash2)) known.push(hash2);
 					else {
-						let country = `${PE.attrAnyNs(dvbi.a_country) ? `country:${PE.attrAnyNs(dvbi.a_country).value}` : ""}`,
+						const country = `${PE.attrAnyNs(dvbi.a_country) ? `country:${PE.attrAnyNs(dvbi.a_country).value}` : ""}`,
 							region = `${PE.attrAnyNs(dvbi.a_region) ? `region:${PE.attrAnyNs(dvbi.a_region).value}` : ""}`;
 						errs.addError({
 							code: "SL246",
@@ -2016,7 +1990,7 @@ export default class ServiceListCheck {
 		}
 
 		// check <ParentalRating>
-		let ParentalRating = service.get(xPath(props.prefix, "ParentalRating"), props.schema);
+		const ParentalRating = service.get(xPath(props.prefix, "ParentalRating"), props.schema);
 		if (ParentalRating) {
 			let ma = 0,
 				MinimumAge,
@@ -2024,25 +1998,23 @@ export default class ServiceListCheck {
 				noCountrySpecified = false;
 			while ((MinimumAge = ParentalRating.get(xPath(props.prefix, dvbi.e_MinimumAge, ++ma), props.schema)) != null) {
 				if (MinimumAge.attrAnyNs(dvbi.a_countryCodes)) {
-					let countriesSpecified = MinimumAge.attrAnyNs(dvbi.a_countryCodes).value.split(",");
-					if (countriesSpecified)
-						countriesSpecified.forEach((country) => {
-							if (!this.#knownCountries.isISO3166code(country))
-								errs.addError({
-									code: "SL251",
-									message: `invalid country code (${country}) specified`,
-									key: keys.k_InvalidCountryCode,
-									fragment: MinimumAge,
-								});
-							if (isIn(foundCountries, country))
-								errs.addError({
-									code: "SL252",
-									message: `duplicate country code (${country}) specified`,
-									key: "duplicate country",
-									fragment: MinimumAge,
-								});
-							else foundCountries.push(country);
-						});
+					MinimumAge.attrAnyNs(dvbi.a_countryCodes).value.split(",").forEach((country) => {
+						if (!this.#knownCountries.isISO3166code(country))
+							errs.addError({
+								code: "SL251",
+								message: `invalid country code (${country}) specified`,
+								key: keys.k_InvalidCountryCode,
+								fragment: MinimumAge,
+							});
+						if (isIn(foundCountries, country))
+							errs.addError({
+								code: "SL252",
+								message: `duplicate country code (${country}) specified`,
+								key: "duplicate country",
+								fragment: MinimumAge,
+							});
+						else foundCountries.push(country);
+					});
 				} else {
 					if (noCountrySpecified)
 						errs.addError({
@@ -2058,7 +2030,7 @@ export default class ServiceListCheck {
 	}
 
 	/*private*/ #doSchemaVerification(ServiceList, props, errs, errCode, report_schema_version = true) {
-		let x = GetSchema(props.namespace);
+		const x = GetSchema(props.namespace);
 		if (x && x.schema) {
 			SchemaCheck(ServiceList, x.schema, errs, `${errCode}:${SchemaVersion(props.namespace)}`);
 			if (report_schema_version)
@@ -2091,7 +2063,7 @@ export default class ServiceListCheck {
 		if (!Object.prototype.hasOwnProperty.call(options, "log_prefix")) options.log_prefix = null;
 		if (!Object.prototype.hasOwnProperty.call(options, "report_schema_version")) options.report_schema_version = true;
 
-		let SL = SchemaLoad(SLtext, errs, "SL001");
+		const SL = SchemaLoad(SLtext, errs, "SL001");
 		if (!SL) return;
 		writeOut(errs, options.log_prefix, false);
 
@@ -2119,7 +2091,7 @@ export default class ServiceListCheck {
 			return;
 		}
 
-		let props = MakeDocumentProperties(SL.root);
+		const props = MakeDocumentProperties(SL.root);
 
 		if (!this.#doSchemaVerification(SL, props, errs, "SL005", options.report_schema_version)) {
 			errs.addError({
@@ -2129,7 +2101,7 @@ export default class ServiceListCheck {
 			});
 			return;
 		}
-		let ServiceList = SL.root;
+		const ServiceList = SL.root;
 		let slRequiredAttributes = [dvbi.a_version];
 		if (SchemaVersion(props.namespace) >= SCHEMA_r3) slRequiredAttributes.push(tva.a_lang);
 		if (SchemaVersion(props.namespace) >= SCHEMA_r6) slRequiredAttributes.push(dvbi.a_id);
@@ -2148,7 +2120,7 @@ export default class ServiceListCheck {
 
 		// check ServiceList@id
 		if (ServiceList.attrAnyNs(dvbi.a_id)) {
-			let thisServiceListId = ServiceList.attrAnyNs(dvbi.a_id).value;
+			const thisServiceListId = ServiceList.attrAnyNs(dvbi.a_id).value;
 			if (!validServiceListIdentifier(thisServiceListId))
 				errs.addError({
 					code: "SL016",
@@ -2160,7 +2132,8 @@ export default class ServiceListCheck {
 		}
 
 		//check <ServiceList><StandardVersion>
-		let sv = 0, StandardVersion;
+		let sv = 0, 
+			StandardVersion;
 		while ((StandardVersion = ServiceList.get(xPath(props.prefix, dvbi.e_StandardVersion, ++sv), props.schema)) != null) {
 			if (!isA177specification_URN(StandardVersion.content)) 
 				errs.addError({
@@ -2181,14 +2154,14 @@ export default class ServiceListCheck {
 
 		//check <ServiceList><LanguageList>
 		let announcedAudioLanguages = [];
-		let LanguageList = ServiceList.get(xPath(props.prefix, dvbi.e_LanguageList), props.schema);
+		const LanguageList = ServiceList.get(xPath(props.prefix, dvbi.e_LanguageList), props.schema);
 		if (LanguageList) {
 			let l = 0,
 				Language;
 			while ((Language = LanguageList.get(xPath(props.prefix, tva.e_Language, ++l), props.schema)) != null) {
 				checkLanguage(Language.content, `language in ${tva.e_Language.elementize()}`, Language, errs, "SL030");
 				checkAttributes(Language, [], [], tvaEA.AudioLanguage, errs, "SL031");
-				let lang_lower = Language.content.toLowerCase();
+				const lang_lower = Language.content.toLowerCase();
 				if (isIn(announcedAudioLanguages, lang_lower))
 					errs.addError({
 						code: "SL032",
@@ -2205,7 +2178,7 @@ export default class ServiceListCheck {
 			countControlApps = 0,
 			RelatedMaterial;
 		while ((RelatedMaterial = ServiceList.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
-			let foundHref = this.#validateRelatedMaterial(props, RelatedMaterial, errs, "service list", SERVICE_LIST_RM, "SL040");
+			const foundHref = this.#validateRelatedMaterial(props, RelatedMaterial, errs, "service list", SERVICE_LIST_RM, "SL040");
 			if (foundHref != "" && validServiceControlApplication(foundHref, SchemaVersion(props.namespace))) countControlApps++;
 		}
 
@@ -2231,7 +2204,7 @@ export default class ServiceListCheck {
 			TargetRegion,
 			rBuf = [];
 		while ((TargetRegion = ServiceList.get(xPath(props.prefix, dvbi.e_TargetRegion, ++tr), props.schema)) != null) {
-			let found = knownRegionIDs.find((r) => r.region == TargetRegion.content);
+			const found = knownRegionIDs.find((r) => r.region == TargetRegion.content);
 			if (found == undefined) 
 				errs.addError(UnspecifiedTargetRegion(TargetRegion.content, "service list", "SL051", TargetRegion));
 			else if (!found.selectable)
@@ -2255,12 +2228,12 @@ export default class ServiceListCheck {
 
 		// check <ServiceList><SubscriptionPackageList>
 		let declaredSubscriptionPackages = [];
-		let SubscriptionPackageList = ServiceList.get(xPath(props.prefix, dvbi.e_SubscriptionPackageList), props.schema);
+		const SubscriptionPackageList = ServiceList.get(xPath(props.prefix, dvbi.e_SubscriptionPackageList), props.schema);
 		if (SubscriptionPackageList) {
 			let sp = 0,
 				SubscriptionPackage;
 			while ((SubscriptionPackage = SubscriptionPackageList.get(xPath(props.prefix, dvbi.e_SubscriptionPackage, ++sp), props.schema)) != null) {
-				let pkg = localizedSubscriptionPackage(SubscriptionPackage);
+				const pkg = localizedSubscriptionPackage(SubscriptionPackage);
 
 				if (declaredSubscriptionPackages.includes(pkg))
 					errs.addError({
@@ -2276,8 +2249,8 @@ export default class ServiceListCheck {
 		// <ServiceList><LCNTableList> is checked below, after the services are enumerated
 
 		//check service list <ContentGuideSourceList>
-		let ContentGuideSourceIDs = [],
-			CGSourceList = ServiceList.get(xPath(props.prefix, dvbi.e_ContentGuideSourceList), props.schema);
+		let ContentGuideSourceIDs = [];
+		const CGSourceList = ServiceList.get(xPath(props.prefix, dvbi.e_ContentGuideSourceList), props.schema);
 		if (CGSourceList) {
 			let cgs = 0,
 				CGSource;
@@ -2298,7 +2271,7 @@ export default class ServiceListCheck {
 		}
 
 		// check  elements in <ServiceList><ContentGuideSource>
-		let slGCS = ServiceList.get(xPath(props.prefix, dvbi.e_ContentGuideSource), props.schema);
+		const slGCS = ServiceList.get(xPath(props.prefix, dvbi.e_ContentGuideSource), props.schema);
 		if (slGCS) this.#validateAContentGuideSource(props, slGCS, errs, `${dvbi.e_ServiceList}.${dvbi.e_ContentGuideSource}`, "SL080");
 
 		errs.setW("num services", 0);
@@ -2350,9 +2323,9 @@ export default class ServiceListCheck {
 		// issues a warning if this is a reference to self
 		s = 0;
 		while ((service = ServiceList.get(xPath(props.prefix, dvbi.e_Service, ++s), props.schema)) != null) {
-			let CGSR = service.get(xPath(props.prefix, dvbi.e_ContentGuideServiceRef), props.schema);
+			const CGSR = service.get(xPath(props.prefix, dvbi.e_ContentGuideServiceRef), props.schema);
 			if (CGSR) {
-				let uniqueID = service.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
+				const uniqueID = service.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
 				if (uniqueID && CGSR.content == uniqueID.content)
 					errs.addError({
 						type: WARNING,
@@ -2370,9 +2343,9 @@ export default class ServiceListCheck {
 			let ts = 0,
 				testService;
 			while ((testService = ServiceList.get(xPath(props.prefix, dvbi.e_TestService, ++ts), props.schema)) != null) {
-				let CGSR = testService.get(xPath(props.prefix, dvbi.e_ContentGuideServiceRef), props.schema);
+				const CGSR = testService.get(xPath(props.prefix, dvbi.e_ContentGuideServiceRef), props.schema);
 				if (CGSR) {
-					let uniqueID = testService.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
+					const uniqueID = testService.get(xPath(props.prefix, dvbi.e_UniqueIdentifier), props.schema);
 					if (uniqueID && CGSR.content == uniqueID.content)
 						errs.addError({
 							type: WARNING,
@@ -2385,7 +2358,7 @@ export default class ServiceListCheck {
 			}
 		}
 		// check <ServiceList><LCNTableList>
-		let LCNtableList = ServiceList.get(xPath(props.prefix, dvbi.e_LCNTableList), props.schema);
+		const LCNtableList = ServiceList.get(xPath(props.prefix, dvbi.e_LCNTableList), props.schema);
 		if (LCNtableList) {
 			let l = 0,
 				LCNTable,
@@ -2396,8 +2369,8 @@ export default class ServiceListCheck {
 					TargetRegion,
 					TargetRegions = [];
 				while ((TargetRegion = LCNTable.get(xPath(props.prefix, dvbi.e_TargetRegion, ++tr), props.schema)) != null) {
-					let targetRegionName = TargetRegion.content;
-					let foundRegion = knownRegionIDs.find((r) => r.region == targetRegionName);
+					const targetRegionName = TargetRegion.content;
+					const foundRegion = knownRegionIDs.find((r) => r.region == targetRegionName);
 					if (foundRegion == undefined)
 						errs.addError({
 							code: "SL241",
@@ -2442,7 +2415,7 @@ export default class ServiceListCheck {
 						packageLanguage = GetNodeLanguage(SubscriptionPackage, false, errs, "SL266");
 					}
 
-					let localSubscriptionPackage = localizedSubscriptionPackage(SubscriptionPackage, packageLanguage);
+					const localSubscriptionPackage = localizedSubscriptionPackage(SubscriptionPackage, packageLanguage);
 					if (DuplicatedValue(SubscriptionPackages, localSubscriptionPackage))
 						errs.addError({
 							code: "SL267",
@@ -2465,9 +2438,9 @@ export default class ServiceListCheck {
 				if (SubscriptionPackages == 0) SubscriptionPackages.push(LCN_TABLE_NO_SUBSCRIPTION);
 
 				TargetRegions.forEach((region) => {
-					let displayRegion = region == LCN_TABLE_NO_TARGETREGION ? `unspecified ${dvbi.e_TargetRegion.elementize()}` : `${dvbi.e_TargetRegion.elementize()}="${region}"`;
+					const displayRegion = region == LCN_TABLE_NO_TARGETREGION ? `unspecified ${dvbi.e_TargetRegion.elementize()}` : `${dvbi.e_TargetRegion.elementize()}="${region}"`;
 					SubscriptionPackages.forEach((sPackage) => {
-						let key = `${region}::${sPackage}`,
+						const key = `${region}::${sPackage}`,
 							displayPackage =
 								sPackage == LCN_TABLE_NO_SUBSCRIPTION ? `unspecified ${dvbi.e_SubscriptionPackage.elementize()}` : `${dvbi.e_SubscriptionPackage.elementize()}="${sPackage}"`;
 						if (DuplicatedValue(tableQualifiers, key))
@@ -2487,7 +2460,7 @@ export default class ServiceListCheck {
 				while ((LCN = LCNTable.get(xPath(props.prefix, dvbi.e_LCN, ++e), props.schema)) != null) {
 					// LCN@channelNumber
 					if (LCN.attrAnyNs(dvbi.a_channelNumber)) {
-						let chanNum = LCN.attrAnyNs(dvbi.a_channelNumber).value;
+						const chanNum = LCN.attrAnyNs(dvbi.a_channelNumber).value;
 
 						if (isIn(LCNNumbers, chanNum))
 							errs.addError({
@@ -2497,7 +2470,7 @@ export default class ServiceListCheck {
 								fragment: LCN,
 							});
 						else LCNNumbers.push(chanNum);
-						let chanNumV = parseInt(chanNum, 10);
+						const chanNumV = parseInt(chanNum, 10);
 						if (chanNumV < 1 || chanNumV > 9999) {
 							errs.addError({
 								code: "SL264",

@@ -67,7 +67,7 @@ export default class ISOcountries {
 				}.bind(this)
 			);
 		else {
-			let langs = readFileSync(countriesFile, { encoding: "utf-8" }).toString();
+			const langs = readFileSync(countriesFile, { encoding: "utf-8" }).toString();
 			this.#countriesList = loadCountryData(langs);
 		}
 	}
@@ -79,7 +79,7 @@ export default class ISOcountries {
 	 * @param {boolean} purge         erase the existing values before loading new
 	 */
 	#loadCountriesFromURL(countriesURL, purge = false, async = true) {
-		let isHTTPurl = isHTTPURL(countriesURL);
+		const isHTTPurl = isHTTPURL(countriesURL);
 		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving countries from ${countriesURL} using fetch()`));
 		if (!isHTTPurl) return;
 
