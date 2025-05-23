@@ -76,9 +76,9 @@ function tabulateResults(source, res, error, errs) {
 
 		if (errs.numCountsErr() > 0 || errs.numCountsWarn() > 0 || errs.numCountsInfo() > 0) {
 			res.write(SUMMARY_FORM_HEADER);
-			Object.keys(errs.countsErr).forEach((e) => res.write(`<tr><td>${HTMLize(e.key)}</td><td>${e.count}</td></tr>`));
-			Object.keys(errs.countsWarn).forEach((w) => res.write(`<tr><td><i>W: ${HTMLize(w.key)}</i></td><td>${w.count}</td></tr>`));
-			Object.keys(errs.countsInfo).forEach((i) => res.write(`<tr><td><i>I: ${HTMLize(i.key)}</i></td><td>${i.count}</td></tr>`));
+			errs.countsErr.forEach((e) => res.write(`<tr><td>${HTMLize(e.key)}</td><td>${e.count}</td></tr>`));
+			errs.countsWarn.forEach((w) => res.write(`<tr><td><i>W: ${HTMLize(w.key)}</i></td><td>${w.count}</td></tr>`));
+			errs.countsInfo.forEach((i) => res.write(`<tr><td><i>I: ${HTMLize(i.key)}</i></td><td>${i.count}</td></tr>`));
 			resultsShown = true;
 			res.write(TABLE_FOOTER);
 		}
