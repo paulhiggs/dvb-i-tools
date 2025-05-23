@@ -716,28 +716,9 @@ export default class ServiceListCheck {
 		checkXMLLangs(dvbi.e_ProviderName, loc, source, errs, `${errCode}-2`);
 
 		let rm = 0,
-			foundStandardImage = false,
-			haveRelatedMaterial = false,
 			RelatedMaterial;
-		while ((RelatedMaterial = source.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
-			haveRelatedMaterial = true;
-			let href = this.#validateRelatedMaterial(props, RelatedMaterial, errs, loc, CONTENT_GUIDE_RM, `${errCode}-3`);
-			if (href) {
-				// its a valid Content Guide Source logo so find at least one JPEG or PNG 
-				let ml=0, MediaLocator;
-				while (!foundStandardImage && (MediaLocator = RelatedMaterial.get(xPath(props.tva_prefix, tva.e_MediaLocator, ++ml), props.schema)) != null) {
-					let MediaUri = MediaLocator.get(xPath(props.tva_prefix, tva.e_MediaUri), props.schema);
-					if (MediaUri) {
-						let _imageType = MediaUri.attrAnyNs(tva.a_contentType);
-						if (_imageType && isRequiredImageMime(_imageType.value))
-							foundStandardImage = true;
-					}
-				}
-			}
-		}
-
-		if (haveRelatedMaterial && !foundStandardImage) 
-			errs.addError(missingRequiredImageType(`${errCode}-6`, "content guide source", "5.2.6.3", source.line));
+		while ((RelatedMaterial = source.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null)
+			this.#validateRelatedMaterial(props, RelatedMaterial, errs, loc, CONTENT_GUIDE_RM, `${errCode}-3`);
 
 		// ContentGuideSourceType::ScheduleInfoEndpoint - should be a URL
 		CheckEndpoint(dvbi.e_ScheduleInfoEndpoint, 14);
@@ -1799,28 +1780,9 @@ export default class ServiceListCheck {
 
 		//check <RelatedMaterial>
 		let rm = 0,
-			haveRelatedMaterial = false,
-			foundStandardImage = false,
 			RelatedMaterial;
-		while ((RelatedMaterial = service.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
-			haveRelatedMaterial = true;
-			let href = this.#validateRelatedMaterial(props, RelatedMaterial, errs, `service ${thisServiceId.quote()}`, SERVICE_RM, "SL150");
-			if (href) {
-				// its a valid Service logo so find at least one JPEG or PNG 
-				let ml=0, MediaLocator;
-				while (!foundStandardImage && (MediaLocator = RelatedMaterial.get(xPath(props.prefix, tva.e_MediaLocator, ++ml), props.schema)) != null) {
-					let MediaUri = MediaLocator.get(xPath(props.prefix, tva.e_MediaUri), props.schema);
-					if (MediaUri) {
-						let _imageType = MediaUri.attrAnyNs(tva.a_contentType);
-						if (_imageType && isRequiredImageMime(_imageType.value))
-							foundStandardImage = true;
-					}
-				}
-			}
-		}
-
-		if (haveRelatedMaterial && !foundStandardImage)
-			errs.addError(missingRequiredImageType("SL151", "service", "5.2.6.2"));
+		while ((RelatedMaterial = service.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) 
+			this.#validateRelatedMaterial(props, RelatedMaterial, errs, `service ${thisServiceId.quote()}`, SERVICE_RM, "SL150");
 
 		//check <ServiceGenre>
 		let sg = 0,
@@ -2241,30 +2203,11 @@ export default class ServiceListCheck {
 		//check <ServiceList><RelatedMaterial>
 		let rm = 0,
 			countControlApps = 0,
-			haveRelatedMaterial = false,
-			foundStandardImage = false,
 			RelatedMaterial;
 		while ((RelatedMaterial = ServiceList.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
-			haveRelatedMaterial = true;
 			let foundHref = this.#validateRelatedMaterial(props, RelatedMaterial, errs, "service list", SERVICE_LIST_RM, "SL040");
 			if (foundHref != "" && validServiceControlApplication(foundHref, SchemaVersion(props.namespace))) countControlApps++;
-
-			if (foundHref) {
-				// its a valid Service List logo so find at least one JPEG or PNG 
-				let ml=0, MediaLocator;
-				while (!foundStandardImage && (MediaLocator = RelatedMaterial.get(xPath(props.prefix, tva.e_MediaLocator, ++ml), props.schema)) != null) {
-					let MediaUri = MediaLocator.get(xPath(props.prefix, tva.e_MediaUri), props.schema);
-					if (MediaUri) {
-						let _imageType = MediaUri.attrAnyNs(tva.a_contentType);
-						if (_imageType && isRequiredImageMime(_imageType.value))
-							foundStandardImage = true;
-					}
-				}
-			}
 		}
-
-		if (haveRelatedMaterial && !foundStandardImage)
-			errs.addError(missingRequiredImageType("SL041", "service list", "5.2.6.1"))
 
 		if (countControlApps > 1)
 			errs.addError({

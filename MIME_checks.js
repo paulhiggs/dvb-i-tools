@@ -52,7 +52,7 @@ export function validImageSet(MIMEs) {
 	let uniqueMIMEs = [...new Set(MIMEs)];
 
 	uniqueMIMEs.forEach((MIME) => {
-		if (REQUIRED_MIMES.includes[MIME]) hasRequired = true;
+		if (REQUIRED_MIMES.includes(MIME)) hasRequired = true;
 		else hasOther = true;
 	});
 

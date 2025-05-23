@@ -213,6 +213,12 @@ export function checkValidLogos(RelatedMaterial, errs, errCode, location) {
 		});
 
 	if (specifiedMediaTypes.length != 0 && !validImageSet(specifiedMediaTypes)) {
-		errs.addError({ code: `${errCode}-7`, message: "A PNG or JPG image must be specified with other MIME types are used", key: "invalid image set", line: RelatedMaterial.line });
+		errs.addError({ 
+			code: `${errCode}-7`, 
+			message: "A PNG or JPG image must be specified when other MIME types are used", 
+			key: "invalid image set", 
+			line: RelatedMaterial.line, 
+			description: "At least one image shall be provided with the Media Type image/jpeg or image/png for compatibility purposes", 
+		});
 	}
 }
