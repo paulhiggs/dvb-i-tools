@@ -101,7 +101,7 @@ export let unEntity = (str) => str.replace(/(&.+;)/gi, "*");
 /**
  * checks is an object has none of its own properties
  *
- * @param {Object} obj   The object to check
+ * @param {object} obj   The object to check
  * @returns {Booolean} true if the object does not contain ant local properties
  */
 export function isEmpty(obj) {

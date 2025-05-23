@@ -29,11 +29,11 @@ import { WARNING } from "./error_list.js";
 /**
  * Add an error message when the a required element is not present
  *
- * @param {Object}  errs             Errors buffer
- * @param {string}  missingElement   Name of the missing element
- * @param {XMLnode} parentElement    The element which should contain the missingElement
- * @param {string}  schemaLoctation  The location in the schema of the element
- * @param {string}  errCode          The error number to show in the log
+ * @param {ErrorList}   errs             Errors buffer
+ * @param {string}      missingElement   Name of the missing element
+ * @param {XmlElement}  parentElement    The element which should contain the missingElement
+ * @param {string}      schemaLoctation  The location in the schema of the element
+ * @param {string}      errCode          The error number to show in the log
  */
 export var NoChildElement = (missingElement, parentElement, schemaLocation, errCode) => ({
 	code: errCode,
@@ -44,11 +44,11 @@ export var NoChildElement = (missingElement, parentElement, schemaLocation, errC
 /**
  * Add an error message when the @href contains an invalid value
  *
- * @param {string}  value     The invalid value for the href attribute
- * @param {XMLnode} element   The element containing the @href attribute
- * @param {string}  loc       The location of the element
- * @param {Object}  errs      Errors buffer
- * @param {string}  errCode   The error number to show in the log
+ * @param {string}     value     The invalid value for the href attribute
+ * @param {XmlElement} element   The element containing the @href attribute
+ * @param {string}     loc       The location of the element
+ * @param {ErrorList}  errs      Errors buffer
+ * @param {string}     errCode   The error number to show in the log
  */
 export var cg_InvalidHrefValue = (value, element, loc, errCode) => ({
 	code: errCode,

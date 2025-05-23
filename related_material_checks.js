@@ -18,11 +18,11 @@ import { cg_InvalidHrefValue, InvalidURL, keys } from "./common_errors.js";
  * verifies if the specified RelatedMaterial contains a image of the specified type(s). Only a single image is permitted and the format
  * specified in <MediaLocator><MediaURI> must match that specified in <Format>
  *
- * @param {Object} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
- * @param {Object} errs              The class where errors and warnings relating to the serivce list processing are stored
- * @param {String} errcode           Error code prefix for reporting
- * @param {string} location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
- * @param {array}  allowedHowRelated The set of permitted
+ * @param {XmlElement} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
+ * @param {ErrorList}  errs              The class where errors and warnings relating to the serivce list processing are stored
+ * @param {String}     errcode           Error code prefix for reporting
+ * @param {string}     location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+ * @param {array}      allowedHowRelated The set of permitted
  */
 function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, allowedHowRelated) {
 	if (!RelatedMaterial) {
@@ -145,10 +145,10 @@ function validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, 
  * verifies if the specified RelatedMaterial contains a Promotional Still Image (per A177 clause 6.10.13). Only a single image is permitted and the format
  * specified in <MediaLocator><MediaURI> must match that specified in <Format>
  *
- * @param {Object} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
- * @param {Object} errs              The class where errors and warnings relating to the serivce list processing are stored
- * @param {String} errcode           Error code prefix for reporting
- * @param {string} location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+ * @param {XmlElement} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
+ * @param {ErrorList}  errs              The class where errors and warnings relating to the serivce list processing are stored
+ * @param {String}     errcode           Error code prefix for reporting
+ * @param {string}     location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
  */
 export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, location) {
 	validateImageRelatedMaterial(RelatedMaterial, errs, errCode, location, [tva.cs_PromotionalStillImage]);
@@ -157,10 +157,10 @@ export function ValidatePromotionalStillImage(RelatedMaterial, errs, errCode, lo
 /**
  * verifies if the images provided in <MediaLocator> elments are valid according to specification
  *
- * @param {Object} Element            The <RelatedMaterial> element
- * @param {Object} errs               The class where errors and warnings relating to the service list processing are stored
- * @param {String} errCode            Error code prefix for reporting
- * @param {string} location           The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+ * @param {XmlElement} Element            The <RelatedMaterial> element
+ * @param {ErrorList}  errs               The class where errors and warnings relating to the service list processing are stored
+ * @param {String}     errCode            Error code prefix for reporting
+ * @param {string}     location           The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
  */
 export function checkValidLogos(RelatedMaterial, errs, errCode, location) {
 	if (!RelatedMaterial) return;

@@ -233,7 +233,7 @@ export default class ServiceListCheck {
 	 * @param {integer}    depth            The current depth in the hierarchial structure of regions
 	 * @param {Array}      knownRegionIDs   The list of region IDs that have been found
 	 * @param {Array}      countries
-	 * @param {Object}     errs             The class where errors and warnings relating to the service list processing are stored
+	 * @param {ErrorList}  errs             The class where errors and warnings relating to the service list processing are stored
 	 */
 	/*private*/ #addRegion(props, Region, depth, knownRegionIDs, countries, errs) {
 		if (!Region) {
@@ -372,7 +372,7 @@ export default class ServiceListCheck {
 	 * verifies if the specified application is valid according to specification
 	 *
 	 * @param {XmlElement} MediaLocator  The <MediaLocator> subelement (a libxmls object tree) of the <RelatedMaterial> element
-	 * @param {Object}     errs          The class where errors and warnings relating to the service list processing are stored
+	 * @param {ErrorList}  errs          The class where errors and warnings relating to the service list processing are stored
 	 * @param {string}     Location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 * @param {string}     AppType       The type of application being checked, from HowRelated@href
 	 */
@@ -453,7 +453,7 @@ export default class ServiceListCheck {
 	 *
 	 * @param {object}     props             Metadata of the XML document
 	 * @param {XmlElement} RelatedMaterial   The <RelatedMaterial> element (a libxmls object tree) to be checked
-	 * @param {Object}     errs              The class where errors and warnings relating to the service list processing are stored
+	 * @param {ErrorList}  errs              The class where errors and warnings relating to the service list processing are stored
 	 * @param {string}     Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 * @param {string}     LocationType      The type of element containing the <RelatedMaterial> element. Different validation rules apply to different location types
 	 * @param {string}     errCode           The prefix to use for any errors found
@@ -648,8 +648,8 @@ export default class ServiceListCheck {
 	 *
 	 * @param {object}     props         Metadata of the XML document
 	 * @param {XmlElement} source        The <ContentGuideSource> element to be checked
-	 * @param {Class}      errs          Errors found in validaton
-	 * @param {object}     loc           The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
+	 * @param {ErrorList}  errs          Errors found in validaton
+	 * @param {XmlElement} loc           The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
 	 * @param {string}     errCode       Error code prefix to be used in reports
 	 */
 	/*private*/ #validateAContentGuideSource(props, source, errs, loc, errCode) {
@@ -714,7 +714,7 @@ export default class ServiceListCheck {
 	/**
 	 * validate the language specified record any errors
 	 *
-	 * @param {Class}      errs       errors found in validaton
+	 * @param {ErrorList}  errs       errors found in validaton
 	 * @param {XmlElement} node       the XML node whose @lang attribute should be checked
 	 * @param {string}     parentLang the language of the XML element which is the parent of node
 	 * @param {boolean}    isRequired report an error if @lang is not explicitly stated
@@ -749,7 +749,7 @@ export default class ServiceListCheck {
 	 * @param {array}      requiredLengths    @length attributes that are required to be present
 	 * @param {array}      optionalLengths    @length attributes that can optionally be present
 	 * @param {string}     parentLanguage	   the xml:lang of the parent element
-	 * @param {Class}      errs               errors found in validaton
+	 * @param {ErrorList}  errs               errors found in validaton
 	 * @param {string}     errCode            error code prefix to be used in reports
 	 */ 7;
 	/*private*/ #ValidateSynopsisType(props, Element, ElementName, requiredLengths, optionalLengths, parentLanguage, errs, errCode) {
@@ -947,7 +947,7 @@ export default class ServiceListCheck {
 	 * @param {XmlElement} ServiceInstance               the service instance element to check
 	 * @param {string}     thisServiceId                 the identifier of the service
 	 * @param {array}      declaredSubscriptionPackages  subscription packages that are declared in the service list
-	 * @param {Class}      errs                          errors found in validaton
+	 * @param {ErrorList}  errs                          errors found in validaton
 	 */
 	/*private*/ #validateServiceInstance(props, ServiceInstance, thisServiceId, declaredSubscriptionPackages, declaredAudioLanguages, errs) {
 		if (!ServiceInstance) {
@@ -1685,7 +1685,7 @@ export default class ServiceListCheck {
 	 * @param {array}      declaredSubscriptionPackages  subscription packages that are declared in the service list
 	 * @param {array}      declaredAudioLanguages        language values declared in the <LanguageList> of the service list
 	 * @param {array}      ContentGuideSourceIDs         identifiers of content guide sources found in the service list
-	 * @param {Class}      errs                          errors found in validaton
+	 * @param {ErrorList}  errs                          errors found in validaton
 	 */
 	/*private*/ #validateService(
 		props,
@@ -2043,9 +2043,9 @@ export default class ServiceListCheck {
 	/**
 	 * validate the service list and record any errors
 	 *
-	 * @param {String} SLtext      The service list text to be validated
-	 * @param {Class}  errs        Errors found in validaton
-	 * @param {Object} options 
+	 * @param {String}    SLtext      The service list text to be validated
+	 * @param {ErrorList} errs        Errors found in validaton
+	 * @param {object}    options 
 	 *                   options.log_prefix            the first part of the logging location (or null if no logging)
 	 *                   options.report_schema_version report the state of the schema in the error/warning list
 	 */

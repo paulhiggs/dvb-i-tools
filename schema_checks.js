@@ -22,7 +22,7 @@ import { keys } from "./common_errors.js";
  * @param {Array}      requiredAttributes the element names permitted within the parent
  * @param {Array}      optionalAttributes the element names permitted within the parent
  * @param {Array}      definedAttributes  attributes that defined in the schema, whether requited, optional or profiled out
- * @param {Class}      errs               errors found in validaton
+ * @param {ErrorList}  errs               errors found in validaton
  * @param {string}     errCode            error code to be used in reports,
  */
 export function checkAttributes(checkElement, requiredAttributes, optionalAttributes, definedAttributes, errs, errCode) {
@@ -63,13 +63,13 @@ export function checkAttributes(checkElement, requiredAttributes, optionalAttrib
 /**
  * check that the specified child elements are in the parent element
  *
- * @param {XMLNode} parentElement         the element whose children should be checked
- * @param {Array}   childElements		      the names of elements and their cardinality
- * @param {Array}   definedChildElements  the names of all child elements of parentElement that are defined in the schema, including
- *                                        those which are profiled out of DVB-I
- * @param {boolean} allowOtherElements    flag indicating if other elements, i.e. those defined in the another are permitted
- * @param {Class}   errs                  errors found in validaton
- * @param {string}  errCode               error code to be used for any error found
+ * @param {XMLElement} parentElement         the element whose children should be checked
+ * @param {Array}      childElements		      the names of elements and their cardinality
+ * @param {Array}      definedChildElements  the names of all child elements of parentElement that are defined in the schema, including
+ *                                           those which are profiled out of DVB-I
+ * @param {boolean}    allowOtherElements    flag indicating if other elements, i.e. those defined in the another are permitted
+ * @param {ErrorList}  errs                  errors found in validaton
+ * @param {string}     errCode               error code to be used for any error found
  * @returns {boolean} true if no errors are found (all mandatory elements are present and no extra elements are specified)
  *
  * NOTE: elements are described as an object containing "name", "minOccurs", "maxOccurs".
@@ -169,10 +169,10 @@ export function hasChild(elem, childElementName) {
 /**
  * validate a XML document gainst the specified schema (included schemas must be in the same directory)
  *
- * @param {Document} XML         the XML document to check
- * @param {Document} XSD         the schema
- * @param {object}   errs        array to record any errors
- * @param {string}   errCode     the error code to report with each error
+ * @param {XmlDocument} XML         the XML document to check
+ * @param {XmlDocument} XSD         the schema
+ * @param {ErrorList}   errs        array to record any errors
+ * @param {string}      errCode     the error code to report with each error
  */
 export function SchemaCheck(XML, XSD, errs, errCode) {
 	let validator = null;
@@ -202,9 +202,9 @@ export function SchemaCheck(XML, XSD, errs, errCode) {
  * report if the schema version being used is not 'formal'
  *
  * @param {object}      props                Metadata of the XML document
- * @param {XMLdocument} document             the XML document
+ * @param {XmlDocument} document             the XML document
  * @param {enum}        publication_state    the publication status of the schema
- * @param {Class}       errs                 array to record any errors
+ * @param {ErrorList}   errs                 array to record any errors
  * @param {string}      errCode              the error code to report with each error
  */
 export function SchemaVersionCheck(props, document, publication_state, errs, errCode) {
@@ -223,8 +223,8 @@ export function SchemaVersionCheck(props, document, publication_state, errs, err
 
 /**
  * load the XML data
- * @param {XMLdocument} document 	  XMLdocument
- * @param {Class}       errs        error handler for any loading errors
+ * @param {XmlDocument} document 	  XMLdocument
+ * @param {ErrorList}   errs        error handler for any loading errors
  * @param {string}      errcode     error code prefix to use for any loading issues
  * @returns {XMLDocument}  an XML document structure
  */

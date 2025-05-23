@@ -251,8 +251,8 @@ function match(permittedValues, value, version = ANY_NAMESPACE) {
 /**
  * determines if the identifer provided refers to a valid banner for out-of-servce-hours presentation
  *
- * @param {XMLnode} HowRelated  The banner identifier
- * @param {String}  namespace   The namespace being used in the XML document
+ * @param {XmlElement} HowRelated  The banner identifier
+ * @param {String}     namespace   The namespace being used in the XML document
  * @returns {boolean} true if this is a valid banner for out-of-servce-hours presentation else false
  */
 export function validOutScheduleHours(HowRelated, namespace) {
@@ -265,8 +265,8 @@ export function validOutScheduleHours(HowRelated, namespace) {
  * determines if the identifer provided refers to a valid banner for content-finished presentation
  *
  * @since DVB A177r1
- * @param {XMLnode} HowRelated  The banner identifier
- * @param {String}  namespace   The namespace being used in the XML document
+ * @param {XmlElement} HowRelated  The banner identifier
+ * @param {String}     namespace   The namespace being used in the XML document
  * @returns {boolean} true if this is a valid banner for content-finished presentation else false
  */
 export function validContentFinishedBanner(HowRelated, namespace) {
@@ -278,8 +278,8 @@ export function validContentFinishedBanner(HowRelated, namespace) {
 /**
  * determines if the identifer provided refers to a valid service list logo
  *
- * @param {XMLnode} HowRelated  The logo identifier
- * @param {String}  namespace   The namespace being used in the XML document
+ * @param {XmlElement} HowRelated  The logo identifier
+ * @param {String}     namespace   The namespace being used in the XML document
  * @returns {boolean} true if this is a valid logo for a service list else false
  */
 export function validServiceListLogo(HowRelated, namespace) {
@@ -296,8 +296,8 @@ export function validServiceAgreementApp(HowRelated, namespace) {
 /**
  * determines if the identifer provided refers to a valid service logo
  *
- * @param {XMLnode} HowRelated  The logo identifier
- * @param {String}  namespace   The namespace being used in the XML document
+ * @param {XmlElement} HowRelated  The logo identifier
+ * @param {String}     namespace   The namespace being used in the XML document
  * @returns {boolean} true if this is a valid logo for a service  else false
  */
 export function validServiceLogo(HowRelated, namespace) {
@@ -309,8 +309,8 @@ export function validServiceLogo(HowRelated, namespace) {
 /**
  * determines if the identifer provided refers to a valid service banner
  *
- * @param {XMLnode} HowRelated  The logo identifier
- * @param {String}  namespace   The namespace being used in the XML document
+ * @param {XmlElement} HowRelated  The logo identifier
+ * @param {String}     namespace   The namespace being used in the XML document
  * @returns {boolean} true if this is a valid banner for a service  else false
  */
 export function validServiceBanner(HowRelated, namespace) {
@@ -322,8 +322,8 @@ export function validServiceBanner(HowRelated, namespace) {
 /**
  * determines if the identifer provided refers to a valid content guide source logo
  *
- * @param {XMLnode} HowRelated  The logo identifier
- * @param {String}  namespace   The namespace being used in the XML document
+ * @param {XmlElement} HowRelated  The logo identifier
+ * @param {String}     namespace   The namespace being used in the XML document
  * @returns {boolean} true if this is a valid logo for a content guide source else false
  */
 export function validContentGuideSourceLogo(HowRelated, namespace) {

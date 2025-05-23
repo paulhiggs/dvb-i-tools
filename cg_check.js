@@ -1677,7 +1677,7 @@ export default class ContentGuideCheck {
 	 * @param {XmlElement} GroupInformation   the element whose children should be checked
 	 * @param {string}     requestType        the type of content guide request being checked
 	 * @param {ErrorList}  errs               errors found in validaton
-	 * @param {object}     categoryGroup      the GroupInformationElement that others must refer to through <MemberOf>
+	 * @param {XmlElement} categoryGroup      the GroupInformationElement that others must refer to through <MemberOf>
 	 * @param {array}      indexes            an accumulation of the @index values found
 	 * @param {array}      groupsFound        groupId values found (null if not needed)
 	 */
@@ -1931,7 +1931,7 @@ export default class ContentGuideCheck {
 	 * @param {object}     props              Metadata of the XML documentE
 	 * @param {XmlElement} GroupInformation   the element whose children should be checked
 	 * @param {string}     requestType        the type of content guide request being checked
-	 * @param {ErrorLust}  errs               errors found in validaton
+	 * @param {ErrorList}  errs               errors found in validaton
 	 * @param {XmlElement} categoryGroup      the GroupInformationElement that others must refer to through <MemberOf>
 	 * @param {array}      indexes            an accumulation of the @index values found
 	 * @param {array}      groupsFound        groupId values found (null if not needed)
@@ -3355,7 +3355,7 @@ export default class ContentGuideCheck {
 	 * @param {String}    CGtext       the service list text to be validated
 	 * @param {String}    requestType  the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
 	 * @param {ErrorList} errs         errors found in validaton
-	 * @param {Object} options 
+	 * @param {object} options 
 	 *                   options.log_prefix            the first part of the logging location (or null if no logging)
 	 *                   options.report_schema_version report the state of the schema in the error/warning list
 	 */
