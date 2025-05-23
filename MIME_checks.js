@@ -37,6 +37,8 @@ export let isWebPmime = (val) => (val ? val == WebP_MIME : false);
 
 export let isAllowedImageMime = (val) => (val ? allowedImageTypes.includes(val) : false);
 
+export let isRequiredImageMime = (val) => (val ? REQUIRED_MIMES.includes(val) : false);
+
 /**
  *
  * @param {array} MIMEs the list of MIME types provided for an image type
@@ -54,5 +56,5 @@ export function validImageSet(MIMEs) {
 		else hasOther = true;
 	});
 
-	return hasRequired || (hasOther && !hasRequired);
+	return (hasOther && !hasRequired) ? false : hasRequired;
 }

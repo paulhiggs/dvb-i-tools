@@ -50,8 +50,9 @@ function tabulateResults(source, res, error, errs) {
 	}</script>`;
 	let DETAIL_FORM_HEADER = (mode) => `${scrollFunc}<table><tr>${SHOW_LINE_NUMBER ? "<th>line</th>" : ""}<th>code</th><th>${mode}</th></tr>`;
 	let DESCRIPTION_TABLE_HEDER = () => `<table><tr><th>code</th><th>description</th></tr>`;
+	let DEBUG_FORM_HEADER = (mode) => `${scrollFunc}<table><tr><th>code</th><th>${mode}</th></tr>`;
 
-	let TABLE_FOOTER = `</table>${BREAK}`;
+	const TABLE_FOOTER = `</table>${BREAK}`;
 
 	function tabluateMessage(value) {
 		res.write("<tr>");
@@ -61,6 +62,10 @@ function tabulateResults(source, res, error, errs) {
 		res.write(`<td>${value.message ? HTMLize(value.message) : ""}`);
 		res.write(`${value.element ? `<br/><span class="xmlfont"><pre>${HTMLize(value.element)}</pre></span>` : ""}</td>`);
 		res.write("</tr>");
+	}
+
+	function simpleMessage(value) {
+		res.write(`<tr><td>${value.code}</td><td>${value.message}</td><tr>`);
 	}
 
 	res.write(RESULT_WITH_INSTRUCTION);
@@ -110,6 +115,13 @@ function tabulateResults(source, res, error, errs) {
 			resultsShown = true;
 			res.write(TABLE_FOOTER);
 		}
+
+		if (errs.debugs.length > 0) {
+			res.write(DEBUG_FORM_HEADER("debug"));
+			errs.debugs.forEach(simpleMessage);
+			resultsShown = true;
+			res.write(TABLE_FOOTER);
+		}
 	}
 
 	if (!error && !resultsShown) res.write(`no errors, warnings or informationals${BREAK}`);
@@ -130,7 +142,10 @@ function tabulateResults(source, res, error, errs) {
 			WARN = "warnings",
 			INFO = "info",
 			style = (name, colour) => `<style>.${name} {position:relative; cursor:pointer; color:${colour};} .${name}[title]:hover:after {opacity:1; transition-delay:.1s; }</style>`;
+		let lineNum=0;
+		const maxLineNumLength = errs.markupXML.length.toString().length;
 		res.write(`${style(ERR, "red")}${style(WARN, "blue")}${style(INFO, "orange")}<pre>`);
+		
 		errs.markupXML.forEach((line) => {
 			let cla = "",
 				tip = line.validationErrors ? line.validationErrors.map((err) => HTMLize(err)).join("&#10;") : null;
@@ -140,6 +155,10 @@ function tabulateResults(source, res, error, errs) {
 				else cla = INFO;
 			}
 			let qualifier = tip ? ` class="${cla}" title="${tip}"` : "";
+			if (SHOW_LINE_NUMBER) {
+				lineNum++;
+				res.write(`<span>${lineNum.toString().padStart(maxLineNumLength)} : </span>`);
+			}
 			res.write(`<span id="line-${line.ix}"${qualifier}>${HTMLize(line.value)}</span>${BREAK}`);
 		});
 		res.write(`</pre>${LINE}`);

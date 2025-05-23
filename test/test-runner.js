@@ -11,6 +11,8 @@ import commandLineArgs from "command-line-args";
 import commandLineUsage from "command-line-usage";
 import fetchS from "sync-fetch";
 
+import { Libxml2_wasm_init } from '../libxml2-wasm-extensions.js';
+
 import ServiceListCheck from "../sl_check.js";
 import ContentGuideCheck from "../cg_check.js";
 import { isHTTPURL } from "../pattern_checks.js";
@@ -86,20 +88,20 @@ if (options.mode.toLowerCase() == "sl") {
 				console.log(chalk.red(error.message));
 			}
 			if (resp) {
-				if (resp.ok) SLtext = resp.text();
+				if (resp.ok) SLtext = resp.content;
 				else console.log(chalk.red(`error (${resp.status}:${resp.statusText}) handling ${ref}`));
 			}
 		}
 		else SLtext = readFileSync(ref, { encoding: 'utf8', flag: 'r' });
 
 		let errs = new ErrorList();
-		sl.doValidateServiceList(SLtext, errs);
+		sl.doValidateServiceList(SLtext, errs, {report_schema_version:false});
 		console.log(`\n${ref}\n${"".padStart(ref.length, "=")}\n`);
 		console.log(JSON.stringify({errs}, null, 2));
 	});
 }
 else if (options.mode.toLowerCase().substring(0,2) == "cg") {
-	// test a content guide frsagmet
+	// test a content guide document
 	if (options.mode.indexOf("-") == -1) {
 		console.log(chalk.red(`content guide request type must be specified`));
 		process.exit(1);
@@ -111,7 +113,6 @@ else if (options.mode.toLowerCase().substring(0,2) == "cg") {
 		console.log(chalk.red(`"${cg_request}" is not a supported content guide requet type`));
 		process.exit(1);
 	}
-	//console.log(`processing cg as "${req.label}"`);
 	options.src.forEach((ref) => {
 		let CGtext = null;
 		if (isHTTPURL(ref)) {
@@ -122,14 +123,14 @@ else if (options.mode.toLowerCase().substring(0,2) == "cg") {
 				console.log(chalk.red(error.message));
 			}
 			if (resp) {
-				if (resp.ok) CGtext = resp.text();
+				if (resp.ok) CGtext = resp.content;
 				else console.log(chalk.red(`error (${resp.status}:${resp.statusText}) handling ${ref}`));
 			}
 		}
 		else CGtext = readFileSync(ref, { encoding: 'utf8', flag: 'r' });
 
 		let errs = new ErrorList();
-		cg.doValidateContentGuide(CGtext, cg_request, errs);
+		cg.doValidateContentGuide(CGtext, cg_request, errs, {report_schema_version:false});
 		console.log(`\n${ref}\n${"".padStart(ref.length, "=")}\n`);
 		console.log(JSON.stringify({errs}, null, 2));
 	});

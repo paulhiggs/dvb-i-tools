@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServiceList xmlns="urn:dvb:metadata:servicediscovery:2025" xmlns:tva="urn:tva:metadata:2024" id="tag:dvb.org,2025:A177r7" version="1" xml:lang="en">
+	<StandardVersion>urn:dvb:metadata:dvbi:standardversion:7</StandardVersion>
+	<Name>Service List Applications</Name>
+	<ProviderName>Regression Test</ProviderName>
+	<RelatedMaterial>
+		<!-- Service List Application for Service List Installation -->
+		<tva:HowRelated href="urn:dvb:metadata:cs:LinkedApplicationCS:2019:4.1"/>
+		<tva:MediaLocator>
+			<tva:MediaUri contentType="text/html">
+				http://dvb.org/regress/0020/SLinstall.html
+			</tva:MediaUri>
+		</tva:MediaLocator>
+		<tva:MediaLocator>
+			<tva:MediaUri contentType="application/vnd.dvb.ait+xml">http://dvb.org/regress/0020/SLinstall.aitx</tva:MediaUri>
+		</tva:MediaLocator>
+	</RelatedMaterial>
+	<RelatedMaterial>
+		<!-- Service List Application for Withdrawl of Consent -->
+		<tva:HowRelated href="urn:dvb:metadata:cs:LinkedApplicationCS:2019:4.2"/>
+		<tva:MediaLocator>
+			<tva:MediaUri contentType="text/html">
+				http://dvb.org/regress/0020/SLwithdraw.html
+			</tva:MediaUri>
+		</tva:MediaLocator>
+		<tva:MediaLocator>
+			<tva:MediaUri contentType="application/vnd.dvb.ait+xml">http://dvb.org/regress/0020/SLwithdraw.aitx</tva:MediaUri>
+		</tva:MediaLocator>
+	</RelatedMaterial>
+	<RelatedMaterial>
+		<!-- Service List Application for Renewal of Agreement -->
+		<tva:HowRelated href="urn:dvb:metadata:cs:LinkedApplicationCS:2019:4.3"/>
+		<tva:MediaLocator>
+			<tva:MediaUri contentType="application/vnd.dvb.ait+xml">http://dvb.org/regress/0020/SLrenew.aitx</tva:MediaUri>
+		</tva:MediaLocator>
+		<tva:MediaLocator>
+			<tva:MediaUri contentType="text/html">http://dvb.org/regress/0020/SLrenew.html</tva:MediaUri>
+		</tva:MediaLocator>
+	</RelatedMaterial>
+</ServiceList>

@@ -3,9 +3,12 @@
  *
  * Manages errors and warnings for the application
  */
+import { XmlSimpleNode, XmlTreeNode, XmlElement, XmlText } from "libxml2-wasm";
+import { xmlSaveFormatFileTo } from "libxml2-wasm/lib/libxml2.mjs";
 import { datatypeIs } from "./phlib/phlib.js";
 
 export const ERROR = "(E)",
+	DEBUG = "(D)",
 	WARNING = "(W)",
 	INFORMATION = "(I)",
 	APPLICATION = "(A)";
@@ -29,6 +32,7 @@ export default class ErrorList {
 		this.countsInfo = [];
 		this.errors = [];
 		this.warnings = [];
+		this.debugs = [];
 		this.informationals = [];
 		this.markupXML = [];
 		this.errorDescriptions = [];
@@ -86,10 +90,9 @@ export default class ErrorList {
 	}
 
 	/* private method */ #prettyPrint(node) {
-		// clean up and redo formatting
-		const tmp = node.toString({ declaration: false, format: true });
-		const maxLen = nthIndexOf(tmp, "\n", MAX_FRAGMENT_LINES);
-		return maxLen == -1 ? tmp : `${tmp.slice(0, maxLen)}\n....\n`;
+		const t = node.prettyPrint();
+		const maxLen = nthIndexOf(t, "\n", MAX_FRAGMENT_LINES);
+		return maxLen == -1 ? t : `${t.slice(0, maxLen)}\n....\n`;
 	}
 
 	/* private method */ #insertErrorData(type, key, err) {
@@ -113,6 +116,10 @@ export default class ErrorList {
 		}
 	}
 
+	/* private method */ #debugMessage(err) {
+		this.debugs.push(err);
+	}
+
 	/**
 	 * log an error from the service list or program metadata analysis
 	 *
@@ -131,7 +138,7 @@ export default class ErrorList {
 		if (!Object.prototype.hasOwnProperty.call(e, "type")) e.type = ERROR;
 		if (!Object.prototype.hasOwnProperty.call(e, "reportInTable")) e.reportInTable = true;
 
-		if (![ERROR, WARNING, INFORMATION, APPLICATION].includes(e.type)) {
+		if (![ERROR, WARNING, INFORMATION, APPLICATION, DEBUG].includes(e.type)) {
 			this.errors.push({ code: "ERR000", message: `addError() called with invalid type property (${e.type})` });
 			this.#increment(_INVALID_CALL);
 			argsOK = false;
@@ -151,7 +158,9 @@ export default class ErrorList {
 
 		if (!argsOK) return;
 
-		if (e.multiElementError) {
+		if (e.type == DEBUG) {
+			this.#debugMessage({ code: e.code, message: e.message });
+		} else if (e.multiElementError) {
 			/**
 			 * this type of error involves multiple elements, for example when the cardinality exceeds a specified limit.
 			 * each element of multiElementError is an element that is marked up, but the error message is
@@ -159,7 +168,7 @@ export default class ErrorList {
 			 */
 			this.#insertErrorData(e.type, e.key, { code: e.code, message: e.message });
 			e.multiElementError.forEach((fragment) => {
-				if (fragment && !datatypeIs(fragment, "string")) this.#setError(e.type, e.code, e.message, fragment.line());
+				if (fragment && !datatypeIs(fragment, "string")) this.#setError(e.type, e.code, e.message, fragment.line);
 			});
 		} else if (e.fragments) {
 			// note that the line of the error is derived from the fragment -- e.line is only used with the fragment is already a string
@@ -171,11 +180,11 @@ export default class ErrorList {
 					if (datatypeIs(fragment, "string")) {
 						if (Object.prototype.hasOwnProperty.call(e, "line")) {
 							this.#setError(e.type, e.code, e.message, e.line);
-							newError.line = e.line - 2;
+							newError.line = e.line;
 						}
 					} else {
-						this.#setError(e.type, e.code, e.message, fragment.line());
-						newError.line = fragment.line() - 2;
+						this.#setError(e.type, e.code, e.message, fragment.line);
+						newError.line = fragment.line;
 					}
 					if (e.reportInTable) this.#insertErrorData(e.type, e.key, newError);
 				}
@@ -187,23 +196,22 @@ export default class ErrorList {
 			if (datatypeIs(e.fragment, "string")) {
 				if (Object.prototype.hasOwnProperty.call(e, "line")) {
 					this.#setError(e.type, e.code, e.message, e.line);
-					newError.line = e.line - 2;
+					newError.line = e.line;
 				}
 			} else {
-				this.#setError(e.type, e.code, e.message, e.fragment.line());
-				newError.line = e.fragment.line() - 2;
+				this.#setError(e.type, e.code, e.message, e.fragment.line);
+				newError.line = e.fragment.line;
 			}
 			if (e.reportInTable) this.#insertErrorData(e.type, e.key, newError);
 		} else {
 			let newError = { code: e.code, message: e.message, element: null };
 			if (e.line) {
 				this.#setError(e.type, e.code, e.message, e.line);
-				newError.line = e.line - 2;
+				newError.line = e.line;
 			}
 			if (e.reportInTable) this.#insertErrorData(e.type, e.key, newError);
 		}
-		if (e.description)
-			this.errorDescription({code:e.code, description: e.description, clause: e.clause});
+		if (e.description) this.errorDescription({ code: e.code, description: e.description, clause: e.clause });
 	}
 
 	numErrors() {

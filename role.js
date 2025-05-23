@@ -28,7 +28,7 @@ export default class Role extends ClassificationScheme {
 
 		fetch(rolesURL)
 			.then(handleErrors)
-			.then((response) => response.text())
+			.then((response) => response.content)
 			.then((roles) =>
 				roles.split("\n").forEach((e) => {
 					this.insertValue(e.trim(), true);

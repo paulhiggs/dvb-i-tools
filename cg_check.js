@@ -7,7 +7,10 @@ import process from "process";
 import { readFileSync } from "fs";
 
 import chalk from "chalk";
-import { parseXmlString } from "libxmljs2";
+import { XmlDocument, XmlElement } from "libxml2-wasm";
+import { MakeDocumentProperties } from "./libxml2-wasm-extensions.js";
+import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
+xmlRegisterFsInputProviders();
 
 import { attribute, elementize, quote } from "./phlib/phlib.js";
 
@@ -112,9 +115,9 @@ let SchemaVersion = (namespace) => {
  * converts a decimal representation of a string to a number
  *
  * @param {string} str    string contining the decimal value
- * @returns {integer}  the decimal representation of the string, or 0 is non-digits are included
+ * @returns {integer}  the decimal representation of the string, or 0 if non-digits are included
  */
-function valUnsignedInt(str) {
+let valUnsignedInt = (str) => {
 	const intRegex = /[\d]+/;
 	let s = str.match(intRegex);
 	return s[0] === str ? parseInt(str, 10) : 0;
@@ -123,12 +126,12 @@ function valUnsignedInt(str) {
 /**
  * checks is the specified element (elem) has an attribute named attrName and that its value is on the given list)
  *
- * @param {XMLnode} elem       the XML element to be checked
- * @param {string}  attrName   the name of the attribute carrying the boolean value
- * @param {string}  errCode    the error number used as a prefix for reporting errors
- * @param {Class}   errs       errors found in validaton
- * @param {array}   allowed    the set or permitted values
- * @param {boolean} isRequired true if the specificed attribued is required to be specified for the element
+ * @param {XmlElement} elem       the XML element to be checked
+ * @param {string}     attrName   the name of the attribute carrying the boolean value
+ * @param {string}     errCode    the error number used as a prefix for reporting errors
+ * @param {ErrorList}  errs       errors found in validaton
+ * @param {array}      allowed    the set or permitted values
+ * @param {boolean}    isRequired true if the specificed attribued is required to be specified for the element
  */
 function AllowedValue(elem, attrName, errCode, errs, allowed, isRequired = true) {
 	if (!elem) {
@@ -136,20 +139,20 @@ function AllowedValue(elem, attrName, errCode, errs, allowed, isRequired = true)
 		return;
 	}
 
-	if (elem.attr(attrName)) {
-		if (!isIn(allowed, elem.attr(attrName).value())) {
+	if (elem.attrAnyNs(attrName)) {
+		if (!isIn(allowed, elem.attrAnyNs(attrName).value)) {
 			let str = "";
 			allowed.forEach((value) => (str = str + (str.length ? " or " : "") + value));
 			errs.addError({
 				code: `${errCode}-1`,
-				message: `${attrName.attribute(`${elem.parent().name}.${elem.name()}`)} must be ${str}`,
+				message: `${attrName.attribute(`${elem.parent.name}.${elem.name}`)} must be ${str}`,
 				fragment: elem,
 			});
 		}
 	} else if (isRequired)
 		errs.addError({
 			code: `${errCode}-2`,
-			message: `${attrName.attribute()} must be specified for ${elem.parent().name()}.${elem.name()}`,
+			message: `${attrName.attribute()} must be specified for ${elem.parent.name}.${elem.name}`,
 			fragment: elem,
 		});
 }
@@ -157,109 +160,41 @@ function AllowedValue(elem, attrName, errCode, errs, allowed, isRequired = true)
 /**
  * checks is the specified element (elem) has an attribute named attrName and that its value is "true" or "false"
  *
- * @param {XMLnode} elem       the XML element to be checked
- * @param {string}  attrName   the name of the attribute carrying the boolean value
- * @param {string}  errCode    the error number used as a prefix for reporting errors
- * @param {Class}   errs       errors found in validaton
- * @param {boolean} isRequired true if the specificed attribued is required to be specified for the element
+ * @param {XmlElement} elem       the XML element to be checked
+ * @param {string}     attrName   the name of the attribute carrying the boolean value
+ * @param {string}     errCode    the error number used as a prefix for reporting errors
+ * @param {ErrorList}  errs       errors found in validaton
+ * @param {boolean}    isRequired true if the specificed attribued is required to be specified for the element
  */
-function BooleanValue(elem, attrName, errCode, errs, isRequired = true) {
-	AllowedValue(elem, attrName, errCode, errs, ["true", "false"], isRequired);
-}
+let BooleanValue = (elem, attrName, errCode, errs, isRequired = true) => AllowedValue(elem, attrName, errCode, errs, ["true", "false"], isRequired);
 
 /**
  * checks is the specified element (elem) has an attribute named attrName and that its value is "true"
  *
- * @param {XMLnode} elem       the XML element to be checked
- * @param {string}  attrName   the name of the attribute carrying the boolean value
- * @param {string}  errCode    the error number used as a prefix for reporting errors
- * @param {Class}   errs       errors found in validaton
- * @param {boolean} isRequired true if the specificed attribued is required to be specified for the element
+ * @param {XmlElement} elem       the XML element to be checked
+ * @param {string}     attrName   the name of the attribute carrying the boolean value
+ * @param {string}     errCode    the error number used as a prefix for reporting errors
+ * @param {ErrorList}  errs       errors found in validaton
+ * @param {boolean}    isRequired true if the specificed attribued is required to be specified for the element
  */
-function TrueValue(elem, attrName, errCode, errs, isRequired = true) {
-	AllowedValue(elem, attrName, errCode, errs, ["true"], isRequired);
-}
+let TrueValue = (elem, attrName, errCode, errs, isRequired = true) => AllowedValue(elem, attrName, errCode, errs, ["true"], isRequired);
 
 /**
  * checks is the specified element (elem) has an attribute named attrName and that its value is "false"
  *
- * @param {XMLnode} elem       the XML element to be checked
- * @param {string}  attrName   the name of the attribute carrying the boolean value
- * @param {string}  errCode    the error number used as a prefix for reporting errors
- * @param {Class}   errs       errors found in validaton
- * @param {boolean} isRequired true if the specificed attribued is required to be specified for the element
+ * @param {XmlElement} elem       the XML element to be checked
+ * @param {string}     attrName   the name of the attribute carrying the boolean value
+ * @param {string}     errCode    the error number used as a prefix for reporting errors
+ * @param {ErrorList}  errs       errors found in validaton
+ * @param {boolean}    isRequired true if the specificed attribued is required to be specified for the element
  */
-function FalseValue(elem, attrName, errCode, errs, isRequired = true) {
-	AllowedValue(elem, attrName, errCode, errs, ["false"], isRequired);
-}
-
-if (!Array.prototype.forEachSubElement) {
-	// based on the polyfill at https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
-	/*
-	 * alternate to Array.prototype.forEach that only returns XML tree nodes that are elements
-	 */
-
-	Array.prototype.forEachSubElement = function (callback, thisArg) {
-		if (this == null) {
-			throw new TypeError("Array.prototype.forEachSubElement called on null or undefined");
-		}
-
-		var T, k;
-		// 1. Let O be the result of calling toObject() passing the
-		// |this| value as the argument.
-		var O = Object(this);
-
-		// 2. Let lenValue be the result of calling the Get() internal
-		// method of O with the argument "length".
-		// 3. Let len be toUint32(lenValue).
-		var len = O.length >>> 0;
-
-		// 4. If isCallable(callback) is false, throw a TypeError exception.
-		// See: https://es5.github.com/#x9.11
-		if (typeof callback !== "function") {
-			throw new TypeError(`${callback} is not a function`);
-		}
-
-		// 5. If thisArg was supplied, let T be thisArg; else let
-		// T be undefined.
-		if (arguments.length > 1) {
-			T = thisArg;
-		}
-
-		// 6. Let k be 0
-		k = 0;
-
-		// 7. Repeat, while k < len
-		while (k < len) {
-			var kValue;
-
-			// a. Let Pk be ToString(k).
-			//    This is implicit for LHS operands of the in operator
-			// b. Let kPresent be the result of calling the HasProperty
-			//    internal method of O with argument Pk.
-			//    This step can be combined with c
-			// c. If kPresent is true, then
-			if (k in O) {
-				// i. Let kValue be the result of calling the Get internal
-				// method of O with argument Pk.
-				kValue = O[k];
-
-				// ii. Call the Call internal method of callback with T as
-				// the this value and argument list containing kValue, k, and O.
-				if (kValue.type() == "element") callback.call(T, kValue, k, O);
-			}
-			// d. Increase k by 1.
-			k++;
-		}
-		// 8. return undefined
-	};
-}
+let FalseValue = (elem, attrName, errCode, errs, isRequired = true) => AllowedValue(elem, attrName, errCode, errs, ["false"], isRequired);
 
 /**
  * @param {string} genre the value to check as being a restart availability genre
  * @retuwns {boolean} trus id the value provided is a valid restart availability genre
  */
-export var isRestartAvailability = (genre) => [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(genre);
+export let isRestartAvailability = (genre) => [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(genre);
 
 export default class ContentGuideCheck {
 	#numRequests;
@@ -301,7 +236,7 @@ export default class ContentGuideCheck {
 		SchemaVersions.forEach((version) => {
 			process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
 			let schema = readFileSync(version.filename).toString().replace(`schemaLocation="./`, `schemaLocation="${__dirname_linux}/`);
-			version.schema = parseXmlString(schema);
+			version.schema = XmlDocument.fromString(schema);
 			console.log(version.schema ? chalk.green("OK") : chalk.red.bold("FAIL"));
 		});
 	}
@@ -317,13 +252,14 @@ export default class ContentGuideCheck {
 		return res;
 	}
 
-	/*private*/ #doSchemaVerification(TVAdoc, props, errs, errCode) {
+	/*private*/ #doSchemaVerification(TVAdoc, props, errs, errCode, report_schema_version = true) {
 		let _rc = true;
 
 		let x = SchemaVersions.find((s) => s.namespace == props.namespace);
 		if (x && x.schema) {
 			SchemaCheck(TVAdoc, x.schema, errs, `${errCode}:${SchemaVersion(props.namespace)}`);
-			SchemaVersionCheck(props, TVAdoc, x.status, errs, `${errCode}a`);
+			if (report_schema_version)
+				SchemaVersionCheck(props, TVAdoc, x.status, errs, `${errCode}a`);
 		} else _rc = false;
 
 		return _rc;
@@ -332,33 +268,33 @@ export default class ContentGuideCheck {
 	/**
 	 * check if the specificed element has the named child element
 	 *
-	 * @param {XMLnode} node         the node to check
-	 * @param {string}  elementName  the name of the child element
+	 * @param {XmlElement} node         the node to check
+	 * @param {string}     elementName  the name of the child element
 	 * @returns {boolean} true if an element named node.elementName exists, else false
 	 */
 	/* private */ #hasElement(node, elementName) {
 		if (!node) return false;
-		return node.childNodes().find((c) => c.type() == "element" && c.name() == elementName);
+		return node.childNodes().find((c) => c instanceof XmlElement && c.name == elementName);
 	}
 
 	/**
 	 * check that the serviceIdRef attribute is a TAG URI and report warnings
 	 *
-	 * @param {XMLnode} elem     the node containing the element being checked
-	 * @param {Class}   errs     errors found in validaton
-	 * @param {string}  errCode  error code prefix to be used in reports
+	 * @param {XmlElement} elem     the node containing the element being checked
+	 * @param {ErrorList}  errs     errors found in validaton
+	 * @param {string}     errCode  error code prefix to be used in reports
 	 * @returns {string} the serviceIdRef, whether it is valid of not
 	 */
 	/* private */ #checkTAGUri(elem, errs, errCode) {
-		if (elem && elem.attr(tva.a_serviceIDRef)) {
-			let svcID = elem.attr(tva.a_serviceIDRef).value();
+		if (elem && elem.attrAnyNs(tva.a_serviceIDRef)) {
+			let svcID = elem.attrAnyNs(tva.a_serviceIDRef).value;
 			if (!isTAGURI(svcID))
 				errs.addError({
 					type: WARNING,
 					code: errCode,
 					key: keys.k_InvalidTag,
-					message: `${tva.a_serviceIDRef.attribute(elem.name())} ${svcID.quote()} is not a TAG URI`,
-					line: elem.line(),
+					message: `${tva.a_serviceIDRef.attribute(elem.name)} ${svcID.quote()} is not a TAG URI`,
+					line: elem.line,
 				});
 			return svcID;
 		}
@@ -368,12 +304,12 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <Synopsis> elements
 	 *
-	 * @param {object}  props               Metadata of the XML document
-	 * @param {XMLnode} BasicDescription    the element whose children should be checked
-	 * @param {array}   requiredLengths	    @length attributes that are required to be present
-	 * @param {array}   optionalLengths	    @length attributes that can optionally be present
-	 * @param {Class}   errs                errors found in validaton
-	 * @param {string}  errCode             error code prefix to be used in reports
+	 * @param {object}     props               Metadata of the XML document
+	 * @param {XmlElement} BasicDescription    the element whose children should be checked
+	 * @param {array}      requiredLengths	    @length attributes that are required to be present
+	 * @param {array}      optionalLengths	    @length attributes that can optionally be present
+	 * @param {ErrorList}  errs                errors found in validaton
+	 * @param {string}     errCode             error code prefix to be used in reports
 	 */
 	/* private */ #ValidateSynopsis(props, BasicDescription, requiredLengths, optionalLengths, errs, errCode) {
 		if (!BasicDescription) {
@@ -400,12 +336,12 @@ export default class ContentGuideCheck {
 		while ((Synopsis = BasicDescription.get(xPath(props.prefix, tva.e_Synopsis, ++s), props.schema)) != null) {
 			checkAttributes(Synopsis, [tva.a_length], [tva.a_lang], tvaEA.Synopsis, errs, `${errCode}-1`);
 
-			const synopsisLang = GetNodeLanguage(Synopsis, false, errs, `${errCode}-2`, this.#knownLanguages);
-			const synopsisLength = Synopsis.attr(tva.a_length) ? Synopsis.attr(tva.a_length).value() : null;
+			const synopsisLang = GetNodeLanguage(Synopsis, false, errs, `${errCode}-2`);
+			const synopsisLength = Synopsis.attrAnyNs(tva.a_length) ? Synopsis.attrAnyNs(tva.a_length).value : null;
 
 			if (synopsisLength) {
 				if (isIn(requiredLengths, synopsisLength) || isIn(optionalLengths, synopsisLength)) {
-					const _len = unEntity(Synopsis.text()).length;
+					const _len = unEntity(Synopsis.content).length;
 					switch (synopsisLength) {
 						case tva.SYNOPSIS_SHORT_LABEL:
 							if (_len > tva.SYNOPSIS_SHORT_LENGTH)
@@ -487,21 +423,21 @@ export default class ContentGuideCheck {
 			errs.addError({
 				code: `${errCode}-19`,
 				message: requiredSynopsisError(tva.SYNOPSIS_SHORT_LABEL),
-				line: BasicDescription.line(),
+				line: BasicDescription.line,
 				key: keys.k_MissingSynopsisLength,
 			});
 		if (isIn(requiredLengths, tva.SYNOPSIS_MEDIUM_LABEL) && !hasMedium)
 			errs.addError({
 				code: `${errCode}-20`,
 				message: requiredSynopsisError(tva.SYNOPSIS_MEDIUM_LABEL),
-				line: BasicDescription.line(),
+				line: BasicDescription.line,
 				key: keys.k_MissingSynopsisLength,
 			});
 		if (isIn(requiredLengths, tva.SYNOPSIS_LONG_LABEL) && !hasLong)
 			errs.addError({
 				code: `${errCode}-21`,
 				message: requiredSynopsisError(tva.SYNOPSIS_LONG_LABEL),
-				line: BasicDescription.line(),
+				line: BasicDescription.line,
 				key: keys.k_MissingSynopsisLength,
 			});
 	}
@@ -509,12 +445,12 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <Keyword> elements specified
 	 *
-	 * @param {object}  props             Metadata of the XML document
-	 * @param {XMLnode} BasicDescription  the element whose children should be checked
-	 * @param {integer} minKeywords       the minimum number of keywords
-	 * @param {integer}	maxKeywords       the maximum number of keywords
-	 * @param {Class}   errs              errors found in validaton
-	 * @param {string}  errCode           error code prefix to be used in reports
+	 * @param {object}     props             Metadata of the XML document
+	 * @param {XmlElement} BasicDescription  the element whose children should be checked
+	 * @param {integer}    minKeywords       the minimum number of keywords
+	 * @param {integer}	   maxKeywords       the maximum number of keywords
+	 * @param {ErrorList}  errs              errors found in validaton
+	 * @param {string}     errCode           error code prefix to be used in reports
 	 */
 	/* private */ #ValidateKeyword(props, BasicDescription, minKeywords, maxKeywords, errs, errCode) {
 		if (!BasicDescription) {
@@ -531,8 +467,8 @@ export default class ContentGuideCheck {
 		while ((Keyword = BasicDescription.get(xPath(props.prefix, tva.e_Keyword, ++k), props.schema)) != null) {
 			checkAttributes(Keyword, [], [tva.a_lang, tva.a_type], tvaEA.Keyword, errs, `${errCode}-1`);
 
-			let keywordType = Keyword.attr(tva.a_type) ? Keyword.attr(tva.a_type).value() : tva.DEFAULT_KEYWORD_TYPE;
-			let keywordLang = GetNodeLanguage(Keyword, false, errs, `${errCode}-2`, this.#knownLanguages);
+			let keywordType = Keyword.attrAnyNs(tva.a_type) ? Keyword.attrAnyNs(tva.a_type).value : tva.DEFAULT_KEYWORD_TYPE;
+			let keywordLang = GetNodeLanguage(Keyword, false, errs, `${errCode}-2`);
 
 			if (counts[keywordLang] === undefined) counts[keywordLang] = [Keyword];
 			else counts[keywordLang].push(Keyword);
@@ -544,7 +480,7 @@ export default class ContentGuideCheck {
 					message: `${tva.a_type.attribute()}=${keywordType.quote()} not permitted for ${tva.e_Keyword.elementize()}`,
 					fragment: Keyword,
 				});
-			if (unEntity(Keyword.text()).length > dvbi.MAX_KEYWORD_LENGTH)
+			if (unEntity(Keyword.content).length > dvbi.MAX_KEYWORD_LENGTH)
 				errs.addError({
 					code: `${errCode}-12`,
 					message: `length of ${tva.e_Keyword.elementize()} is greater than ${dvbi.MAX_KEYWORD_LENGTH}`,
@@ -569,10 +505,10 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <Genre> elements specified
 	 *
-	 * @param {object}  props             Metadata of the XML document
-	 * @param {XMLnode} BasicDescription  the element whose children should be checked
-	 * @param {Class}   errs              errors found in validaton
-	 * @param {string}  errCode           error code prefix to be used in reports
+	 * @param {object}     props             Metadata of the XML document
+	 * @param {XmlElement} BasicDescription  the element whose children should be checked
+	 * @param {ErrorList}  errs              errors found in validaton
+	 * @param {string}     errCode           error code prefix to be used in reports
 	 */
 	/* private */ #ValidateGenre(props, BasicDescription, errs, errCode) {
 		if (!BasicDescription) {
@@ -583,7 +519,7 @@ export default class ContentGuideCheck {
 		let g = 0,
 			Genre;
 		while ((Genre = BasicDescription.get(xPath(props.prefix, tva.e_Genre, ++g), props.schema)) != null) {
-			const genreType = Genre.attr(tva.a_type) ? Genre.attr(tva.a_type).value() : tva.DEFAULT_GENRE_TYPE;
+			const genreType = Genre.attrAnyNs(tva.a_type) ? Genre.attrAnyNs(tva.a_type).value : tva.DEFAULT_GENRE_TYPE;
 			if (genreType != tva.GENRE_TYPE_MAIN)
 				errs.addError({
 					code: `${errCode}-1`,
@@ -594,7 +530,7 @@ export default class ContentGuideCheck {
 					description: `${tva.a_type.attribute(tva.e_Genre)} must be "${tva.GENRE_TYPE_MAIN}", semantic definitions of ${tva.e_Genre.elementize()}`,
 				});
 
-			const genreValue = Genre.attr(tva.a_href) ? Genre.attr(tva.a_href).value() : "";
+			const genreValue = Genre.attrAnyNs(tva.a_href) ? Genre.attrAnyNs(tva.a_href).value : "";
 			if (!this.#allowedGenres.isIn(genreValue))
 				errs.addError({
 					code: `${errCode}-2`,
@@ -610,10 +546,10 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <ParentalGuidance> elements specified.
 	 *
-	 * @param {object}  props             Metadata of the XML document
-	 * @param {XMLnode} BasicDescription  the element whose children should be checked
-	 * @param {Class}   errs              errors found in validaton
-	 * @param {string}  errCode           error code prefix to be used in reports
+	 * @param {object}     props             Metadata of the XML document
+	 * @param {XmlElement} BasicDescription  the element whose children should be checked
+	 * @param {ErrorList}  errs              errors found in validaton
+	 * @param {string}     errCode           error code prefix to be used in reports
 	 */
 	/* private */ #Validate_ParentalGuidance(props, BasicDescription, errs, errCode) {
 		if (!BasicDescription) {
@@ -631,7 +567,7 @@ export default class ContentGuideCheck {
 			ParentalGuidance;
 		while ((ParentalGuidance = BasicDescription.get(xPath(props.prefix, tva.e_ParentalGuidance, ++pg), props.schema)) != null) {
 			let pgCountries = UNSPECIFIED_COUNTRY;
-			if (hasChild(ParentalGuidance, tva.e_CountryCodes)) pgCountries = ParentalGuidance.get(xPath(props.prefix, tva.e_CountryCodes), props.schema).text();
+			if (hasChild(ParentalGuidance, tva.e_CountryCodes)) pgCountries = ParentalGuidance.get(xPath(props.prefix, tva.e_CountryCodes), props.schema).content;
 
 			const pgCountriesList = pgCountries.split(",");
 			pgCountriesList.forEach((pgCountry) => {
@@ -652,7 +588,7 @@ export default class ContentGuideCheck {
 				// first <ParentalGuidance> element must contain an <mpeg7:MinimumAge> element
 				if (ParentalGuidance.childNodes())
 					ParentalGuidance.childNodes().forEachSubElement((pgChild) => {
-						switch (pgChild.name()) {
+						switch (pgChild.name) {
 							case tva.e_MinimumAge:
 								checkAttributes(pgChild, [], [], tvaEA.MinimumAge, errs, `${errCode}-10`);
 								if (thisCountry.MinimumAge) {
@@ -667,7 +603,7 @@ export default class ContentGuideCheck {
 									});
 								}
 								thisCountry.MinimumAge = pgChild;
-								let age = parseInt(pgChild.text());
+								let age = parseInt(pgChild.content);
 								if ((age < 4 || age > 18) && age != 255)
 									errs.addError({
 										code: `${errCode}-12`,
@@ -689,8 +625,8 @@ export default class ContentGuideCheck {
 										fragment: pgChild,
 									});
 								}
-								if (pgChild.attr(tva.a_href)) {
-									const rating = pgChild.attr(tva.a_href).value();
+								if (pgChild.attrAnyNs(tva.a_href)) {
+									const rating = pgChild.attrAnyNs(tva.a_href).value;
 									if (this.#allowedRatings.hasScheme(rating)) {
 										if (!this.#allowedRatings.isIn(rating))
 											errs.addError({
@@ -722,16 +658,16 @@ export default class ContentGuideCheck {
 								break;
 							case tva.e_ExplanatoryText:
 								checkAttributes(pgChild, [tva.a_length], [tva.a_lang], tvaEA.ExplanatoryText, errs, `${errCode}-30`);
-								if (pgChild.attr(tva.a_length)) {
-									if (pgChild.attr(tva.a_length).value() != tva.v_lengthLong)
+								if (pgChild.attrAnyNs(tva.a_length)) {
+									if (pgChild.attrAnyNs(tva.a_length).value != tva.v_lengthLong)
 										errs.addError({
 											code: `${errCode}-31`,
-											message: `${tva.a_length.attribute()}=${pgChild.attr(tva.a_length).value().quote()} is not allowed for ${tva.e_ExplanatoryText.elementize()}`,
+											message: `${tva.a_length.attribute()}=${pgChild.attrAnyNs(tva.a_length).value.quote()} is not allowed for ${tva.e_ExplanatoryText.elementize()}`,
 											fragment: pgChild,
 											key: keys.k_LengthError,
 										});
 								}
-								if (unEntity(pgChild.text()).length > dvbi.MAX_EXPLANATORY_TEXT_LENGTH)
+								if (unEntity(pgChild.content).length > dvbi.MAX_EXPLANATORY_TEXT_LENGTH)
 									errs.addError({
 										code: `${errCode}-32`,
 										message: `length of ${tva._ExplanatoryText.elementize()} cannot exceed ${dvbi.MAX_EXPLANATORY_TEXT_LENGTH} characters`,
@@ -741,7 +677,7 @@ export default class ContentGuideCheck {
 								break;
 						}
 					});
-				checkXMLLangs(tva.e_ExplanatoryText, `${BasicDescription.name()}.${tva.e_ParentalGuidance}`, ParentalGuidance, errs, `${errCode}-50`, this.#knownLanguages);
+				checkXMLLangs(tva.e_ExplanatoryText, `${BasicDescription.name}.${tva.e_ParentalGuidance}`, ParentalGuidance, errs, `${errCode}-50`);
 			});
 		}
 
@@ -762,10 +698,10 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <CreditsList> elements specified
 	 *
-	 * @param {object}  props              Metadata of the XML document
-	 * @param {XMLnode} BasicDescription   the element whose children should be checked
-	 * @param {Class}   errs               errors found in validaton
-	 * @param {string}  errCode            error code prefix to be used in reports
+	 * @param {object}     props              Metadata of the XML document
+	 * @param {XmlElement} BasicDescription   the element whose children should be checked
+	 * @param {ErrorList}  errs               errors found in validaton
+	 * @param {string}     errCode            error code prefix to be used in reports
 	 */
 	/* private */ #ValidateCreditsList(props, BasicDescription, errs, errCode) {
 		if (!BasicDescription) {
@@ -780,17 +716,17 @@ export default class ContentGuideCheck {
 		/**
 		 * validate a name (either PersonName of Character) to ensure a single GivenName is present with a single optional FamilyName
 		 *
-		 * @param {XMLnode} elem      the element whose children should be checked
-		 * @param {Class}   errs      errors found in validaton
-		 * @param {string}  errCode   error code prefix to be used in reports
+		 * @param {XmlElement} elem      the element whose children should be checked
+		 * @param {ErrorList}  errs      errors found in validaton
+		 * @param {string}     errCode   error code prefix to be used in reports
 		 */
 		function ValidateName(elem, errs, errCode) {
 			function checkNamePart(elem, errs, errCode) {
-				if (unEntity(elem.text()).length > dvbi.MAX_NAME_PART_LENGTH)
+				if (unEntity(elem.content).length > dvbi.MAX_NAME_PART_LENGTH)
 					errs.addError({
 						code: errCode,
 						fragment: elem,
-						message: `${elem.name().elementize()} in ${elem.parent().name().elementize()} is longer than ${dvbi.MAX_NAME_PART_LENGTH} characters`,
+						message: `${elem.name.elementize()} in ${elem.parent.name.elementize()} is longer than ${dvbi.MAX_NAME_PART_LENGTH} characters`,
 						key: keys.k_LengthError,
 					});
 			}
@@ -803,7 +739,7 @@ export default class ContentGuideCheck {
 				givenNameCount = 0;
 			if (elem.childNodes())
 				elem.childNodes().forEachSubElement((subElem) => {
-					switch (subElem.name()) {
+					switch (subElem.name) {
 						case tva.e_GivenName:
 							givenNameCount++;
 							checkNamePart(subElem, errs, `${errCode}-2`);
@@ -818,14 +754,14 @@ export default class ContentGuideCheck {
 			if (givenNameCount == 0)
 				errs.addError({
 					code: `${errCode}-4`,
-					message: `${tva.e_GivenName.elementize()} is mandatory in ${elem.name().elementize()}`,
-					line: elem.line(),
+					message: `${tva.e_GivenName.elementize()} is mandatory in ${elem.name.elementize()}`,
+					line: elem.line,
 					key: "missing element",
 				});
 			if (familyNameCount.length > 1)
 				errs.addError({
 					code: `${errCode}-5`,
-					message: `only a single ${tva.e_FamilyName.elementize()} is permitted in ${elem.name().elementize()}`,
+					message: `only a single ${tva.e_FamilyName.elementize()} is permitted in ${elem.name.elementize()}`,
 					multiElementError: familyNameCount,
 					key: "multiple element",
 				});
@@ -839,8 +775,8 @@ export default class ContentGuideCheck {
 			while ((CreditsItem = CreditsList.get(xPath(props.prefix, tva.e_CreditsItem, ++ci), props.schema)) != null) {
 				numCreditsItems++;
 				checkAttributes(CreditsItem, [tva.a_role], [], tvaEA.CreditsItem, errs, `${errCode}-1`);
-				if (CreditsItem.attr(tva.a_role)) {
-					const CreditsItemRole = CreditsItem.attr(tva.a_role).value();
+				if (CreditsItem.attrAnyNs(tva.a_role)) {
+					const CreditsItemRole = CreditsItem.attrAnyNs(tva.a_role).value;
 					if (!this.#allowedCreditItemRoles.isIn(CreditsItemRole))
 						errs.addError({
 							code: `${errCode}-2`,
@@ -855,24 +791,24 @@ export default class ContentGuideCheck {
 					foundOrganizationName = [];
 				if (CreditsItem.childNodes())
 					CreditsItem.childNodes().forEachSubElement((elem) => {
-						switch (elem.name()) {
+						switch (elem.name) {
 							case tva.e_PersonName:
 								foundPersonName.push(elem);
 								// required to have a GivenName optionally have a FamilyName
 								ValidateName(elem, errs, `${errCode}-11`);
-								checkXMLLangs(tva.e_GivenName, tva.e_PersonName, elem, errs, `${errCode}-12`, this.#knownLanguages);
-								checkXMLLangs(tva.e_FamilyName, tva.e_PersonName, elem, errs, `${errCode}-13`, this.#knownLanguages);
+								checkXMLLangs(tva.e_GivenName, tva.e_PersonName, elem, errs, `${errCode}-12`);
+								checkXMLLangs(tva.e_FamilyName, tva.e_PersonName, elem, errs, `${errCode}-13`);
 								break;
 							case tva.e_Character:
 								foundCharacter.push(elem);
 								// required to have a GivenName optionally have a FamilyName
 								ValidateName(elem, errs, `${errCode}-21`);
-								checkXMLLangs(tva.e_GivenName, tva.e_Character, elem, errs, `${errCode}-22`, this.#knownLanguages);
-								checkXMLLangs(tva.e_FamilyName, tva.e_Character, elem, errs, `${errCode}-23`, this.#knownLanguages);
+								checkXMLLangs(tva.e_GivenName, tva.e_Character, elem, errs, `${errCode}-22`);
+								checkXMLLangs(tva.e_FamilyName, tva.e_Character, elem, errs, `${errCode}-23`);
 								break;
 							case tva.e_OrganizationName:
 								foundOrganizationName.push(elem);
-								if (unEntity(elem.text()).length > dvbi.MAX_ORGANIZATION_NAME_LENGTH)
+								if (unEntity(elem.content).length > dvbi.MAX_ORGANIZATION_NAME_LENGTH)
 									errs.addError({
 										code: `${errCode}-31`,
 										message: `length of ${tva.e_OrganizationName.elementize()} in ${tva.e_CreditsItem.elementize()} exceeds ${dvbi.MAX_ORGANIZATION_NAME_LENGTH} characters`,
@@ -881,17 +817,17 @@ export default class ContentGuideCheck {
 									});
 								break;
 							default:
-								if (elem.name() != "text")
+								if (elem.name != "text")
 									errs.addError({
 										code: `${errCode}-91`,
-										message: `extra element ${elem.name().elementize()} found in ${tva.e_CreditsItem.elementize()}`,
+										message: `extra element ${elem.name.elementize()} found in ${tva.e_CreditsItem.elementize()}`,
 										fragment: elem,
 										key: "unexpected element",
 									});
 						}
 					});
 				let singleElementError = (elementName, parentElementName) => `only a single ${elementName.elementize()} is permitted in ${parentElementName.elementize()}`;
-				checkXMLLangs(tva.e_OrganizationName, tva.e_CreditsItem, CreditsItem, errs, `${errCode}-11`, this.#knownLanguages);
+				checkXMLLangs(tva.e_OrganizationName, tva.e_CreditsItem, CreditsItem, errs, `${errCode}-11`);
 				if (foundPersonName.length > 1)
 					errs.addError({
 						code: `${errCode}-51`,
@@ -917,14 +853,14 @@ export default class ContentGuideCheck {
 					errs.addError({
 						code: `${errCode}-54`,
 						message: `${tva.e_Character.elementize()} in ${tva.e_CreditsItem.elementize()} requires ${tva.e_PersonName.elementize()}`,
-						line: CreditsItem.line(),
+						line: CreditsItem.line,
 						key: keys.k_InvalidElement,
 					});
 				if (foundOrganizationName.length > 0 && (foundPersonName.length > 0 || foundCharacter.length > 0))
 					errs.addError({
 						code: `${errCode}-55`,
 						message: `${tva.e_OrganizationName.elementize()} can only be present when ${tva.e_PersonName.elementize()} and ${tva.e_OrganizationName.elementize()} are absent in ${tva.e_CreditsItem.elementize()}`,
-						line: CreditsItem.line(),
+						line: CreditsItem.line,
 						key: keys.k_InvalidElement,
 					});
 			}
@@ -932,7 +868,7 @@ export default class ContentGuideCheck {
 				errs.addError({
 					code: `${errCode}-16`,
 					message: `a maximum of ${dvbi.MAX_CREDITS_ITEMS} ${tva.e_CreditsItem.elementize()} elements are permitted in ${tva.e_CreditsList.elementize()}`,
-					line: CreditsItem.line(),
+					line: CreditsItem.line,
 					key: `excess ${tva.e_CreditsItem.elementize()}`,
 				});
 		}
@@ -941,9 +877,9 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <RelatedMaterial> elements specified
 	 *
-	 * @param {object}  props             Metadata of the XML document
-	 * @param {XMLnode} BasicDescription  the element whose children should be checked
-	 * @param {Class}   errs              errors found in validaton
+	 * @param {object}     props             Metadata of the XML document
+	 * @param {XmlElement} BasicDescription  the element whose children should be checked
+	 * @param {ErrorList}  errs              errors found in validaton
 	 */
 	/* private */ #ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs) {
 		if (!BasicDescription) {
@@ -957,16 +893,16 @@ export default class ContentGuideCheck {
 		let rm = 0,
 			RelatedMaterial;
 		while ((RelatedMaterial = BasicDescription.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null)
-			ValidatePromotionalStillImage(RelatedMaterial, errs, "RMPSI001", BasicDescription.name().elementize(), this.#knownLanguages);
+			ValidatePromotionalStillImage(RelatedMaterial, errs, "RMPSI001", BasicDescription.name.elementize());
 	}
 
 	/**
 	 * validate the <RelatedMaterial> elements containing pagination links
 	 *
-	 * @param {object}  props              Metadata of the XML document
-	 * @param {XMLnode} BasicDescription   the element whose children should be checked
-	 * @param {Class}   errs               errors found in validaton
-	 * @param {string}  Location           The location of the Basic Description element
+	 * @param {object}     props              Metadata of the XML document
+	 * @param {XmlElement} BasicDescription   the element whose children should be checked
+	 * @param {ErrorList}  errs               errors found in validaton
+	 * @param {string}     Location           The location of the Basic Description element
 	 */
 	/* private */ #ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, Location) {
 		if (!BasicDescription) {
@@ -1001,8 +937,8 @@ export default class ContentGuideCheck {
 			if (!HowRelated) errs.addError(NoChildElement(tva.e_HowRelated.elementize(), RelatedMaterial, Location, "VP001"));
 			else {
 				checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "VP002");
-				if (HowRelated.attr(tva.a_href))
-					switch (HowRelated.attr(tva.a_href).value()) {
+				if (HowRelated.attrAnyNs(tva.a_href))
+					switch (HowRelated.attrAnyNs(tva.a_href).value) {
 						case dvbi.PAGINATION_FIRST_URI:
 							countPaginationFirst.push(HowRelated);
 							break;
@@ -1018,10 +954,10 @@ export default class ContentGuideCheck {
 					}
 				let MediaURI = RelatedMaterial.get(xPathM(props.prefix, [tva.e_MediaLocator, tva.e_MediaUri]), props.schema);
 				if (MediaURI) {
-					if (!isHTTPURL(MediaURI.text()))
+					if (!isHTTPURL(MediaURI.content))
 						errs.addError({
 							code: "VP011",
-							message: `${tva.e_MediaUri.elementize()}=${MediaURI.text().quote()} is not a valid Pagination URL`,
+							message: `${tva.e_MediaUri.elementize()}=${MediaURI.content.quote()} is not a valid Pagination URL`,
 							key: keys.k_InvalidURL,
 							fragment: MediaURI,
 						});
@@ -1069,9 +1005,9 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <RelatedMaterial> elements in  More Episodes response
 	 *
-	 * @param {object}  props              Metadata of the XML document
-	 * @param {XMLnode} BasicDescription   the element whose children should be checked
-	 * @param {Class}   errs               errors found in validaton
+	 * @param {object}     props              Metadata of the XML document
+	 * @param {XmlElement} BasicDescription   the element whose children should be checked
+	 * @param {ErrorList}  errs               errors found in validaton
 	 */
 	/* private */ #ValidateRelatedMaterial_MoreEpisodes(props, BasicDescription, errs) {
 		if (!BasicDescription) {
@@ -1082,12 +1018,12 @@ export default class ContentGuideCheck {
 			});
 			return;
 		}
-		switch (BasicDescription.parent().name()) {
+		switch (BasicDescription.parent.name) {
 			case tva.e_ProgramInformation:
 				let rm = 0,
 					RelatedMaterial;
 				while ((RelatedMaterial = BasicDescription.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null)
-					ValidatePromotionalStillImage(RelatedMaterial, errs, "RMME001", BasicDescription.name(), this.#knownLanguages);
+					ValidatePromotionalStillImage(RelatedMaterial, errs, "RMME001", BasicDescription.name);
 				break;
 			case tva.e_GroupInformation:
 				this.#ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, "More Episodes");
@@ -1097,9 +1033,9 @@ export default class ContentGuideCheck {
 
 	/** TemplateAITPromotional Still Image
 	 *
-	 * @param {XMLnode} RelatedMaterial  the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
-	 * @param {Object}  errs             the class where errors and warnings relating to the serivce list processing are stored
-	 * @param {string}  Location         the printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+	 * @param {XmlElement} RelatedMaterial  the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
+	 * @param {ErrorList}  errs             the class where errors and warnings relating to the serivce list processing are stored
+	 * @param {string}     Location         the printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 */
 	/* private */ #ValidateTemplateAIT(RelatedMaterial, errs, Location) {
 		if (!RelatedMaterial) {
@@ -1115,7 +1051,7 @@ export default class ContentGuideCheck {
 
 		if (RelatedMaterial.childNodes())
 			RelatedMaterial.childNodes().forEachSubElement((elem) => {
-				switch (elem.name()) {
+				switch (elem.name) {
 					case tva.e_HowRelated:
 						HowRelated = elem;
 						break;
@@ -1131,11 +1067,11 @@ export default class ContentGuideCheck {
 		}
 
 		checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "TA002");
-		if (HowRelated.attr(tva.a_href)) {
-			if (HowRelated.attr(tva.a_href).value() != dvbi.TEMPLATE_AIT_URI)
+		if (HowRelated.attrAnyNs(tva.a_href)) {
+			if (HowRelated.attrAnyNs(tva.a_href).value != dvbi.TEMPLATE_AIT_URI)
 				errs.addError({
 					code: "TA003",
-					message: `${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attr(tva.a_href).value().quote()} does not designate a Template AIT`,
+					message: `${tva.a_href.attribute(tva.e_HowRelated)}=${HowRelated.attrAnyNs(tva.a_href).value.quote()} does not designate a Template AIT`,
 					fragment: HowRelated,
 					key: "not template AIT",
 				});
@@ -1145,15 +1081,15 @@ export default class ContentGuideCheck {
 						let hasAuxiliaryURI = false;
 						if (ml.childNodes())
 							ml.childNodes().forEachSubElement((child) => {
-								if (child.name() == tva.e_AuxiliaryURI) {
+								if (child.name == tva.e_AuxiliaryURI) {
 									hasAuxiliaryURI = true;
 									checkAttributes(child, [tva.a_contentType], [], tvaEA.AuxiliaryURI, errs, "TA010");
-									if (child.attr(tva.a_contentType)) {
-										let contentType = child.attr(tva.a_contentType).value();
+									if (child.attrAnyNs(tva.a_contentType)) {
+										let contentType = child.attrAnyNs(tva.a_contentType).value;
 										if (contentType != dvbi.XML_AIT_CONTENT_TYPE)
 											errs.addError({
 												code: "TA011",
-												message: `invalid ${tva.a_contentType.attribute()}=${contentType.quote()} specified for ${RelatedMaterial.name().elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`,
+												message: `invalid ${tva.a_contentType.attribute()}=${contentType.quote()} specified for ${RelatedMaterial.name.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`,
 												fragment: child,
 												key: keys.k_InvalidValue,
 											});
@@ -1170,9 +1106,9 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <RelatedMaterial> elements specified in a Box Set List
 	 *
-	 * @param {object}  props              Metadata of the XML document
-	 * @param {XMLnode} BasicDescription   the element whose children should be checked
-	 * @param {Class}   errs               errors found in validaton
+	 * @param {object}     props              Metadata of the XML document
+	 * @param {XmlElement} BasicDescription   the element whose children should be checked
+	 * @param {ErrorList}  errs               errors found in validaton
 	 */
 	/* private */ #ValidateRelatedMaterial_BoxSetList(props, BasicDescription, errs) {
 		if (!BasicDescription) {
@@ -1195,12 +1131,12 @@ export default class ContentGuideCheck {
 			if (!HowRelated) errs.addError(NoChildElement(tva.e_HowRelated.elementize(), RelatedMaterial, null, "MB009"));
 			else {
 				checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "MB010");
-				if (HowRelated.attr(tva.a_href)) {
-					const hrHref = HowRelated.attr(tva.a_href).value();
+				if (HowRelated.attrAnyNs(tva.a_href)) {
+					const hrHref = HowRelated.attrAnyNs(tva.a_href).value;
 					switch (hrHref) {
 						case dvbi.TEMPLATE_AIT_URI:
 							countTemplateAIT.push(HowRelated);
-							this.#ValidateTemplateAIT(RelatedMaterial, errs, BasicDescription.name().elementize());
+							this.#ValidateTemplateAIT(RelatedMaterial, errs, BasicDescription.name.elementize());
 							break;
 						case dvbi.PAGINATION_FIRST_URI:
 						case dvbi.PAGINATION_PREV_URI:
@@ -1211,7 +1147,7 @@ export default class ContentGuideCheck {
 							break;
 						case tva.cs_PromotionalStillImage:
 							countImage.push(HowRelated);
-							ValidatePromotionalStillImage(RelatedMaterial, errs, "MB012", BasicDescription.name().elementize(), this.#knownLanguages);
+							ValidatePromotionalStillImage(RelatedMaterial, errs, "MB012", BasicDescription.name.elementize());
 							break;
 						default:
 							errs.addError(cg_InvalidHrefValue(hrHref, HowRelated, `${tva.e_RelatedMaterial.elementize()} in Box Set List`, "MB011"));
@@ -1244,12 +1180,12 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <Title> elements specified
 	 *
-	 * @param {object}  props            Metadata of the XML document
-	 * @param {XMLnode} containingNode   the element whose children should be checked
-	 * @param {boolean} allowSecondary   indicates if  Title with @type="secondary" is permitted
-	 * @param {Class}   errs             errors found in validaton
-	 * @param {string}  errCode          error code prefix to be used in reports
-	 * @param {boolean} TypeIsRequired   true is the @type is a required attribute in this use of <Title>
+	 * @param {object}     props            Metadata of the XML document
+	 * @param {XmlElement} containingNode   the element whose children should be checked
+	 * @param {boolean}    allowSecondary   indicates if  Title with @type="secondary" is permitted
+	 * @param {ErrorList}  errs             errors found in validaton
+	 * @param {string}     errCode          error code prefix to be used in reports
+	 * @param {boolean}    TypeIsRequired   true is the @type is a required attribute in this use of <Title>
 	 */
 	/* private */ #ValidateTitle(props, containingNode, allowSecondary, errs, errCode, TypeIsRequired) {
 		if (!containingNode) {
@@ -1270,16 +1206,16 @@ export default class ContentGuideCheck {
 		while ((Title = containingNode.get(xPath(props.prefix, tva.e_Title, ++t), props.schema)) != null) {
 			checkAttributes(Title, requiredAttributes, optionalAttributes, tvaEA.Title, errs, `${errCode}-1`);
 
-			const titleType = Title.attr(tva.a_type) ? Title.attr(tva.a_type).value() : mpeg7.DEFAULT_TITLE_TYPE;
-			const titleLang = GetNodeLanguage(Title, false, errs, `${errCode}-2`, this.#knownLanguages);
-			const titleStr = unEntity(Title.text());
+			const titleType = Title.attrAnyNs(tva.a_type) ? Title.attrAnyNs(tva.a_type).value : mpeg7.DEFAULT_TITLE_TYPE;
+			const titleLang = GetNodeLanguage(Title, false, errs, `${errCode}-2`);
+			const titleStr = unEntity(Title.content);
 
 			if (titleStr.length > dvbi.MAX_TITLE_LENGTH)
 				errs.addError({
 					code: `${errCode}-11`,
 					message: `${tva.e_Title.elementize()} length exceeds ${dvbi.MAX_TITLE_LENGTH} characters`,
 					fragment: Title,
-					description: "refer clause 6.10.5 in A177"
+					description: "refer clause 6.10.5 in A177",
 				});
 			switch (titleType) {
 				case mpeg7.TITLE_TYPE_MAIN:
@@ -1301,7 +1237,7 @@ export default class ContentGuideCheck {
 					} else
 						errs.addError({
 							code: `${errCode}-14`,
-							message: `${tva.a_type.attribute(tva.e_Title)}=${mpeg7.TITLE_TYPE_SECONDARY.quote()} is not permitted for this ${containingNode.name().elementize()}`,
+							message: `${tva.a_type.attribute(tva.e_Title)}=${mpeg7.TITLE_TYPE_SECONDARY.quote()} is not permitted for this ${containingNode.name.elementize()}`,
 							fragment: Title,
 						});
 					break;
@@ -1310,7 +1246,7 @@ export default class ContentGuideCheck {
 						code: `${errCode}-15`,
 						message: `${tva.a_type.attribute()} must be ${mpeg7.TITLE_TYPE_MAIN.quote()} or ${mpeg7.TITLE_TYPE_SECONDARY.quote()} for ${tva.e_Title.elementize()}`,
 						fragment: Title,
-						description: "refer to the relevant subsection of clause 6.10.5 in A177"
+						description: "refer to the relevant subsection of clause 6.10.5 in A177",
 					});
 					break;
 			}
@@ -1330,11 +1266,11 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <BasicDescription> element against the profile for the given request/response type
 	 *
-	 * @param {object}  props           Metadata of the XML document
-	 * @param {XMLnode} parentElement   the element whose children should be checked
-	 * @param {string}  requestType     the type of content guide request being checked
-	 * @param {Class}   errs            errors found in validaton
-	 * @param {XMLnode} categoryGroup   the GroupInformation element that others must refer to through <MemberOf>
+	 * @param {object}     props           Metadata of the XML document
+	 * @param {XmlElement} parentElement   the element whose children should be checked
+	 * @param {string}     requestType     the type of content guide request being checked
+	 * @param {ErrorList}  errs            errors found in validaton
+	 * @param {XmlElement} categoryGroup   the GroupInformation element that others must refer to through <MemberOf>
 	 */
 	/* private */ #ValidateBasicDescription(props, parentElement, requestType, errs, categoryGroup) {
 		if (!parentElement) {
@@ -1346,14 +1282,14 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		const isParentGroup = parentElement == categoryGroup;
+		const isParentGroup = categoryGroup ? (parentElement.line == categoryGroup.line) : null;
 		const BasicDescription = parentElement.get(xPath(props.prefix, tva.e_BasicDescription), props.schema);
 		if (!BasicDescription) {
 			errs.addError(NoChildElement(tva.e_BasicDescription.elementize(), parentElement, null, "BD001"));
 			return;
 		}
 
-		switch (parentElement.name()) {
+		switch (parentElement.name) {
 			case tva.e_ProgramInformation:
 				switch (requestType) {
 					case CG_REQUEST_SCHEDULE_NOWNEXT: //6.10.5.2
@@ -1445,7 +1381,7 @@ export default class ContentGuideCheck {
 						errs.addError({
 							type: APPLICATION,
 							code: "BD050",
-							message: `ValidateBasicDescription() called with invalid requestType/element (${requestType}/${parentElement.name()})`,
+							message: `ValidateBasicDescription() called with invalid requestType/element (${requestType}/${parentElement.name})`,
 						});
 				}
 				break;
@@ -1514,7 +1450,7 @@ export default class ContentGuideCheck {
 						errs.addError({
 							type: APPLICATION,
 							code: "BD100",
-							message: `ValidateBasicDescription() called with invalid requestType/element (${requestType}/${parentElement.name()})`,
+							message: `ValidateBasicDescription() called with invalid requestType/element (${requestType}/${parentElement.name})`,
 						});
 				}
 				break;
@@ -1522,7 +1458,7 @@ export default class ContentGuideCheck {
 				errs.addError({
 					type: APPLICATION,
 					code: "BD003",
-					message: `ValidateBasicDescription() called with invalid element (${parentElement.name()})`,
+					message: `ValidateBasicDescription() called with invalid element (${parentElement.name})`,
 				});
 		}
 	}
@@ -1535,20 +1471,20 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <ProgramInformation> element against the profile for the given request/response type
 	 *
-	 * @param {object}  props               Metadata of the XML document
-	 * @param {XMLnode} ProgramInformation  the element whose children should be checked
-	 * @param {array}   programCRIDs        array to record CRIDs for later use
-	 * @param {array}   groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
-	 * @param {string}  requestType         the type of content guide request being checked
-	 * @param {array}   indexes             array of @index values from other elements in the same table - for duplicate detection
-	 * @param {Class}   errs                errors found in validaton
-	 * @returns {String} 	CRID if the current program, if this is it
+	 * @param {object}     props               Metadata of the XML document
+	 * @param {XmlElement} ProgramInformation  the element whose children should be checked
+	 * @param {array}      programCRIDs        array to record CRIDs for later use
+	 * @param {array}      groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
+	 * @param {string}     requestType         the type of content guide request being checked
+	 * @param {array}      indexes             array of @index values from other elements in the same table - for duplicate detection
+	 * @param {ErrorList}  errs                errors found in validaton
+	 * @returns {String} 	CRID of the current program, if this is it
 	 */
 	/* private */ #ValidateProgramInformation(props, ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs) {
 		if (!ProgramInformation) {
 			errs.addError({
 				type: APPLICATION,
-				code: "PI000",
+				code: "PIV000",
 				message: "ValidateProgramInformation() called with ProgramInformation==null",
 			});
 			return null;
@@ -1576,23 +1512,23 @@ export default class ContentGuideCheck {
 			"PI002"
 		);
 
-		GetNodeLanguage(ProgramInformation, false, errs, "PI010", this.#knownLanguages);
+		GetNodeLanguage(ProgramInformation, false, errs, "PI010");
 		let isCurrentProgram = false,
 			programCRID = null;
 
-		if (ProgramInformation.attr(tva.a_programId)) {
-			programCRID = ProgramInformation.attr(tva.a_programId).value();
+		if (ProgramInformation.attrAnyNs(tva.a_programId)) {
+			programCRID = ProgramInformation.attrAnyNs(tva.a_programId).value;
 			if (!isCRIDURI(programCRID))
 				this.#NotCRIDFormat(errs, {
 					code: "PI011",
-					message: `${tva.a_programId.attribute(ProgramInformation.name())} is not a valid CRID (${programCRID})`,
-					line: ProgramInformation.line(),
+					message: `${tva.a_programId.attribute(ProgramInformation.name)} is not a valid CRID (${programCRID})`,
+					line: ProgramInformation.line,
 				});
 			if (isIni(programCRIDs, programCRID))
 				errs.addError({
 					code: "PI012",
-					message: `${tva.a_programId.attribute(ProgramInformation.name())}=${programCRID.quote()} is already used`,
-					line: ProgramInformation.line(),
+					message: `${tva.a_programId.attribute(ProgramInformation.name)}=${programCRID.quote()} is already used`,
+					line: ProgramInformation.line,
 				});
 			else programCRIDs.push(programCRID);
 		}
@@ -1602,7 +1538,7 @@ export default class ContentGuideCheck {
 
 		if (ProgramInformation.childNodes())
 			ProgramInformation.childNodes().forEachSubElement((child) => {
-				switch (child.name()) {
+				switch (child.name) {
 					case tva.e_OtherIdentifier: // <ProgramInformation><OtherIdentifier>
 						checkAttributes(child, [], [], tvaEA.OtherIdentifier, errs, "PI021");
 						if (requestType == CG_REQUEST_MORE_EPISODES)
@@ -1616,20 +1552,20 @@ export default class ContentGuideCheck {
 						checkAttributes(child, [tva.a_crid], [tva.a_index], tvaEA.EpisodeOf, errs, "PI031");
 
 						// <ProgramInformation><EpisodeOf>@crid
-						if (child.attr(tva.a_crid)) {
-							const foundCRID = child.attr(tva.a_crid).value();
+						if (child.attrAnyNs(tva.a_crid)) {
+							const foundCRID = child.attrAnyNs(tva.a_crid).value;
 							if (groupCRIDs && !isIni(groupCRIDs, foundCRID))
 								errs.addError({
 									code: "PI032",
 									message: `${tva.a_crid.attribute(
-										`${ProgramInformation.name()}.${tva.e_EpisodeOf}`
+										`${ProgramInformation.name}.${tva.e_EpisodeOf}`
 									)}=${foundCRID.quote()} is not a defined Group CRID for ${tva.e_EpisodeOf.elementize()}`,
 									fragment: child,
 								});
 							else if (!isCRIDURI(foundCRID))
 								this.#NotCRIDFormat(errs, {
 									code: "PI033",
-									message: `${tva.a_crid.attribute(`${ProgramInformation.name()}.${tva.e_EpisodeOf}`)}=${foundCRID.quote()} is not a valid CRID`,
+									message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_EpisodeOf}`)}=${foundCRID.quote()} is not a valid CRID`,
 									fragment: child,
 								});
 						}
@@ -1638,45 +1574,45 @@ export default class ContentGuideCheck {
 						if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW].includes(requestType)) {
 							// xsi:type is optional for Now/Next
 							checkAttributes(child, [tva.a_index, tva.a_crid], [tva.a_type], tvaEA.MemberOf, errs, "PI041");
-							if (child.attr(tva.a_crid) && child.attr(tva.a_crid).value() == dvbi.CRID_NOW) isCurrentProgram = true;
+							if (child.attrAnyNs(tva.a_crid) && child.attrAnyNs(tva.a_crid).value == dvbi.CRID_NOW) isCurrentProgram = true;
 						} else checkAttributes(child, [tva.a_type, tva.a_index, tva.a_crid], [], tvaEA.MemberOf, errs, "PI042");
 
 						// <ProgramInformation><MemberOf>@xsi:type
-						if (child.attr(tva.a_type) && child.attr(tva.a_type).value() != tva.t_MemberOfType)
+						if (child.attrAnyNs(tva.a_type) && child.attrAnyNs(tva.a_type).value != tva.t_MemberOfType)
 							errs.addError({
 								code: "PI043",
-								message: `${attribute(`xsi:${tva.a_type}`)} must be ${tva.t_MemberOfType.quote()} for ${ProgramInformation.name()}.${tva.e_MemberOf}`,
+								message: `${attribute(`xsi:${tva.a_type}`)} must be ${tva.t_MemberOfType.quote()} for ${ProgramInformation.name}.${tva.e_MemberOf}`,
 								fragment: child,
 							});
 
 						// <ProgramInformation><MemberOf>@crid
 						let foundCRID = null;
-						if (child.attr(tva.a_crid)) {
-							foundCRID = child.attr(tva.a_crid).value();
+						if (child.attrAnyNs(tva.a_crid)) {
+							foundCRID = child.attrAnyNs(tva.a_crid).value;
 							if (groupCRIDs && !isIni(groupCRIDs, foundCRID))
 								errs.addError({
 									code: "PI044",
 									message: `${tva.a_crid.attribute(
-										`${ProgramInformation.name()}.${tva.e_MemberOf}`
+										`${ProgramInformation.name}.${tva.e_MemberOf}`
 									)}=${foundCRID.quote()} is not a defined Group CRID for ${tva.e_MemberOf.elementize()}`,
 									fragment: child,
 								});
 							else if (!isCRIDURI(foundCRID))
 								this.#NotCRIDFormat(errs, {
 									code: "PI045",
-									message: `${tva.a_crid.attribute(`${ProgramInformation.name()}.${tva.e_MemberOf}`)}=${foundCRID.quote()} is not a valid CRID`,
+									message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_MemberOf}`)}=${foundCRID.quote()} is not a valid CRID`,
 									fragment: child,
 								});
 						}
 
 						// <ProgramInformation><MemberOf>@index
-						if (child.attr(tva.a_index)) {
-							const index = valUnsignedInt(child.attr(tva.a_index).value());
+						if (child.attrAnyNs(tva.a_index)) {
+							const index = valUnsignedInt(child.attrAnyNs(tva.a_index).value);
 							const indexInCRID = `${foundCRID ? foundCRID : "noCRID"}(${index})`;
 							if (isIni(indexes, indexInCRID))
 								errs.addError({
 									code: "PI046",
-									message: `${tva.a_index.attribute(tva.e_MemberOf)}=${index} is in use by another ${ProgramInformation.name()} element`,
+									message: `${tva.a_index.attribute(tva.e_MemberOf)}=${index} is in use by another ${ProgramInformation.name} element`,
 									fragment: child,
 								});
 							else indexes.push(indexInCRID);
@@ -1691,20 +1627,20 @@ export default class ContentGuideCheck {
 	/**
 	 * find and validate any <ProgramInformation> elements in the <ProgramInformationTable>
 	 *
-	 * @param {object}  props               Metadata of the XML document
-	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {array}   programCRIDs        array to record CRIDs for later use
-	 * @param {array}   groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
-	 * @param {string}  requestType         the type of content guide request being checked
-	 * @param {Class}   errs                errors found in validaton
-	 * @param {integer} o.childCount        the number of child elements to be present (to match GroupInformation@numOfItems)
+	 * @param {object}     props               Metadata of the XML document
+	 * @param {XmlElement} ProgramDescription  the element containing the <ProgramInformationTable>
+	 * @param {array}      programCRIDs        array to record CRIDs for later use
+	 * @param {array}      groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
+	 * @param {string}     requestType         the type of content guide request being checked
+	 * @param {ErrorList}  errs                errors found in validaton
+	 * @param {integer}    o.childCount        the number of child elements to be present (to match GroupInformation@numOfItems)
 	 * @returns {string} the CRID of the currently airing program (that which is a member of the "now" structural crid)
 	 */
 	/* private */ #CheckProgramInformation(props, ProgramDescription, programCRIDs, groupCRIDs, requestType, errs, o = null) {
 		if (!ProgramDescription) {
 			errs.addError({
 				type: APPLICATION,
-				code: "PI100",
+				code: "CPI000",
 				message: "CheckProgramInformation() called with ProgramDescription==null",
 			});
 			return null;
@@ -1712,11 +1648,11 @@ export default class ContentGuideCheck {
 
 		let ProgramInformationTable = ProgramDescription.get(xPath(props.prefix, tva.e_ProgramInformationTable), props.schema);
 		if (!ProgramInformationTable) {
-			//errs.addError({code:"PI101", message:`${tva.e_ProgramInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}, line:ProgramDescription.line()`});
+			//errs.addError({code:"PI101", message:`${tva.e_ProgramInformationTable.elementize()} not specified in ${ProgramDescription.name.elementize()}, line:ProgramDescription.line`});
 			return null;
 		}
 		checkAttributes(ProgramInformationTable, [], [tva.a_lang], tvaEA.ProgramInformationTable, errs, "PI102");
-		GetNodeLanguage(ProgramInformationTable, false, errs, "PI103", this.#knownLanguages);
+		GetNodeLanguage(ProgramInformationTable, false, errs, "PI103");
 
 		let pi = 0,
 			ProgramInformation,
@@ -1736,7 +1672,7 @@ export default class ContentGuideCheck {
 					message: `number of items (${cnt}) in the ${tva.e_ProgramInformationTable.elementize()} does not match ${tva.a_numOfItems.attribute(
 						tva.e_GroupInformation
 					)} specified in ${CATEGORY_GROUP_NAME} (${o.childCount})`,
-					line: ProgramInformationTable.line(),
+					line: ProgramInformationTable.line,
 				});
 		}
 		return currentProgramCRID;
@@ -1745,13 +1681,13 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <GroupInformation> element for Box Set related requests
 	 *
-	 * @param {object}  props              Metadata of the XML document
-	 * @param {XMLnode} GroupInformation   the element whose children should be checked
-	 * @param {string}  requestType        the type of content guide request being checked
-	 * @param {Class}   errs               errors found in validaton
-	 * @param {object}  categoryGroup      the GroupInformationElement that others must refer to through <MemberOf>
-	 * @param {array}   indexes            an accumulation of the @index values found
-	 * @param {array}   groupsFound        groupId values found (null if not needed)
+	 * @param {object}     props              Metadata of the XML document
+	 * @param {XmlElement} GroupInformation   the element whose children should be checked
+	 * @param {string}     requestType        the type of content guide request being checked
+	 * @param {ErrorList}  errs               errors found in validaton
+	 * @param {object}     categoryGroup      the GroupInformationElement that others must refer to through <MemberOf>
+	 * @param {array}      indexes            an accumulation of the @index values found
+	 * @param {array}      groupsFound        groupId values found (null if not needed)
 	 */
 	/* private */ #ValidateGroupInformationBoxSets(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupsFound) {
 		if (!GroupInformation) {
@@ -1762,7 +1698,7 @@ export default class ContentGuideCheck {
 			});
 			return;
 		}
-		let isParentGroup = GroupInformation == categoryGroup;
+		const isParentGroup = GroupInformation.line == categoryGroup.line;
 
 		switch (requestType) {
 			case CG_REQUEST_BS_CATEGORIES:
@@ -1824,58 +1760,58 @@ export default class ContentGuideCheck {
 				break;
 		}
 
-		if (GroupInformation.attr(tva.a_groupId)) {
-			let groupId = GroupInformation.attr(tva.a_groupId).value();
+		if (GroupInformation.attrAnyNs(tva.a_groupId)) {
+			let groupId = GroupInformation.attrAnyNs(tva.a_groupId).value;
 			if (isCRIDURI(groupId)) {
 				if (groupsFound) groupsFound.push(groupId);
 			}
 		}
 
-		const categoryCRID = categoryGroup && categoryGroup.attr(tva.a_groupId) ? categoryGroup.attr(tva.a_groupId).value() : "";
+		const categoryCRID = categoryGroup && categoryGroup.attrAnyNs(tva.a_groupId) ? categoryGroup.attrAnyNs(tva.a_groupId).value : "";
 
 		if (!isParentGroup) {
 			const MemberOf = GroupInformation.get(xPath(props.prefix, tva.e_MemberOf), props.schema);
 			if (MemberOf) {
 				checkAttributes(MemberOf, [tva.a_type, tva.a_index, tva.a_crid], [], tvaEA.MemberOf, errs, "GIB041");
-				if (MemberOf.attr(tva.a_type) && MemberOf.attr(tva.a_type).value() != tva.t_MemberOfType)
+				if (MemberOf.attrAnyNs(tva.a_type) && MemberOf.attrAnyNs(tva.a_type).value != tva.t_MemberOfType)
 					errs.addError({
 						code: "GIB042",
-						message: `${GroupInformation.name()}.${tva.e_MemberOf}@xsi:${tva.a_type} is invalid (${MemberOf.attr(tva.a_type).value().quote()})`,
+						message: `${GroupInformation.name}.${tva.e_MemberOf}@xsi:${tva.a_type} is invalid (${MemberOf.attrAnyNs(tva.a_type).value.quote()})`,
 						fragment: MemberOf,
 					});
 
-				if (MemberOf.attr(tva.a_index)) {
-					const index = valUnsignedInt(MemberOf.attr(tva.a_index).value());
+				if (MemberOf.attrAnyNs(tva.a_index)) {
+					const index = valUnsignedInt(MemberOf.attrAnyNs(tva.a_index).value);
 					if (index >= 1) {
 						if (indexes) {
 							if (DuplicatedValue(indexes, index))
 								errs.addError({
 									code: "GI043",
-									message: `duplicated ${tva.a_index.attribute(`${GroupInformation.name()}.${tva.e_MemberOf}`)} values (${index})`,
+									message: `duplicated ${tva.a_index.attribute(`${GroupInformation.name}.${tva.e_MemberOf}`)} values (${index})`,
 									fragment: MemberOf,
 								});
 						}
 					} else
 						errs.addError({
 							code: "GIB44",
-							message: `${tva.a_index.attribute(`${GroupInformation.name()}.${tva.e_MemberOf}`)} must be an integer >= 1 (parsed ${index})`,
+							message: `${tva.a_index.attribute(`${GroupInformation.name}.${tva.e_MemberOf}`)} must be an integer >= 1 (parsed ${index})`,
 							fragment: MemberOf,
 						});
 				}
 
-				if (MemberOf.attr(tva.a_crid) && MemberOf.attr(tva.a_crid).value() != categoryCRID)
+				if (MemberOf.attrAnyNs(tva.a_crid) && MemberOf.attrAnyNs(tva.a_crid).value != categoryCRID)
 					errs.addError({
 						code: "GIB045",
-						message: `${tva.a_crid.attribute(`${GroupInformation.name()}.${tva.e_MemberOf}`)} (${MemberOf.attr(
-							tva.a_crid
-						).value()}) does not match the ${CATEGORY_GROUP_NAME} crid (${categoryCRID})`,
+						message: `${tva.a_crid.attribute(`${GroupInformation.name}.${tva.e_MemberOf}`)} (${
+							MemberOf.attrAnyNs(tva.a_crid).value
+						}) does not match the ${CATEGORY_GROUP_NAME} crid (${categoryCRID})`,
 						fragment: MemberOf,
 					});
 			} else
 				errs.addError({
 					code: "GIB046",
-					message: `${GroupInformation.name()} requires a ${tva.e_MemberOf.elementize()} element referring to the ${CATEGORY_GROUP_NAME} (${categoryCRID})`,
-					line: GroupInformation.line(),
+					message: `${GroupInformation.name} requires a ${tva.e_MemberOf.elementize()} element referring to the ${CATEGORY_GROUP_NAME} (${categoryCRID})`,
+					line: GroupInformation.line,
 				});
 		}
 
@@ -1888,11 +1824,11 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <GroupInformation> element for Schedules related requests
 	 *
-	 * @param {object}  props              Metadata of the XML document
-	 * @param {XMLnode} GroupInformation   the element whose children should be checked
-	 * @param {string}  requestType        the type of content guide request being checked
-	 * @param {Class}   errs               errors found in validaton
-	 * @param {XMLnode} categoryGroup      the GroupInformationElement that others must refer to through <MemberOf>
+	 * @param {object}     props              Metadata of the XML document
+	 * @param {XmlElement} GroupInformation   the element whose children should be checked
+	 * @param {string}     requestType        the type of content guide request being checked
+	 * @param {ErrorList}  errs               errors found in validaton
+	 * @param {XmlElement} categoryGroup      the GroupInformationElement that others must refer to through <MemberOf>
 	 */
 	/* private */ #ValidateGroupInformationSchedules(props, GroupInformation, requestType, errs, categoryGroup) {
 		if (!GroupInformation) {
@@ -1905,24 +1841,24 @@ export default class ContentGuideCheck {
 		}
 		checkAttributes(GroupInformation, [tva.a_groupId, tva.a_ordered, tva.a_numOfItems], [tva.a_lang], tvaEA.GroupInformation, errs, "GIS001");
 
-		if (GroupInformation.attr(tva.a_groupId)) {
-			const groupId = GroupInformation.attr(tva.a_groupId).value();
+		if (GroupInformation.attrAnyNs(tva.a_groupId)) {
+			const groupId = GroupInformation.attrAnyNs(tva.a_groupId).value;
 			if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW].includes(requestType))
 				if (![dvbi.CRID_NOW, dvbi.CRID_LATER, dvbi.CRID_EARLIER].includes(groupId))
 					errs.addError({
 						code: "GIS011",
-						message: `${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is not valid for this request type`,
-						line: GroupInformation.line(),
+						message: `${tva.a_groupId.attribute(GroupInformation.name)} value ${groupId.quote()} is not valid for this request type`,
+						line: GroupInformation.line,
 					});
 		}
 
 		if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW].includes(requestType)) {
 			TrueValue(GroupInformation, tva.a_ordered, "GIS013", errs);
-			if (!GroupInformation.attr(tva.a_numOfItems))
+			if (!GroupInformation.attrAnyNs(tva.a_numOfItems))
 				errs.addError({
 					code: "GIS015",
-					message: `${tva.a_numOfItems.attribute(GroupInformation.name())} is required for this request type`,
-					line: GroupInformation.line(),
+					message: `${tva.a_numOfItems.attribute(GroupInformation.name)} is required for this request type`,
+					line: GroupInformation.line,
 				});
 		}
 
@@ -1933,12 +1869,12 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <GroupInformation> element for More Episodes requests
 	 *
-	 * @param {object}  props               Metadata of the XML document
-	 * @param {XMLnode} GroupInformation    the element whose children should be checked
-	 * @param {string}  requestType         the type of content guide request being checked
-	 * @param {Class}   errs                errors found in validaton
-	 * @param {XMLnode} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
-	 * @param {array}   groupsFound         groupId values found (null if not needed)
+	 * @param {object}     props               Metadata of the XML document
+	 * @param {XmlElement} GroupInformation    the element whose children should be checked
+	 * @param {string}     requestType         the type of content guide request being checked
+	 * @param {ErrorList}  errs                errors found in validaton
+	 * @param {XmlElement} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
+	 * @param {array}      groupsFound         groupId values found (null if not needed)
 	 */
 	/* private */ #ValidateGroupInformationMoreEpisodes(props, GroupInformation, requestType, errs, categoryGroup, groupsFound) {
 		if (!GroupInformation) {
@@ -1953,18 +1889,18 @@ export default class ContentGuideCheck {
 			errs.addError({
 				code: "GIM001",
 				message: `${CATEGORY_GROUP_NAME} should not be specified for this request type`,
-				line: GroupInformation.line(),
+				line: GroupInformation.line,
 			});
 
 		checkAttributes(GroupInformation, [tva.a_groupId, tva.a_ordered, tva.a_numOfItems], [tva.a_lang], tvaEA.GroupInformation, errs, "GIM002");
 
-		if (GroupInformation.attr(tva.a_groupId)) {
-			const groupId = GroupInformation.attr(tva.a_groupId).value();
+		if (GroupInformation.attrAnyNs(tva.a_groupId)) {
+			const groupId = GroupInformation.attrAnyNs(tva.a_groupId).value;
 			if (!isCRIDURI(groupId))
 				this.#NotCRIDFormat(errs, {
 					code: "GIM003",
-					message: `${tva.a_groupId.attribute(GroupInformation.name())} value ${groupId.quote()} is not a valid CRID`,
-					line: GroupInformation.line(),
+					message: `${tva.a_groupId.attribute(GroupInformation.name)} value ${groupId.quote()} is not a valid CRID`,
+					line: GroupInformation.line,
 				});
 			else groupsFound.push(groupId);
 		}
@@ -1975,13 +1911,13 @@ export default class ContentGuideCheck {
 		if (GroupType) {
 			checkAttributes(GroupType, [tva.a_type, tva.a_value], [], tvaEA.GroupType, errs, "GIM011");
 
-			if (GroupType.attr(tva.a_type) && GroupType.attr(tva.a_type).value() != tva.t_ProgramGroupTypeType)
+			if (GroupType.attrAnyNs(tva.a_type) && GroupType.attrAnyNs(tva.a_type).value != tva.t_ProgramGroupTypeType)
 				errs.addError({
 					code: "GIM012",
 					message: `${tva.e_GroupType}@xsi:${tva.a_type} must be ${tva.t_ProgramGroupTypeType.quote()}`,
 					fragment: GroupType,
 				});
-			if (GroupType.attr(tva.a_value) && GroupType.attr(tva.a_value).value() != tva.v_otherCollection)
+			if (GroupType.attrAnyNs(tva.a_value) && GroupType.attrAnyNs(tva.a_value).value != tva.v_otherCollection)
 				errs.addError({
 					code: "GIM013",
 					message: `${tva.a_value.attribute(tva.e_GroupType)} must be ${tva.v_otherCollection.quote()}`,
@@ -1990,8 +1926,8 @@ export default class ContentGuideCheck {
 		} else
 			errs.addError({
 				code: "GIM014",
-				message: `${tva.e_GroupType.elementize()} is required in ${GroupInformation.name().elementize()}`,
-				line: GroupInformation.line(),
+				message: `${tva.e_GroupType.elementize()} is required in ${GroupInformation.name.elementize()}`,
+				line: GroupInformation.line,
 			});
 
 		// <GroupInformation><BasicDescription>
@@ -2001,13 +1937,13 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <GroupInformation> element against the profile for the given request/response type
 	 *
-	 * @param {object}  props              Metadata of the XML documentE
-	 * @param {XMLnode} GroupInformation   the element whose children should be checked
-	 * @param {string}  requestType        the type of content guide request being checked
-	 * @param {Class}   errs               errors found in validaton
-	 * @param {XMLnode} categoryGroup      the GroupInformationElement that others must refer to through <MemberOf>
-	 * @param {array}   indexes            an accumulation of the @index values found
-	 * @param {array}   groupsFound        groupId values found (null if not needed)
+	 * @param {object}     props              Metadata of the XML documentE
+	 * @param {XmlElement} GroupInformation   the element whose children should be checked
+	 * @param {string}     requestType        the type of content guide request being checked
+	 * @param {ErrorLust}  errs               errors found in validaton
+	 * @param {XmlElement} categoryGroup      the GroupInformationElement that others must refer to through <MemberOf>
+	 * @param {array}      indexes            an accumulation of the @index values found
+	 * @param {array}      groupsFound        groupId values found (null if not needed)
 	 */
 	/* private */ #ValidateGroupInformation(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupsFound) {
 		if (!GroupInformation) {
@@ -2019,7 +1955,7 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		GetNodeLanguage(GroupInformation, false, errs, "GI001", this.#knownLanguages);
+		GetNodeLanguage(GroupInformation, false, errs, "GI001");
 
 		switch (requestType) {
 			case CG_REQUEST_SCHEDULE_NOWNEXT:
@@ -2038,13 +1974,14 @@ export default class ContentGuideCheck {
 
 		const GroupType = GroupInformation.get(xPath(props.prefix, tva.e_GroupType), props.schema);
 		if (GroupType) {
-			if (!(GroupType.attr(tva.a_type) && GroupType.attr(tva.a_type).value() == tva.t_ProgramGroupTypeType))
+			let _type = GroupType.attrAnyNs(tva.a_type);
+			if (!(_type && _type.value == tva.t_ProgramGroupTypeType))
 				errs.addError({
 					code: "GI011",
 					message: `${tva.e_GroupType}@xsi:${tva.a_type}=${tva.t_ProgramGroupTypeType.quote()} is required`,
 					fragment: GroupType,
 				});
-			if (!(GroupType.attr(tva.a_value) && GroupType.attr(tva.a_value).value() == tva.v_otherCollection))
+			if (!(GroupType.attrAnyNs(tva.a_value) && GroupType.attrAnyNs(tva.a_value).value == tva.v_otherCollection))
 				errs.addError({
 					code: "GI022",
 					message: `${tva.a_value.attribute(tva.e_GroupType)}=${tva.v_otherCollection.quote()} is required`,
@@ -2053,42 +1990,47 @@ export default class ContentGuideCheck {
 		} else
 			errs.addError({
 				code: "GI014",
-				message: `${tva.e_GroupType.elementize()} is required in ${GroupInformation.name().elementize()}`,
-				line: GroupInformation.line(),
+				message: `${tva.e_GroupType.elementize()} is required in ${GroupInformation.name.elementize()}`,
+				line: GroupInformation.line,
 			});
 	}
 
 	/**
 	 * find and validate any <GroupInformation> elements in the <GroupInformationTable>
 	 *
-	 * @param {object}  props               Metadata of the XML document
-	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {string}  requestType         the type of content guide request being checked
-	 * @param {array}   groupIds            buffer to recieve the group ids parsed (null if not needed)
-	 * @param {Class}   errs                errors found in validaton
-	 * @param {integer} o.childCount        the value from the @numItems attribute of the "category group"
+	 * @param {object}     props               Metadata of the XML document
+	 * @param {XmlElement} ProgramDescription  the element containing the <ProgramInformationTable>
+	 * @param {string}     requestType         the type of content guide request being checked
+	 * @param {array}      groupIds            buffer to recieve the group ids parsed (null if not needed)
+	 * @param {ErrorList}  errs                errors found in validaton
+	 * @param {integer}    o.childCount        the value from the @numItems attribute of the "category group"
 	 */
 	/* private */ #CheckGroupInformation(props, ProgramDescription, requestType, groupIds, errs, o) {
+		if (requestType == CG_REQUEST_BS_CONTENTS) {
+			this.#CheckGroupInformationBoxsetContents(props, ProgramDescription, requestType, groupIds, errs, o);
+			return;
+		}
 		if (!ProgramDescription) {
 			errs.addError({
 				type: APPLICATION,
-				code: "GI100",
+				code: "GI000",
 				message: "CheckGroupInformation() called with ProgramDescription==null",
 			});
 			return;
 		}
-		let gi, GroupInformation;
-		const GroupInformationTable = ProgramDescription.get(xPath(props.prefix, tva.e_GroupInformationTable), props.schema);
 
+		const GroupInformationTable = ProgramDescription.get(xPath(props.prefix, tva.e_GroupInformationTable), props.schema);
 		if (!GroupInformationTable) {
-			//errs.addError({code:"GI101", message:`${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`, line:ProgramDescription.line()});
+			//errs.addError({code:"GI101", message:`${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name.elementize()}`, line:ProgramDescription.line});
 			return;
 		}
-		GetNodeLanguage(GroupInformationTable, false, errs, "GI102", this.#knownLanguages);
+		
+		GetNodeLanguage(GroupInformationTable, false, errs, "GI102");
 
+		let gi, GroupInformation;
 		// find which GroupInformation element is the "category group"
 		let categoryGroup = null;
-		if ([CG_REQUEST_BS_LISTS, CG_REQUEST_BS_CATEGORIES, CG_REQUEST_BS_CONTENTS].includes(requestType)) {
+		if ([CG_REQUEST_BS_LISTS, CG_REQUEST_BS_CATEGORIES].includes(requestType)) {
 			gi = 0;
 			while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
 				// this GroupInformation element is the "category group" if it does not contain a <MemberOf> element
@@ -2098,7 +2040,7 @@ export default class ContentGuideCheck {
 						errs.addError({
 							code: "GI111",
 							message: `only a single ${CATEGORY_GROUP_NAME} can be present in ${tva.e_GroupInformationTable.elementize()}`,
-							line: GroupInformation.line(),
+							line: GroupInformation.line,
 						});
 					else categoryGroup = GroupInformation;
 				}
@@ -2107,7 +2049,7 @@ export default class ContentGuideCheck {
 				errs.addError({
 					code: "GI112",
 					message: `a ${CATEGORY_GROUP_NAME} must be specified in ${tva.e_GroupInformationTable.elementize()} for this request type`,
-					line: GroupInformation.line(),
+					line: GroupInformation.line,
 				});
 		}
 
@@ -2116,39 +2058,142 @@ export default class ContentGuideCheck {
 		gi = 0;
 		while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
 			this.#ValidateGroupInformation(props, GroupInformation, requestType, errs, categoryGroup, indexes, groupIds);
-			if (GroupInformation != categoryGroup) giCount++;
+			if (categoryGroup && GroupInformation.line != categoryGroup.line)
+				giCount++;
 		}
 		if (categoryGroup) {
-			let numOfItems = categoryGroup.attr(tva.a_numOfItems) ? valUnsignedInt(categoryGroup.attr(tva.a_numOfItems).value()) : 0;
-			if (requestType != CG_REQUEST_BS_CONTENTS && numOfItems != giCount)
-				errs.addError({
-					code: "GI113",
-					message: `${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${numOfItems}) does match the number of items (${giCount})`,
-					line: categoryGroup.line(),
-				});
-
-			if (o) o.childCount = numOfItems;
+				let numOfItems = categoryGroup.attrAnyNs(tva.a_numOfItems) ? valUnsignedInt(categoryGroup.attrAnyNs(tva.a_numOfItems).value) : 0;
+				if (requestType != CG_REQUEST_BS_CONTENTS && numOfItems != giCount)
+					errs.addError({
+						code: "GI113",
+						message: `${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${numOfItems}) does match the number of items (${giCount})`,
+						line: categoryGroup.line,
+						key: "mismatch count",
+					});
+				if (o) o.childCount = numOfItems;
 		}
 
 		if (requestType == CG_REQUEST_MORE_EPISODES && giCount > 1)
 			errs.addError({
 				code: "GI114",
 				message: `only one ${tva.e_GroupInformation.elementize()} element is premitted for this request type`,
-				line: GroupInformationTable.line(),
+				line: GroupInformationTable.line,
 			});
+	}
+
+	/**
+	 * find and validate any <GroupInformation> elements in the <GroupInformationTable> for a Boxset Contents response
+	 *
+	 * @param {object}     props               Metadata of the XML document
+	 * @param {XmlElement} ProgramDescription  the element containing the <ProgramInformationTable>
+	 * @param {string}     requestType         the type of content guide request being checked
+	 * @param {array}      groupIds            buffer to recieve the group ids parsed (null if not needed)
+	 * @param {ErrorList}  errs                errors found in validaton
+	 * @param {integer}    o.childCount        the value from the @numItems attribute of the "category group"
+	 */
+	/* private */ #CheckGroupInformationBoxsetContents(props, ProgramDescription, requestType, groupIds, errs, o) {
+		if (!ProgramDescription) {
+			errs.addError({
+				type: APPLICATION,
+				code: "GIC000",
+				message: "CheckGroupInformationBoxsetContents() called with ProgramDescription==null",
+			});
+			return;
+		}
+		if (requestType != CG_REQUEST_BS_CONTENTS) {
+			errs.addError({
+				type: APPLICATION,
+				code: "GIC001",
+				message: `CheckGroupInformationBoxsetContents() called invalid requestType (${requestType})`,
+			});
+			return;
+		}
+		const GroupInformationTable = ProgramDescription.get(xPath(props.prefix, tva.e_GroupInformationTable), props.schema);
+		if (!GroupInformationTable) {
+			//errs.addError({code:"GIC101", message:`${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name.elementize()}`, line:ProgramDescription.line});
+			return;
+		}
+		const ERROR_KEY = "boxset contents";
+
+		GetNodeLanguage(GroupInformationTable, false, errs, "GIC102");
+
+		// Check all category groups (main and descendant)
+		// find which GroupInformation element is the "category group"
+		let contentsGroup = null, gi = 0, GroupInformation;
+		while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
+			// this GroupInformation element is the "contents group" if it does not contain a <MemberOf> element
+			if (CountChildElements(GroupInformation, tva.e_MemberOf) == 0) {
+				// this GroupInformation element is not a member of another GroupInformation so it must be the "contents group"
+				checkTopElementsAndCardinality(GroupInformation,
+					[{name: tva.e_GroupType},
+					 {name: tva.e_BasicDescription},],
+					tvaEC.GroupInformation, false, errs, "GIC111");
+				if (contentsGroup)
+					errs.addError({
+						code: "GIC112",
+						message: `only a single Contents group (a ${tva.e_GroupInformation} without a ${tva.e_MemberOf} child element) can be present in ${tva.e_GroupInformationTable.elementize()}`,
+						line: GroupInformation.line,
+						key: ERROR_KEY,
+					});
+				else
+					contentsGroup = GroupInformation;
+			}
+			else 
+				checkTopElementsAndCardinality(GroupInformation,
+					[{name: tva.e_GroupType},
+					 {name: tva.e_BasicDescription},
+					 {name: tva.e_MemberOf},
+					],
+					tvaEC.GroupInformation, false, errs, "GIC113");
+			if (GroupInformation.attrAnyNs(tva.a_groupId))
+					groupIds.push(GroupInformation.attrAnyNs(tva.a_groupId).value)
+		}
+		if (!contentsGroup)
+			errs.addError({
+				code: "GIC115",
+				message: `a Contents group (a ${tva.e_GroupInformation} without a ${tva.e_MemberOf} child element) must be specified in ${tva.e_GroupInformationTable.elementize()} for this request type`,
+				line: GroupInformation.line,
+				key: ERROR_KEY,
+			});
+
+		// each series group (GroupInformation that includes a <Memberof> child element) must descend from the Contents group
+		if (contentsGroup) {
+			const cgCRID = contentsGroup.attrAnyNs(tva.a_groupId) ? contentsGroup.attrAnyNs(tva.a_groupId).value : "none";
+			gi = 0;
+			while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
+				if (GroupInformation.line != contentsGroup.line) {
+					let MemberOf = GroupInformation.get(xPath(props.prefix, tva.e_MemberOf), props.schema);
+					if (MemberOf) {
+						if (MemberOf.attrAnyNs(tva.a_crid) && MemberOf.attrAnyNs(tva.a_crid).value != cgCRID)
+							errs.addError({
+								code:"GIC120",
+								message: `series group must have ${tva.a_crid.attribute(tva.e_MemberOf)} referring to the category group`,
+								fragment: MemberOf, 
+								key: ERROR_KEY,
+							});
+						if (MemberOf.attrAnyNs(tva.a_type) && MemberOf.attrAnyNs(tva.a_type).value != tva.t_MemberOfType)
+								errs.addError({
+									code: "GIC121",
+									message: `${attribute(`xsi:${tva.a_type}`)} must be ${tva.t_MemberOfType.quote()} for ${GroupInformation.name}.${MemberOf.name}`,
+									fragment: MemberOf,
+								});
+					}
+				}
+			}
+		}
 	}
 
 	/**
 	 * validate the <GroupInformation> element against the profile for the given request/response type
 	 *
-	 * @param {object}  props               Metadata of the XML document
-	 * @param {XMLnode} GroupInformation    the element whose children should be checked
-	 * @param {string}  requestType         the type of content guide request being checked
-	 * @param {Class}   errs                errors found in validaton
-	 * @param {int}     numEarlier          maximum number of <GroupInformation> elements that are earlier
-	 * @param {int}     numNow              maximum number of <GroupInformation> elements that are now
-	 * @param {int}     numLater            maximum number of <GroupInformation> elements that are later
-	 * @param {array}   groupCRIDsFound     list of structural crids already found in this response
+	 * @param {object}     props               Metadata of the XML document
+	 * @param {XmlElement} GroupInformation    the element whose children should be checked
+	 * @param {string}     requestType         the type of content guide request being checked
+	 * @param {ErrorList}  errs                errors found in validaton
+	 * @param {int}        numEarlier          maximum number of <GroupInformation> elements that are earlier
+	 * @param {int}        numNow              maximum number of <GroupInformation> elements that are now
+	 * @param {int}        numLater            maximum number of <GroupInformation> elements that are later
+	 * @param {array}      groupCRIDsFound     list of structural crids already found in this response
 	 */
 	/* private */ #ValidateGroupInformationNowNext(props, GroupInformation, requestType, errs, numEarlier, numNow, numLater, groupCRIDsFound) {
 		function validValues(errs, numOfItems, numAllowed, grp, element) {
@@ -2156,13 +2201,13 @@ export default class ContentGuideCheck {
 				errs.addError({
 					code: "VNN101",
 					message: `${tva.a_numOfItems.attribute(tva.e_GroupInformation)} must be > 0 for ${grp.quote()}`,
-					line: element.line(),
+					line: element.line,
 				});
 			if (numOfItems > numAllowed)
 				errs.addError({
 					code: "VNN102",
 					message: `${tva.a_numOfItems.attribute(tva.e_GroupInformation)} must be <= ${numAllowed} for ${grp.quote()}`,
-					line: element.line(),
+					line: element.line,
 				});
 		}
 
@@ -2178,10 +2223,10 @@ export default class ContentGuideCheck {
 		// NOWNEXT and WINDOW GroupInformationElements contains the same syntax as other GroupInformationElements
 		this.#ValidateGroupInformation(props, GroupInformation, requestType, errs, null, null, null);
 
-		if (GroupInformation.attr(tva.a_groupId)) {
-			const grp = GroupInformation.attr(tva.a_groupId).value();
+		if (GroupInformation.attrAnyNs(tva.a_groupId)) {
+			const grp = GroupInformation.attrAnyNs(tva.a_groupId).value;
 			if ((grp == dvbi.CRID_EARLIER && numEarlier > 0) || (grp == dvbi.CRID_NOW && numNow > 0) || (grp == dvbi.CRID_LATER && numLater > 0)) {
-				let numOfItems = GroupInformation.attr(tva.a_numOfItems) ? valUnsignedInt(GroupInformation.attr(tva.a_numOfItems).value()) : -1;
+				let numOfItems = GroupInformation.attrAnyNs(tva.a_numOfItems) ? valUnsignedInt(GroupInformation.attrAnyNs(tva.a_numOfItems).value) : -1;
 				switch (grp) {
 					case dvbi.CRID_EARLIER:
 						validValues(errs, numOfItems, numEarlier, grp, GroupInformation);
@@ -2197,14 +2242,14 @@ export default class ContentGuideCheck {
 					errs.addError({
 						code: "VNN001",
 						message: `only a single ${grp.quote()} structural CRID is premitted in this request`,
-						line: GroupInformation.line(),
+						line: GroupInformation.line,
 					});
 				else groupCRIDsFound.push(grp);
 			} else
 				errs.addError({
 					code: "VNN002",
 					message: `${tva.e_GroupInformation.elementize()} for ${grp.quote()} is not permitted for this request type`,
-					line: GroupInformation.line(),
+					line: GroupInformation.line,
 				});
 		}
 	}
@@ -2212,11 +2257,11 @@ export default class ContentGuideCheck {
 	/**
 	 * find and validate any <GroupInformation> elements used for now/next in the <GroupInformationTable>
 	 *
-	 * @param {object}  props               Metadata of the XML document
-	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {array}   groupIds            array of GroupInformation@CRID values found
-	 * @param {string}  requestType         the type of content guide request being checked
-	 * @param {Class}   errs                errors found in validaton
+	 * @param {object}     props               Metadata of the XML document
+	 * @param {XmlElement} ProgramDescription  the element containing the <ProgramInformationTable>
+	 * @param {array}      groupIds            array of GroupInformation@CRID values found
+	 * @param {string}     requestType         the type of content guide request being checked
+	 * @param {ErrorList}  errs                errors found in validaton
 	 */
 	/* private */ #CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs) {
 		if (!ProgramDescription) {
@@ -2232,12 +2277,12 @@ export default class ContentGuideCheck {
 		if (!GroupInformationTable) {
 			errs.addError({
 				code: "NN001",
-				message: `${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name().elementize()}`,
-				line: ProgramDescription.line(),
+				message: `${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name.elementize()}`,
+				line: ProgramDescription.line,
 			});
 			return;
 		}
-		GetNodeLanguage(GroupInformationTable, false, errs, "NM002", this.#knownLanguages);
+		GetNodeLanguage(GroupInformationTable, false, errs, "NM002");
 
 		let gi = 0,
 			GroupInformation;
@@ -2253,7 +2298,7 @@ export default class ContentGuideCheck {
 					errs.addError({
 						code: "NN003",
 						message: `${tva.e_GroupInformation.elementize()} not processed for this request type`,
-						line: GroupInformation.line(),
+						line: GroupInformation.line,
 					});
 			}
 		}
@@ -2262,9 +2307,9 @@ export default class ContentGuideCheck {
 	/**
 	 * validate any <AVAttributes> elements in <InstanceDescription> elements
 	 *
-	 * @param {object}  props          Metadata of the XML document
-	 * @param {XMLnode} AVAttributes   the <AVAttributes> node to be checked
-	 * @param {Class}   errs           errors found in validaton
+	 * @param {object}     props          Metadata of the XML document
+	 * @param {XmlElement} AVAttributes   the <AVAttributes> node to be checked
+	 * @param {ErrorList}  errs           errors found in validaton
 	 */
 	/* private */ #ValidateAVAttributes(props, AVAttributes, errs) {
 		if (!AVAttributes) {
@@ -2321,7 +2366,7 @@ export default class ContentGuideCheck {
 			const MixType = AudioAttributes.get(xPath(props.prefix, tva.e_MixType), props.schema);
 			if (MixType) {
 				checkAttributes(MixType, [tva.a_href], [], tvaEA.MixType, errs, "AV011");
-				if (MixType.attr(tva.a_href) && !isValidAudioMixType(MixType.attr(tva.a_href).value()))
+				if (MixType.attrAnyNs(tva.a_href) && !isValidAudioMixType(MixType.attrAnyNs(tva.a_href).value))
 					errs.addError({
 						code: "AV012",
 						message: `${tva.e_AudioAttributes}.${tva.e_MixType} is not valid`,
@@ -2334,9 +2379,9 @@ export default class ContentGuideCheck {
 				checkAttributes(AudioLanguage, [tva.a_purpose], [], tvaEA.AudioLanguage, errs, "AV013");
 				let validLanguage = false,
 					validPurpose = false,
-					audioLang = AudioLanguage.text();
-				if (AudioLanguage.attr(tva.a_purpose)) {
-					if (!(validPurpose = isValidAudioLanguagePurpose(AudioLanguage.attr(tva.a_purpose).value())))
+					audioLang = AudioLanguage.content;
+				if (AudioLanguage.attrAnyNs(tva.a_purpose)) {
+					if (!(validPurpose = isValidAudioLanguagePurpose(AudioLanguage.attrAnyNs(tva.a_purpose).value)))
 						errs.addError({
 							code: "AV014",
 							message: `${tva.a_purpose.attribute(tva.e_AudioLanguage)} is not valid`,
@@ -2344,17 +2389,17 @@ export default class ContentGuideCheck {
 						});
 				}
 
-				validLanguage = checkLanguage(this.#knownLanguages, audioLang, `${tva.e_AudioAttributes}.${tva.e_AudioLanguage}`, AudioLanguage, errs, "AV015");
+				validLanguage = checkLanguage(audioLang, `${tva.e_AudioAttributes}.${tva.e_AudioLanguage}`, AudioLanguage, errs, "AV015");
 
 				if (validLanguage && validPurpose) {
 					if (audioCounts[audioLang] === undefined) audioCounts[audioLang] = [AudioLanguage];
 					else audioCounts[audioLang].push(AudioLanguage);
 
-					let combo = `${audioLang}!--!${AudioLanguage.attr(tva.a_purpose).value()}`;
+					let combo = `${audioLang}!--!${AudioLanguage.attrAnyNs(tva.a_purpose).value}`;
 					if (isIn(foundAttributes, combo))
 						errs.addError({
 							code: "AV016",
-							message: `audio ${tva.a_purpose.attribute()} ${AudioLanguage.attr(tva.a_purpose).value().quote()} already specified for language ${audioLang.quote()}`,
+							message: `audio ${tva.a_purpose.attribute()} ${AudioLanguage.attrAnyNs(tva.a_purpose).value.quote()} already specified for language ${audioLang.quote()}`,
 							fragment: AudioLanguage,
 						});
 					else foundAttributes.push(combo);
@@ -2396,8 +2441,8 @@ export default class ContentGuideCheck {
 			const Coding = CaptioningAttributes.get(xPath(props.prefix, tva.e_Coding), props.schema);
 			if (Coding) {
 				checkAttributes(Coding, [tva.a_href], [], tvaEA.Coding, errs, "AV041");
-				if (Coding.attr(tva.a_href)) {
-					let codingHref = Coding.attr(tva.a_href).value();
+				if (Coding.attrAnyNs(tva.a_href)) {
+					let codingHref = Coding.attrAnyNs(tva.a_href).value;
 					if (![dvbi.DVB_BITMAP_SUBTITLES, dvbi.DVB_CHARACTER_SUBTITLES, dvbi.EBU_TT_D].includes(codingHref))
 						errs.addError({
 							code: "AV042",
@@ -2434,9 +2479,9 @@ export default class ContentGuideCheck {
 	/**
 	 * validate a <RelatedMaterial> element conforms to the Restart Application Linking rules (A177r1 clause 6.5.5)
 	 *
-	 * @param {object}  props            Metadata of the XML document
-	 * @param {XMLnode} RelatedMaterial  the <RelatedMaterial> node to be checked
-	 * @param {Class}   errs             errors found in validaton
+	 * @param {object}     props            Metadata of the XML document
+	 * @param {XmlElement} RelatedMaterial  the <RelatedMaterial> node to be checked
+	 * @param {ErrorList}  errs             errors found in validaton
 	 * @returns {boolean}	true if this RelatedMaterial element contains a restart link (proper HowRelated@href and MediaLocator.MediaUri and MediaLocator.AuxiliaryURI)
 	 */
 	/* private */ #ValidateRestartRelatedMaterial(props, RelatedMaterial, errs) {
@@ -2456,11 +2501,11 @@ export default class ContentGuideCheck {
 		let HowRelated = RelatedMaterial.get(xPath(props.prefix, tva.e_HowRelated), props.schema);
 		if (HowRelated) {
 			checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "RR002");
-			if (HowRelated.attr(tva.a_href)) {
-				if (!isRestartLink(HowRelated.attr(tva.a_href).value())) {
+			if (HowRelated.attrAnyNs(tva.a_href)) {
+				if (!isRestartLink(HowRelated.attrAnyNs(tva.a_href).value)) {
 					errs.addError({
 						code: "RR003",
-						message: `invalid ${tva.a_href.attribute(tva.e_HowRelated)} (${HowRelated.attr(tva.a_href).value()}) for Restart Application Link`,
+						message: `invalid ${tva.a_href.attribute(tva.e_HowRelated)} (${HowRelated.attrAnyNs(tva.a_href).value}) for Restart Application Link`,
 						fragment: HowRelated,
 					});
 					isRestart = false;
@@ -2478,11 +2523,11 @@ export default class ContentGuideCheck {
 	/**
 	 * validate any <InstanceDescription> elements in the <ScheduleEvent> and <OnDemandProgram> elements
 	 *
-	 * @param {object}  props                 Metadata of the XML document
-	 * @param {string}  VerifyType            the type of verification to perform (OnDemandProgram | ScheduleEvent)
-	 * @param {XMLnode} InstanceDescription   the <InstanceDescription> node to be checked
-	 * @param {boolean} isCurrentProgram      indicates if this <InstanceDescription> element is for the currently airing program
-	 * @param {Class}   errs                  errors found in validaton
+	 * @param {object}     props                 Metadata of the XML document
+	 * @param {string}     VerifyType            the type of verification to perform (OnDemandProgram | ScheduleEvent)
+	 * @param {XmlElement} InstanceDescription   the <InstanceDescription> node to be checked
+	 * @param {boolean}    isCurrentProgram      indicates if this <InstanceDescription> element is for the currently airing program
+	 * @param {ErrorList}  errs                  errors found in validaton
 	 */
 	/* private */ #ValidateInstanceDescription(props, VerifyType, InstanceDescription, isCurrentProgram, errs) {
 		if (!InstanceDescription) {
@@ -2497,14 +2542,14 @@ export default class ContentGuideCheck {
 		function checkGenre(genre, errs, errcode) {
 			if (!genre) return null;
 			checkAttributes(genre, [tva.a_href], [tva.a_type], tvaEA.Genre, errs, `${errcode}-1`);
-			let GenreType = genre.attr(tva.a_type) ? genre.attr(tva.a_type).value() : tva.DEFAULT_GENRE_TYPE;
+			let GenreType = genre.attrAnyNs(tva.a_type) ? genre.attrAnyNs(tva.a_type).value : tva.DEFAULT_GENRE_TYPE;
 			if (GenreType != tva.GENRE_TYPE_OTHER)
 				errs.addError({
 					code: `${errcode}-2`,
-					message: `${tva.a_type.attribute(`${genre.parent().name()}.${genre.name()}`)} must contain ${tva.GENRE_TYPE_OTHER.quote()}`,
+					message: `${tva.a_type.attribute(`${genre.parent.name}.${genre.name}`)} must contain ${tva.GENRE_TYPE_OTHER.quote()}`,
 					fragment: genre,
 				});
-			return genre.attr(tva.a_href) ? genre.attr(tva.a_href).value() : null;
+			return genre.attrAnyNs(tva.a_href) ? genre.attrAnyNs(tva.a_href).value : null;
 		}
 
 		let isMediaAvailability = (str) => [dvbi.MEDIA_AVAILABLE, dvbi.MEDIA_UNAVAILABLE].includes(str);
@@ -2558,11 +2603,11 @@ export default class ContentGuideCheck {
 		}
 
 		// @serviceInstanceId
-		if (InstanceDescription.attr(tva.a_serviceInstanceID) && InstanceDescription.attr(tva.a_serviceInstanceID).value().length == 0)
+		if (InstanceDescription.attrAnyNs(tva.a_serviceInstanceID) && InstanceDescription.attrAnyNs(tva.a_serviceInstanceID).value.length == 0)
 			errs.addError({
 				code: "ID009",
 				message: `${tva.a_serviceInstanceID.attribute()} should not be empty is specified`,
-				line: InstanceDescription.line(),
+				line: InstanceDescription.line,
 				key: "empty ID",
 			});
 
@@ -2580,7 +2625,7 @@ export default class ContentGuideCheck {
 				if (g1href && !isAvailability(g1href))
 					errs.addError({
 						code: "ID012",
-						message: `first ${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a media or fepg availability indicator`,
+						message: `first ${elementize(`${InstanceDescription.name}.+${tva.e_Genre}`)} must contain a media or fepg availability indicator`,
 						fragment: Genre1,
 					});
 
@@ -2588,7 +2633,7 @@ export default class ContentGuideCheck {
 				if (g2href && !isAvailability(g2href))
 					errs.addError({
 						code: "ID014",
-						message: `second ${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} must contain a media or fepg availability indicator`,
+						message: `second ${elementize(`${InstanceDescription.name}.+${tva.e_Genre}`)} must contain a media or fepg availability indicator`,
 						fragment: Genre2,
 					});
 
@@ -2596,7 +2641,7 @@ export default class ContentGuideCheck {
 					if ((isMediaAvailability(g1href) && isMediaAvailability(g2href)) || (isEPGAvailability(g1href) && isEPGAvailability(g2href))) {
 						errs.addError({
 							code: "ID015-1",
-							message: `${elementize(`${InstanceDescription.name()}.+${tva.e_Genre}`)} elements must indicate different availabilities`,
+							message: `${elementize(`${InstanceDescription.name}.+${tva.e_Genre}`)} elements must indicate different availabilities`,
 							fragments: [Genre1, Genre2],
 						});
 					}
@@ -2606,20 +2651,20 @@ export default class ContentGuideCheck {
 				let Genre = InstanceDescription.get(xPath(props.prefix, tva.e_Genre), props.schema);
 				if (Genre) {
 					checkAttributes(Genre, [tva.a_href], [tva.a_type], tvaEA.Genre, errs, "ID016");
-					if (Genre.attr(tva.a_href)) {
-						if (isRestartAvailability(Genre.attr(tva.a_href).value())) {
+					if (Genre.attrAnyNs(tva.a_href)) {
+						if (isRestartAvailability(Genre.attrAnyNs(tva.a_href).value)) {
 							restartGenre = Genre;
-							if (Genre.attr(tva.a_type) && Genre.attr(tva.a_type).value() != tva.GENRE_TYPE_OTHER)
+							if (Genre.attrAnyNs(tva.a_type) && Genre.attrAnyNs(tva.a_type).value != tva.GENRE_TYPE_OTHER)
 								errs.addError({
 									code: "ID018",
-									message: `${tva.a_type.attribute(Genre.name())} must be ${tva.GENRE_TYPE_OTHER.quote()}`,
+									message: `${tva.a_type.attribute(Genre.name)} must be ${tva.GENRE_TYPE_OTHER.quote()}`,
 									fragment: Genre,
 								});
 						} else
 							errs.addError({
 								code: "ID017",
-								message: `${elementize(`${InstanceDescription.name()}.${tva.e_Genre}`)} must contain a restart link indicator`,
-								line: InstanceDescription.line(),
+								message: `${elementize(`${InstanceDescription.name}.${tva.e_Genre}`)} must contain a restart link indicator`,
+								line: InstanceDescription.line,
 							});
 					}
 				}
@@ -2629,20 +2674,20 @@ export default class ContentGuideCheck {
 		// <CaptionLanguage>
 		let CaptionLanguage = InstanceDescription.get(xPath(props.prefix, tva.e_CaptionLanguage), props.schema);
 		if (CaptionLanguage) {
-			checkLanguage(this.#knownLanguages, CaptionLanguage.text(), `${InstanceDescription.name()}.${tva.e_CaptionLanguage}`, CaptionLanguage, errs, "ID021");
+			checkLanguage(CaptionLanguage.content, `${InstanceDescription.name}.${tva.e_CaptionLanguage}`, CaptionLanguage, errs, "ID021");
 			BooleanValue(CaptionLanguage, tva.a_closed, "ID022", errs);
 		}
 
 		// <SignLanguage>
 		let SignLanguage = InstanceDescription.get(xPath(props.prefix, tva.e_SignLanguage), props.schema);
 		if (SignLanguage) {
-			checkLanguage(this.#knownLanguages, SignLanguage.text(), `${InstanceDescription.name()}.${tva.e_SignLanguage}`, SignLanguage, errs, "ID031");
+			checkLanguage(SignLanguage.content, `${InstanceDescription.name}.${tva.e_SignLanguage}`, SignLanguage, errs, "ID031");
 			FalseValue(SignLanguage, tva.a_closed, "ID032", errs);
 			// check value is "sgn" according to ISO 639-2 or a sign language listed in ISO 639-3
-			if (SignLanguage.text() != "sgn" && !this.#knownLanguages.isKnownSignLanguage(SignLanguage.text()))
+			if (SignLanguage.content != "sgn" && !this.#knownLanguages.isKnownSignLanguage(SignLanguage.content))
 				errs.addError({
 					code: "ID033",
-					message: `invalid ${tva.e_SignLanguage.elementize()} ${SignLanguage.text().quote()} in ${InstanceDescription.name().elementize()}`,
+					message: `invalid ${tva.e_SignLanguage.elementize()} ${SignLanguage.content.quote()} in ${InstanceDescription.name.elementize()}`,
 					fragment: SignLanguage,
 				});
 		}
@@ -2656,8 +2701,8 @@ export default class ContentGuideCheck {
 			OtherIdentifier;
 		while ((OtherIdentifier = InstanceDescription.get(xPath(props.prefix, tva.e_OtherIdentifier, ++oi), props.schema)) != null) {
 			checkAttributes(OtherIdentifier, [tva.a_type], [], tvaEA.OtherIdentifier, errs, "VID052");
-			if (OtherIdentifier.attr(tva.a_type)) {
-				let oiType = OtherIdentifier.attr(tva.a_type).value();
+			if (OtherIdentifier.attrAnyNs(tva.a_type)) {
+				let oiType = OtherIdentifier.attrAnyNs(tva.a_type).value;
 
 				if (
 					(VerifyType == tva.e_ScheduleEvent && ["CPSIndex", dvbi.EIT_PROGRAMME_CRID_TYPE, dvbi.EIT_SERIES_CRID_TYPE].includes(oiType)) ||
@@ -2665,16 +2710,16 @@ export default class ContentGuideCheck {
 				) {
 					// all good
 				} else {
-					if (!OtherIdentifier.attr(mpeg7.a_organization))
+					if (!OtherIdentifier.attrAnyNs(mpeg7.a_organization))
 						// don't throw errors for other organisations <OtherIdentifier> values
 						errs.addError({
 							code: "ID050",
-							message: `${tva.a_type.attribute(tva.e_OtherIdentifier)}=${oiType.quote()} is not valid for ${VerifyType}.${InstanceDescription.name()}`,
+							message: `${tva.a_type.attribute(tva.e_OtherIdentifier)}=${oiType.quote()} is not valid for ${VerifyType}.${InstanceDescription.name}`,
 							fragment: OtherIdentifier,
 						});
 				}
 				if ([dvbi.EIT_PROGRAMME_CRID_TYPE, dvbi.EIT_SERIES_CRID_TYPE].includes(oiType))
-					if (!isCRIDURI(OtherIdentifier.text()))
+					if (!isCRIDURI(OtherIdentifier.content))
 						errs.addError({
 							code: "ID051",
 							message: `${tva.e_OtherIdentifier} must be a CRID for ${tva.a_type.attribute()}=${oiType.quote()}`,
@@ -2714,49 +2759,49 @@ export default class ContentGuideCheck {
 	/**
 	 * validate a <ProgramURL> or <AuxiliaryURL> element to see if it signals a Template XML AIT
 	 *
-	 * @param {XMLnode} node                 the element node containing the an XML AIT reference
-	 * @param {Array}   allowedContentTypes  the contentTypes that can be signalled in the node@contentType attribute
-	 * @param {Class}   errs                 errors found in validaton
-	 * @param {string}  errcode              error code to be used with any errors found
+	 * @param {XmlElement} node                 the element node containing the an XML AIT reference
+	 * @param {array}      allowedContentTypes  the contentTypes that can be signalled in the node@contentType attribute
+	 * @param {ErrorList}  errs                 errors found in validaton
+	 * @param {string}     errcode              error code to be used with any errors found
 	 */
 	/* private */ #CheckPlayerApplication(node, allowedContentTypes, errs, errcode) {
 		if (!node) {
-			errs.addError({ type: APPLICATION, code: "PA000a", message: "CheckPlayerApplication() called with node==null" });
+			errs.addError({ type: APPLICATION, code: "PA000", message: "CheckPlayerApplication() called with node==null" });
 			return;
 		}
 		let allowedTypes = Array.isArray(allowedContentTypes) ? allowedContentTypes : [].concat(allowedContentTypes);
-		if (!node.attr(tva.a_contentType)) {
+		if (!node.attrAnyNs(tva.a_contentType)) {
 			errs.addError({
 				code: `${errcode}-1`,
-				message: `${tva.a_contentType.attribute()} attribute is required when signalling a player in ${node.name().elementize()}`,
+				message: `${tva.a_contentType.attribute()} attribute is required when signalling a player in ${node.name.elementize()}`,
 				key: `missing ${tva.a_contentType.attribute()}`,
 				fragment: node,
 			});
 			return;
 		}
 
-		if (allowedTypes.includes(node.attr(tva.a_contentType).value())) {
-			switch (node.attr(tva.a_contentType).value()) {
+		if (allowedTypes.includes(node.attrAnyNs(tva.a_contentType).value)) {
+			switch (node.attrAnyNs(tva.a_contentType).value) {
 				case dvbi.XML_AIT_CONTENT_TYPE:
-					if (!isHTTPURL(node.text()))
+					if (!isHTTPURL(node.content))
 						errs.addError({
 							code: `${errcode}-2`,
-							message: `${node.name().elementize()}=${node.text().quote()} is not a valid HTTP or HTTP URL`,
+							message: `${node.name.elementize()}=${node.content.quote()} is not a valid HTTP or HTTP URL`,
 							key: keys.k_InvalidURL,
 							fragment: node,
 						});
 					break;
 				/*			case dvbi.HTML5_APP:
 				case dvbi.XHTML_APP:
-					if (!isHTTPURL(node.text()))
-						errs.addError({code:`${errcode}-3`, message:`${node.name().elementize()}=${node.text().quote()} is not a valid URL`, key:"invalid URL", fragment:node});		
+					if (!isHTTPURL(node.content))
+						errs.addError({code:`${errcode}-3`, message:`${node.name.elementize()}=${node.content.quote()} is not a valid URL`, key:"invalid URL", fragment:node});		
 					break;
 				*/
 			}
 		} else
 			errs.addError({
 				code: `${errcode}-4`,
-				message: `${tva.a_contentType.attribute(node.name())}=${node.attr(tva.a_contentType).value().quote()} is not valid for a player`,
+				message: `${tva.a_contentType.attribute(node.name)}=${node.attrAnyNs(tva.a_contentType).value.quote()} is not valid for a player`,
 				fragment: node,
 				key: `invalid ${tva.a_contentType}`,
 			});
@@ -2765,12 +2810,12 @@ export default class ContentGuideCheck {
 	/**
 	 * validate an <OnDemandProgram> elements in the <ProgramLocationTable>
 	 *
-	 * @param {object}  props              Metadata of the XML document
-	 * @param {XMLnode} OnDemandProgram    the node containing the <OnDemandProgram> being checked
-	 * @param {array}   programCRIDs       array of program crids defined in <ProgramInformationTable>
-	 * @param {array}   plCRIDs            array of program crids defined in <ProgramLocationTable>
-	 * @param {string}  requestType        the type of content guide request being checked
-	 * @param {Class}   errs               errors found in validaton
+	 * @param {object}     props              Metadata of the XML document
+	 * @param {XmlElement} OnDemandProgram    the node containing the <OnDemandProgram> being checked
+	 * @param {array}      programCRIDs       array of program crids defined in <ProgramInformationTable>
+	 * @param {array}      plCRIDs            array of program crids defined in <ProgramLocationTable>
+	 * @param {string}     requestType        the type of content guide request being checked
+	 * @param {ErrorList}  errs               errors found in validaton
 	 */
 	/* private */ #ValidateOnDemandProgram(props, OnDemandProgram, programCRIDs, plCRIDs, requestType, errs) {
 		if (!OnDemandProgram) {
@@ -2846,35 +2891,35 @@ export default class ContentGuideCheck {
 			default:
 				errs.addError({
 					code: "OD004",
-					message: `requestType=${requestType} is not valid for ${OnDemandProgram.name()}`,
+					message: `requestType=${requestType} is not valid for ${OnDemandProgram.name}`,
 				});
 				validRequest = false;
 		}
 
 		checkAttributes(OnDemandProgram, [tva.a_serviceIDRef], [tva.a_lang], tvaEA.OnDemandProgram, errs, "OD005");
-		GetNodeLanguage(OnDemandProgram, false, errs, "OD006", this.#knownLanguages);
+		GetNodeLanguage(OnDemandProgram, false, errs, "OD006");
 		this.#checkTAGUri(OnDemandProgram, errs, "OD007");
 
 		// <Program>
 		let Program = OnDemandProgram.get(xPath(props.prefix, tva.e_Program), props.schema);
 		if (Program) {
 			checkAttributes(Program, [tva.a_crid], [], tvaEA.Program, errs, "OD012");
-			if (Program.attr(tva.a_crid)) {
-				let programCRID = Program.attr(tva.a_crid).value();
+			if (Program.attrAnyNs(tva.a_crid)) {
+				let programCRID = Program.attrAnyNs(tva.a_crid).value;
 				if (!isCRIDURI(programCRID))
 					errs.addError({
 						code: "OD010",
-						message: `${tva.a_crid.attribute(`${OnDemandProgram.name()}.${tva.e_Program}`)} is not a CRID URI`,
-						line: Program.line(),
+						message: `${tva.a_crid.attribute(`${OnDemandProgram.name}.${tva.e_Program}`)} is not a CRID URI`,
+						line: Program.line,
 					});
 				else {
 					if (!isIni(programCRIDs, programCRID))
 						errs.addError({
 							code: "OD011",
 							message: `${tva.a_crid.attribute(
-								`${OnDemandProgram.name()}.${tva.e_Program}`
+								`${OnDemandProgram.name}.${tva.e_Program}`
 							)}=${programCRID.quote()} does not refer to a program in the ${tva.e_ProgramInformationTable.elementize()}`,
-							line: Program.line(),
+							line: Program.line,
 						});
 				}
 				plCRIDs.push(programCRID);
@@ -2892,7 +2937,7 @@ export default class ContentGuideCheck {
 		// <InstanceDescription>
 		if (validRequest && [CG_REQUEST_BS_CONTENTS, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType)) {
 			let InstanceDescription = OnDemandProgram.get(xPath(props.prefix, tva.e_InstanceDescription), props.schema);
-			if (InstanceDescription) this.#ValidateInstanceDescription(props, OnDemandProgram.name(), InstanceDescription, false, errs);
+			if (InstanceDescription) this.#ValidateInstanceDescription(props, OnDemandProgram.name, InstanceDescription, false, errs);
 		}
 
 		// <PublishedDuration>
@@ -2902,8 +2947,8 @@ export default class ContentGuideCheck {
 			eoa = OnDemandProgram.get(xPath(props.prefix, tva.e_EndOfAvailability), props.schema);
 
 		if (soa && eoa) {
-			let fr = new Date(soa.text()),
-				to = new Date(eoa.text());
+			let fr = new Date(soa.content),
+				to = new Date(eoa.content);
 			if (to.getTime() < fr.getTime())
 				errs.addError({
 					code: "OD062",
@@ -2916,10 +2961,10 @@ export default class ContentGuideCheck {
 		// <DeliveryMode>
 		if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType)) {
 			let DeliveryMode = OnDemandProgram.get(xPath(props.prefix, tva.e_DeliveryMode), props.schema);
-			if (DeliveryMode && DeliveryMode.text() != tva.DELIVERY_MODE_STREAMING)
+			if (DeliveryMode && DeliveryMode.content != tva.DELIVERY_MODE_STREAMING)
 				errs.addError({
 					code: "OD070",
-					message: `${OnDemandProgram.name()}.${tva.e_DeliveryMode} must be ${tva.DELIVERY_MODE_STREAMING.quote()}`,
+					message: `${OnDemandProgram.name}.${tva.e_DeliveryMode} must be ${tva.DELIVERY_MODE_STREAMING.quote()}`,
 					fragment: DeliveryMode,
 				});
 		}
@@ -2932,20 +2977,18 @@ export default class ContentGuideCheck {
 	/**
 	 * validate any <ScheduleEvent> or <BroadcastEvent> elements
 	 *
-	 * @param {object}  props               Metadata of the XML document
-	 * @param {XMLnode} Event               the <BroadcastEvent> or <ScheduleEvent> element to be checked
-	 * @param {Class}   errs                errors found in validaton
-	 * @param {array}   programCRIDs        array of program crids defined in <ProgramInformationTable>
-	 * @param {array}   plCRIDs             array of program crids defined in <ProgramLocationTable>
-	 * @param {string}  currentProgramCRID  CRID of the currently airing program
-	 * @param {XMLnode} Schedule            the parent node of a <ScheduleEvent>
+	 * @param {object}     props               Metadata of the XML document
+	 * @param {XmlElement} Event               the <BroadcastEvent> or <ScheduleEvent> element to be checked
+	 * @param {ErrorList}  errs                errors found in validaton
+	 * @param {array}      programCRIDs        array of program crids defined in <ProgramInformationTable>
+	 * @param {array}      plCRIDs             array of program crids defined in <ProgramLocationTable>
+	 * @param {string}     currentProgramCRID  CRID of the currently airing program
+	 * @param {XmlElement} Schedule            the parent node of a <ScheduleEvent>
 	 */
-	/* private */ #ValidateEvent(props, Event, errs, programCRIDs, plCRIDs, currentProgramCRID, Schedule=null) {
+	/* private */ #ValidateEvent(props, Event, errs, programCRIDs, plCRIDs, currentProgramCRID, Schedule = null) {
 		let prefix = "";
-		if (Event.name() == tva.e_BroadcastEvent)
-			prefix="BE";
-		else if (Event.name() == tva.e_ScheduleEvent)
-			prefix="SE";
+		if (Event.name == tva.e_BroadcastEvent) prefix = "BE";
+		else if (Event.name == tva.e_ScheduleEvent) prefix = "SE";
 		else {
 			errs.addError({
 				type: APPLICATION,
@@ -2954,42 +2997,43 @@ export default class ContentGuideCheck {
 			});
 			return;
 		}
-	
-		let startSchedule = Schedule ? Schedule.attr(tva.a_start) : null,
+
+		let startSchedule = Schedule ? Schedule.attrAnyNs(tva.a_start) : null,
 			fr = null,
-			endSchedule = Schedule ? Schedule.attr(tva.a_end) : null,
+			endSchedule = Schedule ? Schedule.attrAnyNs(tva.a_end) : null,
 			to = null;
-		if (startSchedule) fr = new Date(startSchedule.value());
-		if (endSchedule) to = new Date(endSchedule.value());
+		if (startSchedule) fr = new Date(startSchedule.value);
+		if (endSchedule) to = new Date(endSchedule.value);
 
 		let isCurrentProgram = false;
-		GetNodeLanguage(Event, false, errs, `${prefix}001`, this.#knownLanguages);
+		GetNodeLanguage(Event, false, errs, `${prefix}001`);
 		checkAttributes(Event, prefix == "BE" ? [tva.a_serviceIDRef] : [], [], tvaEA.ScheduleEvent, errs, `${prefix}002`);
 		checkTopElementsAndCardinality(
 			Event,
-			prefix == "BE" ? [
-				{ name: tva.e_Program },
-				{ name: tva.e_ProgramURL, minOccurs: 0 },
-				{ name: tva.e_InstanceDescription, minOccurs: 0, maxOccurs: Infinity },
-				{ name: tva.e_PublishedStartTime, minOccurs: 0 },
-				{ name: tva.e_PublishedDuration, minOccurs: 0 },
-				{ name: tva.e_ActualStartTime, minOccurs: 0 },
-				{ name: tva.e_ActualDuration, minOccurs: 0 },
-				{ name: tva.e_FirstShowing, minOccurs: 0 },
-				{ name: tva.e_Free, minOccurs: 0 },
-			] :
-			[
-				{ name: tva.e_Program },
-				{ name: tva.e_ProgramURL, minOccurs: 0 },
-				{ name: tva.e_InstanceDescription, minOccurs: 0, maxOccurs: Infinity },
-				{ name: tva.e_PublishedStartTime },
-				{ name: tva.e_PublishedDuration },
-				{ name: tva.e_ActualStartTime, minOccurs: 0 },
-				{ name: tva.e_ActualDuration, minOccurs: 0 },
-				{ name: tva.e_FirstShowing, minOccurs: 0 },
-				{ name: tva.e_Free, minOccurs: 0 },
-			],
-			tvaEC.ScheduleEvent,
+			prefix == "BE"
+				? [
+						{ name: tva.e_Program },
+						{ name: tva.e_ProgramURL, minOccurs: 0 },
+						{ name: tva.e_InstanceDescription, minOccurs: 0, maxOccurs: Infinity },
+						{ name: tva.e_PublishedStartTime, minOccurs: 0 },
+						{ name: tva.e_PublishedDuration, minOccurs: 0 },
+						{ name: tva.e_ActualStartTime, minOccurs: 0 },
+						{ name: tva.e_ActualDuration, minOccurs: 0 },
+						{ name: tva.e_FirstShowing, minOccurs: 0 },
+						{ name: tva.e_Free, minOccurs: 0 },
+				  ]
+				: [
+						{ name: tva.e_Program },
+						{ name: tva.e_ProgramURL, minOccurs: 0 },
+						{ name: tva.e_InstanceDescription, minOccurs: 0, maxOccurs: Infinity },
+						{ name: tva.e_PublishedStartTime },
+						{ name: tva.e_PublishedDuration },
+						{ name: tva.e_ActualStartTime, minOccurs: 0 },
+						{ name: tva.e_ActualDuration, minOccurs: 0 },
+						{ name: tva.e_FirstShowing, minOccurs: 0 },
+						{ name: tva.e_Free, minOccurs: 0 },
+				  ],
+			prefix == "BE" ? tvaEC.BroadcastEvent : tvaEC.ScheduleEvent,
 			false,
 			errs,
 			`${prefix}003`
@@ -3000,33 +3044,33 @@ export default class ContentGuideCheck {
 		if (Program) {
 			checkAttributes(Program, [tva.a_crid], [], tvaEA.Program, errs, `${prefix}010`);
 
-			let ProgramCRID = Program.attr(tva.a_crid);
+			let ProgramCRID = Program.attrAnyNs(tva.a_crid);
 			if (ProgramCRID) {
-				if (!isCRIDURI(ProgramCRID.value())) {
+				if (!isCRIDURI(ProgramCRID.value)) {
 					this.#NotCRIDFormat(errs, {
 						code: `${prefix}011`,
-						message: `${tva.a_crid.attribute(tva.e_Program)} is not a valid CRID (${ProgramCRID.value()})`,
+						message: `${tva.a_crid.attribute(tva.e_Program)} is not a valid CRID (${ProgramCRID.value})`,
 						fragment: Program,
 					});
 				}
-				if (!isIni(programCRIDs, ProgramCRID.value()))
+				if (!isIni(programCRIDs, ProgramCRID.value))
 					errs.addError({
 						code: `${prefix}012`,
-						message: `${tva.a_crid.attribute(tva.e_Program)}=${ProgramCRID.value().quote()} does not refer to a program in the ${tva.e_ProgramInformationTable.elementize()}`,
+						message: `${tva.a_crid.attribute(tva.e_Program)}=${ProgramCRID.value.quote()} does not refer to a program in the ${tva.e_ProgramInformationTable.elementize()}`,
 						fragment: Program,
 					});
-				plCRIDs.push(ProgramCRID.value());
-				isCurrentProgram = ProgramCRID.value() == currentProgramCRID;
+				plCRIDs.push(ProgramCRID.value);
+				isCurrentProgram = ProgramCRID.value == currentProgramCRID;
 			}
 		}
 
 		// <ProgramURL>
 		let ProgramURL = Event.get(xPath(props.prefix, tva.e_ProgramURL), props.schema);
 		if (ProgramURL)
-			if (!isDVBLocator(ProgramURL.text()))
+			if (!isDVBLocator(ProgramURL.content))
 				errs.addError({
 					code: `${prefix}021`,
-					message: `${Event.name()}.${tva.e_ProgramURL} (${ProgramURL.text()}) is not a valid DVB locator`,
+					message: `${Event.name}.${tva.e_ProgramURL} (${ProgramURL.content}) is not a valid DVB locator`,
 					fragment: ProgramURL,
 				});
 
@@ -3035,12 +3079,12 @@ export default class ContentGuideCheck {
 			thisInstanceDescription,
 			serviceIDs = [];
 		while ((thisInstanceDescription = Event.get(xPath(props.prefix, tva.e_InstanceDescription, ++id), props.schema)) != null) {
-			this.#ValidateInstanceDescription(props, Event.name(), thisInstanceDescription, isCurrentProgram, errs);
-			let instanceServiceID = thisInstanceDescription.attr(tva.a_serviceInstanceID) ? thisInstanceDescription.attr(tva.a_serviceInstanceID).value() : "dflt";
+			this.#ValidateInstanceDescription(props, Event.name, thisInstanceDescription, isCurrentProgram, errs);
+			let instanceServiceID = thisInstanceDescription.attrAnyNs(tva.a_serviceInstanceID) ? thisInstanceDescription.attrAnyNs(tva.a_serviceInstanceID).value : "dflt";
 			if (isIn(serviceIDs, instanceServiceID))
 				errs.addError({
 					code: instanceServiceID == "dflt" ? `${prefix}031` : `${prefix}032`,
-					line: thisInstanceDescription.line(),
+					line: thisInstanceDescription.line,
 					message: instanceServiceID == "dflt" ? "Default instance description is already specified" : `Instance description for ${instanceServiceID} is already specified`,
 					tag: "duplicate instance",
 				});
@@ -3050,8 +3094,8 @@ export default class ContentGuideCheck {
 		// <PublishedStartTime> and <PublishedDuration>
 		let pstElem = Event.get(xPath(props.prefix, tva.e_PublishedStartTime), props.schema);
 		if (pstElem) {
-			if (isUTCDateTime(pstElem.text())) {
-				let PublishedStartTime = new Date(pstElem.text());
+			if (isUTCDateTime(pstElem.content)) {
+				let PublishedStartTime = new Date(pstElem.content);
 
 				if (startSchedule && PublishedStartTime < startSchedule)
 					errs.addError({
@@ -3068,7 +3112,7 @@ export default class ContentGuideCheck {
 
 				let pdElem = Event.get(xPath(props.prefix, tva.e_PublishedDuration), props.schema);
 				if (endSchedule && pdElem) {
-					let parsedPublishedDuration = parseISOduration(pdElem.text());
+					let parsedPublishedDuration = parseISOduration(pdElem.content);
 					if (parsedPublishedDuration.add(PublishedStartTime) > endSchedule)
 						errs.addError({
 							code: `${prefix}043`,
@@ -3079,17 +3123,17 @@ export default class ContentGuideCheck {
 			} else
 				errs.addError({
 					code: `${prefix}049`,
-					message: `${tva.e_PublishedStartTime.elementize()} is not expressed in UTC format (${pstElem.text()})`,
+					message: `${tva.e_PublishedStartTime.elementize()} is not expressed in UTC format (${pstElem.content})`,
 					fragment: pstElem,
 				});
 		}
 
 		// <ActualStartTime>
 		let astElem = Event.get(xPath(props.prefix, tva.e_ActualStartTime), props.schema);
-		if (astElem && !isUTCDateTime(astElem.text()))
+		if (astElem && !isUTCDateTime(astElem.content))
 			errs.addError({
 				code: `${prefix}051`,
-				message: `${tva.e_ActualStartTime.elementize()} is not expressed in UTC format (${astElem.text()})`,
+				message: `${tva.e_ActualStartTime.elementize()} is not expressed in UTC format (${astElem.content})`,
 				fragment: astElem,
 			});
 
@@ -3102,17 +3146,16 @@ export default class ContentGuideCheck {
 		if (Free) BooleanValue(Free, tva.a_value, `${prefix}071`, errs);
 	}
 
-
 	/**
 	 * validate a <BroadcastEvent> elements in the <ProgramLocationTable>
 	 *
-	 * @param {object}  props                Metadata of the XML document
-	 * @param {XMLnode} BroadcastEvent       the node containing the <BroadcastEvent> being checked
-	 * @param {array}   programCRIDs         array of program crids defined in <ProgramInformationTable>
-	 * @param {array}   plCRIDs              array of program crids defined in <ProgramLocationTable>
-	 * @param {string}  currentProgramCRID   CRID of the currently airing program
-	 * @param {string}  requestType          the type of content guide request being checked
-	 * @param {Class}   errs                 errors found in validaton
+	 * @param {object}     props                Metadata of the XML document
+	 * @param {XmlElement} BroadcastEvent       the node containing the <BroadcastEvent> being checked
+	 * @param {array}      programCRIDs         array of program crids defined in <ProgramInformationTable>
+	 * @param {array}      plCRIDs              array of program crids defined in <ProgramLocationTable>
+	 * @param {string}     currentProgramCRID   CRID of the currently airing program
+	 * @param {string}     requestType          the type of content guide request being checked
+	 * @param {ErrorList}  errs                 errors found in validaton
 	 */
 	/* private */ #ValidateBroadcastEvent(props, BroadcastEvent, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs) {
 		if (!BroadcastEvent) {
@@ -3130,14 +3173,12 @@ export default class ContentGuideCheck {
 	/**
 	 * validate any <ScheduleEvent> elements in the <ProgramLocationTable.Schedule>
 	 *
-	 * @param {object}  props               Metadata of the XML document
-	 * @param {XMLnode} Schedule            the <Schedule> node containing the <ScheduleEvent> element to be checked
-	 * @param {array}   programCRIDs        array of program crids defined in <ProgramInformationTable>
-	 * @param {array}   plCRIDs             array of program crids defined in <ProgramLocationTable>
-	 * @param {string}  currentProgramCRID  CRID of the currently airing program
-	 * @param {Date}    scheduleStart       Date representation of Schedule@start
-	 * @param {Date}    scheduleEnd         Date representation of Schedule@end
-	 * @param {Class}   errs                errors found in validaton
+	 * @param {object}     props               Metadata of the XML document
+	 * @param {XmlElement} Schedule            the <Schedule> node containing the <ScheduleEvent> element to be checked
+	 * @param {array}      programCRIDs        array of program crids defined in <ProgramInformationTable>
+	 * @param {array}      plCRIDs             array of program crids defined in <ProgramLocationTable>
+	 * @param {string}     currentProgramCRID  CRID of the currently airing program
+	 * @param {ErrorList}  errs                errors found in validaton
 	 */
 	/* private */ #ValidateScheduleEvents(props, Schedule, programCRIDs, plCRIDs, currentProgramCRID, errs) {
 		if (!Schedule) {
@@ -3152,20 +3193,20 @@ export default class ContentGuideCheck {
 		let se = 0,
 			ScheduleEvent;
 		while ((ScheduleEvent = Schedule.get(xPath(props.prefix, tva.e_ScheduleEvent, ++se), props.schema)) != null) {
-			this.#ValidateEvent(ScheduleEvent, errs, programCRIDs, plCRIDs, currentProgramCRID, Schedule);
+			this.#ValidateEvent(props, ScheduleEvent, errs, programCRIDs, plCRIDs, currentProgramCRID, Schedule);
 		}
 	}
 
 	/**
 	 * validate a <Schedule> elements in the <ProgramLocationTable>
 	 *
-	 * @param {object}  props                Metadata of the XML document
-	 * @param {XMLnode} Schedule             the node containing the <Schedule> being checked
-	 * @param {array}   programCRIDs         array of program crids defined in <ProgramInformationTable>
-	 * @param {array}   plCRIDs              array of program crids defined in <ProgramLocationTable>
-	 * @param {string}  currentProgramCRID   CRID of the currently airing program
-	 * @param {string}  requestType          the type of content guide request being checked
-	 * @param {Class}   errs                 errors found in validaton
+	 * @param {object}     props                Metadata of the XML document
+	 * @param {XmlElement} Schedule             the node containing the <Schedule> being checked
+	 * @param {array}      programCRIDs         array of program crids defined in <ProgramInformationTable>
+	 * @param {array}      plCRIDs              array of program crids defined in <ProgramLocationTable>
+	 * @param {string}     currentProgramCRID   CRID of the currently airing program
+	 * @param {string}     requestType          the type of content guide request being checked
+	 * @param {ErrorList}  errs                 errors found in validaton
 	 * @returns {string}	the serviceIdRef for this <Schedule> element
 	 */
 	/* private */ #ValidateSchedule(props, Schedule, programCRIDS, plCRIDs, currentProgramCRID, requestType, errs) {
@@ -3177,21 +3218,21 @@ export default class ContentGuideCheck {
 		checkTopElementsAndCardinality(Schedule, [{ name: tva.e_ScheduleEvent, minOccurs: 0, maxOccurs: Infinity }], tvaEC.Schedule, false, errs, "VS001");
 		checkAttributes(Schedule, [tva.a_serviceIDRef, tva.a_start, tva.a_end], [], tvaEA.Schedule, errs, "VS002");
 
-		GetNodeLanguage(Schedule, false, errs, "VS003", this.#knownLanguages);
+		GetNodeLanguage(Schedule, false, errs, "VS003");
 		let serviceIdRef = this.#checkTAGUri(Schedule, errs, "VS004");
-		let startSchedule = Schedule.attr(tva.a_start),
+		let startSchedule = Schedule.attrAnyNs(tva.a_start),
 			fr = null,
-			endSchedule = Schedule.attr(tva.a_end),
+			endSchedule = Schedule.attrAnyNs(tva.a_end),
 			to = null;
-		if (startSchedule) fr = new Date(startSchedule.value());
+		if (startSchedule) fr = new Date(startSchedule.value);
 
-		if (endSchedule) to = new Date(endSchedule.value());
+		if (endSchedule) to = new Date(endSchedule.value);
 
 		if (startSchedule && endSchedule)
 			if (to.getTime() <= fr.getTime())
 				errs.addError({
 					code: "VS012",
-					message: `${tva.a_start.attribute(Schedule.name())} must be earlier than ${tva.a_end.attribute()}`,
+					message: `${tva.a_start.attribute(Schedule.name)} must be earlier than ${tva.a_end.attribute()}`,
 					fragment: Schedule,
 				});
 
@@ -3203,13 +3244,13 @@ export default class ContentGuideCheck {
 	/**
 	 * find and validate any <ProgramLocation> elements in the <ProgramLocationTable>
 	 *
-	 * @param {object}  props               Metadata of the XML document
-	 * @param {XMLnode} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {array}   programCRIDs        array to record CRIDs for later use
-	 * @param {string}  currentProgramCRID  CRID of the currently airing program
-	 * @param {string}  requestType         the type of content guide request being checked
-	 * @param {Class}   errs                errors found in validaton
-	 * @param {integer} o.childCount        the number of child elements to be present (to match GroupInformation@numOfItems)
+	 * @param {object}     props               Metadata of the XML document
+	 * @param {XmlElement} ProgramDescription  the element containing the <ProgramInformationTable>
+	 * @param {array}      programCRIDs        array to record CRIDs for later use
+	 * @param {string}     currentProgramCRID  CRID of the currently airing program
+	 * @param {string}     requestType         the type of content guide request being checked
+	 * @param {ErrorList}  errs                errors found in validaton
+	 * @param {integer}    o.childCount        the number of child elements to be present (to match GroupInformation@numOfItems)
 	 */
 	/* private */ #CheckProgramLocation(props, ProgramDescription, programCRIDs, currentProgramCRID, requestType, errs, o = null) {
 		if (!ProgramDescription) {
@@ -3223,15 +3264,33 @@ export default class ContentGuideCheck {
 
 		let ProgramLocationTable = ProgramDescription.get(xPath(props.prefix, tva.e_ProgramLocationTable), props.schema);
 		if (!ProgramLocationTable) {
-			//errs.addError({code:"PL001", message:`${tva.e_ProgramLocationTable.elementize()} is not specified`, line:ProgramDescription.line()});
+			//errs.addError({code:"PL001", message:`${tva.e_ProgramLocationTable.elementize()} is not specified`, line:ProgramDescription.line});
 			return;
 		}
+
+		let allowedElements = [{ name: tva.e_OnDemandProgram, minOccurs: 0, maxOccurs: Infinity }];
+		switch (requestType) {
+			case CG_REQUEST_SCHEDULE_NOWNEXT:
+			case CG_REQUEST_SCHEDULE_TIME:
+			case CG_REQUEST_SCHEDULE_WINDOW:
+			case CG_REQUEST_PROGRAM:
+				allowedElements.push({ name: tva.e_Schedule, minOccurs: 0, maxOccurs: Infinity });
+				break;
+			case CG_REQUEST_BS_CONTENTS:
+				allowedElements.push({ name: tva.e_BroadcastEvent, minOccurs: 0, maxOccurs: Infinity });
+				break;
+			case CG_REQUEST_BS_LISTS:
+			case CG_REQUEST_BS_CATEGORIES:
+					// ProgramLocationTable is not included in these response types
+					break;
+			case CG_REQUEST_MORE_EPISODES:
+				// only OnDemandProgram elements are permitted in More Episodes response
+				break;
+		}
+
 		checkTopElementsAndCardinality(
 			ProgramLocationTable,
-			[
-				{ name: tva.e_BroadcastEvent, minOccurs: 0, maxOccurs: Infinity },
-				{ name: tva.e_OnDemandProgram, minOccurs: 0, maxOccurs: Infinity },
-			],
+			allowedElements,
 			tvaEC.ProgramLocationTable,
 			false,
 			errs,
@@ -3239,16 +3298,17 @@ export default class ContentGuideCheck {
 		);
 		checkAttributes(ProgramLocationTable, [], [tva.a_lang], tvaEA.ProgramLocationTable, errs, "PL011");
 
-		GetNodeLanguage(ProgramLocationTable, false, errs, "PL012", this.#knownLanguages);
+		GetNodeLanguage(ProgramLocationTable, false, errs, "PL012");
 
 		let cntODP = 0,
+			cntSE = 0,
 			cntBE = 0,
 			foundServiceIds = [],
 			plCRIDs = [];
 
 		if (ProgramLocationTable.childNodes())
 			ProgramLocationTable.childNodes().forEachSubElement((child) => {
-				switch (child.name()) {
+				switch (child.name) {
 					case tva.e_OnDemandProgram:
 						this.#ValidateOnDemandProgram(props, child, programCRIDs, plCRIDs, requestType, errs);
 						cntODP++;
@@ -3257,21 +3317,32 @@ export default class ContentGuideCheck {
 						this.#ValidateBroadcastEvent(props, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
 						cntBE++;
 						break;
+					case tva.e_Schedule:
+						let thisServiceIdRef = this.#ValidateSchedule(props, child, programCRIDs, plCRIDs, currentProgramCRID, requestType, errs);
+						if (thisServiceIdRef.length)
+							if (isIni(foundServiceIds, thisServiceIdRef))
+								errs.addError({
+									code: "PL020",
+									message: `A ${tva.e_Schedule.elementize()} element with ${tva.a_serviceIDRef.attribute()}=${thisServiceIdRef.quote()} is already specified`,
+								});
+							else foundServiceIds.push(thisServiceIdRef);
+						cntSE++;
+						break;
 				}
 			});
 
 		if (o && o.childCount != 0) {
-			if (o.childCount != cntODP + cntBE)
+			if (o.childCount != cntODP + cntBE + cntSE)
 				errs.addError({
 					code: "PL021",
-					message: `number of items (${cntODP + cntSE}) in the ${tva.e_ProgramLocationTable.elementize()} does not match ${tva.a_numOfItems.attribute(
+					message: `number of items (${cntODP + cntBE + cntSE}) in the ${tva.e_ProgramLocationTable.elementize()} does not match ${tva.a_numOfItems.attribute(
 						tva.e_GroupInformation
 					)} specified in ${CATEGORY_GROUP_NAME} (${o.childCount})`,
 				});
 		}
 
 		if (requestType == CG_REQUEST_PROGRAM) {
-			if (cntODP > 1 || cntBE != 0)
+			if (cntODP > 1 || cntSE != 0)
 				errs.addError({
 					code: "PL023",
 					message: `The ${tva.e_ProgramLocationTable.elementize()} may only contain a single OnDemandProgram element representing the current On Demand availability of this programme`,
@@ -3291,12 +3362,14 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the content guide and record any errors
 	 *
-	 * @param {String} CGtext       the service list text to be validated
-	 * @param {String} requestType  the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
-	 * @param {Class}  errs         errors found in validaton
-	 * @param {String} log_prefix   the first part of the logging location (of null if no logging)
+	 * @param {String}    CGtext       the service list text to be validated
+	 * @param {String}    requestType  the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
+	 * @param {ErrorList} errs         errors found in validaton
+	 * @param {Object} options 
+	 *                   options.log_prefix            the first part of the logging location (or null if no logging)
+	 *                   options.report_schema_version report the state of the schema in the error/warning list
 	 */
-	doValidateContentGuide(CGtext, requestType, errs, log_prefix) {
+	doValidateContentGuide(CGtext, requestType, errs, options = {}) {
 		this.#numRequests++;
 
 		if (!CGtext) {
@@ -3304,12 +3377,15 @@ export default class ContentGuideCheck {
 			return;
 		}
 
+		if (!Object.prototype.hasOwnProperty.call(options, "log_prefix")) options.log_prefix = null;
+		if (!Object.prototype.hasOwnProperty.call(options, "report_schema_version")) options.report_schema_version = true;
+
 		let CG = SchemaLoad(CGtext, errs, "CG001");
 		if (!CG) return;
 
-		writeOut(errs, log_prefix, false);
+		writeOut(errs, options.log_prefix, false);
 
-		if (CG.root().name() != tva.e_TVAMain) {
+		if (CG.root.name != tva.e_TVAMain) {
 			errs.addError({
 				code: "CG002",
 				message: `Root element is not ${tva.e_TVAMain.elementize()}`,
@@ -3318,21 +3394,13 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		let CG_SCHEMA = {},
-			SCHEMA_PREFIX = CG.root().namespace() ? CG.root().namespace().prefix() : "",
-			SCHEMA_NAMESPACE = CG.root().namespace() ? CG.root().namespace().href() : "";
-		CG_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
+		let props = MakeDocumentProperties(CG.root);
 
-		let props = {
-			schema: CG_SCHEMA,
-			prefix: SCHEMA_PREFIX,
-			namespace: SCHEMA_NAMESPACE,
-		};
+		this.#doSchemaVerification(CG, props, errs, "CG003", options.report_schema_version);
 
-		this.#doSchemaVerification(CG, props, errs, "CG003");
-
-		GetNodeLanguage(CG.root(), true, errs, "CG005", this.#knownLanguages);
-		let ProgramDescription = CG.get(xPath(props.prefix, tva.e_ProgramDescription), props.schema);
+		let TVAMain = CG.root;
+		GetNodeLanguage(TVAMain, true, errs, "CG005");
+		let ProgramDescription = TVAMain.get(xPath(props.prefix, tva.e_ProgramDescription), props.schema);
 		if (!ProgramDescription) {
 			errs.addError({ code: "CG006", message: `No ${tva.e_ProgramDescription.elementize()} element specified.` });
 			return;
@@ -3353,7 +3421,6 @@ export default class ContentGuideCheck {
 					errs,
 					"CG011"
 				);
-
 				this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, null, requestType, errs);
 				this.#CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs);
 				break;
@@ -3367,7 +3434,6 @@ export default class ContentGuideCheck {
 					errs,
 					"CG021"
 				);
-
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
 				if (this.#hasElement(ProgramDescription, tva.e_GroupInformationTable)) this.#CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs);
 				let currentProgramCRIDnn = this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs);
@@ -3382,7 +3448,6 @@ export default class ContentGuideCheck {
 					errs,
 					"CG031"
 				);
-
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
 				if (this.#hasElement(ProgramDescription, tva.e_GroupInformationTable)) this.#CheckGroupInformationNowNext(props, ProgramDescription, groupIds, requestType, errs);
 				let currentProgramCRIDsw = this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs);
@@ -3398,7 +3463,6 @@ export default class ContentGuideCheck {
 					errs,
 					"CG041"
 				);
-
 				this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, null, requestType, errs);
 				this.#CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs);
 				break;
@@ -3412,7 +3476,6 @@ export default class ContentGuideCheck {
 					errs,
 					"CG051"
 				);
-
 				this.#CheckGroupInformation(props, ProgramDescription, requestType, groupIds, errs, o);
 				this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs, o);
 				this.#CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs, o);
@@ -3420,13 +3483,11 @@ export default class ContentGuideCheck {
 			case CG_REQUEST_BS_CATEGORIES:
 				// box set categories response (6.8.2.3) has <GroupInformationTable> element
 				checkTopElementsAndCardinality(ProgramDescription, [{ name: tva.e_GroupInformationTable }], tvaEC.ProgramDescription, false, errs, "CG061");
-
 				this.#CheckGroupInformation(props, ProgramDescription, requestType, null, errs, null);
 				break;
 			case CG_REQUEST_BS_LISTS:
 				// box set lists response (6.8.3.3) has <GroupInformationTable> element
 				checkTopElementsAndCardinality(ProgramDescription, [{ name: tva.e_GroupInformationTable }], tvaEC.ProgramDescription, false, errs, "CG071");
-
 				this.#CheckGroupInformation(props, ProgramDescription, requestType, null, errs, null);
 				break;
 			case CG_REQUEST_BS_CONTENTS:
@@ -3446,12 +3507,13 @@ export default class ContentGuideCheck {
 						clause: "A177 clause 6.8.4.3",
 						descripition: `the required child elements of ${tva.e_ProgramDescription.elementize()} for Box Set Contents need to be provied`,
 					});
-
 				this.#CheckGroupInformation(props, ProgramDescription, requestType, groupIds, errs, o);
 				this.#CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs, o);
 				this.#CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs, o);
 				break;
 		}
+
+		CG.dispose();
 	}
 
 	/**
@@ -3459,11 +3521,11 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {String} CGtext        the service list text to be validated
 	 * @param {String} requestType   the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
-	 * @returns {Class}	errs errors found in validaton
+	 * @returns {ErrorList} errs errors found in validaton
 	 */
 	validateContentGuide(CGtext, requestType) {
 		var errs = new ErrorList();
-		this.doValidateContentGuide(CGtext, requestType, errs);
+		this.doValidateContentGuide(CGtext, requestType, errs, {report_schema_version: true});
 
 		return new Promise((resolve, /* eslint-disable no-unused-vars*/ reject /* eslint-enable */) => {
 			resolve(errs);

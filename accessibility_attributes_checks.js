@@ -4,6 +4,8 @@
  * Checks the value space of the <AccessibilityAttributes> element against the rules and
  * values provided in DVB A177.
  */
+import { XmlElement } from 'libxml2-wasm';
+
 import { datatypeIs } from "./phlib/phlib.js";
 
 import { tva, tvaEC, BaseAccessibilityAttributesType } from "./TVA_definitions.js";
@@ -29,7 +31,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 		return;
 	}
 
-	const accessibilityParent = AccessibilityAttributes.parent().name();
+	const accessibilityParent = AccessibilityAttributes.parent.name;
 
 	const mediaAccessibilityElements = [
 		{ name: tva.e_SubtitleAttributes, minOccurs: 0, maxOccurs: Infinity },
@@ -70,10 +72,10 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 		let children = elem.childNodes();
 		if (children)
 			children.forEachSubElement((e) => {
-				if (e.name() == tva.e_Purpose) {
-					let href = e.attr(tva.a_href);
+				if (e.name == tva.e_Purpose) {
+					let href = e.attrAnyNs(tva.a_href);
 					if (href) {
-						let purposeTerm = href.value();
+						let purposeTerm = href.value;
 						if (!cs.AccessibilityPurposeCS.isIn(purposeTerm))
 							errs.addError({
 								code: `${errCode}-${errNum}a`,
@@ -87,7 +89,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 								errs.addError({
 									code: `${errCode}-${errNum}b`,
 									fragment: e,
-									message: `"${purposeTerm}" is not valid for ${elem.name().elementize()}`,
+									message: `"${purposeTerm}" is not valid for ${elem.name.elementize()}`,
 									key: ACCESSIBILITY_CHECK_KEY,
 								});
 						}
@@ -97,29 +99,29 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 	};
 
 	let checkAppInformation = (elem, errNum) => {
-		let appInfo = elem.childNodes().find((el) => el.type() == "element" && el.name().endsWith(tva.e_AppInformation));
+		let appInfo = elem.childNodes().find((el) => (el instanceof XmlElement) && el.name.endsWith(tva.e_AppInformation));
 		if (appInfo == undefined) return false; // AppInformation element is not present
 		let children = appInfo.childNodes();
 		if (children)
 			children.forEachSubElement((e) => {
-				switch (e.name()) {
+				switch (e.name) {
 					case tva.e_RequiredStandardVersion:
-						if (!dvbi.ApplicationStandards.includes(e.text()))
+						if (!dvbi.ApplicationStandards.includes(e.content))
 							errs.addError({
 								type: WARNING,
 								code: `${errCode}-${errNum}a`,
 								fragment: e,
-								message: `"${e.text()}" is not a known Standard Version`,
+								message: `"${e.content}" is not a known Standard Version`,
 								key: ACCESSIBILITY_CHECK_KEY,
 							});
 						break;
 					case tva.e_RequiredOptionalFeature:
-						if (!dvbi.ApplicationOptions.includes(e.text()))
+						if (!dvbi.ApplicationOptions.includes(e.content))
 							errs.addError({
 								type: WARNING,
 								code: `${errCode}-${errNum}b`,
 								fragment: e,
-								message: `"${e.text()}" is not a known Optional Feature`,
+								message: `"${e.content}" is not a known Optional Feature`,
 								key: ACCESSIBILITY_CHECK_KEY,
 							});
 						break;
@@ -133,13 +135,13 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 			children = elem.childNodes();
 		if (children)
 			children.forEachSubElement((e) => {
-				if (e.name() == childName) {
-					let href = e.attr(tva.a_href) ? e.attr(tva.a_href).value() : null;
+				if (e.name == childName) {
+					let href = e.attrAnyNs(tva.a_href) ? e.attrAnyNs(tva.a_href).value : null;
 					if (href && !cs.isIn(href)) {
 						errs.addError({
 							code: `${errCode}-${errNum}`,
 							fragment: e,
-							message: `"${href}" is not valid for ${e.name().elementize()} in ${elem.name().elementize()}`,
+							message: `"${href}" is not valid for ${e.name.elementize()} in ${elem.name.elementize()}`,
 							key: ACCESSIBILITY_CHECK_KEY,
 						});
 						rc = false;
@@ -156,31 +158,31 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 		let children = elem.childNodes();
 		if (children)
 			children.forEachSubElement((e) => {
-				if (e.name() == childName) {
-					let languageCode = e.text();
+				if (e.name == childName) {
+					let languageCode = e.content;
 					if (cs.KnownLanguages.checkSignLanguage(languageCode) != cs.KnownLanguages.languageKnown)
 						errs.addError({
 							code: `${errCode}-${errNum}b`,
 							fragment: e,
-							message: `${languageCode.quote()} is not a valid sign language for ${e.name().elementize()} in ${elem.name().elementize()}`,
+							message: `${languageCode.quote()} is not a valid sign language for ${e.name.elementize()} in ${elem.name.elementize()}`,
 							key: ACCESSIBILITY_CHECK_KEY,
-							description: `language used for ${e.name().elementize()}} must be a sign language in the IANA language-subtag-regostry`,
+							description: `language used for ${e.name.elementize()}} must be a sign language in the IANA language-subtag-registry`,
 						});
 				}
 			});
 	};
 
-	let checkLanguage = (elem, childName, errNum) => {
+	let checkLanguageFmt = (elem, childName, errNum) => {
 		let children = elem.childNodes();
 		if (children)
 			children.forEachSubElement((e) => {
-				if (e.name() == childName) {
-					if (!isValidLangFormat(e.text())) {
+				if (e.name == childName) {
+					if (!isValidLangFormat(e.content)) {
 						errs.addError({
 							code: `${errCode}-${errNum}a`,
 							key: "invalid lang format",
 							fragment: e,
-							message: `xml:${tva.a_lang} value ${e.text().quote()} does not match format for Language-Tag in BCP47`,
+							message: `xml:${tva.a_lang} value ${e.content.quote()} does not match format for Language-Tag in BCP47`,
 						});
 					}
 				}
@@ -192,12 +194,12 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 		let children = elem.childNodes();
 		if (children)
 			children.forEachSubElement((e) => {
-				if (e.name() == childName) {
-					if (e.attr(tva.a_purpose) && !cs.AudioPurposeCS.isIn(e.attr(tva.a_purpose).value()))
+				if (e.name == childName) {
+					if (e.attrAnyNs(tva.a_purpose) && !cs.AudioPurposeCS.isIn(e.attrAnyNs(tva.a_purpose).value))
 						errs.addError({
 							code: errNum,
 							fragment: e,
-							message: `"${e.attr(tva.a_purpose).value()}" not not valid for ${elem.name().elementize()}${e.name().elementize()}`,
+							message: `"${e.attrAnyNs(tva.a_purpose).value}" not not valid for ${elem.name.elementize()}${e.name.elementize()}`,
 							key: ACCESSIBILITY_CHECK_KEY,
 						});
 				}
@@ -208,7 +210,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 		let children = elem.childNodes();
 		if (children)
 			children.forEachSubElement((e) => {
-				if (e.name() == childName) {
+				if (e.name == childName) {
 					checkTopElementsAndCardinality(
 						e,
 						[
@@ -222,29 +224,29 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 						`${errCode}-${errNum}a`
 					);
 					// AccessibilityAttributes.*.AudioAttribites.AudioLanguage
-					checkLanguage(e, tva.e_AudioLanguage, `${errNum}b`);
+					checkLanguageFmt(e, tva.e_AudioLanguage, `${errNum}b`);
 					checkLanguagePurpose(e, tva.e_AudioLanguage, `${errNum}c`);
 					let c2 = e.childNodes();
 					if (c2)
 						c2.forEachSubElement((e2) => {
-							switch (e2.name()) {
+							switch (e2.name) {
 								case tva.e_Coding:
 									// AccessibilityAttributes.*.AudioAttribites.Coding
-									if (e2.attr(tva.a_href) && !cs.AudioCodecCS.isIn(e2.attr(tva.a_href).value()))
+									if (e2.attrAnyNs(tva.a_href) && !cs.AudioCodecCS.isIn(e2.attrAnyNs(tva.a_href).value))
 										errs.addError({
 											code: `${errCode}-${errNum}d`,
 											fragment: e2,
-											message: `"${e2.attr(tva.a_href).value()}" not not valid for ${elem.name().elementize()}${e.name().elementize()}${e2.name().elementize()}`,
+											message: `"${e2.attrAnyNs(tva.a_href).value}" not not valid for ${elem.name.elementize()}${e.name.elementize()}${e2.name.elementize()}`,
 											key: ACCESSIBILITY_CHECK_KEY,
 										});
 									break;
 								case tva.e_MixType:
 									// AccessibilityAttributes.*.AudioAttribites.MixType
-									if (e2.attr(tva.a_href) && !cs.AudioPresentationCS.isIn(e2.attr(tva.a_href).value()))
+									if (e2.attrAnyNs(tva.a_href) && !cs.AudioPresentationCS.isIn(e2.attrAnyNs(tva.a_href).value))
 										errs.addError({
 											code: `${errCode}-${errNum}e`,
 											fragment: e2,
-											message: `"${e2.attr(tva.a_href).value()}" not not valid for ${elem.name().elementize()}${e.name().elementize()}${e2.name().elementize()}`,
+											message: `"${e2.attrAnyNs(tva.a_href).value}" not not valid for ${elem.name.elementize()}${e.name.elementize()}${e2.name.elementize()}`,
 											key: ACCESSIBILITY_CHECK_KEY,
 										});
 									break;
@@ -267,7 +269,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 		hasAppInformation = false;
 	if (children)
 		children.forEachSubElement((elem) => {
-			switch (elem.name()) {
+			switch (elem.name) {
 				case tva.e_MagnificationUIAttributes:
 					checkTopElementsAndCardinality(elem, allowedAppChildren, allAppChildren, false, errs, `${errCode}-11`);
 					checkAppInformation(elem, 12);
@@ -283,7 +285,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 					checkTopElementsAndCardinality(elem, ScreenReaderChildElements, tvaEC.ScreenReaderAttributes, false, errs, `${errCode}-31`);
 					checkAppInformation(elem, 32);
 					checkPurpose(elem, "3", 33);
-					checkLanguage(elem, tva.e_ScreenReaderLanguage, 34);
+					checkLanguageFmt(elem, tva.e_ScreenReaderLanguage, 34);
 					break;
 				case tva.e_ResponseToUserActionAttributes:
 					checkTopElementsAndCardinality(elem, allowedAppChildren, allAppChildren, false, errs, `${errCode}-41`);
@@ -308,7 +310,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes, cs
 					hasAppInformation = checkAppInformation(elem, 52);
 					checkCS(elem, tva.e_Carriage, cs.SubtitleCarriageCS, 53, carriages);
 					checkCS(elem, tva.e_Coding, cs.SubtitleCodingFormatCS, 54, codings);
-					checkLanguage(elem, tva.e_SubtitleLanguage, 55);
+					checkLanguageFmt(elem, tva.e_SubtitleLanguage, 55);
 					checkCS(elem, tva.e_Purpose, cs.SubtitlePurposeTypeCS, 56);
 					break;
 				case tva.e_AudioDescriptionAttributes:

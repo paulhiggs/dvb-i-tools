@@ -17,6 +17,8 @@ import fileupload from "express-fileupload";
 import favicon from "serve-favicon";
 import fetchS from "sync-fetch";
 
+import { Libxml2_wasm_init } from './libxml2-wasm-extensions.js';
+
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.js";
 import { Default_SLEPR, __dirname } from "./data_locations.js";
 import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults } from "./ui.js";
@@ -105,10 +107,10 @@ function DVB_I_check(req, res, slcheck, cgcheck, hasSL, hasCG, motd, mode = MODE
 		if (!req.parseErr)
 			switch (req.body.testtype) {
 				case MODE_CG:
-					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, log_prefix);
+					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, {log_prefix: log_prefix, report_schema_version:true});
 					break;
 				case MODE_SL:
-					if (slcheck) slcheck.doValidateServiceList(VVxml, errs, log_prefix);
+					if (slcheck) slcheck.doValidateServiceList(VVxml, errs, {log_prefix: log_prefix, report_schema_version:true});
 					break;
 			}
 
@@ -139,7 +141,7 @@ function validateServiceList(req, res, slcheck, motd) {
 			req.parseErr = error.message;
 		}
 		if (resp) {
-			if (resp.ok) VVxml = resp.text();
+			if (resp.ok) VVxml = resp.content;
 			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
 		}
 	} else if (req.method == "POST") {
@@ -164,7 +166,7 @@ function validateServiceListJson(req, res, slcheck) {
 			req.parseErr = error.message;
 		}
 		if (resp) {
-			if (resp.ok) VVxml = resp.text();
+			if (resp.ok) VVxml = resp.content;
 			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
 		}
 	} else if (req.method == "POST") {
@@ -406,7 +408,10 @@ export default function validator(options) {
 
 	// start the HTTP server
 	var http_server = app.listen(options.port, function () {
-		console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}`));
+		if (http_server.address()?.port)
+			console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}`));
+		else 
+			console.log(chalk.red(`HTTP port ${options.port} already in use -- HTTP server not started`));
 	});
 
 	// start the HTTPS server

@@ -4,8 +4,8 @@
  * some usefule utility functions that may be used by more than one class
  */
 import { statSync, readFileSync } from "fs";
-
 import chalk from "chalk";
+import { XmlXPath, XmlElement } from 'libxml2-wasm';
 
 import { datatypeIs } from "./phlib/phlib.js";
 
@@ -26,17 +26,16 @@ export let xPath = (SCHEMA_PREFIX, elementName, index = null) => `${SCHEMA_PREFI
  * @param {array}  elementNames     the name of the element to be searched for
  * @returns {string} the XPath selector
  */
-export let xPathM = (SCHEMA_PREFIX, elementNames) =>
-	datatypeIs(elementNames, "array") ? `${SCHEMA_PREFIX}:${elementNames.join(`/${SCHEMA_PREFIX}:`)}` : xPath(SCHEMA_PREFIX, elementNames);
+export let xPathM = (SCHEMA_PREFIX, elementNames) => datatypeIs(elementNames, "array") ? `${SCHEMA_PREFIX}:${elementNames.join(`/${SCHEMA_PREFIX}:`)}` : xPath(SCHEMA_PREFIX, elementNames);
 
 /**
  * Finds the first named child element
  *
- * @param {*} element 								The containing parent element
- * @param {string} childElementName 	The name of the child element to find
+ * @param {XmlElement} element           The containing parent element
+ * @param {string}    childElementName   The name of the child element to find
  * @returns the named child element or undefined if not present
  */
-let getFirstElementByTagName = (element, childElementName) => element.childNodes()?.find((c) => c.type() == "element" && c.name() == childElementName);
+let getFirstElementByTagName = (element, childElementName) => element.childNodes()?.find((c) => (c instanceof XmlElement) && c.name == childElementName);
 
 export function getElementByTagName(element, childElementName, index = null) {
 	switch (datatypeIs(childElementName)) {
@@ -46,7 +45,7 @@ export function getElementByTagName(element, childElementName, index = null) {
 			let cnt = 0;
 			const ch1 = element.childNodes();
 			for (let i = 0; i < ch1.length; i++) {
-				if (ch1[i].type() == "element" && ch1[i].name() == childElementName) cnt++;
+				if ((ch1[i] instanceof XmlElement) && ch1[i].name == childElementName) cnt++;
 				if (cnt >= index) return ch1[i];
 			}
 			break;
@@ -175,8 +174,8 @@ export function parseISOduration(duration) {
 /**
  * counts the number of named elements in the specificed node
  * *
- * @param {XMLnode} node             the libxmljs node to check
- * @param {String}  childElementName the name of the child element to count
+ * @param {XmlElement} node             the libxmljs node to check
+ * @param {String}     childElementName the name of the child element to count
  * @returns {integer} the number of named child elments
  */
 export function CountChildElements(node, childElementName) {
@@ -184,15 +183,15 @@ export function CountChildElements(node, childElementName) {
 	const childElems = node ? node.childNodes() : null;
 	if (childElems)
 		childElems.forEachSubElement((elem) => {
-			if (elem.name() == childElementName) r++;
+			if (elem.name == childElementName) r++;
 		});
 	return r;
 }
 
 /**
- * determines if the specified value is already in the array
+ * determines if the specified value is already in the array and adds it if it is not
  * *
- * @param {Array} found    the libxmljs node to check
+ * @param {Array} found    an array on non-duplicated values
  * @param {String}  val    the value whose existance is to be checked
  * @returns {boolean} true if @val is already present in @found, else false
  */

@@ -1,14 +1,16 @@
 /**
  * schema_checks.js
  */
-import { parseXmlString } from "libxmljs2";
+import { XmlDocument, XsdValidator, XmlValidateError } from "libxml2-wasm";
+import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
+xmlRegisterFsInputProviders();
+
 import format from "xml-formatter";
 
 import { elementize, datatypeIs } from "./phlib/phlib.js";
 
 import { dvbi } from "./DVB-I_definitions.js";
-
-import { APPLICATION, INFORMATION, WARNING } from "./error_list.js";
+import { APPLICATION, INFORMATION, WARNING, DEBUG } from "./error_list.js";
 import { OLD, DRAFT } from "./globals.js";
 import { isIn, xPath } from "./utils.js";
 import { keys } from "./common_errors.js";
@@ -16,12 +18,12 @@ import { keys } from "./common_errors.js";
 /**
  * check that the specified child elements are in the parent element
  *
- * @param {Object} checkElement       the element whose attributes should be checked
- * @param {Array}  requiredAttributes the element names permitted within the parent
- * @param {Array}  optionalAttributes the element names permitted within the parent
- * @param {Array}  definedAttributes  attributes that defined in the schema, whether requited, optional or profiled out
- * @param {Class}  errs               errors found in validaton
- * @param {string} errCode            error code to be used in reports,
+ * @param {XmlElement} checkElement       the element whose attributes should be checked
+ * @param {Array}      requiredAttributes the element names permitted within the parent
+ * @param {Array}      optionalAttributes the element names permitted within the parent
+ * @param {Array}      definedAttributes  attributes that defined in the schema, whether requited, optional or profiled out
+ * @param {Class}      errs               errors found in validaton
+ * @param {string}     errCode            error code to be used in reports,
  */
 export function checkAttributes(checkElement, requiredAttributes, optionalAttributes, definedAttributes, errs, errCode) {
 	if (!checkElement || !requiredAttributes) {
@@ -30,30 +32,30 @@ export function checkAttributes(checkElement, requiredAttributes, optionalAttrib
 	}
 	let p = "";
 	try {
-		p = `${checkElement.parent().name()}.${checkElement.name()}`;
+		p = `${checkElement.parent.childName}.${checkElement.name}`;
 	} catch (e) {
-		p = checkElement.name();
+		p = checkElement.name;
 	}
 
 	requiredAttributes.forEach((attributeName) => {
-		if (!checkElement.attr(attributeName))
-			errs.addError({ code: `${errCode}-1`, message: `${attributeName.attribute(`${p}`)} is a required attribute`, key: "missing attribute", line: checkElement.line() });
+		if (!checkElement.attrAnyNs(attributeName))
+			errs.addError({ code: `${errCode}-1`, message: `${attributeName.attribute(`${p}`)} is a required attribute`, key: "missing attribute", line: checkElement.line });
 	});
 
-	checkElement.attrs().forEach((attr) => {
-		if (!isIn(requiredAttributes, attr.name()) && !isIn(optionalAttributes, attr.name()) && !isIn(definedAttributes, attr.name()))
-			errs.addError({ code: `${errCode}-2`, message: `${attr.name().attribute()} is not permitted in ${p}`, key: "unexpected attribute", line: checkElement.line() });
+	checkElement.attrs.forEach((attr) => {
+		if (!isIn(requiredAttributes, attr.name) && !isIn(optionalAttributes, attr.name) && !isIn(definedAttributes, attr.name))
+			errs.addError({ code: `${errCode}-2`, message: `${attr.name.attribute()} is not permitted in ${p}`, key: "unexpected attribute", line: checkElement.line });
 	});
 
 	definedAttributes.forEach((attribute) => {
 		if (!isIn(requiredAttributes, attribute) && !isIn(optionalAttributes, attribute))
-			if (checkElement.attr(attribute))
+			if (checkElement.attrAnyNs(attribute))
 				errs.addError({
 					type: INFORMATION,
 					code: `${errCode}-3`,
-					message: `${attribute.attribute()} is profiled out of  ${checkElement.name().elementize()}`,
+					message: `${attribute.attribute()} is profiled out of  ${checkElement.name.elementize()}`,
 					key: "unused attribute",
-					line: checkElement.line(),
+					line: checkElement.line,
 				});
 	});
 }
@@ -81,7 +83,7 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 			childElems = node ? node.childNodes() : null;
 		if (childElems)
 			childElems.forEachSubElement((elem) => {
-				if (elem.name() == childElementName) res.push(elem);
+				if (elem.name == childElementName) res.push(elem);
 			});
 		return res;
 	}
@@ -90,7 +92,7 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 		return false;
 	}
 	let rv = true,
-		thisElem = elementize(`${parentElement.parent().name()}.${parentElement.name()}`);
+		thisElem = elementize(`${parentElement.parent.name}.${parentElement.name}`);
 	// check that each of the specifid childElements exists
 	childElements.forEach((elem) => {
 		let min = Object.prototype.hasOwnProperty.call(elem, "minOccurs") ? elem.minOccurs : 1;
@@ -101,7 +103,7 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 		if (count == 0 && min != 0) {
 			errs.addError({
 				code: `${errCode}-1`,
-				line: parentElement.line(),
+				line: parentElement.line,
 				message: `Mandatory element ${elem.name.elementize()} not specified in ${thisElem}`,
 				key: "missing element",
 			});
@@ -111,7 +113,7 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 				namedChildren.forEach((child) =>
 					errs.addError({
 						code: `${errCode}-2`,
-						line: child.line(),
+						line: child.line,
 						message: `Cardinality of ${elem.name.elementize()} in ${thisElem} is not in the range ${min}..${max == Infinity ? "unbounded" : max}`,
 						key: "wrong element count",
 					})
@@ -130,18 +132,18 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 		});
 
 		parentElement.childNodes().forEachSubElement((child) => {
-			let childName = child.name();
+			let childName = child.name;
 			if (!findElementIn(childElements, childName)) {
 				if (isIn(excludedChildren, childName))
 					errs.addError({
 						type: INFORMATION,
 						code: `${errCode}-10`,
 						message: `Element ${childName.elementize()} in ${thisElem} is not included in DVB-I`,
-						line: child.line(),
+						line: child.line,
 						key: "profiled out",
 					});
 				else if (!allowOtherElements) {
-					errs.addError({ code: `${errCode}-11`, line: child.line(), message: `Element ${childName.elementize()} is not permitted in ${thisElem}`, key: "element not allowed" });
+					errs.addError({ code: `${errCode}-11`, line: child.line, message: `Element ${childName.elementize()} is not permitted in ${thisElem}`, key: "element not allowed" });
 					rv = false;
 				}
 			}
@@ -153,11 +155,18 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 /**
  * check if the element contains the named child element
  *
- * @param {Object} elem                 the element to check
- * @param {string} childElementName     the name of the child element to look for
+ * @param {XmlElement} elem                 the element to check
+ * @param {string}     childElementName     the name of the child element to look for
  * @returns {boolean} true if the element contains the named child element(s) otherwise false
  */
-export var hasChild = (elem, childElementName) => (elem ? elem.childNodes().find((el) => el.type() == "element" && el.name().endsWith(childElementName)) != undefined : false);
+export function hasChild(elem, childElementName) {
+	if (!elem) return false;
+	let term = elem.firstChild;
+	while (term) {
+		if (term?.name?.endsWith(childElementName)) return true;
+		term = term.next;
+	}
+}
 
 /**
  * validate a XML document gainst the specified schema (included schemas must be in the same directory)
@@ -168,16 +177,26 @@ export var hasChild = (elem, childElementName) => (elem ? elem.childNodes().find
  * @param {string}   errCode     the error code to report with each error
  */
 export function SchemaCheck(XML, XSD, errs, errCode) {
-	if (!XML.validate(XSD)) {
-		let prettyXML = format(XML.toString(), { collapseContent: true, lineSeparator: "\n", strictMode: true });
-		let lines = prettyXML.split("\n");
-		XML.validationErrors.forEach((ve) => {
-			// ignore errors related to duplicated schema imports (schema passed to this function vs that declared in instance document)
-			if (!(ve.domain == 16 && ve.code == 3083)) {
-				let splt = ve.toString().split("\r");
-				splt.forEach((err) => errs.addError({ code: errCode, message: err, fragment: lines[ve.line - 1], line: ve.line, key: keys.k_XSDValidation }));
-			}
+	let validator = null;
+	try {
+		validator = XsdValidator.fromDoc(XSD);
+	} catch (err) {
+		let x = err.details;
+		x.forEach((e) => {
+			errs.addError({ code: "LS000", type: DEBUG, message: JSON.stringify(e) });
 		});
+	}
+
+	try {
+		validator.validate(XML);
+	} catch (err) {
+		//console.log(err.message)
+		if (err.details) {
+			let lines = format(XML.toString(), { collapseContent: true, lineSeparator: "\n", strictMode: true }).split("\n");
+			err.details.forEach((ve) => {
+				errs.addError({ code: errCode, message: ve.message, fragment: lines[ve.line], line: ve.line, key: keys.k_XSDValidation });
+			});
+		}
 	}
 }
 
@@ -194,12 +213,12 @@ export function SchemaVersionCheck(props, document, publication_state, errs, err
 	let ServiceList = document.get(xPath(props.prefix, dvbi.e_ServiceList), props.schema);
 	if (publication_state & OLD) {
 		let err1 = { code: `${errCode}a`, message: "schema version is out of date", key: "schema version" };
-		if (ServiceList) err1.line = ServiceList.line();
+		if (ServiceList) err1.line = ServiceList.line;
 		errs.addError(err1);
 	}
 	if (publication_state & DRAFT) {
 		let err2 = { type: WARNING, code: `${errCode}b`, message: "schema is in draft state", key: "schema version" };
-		if (ServiceList) err2.line = ServiceList.line();
+		if (ServiceList) err2.line = ServiceList.line;
 		errs.addError(err2);
 	}
 }
@@ -209,27 +228,34 @@ export function SchemaVersionCheck(props, document, publication_state, errs, err
  * @param {XMLdocument} document 	  XMLdocument
  * @param {Class}       errs        error handler for any loading errors
  * @param {string}      errcode     error code prefix to use for any loading issues
- * @returns {Document}  an XML document structure for use with libxmljs2
+ * @returns {XMLDocument}  an XML document structure
  */
 export function SchemaLoad(document, errs, errcode) {
-	let tmp = null, prettyXML=null;
+	const _key = "malformed XML";
+	let tmp = null,
+		prettyXML = null;
+
 	try {
-		prettyXML = format(document.replace(/(\n\t)/gm, "\n"), { collapseContent: true, lineSeparator: "\n" });
+		tmp = XmlDocument.fromString(document);
 	}
 	catch (err) {
-		console.dir(err);
-		errs.addError({ code: `${errcode}-1`, message: `XML format failed: ${err.cause}`, key: "malformed XML" });
+		errs.addError({ code: `${errcode}-1`, message: `Raw XML parsing failed: ${err.message}`, key: _key });
+	}
+	try {
+		prettyXML = format(document.replace(/(\n\t)/gm, "\n"), { collapseContent: true, lineSeparator: "\n" });
+	} catch (err) {
+		errs.addError({ code: `${errcode}-2`, message: `XML format failed: ${err.cause}`, key: _key });
 		return null;
 	}
 	try {
-		tmp = parseXmlString(prettyXML);
+		tmp = XmlDocument.fromString(prettyXML);
 	} catch (err) {
-		errs.addError({ code: `${errcode}-11`, message: `XML parsing failed: ${err.message}`, key: "malformed XML" });
+		errs.addError({ code: `${errcode}-11`, message: `XML parsing failed: ${err.message}`, key: _key });
 		errs.loadDocument(prettyXML);
 		return null;
 	}
-	if (!tmp || !tmp.root()) {
-		errs.addError({ code: `${errcode}-21`, message: "XML document is empty", key: "malformed XML" });
+	if (!tmp || !tmp.root) {
+		errs.addError({ code: `${errcode}-12`, message: "XML document is empty", key: _key });
 		errs.loadDocument(prettyXML);
 		return null;
 	}

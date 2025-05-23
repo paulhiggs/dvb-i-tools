@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServiceList xmlns="urn:dvb:metadata:servicediscovery:2025" xmlns:tva="urn:tva:metadata:2024" id="tag:dvb.org,2025:A177r7" version="1" xml:lang="en">
+	<StandardVersion>urn:dvb:metadata:dvbi:standardversion:7</StandardVersion>
+	<Name>Service List with disallowed apps/images</Name>
+	<ProviderName>Regression Test</ProviderName>
+	<RelatedMaterial>
+		<!-- Service Logo -->
+		<tva:HowRelated href="urn:dvb:metadata:cs:HowRelatedCS:2021:1001.2"/>
+		<tva:MediaLocator>
+			<tva:MediaUri contentType="image/png">https://dvb.org/images/dvb-logo.png</tva:MediaUri>
+		</tva:MediaLocator>
+	</RelatedMaterial>
+	<RelatedMaterial>
+		<!-- Content Guide Source Logo -->
+		<tva:HowRelated href="urn:dvb:metadata:cs:HowRelatedCS:2021:1002.1"/>
+		<tva:MediaLocator>
+			<tva:MediaUri contentType="image/png">https://dvb.org/images/dvb-logo.png</tva:MediaUri>
+		</tva:MediaLocator>
+	</RelatedMaterial>
+	<RelatedMaterial>
+		<!-- Service Banner -->
+		<tva:HowRelated href="urn:dvb:metadata:cs:HowRelatedCS:2021:1001.3"/>
+		<tva:MediaLocator>
+			<tva:MediaUri contentType="image/png">https://dvb.org/images/dvb-banner.png</tva:MediaUri>
+		</tva:MediaLocator>
+	</RelatedMaterial>
+	<RelatedMaterial>
+		<!-- Content Finished Banner -->
+		<tva:HowRelated href="urn:dvb:metadata:cs:HowRelatedCS:2021:1000.2"/>
+		<tva:MediaLocator>
+			<tva:MediaUri contentType="image/png">https://dvb.org/images/testcard.png</tva:MediaUri>
+		</tva:MediaLocator>
+	</RelatedMaterial>
+</ServiceList>

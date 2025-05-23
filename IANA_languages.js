@@ -6,13 +6,13 @@
 import { readFile, readFileSync } from "fs";
 
 import chalk from "chalk";
+import fetchS from "sync-fetch";
 
 import { datatypeIs } from "./phlib/phlib.js";
 
 import handleErrors from "./fetch_err_handler.js";
 import { isIn, isIni } from "./utils.js";
 import { isHTTPURL, BCP47_Language_Tag } from "./pattern_checks.js";
-import fetchS from "sync-fetch";
 
 export default class IANAlanguages {
 	#languagesList;
@@ -174,7 +174,7 @@ export default class IANAlanguages {
 		if (async)
 			fetch(languagesURL)
 				.then(handleErrors)
-				.then((response) => response.text())
+				.then((response) => response.content)
 				.then((responseText) => this.#processLanguageData(responseText))
 				.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${languagesURL}`)));
 		else {
@@ -254,7 +254,7 @@ export default class IANAlanguages {
 const BCP47langauetag_exp = new RegExp(`^${BCP47_Language_Tag}$`);
 export let isValidLangFormat = (lang) => (datatypeIs(lang, "string") ? BCP47langauetag_exp.test(lang) : false);
 
-export function ValidateLanguage(validator, lang, errs, errCode, elem, errLoc) {
+export function ValidateLanguage(lang, errs, errCode, errLoc) {
 	// language format check
 	if (!isValidLangFormat(lang)) {
 		errs.addError({
@@ -264,48 +264,4 @@ export function ValidateLanguage(validator, lang, errs, errCode, elem, errLoc) {
 			message: `xml:${tva.a_lang} value ${lang.quote()} does not match format for Language-Tag in BCP47`,
 		});
 	}
-	/*
-	// language value check
-	if (validator) {
-		let validatorResp = validator.isKnown(lang);
-		if (validatorResp.resp != validator.languageKnown) {
-			switch (validatorResp.resp) {
-				case validator.languageUnknown:
-					errs.addError({
-						code: `${errCode}-12`,
-						message: `${elem} xml:${tva.a_lang} value ${lang.quote()} is invalid`,
-						line: errLoc,
-						key: keys.k_InvalidLanguage,
-					});
-					break;
-				case validator.languageRedundant:
-					let msg = `${elem} xml:${tva.a_lang} value ${lang.quote()} is deprecated`;
-					if (validatorResp?.pref) msg += `(use ${validatorResp.pref.quote()} instead)`;
-					errs.addError({
-						code: `${errCode}-13`,
-						message: msg,
-						line: errLoc,
-						key: "deprecated language",
-					});
-					break;
-				case validator.languageNotSpecified:
-					errs.addError({
-						code: `${errCode}-14`,
-						message: `${elem} xml:${tva.a_lang} value is not provided`,
-						line: errLoc,
-						key: keys.k_UnspecifiedLanguage,
-					});
-					break;
-				case validator.languageInvalidType:
-					errs.addError({
-						code: `${errCode}-15`,
-						message: `${elem} xml:${tva.a_lang} value ${lang.quote()} is invalid`,
-						line: errLoc,
-						key: keys.k_InvalidLanguage,
-					});
-					break;
-			}
-		}
-	}
-	*/
 }

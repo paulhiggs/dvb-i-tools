@@ -87,7 +87,7 @@ export default class ISOcountries {
 		if (async)
 			fetch(countriesURL)
 				.then(handleErrors)
-				.then((response) => response.text())
+				.then((response) => response.content)
 				.then((responseText) => (this.#countriesList = loadCountryData(responseText)))
 				.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${countriesURL}`)));
 		else {

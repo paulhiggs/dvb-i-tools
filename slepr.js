@@ -6,7 +6,7 @@
 import { readFile } from "fs";
 
 import chalk from "chalk";
-import { parseXmlString } from "libxmljs2";
+import { XmlDocument } from 'libxml2-wasm';
 
 import { datatypeIs } from "./phlib/phlib.js";
 
@@ -42,7 +42,7 @@ function GetChild(element, childName, index) {
 		i = 0;
 
 	element.childNodes().forEachSubElement((e) => {
-		if (e.name().endsWith(childName)) {
+		if (e.name.endsWith(childName)) {
 			i++;
 			if (index == i) rc = e;
 		}
@@ -105,8 +105,8 @@ export default class SLEPR {
 		if (isHTTPURL(filename)) {
 			fetch(filename)
 				.then(handleErrors)
-				.then((response) => response.text())
-				.then((responseText) => (masterSLEPR = responseText))
+				.then((response) => response.content)
+				.then((responseText) => (masterSLEPR = responseText.replace(/(\r\n|\n|\r|\t)/gm, "")))
 				.catch((error) => {
 					console.log(chalk.red(`error (${error}) retrieving ${filename}`));
 					masterSLEPR = EMPTY_SLEPR;
@@ -189,13 +189,17 @@ export default class SLEPR {
 			res.status(400);
 			return false;
 		}
-		console.log(masterSLEPR)
-		let slepr = parseXmlString(masterSLEPR);
+		let slepr = XmlDocument.fromString(masterSLEPR); 
 
 		let SLEPR_SCHEMA = {},
-			SCHEMA_PREFIX = slepr.root().namespace().prefix(),
-			SCHEMA_NAMESPACE = slepr.root().namespace().href();
+			SCHEMA_PREFIX = slepr.root.namespacePrefix,
+			SCHEMA_NAMESPACE = slepr.root.namespaceUri;
 		SLEPR_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
+		if (SCHEMA_PREFIX == "") {
+			SCHEMA_PREFIX = "__RANDOM__";
+			SLEPR_SCHEMA[SCHEMA_PREFIX] = SCHEMA_NAMESPACE;
+			SL.root.addNsDeclaration(SCHEMA_NAMESPACE, SCHEMA_PREFIX);
+		}
 
 		let props = {
 			schema: SLEPR_SCHEMA,
@@ -213,7 +217,7 @@ export default class SLEPR {
 					n = 0,
 					matchedProvider = false;
 				while (!matchedProvider && (provName = prov.get(xPath(props.prefix, dvbi.e_Provider) + "/" + xPath(props.prefix, dvbi.e_Name, ++n), props.schema)))
-					if (isIn(req.query.ProviderName, provName.text())) matchedProvider = true;
+					if (isIn(req.query.ProviderName, provName.content)) matchedProvider = true;
 				if (!matchedProvider) providerCleanup.push(prov);
 			}
 			providerCleanup.forEach((provider) => provider.remove());
@@ -232,7 +236,7 @@ export default class SLEPR {
 					// remove services that do not match the specified regulator list flag
 					if (req.query.regulatorListFlag) {
 						// The regulatorListFlag has been specified in the query, so it has to match. Default in instance document is "false"
-						let flag = serv.attr(dvbi.a_regulatorListFlag) ? serv.attr(dvbi.a_regulatorListFlag).value() : "false";
+						let flag = serv.attrAnyNs(dvbi.a_regulatorListFlag) ? serv.attrAnyNs(dvbi.a_regulatorListFlag).value : "false";
 						if (req.query.regulatorListFlag != flag) removeService = true;
 					}
 
@@ -243,7 +247,7 @@ export default class SLEPR {
 							keepService = false,
 							hasLanguage = false;
 						while (!keepService && (lang = serv.get(xPath(props.prefix, dvbi.e_Language, ++l), props.schema))) {
-							if (isIn(req.query.Language, lang.text())) keepService = true;
+							if (isIn(req.query.Language, lang.content)) keepService = true;
 							hasLanguage = true;
 						}
 						if (hasLanguage && !keepService) removeService = true;
@@ -257,7 +261,7 @@ export default class SLEPR {
 							hasCountry = false;
 						while (!keepService && (targetCountry = serv.get(xPath(props.prefix, dvbi.e_TargetCountry, ++c), props.schema))) {
 							// note that the <TargetCountry> element can signal multiple values. Its XML pattern is "\c\c\c(,\c\c\c)*"
-							let countries = targetCountry.text().split(",");
+							let countries = targetCountry.content.split(",");
 							/* jslint -W083 */
 							countries.forEach((country) => {
 								if (isIn(req.query.TargetCountry, country)) keepService = true;
@@ -275,7 +279,7 @@ export default class SLEPR {
 							keepService = false,
 							hasGenre = false;
 						while (!keepService && (genre = serv.get(xPath(props.prefix, dvbi.e_Genre, ++g), props.schema))) {
-							if (isIn(req.query.Genre, genre.text())) keepService = true;
+							if (isIn(req.query.Genre, genre.content)) keepService = true;
 							hasGenre = true;
 						}
 						if (hasGenre && !keepService) removeService = true;
@@ -341,7 +345,7 @@ export default class SLEPR {
 								mu = 0;
 							let discardURIs = [];
 							while ((mediaUri = GetChild(mediaLocator, tva.e_MediaUri, ++mu)) != null)
-								if (mediaUri.text().toLowerCase().startsWith(RFC2397_PREFIX.toLowerCase())) discardURIs.push(mediaUri);
+								if (mediaUri.content.toLowerCase().startsWith(RFC2397_PREFIX.toLowerCase())) discardURIs.push(mediaUri);
 
 							discardURIs.forEach((uri) => uri.remove());
 
