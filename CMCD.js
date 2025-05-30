@@ -81,7 +81,7 @@ const CMCDv1_keys = [
 
 const deprecated_CMCDv1_keys = [{ key: CMCD_keys.next_range_request, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] }];
 
-// 
+// CMCv2 draft at https://docs.google.com/document/d/1isrbeAuauUwjTDUJCxJVltxls_qrFFx7/edit
 const CMCDv2_keys = CMCDv1_keys.concat([
 	{ key: CMCD_keys.aggregate_encoded_bitrate, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.target_buffer_length, allow_modes: all_reporting_modes },
@@ -107,7 +107,7 @@ const CMCDv2_keys = CMCDv1_keys.concat([
 	{ key: CMCD_keys.event, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.CMSD_dynamic_header, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE]},
 	{ key: CMCD_keys.CMSD_static_header, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE]},
-	{ key: CMCD_keys.SMT_header, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE]},
+	{ key: CMCD_keys.SMT_header, allow_modes: [CMCD_MODE_RESPONSE]},
 ]);
 
 const isCustomKey = (key) => key.includes("-");
@@ -173,6 +173,20 @@ function checkCMCDkeys(CMCD, errs, errCode) {
 		if (!isIn(keys, CMCD_keys.timestamp)) errs.addError(unprovided_key("response", CMCD_keys.timestamp));
 	} else if (reporting_mode == CMCD_MODE_EVENT) {
 		if (!isIn(keys, CMCD_keys.timestamp)) errs.addError(unprovided_key("event", CMCD_keys.timestamp));
+	}
+	if (version >= 2) {
+		let missing_mandatory_key = (key) => ({
+			code: `${errCode}f`,
+			message: `key "${key}" is required in all reports since CMCDv2 and should be included`,
+			fragment: CMCD,
+			key: error_key,
+			description: "All keys are OPTIONAL except for 'bs', 'su', and 'v' which are now required as of version 2..",
+			clasue: "CMCDv2 clause 4.2 item 8",
+		});
+		// CMCDv2 clause 4.2 item 8 says that "bs", "su" and "v" are mandatory
+		if (!isIn(keys, CMCD_keys.buffer_starvation)) errs.addError(missing_mandatory_key(CMCD_keys.buffer_starvation));
+		if (!isIn(keys, CMCD_keys.startup)) errs.addError(missing_mandatory_key(CMCD_keys.startup));
+		if (!isIn(keys, CMDD_kets.version)) errs.addError(missing_mandatory_key(CMCD_keys.version));
 	}
 }
 
