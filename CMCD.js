@@ -34,6 +34,7 @@ const CMCD_keys = {
 	streaming_format: "sf",
 	session_id: "sid",
 	backgrounded: "bg",
+	sequence_number: "sn",
 	state: "sta",
 	stream_type: "st",
 	startup: "su",
@@ -53,6 +54,7 @@ const CMCD_keys = {
 	event: "e",
 	CMSD_dynamic_header: "cmsdd",
 	CMSD_static_header: "cmsds",
+	SMT_header: "smrt",
 	CMCD_version: "v",
 };
 
@@ -79,6 +81,7 @@ const CMCDv1_keys = [
 
 const deprecated_CMCDv1_keys = [{ key: CMCD_keys.next_range_request, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] }];
 
+// 
 const CMCDv2_keys = CMCDv1_keys.concat([
 	{ key: CMCD_keys.aggregate_encoded_bitrate, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.target_buffer_length, allow_modes: all_reporting_modes },
@@ -87,6 +90,7 @@ const CMCDv2_keys = CMCDv1_keys.concat([
 	{ key: CMCD_keys.live_stream_latency, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.response_code, allow_modes: [CMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.backgrounded, allow_modes: all_reporting_modes },
+	{ key: CMCD_keys.sequence_number, allowed_modes: all_reporting_modes },
 	{ key: CMCD_keys.state, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.time_to_first_byte, allow_modes: [CMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.time_to_first_body_byte, allow_modes: [CMCD_MODE_RESPONSE] },
@@ -103,6 +107,7 @@ const CMCDv2_keys = CMCDv1_keys.concat([
 	{ key: CMCD_keys.event, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.CMSD_dynamic_header, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE]},
 	{ key: CMCD_keys.CMSD_static_header, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE]},
+	{ key: CMCD_keys.SMT_header, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE]},
 ]);
 
 const isCustomKey = (key) => key.includes("-");
