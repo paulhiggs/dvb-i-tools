@@ -184,7 +184,7 @@ export let isPostcode = (postcode) => (datatypeIs(postcode, "string") ? postcode
 const WildcardFirstRegex = new RegExp(`^(\\*[${e_digit}${e_lowalpha}]*[\\- ]?[${e_digit}${e_lowalpha}]+)`, "i"),
 	WildcardMiddleRegex = new RegExp(`^(([${e_digit}${e_lowalpha}]+\\*[\\- ]?[${e_digit}${e_lowalpha}]+)|([${e_digit}${e_lowalpha}]+[\\- ]?\\*[${e_digit}${e_lowalpha}]+))$`, "i"),
 	WildcardEndRegex = new RegExp(`^([${e_digit}${e_lowalpha}]+[\\- ]?[${e_digit}${e_lowalpha}]*\\*)$`, "i");
-export var isWildcardPostcode = (postcode) =>
+export let isWildcardPostcode = (postcode) =>
 	datatypeIs(postcode, "string") ? WildcardEndRegex.test(postcode.trim()) || WildcardMiddleRegex.test(postcode.trim()) || WildcardFirstRegex.test(postcode.trim()) : false;
 
 /**

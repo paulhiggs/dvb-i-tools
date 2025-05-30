@@ -7,6 +7,7 @@ import { tva } from "./TVA_definitions.js";
 import { dvbi } from "./DVB-I_definitions.js";
 
 export const keys = {
+	k_InvalidHRef: "invalid href",
 	k_InvalidValue: "invalid value",
 	k_InvalidTag: "invalid tag",
 	k_LengthError: "length error",
@@ -35,7 +36,7 @@ import { WARNING } from "./error_list.js";
  * @param {string}      schemaLoctation  The location in the schema of the element
  * @param {string}      errCode          The error number to show in the log
  */
-export var NoChildElement = (missingElement, parentElement, schemaLocation, errCode) => ({
+export let NoChildElement = (missingElement, parentElement, schemaLocation, errCode) => ({
 	code: errCode,
 	message: `${missingElement} element not specified for ${parentElement.name.elementize()}${schemaLocation ? " in " + schemaLocation : ""}`,
 	line: parentElement.line,
@@ -50,22 +51,22 @@ export var NoChildElement = (missingElement, parentElement, schemaLocation, errC
  * @param {ErrorList}  errs      Errors buffer
  * @param {string}     errCode   The error number to show in the log
  */
-export var cg_InvalidHrefValue = (value, element, loc, errCode) => ({
+export let cg_InvalidHrefValue = (value, element, loc, errCode) => ({
 	code: errCode,
 	message: `invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${element.name.elementize()} in ${loc}`,
 	line: element.line,
-	key: "invalid href",
+	key: keys.k_InvalidHRef,
 });
 
-export var sl_InvalidHrefValue = (value, element, src, loc, errCode) => ({
+export let sl_InvalidHrefValue = (value, element, src, loc, errCode) => ({
 	code: errCode,
 	fragment: element,
 	line: element.line,
 	message: `invalid ${dvbi.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`,
-	key: "invalid href",
+	key: keys.k_InvalidHRef,
 });
 
-export var InvalidURL = (value, element, src, errCode) => ({
+export let InvalidURL = (value, element, src, errCode) => ({
 	code: errCode,
 	fragment: element,
 	line: element.line,
@@ -73,7 +74,7 @@ export var InvalidURL = (value, element, src, errCode) => ({
 	key: keys.k_InvalidURL,
 });
 
-export var DeprecatedElement = (what, when, errCode) => ({
+export let DeprecatedElement = (what, when, errCode) => ({
 	type: WARNING,
 	code: errCode,
 	fragment: what,
@@ -82,7 +83,7 @@ export var DeprecatedElement = (what, when, errCode) => ({
 	keys: "deprecated element",
 });
 
-export var DeprecatedAttribute = (what, when, errCode) => ({
+export let DeprecatedAttribute = (what, when, errCode) => ({
 	type: WARNING,
 	code: errCode,
 	fragment: what.parent,
