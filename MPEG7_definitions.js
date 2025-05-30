@@ -1,7 +1,7 @@
 /**
  * MPEG7_defintions.js
  *
- * Defintion made in MPEG-&, ISO/IEC 15938-5
+ * Defintion made in MPEG-7, ISO/IEC 15938-5
  */
 
 const MPEG7_CS = "urn:mpeg:mpeg7:cs";

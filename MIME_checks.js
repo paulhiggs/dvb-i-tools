@@ -9,8 +9,8 @@ const JPEG_MIME = "image/jpeg",
 	WebP_MIME = "image/WebP"; // BUG2937 - https://bugzilla.dvb.org/show_bug.cgi?id=2937
 
 const REQUIRED_MIMES = [JPEG_MIME, PNG_MIME];
-
 const allowedImageTypes = [JPEG_MIME, PNG_MIME, WebP_MIME];
+
 /**
  * determines if the value is a valid JPEG MIME type
  *
