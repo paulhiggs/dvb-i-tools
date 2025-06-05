@@ -829,10 +829,10 @@ export default class ServiceListCheck {
 							hasLong = true;
 							break;
 						case tva.SYNOPSIS_EXTENDED_LABEL:
-							if (cleanSynopsisLength < tva.SYNOPSIS_LONG_LENGTH)
+							if (cleanSynopsisLength < tva.SYNOPSIS_EXTENDED_MIN_LENGTH)
 								errs.addError({
 									code: `${errCode}-14`,
-									message: synopsisToShortError(ElementName, tva.SYNOPSIS_EXTENDED_LABEL, tva.SYNOPSIS_LONG_LENGTH),
+									message: synopsisToShortError(ElementName, tva.SYNOPSIS_EXTENDED_LABEL, tva.SYNOPSIS_EXTENDED_MIN_LENGTH),
 									fragment: ste,
 									key: ERROR_KEY,
 								});
