@@ -141,7 +141,7 @@ function validateServiceList(req, res, slcheck, motd,jsonResponse) {
 			req.parseErr = error.message;
 		}
 		if (resp) {
-			if (resp.ok) VVxml = resp.content;
+			if (resp.ok) VVxml = resp.text();
 			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
 		}
 	} else if (req.method == "POST") {
