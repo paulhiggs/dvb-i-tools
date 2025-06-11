@@ -256,7 +256,7 @@ function match(permittedValues, value, version = ANY_NAMESPACE) {
  * @returns {boolean} true if this is a valid banner for out-of-servce-hours presentation else false
  */
 export function validOutScheduleHours(HowRelated, namespace) {
-	// return true if val is a valid CS value for Out of Service Banners (A177 5.2.5.3)
+	// return true if HowRelated@href is a valid CS value for Out of Service Banners (A177 5.2.5.3)
 	const HRhref = HowRelated.attrAnyNs(dvbi.a_href);
 	return match(OutOfScheduledHoursBanners, HRhref ? HRhref.value : null, namespace);
 }
@@ -270,7 +270,7 @@ export function validOutScheduleHours(HowRelated, namespace) {
  * @returns {boolean} true if this is a valid banner for content-finished presentation else false
  */
 export function validContentFinishedBanner(HowRelated, namespace) {
-	// return true if val is a valid CS value for Content Finished Banner (A177 5.2.7.3)
+	// return true if HowRelated@href is a valid CS value for Content Finished Banner (A177 5.2.7.3)
 	const HRhref = HowRelated.attrAnyNs(dvbi.a_href);
 	return match(ContentFinishedBanners, HRhref ? HRhref.value : null, namespace);
 }
@@ -288,6 +288,13 @@ export function validServiceListLogo(HowRelated, namespace) {
 	return match(ServiceListLogos, HRhref ? HRhref.value : null, namespace);
 }
 
+/**
+ * determines if the identifer provided refers to a valid agreement app
+ *
+ * @param {XmlElement} HowRelated  The logo identifier
+ * @param {String}     namespace   The namespace being used in the XML document
+ * @returns {boolean} true if this is a valid agreement app else false
+ */
 export function validServiceAgreementApp(HowRelated, namespace) {
 	const HRhref = HowRelated.attrAnyNs(dvbi.a_href);
 	return HRhref ? validAgreementApplication(HRhref.value, SchemaVersion(namespace)) : false;
