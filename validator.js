@@ -155,6 +155,7 @@ function validateServiceList(req, res, slcheck, motd,jsonResponse) {
 		res.setHeader("Content-Type", "application/json");
 		if (req.parseErr) res.write(JSON.stringify({ parseErr: req.parseErr }));
 		else
+			delete errs.markupXML
 			res.write(
 				JSON.stringify(
 					req.query.results && req.query.results == "all" ? { errs } : { errors: errs.errors.length, warnings: errs.warnings.length, informationals: errs.informationals.length }
