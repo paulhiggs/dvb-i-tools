@@ -129,7 +129,7 @@ function DVB_I_check(req, res, slcheck, cgcheck, hasSL, hasCG, motd, mode = MODE
 	res.end();
 }
 
-function validateServiceList(req, res, slcheck, motd) {
+function validateServiceList(req, res, slcheck, motd,jsonResponse) {
 	let errs = new ErrorList();
 	let resp,
 		VVxml = null;
@@ -147,41 +147,23 @@ function validateServiceList(req, res, slcheck, motd) {
 	} else if (req.method == "POST") {
 		VVxml = req.body;
 	}
-	slcheck.doValidateServiceList(VVxml, errs, log_prefix);
-	drawResults(req, res, motd, req.parseErr, errs);
-
-	writeOut(errs, log_prefix, true, req);
-	res.end();
-}
-
-function validateServiceListJson(req, res, slcheck) {
-	let errs = new ErrorList();
-	let resp,
-		VVxml = null;
-	const log_prefix = createPrefix(req);
-	if (req.method == "GET") {
-		try {
-			resp = fetchS(req.query.url);
-		} catch (error) {
-			req.parseErr = error.message;
-		}
-		if (resp) {
-			if (resp.ok) VVxml = resp.content;
-			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
-		}
-	} else if (req.method == "POST") {
-		VVxml = req.body;
+	else {
+		res.status(405).end()
 	}
-	slcheck.doValidateServiceList(VVxml, errs, log_prefix);
-	res.setHeader("Content-Type", "application/json");
-	if (req.parseErr) res.write(JSON.stringify({ parseErr: req.parseErr }));
-	else
-		res.write(
-			JSON.stringify(
-				req.query.results && req.query.results == "all" ? { errs } : { errors: errs.errors.length, warnings: errs.warnings.length, informationals: errs.informationals.length }
-			)
-		);
-
+	slcheck.doValidateServiceList(VVxml, errs, {log_prefix: log_prefix, report_schema_version:true});
+	if(jsonResponse) {
+		res.setHeader("Content-Type", "application/json");
+		if (req.parseErr) res.write(JSON.stringify({ parseErr: req.parseErr }));
+		else
+			res.write(
+				JSON.stringify(
+					req.query.results && req.query.results == "all" ? { errs } : { errors: errs.errors.length, warnings: errs.warnings.length, informationals: errs.informationals.length }
+				)
+			);
+		}
+	else {
+		drawResults(req, res, motd, req.parseErr, errs);
+	}
 	writeOut(errs, log_prefix, true, req);
 	res.end();
 }
@@ -321,20 +303,12 @@ export default function validator(options) {
 			});
 	}
 	if (!options.nosl) {
-		app.get("/validate_sl", (req, res) => {
-			validateServiceList(req, res, slcheck, motd);
+		app.all("/validate_sl", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
+			validateServiceList(req, res, slcheck, motd,false);
 		});
 
-		app.get("/validate_sl_json", (req, res) => {
-			validateServiceListJson(req, res, slcheck);
-		});
-
-		app.post("/validate_sl", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
-			validateServiceList(req, res, slcheck, motd);
-		});
-
-		app.post("/validate_sl_json", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
-			validateServiceListJson(req, res, slcheck);
+		app.all("/validate_sl_json", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
+			validateServiceList(req, res, slcheck,motd,true);
 		});
 	}
 
