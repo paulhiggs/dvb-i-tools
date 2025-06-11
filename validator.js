@@ -129,7 +129,7 @@ function DVB_I_check(req, res, slcheck, cgcheck, hasSL, hasCG, motd, mode = MODE
 	res.end();
 }
 
-function validateServiceList(req, res, slcheck, motd,jsonResponse) {
+function validateServiceList(req, res, slcheck, motd, jsonResponse) {
 	let errs = new ErrorList();
 	let resp,
 		VVxml = null;
@@ -151,7 +151,7 @@ function validateServiceList(req, res, slcheck, motd,jsonResponse) {
 		res.status(405).end()
 	}
 	slcheck.doValidateServiceList(VVxml, errs, {log_prefix: log_prefix, report_schema_version:true});
-	if(jsonResponse) {
+	if (jsonResponse) {
 		res.setHeader("Content-Type", "application/json");
 		if (req.parseErr) res.write(JSON.stringify({ parseErr: req.parseErr }));
 		else
@@ -169,7 +169,7 @@ function validateServiceList(req, res, slcheck, motd,jsonResponse) {
 	res.end();
 }
 
-function validateContentGuide(req, res, cgcheck, motd,jsonResponse) {
+function validateContentGuide(req, res, cgcheck, motd, jsonResponse) {
 	let errs = new ErrorList();
 	let resp,
 		VVxml = null;
@@ -347,19 +347,19 @@ export default function validator(options) {
 	}
 	if (!options.nosl) {
 		app.all("/validate_sl", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
-			validateServiceList(req, res, slcheck, motd,false);
+			validateServiceList(req, res, slcheck, motd, false);
 		});
 
 		app.all("/validate_sl_json", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
-			validateServiceList(req, res, slcheck,motd,true);
+			validateServiceList(req, res, slcheck, motd, true);
 		});
 
 		app.all("/validate_cg", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
-			validateContentGuide(req, res, cgcheck, motd,false);
+			validateContentGuide(req, res, cgcheck, motd, false);
 		});
 
 		app.all("/validate_cg_json", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
-			validateContentGuide(req, res, cgcheck,motd,true);
+			validateContentGuide(req, res, cgcheck,motd, true);
 		});
 	}
 
@@ -384,7 +384,7 @@ export default function validator(options) {
 	}
 
 	if (!options.nosl || !options.nocg) {
-		app.get("/check", (req, res) => {
+		app.get("/check", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
 			DVB_I_check(req, res, slcheck, cgcheck, !options.nosl, !options.nocg, motd);
 		});
 		app.post("/check", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
