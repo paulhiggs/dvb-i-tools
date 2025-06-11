@@ -222,10 +222,19 @@ Box Set Contents: `bsContents`
 
 `<server>/validate_cg?url=<content_guide_url>&type=<type>` gives the validation results of the content guide data in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the content guide data in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML
 
-`<server>/validate_sl_json?url=<content_guide_url>&type=<type>`` valdiates the content guide data in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter.  The response is in the same format as `<server>/validate_sl_json?url=<service_list_url>` request
+`<server>/validate_gc_json?url=<content_guide_url>&type=<type>`` validates the content guide data in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the content guide fragment in the request body with content type "application/xml" instead of the url query parameter.  The response is in the same format as `<server>/validate_sl__json?url=<service_list_url>` request
 
-`<server>/validate_cg_json?url=<content_guide_url>&results=all&type=<type>` valdiates the content guide document in "url"-parameter and gives the complete validation results as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. The response is in the same format as `<server>/validate_sl_json?url=<service_list_url>&results=all` request
+`<server>/validate_cg_json?url=<content_guide_url>&results=all&type=<type>` validates the content guide document in "url"-parameter and gives the complete validation results as JSON. Also accepts POST request with the content guide fragment in the request body with content type "application/xml" instead of the url query parameter. The response is in the same format as `<server>/validate_sl_json?url=<service_list_url>&results=all` request
 
+accepted valies for `<type>`
+- `Time` - Content guide fragment represents a Timestamp Filtered Schedule response according to DVB A177 clause 6.5.4.3.1
+- `NowNext` - Content guide fragment represents a Now/Next Filtered Schedule response according to DVB A177 clause 6.5.4.3.2
+- `Window` - Content guide fragment represents a Now/Next (window) Filtered Schedule response according to DVB A177 clause 6.5.4.3.3
+- `ProgInfo` - Content guide fragment contains a Detailed Program Information response according to DVD A177 clause 6.6.3
+- `MoreEpisodes` - Content guide fragment contains a More episodes response according to DVB A177 clause 6.7.3
+- `bsCategories` - Content guide fragment contains a Box Set Categories response according to DVB A177 clause 6.8.2.3
+- `bsLists` - Content guide fragment contains a Box Set Lists response according to DVB A177 clause 6.8.3.3
+- `bsContents` - Content guide fragment contains a Box Set Contents response according to DVB A177 clause 6.8.3.3
 
 ## validate_sl.js
 
