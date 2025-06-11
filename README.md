@@ -146,11 +146,13 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 
 ### Use
 
-`&lt;server&gt;/check` gives a basic/primitive UI. Select the valildation type (service list or Content Guide) and provide either a URL or local file. Press "Validate!" button. Await results!
+`<server>/check` gives a basic/primitive UI. Select the valildation type (service list or Content Guide) and provide either a URL or local file. Press "Validate!" button. Await results!
 
-`&lt;server&gt;/validate_sl?url=&lt;service_list_url&gt;` gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the servicelist in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML
+#### Service list validation endpoints
 
-`&lt;server&gt;/validate_sl_json?url=&lt;service_list_url&gt;` valdiates the list in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. Example response:
+`<server>/validate_sl?url=<service_list_url>` gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the servicelist in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML
+
+`<server>/validate_sl_json?url=<service_list_url>;` valdiates the list in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. Example response:
 
 ```json
 {
@@ -160,7 +162,7 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 }
 ```
 
-`&lt;server&gt;/validate_sl_json?url=&lt;service_list_url&gt;&results=all` valdiates the list "url"-parameter and gives the complete validation results as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. Example response:
+`<server>/validate_sl_json?url=<service_list_url>&results=all` valdiates the list "url"-parameter and gives the complete validation results as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. Example response:
 
 ```json
 {
@@ -202,6 +204,27 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 	}
 }
 ```
+
+#### Content guide validation endpoints
+
+Type-parameter for all content guide validation requests is one of the following:
+
+```
+Schedule Info (time stamp): `Time`
+Schedule Info (now/next): `NowNext`
+Schedule Info (window): `Window`
+Program Info: `ProgInfo`
+More Episodes: `MoreEpisodes`
+Box Set Categories: `bsCategories`
+Box Set Lists: `bsLists`
+Box Set Contents: `bsContents`
+```
+
+`<server>/validate_cg?url=<content_guide_url>&type=<type>` gives the validation results of the content guide data in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the content guide data in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML
+
+`<server>/validate_sl_json?url=<content_guide_url>&type=<type>`` valdiates the content guide data in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter.  The response is in the same format as `<server>/validate_sl_json?url=<service_list_url>` request
+
+`<server>/validate_cg_json?url=<content_guide_url>&results=all&type=<type>` valdiates the content guide document in "url"-parameter and gives the complete validation results as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. The response is in the same format as `<server>/validate_sl_json?url=<service_list_url>&results=all` request
 
 
 ## validate_sl.js
