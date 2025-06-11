@@ -169,6 +169,48 @@ function validateServiceList(req, res, slcheck, motd,jsonResponse) {
 	res.end();
 }
 
+function validateContentGuide(req, res, cgcheck, motd,jsonResponse) {
+	let errs = new ErrorList();
+	let resp,
+		VVxml = null;
+	const log_prefix = createPrefix(req);
+	if (req.method == "GET") {
+		try {
+			resp = fetchS(req.query.url);
+		} catch (error) {
+			console.log(error)
+			req.parseErr = error.message;
+		}
+		if (resp) {
+			console.log(resp.content)
+			if (resp.ok) VVxml = resp.text();
+			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
+		}
+	} else if (req.method == "POST") {
+		VVxml = req.body;
+	}
+	else {
+		res.status(405).end()
+	}
+	cgcheck.doValidateContentGuide(VVxml, req.query.type, errs, {log_prefix: log_prefix, report_schema_version:true});
+	if(jsonResponse) {
+		res.setHeader("Content-Type", "application/json");
+		if (req.parseErr) res.write(JSON.stringify({ parseErr: req.parseErr }));
+		else
+			delete errs.markupXML
+			res.write(
+				JSON.stringify(
+					req.query.results && req.query.results == "all" ?  { errs } : { errors: errs.errors.length, warnings: errs.warnings.length, informationals: errs.informationals.length }
+				)
+			);
+		}
+	else {
+		drawResults(req, res, motd, req.parseErr, errs);
+	}
+	writeOut(errs, log_prefix, true, req);
+	res.end();
+}
+
 function stats_header(res) {
 	res.setHeader("Content-Type", "text/html");
 	res.write(PAGE_TOP("Validator Stats"));
@@ -310,6 +352,14 @@ export default function validator(options) {
 
 		app.all("/validate_sl_json", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
 			validateServiceList(req, res, slcheck,motd,true);
+		});
+
+		app.all("/validate_cg", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
+			validateContentGuide(req, res, cgcheck, motd,false);
+		});
+
+		app.all("/validate_cg_json", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
+			validateContentGuide(req, res, cgcheck,motd,true);
 		});
 	}
 
