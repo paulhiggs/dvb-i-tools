@@ -8,7 +8,7 @@ import { XmlElement } from 'libxml2-wasm';
 import { tva } from "./TVA_definitions.js";
 
 import { APPLICATION } from "./error_list.js";
-import { isIn } from "./utils.js";
+import { CountChildElements, isIn } from "./utils.js";
 import { isValidLangFormat } from "./IANA_languages.js";
 
 const NO_DOCUMENT_LANGUAGE = "**"; // this should not be needed as @xml:lang is required in <ServiceList> and <TVAMain> root elements
@@ -66,15 +66,16 @@ export function checkXMLLangs(elementName, elementLocation, node, errs, errCode)
 	}
 
 	let childElems = node.childNodes();
-	childElems?.forEachNamedSubElement(elementName, elem => {
-		if (!elem.attrAnyNs(tva.a_lang))
-			errs.addError({
-				code: `${errCode}-1`,
-				message: `xml:lang must be declared for each multilingual element for ${elementName.elementize()} in ${elementLocation}`,
-				fragment: elem,
-				key: "required @xml:lang",
-			});
-	});
+	if (CountChildElements(node, elementName) > 1)
+		childElems?.forEachNamedSubElement(elementName, elem => {
+			if (!elem.attrAnyNs(tva.a_lang))
+				errs.addError({
+					code: `${errCode}-1`,
+					message: `xml:lang must be declared for each multilingual element for ${elementName.elementize()} in ${elementLocation}`,
+					fragment: elem,
+					key: "required @xml:lang",
+				});
+		});
 
 	let elementLanguages = [];
 	childElems?.forEachNamedSubElement(elementName, elem => {

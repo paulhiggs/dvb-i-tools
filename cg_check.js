@@ -658,19 +658,18 @@ export default class ContentGuideCheck {
 								break;
 							case tva.e_ExplanatoryText:
 								checkAttributes(pgChild, [tva.a_length], [tva.a_lang], tvaEA.ExplanatoryText, errs, `${errCode}-30`);
-								if (pgChild.attrAnyNs(tva.a_length)) {
-									if (pgChild.attrAnyNs(tva.a_length).value != tva.v_lengthLong)
-										errs.addError({
-											code: `${errCode}-31`,
-											message: `${tva.a_length.attribute()}=${pgChild.attrAnyNs(tva.a_length).value.quote()} is not allowed for ${tva.e_ExplanatoryText.elementize()}`,
-											fragment: pgChild,
-											key: keys.k_LengthError,
-										});
-								}
+								const lengthAttr = pgChild.attrAnyNs(tva.a_length);
+								if (lengthAttr && (lengthAttr.value != tva.v_lengthLong))
+									errs.addError({
+										code: `${errCode}-31`,
+										message: `${tva.a_length.attribute()}=${lengthAttr.value.quote()} is not allowed for ${tva.e_ExplanatoryText.elementize()}`,
+										fragment: pgChild,
+										key: keys.k_LengthError,
+									});
 								if (unEntity(pgChild.content).length > dvbi.MAX_EXPLANATORY_TEXT_LENGTH)
 									errs.addError({
 										code: `${errCode}-32`,
-										message: `length of ${tva._ExplanatoryText.elementize()} cannot exceed ${dvbi.MAX_EXPLANATORY_TEXT_LENGTH} characters`,
+										message: `length of ${tva.e_ExplanatoryText.elementize()} cannot exceed ${dvbi.MAX_EXPLANATORY_TEXT_LENGTH} characters`,
 										fragment: pgChild,
 										key: keys.k_LengthError,
 									});
