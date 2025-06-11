@@ -83,74 +83,76 @@ export const BCP47_Language_Tag = `${l_langtag}|${l_privateuse}|${l_grandfathere
 /**
  * checks if the argument complies to the TV Anytime defintion of RatioType
  *
- * @param {string} str string contining value to check
+ * @param {string} ratio string contining value to check
  * @returns {boolean} true if the argment is compliant to a tva:RatioType
  */
 const ratioRegex = new RegExp(`^[${e_digit}]+:[${e_digit}]+$`);
-export let isRatioType = (str) => (datatypeIs(str, "string") ? ratioRegex.test(str.trim()) : false);
+export let isRatioType = (ratio) => (datatypeIs(ratio, "string") ? ratioRegex.test(ratio.trim()) : false);
 
 /**
  * checks if the argument complies to an XML representation of UTC time
  *
- * @param {string} str string contining the UTC time
+ * @param {string} time string contining the UTC time
  * @returns {boolean}  true if the argment is formatted according to UTC ("Zulu") time
  */
 const UTCregex = new RegExp(/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]{1,3})?Z?$/);
-export let isUTCDateTime = (str) => (datatypeIs(str, "string") ? UTCregex.test(str.trim()) : false);
+export let isUTCDateTime = (time) => (datatypeIs(time, "string") ? UTCregex.test(time.trim()) : false);
 
 /**
  * checks of the specified argument matches an HTTP(s) URL where the protocol is required to be provided
  *
- * @param {string} arg  The value whose format is to be checked
+ * @param {string} url  The value whose format is to be checked
  * @returns {boolean} true if the argument is an HTTP URL
  *
  * see RFC 3986 - https://tools.ietf.org/html/rfc3986
  */
 const HTTPURLregex = new RegExp(`^https?:(//${e_AuthorityAndPath}|${e_PathNoAuthority})${e_Query}?${e_Fragment}?$`, "i");
-export let isHTTPURL = (arg) => (datatypeIs(arg, "string") ? HTTPURLregex.test(arg.trim()) : false);
+export let isHTTPURL = (url) => (datatypeIs(url, "string") ? HTTPURLregex.test(url.trim()) : false);
 
 /**
  * checks of the specified argument matches the scheme, authority and path syntax components of an HTTP(s) URL where the protocol is required to be provided
  *
- * @param {string} arg  The value whose format is to be checked
+ * @param {string} path  The value whose format is to be checked
  * @returns {boolean} true if the argument is an HTTP URL path (no query or fragment componenets)
  *
  * see RFC 3986 - https://tools.ietf.org/html/rfc3986
  */
 const HTTPPathURLregex = new RegExp(`^https?:(//${e_AuthorityAndPath}|${e_PathNoAuthority})$`, "i");
-export let isHTTPPathURL = (arg) => (datatypeIs(arg, "string") ? HTTPPathURLregex.test(arg.trim()) : false);
+export let isHTTPPathURL = (path) => (datatypeIs(path, "string") ? HTTPPathURLregex.test(path.trim()) : false);
 
 /**
  * isURL and isURN use the syntax from MPEG DASH - http://github.com/MPEGGroup/DASHSchema/
- * @param {*} arg
+ * @param {*} urn | url 
  */
 const URNregex = new RegExp(`^${e_URN}$`, "i"),
 	URLregex = new RegExp(`^${e_URL}$`, "i");
-export let isURL = (arg) => (datatypeIs(arg, "string") ? URLregex.test(arg) : false);
-export let isURN = (arg) => (datatypeIs(arg, "string") ? URNregex.test(arg) : false);
+export let isURL = (url) => (datatypeIs(url, "string") ? URLregex.test(url) : false);
+export let isURN = (urn) => (datatypeIs(urn, "string") ? URNregex.test(url) : false);
 
 /**
  * checks of the specified argument matches URL according to RFC 3986 - https://tools.ietf.org/html/rfc3986
  *
- * @param {string} arg  The value whose format is to be checked
- * @returns {boolean} true if the argument is an HTTP URL
+ * @param {string} uri  The value whose format is to be checked
+ * @returns {boolean} true if @uri is an HTTP URL
  */
-export let isURI = (arg) => isURL(arg) || isURN(arg);
+export let isURI = (uri) => isURL(uri) || isURN(uri);
 
 /**
  * Checks the URI conforms to RFC 2397.
  * dataurl := "data:" [ mediatype ] [ ";base64" ] "," data mediatype := [ type "/" subtype ] *( ";" parameter ) data := *urlchar parameter := attribute "=" value
  *
+ * @param {String} uri  the value to be checked
+ * @returns {boolean}  true if @uri is a string and mateches teh format of a data: URI, otherwise false
  * Thanks to https://gist.github.com/khanzadimahdi/bab8a3416bdb764b9eda5b38b35735b8
  */
 const dataRegexp = new RegExp(`^data:((?:\w+\/(?:(?!;).)+)?)((?:;[\w\W]*?[^;])*),(.+)$`, "i");
-export let isDataURI = (arg) => (datatypeIs(arg, "string") ? dataRegexp.test(arg) : false);
+export let isDataURI = (uri) => (datatypeIs(uri, "string") ? dataRegexp.test(uri) : false);
 
 /**
  * checks if the argument complies to an XML representation of UTC time (i.e. ISO 8601-2:2019)
  *
  * @param {string} duration string contining the UTC time
- * @returns {boolean}  true if the argment is formatted according to UTC ("Zulu") time
+ * @returns {boolean}  true if @duration is formatted according to UTC ("Zulu") time
  */
 // based on https://stackoverflow.com/questions/32044846/regex-for-iso-8601-durations
 const isoRegex = new RegExp(
@@ -163,7 +165,7 @@ export let isISODuration = (duration) => (datatypeIs(duration, "string") ? isoRe
  * i.e. dvb://<original_network_id>..<service_id> ;<event_id>
  *
  * @param {string} locator string contining the DVB locator
- * @returns {boolean}  true is the argment is formatted as a DVB locator
+ * @returns {boolean}  true if @locator is formatted as a DVB locator
  */
 const locatorRegex = new RegExp(`^dvb://[${e_digit}${e_hexChar}]+.[${e_digit}${e_hexChar}]*.[${e_digit}${e_hexChar}]+;[${e_digit}${e_hexChar}]+$`);
 export let isDVBLocator = (locator) => (datatypeIs(locator, "string") ? locatorRegex.test(locator.trim()) : false);
@@ -171,7 +173,7 @@ export let isDVBLocator = (locator) => (datatypeIs(locator, "string") ? locatorR
 /**
  *
  * @param {String} postcode  the postcode value to check
- * @returns {boolean} true if the postcode argument is a valid postcode, otherwise false
+ * @returns {boolean} true if @postcode is a valid postcode, otherwise false
  */
 const postcodeRegex = new RegExp(`[${e_digit}${e_lowalpha}]+([- ][${e_digit}${e_lowalpha}]+)?$`, "i");
 export let isPostcode = (postcode) => (datatypeIs(postcode, "string") ? postcodeRegex.test(postcode.trim()) : false);
@@ -179,7 +181,7 @@ export let isPostcode = (postcode) => (datatypeIs(postcode, "string") ? postcode
 /**
  *
  * @param {String} postcode  the postcode value to check
- * @returns {boolean} true if the postcode argument is a valid wildcarded postcode (single asterix '*' in beginning, middle or end), otherwise false
+ * @returns {boolean} true if @postcode is a valid wildcarded postcode (single asterix '*' in beginning, middle or end), otherwise false
  */
 const WildcardFirstRegex = new RegExp(`^(\\*[${e_digit}${e_lowalpha}]*[\\- ]?[${e_digit}${e_lowalpha}]+)`, "i"),
 	WildcardMiddleRegex = new RegExp(`^(([${e_digit}${e_lowalpha}]+\\*[\\- ]?[${e_digit}${e_lowalpha}]+)|([${e_digit}${e_lowalpha}]+[\\- ]?\\*[${e_digit}${e_lowalpha}]+))$`, "i"),
@@ -220,16 +222,16 @@ export let isDomainName = (domain) => (datatypeIs(domain, "string") ? DomainName
  * checks of the specified argument matches an RTSP URL
  *  <restriction base="anyURI"><pattern value="rtsp://.*"/></restriction>
  *
- * @param {string} arg  The value whose format is to be checked
+ * @param {string} url  The value whose format is to be checked
  * @returns {boolean} true if the argument is an RTSP URL
  */
 const RTSPRegex = new RegExp(/^rtsp:\/\/.*$/, "i");
-export let isRTSPURL = (arg) => (datatypeIs(arg, "string") ? isURL(arg) && RTSPRegex.test(arg.trim()) : false);
+export let isRTSPURL = (url) => (datatypeIs(url, "string") ? isURL(url) && RTSPRegex.test(url.trim()) : false);
 
 /**
  * check that a values conforms to the ServiceDaysList type
  *
- * @param {string} the value to check, likely from an Interval@days attribute
+ * @param {string} daysList  the value to check, likely from an Interval@days attribute
  * @returns {boolean} true if the value is properly formated
  */
 const DaysListRegex = new RegExp(/^([1-7]\s+)*[1-7]$/); // list of values 1-7 separeted by spaces
@@ -238,24 +240,28 @@ export let validServiceDaysList = (daysList) => (datatypeIs(daysList, "string") 
 /**
  * check that a values conforms to the ZuluTimeType type
  *
- * @param {string} val the value to check, likely from an Interval@startTime or @endTime attributes
- * @returns {boolean} true if the value is properly formated
+ * @param {string} time the value to check, likely from an Interval@startTime or @endTime attributes
+ * @returns {boolean} true if @time is properly formated
  */
-
 const ZuluRegex = new RegExp(/^(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?)Z$/);
 export let validZuluTimeType = (time) => (datatypeIs(time, "string") ? ZuluRegex.test(time.trim()) : false);
 
 /**
  * checks that the supplied argument conforms to the pattern for a TVA LanguageType
- * @param {String} languageCode
- * @param {Boolean} caseSensitive
+ * @param {String} languageCode  the language code to check
+ * @param {boolean} caseSensitive  if false, then allow upper and lower case characters (default is true)
+ * @returns {boolean}  true if @languageCode matches the specified format for a TV Anytime language (i.e. XML languge)
  */
 const languageFormat = `^[${e_lowalpha}]{1,8}(-[${e_lowalpha}${e_digit}]{1,8})*$`;
 export function isTVAAudioLanguageType(languageCode, caseSensitive = true) {
-	// any language specified should be an XML language
 	const languageRegex = new RegExp(languageFormat, caseSensitive ? "" : "i");
 	return datatypeIs(languageCode, "string") ? languageRegex.test(languageCode) : false;
 }
 
+/**
+ * checks if the supplied string only contains ASCII values
+ * @param {String} ascii_str   the string to check
+ * @returns {boolean} true of @ascii_str is a string any contains only ASCII characters, otherwise false
+ */
 const ASCIIregexp = new RegExp(`^[${ASCII_chars}]*$`);
-export let isASCII = (arg) => (datatypeIs(arg, "string") ? ASCIIregexp.test(arg) : false);
+export let isASCII = (ascii_str) => (datatypeIs(ascii_str, "string") ? ASCIIregexp.test(ascii_str) : false);

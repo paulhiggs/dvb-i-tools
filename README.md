@@ -36,15 +36,15 @@ The server can be reloaded with an updated `slepr-master.xml` file by invoking i
 
 #### Server arguments
 
-- --port [-p] set the HTTP listening port (default: 3000)
-- --sport [-s] set the HTTPS listening port (default: 3001)
-- --urls [-u] load configation from network locations (default: use local files)
-- --file [-f] name of the master registry file to use, can be an http(s) URL (default: ./slepr-master.xml)
-- --CORSmode [-c] select the type of CORS handling
-  - "library" - default mode - use the Express CORS library
-  - "manual" - do code based CORS header insertion (not fully implemented or tested)
-  - "none" - dont do any CORS handling
-- --help [-h] server and client command help
+- `--port [-p] <port>` set the HTTP listening port (default: 3000)
+- `--sport [-s] <port>` set the HTTPS listening port (default: 3001)
+- `--urls [-u]` load configation from network locations (default: use local files)
+- `--file [-f] <filename>` name of the master registry file to use, can be an http(s) URL (default: ./slepr-master.xml)
+- `--CORSmode [-c] <mode>` select the type of CORS handling
+  - `"library"` - default mode - use the Express CORS library
+  - `"manual"` - do code based CORS header insertion (not fully implemented or tested)
+  - `"none"` - dont do any CORS handling
+- `--help [-h]` server and client command help
 
 If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
 
@@ -115,6 +115,7 @@ Validates the value space of the instance document
 - &lt;BasicDescription&gt; sub-elements (&lt;Title&gt;, &lt;Synopsis&gt;, &lt;Keyword&gt;, &lt;Genre&gt;, &lt;CreditsList&gt;, &lt;ParentalGuidance&gt;, &lt;RelatedMaterial&gt;) in &lt;ProgramInformation&gt;
 
 ### Installation
+#### node.js
 
 1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
 1. Install necessary libraries (express, libxmljs, morgan) `npm install`
@@ -124,28 +125,32 @@ If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `s
 
 Occassionally, the language-subtag-registry file can be updated from https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
 
-#### Command Line Arguments
+#### Docker
+1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
+1. run it - `docker compose up`
 
-- --urls [-u] forces the classification scheme, country and language values to be read from the internet. Default is to load values from local files.
-- --port [-p] set the HTTP listening port (default: 3030)
-- --sport [-s] set the HTTPS listening port (default: 3031)
-- --motd [-m] file to read for Message of the Day (default: `motd.html`)
-- --nocsr flag to disable SLR operation (default: false)
-- --nocg flag to disable Content Guide validation (default: false)
-- --nosl flag to disable Service List validation (default: false)
-- --CORSmode [-c] select the type of CORS handling
-  - "library" - default mode - use the Express CORS library
-  - "manual" - do code based CORS header insertion (not fully implemented or tested)
-  - "none" - dont do any CORS handling
-- --CSRfile [-f] file to use for SLR responses (default: `lepr-main.xml`)
+### Command Line Arguments
+
+- `--urls [-u]` forces the classification scheme, country and language values to be read from the internet. Default is to load values from local files.
+- `--port [-p] <port>` set the HTTP listening port (default: 3030)
+- `--sport [-s] <port>` set the HTTPS listening port (default: 3031)
+- `--motd [-m] <filename>` file to read for Message of the Day (default: `motd.html`)
+- `--nocsr` flag to disable SLR operation (default: false)
+- `--nocg` flag to disable Content Guide validation (default: false)
+- `--nosl` flag to disable Service List validation (default: false)
+- `--CORSmode [-c] <mode>` select the type of CORS handling
+  - `"library"` - default mode - use the Express CORS library
+  - `"manual"` - do code based CORS header insertion (not fully implemented or tested)
+  - `"none"` - dont do any CORS handling
+- `--CSRfile [-f] <filename>` file to use for SLR responses (default: `lepr-main.xml`)
 
 ### Use
 
-&lt;server&gt;/check gives a basic/primitive UI. Select the valildation type (service list or Content Guide) and provide either a URL or local file. Press "Validate!" button. Await results!
+`&lt;server&gt;/check` gives a basic/primitive UI. Select the valildation type (service list or Content Guide) and provide either a URL or local file. Press "Validate!" button. Await results!
 
-&lt;server&gt;/validate_sl?url=&lt;service_list_url&gt; gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the servicelist in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML
+`&lt;server&gt;/validate_sl?url=&lt;service_list_url&gt;` gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the servicelist in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML
 
-&lt;server&gt;/validate_sl_json?url=&lt;service_list_url&gt; valdiates the list in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. Example response:
+`&lt;server&gt;/validate_sl_json?url=&lt;service_list_url&gt;` valdiates the list in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. Example response:
 
 ```json
 {
@@ -155,7 +160,7 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 }
 ```
 
-&lt;server&gt;/validate_sl_json?url=&lt;service_list_url&gt;&results=all valdiates the list "url"-parameter and gives the complete validation results as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. Example response:
+`&lt;server&gt;/validate_sl_json?url=&lt;service_list_url&gt;&results=all` valdiates the list "url"-parameter and gives the complete validation results as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. Example response:
 
 ```json
 {
@@ -198,31 +203,6 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 }
 ```
 
-### Installation
-
-1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
-1. Install necessary libraries (express, libxmljs, morgan) `npm install`
-1. run it - `node all-in-one [--port 3030] [--sport 3031] [--CORSmode library]`
-
-If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
-
-#### Command Line Arguments
-
-- --urls [-u] forces the classification scheme, country and language values to be read from the internet. Default is to load values from local files.
-- --port [-p] set the HTTP listening port (default: 3030)
-- --sport [-s] set the HTTPS listening port (default: 3031)
-- --nocsr do not start the CSR function
-- --nosl do not offer service list validation
-- --nocg do not offer content guide validation
-- --CORSmode [-c] select the type of CORS handling
-  - "library" - default mode - use the Express CORS library
-  - "manual" - do code based CORS header insertion (not fully implemented or tested)
-  - "none" - dont do any CORS handling
-
-### Installation alternative (Docker)
-
-1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
-2. run it - `docker compose up`
 
 ## validate_sl.js
 

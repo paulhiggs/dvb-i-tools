@@ -131,7 +131,7 @@ let valUnsignedInt = (str) => {
  * @param {string}     errCode    the error number used as a prefix for reporting errors
  * @param {ErrorList}  errs       errors found in validaton
  * @param {array}      allowed    the set or permitted values
- * @param {boolean}    isRequired true if the specificed attribued is required to be specified for the element
+ * @param {boolean}    isRequired true if the specified attribute is required to be specified for the element
  */
 function AllowedValue(elem, attrName, errCode, errs, allowed, isRequired = true) {
 	if (!elem) {
@@ -164,7 +164,7 @@ function AllowedValue(elem, attrName, errCode, errs, allowed, isRequired = true)
  * @param {string}     attrName   the name of the attribute carrying the boolean value
  * @param {string}     errCode    the error number used as a prefix for reporting errors
  * @param {ErrorList}  errs       errors found in validaton
- * @param {boolean}    isRequired true if the specificed attribued is required to be specified for the element
+ * @param {boolean}    isRequired true if the specified attribute is required to be specified for the element
  */
 let BooleanValue = (elem, attrName, errCode, errs, isRequired = true) => AllowedValue(elem, attrName, errCode, errs, ["true", "false"], isRequired);
 
@@ -175,7 +175,7 @@ let BooleanValue = (elem, attrName, errCode, errs, isRequired = true) => Allowed
  * @param {string}     attrName   the name of the attribute carrying the boolean value
  * @param {string}     errCode    the error number used as a prefix for reporting errors
  * @param {ErrorList}  errs       errors found in validaton
- * @param {boolean}    isRequired true if the specificed attribued is required to be specified for the element
+ * @param {boolean}    isRequired true if the specified attribute is required to be specified for the element
  */
 let TrueValue = (elem, attrName, errCode, errs, isRequired = true) => AllowedValue(elem, attrName, errCode, errs, ["true"], isRequired);
 
@@ -186,13 +186,13 @@ let TrueValue = (elem, attrName, errCode, errs, isRequired = true) => AllowedVal
  * @param {string}     attrName   the name of the attribute carrying the boolean value
  * @param {string}     errCode    the error number used as a prefix for reporting errors
  * @param {ErrorList}  errs       errors found in validaton
- * @param {boolean}    isRequired true if the specificed attribued is required to be specified for the element
+ * @param {boolean}    isRequired true if the specified attribute is required to be specified for the element
  */
 let FalseValue = (elem, attrName, errCode, errs, isRequired = true) => AllowedValue(elem, attrName, errCode, errs, ["false"], isRequired);
 
 /**
  * @param {string} genre the value to check as being a restart availability genre
- * @retuwns {boolean} trus id the value provided is a valid restart availability genre
+ * @retuwns {boolean} true if the value provided is a valid restart availability genre
  */
 export let isRestartAvailability = (genre) => [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(genre);
 
