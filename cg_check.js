@@ -1291,19 +1291,21 @@ export default class ContentGuideCheck {
 				})
 			}
 			else {
-				const location = release.get(xPath(props.prefix, tva.e_ReleaseLocation));
-				const ReleaseLocation = location ? location.value : defaultLocation;
+				const location = release.get(xPath(props.prefix, tva.e_ReleaseLocation), props.schema);
+				const ReleaseLocation = location ? location.content : defaultLocation;
 				if (isIn(locations, ReleaseLocation)) 
 					errs.addError({
 						code: `${errCode}-21`,
-					type: WARNING,
-					message: (ReleaseLocation==defaultLocation) 
-						? `${tva.e_ReleaseInformation} for all regions already specified.` 
-						: `${tva.e_ReleaseInformation} for region ${ReleaseLocation.quote()} already specified.`,
-					key: "duplicate release location",
-					fragment: location,  // addError will use @line if @fragment is null or not specified
-					line: release.line,
-				});
+						type: WARNING,
+						message: (ReleaseLocation==defaultLocation) 
+							? `${tva.e_ReleaseInformation} for all regions already specified.` 
+							: `${tva.e_ReleaseInformation} for region ${ReleaseLocation.quote()} already specified.`,
+						key: "duplicate release location",
+						fragment: location,  // addError will use @line if @fragment is null or not specified
+						line: release.line,
+					});
+			else 
+					locations.push(ReleaseLocation);
 			}
 		}
 	}
