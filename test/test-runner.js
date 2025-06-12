@@ -23,6 +23,7 @@ import ErrorList from "../error_list.js";
 const optionDefinitions = [
 	{ name: "urls", alias: "u", type: Boolean, defaultValue: false, description: "Load data files from network locations." },
 	{ name: "mode", alias: "m", type: String, typeLabel: "{underline type}", description: "Type of validation to perform on the specified sources"},
+	{ name: "nomarkup", type: Boolean, defaultValue: false, description: "Only include error list, no document markup"},
 	{ name: "src", type: String, multiple: true, defaultOption: true, typeLabel: "{underline filenames and/or URLs}", description: "Source files to validate"},
 	{ name: "help", alias: "h", type: Boolean, defaultValue: false, description: "This help" },
 ];
@@ -75,6 +76,7 @@ if (!options.src || options.src.length == 0) {
 	process.exit(1);
 }
 
+
 if (options.mode.toLowerCase() == "sl") {
 	// test a service list
 	let sl = new ServiceListCheck(options.urls, null, false);
@@ -97,6 +99,8 @@ if (options.mode.toLowerCase() == "sl") {
 		let errs = new ErrorList();
 		sl.doValidateServiceList(SLtext, errs, {report_schema_version:false});
 		console.log(`\n${ref}\n${"".padStart(ref.length, "=")}\n`);
+		if (options.nomarkup)
+			delete errs.markupXML;
 		console.log(JSON.stringify({errs}, null, 2));
 	});
 }
@@ -132,6 +136,8 @@ else if (options.mode.toLowerCase().substring(0,2) == "cg") {
 		let errs = new ErrorList();
 		cg.doValidateContentGuide(CGtext, cg_request, errs, {report_schema_version:false});
 		console.log(`\n${ref}\n${"".padStart(ref.length, "=")}\n`);
+		if (options.nomarkup)
+			delete errs.markupXML;
 		console.log(JSON.stringify({errs}, null, 2));
 	});
 }
