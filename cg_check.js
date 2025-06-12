@@ -551,7 +551,7 @@ export default class ContentGuideCheck {
 	 * @param {ErrorList}  errs              errors found in validaton
 	 * @param {string}     errCode           error code prefix to be used in reports
 	 */
-	/* private */ #Validate_ParentalGuidance(props, BasicDescription, errs, errCode) {
+	/* private */ #ValidateParentalGuidance(props, BasicDescription, errs, errCode) {
 		if (!BasicDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -690,6 +690,8 @@ export default class ContentGuideCheck {
 						pgCountry.country == UNSPECIFIED_COUNTRY ? "default country" : pgCountry.country
 					}`,
 					fragment: pgCountry.ParentalRating,
+					description: "Mandatory for the first ParentalGuidance element defined",
+					clause: "A177 table 61",
 				});
 		});
 	}
@@ -1359,7 +1361,7 @@ export default class ContentGuideCheck {
 						this.#ValidateTitle(props, BasicDescription, true, errs, "BD011", true);
 						this.#ValidateSynopsis(props, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL], errs, "BD012");
 						this.#ValidateGenre(props, BasicDescription, errs, "BD013");
-						this.#Validate_ParentalGuidance(props, BasicDescription, errs, "BD014");
+						this.#ValidateParentalGuidance(props, BasicDescription, errs, "BD014");
 						this.#ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
 						break;
 					case CG_REQUEST_PROGRAM: // 6.10.5.3
@@ -1384,7 +1386,7 @@ export default class ContentGuideCheck {
 						this.#ValidateSynopsis(props, BasicDescription, [tva.SYNOPSIS_MEDIUM_LABEL], [tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_LONG_LABEL], errs, "BD022");
 						this.#ValidateKeyword(props, BasicDescription, 0, 20, errs, "BD023");
 						this.#ValidateGenre(props, BasicDescription, errs, "BD024");
-						this.#Validate_ParentalGuidance(props, BasicDescription, errs, "BD025");
+						this.#ValidateParentalGuidance(props, BasicDescription, errs, "BD025");
 						this.#ValidateCreditsList(props, BasicDescription, errs, "BD026");
 						this.#ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
 						this.#ValidateReleaseInformation(props, BasicDescription, errs, "BD027");
@@ -1406,7 +1408,7 @@ export default class ContentGuideCheck {
 						);
 						this.#ValidateTitle(props, BasicDescription, true, errs, "BD031", true);
 						this.#ValidateSynopsis(props, BasicDescription, [], [tva.SYNOPSIS_MEDIUM_LABEL], errs, "BD032");
-						this.#Validate_ParentalGuidance(props, BasicDescription, errs, "BD033");
+						this.#ValidateParentalGuidance(props, BasicDescription, errs, "BD033");
 						this.#ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
 						this.#ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, "Box Set Contents");
 						this.#ValidateReleaseInformation(props, BasicDescription, errs, "BD034");
@@ -1594,6 +1596,8 @@ export default class ContentGuideCheck {
 							code: "PI022",
 							message: `${tva.e_OtherIdentifier.elementize()} is not permitted in this request type`,
 							fragment: child,
+							description: `The ${tva.e_OtherIdentifier.elementize()} element shall not be present in More Episodes responses.`,
+							clause: "A177 table 41", 
 						});
 					break;
 				case tva.e_EpisodeOf: // <ProgramInformation><EpisodeOf>
@@ -1629,6 +1633,8 @@ export default class ContentGuideCheck {
 							code: "PI043",
 							message: `${attribute(`xsi:${tva.a_type}`)} must be ${tva.t_MemberOfType.quote()} for ${ProgramInformation.name}.${tva.e_MemberOf}`,
 							fragment: child,
+							description: "The @xsi:type attribute shall always be set to MemberOfType.",
+							clause: "A177 table 41",
 						});
 					// <ProgramInformation><MemberOf>@crid
 					let foundCRID = null;
@@ -1692,7 +1698,7 @@ export default class ContentGuideCheck {
 
 		let ProgramInformationTable = ProgramDescription.get(xPath(props.prefix, tva.e_ProgramInformationTable), props.schema);
 		if (!ProgramInformationTable) {
-			//errs.addError({code:"PI101", message:`${tva.e_ProgramInformationTable.elementize()} not specified in ${ProgramDescription.name.elementize()}, line:ProgramDescription.line`});
+			errs.addError({code:"PI101", message:`${tva.e_ProgramInformationTable.elementize()} not specified in ${ProgramDescription.name.elementize()}, line:ProgramDescription.line`});
 			return null;
 		}
 		checkAttributes(ProgramInformationTable, [], [tva.a_lang], tvaEA.ProgramInformationTable, errs, "PI102");
