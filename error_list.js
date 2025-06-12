@@ -190,7 +190,7 @@ export default class ErrorList {
 				}
 			});
 		} else if (e.fragment) {
-			// note that the line of the error is derived from the fragment -- e.line is only used with the fragment is already a string
+			// note that the line of the error is derived from the fragment -- e.line is only used when the fragment is already a string
 			let newError = { code: e.code, message: e.message, element: datatypeIs(e.fragment, "string") ? e.fragment : this.#prettyPrint(e.fragment) };
 
 			if (datatypeIs(e.fragment, "string")) {

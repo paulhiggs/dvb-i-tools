@@ -153,17 +153,17 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 /**
  * check if the element contains the named child element
  *
- * @param {XmlElement} elem                 the element to check
+ * @param {XmlElement} containingElement    the element to check
  * @param {string}     childElementName     the name of the child element to look for
  * @returns {boolean} true if the element contains the named child element(s) otherwise false
  */
-export function hasChild(elem, childElementName) {
-	if (!elem) return false;
-	let term = elem.firstChild;
-	while (term) {
-		if (term?.name?.endsWith(childElementName)) return true;
-		term = term.next;
+export function hasChild(containingElement, childElementName) {
+	let child = containingElement?.firstChild;
+	while (child) {
+		if (child?.name?.endsWith(childElementName)) return true;
+		child = child.next;
 	}
+	return false;
 }
 
 /**

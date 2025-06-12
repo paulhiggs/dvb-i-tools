@@ -1259,6 +1259,55 @@ export default class ContentGuideCheck {
 		});
 	}
 
+
+	/**
+	 * validate the <ReleaseInformation> elements specified.
+	 *
+	 * @param {object}     props             Metadata of the XML document
+	 * @param {XmlElement} BasicDescription  the element whose children should be checked
+	 * @param {ErrorList}  errs              errors found in validaton
+	 * @param {string}     errCode           error code prefix to be used in reports
+	 */
+	/* private */ #ValidateReleaseInformation(props, BasicDescription, errs, errCode) {
+		if (!BasicDescription) {
+			errs.addError({
+				type: APPLICATION,
+				code: "RI000",
+				message: "ValidateReleaseInformation() called with BasicDescription=null",
+			});
+			return;
+		}
+		const defaultLocation="##default##";
+		let locations = [];
+		let release, ri=0;
+		while ((release = BasicDescription.get(xPath(props.prefix, tva.e_ReleaseInformation, ++ri), props.schema)) != null) {
+			if (!hasChild(release, tva.e_ReleaseDate) && !hasChild(release, tva.e_ReleaseLocation)) {
+				errs.addError({
+					code: `${errCode}-11`,
+					type: WARNING,
+					message: `${tva.e_ReleaseDate.elementize()} and/or ${tva.e_ReleaseLocation.elementize()} should be specified`,
+					fragment: release,
+					key: "empty element",
+				})
+			}
+			else {
+				const location = release.get(xPath(props.prefix, tva.e_ReleaseLocation));
+				const ReleaseLocation = location ? location.value : defaultLocation;
+				if (isIn(locations, ReleaseLocation)) 
+					errs.addError({
+						code: `${errCode}-21`,
+					type: WARNING,
+					message: (ReleaseLocation==defaultLocation) 
+						? `${tva.e_ReleaseInformation} for all regions already specified.` 
+						: `${tva.e_ReleaseInformation} for region ${ReleaseLocation.quote()} already specified.`,
+					key: "duplicate release location",
+					fragment: location,  // addError will use @line if @fragment is null or not specified
+					line: release.line,
+				});
+			}
+		}
+	}
+
 	/**
 	 * validate the <BasicDescription> element against the profile for the given request/response type
 	 *
@@ -1336,6 +1385,7 @@ export default class ContentGuideCheck {
 						this.#Validate_ParentalGuidance(props, BasicDescription, errs, "BD025");
 						this.#ValidateCreditsList(props, BasicDescription, errs, "BD026");
 						this.#ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
+						this.#ValidateReleaseInformation(props, BasicDescription, errs, "BD027");
 						break;
 					case CG_REQUEST_BS_CONTENTS: // 6.10.5.4
 						checkTopElementsAndCardinality(
@@ -1357,6 +1407,7 @@ export default class ContentGuideCheck {
 						this.#Validate_ParentalGuidance(props, BasicDescription, errs, "BD033");
 						this.#ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription, errs);
 						this.#ValidateRelatedMaterial_Pagination(props, BasicDescription, errs, "Box Set Contents");
+						this.#ValidateReleaseInformation(props, BasicDescription, errs, "BD034");
 						break;
 					case CG_REQUEST_MORE_EPISODES:
 						checkTopElementsAndCardinality(
