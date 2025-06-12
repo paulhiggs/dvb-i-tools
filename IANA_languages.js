@@ -137,6 +137,7 @@ export default class IANAlanguages {
 	 *
 	 * @param {String}  languagesFile   the file name to load
 	 * @param {boolean} purge           erase the existing values before loading new
+	 * @param {boolean} async           use asynchronous loading (sync needed for command line execution)
 	 */
 	#loadLanguagesFromFile(languagesFile, purge = false, async = true) {
 		console.log(chalk.yellow(`reading languages from ${languagesFile}`));
@@ -163,6 +164,7 @@ export default class IANAlanguages {
 	 *
 	 * @param {String}  languagesURL   the URL to load
 	 * @param {boolean} purge          erase the existing values before loading new
+	 * @param {boolean} async          use asynchronous loading (sync needed for command line execution)
 	 */
 	#loadLanguagesFromURL(languagesURL, purge = false, async = true) {
 		const isHTTPurl = isHTTPURL(languagesURL);

@@ -207,9 +207,9 @@ export function LoadServiceTypeCS(useURLs, async = true) {
 	return cs;
 }
 
-export function LoadRatings(useURLs) {
+export function LoadRatings(useURLs, async = true) {
 	console.log(chalk.yellow.underline("loading Ratings..."));
 	let cs = new ClassificationScheme();
-	cs.loadCS(useURLs ? { urls: [TVA_ContentAlertCS.url, DVBI_ParentalGuidanceCS.url] } : { files: [TVA_ContentAlertCS.file, DVBI_ParentalGuidanceCS.file] });
+	cs.loadCS(useURLs ? { urls: [TVA_ContentAlertCS.url, DVBI_ParentalGuidanceCS.url] } : { files: [TVA_ContentAlertCS.file, DVBI_ParentalGuidanceCS.file] }, async);
 	return cs;
 }

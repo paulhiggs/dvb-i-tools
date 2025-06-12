@@ -4,7 +4,7 @@
  * Manages Classification Scheme checking based in a flat list of roles
  */
 import chalk from "chalk";
-import { readFile } from "fs";
+import { readFile, readFileSync } from "fs";
 
 import handleErrors from "./fetch_err_handler.js";
 import { isHTTPURL } from "./pattern_checks.js";
@@ -21,7 +21,7 @@ export default class Role extends ClassificationScheme {
 	 *
 	 * @param {String} rolesURL URL to the classification scheme
 	 */
-	#loadFromURL(rolesURL) {
+	#loadFromURL(rolesURL, async = true) {
 		const isHTTPurl = isHTTPURL(rolesURL);
 		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving Roles from ${rolesURL} via fetch()`));
 		if (!isHTTPurl) return;
@@ -42,23 +42,31 @@ export default class Role extends ClassificationScheme {
 	 *
 	 * @param {String} rolesFile the filename of the classification scheme
 	 */
-	#loadFromFile(rolesFile) {
+	#loadFromFile(rolesFile, async = true) {
 		console.log(chalk.yellow(`reading Roles from ${rolesFile}`));
 
-		readFile(rolesFile, { encoding: "utf-8" }, (err, data) => {
-			if (!err)
-				data.split("\n").forEach((e) => {
+		if (async)
+			readFile(rolesFile, { encoding: "utf-8" }, (err, data) => {
+				if (!err)
+					data.split("\n").forEach((e) => {
+						this.insertValue(e.trim(), true);
+					});
+				else console.log(chalk.red(err));
+			});
+		else {
+			let buff = readFileSync(rolesFile, { encoding: "utf-8" });
+			let data = buff.toString();
+			data.split("\n").forEach((e) => {
 					this.insertValue(e.trim(), true);
 				});
-			else console.log(chalk.red(err));
-		});
+		}
 	}
 
-	loadRoles(options) {
+	loadRoles(options, async = true) {
 		if (!options) options = {};
-		if (options.file) this.#loadFromFile(options.file);
-		if (options.files) options.files.forEach((file) => this.#loadFromFile(file));
-		if (options.url) this.#loadFromURL(options.url);
-		if (options.urls) options.urls.forEach((url) => this.#loadFromURL(url));
+		if (options.file) this.#loadFromFile(options.file, async);
+		if (options.files) options.files.forEach((file) => this.#loadFromFile(file, async));
+		if (options.url) this.#loadFromURL(options.url, async);
+		if (options.urls) options.urls.forEach((url) => this.#loadFromURL(url, async));
 	}
 }
