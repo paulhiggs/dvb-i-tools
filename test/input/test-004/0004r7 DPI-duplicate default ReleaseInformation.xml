@@ -23,11 +23,6 @@
 					<ParentalGuidance>
 						<mpeg7:MinimumAge>15</mpeg7:MinimumAge>
 					</ParentalGuidance>
-					<ParentalGuidance>
-						<mpeg7:ParentalRating href="urn:fvc:metadata:cs:ContentRatingCS:2014-07:fifteen"/>
-						<ExplanatoryText length="long">Contains strong language and flash
-                            photography</ExplanatoryText>
-					</ParentalGuidance>
 					<CreditsList>
 						<CreditsItem role="urn:tva:metadata:cs:TVARoleCS:2011:V20">
 							<OrganizationName>ITV Studios Limited</OrganizationName>
