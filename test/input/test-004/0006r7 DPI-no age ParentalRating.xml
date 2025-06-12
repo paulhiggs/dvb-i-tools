@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TVAMain xmlns="urn:tva:metadata:2024" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xml:lang="en" xsi:schemaLocation="urn:tva:metadata:2024 ../tva_metadata_3-1.xsd">
+	<ProgramDescription>
+		<ProgramInformationTable xml:lang="en">
+			<ProgramInformation programId="crid://channel7.co.uk/b01myjsy">
+				<BasicDescription>
+					<Title type="main">Bargain Hunt</Title>
+					<Title type="secondary">01/01/2014</Title>
+					<Synopsis length="short"> The Bargain Hunt teams head to
+                        Staffordshire's County Showground.</Synopsis>
+					<Synopsis length="medium"> The Bargain Hunt teams head to
+                        Staffordshire's County Showground, where both experts face double trouble.</Synopsis>
+					<Synopsis length="long">The Bargain Hunt teams head to
+                        Staffordshire's County Showground, where both experts face double trouble.
+                        David Harper heads up two Toms for the red team, while twin sisters
+                        Elizabeth and Rachel are guided by Jonathan Pratt for the blue team. Tim
+                        Wonnacott travels to Bath to visit one of the city's greatest architectural
+                        delights.</Synopsis>
+					<Keyword>FAMILY LIFE</Keyword>
+					<Keyword>RELATIONSHIPS</Keyword>
+					<Keyword type="other">Critic’s Choice</Keyword>
+					<Genre href="urn:dvb:metadata:cs:ContentSubject:2019:3" type="main"/>
+					<ParentalGuidance>
+						<mpeg7:ParentalRating href="urn:dvb:metadata:cs:ParentalGuidanceCS:2007:19.1.5"/>
+						<ExplanatoryText length="long">Contains strong language and flash
+                            photography</ExplanatoryText>
+					</ParentalGuidance>
+					<CreditsList>
+						<CreditsItem role="urn:tva:metadata:cs:TVARoleCS:2011:V20">
+							<OrganizationName>ITV Studios Limited</OrganizationName>
+						</CreditsItem>
+						<CreditsItem role="urn:tva:metadata:cs:TVARoleCS:2011:AD6">
+							<PersonName>
+								<mpeg7:GivenName>Jeremy</mpeg7:GivenName>
+								<mpeg7:FamilyName>Kyle</mpeg7:FamilyName>
+							</PersonName>
+						</CreditsItem>
+						<CreditsItem role="urn:mpeg:mpeg7:cs:RoleCS:2001:ACTOR">
+							<PersonName>
+								<mpeg7:GivenName>William</mpeg7:GivenName>
+								<mpeg7:FamilyName>Johnson</mpeg7:FamilyName>
+							</PersonName>
+							<Character>
+								<mpeg7:GivenName>Billy</mpeg7:GivenName>
+								<mpeg7:FamilyName>Johns</mpeg7:FamilyName>
+							</Character>
+						</CreditsItem>
+					</CreditsList>
+					<RelatedMaterial>
+						<HowRelated href="urn:tva:metadata:cs:HowRelatedCS:2012:19"/>
+						<MediaLocator>
+							<MediaUri contentType="image/png">https://img-ctv.mdata.co.uk/channel7/bargain_hunt.png</MediaUri>
+						</MediaLocator>
+					</RelatedMaterial>
+					<ReleaseInformation>
+						<ReleaseDate><Year>1999</Year></ReleaseDate>
+						<ReleaseLocation>GB</ReleaseLocation>
+					</ReleaseInformation>
+				</BasicDescription>
+			</ProgramInformation>
+		</ProgramInformationTable>
+		<ProgramLocationTable xml:lang="en">
+			<OnDemandProgram serviceIDRef="tag:channel7.co.uk,2025:service_a">
+				<Program crid="crid://channel7.co.uk/b01myjsy"/>
+				<ProgramURL contentType="application/vnd.dvb.ait+xml">https://channel7.co.uk/ait.aitx?pid=b01myjsy</ProgramURL>
+				<AuxiliaryURL contentType="application/vnd.dvb.ait+xml">https://channel7.co.uk/ait.aitx?template</AuxiliaryURL>
+				<InstanceDescription>
+					<Genre href="urn:fvc:metadata:cs:MediaAvailabilityCS:2014-07:media_available" type="other"/>
+					<Genre href="urn:fvc:metadata:cs:FEPGAvailabilityCS:2014-10:fepg_unavailable" type="other"/>
+					<AVAttributes>
+						<VideoAttributes>
+							<HorizontalSize>576</HorizontalSize>
+							<VerticalSize>512</VerticalSize>
+							<AspectRatio>16:9</AspectRatio>
+						</VideoAttributes>
+						<AccessibilityAttributes>
+							<SubtitleAttributes>
+								<Carriage href="urn:tva:metadata:cs:SubtitleCarriageCS:2023:2"/>
+								<Coding href="urn:tva:metadata:cs:SubtitleCodingFormatCS:2023:2.1"/>
+								<SubtitleLanguage>en</SubtitleLanguage>
+								<SuitableForTTS>false</SuitableForTTS>
+							</SubtitleAttributes>
+						</AccessibilityAttributes>
+					</AVAttributes>
+				</InstanceDescription>
+				<PublishedDuration>PT1H</PublishedDuration>
+				<StartOfAvailability>2013-09-25T12:03:09Z</StartOfAvailability>
+				<EndOfAvailability>2013-10-02T09:59:00Z</EndOfAvailability>
+				<DeliveryMode>streaming</DeliveryMode>
+				<Free value="true"/>
+			</OnDemandProgram>
+		</ProgramLocationTable>
+	</ProgramDescription>
+</TVAMain>
