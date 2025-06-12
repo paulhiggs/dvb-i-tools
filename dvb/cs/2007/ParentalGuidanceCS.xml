@@ -124,7 +124,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:dv
 		<Definition xml:lang="en"/>
 <Term termID="5.1">
 			<Name xml:lang="en">The Council of Cinematographic Classification</Name>
-			<Definition xml:lang="en"> Movie ratings as defined by the Consejo de CalificaciÛn Cinematogr·fica (http://w3app.mineduc.cl/Consejo/index)</Definition>
+			<Definition xml:lang="en"> Movie ratings as defined by the Consejo de Calificaci√≥n Cinematogr√°fica (http://w3app.mineduc.cl/Consejo/index)</Definition>
 			<Term termID="5.1.1">
 				<Name xml:lang="en">TE</Name>
 				<Definition xml:lang="en">All Audiences</Definition>
@@ -411,7 +411,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:dv
 		<Definition xml:lang="en"/>
 		<Term termID="15.1">
 			<Name xml:lang="en">Ministre of Culture</Name>
-			<Definition xml:lang="en"> Scheme as defined by the Comiss„o de ClassificaÁ„o de Espect·culos (http://www.cce.org.pt)</Definition>
+			<Definition xml:lang="en"> Scheme as defined by the Comiss√£o de Classifica√ß√£o de Espect√°culos (http://www.cce.org.pt)</Definition>
 			<Term termID="15.1.1">
 				<Name xml:lang="en">M/4</Name>
 				<Definition xml:lang="en">For persons of age 4 and above</Definition>
@@ -498,7 +498,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:dv
 		<Definition xml:lang="en"/>
 		<Term termID="18.1">
 			<Name xml:lang="en">Swedish National Board of Film Censors</Name>
-			<Definition xml:lang="en">Scheme as defined by Statens biografbyrÂ (http://www.statensbiografbyra.se)</Definition>
+			<Definition xml:lang="en">Scheme as defined by Statens biografbyr√• (http://www.statensbiografbyra.se)</Definition>
 			<Term termID="18.1.1">
 				<Name xml:lang="en">Btl</Name>
 				<Definition xml:lang="en">Suitable for all ages</Definition>

@@ -24,7 +24,7 @@
 						<mpeg7:MinimumAge>15</mpeg7:MinimumAge>
 					</ParentalGuidance>
 					<ParentalGuidance>
-						<mpeg7:ParentalRating href="urn:fvc:metadata:cs:ContentRatingCS:2014-07:fifteen"/>
+						<mpeg7:ParentalRating href="urn:tva:metadata:cs:ContentAlertCS:2005:6.6.5"/>
 						<ExplanatoryText length="long">Contains strong language and flash
                             photography</ExplanatoryText>
 					</ParentalGuidance>
@@ -56,8 +56,6 @@
 						</MediaLocator>
 					</RelatedMaterial>
 					<ReleaseInformation>
-						<ReleaseDate><Year>1999</Year></ReleaseDate>
-						<ReleaseLocation>GB</ReleaseLocation>
 					</ReleaseInformation>
 					<ReleaseInformation>
 						<ReleaseDate><DayAndYear>2001-12-22</DayAndYear></ReleaseDate>
