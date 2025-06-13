@@ -6,9 +6,9 @@
 import commandLineArgs from "command-line-args";
 import commandLineUsage from "command-line-usage";
 
-import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./globals.js";
-import { Default_SLEPR, MOTD } from "./data_locations.js";
-import validator from "./validator.js";
+import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mjs";
+import { Default_SLEPR, MOTD } from "./lib/data_locations.mjs";
+import validator from "./lib/validator.mjs";
 
 // parse command line options
 const optionDefinitions = [

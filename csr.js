@@ -17,10 +17,14 @@ import commandLineArgs from "command-line-args";
 import commandLineUsage from "command-line-usage";
 import cors from "cors";
 
-import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data_locations.js";
+import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./lib/data_locations.mjs";
+import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mjs";
+import { readmyfile } from "./lib/utils.mjs";
 
-import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./globals.js";
-import { readmyfile } from "./utils.js";
+import IANAlanguages from "./lib/IANA_languages.mjs";
+import ISOcountries from "./lib/ISO_countries.mjs";
+import ClassificationScheme from "./lib/classification_scheme.mjs";
+
 
 const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
@@ -28,7 +32,7 @@ const keyFilename = join(".", "selfsigned.key"),
 const numCPUs = cpus().length;
 
 // SLEPR == Service List Entry Point Registry
-import SLEPR from "./slepr.js";
+import SLEPR from "./lib/slepr.mjs";
 
 // command line options
 const optionDefinitions = [
@@ -109,15 +113,12 @@ if (options.help) {
 
 if (options.urls && options.file == Default_SLEPR.file) options.file = Default_SLEPR.url;
 
-import IANAlanguages from "./IANA_languages.js";
 let knownLanguages = new IANAlanguages();
 knownLanguages.loadLanguages(options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file });
 
-import ISOcountries from "./ISO_countries.js";
 let knownCountries = new ISOcountries(false, true);
 knownCountries.loadCountries(options.urls ? { url: ISO3166.url } : { file: ISO3166.file });
 
-import ClassificationScheme from "./classification_scheme.js";
 let knownGenres = new ClassificationScheme();
 knownGenres.loadCS(
 	options.urls ? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] } : { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] }
@@ -210,7 +211,7 @@ if (cluster.isPrimary) {
 		};
 	}
 	let csr = new SLEPR(options.urls);
-	csr.loadServiceListRegistry(options.file, knownLanguages, knownCountries, knownGenres);
+	csr.loadServiceListRegistry(options.CSRfile, knownLanguages, knownCountries, knownGenres);
 	app.use(morgan(":pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr"));
 	app.use(favicon(join("phlib", "ph-icon.ico")));
 	if (options.CORSmode == CORSlibrary) app.options(SLEPR_query_route, cors());
