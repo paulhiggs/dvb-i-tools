@@ -3,4 +3,7 @@
 	"editor.detectIndentation": false,
 	"editor.renderWhitespace": "all",
 	"editor.insertSpaces": false,
+	"[javascript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	}
 }
