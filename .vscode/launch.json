@@ -13,7 +13,7 @@
 			],
 			"program": "${workspaceFolder}\\all-in-one.js",
 //			"args" : [
-//				 "--CSRfile .\\TEST-serviceListEntryPoint.xml",
+//				 "--CSRfile .\\TESTgit-serviceListEntryPoint.xml",
 //				 "--port 3999"
 //			]
 		}
