@@ -42,7 +42,7 @@ const optionDefinitions = [
 		typeLabel: "{underline ip-port}",
 		description: `The HTTPS port to listen on. Default: ${HTTPPort.csr + 1}`,
 	},
-	{ name: "file", alias: "f", type: String, defaultValue: Default_SLEPR.file, typeLabel: "{underline filename}", description: "local file name of master SLEPR file" },
+	{ name: "CSRfile", alias: "f", type: String, defaultValue: Default_SLEPR.file, typeLabel: "{underline filename}", description: "local file name of SLEPR file" },
 	{
 		name: "CORSmode",
 		alias: "c",

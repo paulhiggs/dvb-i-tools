@@ -39,7 +39,7 @@ The server can be reloaded with an updated `slepr-master.xml` file by invoking i
 - `--port [-p] <port>` set the HTTP listening port (default: 3000)
 - `--sport [-s] <port>` set the HTTPS listening port (default: 3001)
 - `--urls [-u]` load configation from network locations (default: use local files)
-- `--file [-f] <filename>` name of the master registry file to use, can be an http(s) URL (default: ./slepr-master.xml)
+- `--CSRfile [-f] <filename>` name of the registry file to use, can be an http(s) URL (default: ./registries/slepr-main.xml)
 - `--CORSmode [-c] <mode>` select the type of CORS handling
   - `"library"` - default mode - use the Express CORS library
   - `"manual"` - do code based CORS header insertion (not fully implemented or tested)
@@ -142,7 +142,7 @@ Occassionally, the language-subtag-registry file can be updated from https://www
   - `"library"` - default mode - use the Express CORS library
   - `"manual"` - do code based CORS header insertion (not fully implemented or tested)
   - `"none"` - dont do any CORS handling
-- `--CSRfile [-f] <filename>` file to use for SLR responses (default: `lepr-main.xml`)
+- `--CSRfile [-f] <filename>` file to use for SLR responses (default: `./registries/slepr-main.xml`)
 
 ### Use
 
