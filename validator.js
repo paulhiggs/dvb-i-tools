@@ -431,6 +431,10 @@ export default function validator(options) {
 		res.status(200).end();
 	});
 
+	app.get('{*splat}', (/* eslint-disable no-unused-vars */ req, /* eslint-enable */ res) => {
+		res.status(404).end();
+	});
+
 	// start the HTTP server
 	var http_server = app.listen(options.port, function () {
 		if (http_server.address()?.port)

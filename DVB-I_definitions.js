@@ -246,7 +246,6 @@ export const dvbi = {
 	a_referenceType: "referenceType",
 	a_region: "region",
 	a_regionID: "regionID",
-	a_regulatorListFlag: "regulatorListFlag",
 	a_reportingMethod: "reportingMethod",
 	a_reportingMode: "reportingMode",
 	a_responseStatus: "responseStatus",
@@ -342,9 +341,7 @@ export const dvbi = {
 	e_ProminenceList: "ProminenceList",
 	e_PromotionalMedia: "PromotionalMedia",
 	e_PromotionalText: "PromotionalText",
-	e_Provider: "Provider",
 	e_ProviderName: "ProviderName",
-	e_ProviderOffering: "ProviderOffering",
 	e_QueryParameters: "QueryParameters",
 	e_Radius: "Radius",
 	e_RecordingInfo: "RecordingInfo",
@@ -365,7 +362,6 @@ export const dvbi = {
 	e_ServiceInstance: "ServiceInstance",
 	e_ServiceGenre: "ServiceGenre",
 	e_ServiceList: "ServiceList",
-	e_ServiceListOffering: "ServiceListOffering",
 	e_ServiceName: "ServiceName",
 	e_ServiceType: "ServiceType",
 	e_SocialMediaReference: "SocialMediaReference",
@@ -386,6 +382,21 @@ export const dvbi = {
 	e_UriBasedLocation: "UriBasedLocation",
 	e_VideoConformancePoint: "VideoConformancePoint",
 	e_WildcardPostcode: "WildcardPostcode",
+};
+
+export const dvbisld = {
+	a_regulatorListFlag: "regulatorListFlag",
+
+	e_ApplicationDelivery: "ApplicationDelivery",
+	e_DVBCDelivery: "DVBCDelivery",
+	e_DVBSDelivery: "DVBSDelivery",
+	e_DASHDelivery: "DASHDelivery",
+	e_DVBTDelivery: "DVBTDelivery",
+	e_MulticastTSDelivery: "MulticastTSDelivery",
+	e_Provider: "Provider",
+	e_ProviderOffering: "ProviderOffering",
+	e_RTSPDelivery: "RTSPDelivery",
+	e_ServiceListOffering: "ServiceListOffering",
 
 	q_inlineImages: "inlineImages",
 };

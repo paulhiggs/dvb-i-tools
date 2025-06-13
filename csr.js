@@ -197,7 +197,7 @@ if (cluster.isPrimary) {
 		next();
 	};
 	if (options.CORSmode == CORSlibrary) {
-		app.options("*", cors());
+		app.use(cors());
 	} else if (options.CORSmode == CORSmanual) {
 		manualCORS = function (/* eslint-disable no-unused-vars */ req, /* eslint-enable */ res, next) {
 			let opts = res.getHeader("X-Frame-Options");
@@ -229,7 +229,7 @@ if (cluster.isPrimary) {
 		res.status(404).end();
 	});
 
-	app.get("*", (/* eslint-disable no-unused-vars */ req, /* eslint-enable */ res) => {
+	app.get('{*splat}', (/* eslint-disable no-unused-vars */ req, /* eslint-enable */ res) => {
 		res.status(404).end();
 	});
 
