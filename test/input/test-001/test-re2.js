@@ -14,9 +14,12 @@ import {
 	isHTTPURL,
 	validZuluTimeType,
 	isUTCDateTime,
-} from "../../../pattern_checks.js";
+} from "../../../lib/pattern_checks.mjs";
 
-import {isTAGURI} from "../../../URI_checks.js";
+import {isTAGURI} from "../../../lib/URI_checks.mjs";
+
+import {isValidLangFormat} from "../../../lib/IANA_languages.mjs"
+
 
 const AVCregex = /[a-z0-9!"#$%&'()*+,./:;<=>?@[\] ^_`{|}~-]{4}\.[a-f0-9]{6}/i;
 const AC4regex = /ac-4(\.[a-fA-F\d]{1,2}){3}/;
@@ -51,7 +54,8 @@ const ConsoleColours = {
 		BgWhite: "\x1b[47m",
 	},
 	ConsoleGreen = `${ConsoleColours.Reset}${ConsoleColours.FgGreen}`,
-	ConsoleRed = `${ConsoleColours.Reset}${ConsoleColours.FgRed}`;
+	ConsoleRed = `${ConsoleColours.Reset}${ConsoleColours.FgRed}`,
+	ConsoleCyan = `${ConsoleColours.Reset}${ConsoleColours.FgCyan}`;
 
 const tests0 = [
 	{ item: "v6-001", pattern: e_IPv6Address, evaluate: "1:2:3:4:5:6:7:8", expect: true },
@@ -226,6 +230,55 @@ const tests1 = [
 	{item: "AV1 regex3", expression: AV1regex, evaluate: "av01.0.04H.8..112....0", expect:true },
 ];
 
+
+const 
+	e_lowalpha = "a-z",
+	e_highalpha = "A-Z",
+	e_alpha = `${e_lowalpha}${e_highalpha}`,
+	e_digit = "0-9";
+
+// from BCP47 - https://www.rfc-editor.org/rfc/bcp/bcp47.txt
+const l_alphanum = `${e_alpha}${e_digit}`,
+	l_singleton = `[${e_digit}A-WY-Za-wy-z]`;
+const l_extlang = `[${e_alpha}]{3}(\-[${e_alpha}]{3}){0,2}`,
+	l_script = `[${e_alpha}]{4}`,
+	l_region = `[${e_alpha}]{2}|[${e_digit}]{3}`;
+
+const l_variant = `[${l_alphanum}]{5,8}|(${e_digit}[${l_alphanum}]{3})`,
+	l_extension = `${l_singleton}(\-[${l_alphanum}]{2,8})+`,
+	l_privateuse = `(x(\-[${l_alphanum}]{1,8})+)`;
+
+const l_irregular = "(en-GB-oed|i-ami|i-bnn|i-default|i-enochian|i-hak|i-klingon|i-lux|i-mingo|i-navajo|i-pwn|i-tao|i-tay|i-tsu|sgn-BE-FR|sgn-BE-NL|sgn-CH-DE)",
+	l_regular = "(art-lojban|cel-gaulish|no-bok|no-nyn|zh-guoyu|zh-hakka|zh-min|zh-min-nan|zh-xiang)";
+const l_grandfathered = `(${l_irregular}|${l_regular})`;
+
+const l_language = `(([${e_alpha}]{2,3}(\-${l_extlang})?)|([${e_alpha}]{5,8}))`;
+const l_langtag = `(${l_language}(\-${l_script})?(\-${l_region})?(\-${l_variant})*(\-${l_extension})*(\-${l_privateuse})?)`;
+const BCP47_Language_Tag = `(${l_langtag}|${l_privateuse}|${l_grandfathered})`;
+
+
+const test_exp = `${BCP47_Language_Tag}`
+
+const tests2 = [
+	{item: "Language 001", pattern: test_exp, evaluate: "eng", expect: true },
+	{item: "Language 002", pattern: test_exp, evaluate: "english", expect: true },
+	{item: "Language 003", pattern: test_exp, evaluate: "engl!sh", expect: false },
+	{item: "Language 004 (BCP47)", pattern: test_exp, evaluate: "zh-Hant-CN-x-private1-private2", expect: true},
+	{item: "Language 005 (BCP47)", pattern: test_exp, evaluate: "zh-Hant-CN-x-private1", expect: true},
+	{item: "Language 006 (BCP47)", pattern: test_exp, evaluate: "zh-Hant-CN", expect: true},
+	{item: "Language 007 (BCP47)", pattern: test_exp, evaluate: "zh-Hant", expect: true},
+	{item: "Language 008 (BCP47)", pattern: test_exp, evaluate: "zh", expect: true},
+
+
+	{item: "Language 009", pattern: test_exp, evaluate: "zh-Hant-CN-x-", expect: false},
+	{item: "Language 010", pattern: test_exp, evaluate: "zh-Hant-CN-x", expect: false},
+	{item: "Language 011", pattern: test_exp, evaluate: "zh-", expect: false},
+
+	{item: "Language 012", pattern: test_exp, evaluate: "zh-ziang", expect: true},
+	
+
+];
+
 function doTest(test) {
 
 	let showOutput = (testNo, value, result, expected) => {
@@ -251,5 +304,9 @@ function doTest(test) {
 	}
 }
 
-tests0.forEach((test) => doTest(test));
-tests1.forEach((test) => doTest(test));
+//tests0.forEach((test) => doTest(test));
+//tests1.forEach((test) => doTest(test));
+tests2.forEach((test) => doTest(test));
+
+console.log(test_exp)
+
