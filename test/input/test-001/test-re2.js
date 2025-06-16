@@ -256,7 +256,6 @@ const l_language = `(([${e_alpha}]{2,3}(\-${l_extlang})?)|([${e_alpha}]{5,8}))`;
 const l_langtag = `(${l_language}(\-${l_script})?(\-${l_region})?(\-${l_variant})*(\-${l_extension})*(\-${l_privateuse})?)`;
 const BCP47_Language_Tag = `(${l_langtag}|${l_privateuse}|${l_grandfathered})`;
 
-
 const test_exp = `${BCP47_Language_Tag}`
 
 const tests2 = [
