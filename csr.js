@@ -25,7 +25,6 @@ import IANAlanguages from "./lib/IANA_languages.mjs";
 import ISOcountries from "./lib/ISO_countries.mjs";
 import ClassificationScheme from "./lib/classification_scheme.mjs";
 
-
 const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
 
@@ -97,7 +96,7 @@ const commandLineHelp = [
 let options = null;
 try {
 	options = commandLineArgs(optionDefinitions);
-} catch (err) {
+} catch (/* eslint-disable no-unused-vars*/ err /* eslint-enable */) {
 	console.log(commandLineUsage(commandLineHelp));
 	process.exit(1);
 }
@@ -151,7 +150,7 @@ if (cluster.isPrimary) {
 		console.log(chalk.red("Let's fork another worker!"));
 		cluster.fork();
 	});
-	cluster.on("message", (/* eslint-disable no-unused-vars*/ worker /* eslint-enable */, msg, /* eslint-disable no-unused-vars*/ handle /* eslint-enable */) => {
+	cluster.on("message", (worker, msg, /* eslint-disable no-unused-vars*/ handle /* eslint-enable */) => {
 		if (msg.topic)
 			switch (msg.topic) {
 				case RELOAD:
@@ -195,13 +194,13 @@ if (cluster.isPrimary) {
 	const SLEPR_query_route = "/query",
 		SLEPR_reload_route = "/reload",
 		SLEPR_stats_route = "/stats";
-	let manualCORS = function (/* eslint-disable no-unused-vars */ res, req, /* eslint-enable */ next) {
+	let manualCORS = function (res, req, next) {
 		next();
 	};
 	if (options.CORSmode == CORSlibrary) {
 		app.use(cors());
 	} else if (options.CORSmode == CORSmanual) {
-		manualCORS = function (/* eslint-disable no-unused-vars */ req, /* eslint-enable */ res, next) {
+		manualCORS = function (req, res, next) {
 			let opts = res.getHeader("X-Frame-Options");
 			if (opts) {
 				if (!opts.includes("SAMEORIGIN")) opts.push("SAMEORIGIN");
@@ -231,7 +230,7 @@ if (cluster.isPrimary) {
 		res.status(404).end();
 	});
 
-	app.get('{*splat}', (/* eslint-disable no-unused-vars */ req, /* eslint-enable */ res) => {
+	app.get("{*splat}", (req, res) => {
 		res.status(404).end();
 	});
 

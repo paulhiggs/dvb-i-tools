@@ -3,6 +3,7 @@
  *
  * runner for all three DVB-I V&V tools
  */
+import process from "node:process";
 import commandLineArgs from "command-line-args";
 import commandLineUsage from "command-line-usage";
 
@@ -82,7 +83,7 @@ const commandLineHelp = [
 
 const options = commandLineArgs(optionDefinitions);
 
-if (options.help) {
+if (!CORSoptions.includes(options.CORSmode) || options.help) {
 	console.log(commandLineUsage(commandLineHelp));
 	process.exit(0);
 }
