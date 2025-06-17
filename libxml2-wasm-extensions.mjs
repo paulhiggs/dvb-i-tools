@@ -10,7 +10,8 @@ import { XmlDocument, XmlElement } from "libxml2-wasm";
 console.log(chalk.yellow.underline('initialize extensions'));
 
 /**
- * find the named attribute in an element without considering the namespace
+ * find the named attribute in an element without considering the namespace 
+ * return a pointer to the XmlAttribute object or null if not found
  */
 if (!XmlElement.prototype.attrAnyNs) {
 	XmlElement.prototype.attrAnyNs = function (name) {
@@ -18,6 +19,19 @@ if (!XmlElement.prototype.attrAnyNs) {
 		return rc ? rc : null;
 	}
 }
+
+/**
+ * find the named attribute in an element without considering the namespace and return its value
+ * if not found, return the @default_value value
+ */
+if (!XmlElement.prototype.attrAnyNsValueOr) {
+	XmlElement.prototype.attrAnyNsValueOr = function (name, default_value) {
+		let rc = this.attrs.find((a) => a.name == name)
+		return rc ? rc.value : default_value;
+	}
+}
+
+
 
 if (!XmlElement.prototype.childNodes) {
 	XmlElement.prototype.childNodes = function () {
