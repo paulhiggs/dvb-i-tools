@@ -79,7 +79,7 @@ if (!XmlElement.prototype.prettyPrint) {
 
 		let t = indent + "<" + qualifyName(this);
 		this.attrs?.forEach((attr) => {
-			t += ` ${qualifyName(attr)}="${a.value}"`;
+			t += ` ${qualifyName(attr)}="${attr.value}"`;
 		});
 		if (isLeafElement(this)) t += this.content.length ? `>${this.content}</${qualifyName(this)}>` : "/>";
 		else t += this.firstChild ? ">" : "/>";
