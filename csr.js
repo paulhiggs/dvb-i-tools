@@ -238,7 +238,7 @@ if (cluster.isPrimary) {
 		if (msg.topic)
 			switch (msg.topic) {
 				case UPDATE:
-					knownCountries.loadCountries(options.urls ? { url: ISO3166.url } : { file: ISO3166.filee });
+					knownCountries.loadCountries(options.urls ? { url: ISO3166.url } : { file: ISO3166.file });
 					knownLanguages.loadLanguages(options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file });
 					knownGenres.loadCS(
 						options.urls ? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] } : { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] }
