@@ -119,7 +119,7 @@ export let isHTTPURL = (url : string | undefined) : boolean => url ? HTTPURLrege
  * see RFC 3986 - https://tools.ietf.org/html/rfc3986
  */
 const HTTPPathURLregex = new RegExp(`^https?:(//${e_AuthorityAndPath}|${e_PathNoAuthority})$`, "i");
-export let isHTTPPathURL = (path : string | undefined) : boolean => (datatypeIs(path, "string") ? HTTPPathURLregex.test(path.trim()) : false);
+export let isHTTPPathURL = (path : string | undefined) : boolean => path ? HTTPPathURLregex.test(path.trim()) : false;
 
 /**
  * isURL and isURN use the syntax from MPEG DASH - http://github.com/MPEGGroup/DASHSchema/
@@ -228,7 +228,7 @@ export let isDomainName = (domain : string | undefined) : boolean => domain ? Do
  * @returns {boolean} true if the argument is an RTSP URL
  */
 const RTSPRegex = new RegExp(/^rtsp:\/\/.*$/, "i");
-export let isRTSPURL = (url : string | undefined) : booleam => url ? isURL(url) && RTSPRegex.test(url.trim()) : false;
+export let isRTSPURL = (url : string | undefined) : boolean => url ? isURL(url) && RTSPRegex.test(url.trim()) : false;
 
 /**
  * check that a values conforms to the ServiceDaysList type

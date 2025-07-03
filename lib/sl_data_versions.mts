@@ -1,7 +1,7 @@
 /**
  * sl_data_versions.mts
  *
- * version related checks (lifted from sl-check.js)
+ * version related checks
  */
 
 import { readFileSync } from "fs";

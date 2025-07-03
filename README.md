@@ -2,7 +2,7 @@
 
 Pauls DVB Tools
 
-## csr.js - a DVB-I CSR / SLR
+## csr.ts - a DVB-I CSR / SLR
 
 ### Description
 
@@ -30,7 +30,9 @@ Note that these values are case sensitive, and a case sensitive matching is perf
 ### Operation
 
 1. Edit the Service List Entry Point Registry XML document (`slepr-master.xml`) as needed
-1. run it - `node csr.js [--port 3000] [--sport 3001] [--file ./slepr-master.xml] [--CORSmode library]`
+1. run it - `node --experimental-transform-types csr.ts [--port 3000] [--sport 3001] [--file ./slepr-master.xml] [--CORSmode library]`
+
+> _Note:_ the `--experimental-transform-types` in nodejs is needed to map a TypeScript `enum` values. Will become a code nodejs feature in a future release.
 
 The server can be reloaded with an updated `slepr-master.xml` file by invoking it with /reload, i.e. `http://localhost:3000/reload`
 
@@ -48,9 +50,9 @@ The server can be reloaded with an updated `slepr-master.xml` file by invoking i
 
 If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
 
-## all-in-one.js
+## all-in-one.ts
 
-Implements csr.js, validate_cg.js and validate_sl.js in a single node
+Implements csr.ts, validate_cg.ts and validate_sl.ts in a single program
 
 ### Description
 
@@ -115,11 +117,13 @@ Validates the value space of the instance document
 - &lt;BasicDescription&gt; sub-elements (&lt;Title&gt;, &lt;Synopsis&gt;, &lt;Keyword&gt;, &lt;Genre&gt;, &lt;CreditsList&gt;, &lt;ParentalGuidance&gt;, &lt;RelatedMaterial&gt;) in &lt;ProgramInformation&gt;
 
 ### Installation
-#### node.js
+#### node.ts
 
 1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
 1. Install necessary libraries (express, libxmljs, morgan) `npm install`
-1. run it - `node all-in-one [--urls] [--port 3030] [--sport 3031]`
+1. run it - `node --experimental-transform-types all-in-one [--urls] [--port 3030] [--sport 3031]`
+
+> _Note:_ the `--experimental-transform-types` in nodejs is needed to map a TypeScript `enum` values. Will become a code nodejs feature in a future release.
 
 If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
 
@@ -238,8 +242,8 @@ accepted valies for `<type>`
 
 ## validate_sl.js
 
-This standalone app is now removed. Use `all-in-one.js --nocsr --nocg` instead.
+This standalone app is now removed. Use `all-in-one.ts --nocsr --nocg` instead.
 
 ## validate_cg.js
 
-This standalone app is now removed. Use `all-in-one.js --nocsr --nosl` instead.
+This standalone app is now removed. Use `all-in-one.ts --nocsr --nosl` instead.

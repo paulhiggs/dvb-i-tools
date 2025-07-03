@@ -25,6 +25,33 @@ import { isValidLangFormat } from "./IANA_languages.mts";
 import { LanguageCheckResponse } from "./IANA_languages.mts";
 import { getFirstElementByTagName } from "./utils.mts";
 
+
+
+const mediaAccessibilityElements : Array<ElementCardinality> = [
+	{ name: tva.e_SubtitleAttributes, minOccurs: 0, maxOccurs: Infinity },
+	{ name: tva.e_AudioDescriptionAttributes, minOccurs: 0, maxOccurs: Infinity },
+	{ name: tva.e_SigningAttributes, minOccurs: 0, maxOccurs: Infinity },
+	{ name: tva.e_DialogueEnhancementAttributes, minOccurs: 0, maxOccurs: Infinity },
+	{ name: tva.e_SpokenSubtitlesAttributes, minOccurs: 0, maxOccurs: Infinity },
+];
+const applicationAccessibilityElement : Array<ElementCardinality> = [
+	{ name: tva.e_MagnificationUIAttributes, minOccurs: 0, maxOccurs: Infinity },
+	{ name: tva.e_HighContrastUIAttributes, minOccurs: 0, maxOccurs: Infinity },
+	{ name: tva.e_ScreenReaderAttributes, minOccurs: 0, maxOccurs: Infinity },
+	{ name: tva.e_ResponseToUserActionAttributes, minOccurs: 0, maxOccurs: Infinity },
+];
+
+const appInformationElements : Array<ElementCardinality> = [
+	{ name: tva.e_AppInformation, minOccurs: 0 },
+	{ name: tva.e_Personalisation, minOccurs: 0 },
+];
+const allowedAppChildren = appInformationElements.concat([{ name: tva.e_Purpose, maxOccurs: Infinity }]);
+const allAppChildren = [tva.e_Purpose].concat(BaseAccessibilityAttributesType);
+
+
+
+
+
 export default function CheckAccessibilityAttributes(AccessibilityAttributes : XmlElement, cs, errs : ErrorList, errCode : string) {
 	const ACCESSIBILITY_CHECK_KEY = "accessibility attributes";
 
@@ -38,21 +65,6 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 	}
 
 	const accessibilityParent : string = AccessibilityAttributes.parent ? AccessibilityAttributes.parent.name : "";
-
-	const mediaAccessibilityElements : Array<ElementCardinality> = [
-		{ name: tva.e_SubtitleAttributes, minOccurs: 0, maxOccurs: Infinity },
-		{ name: tva.e_AudioDescriptionAttributes, minOccurs: 0, maxOccurs: Infinity },
-		{ name: tva.e_SigningAttributes, minOccurs: 0, maxOccurs: Infinity },
-		{ name: tva.e_DialogueEnhancementAttributes, minOccurs: 0, maxOccurs: Infinity },
-		{ name: tva.e_SpokenSubtitlesAttributes, minOccurs: 0, maxOccurs: Infinity },
-	];
-	const applicationAccessibilityElement : Array<ElementCardinality> = [
-		{ name: tva.e_MagnificationUIAttributes, minOccurs: 0, maxOccurs: Infinity },
-		{ name: tva.e_HighContrastUIAttributes, minOccurs: 0, maxOccurs: Infinity },
-		{ name: tva.e_ScreenReaderAttributes, minOccurs: 0, maxOccurs: Infinity },
-		{ name: tva.e_ResponseToUserActionAttributes, minOccurs: 0, maxOccurs: Infinity },
-	];
-
 	if (accessibilityParent == tva.e_RelatedMaterial) {
 		checkTopElementsAndCardinality(
 			AccessibilityAttributes,
@@ -204,7 +216,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 			// AccessibilityAttributes.*.AudioAttribites.AudioLanguage
 			checkLanguageFmt(child, tva.e_AudioLanguage, errNum);
 			checkLanguagePurpose(child, tva.e_AudioLanguage, errNum);
-			child?.childNodes().forEachNAmedSubElement([tva.e_Coding, tva.e_MixType], (child2) => {
+			child?.childNodes().forEachNamedSubElement([tva.e_Coding, tva.e_MixType], (child2) => {
 				const href = child2.attrAnyNsValueOr(tva.a_href, null);
 				switch (child2.name) {
 					case tva.e_Coding:
@@ -231,13 +243,6 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 			});
 		});
 	};
-
-	const appInformationElements : Array<ElementCardinality> = [
-		{ name: tva.e_AppInformation, minOccurs: 0 },
-		{ name: tva.e_Personalisation, minOccurs: 0 },
-	];
-	const allowedAppChildren = appInformationElements.concat([{ name: tva.e_Purpose, maxOccurs: Infinity }]);
-	const allAppChildren = [tva.e_Purpose].concat(BaseAccessibilityAttributesType);
 
 	let carriages : Array<string> = [],
 		codings : Array<string> = [],

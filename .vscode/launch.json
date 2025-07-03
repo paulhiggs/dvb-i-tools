@@ -6,12 +6,13 @@
 	"configurations": [
 		{
 			"type": "node",
+			"runtimeArgs": [ "--experimental-transform-types" ],
 			"request": "launch",
 			"name": "Launch Program",
 			"skipFiles": [
 				"<node_internals>/**"
 			],
-			"program": "${workspaceFolder}\\all-in-one.js",
+			"program": "${workspaceFolder}\\all-in-one.ts",
 //			"args" : [
 //				 "--CSRfile .\\TESTgit-serviceListEntryPoint.xml",
 //				 "--port 3999"

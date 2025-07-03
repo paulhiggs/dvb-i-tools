@@ -12,7 +12,6 @@ import { isObjectEmpty } from "../phlib/phlib.ts";
 import { dvbi, CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_EVENT, dvbiEA } from "./DVB-I_definitions.mts";
 import { APPLICATION, WARNING } from "./error_list.mts";
 import ErrorList from "./error_list.mts";
-import type ErrorArgs from "./error_list.mts";
 import { checkAttributes } from "./schema_checks.mts";
 import { isIn } from "./utils.mts";
 

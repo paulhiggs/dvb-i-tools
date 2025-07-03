@@ -229,7 +229,7 @@ type ProgramInformationStats = {
 
 export default class ContentGuideCheck {
 	private numRequests : number;
-	private supportedRequests : Array<CGRequestInfo>;
+	supportedRequests : Array<CGRequestInfo>;
 	private knownLanguages : IANAlanguages;
 	private allowedGenres : ClassificationScheme;
 	private allowedVideoSchemes : ClassificationScheme;
@@ -245,7 +245,7 @@ export default class ContentGuideCheck {
 	private subtitlePurposes : ClassificationScheme;
 
 
-	constructor(useURLs, opts, async = true) {
+	constructor(useURLs : boolean, opts : any, async : boolean = true) {
 		this.numRequests = 0;
 		this.supportedRequests = supportedRequests;
 
@@ -1178,7 +1178,7 @@ export default class ContentGuideCheck {
 				errs.addError(NoChildElement(tva.e_HowRelated.elementize(), RelatedMaterial, null, "MB009"));
 			else {
 				checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "MB010");
-				const HowRelated_href = HowRelated.attrAnyNsVlueOr(tva.a_href, null);
+				const HowRelated_href = HowRelated.attrAnyNsValueOr(tva.a_href, null);
 				if (HowRelated_href) 
 					switch (HowRelated_href) {
 						case dvbi.TEMPLATE_AIT_URI:
@@ -1573,16 +1573,16 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the <ProgramInformation> element against the profile for the given request/response type
 	 *
-	 * @param {Object}     props               Metadata of the XML document
-	 * @param {XmlElement} ProgramInformation  the element whose children should be checked
-	 * @param {Array}      programCRIDs        array to record CRIDs for later use
-	 * @param {Array}      groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
-	 * @param {String}     requestType         the type of content guide request being checked
-	 * @param {Array}      indexes             array of @index values from other elements in the same table - for duplicate detection
-	 * @param {ErrorList}  errs                errors found in validaton
-	 * @returns {String} 	CRID of the current program, if this is it
+	 * @param {DocumentProperties} props              Metadata of the XML document
+	 * @param {XmlElement | null} ProgramInformation  the element whose children should be checked
+	 * @param {Array<string>} programCRIDs            array to record CRIDs for later use
+	 * @param {Array<string> | null} groupCRIDs       array of CRIDs found in the GroupInformationTable (null if not used)
+	 * @param {string} requestType                    the type of content guide request being checked
+	 * @param {Array<string>} indexes                 array of @index values from other elements in the same table - for duplicate detection
+	 * @param {ErrorList} errs                        errors found in validaton
+	 * @returns {string | null} 	CRID of the current program, if this is it
 	 */
-	/* private */ #ValidateProgramInformation(props, ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs) {
+	private ValidateProgramInformation(props : DocumentProperties, ProgramInformation : XmlElement | null, programCRIDs : Array<string>, groupCRIDs : Array<string> | null, requestType : string, indexes : Array<string>, errs : ErrorList) : string | null{
 		if (!ProgramInformation) {
 			errs.addError({
 				type: APPLICATION,
@@ -1763,7 +1763,7 @@ export default class ContentGuideCheck {
 			indexes = [],
 			currentProgramCRID : string | null = null;
 		while ((ProgramInformation = ProgramInformationTable.get(xPath(props.prefix, tva.e_ProgramInformation, ++pi), props.schema)) != null) {
-			const t = this.#ValidateProgramInformation(props, ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs);
+			const t = this.ValidateProgramInformation(props, ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs);
 			if (t) 
 				currentProgramCRID = t;
 			cnt++;
@@ -2936,14 +2936,14 @@ export default class ContentGuideCheck {
 	/**
 	 * validate an <OnDemandProgram> elements in the <ProgramLocationTable>
 	 *
-	 * @param {Object}     props            Metadata of the XML document
-	 * @param {XmlElement} OnDemandProgram  the node containing the <OnDemandProgram> being checked
-	 * @param {Array}      programCRIDs     array of program crids defined in <ProgramInformationTable>
-	 * @param {Array}      plCRIDs          array of program crids defined in <ProgramLocationTable>
-	 * @param {String}     requestType      the type of content guide request being checked
-	 * @param {ErrorList}  errs             errors found in validaton
+	 * @param {DocumentProperties} props           Metadata of the XML document
+	 * @param {XmlElement | null} OnDemandProgram  the node containing the <OnDemandProgram> being checked
+	 * @param {Array<string>} programCRIDs         array of program crids defined in <ProgramInformationTable>
+	 * @param {Array<string>} plCRIDs              array of program crids defined in <ProgramLocationTable>
+	 * @param {string} requestType                 the type of content guide request being checked
+	 * @param {ErrorList} errs                     errors found in validaton
 	 */
-	/* private */ #ValidateOnDemandProgram(props, OnDemandProgram, programCRIDs, plCRIDs, requestType, errs) {
+	private ValidateOnDemandProgram(props : DocumentProperties, OnDemandProgram : XmlElement | null, programCRIDs : Array<string>, plCRIDs : Array<string>, requestType : string, errs : ErrorList) {
 		if (!OnDemandProgram) {
 			errs.addError({
 				type: APPLICATION,
@@ -3027,50 +3027,51 @@ export default class ContentGuideCheck {
 		this.checkTAGUri(OnDemandProgram, errs, "OD007");
 
 		// <Program>
-		let Program = OnDemandProgram.get(xPath(props.prefix, tva.e_Program), props.schema);
+		let Program = OnDemandProgram.get(xPath(props.prefix, tva.e_Program), props.schema) as XmlElement;
 		if (Program) {
 			checkAttributes(Program, [tva.a_crid], [], tvaEA.Program, errs, "OD012");
-			if (Program.attrAnyNs(tva.a_crid)) {
-				let programCRID = Program.attrAnyNs(tva.a_crid).value;
-				if (!isCRIDURI(programCRID))
+			const Program_crid = Program.attrAnyNsValueOr(tva.a_crid, null);
+			if (Program_crid) {
+				if (!isCRIDURI(Program_crid))
 					errs.addError({
 						code: "OD010",
 						message: `${tva.a_crid.attribute(`${OnDemandProgram.name}.${tva.e_Program}`)} is not a CRID URI`,
 						line: Program.line,
 					});
 				else {
-					if (!isIni(programCRIDs, programCRID))
+					if (!isIni(programCRIDs, Program_crid))
 						errs.addError({
 							code: "OD011",
-							message: `${tva.a_crid.attribute(
-								`${OnDemandProgram.name}.${tva.e_Program}`
-							)}=${programCRID.quote()} does not refer to a program in the ${tva.e_ProgramInformationTable.elementize()}`,
+							message: `${tva.a_crid.attribute(`${OnDemandProgram.name}.${tva.e_Program}`)}=${Program_crid.quote()} does not refer to a program in the ${tva.e_ProgramInformationTable.elementize()}`,
 							line: Program.line,
 						});
 				}
-				plCRIDs.push(programCRID);
+				plCRIDs.push(Program_crid);
 			}
 		}
 
 		// <ProgramURL>
-		let ProgramURL = OnDemandProgram.get(xPath(props.prefix, tva.e_ProgramURL), props.schema);
-		if (ProgramURL) this.CheckPlayerApplication(ProgramURL, dvbi.XML_AIT_CONTENT_TYPE, errs, "OD020");
+		let ProgramURL = OnDemandProgram.get(xPath(props.prefix, tva.e_ProgramURL), props.schema) as XmlElement;
+		if (ProgramURL) 
+			this.CheckPlayerApplication(ProgramURL, dvbi.XML_AIT_CONTENT_TYPE, errs, "OD020");
 
 		// <AuxiliaryURL>
-		let AuxiliaryURL = OnDemandProgram.get(xPath(props.prefix, tva.e_AuxiliaryURL), props.schema);
-		if (AuxiliaryURL) this.CheckPlayerApplication(AuxiliaryURL, [dvbi.XML_AIT_CONTENT_TYPE /*, dvbi.HTML5_APP, dvbi.XHTML_APP, dvbi.iOS_APP, dvbi.ANDROID_APP*/], errs, "OD030");
+		let AuxiliaryURL = OnDemandProgram.get(xPath(props.prefix, tva.e_AuxiliaryURL), props.schema) as XmlElement;
+		if (AuxiliaryURL) 
+			this.CheckPlayerApplication(AuxiliaryURL, [dvbi.XML_AIT_CONTENT_TYPE /*, dvbi.HTML5_APP, dvbi.XHTML_APP, dvbi.iOS_APP, dvbi.ANDROID_APP*/], errs, "OD030");
 
 		// <InstanceDescription>
 		if (validRequest && [CG_REQUEST_BS_CONTENTS, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType)) {
-			let InstanceDescription = OnDemandProgram.get(xPath(props.prefix, tva.e_InstanceDescription), props.schema);
-			if (InstanceDescription) this.ValidateInstanceDescription(props, OnDemandProgram.name, InstanceDescription, false, errs);
+			let InstanceDescription = OnDemandProgram.get(xPath(props.prefix, tva.e_InstanceDescription), props.schema)  as XmlElement;
+			if (InstanceDescription) 
+				this.ValidateInstanceDescription(props, OnDemandProgram.name, InstanceDescription, false, errs);
 		}
 
 		// <PublishedDuration>
 
 		// <StartOfAvailability> and <EndOfAvailability>
-		let soa = OnDemandProgram.get(xPath(props.prefix, tva.e_StartOfAvailability), props.schema),
-			eoa = OnDemandProgram.get(xPath(props.prefix, tva.e_EndOfAvailability), props.schema);
+		let soa = OnDemandProgram.get(xPath(props.prefix, tva.e_StartOfAvailability), props.schema) as XmlElement,
+			eoa = OnDemandProgram.get(xPath(props.prefix, tva.e_EndOfAvailability), props.schema) as XmlElement;
 
 		if (soa && eoa) {
 			let fr = new Date(soa.content),
@@ -3080,13 +3081,13 @@ export default class ContentGuideCheck {
 					code: "OD062",
 					message: `${tva.e_StartOfAvailability.elementize()} must be earlier than ${tva.e_EndOfAvailability.elementize()}`,
 					multiElementError: [soa, eoa],
-					tag: "bad timing",
+					key: "bad timing",
 				});
 		}
 
 		// <DeliveryMode>
 		if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType)) {
-			let DeliveryMode = OnDemandProgram.get(xPath(props.prefix, tva.e_DeliveryMode), props.schema);
+			let DeliveryMode = OnDemandProgram.get(xPath(props.prefix, tva.e_DeliveryMode), props.schema) as XmlElement;
 			if (DeliveryMode && DeliveryMode.content != tva.DELIVERY_MODE_STREAMING)
 				errs.addError({
 					code: "OD070",
@@ -3096,7 +3097,7 @@ export default class ContentGuideCheck {
 		}
 
 		// <Free>
-		let Free = OnDemandProgram.get(xPath(props.prefix, tva.e_Free), props.schema);
+		let Free = OnDemandProgram.get(xPath(props.prefix, tva.e_Free), props.schema) as XmlElement;
 		if (Free) TrueValue(Free, tva.a_value, errs, "OD080");
 	}
 
@@ -3206,7 +3207,7 @@ export default class ContentGuideCheck {
 			serviceIDs : Array<string> = [];
 		while ((thisInstanceDescription = Event.get(xPath(props.prefix, tva.e_InstanceDescription, ++id), props.schema)) != null) {
 			this.ValidateInstanceDescription(props, Event.name, thisInstanceDescription, isCurrentProgram, errs);
-			const instanceServiceID = thisInstanceDescription.attrAnyNsValueOf(tva.a_serviceInstanceID, "dflt");
+			const instanceServiceID = thisInstanceDescription.attrAnyNsValueOr(tva.a_serviceInstanceID, "dflt");
 			if (isIn(serviceIDs, instanceServiceID))
 				errs.addError({
 					code: instanceServiceID == "dflt" ? `${prefix}031` : `${prefix}032`,
@@ -3434,7 +3435,7 @@ export default class ContentGuideCheck {
 		ProgramLocationTable?.childNodes().forEachSubElement((child) => {
 			switch (child.name) {
 				case tva.e_OnDemandProgram:
-					this.#ValidateOnDemandProgram(props, child, programCRIDs, plCRIDs, requestType, errs);
+					this.ValidateOnDemandProgram(props, child, programCRIDs, plCRIDs, requestType, errs);
 					cntODP++;
 					break;
 				case tva.e_BroadcastEvent:

@@ -1,5 +1,5 @@
 /**
- * csr.js
+ * csr.ts
  *
  * An standalone runner for a service list entry point registry (SLEPR) that can be used as a Central Service List Registry (CSR)
  */
@@ -19,7 +19,7 @@ import cors from "cors";
 
 import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./lib/data_locations.mts";
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mts";
-import { readmyfile } from "./lib/js-utils.mts";
+import { readmyfileB } from "./lib/utils.mts";
 
 import IANAlanguages from "./lib/IANA_languages.mts";
 import ISOcountries from "./lib/ISO_countries.mts";
@@ -32,6 +32,14 @@ const numCPUs = cpus().length;
 
 // SLEPR == Service List Entry Point Registry
 import SLEPR from "./lib/slepr.mts";
+
+declare module "command-line-args" {
+	interface OptionDefinition {
+		// add qualifier for command-line-usage so we dont have to replicate
+		typeLabel?: string,
+		description? : string,
+	}
+}
 
 // command line options
 const optionDefinitions : Array<commandLineArgs.OptionDefinition> = [
@@ -178,7 +186,7 @@ if (cluster.isPrimary) {
 	let app = express();
 	app.use(cors());
 	token("pid", () => {
-		return process.pid;
+		return `${process.pid}`;
 	});
 	token("protocol", (req) => {
 		return req.protocol;
@@ -210,8 +218,8 @@ if (cluster.isPrimary) {
 			next();
 		};
 	}
-	let csr = new SLEPR(options.urls);
-	csr.loadServiceListRegistry(options.CSRfile, knownLanguages, knownCountries, knownGenres);
+	let csr = new SLEPR(options.urls, knownLanguages, knownCountries, knownGenres);
+	csr.loadServiceListRegistry(options.CSRfile);
 	app.use(morgan(":pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr"));
 	app.use(favicon(join("phlib", "ph-icon.ico")));
 	if (options.CORSmode == CORSlibrary) app.options(SLEPR_query_route, cors());
@@ -238,7 +246,7 @@ if (cluster.isPrimary) {
 		if (msg.topic)
 			switch (msg.topic) {
 				case UPDATE:
-					knownCountries.loadCountries(options.urls ? { url: ISO3166.url } : { file: ISO3166.filee });
+					knownCountries.loadCountries(options.urls ? { url: ISO3166.url } : { file: ISO3166.file });
 					knownLanguages.loadLanguages(options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file });
 					knownGenres.loadCS(
 						options.urls ? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] } : { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] }
@@ -253,13 +261,14 @@ if (cluster.isPrimary) {
 		if (error) {
 			throw error;
 		}
-		console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}, PID=${process.pid}`));
+		if (http_server.address()?.port) console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}`));
+		else console.log(chalk.red(`HTTP port ${options.port} already in use -- HTTP server not started`));
 	});
 	// start the HTTPS server
 	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
-	let https_options = {
-		key: readmyfile(keyFilename),
-		cert: readmyfile(certFilename),
+	let https_options : any= {
+		key: readmyfileB(keyFilename),
+		cert: readmyfileB(certFilename),
 	};
 	if (https_options.key && https_options.cert) {
 		if (options.sport == options.port) options.sport = options.port + 1;

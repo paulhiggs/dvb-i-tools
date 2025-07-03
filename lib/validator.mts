@@ -26,7 +26,7 @@ import { Default_SLEPR, __dirname } from "./data_locations.mts";
 import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults } from "./UI.mts";
 import ErrorList from "./error_list.mts";
 import { isHTTPURL } from "./pattern_checks.mts";
-import { readmyfile } from "./js-utils.mjs";
+import { readmyfileB, readmyfileS } from "./utils.mts";
 import ISOcountries from "./ISO_countries.mts";
 import {
 	LoadGenres,
@@ -75,12 +75,12 @@ declare module "express-session" {
 	}
 }
 
-let csr = null;
+let csr : SLEPR | null = null;
 
 const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
 
-function DVB_I_check(req : Request, res : Response, slcheck, cgcheck, hasSL, hasCG, motd, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
+function DVB_I_check(req : Express.Request, res : Express.Response, slcheck : ServiceListCheck | null, cgcheck : ContentGuideCheck | null, hasSL : boolean, hasCG : boolean, motd : string, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
 	if (!req.session.data) {
 		// setup defaults
 		req.session.data = {};
@@ -100,7 +100,7 @@ function DVB_I_check(req : Request, res : Response, slcheck, cgcheck, hasSL, has
 		FormArguments.supportedRequests = cgcheck.supportedRequests;
 	if (!req.body?.testtype) drawForm(req, res, FormArguments, motd, null, null);
 	else {
-		let VVxml = null;
+		let VVxml : string | null = null;
 		req.parseErr = undefined;
 
 		if (req.body.testtype == MODE_CG && req.body.requestType.length == 0) req.parseErr = "request type not specified";
@@ -140,10 +140,10 @@ function DVB_I_check(req : Request, res : Response, slcheck, cgcheck, hasSL, has
 		if (!req.parseErr)
 			switch (req.body.testtype) {
 				case MODE_CG:
-					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
+					if (cgcheck) cgcheck.doValidateContentGuide(VVxml as string, req.body.requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
 					break;
 				case MODE_SL:
-					if (slcheck) slcheck.doValidateServiceList(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true });
+					if (slcheck) slcheck.doValidateServiceList(VVxml as string, errs, { log_prefix: log_prefix, report_schema_version: true });
 					break;
 			}
 
@@ -278,9 +278,9 @@ function tabulate(res, group, stats) {
 /**
  * Setup the validation and service list registry endpoints
  *
- * @param {Object} options   Command Line Arguments - see OptionDefinitions in all-in-one.js
+ * @param {any} options   Command Line Arguments - see OptionDefinitions in all-in-one.ts
  */
-export default function validator(options) {
+export default function validator(options : any) {
 	if (options.nocsr && options.nosl && options.nocg) {
 		console.log(chalk.red("nothing to do... exiting"));
 		process.exit(1);
@@ -297,10 +297,10 @@ export default function validator(options) {
 		process.exit(1);
 	}
 
-	let motd = null;
+	let motd : string | null = null;
 	if (Object.prototype.hasOwnProperty.call(options, "motd")) {
 		console.log(chalk.yellow("reading Message Of The Day from " + chalk.green(options.motd)));
-		motd = readmyfile(options.motd, { encoding: "utf-8", flag: "r" });
+		motd = readmyfileS(options.motd);
 	}
 
 	// initialize Express
@@ -347,8 +347,8 @@ export default function validator(options) {
 		})
 	);
 
-	let slcheck = null,
-		cgcheck = null;
+	let slcheck : ServiceListCheck | null = null,
+		cgcheck : ContentGuideCheck | null  = null;
 
 	if (options.urls && options.CSRfile == Default_SLEPR.file) options.CSRfile = Default_SLEPR.url;
 
@@ -486,23 +486,29 @@ export default function validator(options) {
 	});
 
 	// start the HTTP server
-	var http_server = app.listen(options.port, function () {
+	let http_server = app.listen(options.port, (error) => {
+		if (error) {
+			throw error;
+		}
 		if (http_server.address()?.port) console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}`));
 		else console.log(chalk.red(`HTTP port ${options.port} already in use -- HTTP server not started`));
 	});
 
-	// start the HTTPS server
+	// start the HTTPS server: SecureContextOptions
 	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
-	var https_options = {
-		key: readmyfile(keyFilename),
-		cert: readmyfile(certFilename),
+	const https_options : any = {
+		key: readmyfileB(keyFilename),
+		cert: readmyfileB(certFilename),
 	};
 
-	if (https_options.key && https_options.cert) {
+	if (https_options?.key && https_options?.cert) {
 		if (options.sport == options.port) options.sport = options.port + 1;
 
-		var https_server = createServer(https_options, app);
-		https_server.listen(options.sport, function () {
+		let https_server = createServer(https_options, app);
+		https_server.listen(options.sport, (error) => {
+			if (error) {
+				throw error;
+			}
 			console.log(chalk.cyan(`HTTPS listening on port number ${https_server.address().port}`));
 		});
 	}

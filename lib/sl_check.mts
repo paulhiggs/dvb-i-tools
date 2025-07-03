@@ -1019,10 +1019,11 @@ export default class ServiceListCheck {
 		}
 
 		//<ServiceInstance@id>
-		if (ServiceInstance.attrAnyNsValueOr(dvbi.a_id, "").length == 0)
+		const ServiceInstance_id = ServiceInstance.attrAnyNsValueOr(dvbi.a_id, null);
+		if (ServiceInstance_id && ServiceInstance_id.length == 0)
 			errs.addError({
 				code: "SI012",
-				message: `${dvbi.a_id.attribute()} should not be empty is specified`,
+				message: `${dvbi.a_id.attribute()} should not be empty if specified`,
 				line: ServiceInstance.line,
 				key: "empty ID",
 			});
@@ -1983,15 +1984,16 @@ export default class ServiceListCheck {
 
 		//check <ServiceType>
 		const ServiceType = service.get(xPath(props.prefix, dvbi.e_ServiceType), props.schema) as XmlElement;
-		const ServiceType_href = ServiceType.attrAnyNsValueOr(dvbi.a_href, null);
-		if (ServiceType_href && !this.allowedServiceTypes.isIn(ServiceType_href))
-			errs.addError({
-				code: "SL164",
-				message: `service ${thisServiceId.quote()} has an invalid ${dvbi.e_ServiceType.elementize()} (${ServiceType_href})`,
-				fragment: ServiceType,
-				key: `invalid ${dvbi.a_href.attribute(dvbi.e_ServiceType)}`,
-			});
-
+		if (ServiceType) {
+			const ServiceType_href = ServiceType.attrAnyNsValueOr(dvbi.a_href, null);
+			if (ServiceType_href && !this.allowedServiceTypes.isIn(ServiceType_href))
+				errs.addError({
+					code: "SL164",
+					message: `service ${thisServiceId.quote()} has an invalid ${dvbi.e_ServiceType.elementize()} (${ServiceType_href})`,
+					fragment: ServiceType,
+					key: `invalid ${dvbi.a_href.attribute(dvbi.e_ServiceType)}`,
+				});
+		}
 		// check <ServiceDescription>
 		this.ValidateSynopsisType(props, service, dvbi.e_ServiceDescription, [],
 			[tva.SYNOPSIS_BRIEF_LABEL, tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_EXTENDED_LABEL],
@@ -2549,7 +2551,7 @@ export default class ServiceListCheck {
 					}
 
 					// LCN@serviceRef
-					const LCN_serviceRef = LCN.attrAnyNs(dvbi.a_serviceRef, null);
+					const LCN_serviceRef = LCN.attrAnyNsValueOr(dvbi.a_serviceRef, null);
 					if (LCN_serviceRef && !isIn(knownServices, LCN_serviceRef)) {
 						errs.addError({
 							code: "SL263",

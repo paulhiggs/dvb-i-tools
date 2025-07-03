@@ -104,10 +104,10 @@ export function checkTopElementsAndCardinality(parentElement : XmlElement, child
 	const thisElem = elementize(`${parentElement.parent ? `${parentElement.parent.name}.` : ""}${parentElement.name}`);
 	// check that each of the specifid childElements exists
 	childElements.forEach((child : ElementCardinality) => {
-		const min : number = child.minOccurs ? child.minOccurs : 1;
-		const max : number = child.maxOccurs ? child.maxOccurs : 1;
-		const namedChildren = getNamedChildElements(parentElement, child.name),
-			count = namedChildren.length;
+		const min = Object.prototype.hasOwnProperty.call(child, "minOccurs") ? child.minOccurs : 1;
+		const max  = Object.prototype.hasOwnProperty.call(child, "maxOccurs") ? child.maxOccurs : 1;
+		const namedChildren = getNamedChildElements(parentElement, child.name);
+		const count = namedChildren.length;
 
 		if (count == 0 && min != 0) {
 			errs.addError({
@@ -216,7 +216,8 @@ export function SchemaCheck(XML : XmlDocument, XSD : XmlDocument, errs : ErrorLi
  * @param {string} errCode            the error code to report with each error
  */
 export function SchemaVersionCheck(props : DocumentProperties, document : XmlDocument, publication_state : SpecificationState, errs : ErrorList, errCode : string) {
-	let ServiceList = document.get(xPath(props.prefix, dvbi.e_ServiceList), props.schema);
+	//const ServiceList = document.root.get(xPath(props.prefix, dvbi.e_ServiceList), props.schema);
+	const ServiceList = document.root;
 	if (publication_state & SpecificationState.OLD) {
 		let err1 : ErrorArgs = { code: `${errCode}a`, message: "schema version is out of date", key: "schema version" };
 		if (ServiceList) err1.line = ServiceList.line;

@@ -1,5 +1,5 @@
 /**
- * all-in-one.js
+ * all-in-one.ts
  *
  * runner for all three DVB-I V&V tools
  */

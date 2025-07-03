@@ -245,7 +245,7 @@ export function drawForm(req : Express.Request, res : Express.Response, modes : 
 	});
 }
 
-export function drawResults(req, res, motd = null, error = null, errs = null) {
+export function drawResults(req : Express.Request, res : Express.Response, motd : string | null = null, error : string | null = null, errs : ErrorList = null) {
 	res.setHeader("Content-Type", "text/html");
 	res.write(PAGE_TOP("DVB-I Validator", "DVB-I Validator", motd));
 	tabulateResults(req.query.url ? req.query.url : "uploaded list", res, error, errs);

@@ -65,7 +65,6 @@ export type DebugMessage = {
 	message : string;
 }
 
-
 export default class ErrorList {
 
 	countsErr : Array<ErrorCount>;
