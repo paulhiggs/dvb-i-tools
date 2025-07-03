@@ -18,9 +18,9 @@ import { xPath, isIn } from "./utils.mts";
 import { IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data_locations.mts";
 import { hasChild } from "./schema_checks.mts";
 import { isHTTPURL, isTVAAudioLanguageType } from "./pattern_checks.mts";
-import IANAlanguages from "./IANA_languages.mjs";
-import ClassificationScheme from "./classification_scheme.mjs";
-import ISOcountries from "./ISO_countries.mjs";
+import IANAlanguages from "./IANA_languages.mts";
+import ClassificationScheme from "./classification_scheme.mts";
+import ISOcountries from "./ISO_countries.mts";
 import { MakeDocumentProperties } from "../libxml2-wasm-extensions.mts";
 
 var masterSLEPR : string = "";

@@ -22,7 +22,7 @@ import ErrorList from "./error_list.mts";
 import type { ErrorArgs } from "./error_list.mts";
 import { SpecificationState } from "./globals.mts";
 import { isIn, xPath } from "./utils.mts";
-import { keys } from "./common_errors.mjs";
+import { keys } from "./common_errors.mts";
 
 export type ElementCardinality = {
 	name : string;

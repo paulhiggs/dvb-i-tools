@@ -5,8 +5,8 @@
  */
 import chalk from "chalk";
 
-import IANAlanguages from "./IANA_languages.mjs";
-import ISOcountries from "./ISO_countries.mjs";
+import IANAlanguages from "./IANA_languages.mts";
+import ISOcountries from "./ISO_countries.mts";
 import {
 	IANA_Subtag_Registry,
 	TVA_ContentCS,
@@ -32,7 +32,7 @@ import {
 	DVBI_ParentalGuidanceCS,
 } from "./data_locations.mts";
 import { MPEG1_layer_2 } from "./MPEG7_definitions.mts";
-import ClassificationScheme from "./classification_scheme.mjs";
+import ClassificationScheme from "./classification_scheme.mts";
 
 export function LoadCountries(useURLs : boolean, async : boolean = true) : ISOcountries {
 	console.log(chalk.yellow.underline("loading countries..."));

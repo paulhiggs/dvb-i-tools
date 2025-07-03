@@ -8,8 +8,9 @@ import { readFileSync } from "fs";
 
 import chalk from "chalk";
 import { XmlDocument, XmlElement } from "libxml2-wasm";
-import { MakeDocumentProperties, DocumentProperties } from "../libxml2-wasm-extensions.mts";
-import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mts";
+import { MakeDocumentProperties } from "../libxml2-wasm-extensions.mts";
+import type { DocumentProperties } from "../libxml2-wasm-extensions.mts";
+import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
 xmlRegisterFsInputProviders();
 
 import { attribute, elementize, quote } from "../phlib/phlib.ts";

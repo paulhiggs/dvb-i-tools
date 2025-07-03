@@ -7,7 +7,8 @@ import chalk from "chalk";
 
 import { XmlElement, XmlDocument } from "libxml2-wasm";
 
-import { MakeDocumentProperties, DocumentProperties } from "../libxml2-wasm-extensions.mts";
+import { MakeDocumentProperties } from "../libxml2-wasm-extensions.mts";
+import type { DocumentProperties } from "../libxml2-wasm-extensions.mts";
 import { elementize, quote } from "../phlib/phlib.ts";
 
 import { Array_extension_init } from "./Array-extensions.mts";
@@ -21,12 +22,12 @@ import ErrorList, { WARNING, APPLICATION } from "./error_list.mts";
 import { isTAGURI } from "./URI_checks.mts";
 import { xPath, isIn, unEntity, /* getElementByTagName, */ DuplicatedValue } from "./utils.mts";
 import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isDomainName, isRTSPURL } from "./pattern_checks.mts";
-import { checkValidLogos } from "./related_material_checks.mjs";
-import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys } from "./common_errors.mjs";
-import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./multilingual_element.mjs";
+import { checkValidLogos } from "./related_material_checks.mts";
+import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys } from "./common_errors.mts";
+import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./multilingual_element.mts";
 import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.mts";
-import writeOut from "./logger.mjs";
-import { ValidateLanguage } from "./IANA_languages.mjs";
+import writeOut from "./logger.mts";
+import { ValidateLanguage } from "./IANA_languages.mts";
 import IANAlanguages from "./IANA_languages.mts";
 import {
 	LoadGenres,
@@ -46,7 +47,7 @@ import {
 	LoadServiceTypeCS,
 	LoadLanguages,
 	LoadCountries,
-} from "./classification_scheme_loaders.mjs";
+} from "./classification_scheme_loaders.mts";
 import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts";
 import { DASH_IF_Content_Protection_List, ContentProtectionIDs, CA_SYSTEM_ID_REGISTRY, CASystemIDs } from "./identifiers.mts";
 import ISOcountries from "./ISO_countries.mts";

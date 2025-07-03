@@ -10,8 +10,9 @@ import process from "process";
 
 import chalk from "chalk";
 import cors from "cors";
-import express, { Request, Response } from "express";
-import session, { SessionData } from "express-session";
+import Express from "express";
+import express from "express";
+import session from "express-session";
 import morgan, { token } from "morgan";
 import fileupload from "express-fileupload";
 import favicon from "serve-favicon";
@@ -26,7 +27,7 @@ import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults } from "./UI.mts";
 import ErrorList from "./error_list.mts";
 import { isHTTPURL } from "./pattern_checks.mts";
 import { readmyfile } from "./js-utils.mjs";
-import ISOcountries from "./ISO_countries.mjs";
+import ISOcountries from "./ISO_countries.mts";
 import {
 	LoadGenres,
 	LoadRatings,
@@ -39,17 +40,16 @@ import {
 	LoadSubtitlePurposes,
 	LoadLanguages,
 	LoadCountries,
-} from "./classification_scheme_loaders.mjs";
-import ServiceListCheck from "./sl_check.mjs";
-import ContentGuideCheck from "./cg_check.mjs";
-import SLEPR from "./slepr.mjs";
-import writeOut, { createPrefix } from "./logger.mjs";
+} from "./classification_scheme_loaders.mts";
+import ServiceListCheck from "./sl_check.mts";
+import ContentGuideCheck from "./cg_check.mts";
+import SLEPR from "./slepr.mts";
+import writeOut, { createPrefix } from "./logger.mts";
 import { MODE_URL, MODE_FILE, MODE_SL, MODE_CG, MODE_UNSPECIFIED } from "./UI.mts";
 import type { FormOptions } from "./UI.mts";
 
 declare module "express" {
 	interface Request {
-		session : SessionData;
 		parseErr? : string;
 		files? : fileupload.FileArray | null | undefined;
 		diags : {

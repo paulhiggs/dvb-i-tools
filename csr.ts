@@ -18,8 +18,8 @@ import commandLineUsage from "command-line-usage";
 import cors from "cors";
 
 import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./lib/data_locations.mts";
-import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mjs";
-import { readmyfile } from "./lib/js-utils.mjs";
+import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mts";
+import { readmyfile } from "./lib/js-utils.mts";
 
 import IANAlanguages from "./lib/IANA_languages.mts";
 import ISOcountries from "./lib/ISO_countries.mts";
@@ -31,7 +31,7 @@ const keyFilename = join(".", "selfsigned.key"),
 const numCPUs = cpus().length;
 
 // SLEPR == Service List Entry Point Registry
-import SLEPR from "./lib/slepr.mjs";
+import SLEPR from "./lib/slepr.mts";
 
 // command line options
 const optionDefinitions : Array<commandLineArgs.OptionDefinition> = [

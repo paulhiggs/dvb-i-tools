@@ -6,7 +6,7 @@
 
 import chalk from "chalk";
 
-import Role from "./role.mjs";
+import Role from "./role.mts";
 import { DVBI_CreditsItemRoles, DVBIv2_CreditsItemRoles } from "./data_locations.mts";
 
 export function LoadCredits(useURLs : boolean, async : boolean = true) {

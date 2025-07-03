@@ -29,7 +29,7 @@
 		"npm": ">= 10.8.1"
 	},
 	"scripts": {
-		"start": "node all-in-one.js"
+		"start": "node --experimental-transform-types all-in-one.ts"
 	},
 	"repository": {
 		"type": "git",

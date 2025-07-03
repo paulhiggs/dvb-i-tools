@@ -19,7 +19,7 @@ import ErrorList from "./error_list.mts";
 import { APPLICATION, WARNING } from "./error_list.mts";
 import { checkTopElementsAndCardinality } from "./schema_checks.mts";
 import type { ElementCardinality } from "./schema_checks.mts";
-import { CS_URI_DELIMITER } from "./classification_scheme.mjs";
+import { CS_URI_DELIMITER } from "./classification_scheme.mts";
 
 import { isValidLangFormat } from "./IANA_languages.mts";
 import { LanguageCheckResponse } from "./IANA_languages.mts";

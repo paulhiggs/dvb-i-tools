@@ -1,5 +1,5 @@
 /**
- * pattern_checks.mjs
+ * pattern_checks.mts
  *
  * useful regular expression based checks
  */

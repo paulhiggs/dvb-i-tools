@@ -1,5 +1,5 @@
 /**
- * IANA_languages.mjs
+ * IANA_languages.mts
  *
  * Load and check language identifiers
  */
