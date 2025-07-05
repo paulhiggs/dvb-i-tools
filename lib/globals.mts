@@ -1,8 +1,10 @@
 /**
- * globals.ts
+ * globals.mts
  *
  * Useful global values
+ * 
  */
+
 
 export const HTTPPort = {
 	csr: 3000,

@@ -2,14 +2,17 @@
  * ui.mts
  *
  * Drive the HTML user interface
+ * 
  */
-import { readFileSync } from "fs";
 import Express from 'express';
+import { readFileSync } from "fs";
 
 import { HTMLize } from "../phlib/phlib.ts";
-import { ERROR, WARNING } from "./error_list.mts";
+
 import ErrorList from "./error_list.mts";
+import { ERROR, WARNING } from "./error_list.mts";
 import type { LogIssue, DebugMessage } from "./error_list.mts";
+
 
 export const MODE_UNSPECIFIED : string = "none",
 	MODE_SL : string = "sl",
@@ -39,7 +42,7 @@ export function PAGE_TOP(pageTitle : string, label : string | null = null, motd 
 const BREAK : string = "<br/>",
 	LINE : string = "<hr/>";
 
-export const PAGE_BOTTOM : string = `${BREAK}${LINE}<p><i>Submit issues at </i><a href="${pkg?.bugs?.url}">${pkg?.bugs?.url}</a></p></body></html>`;
+export const PAGE_BOTTOM : string = `${BREAK}${LINE}<p><i>Submit issues at </i><a href=${pkg.bugs.url.quote()}>${pkg.bugs.url}</a></p></body></html>`;
 
 function tabulateResults(source : string , res : Express.Response, error : string | null = null, errs : ErrorList | null) {
 	const RESULT_WITH_INSTRUCTION = `${BREAK}<p><i>Results:</i> ${source}</p>`;
@@ -61,7 +64,7 @@ function tabulateResults(source : string , res : Express.Response, error : strin
 		res.write("<tr>");
 		const anchor = Object.prototype.hasOwnProperty.call(value, "line") ? `line-${value.line}` : null;
 		if (SHOW_LINE_NUMBER) res.write(`<td>${Object.prototype.hasOwnProperty.call(value, "line") ? value.line : ""}</td>`);
-		res.write(`<td>${anchor ? `<span class="${link_css}" onclick="myScrollTo('${anchor}')">` : ""}${value.code ? HTMLize(value.code) : ""}${anchor ? "</span>" : ""}</td>`);
+		res.write(`<td>${anchor ? `<span class=${link_css.quote('"')} onclick="myScrollTo('${anchor}')">` : ""}${value.code ? HTMLize(value.code) : ""}${anchor ? "</span>" : ""}</td>`);
 		res.write(`<td>${value.message ? HTMLize(value.message) : ""}`);
 		res.write(`${value.element ? `<br/><span class="xmlfont"><pre>${HTMLize(value.element)}</pre></span>` : ""}</td>`);
 		res.write("</tr>");
@@ -161,7 +164,7 @@ function tabulateResults(source : string , res : Express.Response, error : strin
 				else if (tip.includes(WARNING)) cla = WARN;
 				else cla = INFO;
 			}
-			let qualifier = tip ? ` class="${cla}" title="${tip}"` : "";
+			let qualifier = tip ? ` class=${cla.quote('"')} title=${tip.quote('"')}` : "";
 			if (SHOW_LINE_NUMBER) {
 				lineNum++;
 				res.write(`<span>${lineNum.toString().padStart(maxLineNumLength)} : </span>`);
@@ -200,28 +203,26 @@ export function drawForm(req : Express.Request, res : Express.Response, modes : 
 	<form method="post" encType="multipart/form-data">
 		${
 			modes.hasSL
-				? `<input id="radSL" type="radio" name="testtype" value="${modes.sl}" ${req.session.data.mode == modes.sl ? "checked" : ""} onclick="redrawForm()">Service List</input>`
+				? `<input id="radSL" type="radio" name="testtype" value=${modes.sl.quote('"')} ${req.session.data.mode == modes.sl ? "checked" : ""} onclick="redrawForm()">Service List</input>`
 				: ""
 		}
 		${
 			modes.hasCG
-				? `<input id="radCG" type="radio" name="testtype" value="${modes.cg}" ${req.session.data.mode == modes.cg ? "checked" : ""} onclick="redrawForm()">Content Guide</input>`
+				? `<input id="radCG" type="radio" name="testtype" value=${modes.cg.quote('"')}${req.session.data.mode == modes.cg ? "checked" : ""} onclick="redrawForm()">Content Guide</input>`
 				: ""
 		}
 		<br><br>
-		<input id="radURL" type="radio" name="doclocation" value="${modes.url}" ${req.session.data.entry == modes.url ? "checked" : ""} onclick="redrawForm()">URL</input>
-		<input id="radFile" type="radio" name="doclocation" value="${modes.file}" ${req.session.data.entry == modes.file ? "checked" : ""} onclick="redrawForm()">File</input>
+		<input id="radURL" type="radio" name="doclocation" value=${modes.url.quote('"')} ${req.session.data.entry == modes.url ? "checked" : ""} onclick="redrawForm()">URL</input>
+		<input id="radFile" type="radio" name="doclocation" value=${modes.file.quote('"')} ${req.session.data.entry == modes.file ? "checked" : ""} onclick="redrawForm()">File</input>
 		${LINE}
-		<div id="entryURL" ${req.session.data.entry == modes.url ? "" : "hidden"}><p><i>URL:</i><input type="url" name="XMLurl" value="${
-			req.session.data.url ? req.session.data.url : ""
-		}"></p></div>
+		<div id="entryURL" ${req.session.data.entry == modes.url ? "" : "hidden"}><p><i>URL:</i><input type="url" name="XMLurl" value=${req.session.data.url ? req.session.data.url.quote('"') : "".quote('"')}></p></div>
 		<div id="entryFile" ${req.session.data.entry == modes.file ? "" : "hidden"}><p><i>FILE:</i><input type="file" name="XMLfile" value=""></p></div>
 		<div id="entryCGtype" ${req.session.data.mode == modes.cg ? "" : "hidden"}><p>Query type:</p>`);
 
 	if (modes.supportedRequests)
 		modes?.supportedRequests?.forEach((choice) => {
 			res.write(
-				`<input type="radio" name="${ENTRY_FORM_REQUEST_TYPE_ID}" value="${choice.value}" ${choice.value == req.session.data.cgmode ? "checked" : ""}>${choice.label}</input>`
+				`<input type="radio" name=${ENTRY_FORM_REQUEST_TYPE_ID.quote('"')} value=${choice.value.quote('"')} ${choice.value == req.session.data.cgmode ? "checked" : ""}>${choice.label}</input>`
 			);
 		});
 	res.write(`</div>
@@ -245,10 +246,10 @@ export function drawForm(req : Express.Request, res : Express.Response, modes : 
 	});
 }
 
-export function drawResults(req : Express.Request, res : Express.Response, motd : string | null = null, error : string | null = null, errs : ErrorList = null) {
+export function drawResults(req : Express.Request, res : Express.Response, motd : string | null = null, error : string | null = null, errs : ErrorList | null = null) {
 	res.setHeader("Content-Type", "text/html");
 	res.write(PAGE_TOP("DVB-I Validator", "DVB-I Validator", motd));
-	tabulateResults(req.query.url ? req.query.url : "uploaded list", res, error, errs);
+	tabulateResults(req.query.url ? req.query.url as string : "uploaded list", res, error, errs);
 	res.write(PAGE_BOTTOM);
 	return new Promise((resolve, /* eslint-disable no-unused-vars */ reject /* eslint-enable */) => {
 		resolve(res);

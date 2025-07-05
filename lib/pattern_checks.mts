@@ -2,8 +2,9 @@
  * pattern_checks.mts
  *
  * useful regular expression based checks
+ * 
  */
-import { datatypeIs } from "../phlib/phlib.ts";
+
 
 const e_pct = "%", //e_pct="&#x25;",
 	e_quot = "&#x22;",

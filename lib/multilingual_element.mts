@@ -1,19 +1,20 @@
 /**
  * multilingual_element.mts
  *
- * check that multiple elements for expressing multilingual values match DVB-I requirments
+ * check that multiple elements for expressing multilingual values match DVB-I requirements
+ * 
  */
 import { XmlElement } from "libxml2-wasm";
 
 import { Array_extension_init } from "./Array-extensions.mts";
 Array_extension_init();
 
-import { tva } from "./TVA_definitions.mts";
-
-import { APPLICATION } from "./error_list.mts";
 import ErrorList from "./error_list.mts";
-import { CountChildElements, isIn } from "./utils.mts";
+import { APPLICATION } from "./error_list.mts";
 import { isValidLangFormat } from "./IANA_languages.mts";
+import { tva } from "./TVA_definitions.mts";
+import { CountChildElements, isIn } from "./utils.mts";
+
 
 const NO_DOCUMENT_LANGUAGE = "**"; // this should not be needed as @xml:lang is required in <ServiceList> and <TVAMain> root elements
 

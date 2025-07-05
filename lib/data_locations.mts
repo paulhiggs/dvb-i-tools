@@ -1,10 +1,12 @@
 /**
  * data_locations.mts
  *
- * paths and URLs to various files used by the validation toole
+ * paths and URLs to various files used by the validation tools
+ * 
  */
 import { join } from "path";
 import process from "node:process";
+
 
 export const __dirname = process.cwd();
 export const __dirname_linux = __dirname.replace(/\\/g, "/");

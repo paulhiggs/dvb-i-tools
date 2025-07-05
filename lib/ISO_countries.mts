@@ -2,14 +2,15 @@
  * ISO_countries.mts
  *
  * Load and check country codes
+ * 
  */
-import { readFile, readFileSync } from "fs";
-
 import chalk from "chalk";
+import { readFile, readFileSync } from "fs";
 import fetchS from "sync-fetch";
 
 import handleErrors from "./fetch_err_handler.mts";
 import { isHTTPURL } from "./pattern_checks.mts";
+
 
 /**
  * load the countries list into the allowedCountries global array from the specified text
@@ -31,15 +32,15 @@ function loadCountryData(countryData : string) {
 }
 
 export default class ISOcountries {
-	private countriesList;
+	private countriesList : any;
 	private use2CharCountries : boolean;
 	private use3CharCountries : boolean;
 
 	/**
 	 * constructor
 	 *
-	 * @param {boolean} use2 allow the 2 digit country codes to be searched
-	 * @param {boolean} use3 allow the 3 digit country codes to be searched
+	 * @param {boolean} use2  allow the 2 digit country codes to be searched
+	 * @param {boolean} use3  allow the 3 digit country codes to be searched
 	 */
 	constructor(use2 : boolean = true, use3 : boolean = false) {
 		loadCountryData.bind(this);
@@ -51,9 +52,9 @@ export default class ISOcountries {
 	/**
 	 * load the countries list into the allowedCountries global array from the specified JSON file
 	 *
-	 * @param {string}  countriesFile   the file name to load
-	 * @param {boolean} purge           erase the existing values before loading new
-	 * @param {boolean} async           load contents asynchronously
+	 * @param {string}  countriesFile  the file name to load
+	 * @param {boolean} purge          erase the existing values before loading new
+	 * @param {boolean} async          load contents asynchronously
 	 */
 	private loadCountriesFromFile(countriesFile : string, purge : boolean = false, async : boolean = true) {
 		console.log(chalk.yellow(`reading countries from ${countriesFile}`));
@@ -78,7 +79,7 @@ export default class ISOcountries {
 	 *
 	 * @param {string}  countriesURL  the URL to the file to load
 	 * @param {boolean} purge         erase the existing values before loading new
-	 * @param {boolean} async           load contents asynchronously
+	 * @param {boolean} async         load contents asynchronously
 	 */
 	private loadCountriesFromURL(countriesURL : string, purge : boolean = false, async : boolean = true) {
 		const isHTTPurl = isHTTPURL(countriesURL);
@@ -125,8 +126,8 @@ export default class ISOcountries {
 	/**
 	 * determine if the argument contains a valid ISO 3166 country code
 	 *
-	 * @param {string}  countryCode     the country code to be checked for validity
-	 * @param {boolean} caseSensitive   ignore case
+	 * @param {string}  countryCode    the country code to be checked for validity
+	 * @param {boolean} caseSensitive  ignore case
 	 * @return {boolean} true if countryCode is known else false
 	 */
 	isISO3166code(countryCode : string, caseSensitive : boolean = true) : boolean {

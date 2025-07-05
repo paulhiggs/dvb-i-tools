@@ -1,10 +1,12 @@
 /**
  * classification_scheme_loaders.mts
-
+ *
  * Load Classification Schemes and other File related resources
+ *
  */
 import chalk from "chalk";
 
+import ClassificationScheme from "./classification_scheme.mts";
 import IANAlanguages from "./IANA_languages.mts";
 import ISOcountries from "./ISO_countries.mts";
 import {
@@ -32,7 +34,7 @@ import {
 	DVBI_ParentalGuidanceCS,
 } from "./data_locations.mts";
 import { MPEG1_layer_2 } from "./MPEG7_definitions.mts";
-import ClassificationScheme from "./classification_scheme.mts";
+
 
 export function LoadCountries(useURLs : boolean, async : boolean = true) : ISOcountries {
 	console.log(chalk.yellow.underline("loading countries..."));

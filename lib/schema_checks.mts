@@ -1,5 +1,7 @@
 /**
  * schema_checks.mts
+ * 
+ * 
  */
 import { XmlDocument, XmlElement, XsdValidator } from "libxml2-wasm";
 import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
@@ -9,20 +11,20 @@ import format from "xml-formatter";
 
 import { elementize, datatypeIs } from "../phlib/phlib.ts";
 
-import {  Libxml2_wasm_init } from "../libxml2-wasm-extensions.mts";
+import { Libxml2_wasm_init } from "../libxml2-wasm-extensions.mts";
 import type { DocumentProperties } from "../libxml2-wasm-extensions.mts";
 Libxml2_wasm_init();
 
 import { Array_extension_init } from "./Array-extensions.mts";
 Array_extension_init();
 
-import { dvbi } from "./DVB-I_definitions.mts";
-import { APPLICATION, INFORMATION, WARNING, DEBUG } from "./error_list.mts";
+import { keys } from "./common_errors.mts";
 import ErrorList from "./error_list.mts";
+import { APPLICATION, INFORMATION, WARNING, DEBUG } from "./error_list.mts";
 import type { ErrorArgs } from "./error_list.mts";
 import { SpecificationState } from "./globals.mts";
-import { isIn, xPath } from "./utils.mts";
-import { keys } from "./common_errors.mts";
+import { isIn } from "./utils.mts";
+
 
 export type ElementCardinality = {
 	name : string;

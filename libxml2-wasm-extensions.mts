@@ -122,7 +122,7 @@ if (!XmlElement.prototype.prettyPrint) {
 
 		let t : string = indent + "<" + qualifyName(this);
 		this.attrs?.forEach((attr : XmlAttribute) => {
-			t += ` ${qualifyName(attr)}="${attr.value}"`;
+			t += ` ${qualifyName(attr)}=${attr.value.quote('"')}`;
 		});
 		if (isLeafElement(this)) 
 			t += this.content.length ? `>${this.content}</${qualifyName(this)}>` : "/>";

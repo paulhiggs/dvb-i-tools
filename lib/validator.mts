@@ -1,33 +1,23 @@
 /**
  * validator.mts
  *
- *
  */
-import { join } from "path";
-import { createServer } from "https";
-import os from "node:os";
-import process from "process";
-
 import chalk from "chalk";
 import cors from "cors";
-import Express from "express";
 import express from "express";
-import session from "express-session";
-import morgan, { token } from "morgan";
 import fileupload from "express-fileupload";
+import session from "express-session";
+import { join } from "path";
+import morgan, { token } from "morgan";
+import os from "node:os";
+import process from "process";
 import favicon from "serve-favicon";
 import fetchS from "sync-fetch";
 
 import { Libxml2_wasm_init } from "../libxml2-wasm-extensions.mts";
 Libxml2_wasm_init();
 
-import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts";
-import { Default_SLEPR, __dirname } from "./data_locations.mts";
-import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults } from "./UI.mts";
-import ErrorList from "./error_list.mts";
-import { isHTTPURL } from "./pattern_checks.mts";
-import { readmyfileB, readmyfileS } from "./utils.mts";
-import ISOcountries from "./ISO_countries.mts";
+import ContentGuideCheck from "./cg_check.mts";
 import {
 	LoadGenres,
 	LoadRatings,
@@ -41,12 +31,19 @@ import {
 	LoadLanguages,
 	LoadCountries,
 } from "./classification_scheme_loaders.mts";
-import ServiceListCheck from "./sl_check.mts";
-import ContentGuideCheck from "./cg_check.mts";
-import SLEPR from "./slepr.mts";
+import { Default_SLEPR, __dirname } from "./data_locations.mts";
+import ErrorList from "./error_list.mts";
+import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts";
+import { StartServers } from "./http_servers.mts";
+import ISOcountries from "./ISO_countries.mts";
 import writeOut, { createPrefix } from "./logger.mts";
-import { MODE_URL, MODE_FILE, MODE_SL, MODE_CG, MODE_UNSPECIFIED } from "./UI.mts";
+import { isHTTPURL } from "./pattern_checks.mts";
+import SLEPR from "./slepr.mts";
+import ServiceListCheck from "./sl_check.mts";
+import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults,MODE_URL, MODE_FILE, MODE_SL, MODE_CG, MODE_UNSPECIFIED } from "./UI.mts";
 import type { FormOptions } from "./UI.mts";
+import { readmyfileS } from "./utils.mts";
+
 
 declare module "express" {
 	interface Request {
@@ -76,9 +73,6 @@ declare module "express-session" {
 }
 
 let csr : SLEPR | null = null;
-
-const keyFilename = join(".", "selfsigned.key"),
-	certFilename = join(".", "selfsigned.crt");
 
 function DVB_I_check(req : Express.Request, res : Express.Response, slcheck : ServiceListCheck | null, cgcheck : ContentGuideCheck | null, hasSL : boolean, hasCG : boolean, motd : string, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
 	if (!req.session.data) {
@@ -127,14 +121,15 @@ function DVB_I_check(req : Express.Request, res : Express.Response, slcheck : Se
 					break;
 				case MODE_FILE:
 					try {
-						VVxml = req.files.XMLfile.data.toString();
+						if (req.files)
+							VVxml = req.files.XMLfile.data.toString();
 					} catch (err) {
 						req.parseErr = `retrieval of FILE ${req.files.XMLfile.name} failed (${err})`;
 					}
 					req.session.data.url = undefined;
 					break;
 				default:
-					req.parseErr = `method is not "${MODE_URL}" or "${MODE_FILE}"`;
+					req.parseErr = `method is not ${MODE_URL.quote('"')} or ${MODE_FILE.quote('"')}`;
 			}
 		let errs = new ErrorList();
 		if (!req.parseErr)
@@ -211,16 +206,16 @@ function validateServiceList(req : Express.Request, res : Express.Response, slch
 /**
  * Validate a service list
  *
- * @param {Express request}   req           The Express request that triggered the validation
- * @param {Express response}  res           The Express response to be written to the requester
- * @param {ContentGuideCheck} cgcheck       Initialised Content Guide Metadata validator
- * @param {String}            motd          HTML text for the Message Of The Day
- * @param {boolean}           jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
+ * @param {Express.Request} req        The Express request that triggered the validation
+ * @param {Express.Response} res       The Express response to be written to the requester
+ * @param {ContentGuideCheck} cgcheck  Initialised Content Guide Metadata validator
+ * @param {string} motd                HTML text for the Message Of The Day
+ * @param {boolean} jsonResponse       Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateContentGuide(req, res, cgcheck, motd, jsonResponse) {
+function validateContentGuide(req :Express.Request, res : Express.Response, cgcheck :ContentGuideCheck, motd : string | null = null, jsonResponse : boolean) {
 	let errs = new ErrorList();
 	let resp,
-		VVxml = null;
+		VVxml : string | null = null;
 	const log_prefix = createPrefix(req);
 	if (req.method == "GET") {
 		try {
@@ -256,20 +251,32 @@ function validateContentGuide(req, res, cgcheck, motd, jsonResponse) {
 	res.end();
 }
 
-function stats_header(res) {
+let stats_header = (res : Express.Response) => {
 	res.setHeader("Content-Type", "text/html");
 	res.write(PAGE_TOP("Validator Stats"));
 }
-function stats_footer(res) {
+let stats_footer = (res : Express.Response) => {
 	res.write(PAGE_BOTTOM);
 }
 
-function tabulate(res, group, stats) {
+function tabulate(res : Express.Response, group : string, stats : any) {
+
+	function printable(what : any) : string {
+		let rc : string= "!unprintable!";
+		try {
+			rc = `${what}`;
+		}
+		catch (err) {}
+		return rc;
+	}
+
 	res.write(`<h1>${group}</h1>`);
 	if (Object.keys(stats).length === 0) res.write("<p>No statistics</p>");
 	else {
 		res.write("<table><tr><th>item</th><th>count</th></tr>");
-		Object.getOwnPropertyNames(stats).forEach((key) => res.write(`<tr><td>${key}</td><td>${stats[key]}</td?</tr>`));
+		//Object.getOwnPropertyNames(stats).forEach((key) => res.write(`<tr><td>${key}</td><td>${stats[key]}</td?</tr>`));
+		for (let k in stats)
+			res.write(`<tr><td>${k}</td><td>${printable(stats[k])}</td?</tr>`);
 		res.write("</table>");
 	}
 	res.write("<hr/>");
@@ -293,7 +300,7 @@ export default function validator(options : any) {
 
 	if (!Object.prototype.hasOwnProperty.call(options, "CORSmode")) options.CORSmode = CORSlibrary;
 	else if (!CORSoptions.includes(options.CORSmode)) {
-		console.log(chalk.red(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`));
+		console.log(chalk.red(`CORSmode must be ${CORSnone.quote('"')}, ${CORSlibrary.quote('"')} to use the Express cors() handler, or ${CORSmanual.quote('"')} to have headers inserted manually`));
 		process.exit(1);
 	}
 
@@ -304,7 +311,7 @@ export default function validator(options : any) {
 	}
 
 	// initialize Express
-	let app = express();
+	const app = express();
 	app.use(cors());
 
 	app.use(express.static(__dirname));
@@ -477,6 +484,7 @@ export default function validator(options : any) {
 		csr && tabulate(res, "CSR", csr.stats());
 		slcheck && tabulate(res, "SL", slcheck.stats());
 		cgcheck && tabulate(res, "CG", cgcheck.stats());
+		tabulate(res, "req", req);
 		stats_footer(res);
 		res.status(200).end();
 	});
@@ -485,31 +493,8 @@ export default function validator(options : any) {
 		res.status(404).end();
 	});
 
-	// start the HTTP server
-	let http_server = app.listen(options.port, (error) => {
-		if (error) {
-			throw error;
-		}
-		if (http_server.address()?.port) console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}`));
-		else console.log(chalk.red(`HTTP port ${options.port} already in use -- HTTP server not started`));
-	});
-
-	// start the HTTPS server: SecureContextOptions
-	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
-	const https_options : any = {
-		key: readmyfileB(keyFilename),
-		cert: readmyfileB(certFilename),
-	};
-
-	if (https_options?.key && https_options?.cert) {
-		if (options.sport == options.port) options.sport = options.port + 1;
-
-		let https_server = createServer(https_options, app);
-		https_server.listen(options.sport, (error) => {
-			if (error) {
-				throw error;
-			}
-			console.log(chalk.cyan(`HTTPS listening on port number ${https_server.address().port}`));
-		});
+	if (!StartServers(app, options)){
+		console.log(chalk.red("No listeners - exiting!!"));
+		process.exit(1);
 	}
 }

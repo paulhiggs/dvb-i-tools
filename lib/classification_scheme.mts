@@ -2,20 +2,22 @@
  * classification_scheme.mts
  *
  * Manages Classification Scheme loading and checking
+ * 
  */
 import { readFile, readFileSync } from "fs";
 
 import chalk from "chalk";
 import { AvlTree } from "@datastructures-js/binary-search-tree";
+import { XmlDocument, XmlElement } from "libxml2-wasm";
 import fetchS from "sync-fetch";
 
-import { XmlDocument, XmlElement } from "libxml2-wasm";
+import { datatypeIs } from "../phlib/phlib.ts";
 
 import { dvb } from "./DVB_definitions.mts";
 import handleErrors from "./fetch_err_handler.mts";
-import { hasChild } from "./schema_checks.mts";
 import { isHTTPURL } from "./pattern_checks.mts";
-import { datatypeIs } from "../phlib/phlib.ts";
+import { hasChild } from "./schema_checks.mts";
+
 
 export type CSLoaderOptions = {
 	urls? : Array<string>,
@@ -105,7 +107,7 @@ export default class ClassificationScheme {
 	/**
 	 * read a classification scheme from a URL and load its hierarical values into a linear list
 	 *
-	 * @param {String}  csURL URL to the classification scheme
+	 * @param {string}  csURL URL to the classification scheme
 	 * @param {boolean} async
 	 */
 	private loadFromURL(csURL : string, async : boolean = true) {
@@ -216,7 +218,7 @@ export default class ClassificationScheme {
 	}
 
 	showMe(prefix : string = "") {
-		console.log(`in showme("${prefix}"), count=${this.values.count()}`);
+		console.log(`in showme(${prefix.quote()}), count=${this.values.count()}`);
 		this.values.traverseInOrder((node) => {
 			if (prefix == "" || node.getValue().startsWith(prefix)) 
 				console.log(node.getValue());

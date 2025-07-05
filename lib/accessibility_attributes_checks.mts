@@ -1,10 +1,10 @@
 /**
- * accessibility_attribites_checks.ts
+ * accessibility_attribites_checks.mts
  *
  * Checks the value space of the <AccessibilityAttributes> element against the rules and
  * values provided in DVB A177.
+ * 
  */
-
 import { XmlElement } from "libxml2-wasm"
 
 import { datatypeIs } from "../phlib/phlib.ts";
@@ -12,19 +12,15 @@ import { datatypeIs } from "../phlib/phlib.ts";
 import { Array_extension_init } from "./Array-extensions.mts";
 Array_extension_init();
 
-import { tva, tvaEC, BaseAccessibilityAttributesType } from "./TVA_definitions.mts";
 import { dvbi } from "./DVB-I_definitions.mts";
-
 import ErrorList from "./error_list.mts";
 import { APPLICATION, WARNING } from "./error_list.mts";
-import { checkTopElementsAndCardinality } from "./schema_checks.mts";
-import type { ElementCardinality } from "./schema_checks.mts";
 import { CS_URI_DELIMITER } from "./classification_scheme.mts";
-
-import { isValidLangFormat } from "./IANA_languages.mts";
-import { LanguageCheckResponse } from "./IANA_languages.mts";
+import { isValidLangFormat, LanguageCheckResponse } from "./IANA_languages.mts";
+import type { ElementCardinality } from "./schema_checks.mts";
+import { checkTopElementsAndCardinality } from "./schema_checks.mts";
+import { tva, tvaEC, BaseAccessibilityAttributesType } from "./TVA_definitions.mts";
 import { getFirstElementByTagName } from "./utils.mts";
-
 
 
 const mediaAccessibilityElements : Array<ElementCardinality> = [
@@ -93,7 +89,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 				if (!cs.AccessibilityPurposeCS.isIn(purposeTerm))
 					errs.addError({
 						code: `${errCode}-${errNum}a`,
-						message: `"${purposeTerm}" is not a valid accessibility purpose`,
+						message: `${purposeTerm.quote()} is not a valid accessibility purpose`,
 						fragment: purpose,
 						key: ACCESSIBILITY_CHECK_KEY,
 					});
@@ -103,7 +99,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 						errs.addError({
 							code: `${errCode}-${errNum}b`,
 							fragment: purpose,
-							message: `"${purposeTerm}" is not valid for ${elem.name.elementize()}`,
+							message: `${purposeTerm.quote()} is not valid for ${elem.name.elementize()}`,
 							key: ACCESSIBILITY_CHECK_KEY,
 						});
 				}
@@ -122,7 +118,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 							type: WARNING,
 							code: `${errCode}-${errNum}a`,
 							fragment: child,
-							message: `"${child.content}" is not a known Standard Version`,
+							message: `${child.content.quote()} is not a known Standard Version`,
 							key: ACCESSIBILITY_CHECK_KEY,
 						});
 					break;
@@ -132,7 +128,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 							type: WARNING,
 							code: `${errCode}-${errNum}b`,
 							fragment: child,
-							message: `"${child.content}" is not a known Optional Feature`,
+							message: `${child.content.quote()} is not a known Optional Feature`,
 							key: ACCESSIBILITY_CHECK_KEY,
 						});
 					break;
@@ -149,7 +145,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 				errs.addError({
 					code: `${errCode}-${errNum}`,
 					fragment: child,
-					message: `"${href}" is not valid for ${child.name.elementize()} in ${elem.name.elementize()}`,
+					message: `${href.quote()} is not valid for ${child.name.elementize()} in ${elem.name.elementize()}`,
 					key: ACCESSIBILITY_CHECK_KEY,
 				});
 				rc = false;
@@ -193,7 +189,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 				errs.addError({
 					code: `${errCode}-${errNum}b`,
 					fragment: child,
-					message: `"${purpose}" is not valid for ${elem.name.elementize()} in ${child.name.elementize()}`,
+					message: `${purpose.quote()} is not valid for ${elem.name.elementize()} in ${child.name.elementize()}`,
 					key: ACCESSIBILITY_CHECK_KEY,
 				});
 		});
@@ -225,7 +221,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 							errs.addError({
 								code: `${errCode}-${errNum}d`,
 								fragment: child2,
-								message: `"${href}" is not valid for ${elem.name.elementize()}${child.name.elementize()}${child2.name.elementize()}`,
+								message: `${href.quote()} is not valid for ${elem.name.elementize()}${child.name.elementize()}${child2.name.elementize()}`,
 								key: ACCESSIBILITY_CHECK_KEY,
 							});
 						break;
@@ -235,7 +231,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 							errs.addError({
 								code: `${errCode}-${errNum}e`,
 								fragment: child2,
-								message: `"${href}" is not valid for ${elem.name.elementize()}${child.name.elementize()}${child2.name.elementize()}`,
+								message: `${href.quote()} is not valid for ${elem.name.elementize()}${child.name.elementize()}${child2.name.elementize()}`,
 								key: ACCESSIBILITY_CHECK_KEY,
 							});
 						break;

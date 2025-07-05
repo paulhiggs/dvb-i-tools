@@ -2,40 +2,26 @@
  * cg_check.mts
  *
  * Validate content guide metadata
+ * 
  */
 import process from "process";
 import { readFileSync } from "fs";
 
 import chalk from "chalk";
 import { XmlDocument, XmlElement } from "libxml2-wasm";
-import { MakeDocumentProperties } from "../libxml2-wasm-extensions.mts";
-import type { DocumentProperties } from "../libxml2-wasm-extensions.mts";
 import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
 xmlRegisterFsInputProviders();
+
+import { MakeDocumentProperties } from "../libxml2-wasm-extensions.mts";
+import type { DocumentProperties } from "../libxml2-wasm-extensions.mts";
 
 import { attribute, elementize, quote } from "../phlib/phlib.ts";
 
 import { Array_extension_init } from "./Array-extensions.mts";
 Array_extension_init();
 
-import { mpeg7 } from "./MPEG7_definitions.mts";
-import { tva, tvaEA, tvaEC } from "./TVA_definitions.mts";
-import { dvbi } from "./DVB-I_definitions.mts";
-
-import { TVAschema, __dirname_linux } from "./data_locations.mts";
-
-import ErrorList, { WARNING, APPLICATION } from "./error_list.mts";
-import type ErrorArgs from "./error_list.mts";
-import { isCRIDURI, isTAGURI } from "./URI_checks.mts";
-import { xPath, xPathM, isIn, isIni, unEntity, CountChildElements, DuplicatedValue } from "./utils.mts";
-import { parseISOduration2 } from "./utils.mts";
-import { isHTTPURL, isDVBLocator, isUTCDateTime } from "./pattern_checks.mts";
-import { ValidatePromotionalStillImage } from "./related_material_checks.mts";
-import { cg_InvalidHrefValue, NoChildElement, keys } from "./common_errors.mts";
-import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.mts";
-import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./multilingual_element.mts";
-import writeOut from "./logger.mts";
-import { SpecificationState } from "./globals.mts";
+import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts";
+import ClassificationScheme from "./classification_scheme.mts";
 import {
 	LoadGenres,
 	LoadRatings,
@@ -50,40 +36,55 @@ import {
 	LoadLanguages,
 	LoadCountries,
 } from "./classification_scheme_loaders.mts";
+import { cg_InvalidHrefValue, NoChildElement, keys } from "./common_errors.mts";
+import { TVAschema, __dirname_linux } from "./data_locations.mts";
+import { dvbi } from "./DVB-I_definitions.mts";
+import ErrorList, { WARNING, APPLICATION } from "./error_list.mts";
+import { SpecificationState } from "./globals.mts";
+import IANAlanguages from "./IANA_languages.mts"
+import ISOcountries from "./ISO_countries.mts";
+import writeOut from "./logger.mts";
+import { mpeg7 } from "./MPEG7_definitions.mts";
+import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./multilingual_element.mts";
+import { isHTTPURL, isDVBLocator, isUTCDateTime } from "./pattern_checks.mts";
+import { ValidatePromotionalStillImage } from "./related_material_checks.mts";
 import Role from "./role.mts";
 import { LoadCredits } from "./role_loader.mts";
-import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts";
-import IANAlanguages from "./IANA_languages.mts"
-import ClassificationScheme from "./classification_scheme.mts";
-import ISOcountries from "./ISO_countries.mts";
+import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.mts";
+import { tva, tvaEA, tvaEC } from "./TVA_definitions.mts";
+import { isCRIDURI, isTAGURI } from "./URI_checks.mts";
+import { parseISOduration2, xPath, xPathM, isIn, isIni, unEntity, CountChildElements, DuplicatedValue } from "./utils.mts";
+
 
 // convenience/readability values
 const DEFAULT_LANGUAGE : string = "***";
 const CATEGORY_GROUP_NAME : string = '"category group"';
 
-const CG_REQUEST_SCHEDULE_TIME : string = "Time";
-const CG_REQUEST_SCHEDULE_NOWNEXT : string = "NowNext";
-const CG_REQUEST_SCHEDULE_WINDOW : string = "Window";
-const CG_REQUEST_PROGRAM : string = "ProgInfo";
-const CG_REQUEST_MORE_EPISODES : string = "MoreEpisodes";
-const CG_REQUEST_BS_CATEGORIES : string = "bsCategories";
-const CG_REQUEST_BS_LISTS : string = "bsLists";
-const CG_REQUEST_BS_CONTENTS : string = "bsContents";
+enum CGrequests {
+	SCHEDULE_TIME = "Time",
+	SCHEDULE_NOWNEXT = "NowNext",
+	SCHEDULE_WINDOW = "Window",
+	PROGRAM = "ProgInfo",
+	MORE_EPISODES = "MoreEpisodes",
+	BS_CATEGORIES = "bsCategories",
+	BS_LISTS = "bsLists",
+	BS_CONTENTS = "bsContents",
+}
 
 export type CGRequestInfo = {
-	value : string,
+	value : CGrequests,
 	label : string,
 }
 
 const supportedRequests : Array<CGRequestInfo> = [
-	{ value: CG_REQUEST_SCHEDULE_TIME, label: "Schedule Info (time stamp)" },
-	{ value: CG_REQUEST_SCHEDULE_NOWNEXT, label: "Schedule Info (now/next)" },
-	{ value: CG_REQUEST_SCHEDULE_WINDOW, label: "Schedule Info (window)" },
-	{ value: CG_REQUEST_PROGRAM, label: "Program Info" },
-	{ value: CG_REQUEST_MORE_EPISODES, label: "More Episodes" },
-	{ value: CG_REQUEST_BS_CATEGORIES, label: "Box Set Categories" },
-	{ value: CG_REQUEST_BS_LISTS, label: "Box Set Lists" },
-	{ value: CG_REQUEST_BS_CONTENTS, label: "Box Set Contents" },
+	{ value: CGrequests.SCHEDULE_TIME, label: "Schedule Info (time stamp)" },
+	{ value: CGrequests.SCHEDULE_NOWNEXT, label: "Schedule Info (now/next)" },
+	{ value: CGrequests.SCHEDULE_WINDOW, label: "Schedule Info (window)" },
+	{ value: CGrequests.PROGRAM, label: "Program Info" },
+	{ value: CGrequests.MORE_EPISODES, label: "More Episodes" },
+	{ value: CGrequests.BS_CATEGORIES, label: "Box Set Categories" },
+	{ value: CGrequests.BS_LISTS, label: "Box Set Lists" },
+	{ value: CGrequests.BS_CONTENTS, label: "Box Set Contents" },
 ];
 
 export enum SchemaReleases {
@@ -218,7 +219,7 @@ let FalseValue = (elem : XmlElement, attrName : string, errs : ErrorList, errCod
 	AllowedValue(elem, attrName, ["false"], errs, errCode, isRequired);
 
 /**
- * @param {String} genre  the value to check as being a restart availability genre
+ * @param {string} genre  the value to check as being a restart availability genre
  * @returns {boolean} true if the value provided is a valid restart availability genre
  */
 export let isRestartAvailability = (genre : string) => [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(genre);
@@ -325,7 +326,7 @@ export default class ContentGuideCheck {
 						type: WARNING,
 						code: errCode,
 						key: keys.k_InvalidTag,
-						message: `${tva.a_serviceIDRef.attribute(elem.name)} ${elem_serviceIDRef.quote()} is not a TAG URI`,
+						message: `${tva.a_serviceIDRef.attribute(elem.name)} value ${elem_serviceIDRef.quote()} is not a TAG URI`,
 						line: elem.line,
 					});
 				return elem_serviceIDRef;
@@ -563,7 +564,7 @@ export default class ContentGuideCheck {
 					message: `${tva.a_type.attribute(tva.e_Genre)}=${genreType.quote()} not permitted for ${tva.e_Genre.elementize()}`,
 					fragment: Genre,
 					clause: "A177 clause 6.10.5",
-					description: `${tva.a_type.attribute(tva.e_Genre)} must be "${tva.GENRE_TYPE_MAIN}", semantic definitions of ${tva.e_Genre.elementize()}`,
+					description: `${tva.a_type.attribute(tva.e_Genre)} must be ${tva.GENRE_TYPE_MAIN.quote()}, semantic definitions of ${tva.e_Genre.elementize()}`,
 				});
 
 			const genreValue = Genre.attrAnyNsValueOr(tva.a_href, "");
@@ -677,7 +678,7 @@ export default class ContentGuideCheck {
 												code: `${errCode}-22`,
 												key: keys.k_ParentalGuidance,
 												fragment: pgChild,
-												message: `invalid rating term "${rating}"`,
+												message: `invalid rating term ${rating.quote()}`,
 											});
 									} else
 										errs.addError({
@@ -1369,11 +1370,11 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {DocumentProperties} props         Metadata of the XML document
 	 * @param {XmlElement | null} parentElement  the element whose children should be checked
-	 * @param {string} requestType               the type of content guide request being checked
+	 * @param {CGrequests} requestType           the type of content guide request being checked
 	 * @param {XmlElement | null} categoryGroup  the GroupInformation element that others must refer to through <MemberOf>
 	 * @param {ErrorList} errs                   errors found in validaton
 	 */
-	private ValidateBasicDescription(props : DocumentProperties, parentElement : XmlElement | null, requestType : string, categoryGroup : XmlElement | null, errs : ErrorList) {
+	private ValidateBasicDescription(props : DocumentProperties, parentElement : XmlElement | null, requestType : CGrequests, categoryGroup : XmlElement | null, errs : ErrorList) {
 		if (!parentElement) {
 			errs.addError({
 				type: APPLICATION,
@@ -1393,9 +1394,9 @@ export default class ContentGuideCheck {
 		switch (parentElement.name) {
 			case tva.e_ProgramInformation:
 				switch (requestType) {
-					case CG_REQUEST_SCHEDULE_NOWNEXT: //6.10.5.2
-					case CG_REQUEST_SCHEDULE_WINDOW:
-					case CG_REQUEST_SCHEDULE_TIME:
+					case CGrequests.SCHEDULE_NOWNEXT: //6.10.5.2
+					case CGrequests.SCHEDULE_WINDOW:
+					case CGrequests.SCHEDULE_TIME:
 						checkTopElementsAndCardinality(
 							BasicDescription as XmlElement,
 							[
@@ -1416,7 +1417,7 @@ export default class ContentGuideCheck {
 						this.ValidateParentalGuidance(props, BasicDescription as XmlElement, errs, "BD014");
 						this.ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription as XmlElement, errs);
 						break;
-					case CG_REQUEST_PROGRAM: // 6.10.5.3
+					case CGrequests.PROGRAM: // 6.10.5.3
 						checkTopElementsAndCardinality(
 							BasicDescription as XmlElement,
 							[
@@ -1443,7 +1444,7 @@ export default class ContentGuideCheck {
 						this.ValidateRelatedMaterial_PromotionalStillImage(props, BasicDescription as XmlElement, errs);
 						this.ValidateReleaseInformation(props, BasicDescription as XmlElement, errs, "BD027");
 						break;
-					case CG_REQUEST_BS_CONTENTS: // 6.10.5.4
+					case CGrequests.BS_CONTENTS: // 6.10.5.4
 						checkTopElementsAndCardinality(
 							BasicDescription as XmlElement,
 							[
@@ -1465,7 +1466,7 @@ export default class ContentGuideCheck {
 						this.ValidateRelatedMaterial_Pagination(props, BasicDescription as XmlElement, "Box Set Contents", errs);
 						this.ValidateReleaseInformation(props, BasicDescription as XmlElement, errs, "BD034");
 						break;
-					case CG_REQUEST_MORE_EPISODES:
+					case CGrequests.MORE_EPISODES:
 						checkTopElementsAndCardinality(
 							BasicDescription as XmlElement,
 							[
@@ -1491,15 +1492,15 @@ export default class ContentGuideCheck {
 
 			case tva.e_GroupInformation:
 				switch (requestType) {
-					case CG_REQUEST_SCHEDULE_NOWNEXT: //6.10.17.3 - BasicDescription for NowNext should be empty
-					case CG_REQUEST_SCHEDULE_WINDOW:
+					case CGrequests.SCHEDULE_NOWNEXT: //6.10.17.3 - BasicDescription for NowNext should be empty
+					case CGrequests.SCHEDULE_WINDOW:
 						checkTopElementsAndCardinality(BasicDescription as XmlElement, [], tvaEC.BasicDescription, false, errs, "BD050");
 						break;
-					case CG_REQUEST_BS_CONTENTS:
+					case CGrequests.BS_CONTENTS:
 						// BasicDescription must be empty
 						checkTopElementsAndCardinality(BasicDescription as XmlElement, [], tvaEC.BasicDescription, false, errs, "BD090");
 						break;
-					case CG_REQUEST_BS_LISTS: // 6.10.5.5
+					case CGrequests.BS_LISTS: // 6.10.5.5
 						if (isParentGroup) checkTopElementsAndCardinality(BasicDescription as XmlElement, [{ name: tva.e_Title, maxOccurs: Infinity }], tvaEC.BasicDescription, false, errs, "BD061");
 						else
 							checkTopElementsAndCardinality(
@@ -1523,11 +1524,11 @@ export default class ContentGuideCheck {
 							this.ValidateRelatedMaterial_BoxSetList(props, BasicDescription as XmlElement, errs);
 						}
 						break;
-					case CG_REQUEST_MORE_EPISODES:
+					case CGrequests.MORE_EPISODES:
 						checkTopElementsAndCardinality(BasicDescription as XmlElement, [{ name: tva.e_RelatedMaterial, maxOccurs: 4 }], tvaEC.BasicDescription, false, errs, "BD070");
 						this.ValidateRelatedMaterial_MoreEpisodes(props, BasicDescription as XmlElement, errs);
 						break;
-					case CG_REQUEST_BS_CATEGORIES:
+					case CGrequests.BS_CATEGORIES:
 						if (isParentGroup) checkTopElementsAndCardinality(BasicDescription as XmlElement, [{ name: tva.e_Title, maxOccurs: Infinity }], tvaEC.BasicDescription, false, errs, "BD080");
 						else
 							checkTopElementsAndCardinality(
@@ -1577,12 +1578,12 @@ export default class ContentGuideCheck {
 	 * @param {XmlElement | null} ProgramInformation  the element whose children should be checked
 	 * @param {Array<string>} programCRIDs            array to record CRIDs for later use
 	 * @param {Array<string> | null} groupCRIDs       array of CRIDs found in the GroupInformationTable (null if not used)
-	 * @param {string} requestType                    the type of content guide request being checked
+	 * @param {CGrequests} requestType                    the type of content guide request being checked
 	 * @param {Array<string>} indexes                 array of @index values from other elements in the same table - for duplicate detection
 	 * @param {ErrorList} errs                        errors found in validaton
 	 * @returns {string | null} 	CRID of the current program, if this is it
 	 */
-	private ValidateProgramInformation(props : DocumentProperties, ProgramInformation : XmlElement | null, programCRIDs : Array<string>, groupCRIDs : Array<string> | null, requestType : string, indexes : Array<string>, errs : ErrorList) : string | null{
+	private ValidateProgramInformation(props : DocumentProperties, ProgramInformation : XmlElement | null, programCRIDs : Array<string>, groupCRIDs : Array<string> | null, requestType : CGrequests, indexes : Array<string>, errs : ErrorList) : string | null{
 		if (!ProgramInformation) {
 			errs.addError({
 				type: APPLICATION,
@@ -1636,13 +1637,13 @@ export default class ContentGuideCheck {
 
 		// <ProgramInformation><BasicDescription>
 		this.ValidateBasicDescription(props, ProgramInformation, requestType, null, errs);
-		let foundCRID = null;
+		let foundCRID : string | null = null;
 
 		ProgramInformation.childNodes()?.forEachSubElement((child) => {
 			switch (child.name) {
 				case tva.e_OtherIdentifier: // <ProgramInformation><OtherIdentifier>
 					checkAttributes(child, [], [], tvaEA.OtherIdentifier, errs, "PI021");
-					if (requestType == CG_REQUEST_MORE_EPISODES)
+					if (requestType == CGrequests.MORE_EPISODES)
 						errs.addError({
 							code: "PI022",
 							message: `${tva.e_OtherIdentifier.elementize()} is not permitted in this request type`,
@@ -1659,19 +1660,19 @@ export default class ContentGuideCheck {
 						if (groupCRIDs && !isIni(groupCRIDs, foundCRID))
 							errs.addError({
 								code: "PI032",
-								message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_EpisodeOf}`)}="${foundCRID}" is not a defined Group CRID for ${tva.e_EpisodeOf.elementize()}`,
+								message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_EpisodeOf}`)}=${foundCRID.quote()} is not a defined Group CRID for ${tva.e_EpisodeOf.elementize()}`,
 								fragment: child,
 							});
 						else if (!isCRIDURI(foundCRID))
 							this.#NotCRIDFormat(errs, {
 								code: "PI033",
-								message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_EpisodeOf}`)}="${foundCRID}" is not a valid CRID`,
+								message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_EpisodeOf}`)}=${foundCRID.quote()} is not a valid CRID`,
 								fragment: child,
 							});
 					}
 					break;
 				case tva.e_MemberOf: // <ProgramInformation><MemberOf>
-					if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW].includes(requestType)) {
+					if ([CGrequests.SCHEDULE_NOWNEXT, CGrequests.SCHEDULE_WINDOW].includes(requestType)) {
 						// xsi:type is optional for Now/Next
 						checkAttributes(child, [tva.a_index, tva.a_crid], [tva.a_type], tvaEA.MemberOf, errs, "PI041");
 						if (child.attrAnyNs(tva.a_crid) && child.attrAnyNs(tva.a_crid).value == dvbi.CRID_NOW) isCurrentProgram = true;
@@ -1691,13 +1692,13 @@ export default class ContentGuideCheck {
 						if (groupCRIDs && !isIni(groupCRIDs, foundCRID))
 							errs.addError({
 								code: "PI044",
-								message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_MemberOf}`)}="${foundCRID}" is not a defined Group CRID for ${tva.e_MemberOf.elementize()}`,
+								message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_MemberOf}`)}=${foundCRID.quote()} is not a defined Group CRID for ${tva.e_MemberOf.elementize()}`,
 								fragment: child,
 							});
 						else if (!isCRIDURI(foundCRID))
 							this.#NotCRIDFormat(errs, {
 								code: "PI045",
-								message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_MemberOf}`)}="${foundCRID}" is not a valid CRID`,
+								message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_MemberOf}`)}=${foundCRID.quote()} is not a valid CRID`,
 								fragment: child,
 							});
 					}
@@ -1730,13 +1731,13 @@ export default class ContentGuideCheck {
 	 * @param {XmlElement | null} ProgramDescription  the element containing the <ProgramInformationTable>
 	 * @param {Array<string>} programCRIDs            array to record CRIDs for later use
 	 * @param {Array<string> | null} groupCRIDs       array of CRIDs found in the GroupInformationTable (null if not used)
-	 * @param {string} requestType                    the type of content guide request being checked
+	 * @param {CGrequests} requestType                    the type of content guide request being checked
 	 * @param {ErrorList} errs                        errors found in validaton
 	 * @param {ProgramInformationStats} o     
 	 *                                   o.childCount        the number of child elements to be present (to match GroupInformation@numOfItems)
-	 * @returns {String | null} the CRID of the currently airing program (that which is a member of the "now" structural crid)
+	 * @returns {string | null} the CRID of the currently airing program (that which is a member of the "now" structural crid)
 	 */
-	private CheckProgramInformation(props : DocumentProperties, ProgramDescription : XmlElement | null, programCRIDs : Array<string>, groupCRIDs : Array<string> | null, requestType : string, errs : ErrorList, o : ProgramInformationStats | null= null) : string | null {
+	private CheckProgramInformation(props : DocumentProperties, ProgramDescription : XmlElement | null, programCRIDs : Array<string>, groupCRIDs : Array<string> | null, requestType : CGrequests, errs : ErrorList, o : ProgramInformationStats | null= null) : string | null {
 		if (!ProgramDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -1746,7 +1747,7 @@ export default class ContentGuideCheck {
 			return null;
 		}
 
-		let ProgramInformationTable = ProgramDescription.get(xPath(props.prefix, tva.e_ProgramInformationTable), props.schema);
+		let ProgramInformationTable = ProgramDescription.get(xPath(props.prefix, tva.e_ProgramInformationTable), props.schema) as XmlElement;
 		if (!ProgramInformationTable) {
 			errs.addError({
 				code: "PI101",
@@ -1787,13 +1788,13 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {DocumentProperties} props            Metadata of the XML document
 	 * @param {XmlElement | null} GroupInformation  the element whose children should be checked
-	 * @param {string} requestType                  the type of content guide request being checked
+	 * @param {CGrequests} requestType              the type of content guide request being checked
 	 * @param {XmlElement | null} categoryGroup     the GroupInformationElement that others must refer to through <MemberOf>
 	 * @param {Array<string> | null} indexes        an accumulation of the @index values found
 	 * @param {Array<string> | null} groupsFound    groupId values found (null if not needed)
 	 * @param {ErrorList} errs                      errors found in validaton
 	 */
-	private ValidateGroupInformationBoxSets(props : DocumentProperties, GroupInformation : XmlElement | null, requestType : string, categoryGroup : XmlElement | null, indexes : Array<string> | null, groupsFound : Array<string> | null, errs : ErrorList) {
+	private ValidateGroupInformationBoxSets(props : DocumentProperties, GroupInformation : XmlElement | null, requestType : CGrequests, categoryGroup : XmlElement | null, indexes : Array<string> | null, groupsFound : Array<string> | null, errs : ErrorList) {
 		if (!GroupInformation) {
 			errs.addError({
 				type: APPLICATION,
@@ -1805,7 +1806,7 @@ export default class ContentGuideCheck {
 		const isParentGroup = GroupInformation.line == categoryGroup?.line;
 
 		switch (requestType) {
-			case CG_REQUEST_BS_CATEGORIES:
+			case CGrequests.BS_CATEGORIES:
 				if (isParentGroup) {
 					checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_ordered, tva.a_numOfItems], tvaEA.GroupInformation, errs, "GIB001");
 					checkTopElementsAndCardinality(
@@ -1828,7 +1829,7 @@ export default class ContentGuideCheck {
 					);
 				}
 				break;
-			case CG_REQUEST_BS_LISTS:
+			case CGrequests.BS_LISTS:
 				if (isParentGroup) {
 					checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_ordered, tva.a_numOfItems], tvaEA.GroupInformation, errs, "GIB005");
 					checkTopElementsAndCardinality(
@@ -1851,7 +1852,7 @@ export default class ContentGuideCheck {
 					);
 				}
 				break;
-			case CG_REQUEST_BS_CONTENTS:
+			case CGrequests.BS_CONTENTS:
 				checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_ordered, tva.a_numOfItems, tva.a_serviceIDRef], tvaEA.GroupInformation, errs, "GIB009");
 				checkTopElementsAndCardinality(
 					GroupInformation,
@@ -1925,11 +1926,11 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {DocumentProperties} props            Metadata of the XML document
 	 * @param {XmlElement | null} GroupInformation  the element whose children should be checked
-	 * @param {string} requestType                  the type of content guide request being checked
+	 * @param {CGrequests} requestType              the type of content guide request being checked
 	 * @param {XmlElement | null} categoryGroup     the GroupInformationElement that others must refer to through <MemberOf>
 	 * @param {ErrorList} errs                      errors found in validaton
 	 */
-	private ValidateGroupInformationSchedules(props : DocumentProperties, GroupInformation : XmlElement | null, requestType : string, categoryGroup : XmlElement | null, errs : ErrorList) {
+	private ValidateGroupInformationSchedules(props : DocumentProperties, GroupInformation : XmlElement | null, requestType : CGrequests, categoryGroup : XmlElement | null, errs : ErrorList) {
 		if (!GroupInformation) {
 			errs.addError({
 				type: APPLICATION,
@@ -1941,7 +1942,7 @@ export default class ContentGuideCheck {
 		checkAttributes(GroupInformation, [tva.a_groupId, tva.a_ordered, tva.a_numOfItems], [tva.a_lang], tvaEA.GroupInformation, errs, "GIS001");
 
 		const groupId = GroupInformation.attrAnyNsValueOr(tva.a_groupId, null);
-		if (groupId && [CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW].includes(requestType))
+		if (groupId && [CGrequests.SCHEDULE_NOWNEXT, CGrequests.SCHEDULE_WINDOW].includes(requestType))
 			if (![dvbi.CRID_NOW, dvbi.CRID_LATER, dvbi.CRID_EARLIER].includes(groupId))
 				errs.addError({
 					code: "GIS011",
@@ -1949,7 +1950,7 @@ export default class ContentGuideCheck {
 					line: GroupInformation.line,
 				});
 
-		if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW].includes(requestType)) {
+		if ([CGrequests.SCHEDULE_NOWNEXT, CGrequests.SCHEDULE_WINDOW].includes(requestType)) {
 			TrueValue(GroupInformation, tva.a_ordered, errs, "GIS013");
 			if (!GroupInformation.attrAnyNs(tva.a_numOfItems))
 				errs.addError({
@@ -1968,12 +1969,12 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {DocumentProperties} props            Metadata of the XML document
 	 * @param {XmlElement | null} GroupInformation  the element whose children should be checked
-	 * @param {string} requestType                  the type of content guide request being checked
+	 * @param {CGrequests} requestType              the type of content guide request being checked
 	 * @param {XmlElement | null} categoryGroup     the GroupInformationElement that others must refer to through <MemberOf>
 	 * @param {Array<string> | null} groupsFound    groupId values found (null if not needed)
 	 * @param {ErrorList} errs                      errors found in validaton
 	 */
-	private ValidateGroupInformationMoreEpisodes(props : DocumentProperties, GroupInformation : XmlElement | null, requestType : string, categoryGroup : XmlElement | null, groupsFound : Array<string> | null, errs : ErrorList) {
+	private ValidateGroupInformationMoreEpisodes(props : DocumentProperties, GroupInformation : XmlElement | null, requestType : CGrequests, categoryGroup : XmlElement | null, groupsFound : Array<string> | null, errs : ErrorList) {
 		if (!GroupInformation) {
 			errs.addError({
 				type: APPLICATION,
@@ -2036,13 +2037,13 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {DocumentProperties} props            Metadata of the XML documentE
 	 * @param {XmlElement | null} GroupInformation  the element whose children should be checked
-	 * @param {string} requestType                  the type of content guide request being checked
+	 * @param {CGrequests} requestType              the type of content guide request being checked
 	 * @param {XmlElement | null} categoryGroup     the GroupInformationElement that others must refer to through <MemberOf>
 	 * @param {Array<string> | null} indexes        an accumulation of the @index values found
 	 * @param {Array<string> | null} groupsFound    groupId values found (null if not needed)
 	 * @param {ErrorList} errs                      errors found in validaton
 	 */
-	private ValidateGroupInformation(props : DocumentProperties, GroupInformation : XmlElement | null, requestType : string, categoryGroup : XmlElement | null, indexes : Array<string> | null, groupsFound : Array<string> | null, errs : ErrorList) {
+	private ValidateGroupInformation(props : DocumentProperties, GroupInformation : XmlElement | null, requestType : CGrequests, categoryGroup : XmlElement | null, indexes : Array<string> | null, groupsFound : Array<string> | null, errs : ErrorList) {
 		if (!GroupInformation) {
 			errs.addError({
 				type: APPLICATION,
@@ -2055,16 +2056,16 @@ export default class ContentGuideCheck {
 		GetNodeLanguage(GroupInformation, false, errs, "GI001");
 
 		switch (requestType) {
-			case CG_REQUEST_SCHEDULE_NOWNEXT:
-			case CG_REQUEST_SCHEDULE_WINDOW:
+			case CGrequests.SCHEDULE_NOWNEXT:
+			case CGrequests.SCHEDULE_WINDOW:
 				this.ValidateGroupInformationSchedules(props, GroupInformation, requestType, categoryGroup, errs);
 				break;
-			case CG_REQUEST_BS_CATEGORIES:
-			case CG_REQUEST_BS_LISTS:
-			case CG_REQUEST_BS_CONTENTS:
+			case CGrequests.BS_CATEGORIES:
+			case CGrequests.BS_LISTS:
+			case CGrequests.BS_CONTENTS:
 				this.ValidateGroupInformationBoxSets(props, GroupInformation, requestType, categoryGroup, indexes, groupsFound, errs);
 				break;
-			case CG_REQUEST_MORE_EPISODES:
+			case CGrequests.MORE_EPISODES:
 				this.ValidateGroupInformationMoreEpisodes(props, GroupInformation, requestType, categoryGroup, groupsFound, errs);
 				break;
 		}
@@ -2098,13 +2099,13 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {DocumentProperties} props              Metadata of the XML document
 	 * @param {XmlElement | null} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {string} requestType                    the type of content guide request being checked
+	 * @param {CGrequests} requestType                    the type of content guide request being checked
 	 * @param {Array<string> | null} groupIds         buffer to recieve the group ids parsed (null if not needed)
 	 * @param {ErrorList} errs                        errors found in validaton
 	 * @param {ProgramInformationStats | null} o
 	 *                                         o.childCount        the value from the @numItems attribute of the "category group"
 	 */
-	private CheckGroupInformation(props : DocumentProperties, ProgramDescription : XmlElement, requestType : string, groupIds : Array<string> | null, errs : ErrorList , o : ProgramInformationStats | null = null) {
+	private CheckGroupInformation(props : DocumentProperties, ProgramDescription : XmlElement, requestType : CGrequests, groupIds : Array<string> | null, errs : ErrorList , o : ProgramInformationStats | null = null) {
 		if (!ProgramDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -2113,7 +2114,7 @@ export default class ContentGuideCheck {
 			});
 			return;
 		}
-		if (requestType == CG_REQUEST_BS_CONTENTS) {
+		if (requestType == CGrequests.BS_CONTENTS) {
 			this.CheckGroupInformationBoxsetContents(props, ProgramDescription, requestType, groupIds, errs, o);
 			return;
 		}
@@ -2129,7 +2130,7 @@ export default class ContentGuideCheck {
 		let gi, GroupInformation;
 		// find which GroupInformation element is the "category group"
 		let categoryGroup = null;
-		if ([CG_REQUEST_BS_LISTS, CG_REQUEST_BS_CATEGORIES].includes(requestType)) {
+		if ([CGrequests.BS_LISTS, CGrequests.BS_CATEGORIES].includes(requestType)) {
 			gi = 0;
 			while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
 				// this GroupInformation element is the "category group" if it does not contain a <MemberOf> element
@@ -2161,8 +2162,9 @@ export default class ContentGuideCheck {
 				giCount++;
 		}
 		if (categoryGroup) {
-			const numOfItems = Number((categoryGroup as XmlElement).attrAnyNsValueOr(tva.a_numOfItems, "0"))
-			if (requestType != CG_REQUEST_BS_CONTENTS && numOfItems != giCount)
+			const numOfItems = Number((categoryGroup as XmlElement).attrAnyNsValueOr(tva.a_numOfItems, "0"));
+			let notBSContents = (request : CGrequests) => (request != CGrequests.BS_CONTENTS);
+			if (notBSContents(requestType) && numOfItems != giCount)
 				errs.addError({
 					code: "GI113",
 					message: `${tva.a_numOfItems.attribute(tva.e_GroupInformation)} specified in ${CATEGORY_GROUP_NAME} (${numOfItems}) does match the number of items (${giCount})`,
@@ -2172,7 +2174,7 @@ export default class ContentGuideCheck {
 			if (o) o.childCount = numOfItems;
 		}
 
-		if (requestType == CG_REQUEST_MORE_EPISODES && giCount > 1)
+		if (requestType == CGrequests.MORE_EPISODES && giCount > 1)
 			errs.addError({
 				code: "GI114",
 				message: `only one ${tva.e_GroupInformation.elementize()} element is premitted for this request type`,
@@ -2180,17 +2182,20 @@ export default class ContentGuideCheck {
 			});
 	}
 
+
+
 	/**
 	 * find and validate any <GroupInformation> elements in the <GroupInformationTable> for a Boxset Contents response
 	 *
-	 * @param {Object}     props               Metadata of the XML document
+	 * @param {DocumentProperties} props       Metadata of the XML document
 	 * @param {XmlElement} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {String}     requestType         the type of content guide request being checked
-	 * @param {Array}      groupIds            buffer to recieve the group ids parsed (null if not needed)
-	 * @param {ErrorList}  errs                errors found in validaton
-	 * @param {integer}    o.childCount        the value from the @numItems attribute of the "category group"
+	 * @param {CGrequests} requestType         the type of content guide request being checked
+	 * @param {Array<string> | null} groupIds  buffer to recieve the group ids parsed (null if not needed)
+	 * @param {ErrorList} errs                 errors found in validaton
+	 * @param {ProgramInformationStats | null} o
+	 *                                         o.childCount        the value from the @numItems attribute of the "category group"
 	 */
-	/* private */ CheckGroupInformationBoxsetContents(props, ProgramDescription, requestType, groupIds, errs, o) {
+	private CheckGroupInformationBoxsetContents(props : DocumentProperties, ProgramDescription : XmlElement, requestType : CGrequests, groupIds : Array<string> | null, errs : ErrorList, o : any | null = null) {
 		if (!ProgramDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -2199,7 +2204,7 @@ export default class ContentGuideCheck {
 			});
 			return;
 		}
-		if (requestType != CG_REQUEST_BS_CONTENTS) {
+		if (requestType != CGrequests.BS_CONTENTS) {
 			errs.addError({
 				type: APPLICATION,
 				code: "GIC001",
@@ -2207,7 +2212,7 @@ export default class ContentGuideCheck {
 			});
 			return;
 		}
-		const GroupInformationTable = ProgramDescription.get(xPath(props.prefix, tva.e_GroupInformationTable), props.schema);
+		const GroupInformationTable = ProgramDescription.get(xPath(props.prefix, tva.e_GroupInformationTable), props.schema) as XmlElement;
 		if (!GroupInformationTable) {
 			//errs.addError({code:"GIC101", message:`${tva.e_GroupInformationTable.elementize()} not specified in ${ProgramDescription.name.elementize()}`, line:ProgramDescription.line});
 			return;
@@ -2243,7 +2248,8 @@ export default class ContentGuideCheck {
 					errs,
 					"GIC113"
 				);
-			if (GroupInformation.attrAnyNs(tva.a_groupId)) groupIds.push(GroupInformation.attrAnyNs(tva.a_groupId).value);
+			if (groupIds && GroupInformation.attrAnyNs(tva.a_groupId)) 
+				groupIds.push(GroupInformation.attrAnyNs(tva.a_groupId).value);
 		}
 		if (!contentsGroup)
 			errs.addError({
@@ -2287,14 +2293,14 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {DocumentProperties} props            Metadata of the XML document
 	 * @param {XmlElement | null} GroupInformation  the element whose children should be checked
-	 * @param {string} requestType                  the type of content guide request being checked
+	 * @param {CGrequests} requestType              the type of content guide request being checked
 	 * @param {number} numEarlier                   maximum number of <GroupInformation> elements that are earlier
 	 * @param {number} numNow                       maximum number of <GroupInformation> elements that are now
 	 * @param {number} numLater                     maximum number of <GroupInformation> elements that are later
 	 * @param {Array<string>} groupCRIDsFound       list of structural crids already found in this response
 	 * @param {ErrorList} errs                      errors found in validaton
 	 */
-	private ValidateGroupInformationNowNext(props : DocumentProperties, GroupInformation : XmlElement | null, requestType : string, numEarlier : number, numNow : number, numLater : number, groupCRIDsFound : Array<string>, errs : ErrorList) {
+	private ValidateGroupInformationNowNext(props : DocumentProperties, GroupInformation : XmlElement | null, requestType : CGrequests, numEarlier : number, numNow : number, numLater : number, groupCRIDsFound : Array<string>, errs : ErrorList) {
 		
 		function validValues(errs : ErrorList, numOfItems : number, numAllowed : number, grp : string, element : XmlElement) {
 			if (numOfItems <= 0)
@@ -2364,10 +2370,10 @@ export default class ContentGuideCheck {
 	 * @param {DocumentProperties} props              Metadata of the XML document
 	 * @param {XmlElement | null} ProgramDescription  the element containing the <ProgramInformationTable>
 	 * @param {Array<string>} groupIds                array of GroupInformation@CRID values found
-	 * @param {string} requestType                    the type of content guide request being checked
+	 * @param {CGrequests} requestType                    the type of content guide request being checked
 	 * @param {ErrorList} errs                        errors found in validaton
 	 */
-	private CheckGroupInformationNowNext(props : DocumentProperties, ProgramDescription : XmlElement | null, groupIds :Array<string>, requestType : string, errs : ErrorList) {
+	private CheckGroupInformationNowNext(props : DocumentProperties, ProgramDescription : XmlElement | null, groupIds :Array<string>, requestType : CGrequests, errs : ErrorList) {
 		if (!ProgramDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -2392,10 +2398,10 @@ export default class ContentGuideCheck {
 			GroupInformation;
 		while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
 			switch (requestType) {
-				case CG_REQUEST_SCHEDULE_NOWNEXT:
+				case CGrequests.SCHEDULE_NOWNEXT:
 					this.ValidateGroupInformationNowNext(props, GroupInformation, requestType, 0, 1, 1, groupIds, errs);
 					break;
-				case CG_REQUEST_SCHEDULE_WINDOW:
+				case CGrequests.SCHEDULE_WINDOW:
 					this.ValidateGroupInformationNowNext(props, GroupInformation, requestType, 10, 1, 10, groupIds, errs);
 					break;
 				default:
@@ -2940,10 +2946,10 @@ export default class ContentGuideCheck {
 	 * @param {XmlElement | null} OnDemandProgram  the node containing the <OnDemandProgram> being checked
 	 * @param {Array<string>} programCRIDs         array of program crids defined in <ProgramInformationTable>
 	 * @param {Array<string>} plCRIDs              array of program crids defined in <ProgramLocationTable>
-	 * @param {string} requestType                 the type of content guide request being checked
+	 * @param {CGrequests} requestType             the type of content guide request being checked
 	 * @param {ErrorList} errs                     errors found in validaton
 	 */
-	private ValidateOnDemandProgram(props : DocumentProperties, OnDemandProgram : XmlElement | null, programCRIDs : Array<string>, plCRIDs : Array<string>, requestType : string, errs : ErrorList) {
+	private ValidateOnDemandProgram(props : DocumentProperties, OnDemandProgram : XmlElement | null, programCRIDs : Array<string>, plCRIDs : Array<string>, requestType : CGrequests, errs : ErrorList) {
 		if (!OnDemandProgram) {
 			errs.addError({
 				type: APPLICATION,
@@ -2954,7 +2960,7 @@ export default class ContentGuideCheck {
 		}
 		let validRequest = true;
 		switch (requestType) {
-			case CG_REQUEST_BS_CONTENTS:
+			case CGrequests.BS_CONTENTS:
 				checkTopElementsAndCardinality(
 					OnDemandProgram,
 					[
@@ -2973,7 +2979,7 @@ export default class ContentGuideCheck {
 					"OD001"
 				);
 				break;
-			case CG_REQUEST_MORE_EPISODES:
+			case CGrequests.MORE_EPISODES:
 				checkTopElementsAndCardinality(
 					OnDemandProgram,
 					[
@@ -2991,10 +2997,10 @@ export default class ContentGuideCheck {
 					"OD002"
 				);
 				break;
-			case CG_REQUEST_SCHEDULE_NOWNEXT:
-			case CG_REQUEST_SCHEDULE_TIME:
-			case CG_REQUEST_SCHEDULE_WINDOW:
-			case CG_REQUEST_PROGRAM:
+			case CGrequests.SCHEDULE_NOWNEXT:
+			case CGrequests.SCHEDULE_TIME:
+			case CGrequests.SCHEDULE_WINDOW:
+			case CGrequests.PROGRAM:
 				checkTopElementsAndCardinality(
 					OnDemandProgram,
 					[
@@ -3061,7 +3067,7 @@ export default class ContentGuideCheck {
 			this.CheckPlayerApplication(AuxiliaryURL, [dvbi.XML_AIT_CONTENT_TYPE /*, dvbi.HTML5_APP, dvbi.XHTML_APP, dvbi.iOS_APP, dvbi.ANDROID_APP*/], errs, "OD030");
 
 		// <InstanceDescription>
-		if (validRequest && [CG_REQUEST_BS_CONTENTS, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType)) {
+		if (validRequest && [CGrequests.BS_CONTENTS, CGrequests.SCHEDULE_NOWNEXT, CGrequests.SCHEDULE_TIME, CGrequests.SCHEDULE_WINDOW, CGrequests.PROGRAM].includes(requestType)) {
 			let InstanceDescription = OnDemandProgram.get(xPath(props.prefix, tva.e_InstanceDescription), props.schema)  as XmlElement;
 			if (InstanceDescription) 
 				this.ValidateInstanceDescription(props, OnDemandProgram.name, InstanceDescription, false, errs);
@@ -3086,7 +3092,7 @@ export default class ContentGuideCheck {
 		}
 
 		// <DeliveryMode>
-		if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM].includes(requestType)) {
+		if ([CGrequests.SCHEDULE_NOWNEXT, CGrequests.SCHEDULE_TIME, CGrequests.SCHEDULE_WINDOW, CGrequests.PROGRAM].includes(requestType)) {
 			let DeliveryMode = OnDemandProgram.get(xPath(props.prefix, tva.e_DeliveryMode), props.schema) as XmlElement;
 			if (DeliveryMode && DeliveryMode.content != tva.DELIVERY_MODE_STREAMING)
 				errs.addError({
@@ -3286,10 +3292,10 @@ export default class ContentGuideCheck {
 	 * @param {Array<string>} programCRIDs        array of program crids defined in <ProgramInformationTable>
 	 * @param {Array<string>} plCRIDs             array of program crids defined in <ProgramLocationTable>
 	 * @param {string | null} currentProgramCRID  CRID of the currently airing program
-	 * @param {string} requestType                the type of content guide request being checked
+	 * @param {CGrequests} requestType            the type of content guide request being checked
 	 * @param {ErrorList} errs                    errors found in validaton
 	 */
-	private ValidateBroadcastEvent(props : DocumentProperties, BroadcastEvent : XmlElement | null, programCRIDs : Array<string>, plCRIDs : Array<string>, currentProgramCRID : string | null, requestType : string, errs : ErrorList) {
+	private ValidateBroadcastEvent(props : DocumentProperties, BroadcastEvent : XmlElement | null, programCRIDs : Array<string>, plCRIDs : Array<string>, currentProgramCRID : string | null, requestType : CGrequests, errs : ErrorList) {
 		if (!BroadcastEvent) {
 			errs.addError({
 				type: APPLICATION,
@@ -3337,11 +3343,11 @@ export default class ContentGuideCheck {
 	 * @param {Array<string>} programCRIDs        array of program crids defined in <ProgramInformationTable>
 	 * @param {Array<string>} plCRIDs             array of program crids defined in <ProgramLocationTable>
 	 * @param {string | null} currentProgramCRID  CRID of the currently airing program
-	 * @param {string} requestType                the type of content guide request being checked
+	 * @param {CGrequests} requestType            the type of content guide request being checked
 	 * @param {ErrorList} errs                    errors found in validaton
 	 * @returns {string | null}	the serviceIdRef for this <Schedule> element
 	 */
-	private ValidateSchedule(props : DocumentProperties, Schedule : XmlElement | null, programCRIDS : Array<string>, plCRIDs : Array<string>, currentProgramCRID : string | null, requestType : string, errs : ErrorList) : string | null {
+	private ValidateSchedule(props : DocumentProperties, Schedule : XmlElement | null, programCRIDS : Array<string>, plCRIDs : Array<string>, currentProgramCRID : string | null, /* eslint-disable no-unused-vars*/ requestType : CGrequests, /* eslint-enable */ errs : ErrorList) : string | null {
 		if (!Schedule) {
 			errs.addError({ type: APPLICATION, code: "VS000", message: "ValidateSchedule() called with Schedule==null" });
 			return null;
@@ -3380,12 +3386,12 @@ export default class ContentGuideCheck {
 	 * @param {XmlElement | null} ProgramDescription  the element containing the <ProgramInformationTable>
 	 * @param {Array<string>} programCRIDs            array to record CRIDs for later use
 	 * @param {string | null} currentProgramCRID      CRID of the currently airing program
-	 * @param {string} requestType                    the type of content guide request being checked
+	 * @param {CGrequests} requestType                    the type of content guide request being checked
 	 * @param {ErrorList}  errs                       errors found in validaton
 	 * @param {ProgramInformationStats | null} o
 	 *                                     o.childCount  the number of child elements to be present (to match GroupInformation@numOfItems)
 	 */
-	private CheckProgramLocation(props :DocumentProperties, ProgramDescription : XmlElement | null, programCRIDs : Array<string>, currentProgramCRID : string | null, requestType : string, errs : ErrorList, o : ProgramInformationStats | null = null) {
+	private CheckProgramLocation(props :DocumentProperties, ProgramDescription : XmlElement | null, programCRIDs : Array<string>, currentProgramCRID : string | null, requestType : CGrequests, errs : ErrorList, o : ProgramInformationStats | null = null) {
 		if (!ProgramDescription) {
 			errs.addError({
 				type: APPLICATION,
@@ -3403,20 +3409,20 @@ export default class ContentGuideCheck {
 
 		let allowedElements = [{ name: tva.e_OnDemandProgram, minOccurs: 0, maxOccurs: Infinity }];
 		switch (requestType) {
-			case CG_REQUEST_SCHEDULE_NOWNEXT:
-			case CG_REQUEST_SCHEDULE_TIME:
-			case CG_REQUEST_SCHEDULE_WINDOW:
-			case CG_REQUEST_PROGRAM:
+			case CGrequests.SCHEDULE_NOWNEXT:
+			case CGrequests.SCHEDULE_TIME:
+			case CGrequests.SCHEDULE_WINDOW:
+			case CGrequests.PROGRAM:
 				allowedElements.push({ name: tva.e_Schedule, minOccurs: 0, maxOccurs: Infinity });
 				break;
-			case CG_REQUEST_BS_CONTENTS:
+			case CGrequests.BS_CONTENTS:
 				allowedElements.push({ name: tva.e_BroadcastEvent, minOccurs: 0, maxOccurs: Infinity });
 				break;
-			case CG_REQUEST_BS_LISTS:
-			case CG_REQUEST_BS_CATEGORIES:
+			case CGrequests.BS_LISTS:
+			case CGrequests.BS_CATEGORIES:
 				// ProgramLocationTable is not included in these response types
 				break;
-			case CG_REQUEST_MORE_EPISODES:
+			case CGrequests.MORE_EPISODES:
 				// only OnDemandProgram elements are permitted in More Episodes response
 				break;
 		}
@@ -3468,7 +3474,7 @@ export default class ContentGuideCheck {
 				});
 		}
 
-		if (requestType == CG_REQUEST_PROGRAM) {
+		if (requestType == CGrequests.PROGRAM) {
 			if (cntODP > 1 || cntSE != 0)
 				errs.addError({
 					code: "PL023",
@@ -3476,7 +3482,7 @@ export default class ContentGuideCheck {
 				});
 		}
 
-		if ((requestType == CG_REQUEST_PROGRAM && cntODP != 0) || requestType != CG_REQUEST_PROGRAM)
+		if ((requestType == CGrequests.PROGRAM && cntODP != 0) || requestType != CGrequests.PROGRAM)
 			programCRIDs.forEach((programCRID) => {
 				if (!isIni(plCRIDs, programCRID))
 					errs.addError({
@@ -3489,14 +3495,14 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the content guide and record any errors
 	 *
-	 * @param {string} CGtext       the service list text to be validated
-	 * @param {string} requestType  the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
-	 * @param {ErrorList} errs      errors found in validaton
+	 * @param {string} CGtext           the service list text to be validated
+	 * @param {CGrequests} requestType  the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
+	 * @param {ErrorList} errs          errors found in validaton
 	 * @param {Object} options
 	 *                   options.log_prefix            the first part of the logging location (or null if no logging)
 	 *                   options.report_schema_version report the state of the schema in the error/warning list
 	 */
-	doValidateContentGuide(CGtext : string, requestType : string, errs : ErrorList, options : any) {
+	doValidateContentGuide(CGtext : string | null, requestType : CGrequests, errs : ErrorList, options : any) {
 		this.numRequests++;
 
 		if (!CGtext) {
@@ -3540,7 +3546,7 @@ export default class ContentGuideCheck {
 			o = { childCount: 0 };
 
 		switch (requestType) {
-			case CG_REQUEST_SCHEDULE_TIME:
+			case CGrequests.SCHEDULE_TIME:
 				// schedule response (6.5.4.1) has <ProgramLocationTable> and <ProgramInformationTable> elements
 				checkTopElementsAndCardinality(
 					ProgramDescription,
@@ -3553,7 +3559,7 @@ export default class ContentGuideCheck {
 				this.CheckProgramInformation(props, ProgramDescription, programCRIDs, null, requestType, errs);
 				this.CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs);
 				break;
-			case CG_REQUEST_SCHEDULE_NOWNEXT:
+			case CGrequests.SCHEDULE_NOWNEXT:
 				// schedule response (6.5.4.1) has <ProgramLocationTable> and <ProgramInformationTable> elements
 				checkTopElementsAndCardinality(
 					ProgramDescription,
@@ -3571,7 +3577,7 @@ export default class ContentGuideCheck {
 				/* eslint-enable */
 				this.CheckProgramLocation(props, ProgramDescription, programCRIDs, currentProgramCRIDnn, requestType, errs);
 				break;
-			case CG_REQUEST_SCHEDULE_WINDOW:
+			case CGrequests.SCHEDULE_WINDOW:
 				checkTopElementsAndCardinality(
 					ProgramDescription,
 					[{ name: tva.e_ProgramLocationTable }, { name: tva.e_ProgramInformationTable }, { name: tva.e_GroupInformationTable }],
@@ -3588,7 +3594,7 @@ export default class ContentGuideCheck {
 				/* eslint-enable */
 				this.CheckProgramLocation(props, ProgramDescription, programCRIDs, currentProgramCRIDsw, requestType, errs);
 				break;
-			case CG_REQUEST_PROGRAM:
+			case CGrequests.PROGRAM:
 				// program information response (6.6.2) has <ProgramLocationTable> and <ProgramInformationTable> elements
 				checkTopElementsAndCardinality(
 					ProgramDescription,
@@ -3601,7 +3607,7 @@ export default class ContentGuideCheck {
 				this.CheckProgramInformation(props, ProgramDescription, programCRIDs, null, requestType, errs);
 				this.CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs);
 				break;
-			case CG_REQUEST_MORE_EPISODES:
+			case CGrequests.MORE_EPISODES:
 				// more episodes response (6.7.3) has <ProgramInformationTable>, <GroupInformationTable> and <ProgramLocationTable> elements
 				checkTopElementsAndCardinality(
 					ProgramDescription,
@@ -3615,17 +3621,17 @@ export default class ContentGuideCheck {
 				this.CheckProgramInformation(props, ProgramDescription, programCRIDs, groupIds, requestType, errs, o);
 				this.CheckProgramLocation(props, ProgramDescription, programCRIDs, null, requestType, errs, o);
 				break;
-			case CG_REQUEST_BS_CATEGORIES:
+			case CGrequests.BS_CATEGORIES:
 				// box set categories response (6.8.2.3) has <GroupInformationTable> element
 				checkTopElementsAndCardinality(ProgramDescription, [{ name: tva.e_GroupInformationTable }], tvaEC.ProgramDescription, false, errs, "CG061");
 				this.CheckGroupInformation(props, ProgramDescription, requestType, null, errs, null);
 				break;
-			case CG_REQUEST_BS_LISTS:
+			case CGrequests.BS_LISTS:
 				// box set lists response (6.8.3.3) has <GroupInformationTable> element
 				checkTopElementsAndCardinality(ProgramDescription, [{ name: tva.e_GroupInformationTable }], tvaEC.ProgramDescription, false, errs, "CG071");
 				this.CheckGroupInformation(props, ProgramDescription, requestType, null, errs, null);
 				break;
-			case CG_REQUEST_BS_CONTENTS:
+			case CGrequests.BS_CONTENTS:
 				// box set contents response (6.8.4.3) has <ProgramInformationTable>, <GroupInformationTable> and <ProgramLocationTable> elements
 				if (
 					!checkTopElementsAndCardinality(
@@ -3655,10 +3661,10 @@ export default class ContentGuideCheck {
 	 * validate the content guide and record any errors
 	 *
 	 * @param {string} CGtext        the service list text to be validated
-	 * @param {string} requestType   the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
+	 * @param {CGrequests} requestType   the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
 	 * @returns {ErrorList} errs errors found in validaton
 	 */
-	validateContentGuide(CGtext : string, requestType : string) {
+	validateContentGuide(CGtext : string, requestType : CGrequests) {
 		var errs = new ErrorList();
 		this.doValidateContentGuide(CGtext, requestType, errs, { report_schema_version: true });
 

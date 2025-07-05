@@ -48,7 +48,7 @@ const optionDefinitions : Array<commandLineArgs.OptionDefinition> = [
 		type: String,
 		defaultValue: CORSlibrary,
 		typeLabel: "{underline mode}",
-		description: `type of CORS habdling "${CORSlibrary}" (default), "${CORSmanual}" or "${CORSnone}"`,
+		description: `type of CORS habdling ${CORSlibrary.quote()} (default), ${CORSmanual.quote()} or ${CORSnone.quote()}`,
 	},
 	{ name: "motd", alias: "m", type: String, defaultValue: MOTD.file, typeLabel: "{underline filename}", description: "local file name containing HTML for Message Of The Day" },
 	{ name: "help", alias: "h", type: Boolean, defaultValue: false, description: "This help" },

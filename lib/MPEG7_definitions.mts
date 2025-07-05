@@ -1,8 +1,10 @@
 /**
- * MPEG7_defintions.ts
+ * MPEG7_defintions.mts
  *
  * Defintion made in MPEG-7, ISO/IEC 15938-5
+ * 
  */
+
 
 const MPEG7_CS  : string = "urn:mpeg:mpeg7:cs";
 const FILE_FORMAT_CS  : string = `${MPEG7_CS}:FileFormatCS:2001`;

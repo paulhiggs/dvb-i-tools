@@ -2,33 +2,21 @@
  * sl_check.mts
  *
  * Check a service list
+ * 
  */
 import chalk from "chalk";
-
 import { XmlElement, XmlDocument } from "libxml2-wasm";
+
+import { elementize, quote } from "../phlib/phlib.ts";
 
 import { MakeDocumentProperties } from "../libxml2-wasm-extensions.mts";
 import type { DocumentProperties } from "../libxml2-wasm-extensions.mts";
-import { elementize, quote } from "../phlib/phlib.ts";
 
 import { Array_extension_init } from "./Array-extensions.mts";
 Array_extension_init();
 
-import { tva, tvaEA } from "./TVA_definitions.mts";
-import { sats } from "./DVB_definitions.mts";
-import { dvbi, dvbiEC, dvbiEA, XMLdocumentType } from "./DVB-I_definitions.mts";
-
-import ErrorList, { WARNING, APPLICATION } from "./error_list.mts";
-import { isTAGURI } from "./URI_checks.mts";
-import { xPath, isIn, unEntity, /* getElementByTagName, */ DuplicatedValue } from "./utils.mts";
-import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isDomainName, isRTSPURL } from "./pattern_checks.mts";
-import { checkValidLogos } from "./related_material_checks.mts";
-import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys } from "./common_errors.mts";
-import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./multilingual_element.mts";
-import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.mts";
-import writeOut from "./logger.mts";
-import { ValidateLanguage } from "./IANA_languages.mts";
-import IANAlanguages from "./IANA_languages.mts";
+import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts";
+import ClassificationScheme from "./classification_scheme.mts";
 import {
 	LoadGenres,
 	LoadVideoCodecCS,
@@ -48,11 +36,20 @@ import {
 	LoadLanguages,
 	LoadCountries,
 } from "./classification_scheme_loaders.mts";
-import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts";
+import { check_CMCD } from "./CMCD.mts";
+import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys } from "./common_errors.mts";
+import { sats } from "./DVB_definitions.mts";
+import { dvbi, dvbiEC, dvbiEA, XMLdocumentType } from "./DVB-I_definitions.mts";
+import ErrorList, { WARNING, APPLICATION } from "./error_list.mts";
+import IANAlanguages from "./IANA_languages.mts";
+import { ValidateLanguage } from "./IANA_languages.mts";
 import { DASH_IF_Content_Protection_List, ContentProtectionIDs, CA_SYSTEM_ID_REGISTRY, CASystemIDs } from "./identifiers.mts";
 import ISOcountries from "./ISO_countries.mts";
-
-import type { SchemaReleaseVersion } from "./sl_data_versions.mts";
+import writeOut from "./logger.mts";
+import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./multilingual_element.mts";
+import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isDomainName, isRTSPURL } from "./pattern_checks.mts";
+import { checkValidLogos } from "./related_material_checks.mts";
+import { checkAttributes, checkTopElementsAndCardinality, hasChild, SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.mts";
 import {
 	GetSchema,
 	SchemaVersion,
@@ -60,15 +57,11 @@ import {
 	ANY_NAMESPACE,
 	SchemaReleases,
 	isA177specification_URN,
-} from "./sl_data_versions.mts";
-import {
 	validServiceControlApplication,
 	//	validAgreementApplication,
 	validServiceInstanceControlApplication,
 	validServiceUnavailableApplication,
 	validDASHcontentType,
-} from "./sl_data_versions.mts";
-import {
 	validOutScheduleHours,
 	validContentFinishedBanner,
 	validServiceListLogo,
@@ -77,8 +70,11 @@ import {
 	validServiceBanner,
 	validContentGuideSourceLogo,
 } from "./sl_data_versions.mts";
-import { check_CMCD } from "./CMCD.mts";
-import ClassificationScheme from "./classification_scheme.mts";
+import type { SchemaReleaseVersion } from "./sl_data_versions.mts";
+import { tva, tvaEA } from "./TVA_definitions.mts";
+import { isTAGURI } from "./URI_checks.mts";
+import { xPath, isIn, unEntity, /* getElementByTagName, */ DuplicatedValue } from "./utils.mts";
+
 
 const LCN_TABLE_NO_TARGETREGION : string = "unspecifiedRegion",
 	LCN_TABLE_NO_SUBSCRIPTION : string = "unspecifiedPackage";
@@ -165,7 +161,7 @@ let NoDeliveryParams = (source : string, serviceId : string, element : XmlElemen
 
 type RegionType = {
 	countries : Array<string>,
-	region : string | null,
+	region : string,
 	selectable : boolean,
 	used : boolean,
 	line : number,
@@ -322,7 +318,7 @@ export default class ServiceListCheck {
 				else
 					knownRegionIDs.push({
 						countries: countriesSpecified,
-						region: regionID,
+						region: regionID as string,
 						selectable: selectable,
 						used: false,
 						line: Region.line,
@@ -346,7 +342,7 @@ export default class ServiceListCheck {
 				else 
 					knownRegionIDs.push({
 						countries: countriesSpecified,
-						region: regionID,
+						region: regionID as string,
 						selectable: true, 
 						used: false,
 						line: Region.line,
@@ -693,7 +689,7 @@ export default class ServiceListCheck {
 						errs.addError({
 							type: WARNING,
 							code: `${errCode}-${errSuffix}b`,
-							message: `"${epURL.content}" should end with a slash '/' for ${elementName.elementize()}`,
+							message: `${epURL.content.quote()} should end with a slash '/' for ${elementName.elementize()}`,
 							fragment: ep as XmlElement,
 							key: "not URL path",
 						});
@@ -764,12 +760,12 @@ export default class ServiceListCheck {
 	 *
 	 * @param {DocumentProperties} props   Metadata of the XML document
 	 * @param {XmlElement | null} Element  the element whose children should be checked
-	 * @param {String} ElementName         the name of the child element to be checked
+	 * @param {string} ElementName         the name of the child element to be checked
 	 * @param {Array} requiredLengths      @length attributes that are required to be present
 	 * @param {Array} optionalLengths      @length attributes that can optionally be present
-	 * @param {String} parentLanguage	     the xml:lang of the parent element
+	 * @param {string} parentLanguage	     the xml:lang of the parent element
 	 * @param {ErrorList} errs             errors found in validaton
-	 * @param {String} errCode             error code prefix to be used in reports
+	 * @param {string} errCode             error code prefix to be used in reports
 	 */
 	private ValidateSynopsisType(props : DocumentProperties, Element : XmlElement | null, ElementName : string, requiredLengths : Array<string>, optionalLengths : Array<string>, parentLanguage : string, errs : ErrorList, errCode : string) {
 		if (!Element) {
@@ -973,7 +969,7 @@ export default class ServiceListCheck {
 	 * @param {Array<LanguageDefinition>} declaredAudioLanguages
 	 * @param {ErrorList} errs                              errors found in validaton
 	 */
-	private validateServiceInstance(props :DocumentProperties, ServiceInstance : XmlElement, thisServiceId : string, declaredSubscriptionPackages : Array<String>, declaredAudioLanguages : Array<LanguageDefinition>, errs : ErrorList) {
+	private validateServiceInstance(props :DocumentProperties, ServiceInstance : XmlElement, thisServiceId : string, declaredSubscriptionPackages : Array<string>, declaredAudioLanguages : Array<LanguageDefinition>, errs : ErrorList) {
 		if (!ServiceInstance) {
 			errs.addError({
 				type: APPLICATION,
@@ -1174,7 +1170,7 @@ export default class ServiceListCheck {
 									errs.addError({
 										type: WARNING,
 										code: "SI053",
-										message: `audio language "${child.content} is not defined in ${dvbi.e_LanguageList.elementize()}`,
+										message: `audio language ${child.content.quote()} is not defined in ${dvbi.e_LanguageList.elementize()}`,
 										fragment: child,
 										key: "audio language",
 									});
@@ -1334,7 +1330,7 @@ export default class ServiceListCheck {
 				if (!declaredSubscriptionPackages.includes(pkg))
 					errs.addError({
 						code: "SI130",
-						message: `${dvbi.e_SubscriptionPackage.elementize()}="${pkg}" is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
+						message: `${dvbi.e_SubscriptionPackage.elementize()}=${pkg.quote()} is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
 						fragment: SubscriptionPackage,
 						key: `undeclared ${dvbi.e_SubscriptionPackage}`,
 					});
@@ -1571,7 +1567,7 @@ export default class ServiceListCheck {
 						errs.addError({
 							code: `SI204${suffix}`,
 							key: ERROR_KEY,
-							message: `${childElementName.elementize()} is not permitted for ${dvbi.e_ModulationSystem}="${modulation}"`,
+							message: `${childElementName.elementize()} is not permitted for ${dvbi.e_ModulationSystem}=${modulation.quote()}`,
 							fragment: element.get(xPath(props.prefix, childElementName), props.schema) as XmlElement,
 						});
 				};
@@ -1717,7 +1713,7 @@ export default class ServiceListCheck {
 						code: `${errCode}-100`,
 						key: "unknown extension",
 						fragment: extn,
-						message: `extenion "${extn_extensionName}" is not known to this tool`,
+						message: `extenion ${extn_extensionName.quote()} is not known to this tool`,
 					});
 			}
 		}
@@ -1778,14 +1774,14 @@ export default class ServiceListCheck {
 			if (NVOD?.attrAnyNs(dvbi.a_reference))
 				errs.addError({
 					code: "SL221",
-					message: `${dvbi.a_reference.attribute()} is not permitted for ${dvbi.a_mode.attribute(dvbi.e_NVOD)}="${dvbi.NVOD_MODE_REFERENCE}"`,
+					message: `${dvbi.a_reference.attribute()} is not permitted for ${dvbi.a_mode.attribute(dvbi.e_NVOD)}=${dvbi.NVOD_MODE_REFERENCE.quote()}`,
 					fragment: NVOD,
 					key: "unallowed attribute",
 				});
 			if (NVOD?.attrAnyNs(dvbi.a_offset))
 				errs.addError({
 					code: "SL222",
-					message: `${dvbi.a_offset.attribute()} is not permitted for ${dvbi.a_mode.attribute(dvbi.e_NVOD)}="${dvbi.NVOD_MODE_REFERENCE}"`,
+					message: `${dvbi.a_offset.attribute()} is not permitted for ${dvbi.a_mode.attribute(dvbi.e_NVOD)}=${dvbi.NVOD_MODE_REFERENCE.quote()}`,
 					fragment: NVOD,
 					key: "unallowed attribute",
 				});
@@ -1809,7 +1805,7 @@ export default class ServiceListCheck {
 				if (!referredService)
 					errs.addError({
 						code: "SL224",
-						message: `no service found with ${dvbi.e_UniqueIdentifier.elementize()}="${NVOD_reference}"`,
+						message: `no service found with ${dvbi.e_UniqueIdentifier.elementize()}=${NVOD_reference.quote()}`,
 						fragment: NVOD,
 						key: "NVOD timeshift",
 					});
@@ -2109,8 +2105,8 @@ export default class ServiceListCheck {
 	/**
 	 * validate the service list and record any errors
 	 *
-	 * @param {String}    SLtext      The service list text to be validated
-	 * @param {ErrorList} errs        Errors found in validaton
+	 * @param {string} SLtext      The service list text to be validated
+	 * @param {ErrorList} errs     Errors found in validaton
 	 * @param {Object}    options
 	 *                      log_prefix            the first part of the logging location (or null if no logging)
 	 *                      report_schema_version report the state of the schema in the error/warning list
@@ -2205,7 +2201,7 @@ export default class ServiceListCheck {
 			if (!isA177specification_URN(StandardVersion.content))
 				errs.addError({
 					code: "SL017",
-					message: `"${StandardVersion.content}" is not a recognised URN for an A177 specification version`,
+					message: `${StandardVersion.content.quote()} is not a recognised URN for an A177 specification version`,
 					key: keys.k_InvalidIdentifier,
 					fragment: StandardVersion,
 					clause: "A177 clause 4.6.1.1",
@@ -2305,7 +2301,7 @@ export default class ServiceListCheck {
 				if (declaredSubscriptionPackages.includes(pkg))
 					errs.addError({
 						code: "SL063",
-						message: `duplicate subscription package definition for "${pkg}"`,
+						message: `duplicate subscription package definition for ${pkg.quote()}`,
 						key: "duplicate subscription package",
 						fragment: SubscriptionPackage,
 					});
@@ -2496,7 +2492,7 @@ export default class ServiceListCheck {
 						if (!declaredSubscriptionPackages.includes(localSubscriptionPackage))
 							errs.addError({
 								code: "SL268",
-								message: `${dvbi.e_SubscriptionPackage.elementize()}="${localSubscriptionPackage}" is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
+								message: `${dvbi.e_SubscriptionPackage.elementize()}=${localSubscriptionPackage.quote()} is not declared in ${dvbi.e_SubscriptionPackageList.elementize()}`,
 								fragment: SubscriptionPackage,
 								key: `undeclared ${dvbi.e_SubscriptionPackage}`,
 							});
@@ -2506,11 +2502,11 @@ export default class ServiceListCheck {
 				if (SubscriptionPackages.length == 0) SubscriptionPackages.push(LCN_TABLE_NO_SUBSCRIPTION);
 
 				TargetRegions.forEach((region) => {
-					const displayRegion = region == LCN_TABLE_NO_TARGETREGION ? `unspecified ${dvbi.e_TargetRegion.elementize()}` : `${dvbi.e_TargetRegion.elementize()}="${region}"`;
+					const displayRegion = region == LCN_TABLE_NO_TARGETREGION ? `unspecified ${dvbi.e_TargetRegion.elementize()}` : `${dvbi.e_TargetRegion.elementize()}=${region.quote()}`;
 					SubscriptionPackages.forEach((sPackage) => {
 						const key = `${region}::${sPackage}`,
 							displayPackage =
-								sPackage == LCN_TABLE_NO_SUBSCRIPTION ? `unspecified ${dvbi.e_SubscriptionPackage.elementize()}` : `${dvbi.e_SubscriptionPackage.elementize()}="${sPackage}"`;
+								sPackage == LCN_TABLE_NO_SUBSCRIPTION ? `unspecified ${dvbi.e_SubscriptionPackage.elementize()}` : `${dvbi.e_SubscriptionPackage.elementize()}=${sPackage.quote()}`;
 						if (DuplicatedValue(tableQualifiers, key))
 							errs.addError({
 								code: "SL251",
@@ -2575,7 +2571,7 @@ export default class ServiceListCheck {
 					errs.addError({
 						code: "SL281",
 						type: WARNING,
-						message: `${dvbi.a_regionID.attribute(dvbi.e_Region)}="${region.region}" is defined but not used`,
+						message: `${dvbi.a_regionID.attribute(dvbi.e_Region)}=${region.region.quote()} is defined but not used`,
 						key: `unused ${dvbi.a_regionID.attribute()}`,
 						line: region.line,
 					});
@@ -2588,7 +2584,7 @@ export default class ServiceListCheck {
 				errs.addError({
 					code: "SL282",
 					type: WARNING,
-					message: `audio language "${language.language}" is defined in ${dvbi.e_LanguageList.elementize()} but not used`,
+					message: `audio language ${language.language} is defined in ${dvbi.e_LanguageList.elementize()} but not used`,
 					key: `unused ${dvbi.e_Language}`,
 					fragment: language.fragment,
 					clause: "see A177 table 14",

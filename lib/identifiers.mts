@@ -1,8 +1,10 @@
 /**
- * identifiers.ts
+ * identifiers.mts
  * 
  * various identifiers and their meaningful names
+ * 
  */
+
 
 export const DASH_IF_Content_Protection_List : string = "https://dashif.org/identifiers/content_protection/";
 

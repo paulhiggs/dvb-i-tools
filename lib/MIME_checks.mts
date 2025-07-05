@@ -1,8 +1,10 @@
 /**
- * MIME_checks.ts
+ * MIME_checks.mts
  *
  * useful routines to check MIME types that could be used in DVB-I documents
+ * 
  */
+
 
 const JPEG_MIME : string = "image/jpeg",
 	PNG_MIME : string = "image/png",

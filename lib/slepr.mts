@@ -2,28 +2,28 @@
  * slepr.mts
  *
  * SLEPR - Service List End Point Resolver
+ * 
  */
-import { readFile } from "fs";
-
 import chalk from "chalk";
+import { readFile } from "fs";
 import { XmlDocument, XmlElement } from "libxml2-wasm";
 
 import { datatypeIs } from "../phlib/phlib.ts";
-
-import { tva } from "./TVA_definitions.mts";
-import { dvbi, dvbisld } from "./DVB-I_definitions.mts";
-
-import handleErrors from "./fetch_err_handler.mts";
-import { xPath, isIn } from "./utils.mts";
-import { IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data_locations.mts";
-import { hasChild } from "./schema_checks.mts";
-import { isHTTPURL, isTVAAudioLanguageType } from "./pattern_checks.mts";
-import IANAlanguages from "./IANA_languages.mts";
-import ClassificationScheme from "./classification_scheme.mts";
-import ISOcountries from "./ISO_countries.mts";
 import { MakeDocumentProperties } from "../libxml2-wasm-extensions.mts";
 
-var masterSLEPR : string = "";
+import ClassificationScheme from "./classification_scheme.mts";
+import { IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./data_locations.mts";
+import { dvbi, dvbisld } from "./DVB-I_definitions.mts";
+import handleErrors from "./fetch_err_handler.mts";
+import IANAlanguages from "./IANA_languages.mts";
+import ISOcountries from "./ISO_countries.mts";
+import { isHTTPURL, isTVAAudioLanguageType } from "./pattern_checks.mts";
+import { hasChild } from "./schema_checks.mts";
+import { tva } from "./TVA_definitions.mts";
+import { xPath, isIn } from "./utils.mts";
+
+
+let  masterSLEPR : string = "";
 const EMPTY_SLEPR : string = '<ServiceListEntryPoints xmlns="urn:dvb:metadata:servicelistdiscovery:2024"></ServiceListEntryPoints>';
 
 const RFC2397_PREFIX : string = "data:";
@@ -58,7 +58,9 @@ export default class SLEPR {
 
 	constructor(useURLs : boolean, preloadedLanguageValidator : IANAlanguages | null = null, preloadedCountries : ISOcountries | null = null, preloadedGenres : ClassificationScheme | null = null) {
 		this.numRequests = 0;
-		this.loadDataFiles(useURLs, preloadedLanguageValidator, preloadedCountries, preloadedGenres);
+		this.knownLanguages = this.loadLanguages(useURLs, preloadedLanguageValidator);
+		this.knownCountries = this.loadCountries(useURLs, preloadedCountries);
+		this.knownGenres = this.loadGenres(useURLs, preloadedGenres);
 	}
 
 	stats() {
@@ -71,34 +73,40 @@ export default class SLEPR {
 		return res;
 	}
 
+	private loadLanguages(useURLs : boolean, preloadedLanguageValidator : IANAlanguages | null = null) : IANAlanguages
+	{
+		if (preloadedLanguageValidator) return preloadedLanguageValidator;
+		let t = new IANAlanguages();
+		t.loadLanguages(useURLs ? { url: IANA_Subtag_Registry.url, purge: true } : { file: IANA_Subtag_Registry.file, purge: true });
+		return t;
+	}
+	private loadCountries(useURLs : boolean, preloadedCountries  : ISOcountries | null = null ) : ISOcountries
+	{
+			if (preloadedCountries) return preloadedCountries;
+			let t = new ISOcountries(false, true);
+			t.loadCountries(useURLs ? { url: ISO3166.url } : { file: ISO3166.file });
+			return t;
+	}
+	private loadGenres(useURLs : boolean, preloadedGenres : ClassificationScheme | null = null) : ClassificationScheme
+	{
+		if (preloadedGenres) return preloadedGenres;
+		let t = new ClassificationScheme();
+		t.loadCS(useURLs ? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] } : { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] });
+		return t;
+	}
+
 	/* public */ loadDataFiles(useURLs : boolean, preloadedLanguageValidator : IANAlanguages | null = null, preloadedCountries  : ISOcountries | null = null, preloadedGenres : ClassificationScheme | null = null) {
-		if (preloadedLanguageValidator) this.knownLanguages = preloadedLanguageValidator;
-		else {
-			this.knownLanguages = new IANAlanguages();
-			this.knownLanguages.loadLanguages(useURLs ? { url: IANA_Subtag_Registry.url, purge: true } : { file: IANA_Subtag_Registry.file, purge: true });
-		}
-
-		if (preloadedCountries) this.knownCountries = preloadedCountries;
-		else {
-			this.knownCountries = new ISOcountries(false, true);
-			this.knownCountries.loadCountries(useURLs ? { url: ISO3166.url } : { file: ISO3166.file });
-		}
-
-		if (preloadedGenres) this.knownGenres = preloadedGenres;
-		else {
-			this.knownGenres = new ClassificationScheme();
-			this.knownGenres.loadCS(
-				useURLs ? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] } : { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] }
-			);
-		}
+			this.knownLanguages = this.loadLanguages(useURLs, preloadedLanguageValidator);
+			this.knownCountries = this.loadCountries(useURLs, preloadedCountries);
+			this.knownGenres = this.loadGenres(useURLs, preloadedGenres);
 	}
 
 	/**
 	 * read in the master XML document as text
 	 *
-	 * @param {String} filename   filename of the master XML document
+	 * @param {string} filename  filename of the master XML document
 	 */
-	/* public */ loadServiceListRegistry(filename) {
+	/* public */ loadServiceListRegistry(filename : string) {
 		console.log(chalk.yellow(`loading SLR from ${filename}`));
 
 		if (isHTTPURL(filename)) {
@@ -117,7 +125,7 @@ export default class SLEPR {
 			});
 	}
 
-	private checkQuery(req, params) {
+	private checkQuery(req : Express.Request, params : {}) {
 		req.parseErr = [];
 		if (req.query) {
 			let checkIt = (argument, argName, checkFunction) => {
@@ -181,7 +189,7 @@ export default class SLEPR {
 
 			/* value space of this argument is not checked
 			//Provider Name(s)
-			var checkProvider = (provider) => true;
+			let checkProvider = (provider) => true;
 			checkIt(params.ProviderName, dvbi.e_ProviderName, checkProvider) 
 			*/
 		}
@@ -212,7 +220,7 @@ export default class SLEPR {
 			let prov,
 				p = 0,
 				providerCleanup : Array<XmlElement> = [];
-			while ((prov = slepr.get("//" + xPath(props.prefix, dvbisld.e_ProviderOffering, ++p), props.schema)) != null) {
+			while ((prov = slepr.get("//" + xPath(props.prefix, dvbisld.e_ProviderOffering, ++p), props.schema) as XmlElement) != null) {
 				let provName,
 					n = 0,
 					matchedProvider = false;
@@ -230,13 +238,13 @@ export default class SLEPR {
 			while ((prov = slepr.get("//" + xPath(props.prefix, dvbisld.e_ProviderOffering, ++p), props.schema)) != null) {
 				let serv,
 					s = 0;
-				while ((serv = prov.get(xPath(props.prefix, dvbisld.e_ServiceListOffering, ++s), props.schema)) != null) {
+				while ((serv = prov.get(xPath(props.prefix, dvbisld.e_ServiceListOffering, ++s), props.schema) as XmlElement) != null) {
 					let removeService = false;
 
 					// remove services that do not match the specified regulator list flag
 					if (queryParams.regulatorListFlag) {
 						// The regulatorListFlag has been specified in the query, so it has to match. Default in instance document is "false"
-						let flag = serv.attrAnyNs(dvbisld.a_regulatorListFlag) ? serv.attrAnyNs(dvbisld.a_regulatorListFlag).value : "false";
+						let flag = serv.attrAnyNsValueOr(dvbisld.a_regulatorListFlag, "false");
 						if (queryParams.regulatorListFlag != flag) removeService = true;
 					}
 
@@ -286,7 +294,7 @@ export default class SLEPR {
 
 					// remove remaining services that do not have the requested delivery modes
 					if (!removeService && queryParams.Delivery) {
-						const delivery = serv.get(xPath(props.datatypes_prefix ? props.datatypes_prefix : props.prefix, dvbi.e_Delivery), props.schema);
+						const delivery = serv.get(xPath(props.datatypes_prefix ? props.datatypes_prefix : props.prefix, dvbi.e_Delivery), props.schema) as XmlElement;
 
 						if (!delivery) removeService = true;
 						else {
@@ -318,7 +326,7 @@ export default class SLEPR {
 		let prov,
 			p = 0,
 			providersToRemove : Array<XmlElement> = [];
-		while ((prov = slepr.get("//" + xPath(props.prefix, dvbisld.e_ProviderOffering, ++p), props.schema)) != null) {
+		while ((prov = slepr.get("//" + xPath(props.prefix, dvbisld.e_ProviderOffering, ++p), props.schema) as XmlElement) != null) {
 			if (!prov.get(xPath(props.prefix, dvbisld.e_ServiceListOffering, 1), props.schema)) providersToRemove.push(prov);
 		}
 		providersToRemove.forEach((provider) => provider.remove());
@@ -335,7 +343,7 @@ export default class SLEPR {
 					let relatedMaterial,
 						rm = 0;
 					let discardRelatedMaterial : Array<XmlElement>  = [];
-					while ((relatedMaterial = serv.get(xPath(props.datatypes_prefix ? props.datatypes_prefix : props.prefix, dvbi.e_RelatedMaterial, ++rm), props.schema)) != null) {
+					while ((relatedMaterial = serv.get(xPath(props.datatypes_prefix ? props.datatypes_prefix : props.prefix, dvbi.e_RelatedMaterial, ++rm), props.schema) as XmlElement) != null) {
 						let mediaLocator,
 							ml = 0;
 						let discardLocators : Array<XmlElement> = [];

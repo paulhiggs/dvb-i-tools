@@ -4,14 +4,11 @@
  * Definitions and check related to CMCD
  *
  */
-
 import{ XmlElement } from "libxml2-wasm";
 
-import { isObjectEmpty } from "../phlib/phlib.ts";
-
 import { dvbi, CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_EVENT, dvbiEA } from "./DVB-I_definitions.mts";
-import { APPLICATION, WARNING } from "./error_list.mts";
 import ErrorList from "./error_list.mts";
+import { APPLICATION, WARNING } from "./error_list.mts";
 import { checkAttributes } from "./schema_checks.mts";
 import { isIn } from "./utils.mts";
 
@@ -177,7 +174,7 @@ function checkCMCDkeys(CMCD : XmlElement | null, errs : ErrorList, errCode : str
 
 	let unprovided_key = (report_type : string, key : string, subcode : string) => ({
 		code: `${errCode}${subcode}`,
-		message: `${report_type} mode report will include "${key}" - it is not specified here`,
+		message: `${report_type} mode report will include ${key.quote()} - it is not specified here`,
 		fragment: CMCD,
 		key: error_key,
 	});
@@ -191,7 +188,7 @@ function checkCMCDkeys(CMCD : XmlElement | null, errs : ErrorList, errCode : str
 	if (version >= 2) {
 		let missing_mandatory_key = (key) => ({
 			code: `${errCode}m`,
-			message: `key "${key}" is required in all reports since CMCDv2 and should be included`,
+			message: `key ${key.quote()} is required in all reports since CMCDv2 and should be included`,
 			fragment: CMCD,
 			key: error_key,
 			description: "All keys are OPTIONAL except for 'bs', 'su', and 'v' which are now required as of version 2.",

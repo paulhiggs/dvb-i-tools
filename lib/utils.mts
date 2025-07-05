@@ -2,16 +2,16 @@
  * utils.mts
  *
  * some useful utility functions that may be used by more than one class
+ * 
  */
+import chalk from "chalk";
+import { statSync, readFileSync } from "fs";
 import { XmlElement } from "libxml2-wasm";
 
 import { datatypeIs } from "../phlib/phlib.ts";
 
 import { Array_extension_init } from "./Array-extensions.mts";
 Array_extension_init();
-
-import { statSync, readFileSync } from "fs";
-import chalk from "chalk";
 
 
 /**
@@ -54,7 +54,7 @@ export let xPath = (SCHEMA_PREFIX : string, elementName : string, index : number
  *
  * @param {string} SCHEMA_PREFIX        Used when constructing Xpath queries
  * @param {Array<string>} elementNames  the name of the elements to be included in the XPath query
- * @returns {String} the XPath selector
+ * @returns {string} the XPath selector
  */
 export let xPathM = (SCHEMA_PREFIX : string, elementNames : Array<string>) : string =>
 	`${SCHEMA_PREFIX}:${elementNames.join(`/${SCHEMA_PREFIX}:`)}`;
@@ -182,7 +182,7 @@ export function DumpString(str : string) : string {
 	let t : Array<string> = [];
 	for (let i = 0; i < str.length; i++) 
 		t.push(str.charCodeAt(i).toString(16));
-	return `"${str}" --> ${t.join(" ")}`;
+	return `${str.quote()} --> ${t.join(" ")}`;
 }
 
 
@@ -197,7 +197,7 @@ export class parseISOduration2 {
 			this.parsed = duration.replace(this.durationRegex, function(_, sign, year, month, day, hour, minute, second, week) : any {
 				sign = sign ? -1 : 1;
 				// parse number for each unit
-				var units = [year, month, day, hour, minute, second, week].map(function (num) {
+				let units = [year, month, day, hour, minute, second, week].map(function (num) {
 					return parseInt(num, 10) * sign || 0;
 				});
 				return { year: units[0], month: units[1], week: units[6], day: units[2], hour: units[3], minute: units[4], second: units[5] };

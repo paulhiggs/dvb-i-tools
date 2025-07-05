@@ -6,8 +6,10 @@
  * @param {*} response
  * @returns
  */
+
+
 export default function handleErrors(response : Response) {
 	if (response && !response.ok) 
-		throw Error(`fetch() returned (${response.status}) "${response.statusText}"`);
+		throw Error(`fetch() returned (${response.status}) ${response.statusText.quote()}`);
 	return response;
 }

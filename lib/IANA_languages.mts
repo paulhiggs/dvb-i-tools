@@ -2,19 +2,20 @@
  * IANA_languages.mts
  *
  * Load and check language identifiers
+ * 
  */
-import { readFile, readFileSync } from "fs";
-
 import chalk from "chalk";
+import { readFile, readFileSync } from "fs";
 import fetchS from "sync-fetch";
 
 import { datatypeIs } from "../phlib/phlib.ts";
 
 import ErrorList from "./error_list.mts";
-import { tva } from "./TVA_definitions.mts";
 import handleErrors from "./fetch_err_handler.mts";
-import { isIn, isIni } from "./utils.mts";
 import { isHTTPURL, BCP47_Language_Tag } from "./pattern_checks.mts";
+import { tva } from "./TVA_definitions.mts";
+import { isIn, isIni } from "./utils.mts";
+
 
 type RedundantType = {
 	tag : string | null;
@@ -93,7 +94,6 @@ export default class IANAlanguages {
 	 *
 	 * @param {string} languageData the text of the language data
 	 */
-	/* private function */
 	private processLanguageData(languageData : string) {
 		/**
 		 * determines if provided language information relates to a sign language
@@ -167,9 +167,9 @@ export default class IANAlanguages {
 	 * load the languages list into the knownLanguages global array from the specified file
 	 * file is formatted according to www.iana.org/assignments/language-subtag-registry/language-subtag-registry
 	 *
-	 * @param {string}  languagesFile   the file name to load
-	 * @param {boolean} purge           erase the existing values before loading new
-	 * @param {boolean} async           use asynchronous loading (sync needed for command line execution)
+	 * @param {string} languagesFile  the file name to load
+	 * @param {boolean} purge         erase the existing values before loading new
+	 * @param {boolean} async         use asynchronous loading (sync needed for command line execution)
 	 */
 	private loadLanguagesFromFile(languagesFile : string, purge : boolean = false, async : boolean = true) {
 		console.log(chalk.yellow(`reading languages from ${languagesFile}`));
@@ -194,9 +194,9 @@ export default class IANAlanguages {
 	/**
 	 * load the languages list into the knownLanguages global array from the specified URL
 	 *
-	 * @param {string}  languagesURL   the URL to load
-	 * @param {boolean} purge          erase the existing values before loading new
-	 * @param {boolean} async          use asynchronous loading (sync needed for command line execution)
+	 * @param {string} languagesURL  the URL to load
+	 * @param {boolean} purge        erase the existing values before loading new
+	 * @param {boolean} async        use asynchronous loading (sync needed for command line execution)
 	 */
 	private loadLanguagesFromURL(languagesURL : string, purge : boolean = false, async : boolean = true) {
 		const isHTTPurl = isHTTPURL(languagesURL);
@@ -238,32 +238,32 @@ export default class IANAlanguages {
 	/**
 	 * determines if a language is known
 	 *
-	 * @param {string} value The value to check for existance
+	 * @param {string} language  The value to check for existance
 	 * @return {LanguageCheckResult} indicating the "known" state of the language
 	 */
-	isKnown(value? : string) : LanguageCheckResult {
-		if (value === null || value === undefined) return { resp: LanguageCheckResponse.languageNotSpecified };
+	isKnown(language? : string) : LanguageCheckResult {
+		if (language === null || language === undefined) return { resp: LanguageCheckResponse.languageNotSpecified };
 
-		if (datatypeIs(value, "string")) {
-			if (this.languageRanges.find((range) => range.start <= value && value <= range.end)) return { resp: LanguageCheckResponse.languageKnown };
+		if (datatypeIs(language, "string")) {
+			if (this.languageRanges.find((range) => range.start <= language && language <= range.end)) return { resp: LanguageCheckResponse.languageKnown };
 
-			const found = this.redundantLanguagesList.find((e) => e.tag &&  e.tag.toLowerCase() == value.toLowerCase());
+			const found = this.redundantLanguagesList.find((e) => e.tag &&  e.tag.toLowerCase() == language.toLowerCase());
 			if (found) {
 				let res : LanguageCheckResult = { resp: LanguageCheckResponse.languageRedundant, pref: null };
 				if (found?.preferred) res.pref = found.preferred;
 				return res;
 			}
 
-			if (value.indexOf("-") != -1) {
+			if (language.indexOf("-") != -1) {
 				let matches : boolean = true;
-				const parts = value.split("-");
+				const parts = language.split("-");
 				parts.forEach((part) => {
 					matches = matches && isIni(this.languagesList, part);
 				});
 				if (matches) return { resp: LanguageCheckResponse.languageKnown };
 			}
 
-			return { resp: isIni(this.languagesList, value) ? LanguageCheckResponse.languageKnown : LanguageCheckResponse.languageUnknown };
+			return { resp: isIni(this.languagesList, language) ? LanguageCheckResponse.languageKnown : LanguageCheckResponse.languageUnknown };
 		}
 		return { resp: LanguageCheckResponse.languageInvalidType };
 	}
@@ -271,15 +271,21 @@ export default class IANAlanguages {
 	/**
 	 * determines if a signing language is known
 	 *
-	 * @param {String} value The value to check for existance in the list of known signing languages
-	 * @return {integer} indicating the "known" state of the language
+	 * @param {string} language  The value to check for existance in the list of known signing languages
+	 * @return {LanguageCheckResponse} indicating the "known" state of the language
 	 */
-	checkSignLanguage(language) {
+	checkSignLanguage(language : string) : LanguageCheckResponse {
 		return this.signLanguagesList.find((lang) => lang.toLowerCase() === language) ? LanguageCheckResponse.languageKnown : LanguageCheckResponse.languageUnknown;
 	}
 
-	isKnownSignLanguage(value : string) : number {
-		const lcValue = value.toLowerCase();
+		/**
+	 * determines if the specified language is a signing language
+	 *
+	 * @param {string} language  The value to check 
+	 * @return {LanguageCheckResponse} indicating the "known" state of the language
+	 */
+	isKnownSignLanguage(language : string) : LanguageCheckResponse {
+		const lcValue = language.toLowerCase();
 		let res = this.checkSignLanguage(lcValue);
 		if (res === LanguageCheckResponse.languageUnknown) 
 			res = this.checkSignLanguage("sgn-" + lcValue);
@@ -289,16 +295,16 @@ export default class IANAlanguages {
 
 // return true is @lang is formatted according to BCP47 Language-Tag
 const BCP47langauetag_exp = new RegExp(`^${BCP47_Language_Tag}$`);
-export let isValidLangFormat = (lang : string ) : boolean => BCP47langauetag_exp.test(lang);
+export let isValidLangFormat = (language : string ) : boolean => BCP47langauetag_exp.test(language);
 
-export function ValidateLanguage(lang : string, errs : ErrorList, errCode : string, errLine : number) {
+export function ValidateLanguage(language : string, errs : ErrorList, errCode : string, errLine : number) {
 	// language format check
-	if (!isValidLangFormat(lang)) {
+	if (!isValidLangFormat(language)) {
 		errs.addError({
 			code: `${errCode}-11`,
 			key: "invalid lang format",
 			line: errLine,
-			message: `xml:${tva.a_lang} value ${lang.quote()} does not match format for Language-Tag in BCP47`,
+			message: `xml:${tva.a_lang} value ${language.quote()} does not match format for Language-Tag in BCP47`,
 		});
 	}
 }

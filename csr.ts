@@ -3,30 +3,26 @@
  *
  * An standalone runner for a service list entry point registry (SLEPR) that can be used as a Central Service List Registry (CSR)
  */
-import { join } from "path";
-import { createServer } from "https";
-import cluster from "cluster";
-import { cpus } from "os";
-import process from "process";
-
 import chalk from "chalk";
-import express from "express";
-import morgan, { token } from "morgan";
-import favicon from "serve-favicon";
+import cluster from "cluster";
 import commandLineArgs from "command-line-args";
 import commandLineUsage from "command-line-usage";
 import cors from "cors";
+import express from "express";
+import { Application } from "express";
+import morgan, { token } from "morgan";
+import { cpus } from "os";
+import { join } from "path";
+import process from "process";
+import favicon from "serve-favicon";
 
+import ClassificationScheme from "./lib/classification_scheme.mts";
 import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./lib/data_locations.mts";
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mts";
-import { readmyfileB } from "./lib/utils.mts";
-
+import { StartServers } from "./lib/http_servers.mts";
 import IANAlanguages from "./lib/IANA_languages.mts";
 import ISOcountries from "./lib/ISO_countries.mts";
-import ClassificationScheme from "./lib/classification_scheme.mts";
 
-const keyFilename = join(".", "selfsigned.key"),
-	certFilename = join(".", "selfsigned.crt");
 
 const numCPUs = cpus().length;
 
@@ -60,7 +56,7 @@ const optionDefinitions : Array<commandLineArgs.OptionDefinition> = [
 		type: String,
 		defaultValue: "library",
 		typeLabel: "{underline mode}",
-		description: `type of CORS habdling "${CORSlibrary}" (default), "${CORSmanual}" or "${CORSnone}"`,
+		description: `type of CORS habdling ${CORSlibrary.quote()} (default), ${CORSmanual.quote()} or ${CORSnone.quote()}`,
 	},
 	{ name: "help", alias: "h", type: Boolean, defaultValue: false, description: "This help" },
 ];
@@ -110,7 +106,7 @@ try {
 }
 
 if (!CORSoptions.includes(options.CORSmode)) {
-	console.log(chalk.red(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`));
+	console.log(chalk.red(`CORSmode must be ${CORSnone.quote()}, ${CORSlibrary.quote()}" to use the Express cors() handler, or ${CORSmanual.quote()} to have headers inserted manually`));
 	process.exit(1);
 }
 
@@ -163,10 +159,9 @@ if (cluster.isPrimary) {
 			switch (msg.topic) {
 				case RELOAD:
 					metrics.reloadRequests++;
-					for (const id in cluster.workers) {
-						// Here we notify each worker of the updated value
-						cluster.workers[id].send({ topic: UPDATE });
-					}
+					if (cluster.workers) // Here we notify each worker of the updated value
+						for (const id in cluster.workers)
+							cluster.workers[id].send({ topic: UPDATE });
 					break;
 				case INCR_REQUESTS:
 					metrics.numRequests++;
@@ -183,7 +178,7 @@ if (cluster.isPrimary) {
 			}
 	});
 } else {
-	let app = express();
+	const app : Application = express();
 	app.use(cors());
 	token("pid", () => {
 		return `${process.pid}`;
@@ -256,29 +251,10 @@ if (cluster.isPrimary) {
 					break;
 			}
 	});
-	// start the HTTP server
-	let http_server = app.listen(options.port, (error) => {
-		if (error) {
-			throw error;
-		}
-		if (http_server.address()?.port) console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}`));
-		else console.log(chalk.red(`HTTP port ${options.port} already in use -- HTTP server not started`));
-	});
-	// start the HTTPS server
-	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
-	let https_options : any= {
-		key: readmyfileB(keyFilename),
-		cert: readmyfileB(certFilename),
-	};
-	if (https_options.key && https_options.cert) {
-		if (options.sport == options.port) options.sport = options.port + 1;
 
-		let https_server = createServer(https_options, app);
-		https_server.listen(options.sport, (error) => {
-			if (error) {
-				throw error;
-			}
-			console.log(chalk.cyan(`HTTPS listening on port number ${https_server.address().port}, PID=${process.pid}`));
-		});
+
+	if (!StartServers(app, options)){
+		console.log(chalk.red("No listeners - exiting!!"));
+		process.exit(1);
 	}
 }

@@ -2,23 +2,24 @@
  * related_material_checks.mts
  *
  * Checks performed in <RelatedMaterial> elements for based on their use in DVB-I
+ * 
  */
 import {XmlElement } from "libxml2-wasm";
 
 import { Array_extension_init } from "./Array-extensions.mts";
 Array_extension_init();
 
-import { mpeg7 } from "./MPEG7_definitions.mts";
-import { tva, tvaEA, tvaEC } from "./TVA_definitions.mts";
-import { dvbi, dvbiEA } from "./DVB-I_definitions.mts";
-
-import { APPLICATION, WARNING } from "./error_list.mts";
-import ErrorList from "./error_list.mts";
-import { checkLanguage } from "./multilingual_element.mts";
-import { checkAttributes, checkTopElementsAndCardinality } from "./schema_checks.mts";
-import { isJPEGmime, isPNGmime, validImageSet, isAllowedImageMime } from "./MIME_checks.mts";
-import { isHTTPURL } from "./pattern_checks.mts";
 import { cg_InvalidHrefValue, InvalidURL, keys } from "./common_errors.mts";
+import { dvbi, dvbiEA } from "./DVB-I_definitions.mts";
+import ErrorList from "./error_list.mts";
+import { APPLICATION, WARNING } from "./error_list.mts";
+import { isJPEGmime, isPNGmime, validImageSet, isAllowedImageMime } from "./MIME_checks.mts";
+import { mpeg7 } from "./MPEG7_definitions.mts";
+import { checkLanguage } from "./multilingual_element.mts";
+import { isHTTPURL } from "./pattern_checks.mts";
+import { checkAttributes, checkTopElementsAndCardinality } from "./schema_checks.mts";
+import { tva, tvaEA, tvaEC } from "./TVA_definitions.mts";
+
 
 /**
  * verifies if the specified RelatedMaterial contains a image of the specified type(s). Only a single image is permitted and the format

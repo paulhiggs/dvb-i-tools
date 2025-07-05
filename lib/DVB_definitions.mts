@@ -1,5 +1,5 @@
 /**
- * DVB_definitions.ts
+ * DVB_definitions.mts
  * 
  * Some definitions from other (non DVB-I) specifications
  *  
@@ -8,7 +8,10 @@
  * (DVB-S) ETSI EN 300 421 - https://www.etsi.org/deliver/etsi_en/300400_300499/300421/
  * (DVB-S2) ETSI EN 303 307-1 - https://www.etsi.org/deliver/etsi_en/302300_302399/30230701/
  * (DVB-S2x) ETSI EN 303 307-2 - https://www.etsi.org/deliver/etsi_en/302300_302399/30230702/
+ * 
  */
+
+
 export const dvb = {
 	a_termID: "termID",
 	a_uri: "uri",
@@ -25,7 +28,6 @@ const _S_FEC : Array<string> = ["1/2", "2/3", "3/4", "5/6", "7/8"];
 
 // ETSI EN 300 421 clause 4.5
 const _S_Modulation : Array<string> = ["QPSK"]; 
-
 
 // ETSI EN 300 468 table 39
 const _S2_RollOff : Array<string> = ["0.25", "0.20"].concat(_S_RollOff);

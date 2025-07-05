@@ -1,14 +1,16 @@
 /**
  * common_errors.mts
  *
- * error templates used by different validatirs
+ * error templates used by different validators
+ * 
  */
 import { XmlElement, XmlAttribute } from "libxml2-wasm";
 
-import { tva } from "./TVA_definitions.mts";
 import { dvbi } from "./DVB-I_definitions.mts";
 import { WARNING } from "./error_list.mts";
 import type { ErrorArgs } from "./error_list.mts";
+import { tva } from "./TVA_definitions.mts";
+
 
 export const keys = {
 	k_InvalidHRef: "invalid href",
@@ -32,7 +34,7 @@ export const keys = {
 };
 
 /**
- * Add an error message when the a required element is not present
+ * An error message when the a required element is not present
  *
  * @param {string} missingElement         Name of the missing element
  * @param {XmlElement} parentElement      The element which should contain the missingElement
@@ -46,12 +48,12 @@ export let NoChildElement = (missingElement : string, parentElement : XmlElement
 });
 
 /**
- * Add an error message when the @href contains an invalid value
+ * An error message when the @href contains an invalid value
  *
- * @param {string}     value     The invalid value for the href attribute
- * @param {XmlElement} element   The element containing the @href attribute
- * @param {string}     loc       The location of the element
- * @param {string}     errCode   The error number to show in the log
+ * @param {string}     value    The invalid value for the href attribute
+ * @param {XmlElement} element  The element containing the @href attribute
+ * @param {string}     loc      The location of the element
+ * @param {string}     errCode  The error number to show in the log
  */
 export let cg_InvalidHrefValue = (value : string, element : XmlElement, loc : string, errCode : string) : ErrorArgs => ({
 	code: errCode,
@@ -72,7 +74,7 @@ export let InvalidURL = (value : string, element, src : string, errCode : string
 	code: errCode,
 	fragment: element,
 	line: element.line,
-	message: `invalid URL "${value}" specified for ${src.elementize()}`,
+	message: `invalid URL ${value.quote()} specified for ${src.elementize()}`,
 	key: keys.k_InvalidURL,
 });
 

@@ -2,16 +2,17 @@
  * role.mts
  *
  * Manages Classification Scheme checking based in a flat list of roles
+ * 
  */
 import chalk from "chalk";
 import { readFile, readFileSync } from "fs";
 import fetchS from "sync-fetch";
 
+import ClassificationScheme from "./classification_scheme.mts";
+import type { CSLoaderOptions } from "./classification_scheme.mts";
 import handleErrors from "./fetch_err_handler.mts";
 import { isHTTPURL } from "./pattern_checks.mts";
 
-import ClassificationScheme from "./classification_scheme.mts";
-import type { CSLoaderOptions } from "./classification_scheme.mts";
 
 export default class Role extends ClassificationScheme {
 	constructor() {

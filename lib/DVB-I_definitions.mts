@@ -1,9 +1,11 @@
 /**
- * DVB-I_defintions.ts
+ * DVB-I_defintions.mts
  *
  * Defintions made in DVB A177 Bluebooks
+ * 
  */
 import { tva, tvaEA, tvaEC, TVA_CSmetadata } from "./TVA_definitions.mts";
+
 
 const DVB_metadata : string = "urn:dvb:metadata";
 const DVB_CSmetadata : string = `${DVB_metadata}:cs`,

@@ -2,11 +2,13 @@
  * Array-extensions.mts
  *
  * Additional useful functions when processing arrays
+ * 
  */
 
 import { XmlElement } from "libxml2-wasm";
 
-type XmlElementArrayIteratorFunction = (XmlElement) => void;
+
+type XmlElementArrayIteratorFunction = (XmlElement, number, any) => void;
 
 declare global {
 	interface Array<T> {
@@ -90,8 +92,8 @@ declare global {
 /**
  * Iterate over the array invoking the callback if the array item is an XmlElement with the specified name
  *
- * @param {String or Array}   elementName  the name(s) of the element that we want the callback to be invoked for
- * @param {function} callback     function to be invoked - same approach as Array.forEach()
+ * @param {string | Array<string>} elementName  the name(s) of the element that we want the callback to be invoked for
+ * @param {function} callback                   function to be invoked - same approach as Array.forEach()
  */
 if (!Array.prototype.forEachNamedSubElement) {
 	Array.prototype.forEachNamedSubElement = function (elementName: Array<string> | string, callback : XmlElementArrayIteratorFunction, thisArg = null) {

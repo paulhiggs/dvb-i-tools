@@ -1,9 +1,11 @@
 /**
- * error_list.ts
+ * error_list.mts
  *
  * Manages errors and warnings for the application
+ * 
  */
 import { XmlElement } from "libxml2-wasm";
+
 
 export const ERROR : string = "(E)",
 	DEBUG : string = "(D)",
@@ -297,9 +299,9 @@ export default class ErrorList {
 	/**
 	 * built up descriptive information on the errors found in the analysis
 	 *
-	 * @param {String}  e.code         Error code, should be the same as @e.code passed to addError
-	 * @param {String}  e.description  A long form description of the stated error code
-	 * @param {String}  e.clause      (optional) the specification clause/section that is violated (only used with @e.description is provided)
+	 * @param {string}  e.code         Error code, should be the same as @e.code passed to addError
+	 * @param {string}  e.description  A long form description of the stated error code
+	 * @param {string}  e.clause      (optional) the specification clause/section that is violated (only used with @e.description is provided)
 	 */
 	errorDescription(e : ErrorDescription) {
 		if (!e.code || !e.description) return;

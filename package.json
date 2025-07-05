@@ -45,11 +45,13 @@
 		"@types/express-fileupload": "^1.5.1",
 		"@types/express-session": "^1.18.2",
 		"@types/morgan": "^1.9.10",
-		"@types/node": "^24.0.7",
+		"@types/node": "^24.0.10",
 		"@types/serve-favicon": "^2.5.7",
 		"@types/sync-fetch": "^0.4.3",
-		"eslint": "^9.28.0",
+		"eslint": "^9.30.1",
 		"globals": "^16.2.0",
-		"prettier": "^3.5.3"
+		"prettier": "^3.6.2",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.8.3"
 	}
 }
