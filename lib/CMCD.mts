@@ -186,7 +186,7 @@ function checkCMCDkeys(CMCD : XmlElement | null, errs : ErrorList, errCode : str
 		if (!isIn(keys, CMCD_keys.timestamp)) errs.addError(unprovided_key("event", CMCD_keys.timestamp, 'g'));
 	}
 	if (version >= 2) {
-		let missing_mandatory_key = (key) => ({
+		let missing_mandatory_key = (key : string) => ({
 			code: `${errCode}m`,
 			message: `key ${key.quote()} is required in all reports since CMCDv2 and should be included`,
 			fragment: CMCD,

@@ -8,7 +8,7 @@
 import { XmlElement } from "libxml2-wasm";
 
 
-type XmlElementArrayIteratorFunction = (XmlElement, number, any) => void;
+type XmlElementArrayIteratorFunction = (e : XmlElement, i: number, t : any) => void;
 
 declare global {
 	interface Array<T> {
@@ -143,7 +143,8 @@ if (!Array.prototype.forEachNamedSubElement) {
 
 				// ii. Call the Call internal method of callback with T as
 				// the this value and argument list containing kValue, k, and O.
-				if (kValue instanceof XmlElement && (Array.isArray(elementName) ? elementName.includes[kValue.name] : kValue.name == elementName)) callback.call(T, kValue, k, O);
+				if (kValue instanceof XmlElement && (Array.isArray(elementName) ? elementName.includes[kValue.name] : kValue.name == elementName)) 
+					callback.call(T, kValue, k, O);
 			}
 			// d. Increase k by 1.
 			k++;

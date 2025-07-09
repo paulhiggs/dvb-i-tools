@@ -14,6 +14,8 @@ import process from "process";
 import favicon from "serve-favicon";
 import fetchS from "sync-fetch";
 
+import type { TypedRequestBody }  from "./index.d.ts";
+
 import { Libxml2_wasm_init } from "../libxml2-wasm-extensions.mts";
 Libxml2_wasm_init();
 
@@ -74,7 +76,7 @@ declare module "express-session" {
 
 let csr : SLEPR | null = null;
 
-function DVB_I_check(req : Express.Request, res : Express.Response, slcheck : ServiceListCheck | null, cgcheck : ContentGuideCheck | null, hasSL : boolean, hasCG : boolean, motd : string, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
+function DVB_I_check(req : TypedRequestBody, res : Express.Response, slcheck : ServiceListCheck | null, cgcheck : ContentGuideCheck | null, hasSL : boolean, hasCG : boolean, motd : string, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
 	if (!req.session.data) {
 		// setup defaults
 		req.session.data = {};
@@ -97,8 +99,8 @@ function DVB_I_check(req : Express.Request, res : Express.Response, slcheck : Se
 		let VVxml : string | null = null;
 		req.parseErr = undefined;
 
-		if (req.body.testtype == MODE_CG && req.body.requestType.length == 0) req.parseErr = "request type not specified";
-		else if (req.body.doclocation == MODE_URL && req.body.XMLurl.length == 0) req.parseErr = "URL not specified";
+		if (req.body.testtype == MODE_CG && req.body.requestType?.length == 0) req.parseErr = "request type not specified";
+		else if (req.body.doclocation == MODE_URL && req.body.XMLurl?.length == 0) req.parseErr = "URL not specified";
 		else if (req.body.doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) req.parseErr = "File not provided";
 
 		const log_prefix = createPrefix(req);
@@ -166,7 +168,7 @@ function DVB_I_check(req : Express.Request, res : Express.Response, slcheck : Se
  * @param {string} motd               HTML text for the Message Of The Day
  * @param {boolean} jsonResponse      Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateServiceList(req : Express.Request, res : Express.Response, slcheck, motd, jsonResponse) {
+function validateServiceList(req : Express.Request, res : Express.Response, slcheck :ServiceListCheck, motd : string,  jsonResponse : boolean) {
 	let errs = new ErrorList();
 	let resp,
 		VVxml = null;

@@ -50,6 +50,11 @@ function GetChild(element : XmlElement, childName : string, index : number) : Xm
 	return rc;
 }
 
+export interface SLEPRRequestBody extends Express.Request {
+	parseErr? : Array<string>,
+	query? : any,
+}
+
 export default class SLEPR {
 	numRequests : number;
 	knownLanguages : IANAlanguages;
@@ -125,17 +130,18 @@ export default class SLEPR {
 			});
 	}
 
-	private checkQuery(req : Express.Request, params : {}) {
+	private checkQuery(req : SLEPRRequestBody, params : any) {
 		req.parseErr = [];
 		if (req.query) {
-			let checkIt = (argument, argName, checkFunction) => {
+
+			let checkIt = (argument : string | Array<string> | any, argName, checkFunction) => {
 				if (argument)
 					switch (datatypeIs(argument)) {
 						case "string":
 							if (!checkFunction(argument)) req.parseErr.push(`invalid ${argName} [${argument}]`);
 							break;
 						case "array":
-							argument.forEach((item) => {
+							argument.forEach((item : string) => {
 								if (!checkFunction(item, false)) req.parseErr.push(`invalid ${argName} [${item}]`);
 							});
 							break;
@@ -145,7 +151,7 @@ export default class SLEPR {
 					}
 			};
 
-			let update = (obj, key, value) => {
+			let update = (obj : any, key : string, value : any) => {
 				if (!Object.prototype.hasOwnProperty.call(obj, key)) obj[key] = [];
 				switch (datatypeIs(value)) {
 					case "string":
@@ -164,28 +170,29 @@ export default class SLEPR {
 					update(params, target_key, req.query[key]);
 				} else req.parseErr.push(`invalid argument - ${key}`);
 			}
-			let checkBoolean = (bool) => ["true", "false"].includes(bool);
+			let checkBoolean = (bool : string) => ["true", "false"].includes(bool);
 			checkIt(params.regulatorListFlag, dvbisld.a_regulatorListFlag, checkBoolean);
 
 			//TargetCountry(s)
-			let checkTargetCountry = (country) => this.knownCountries.isISO3166code(country, false);
+			let checkTargetCountry = (country : string) => this.knownCountries.isISO3166code(country, false);
 			checkIt(params.TargetCountry, dvbi.e_TargetCountry, checkTargetCountry);
 
 			//Language(s)
-			let checkLanguage = (language) => isTVAAudioLanguageType(language, false);
+			let checkLanguage = (language : string) => isTVAAudioLanguageType(language, false);
 			checkIt(params.Language, dvbi.e_Language, checkLanguage);
 
 			//DeliverySystems(s)
-			let checkDelivery = (system) => [DVB_DASH_DELIVERY, DVB_T_DELIVERY, DVB_S_DELIVERY, DVB_C_DELIVERY, DVB_IPTV_DELIVERY, DVB_APPLICATION_DELIVERY].includes(system);
+			let checkDelivery = (system : string) => [DVB_DASH_DELIVERY, DVB_T_DELIVERY, DVB_S_DELIVERY, DVB_C_DELIVERY, DVB_IPTV_DELIVERY, DVB_APPLICATION_DELIVERY].includes(system);
 			checkIt(params.Delivery, dvbi.e_Delivery, checkDelivery);
 
 			// Genre(s)
-			let checkGenre = (genre) => this.knownGenres.isIn(genre);
+			let checkGenre = (genre : string) => this.knownGenres.isIn(genre);
 			checkIt(params.Genre, dvbi.e_Genre, checkGenre);
 
 			checkIt(params.inlineImages, dvbisld.q_inlineImages, checkBoolean);
 
-			if (params.inlineImages && !datatypeIs(params.inlineImages, "string")) req.parseErr.push(`invalid type for ${dvbisld.q_inlineImages} [${typeof req.query.inlineImages}]`);
+			if (params.inlineImages && !datatypeIs(params.inlineImages, "string")) 
+				req.parseErr.push(`invalid type for ${dvbisld.q_inlineImages} [${typeof req.query.inlineImages}]`);
 
 			/* value space of this argument is not checked
 			//Provider Name(s)
@@ -196,7 +203,7 @@ export default class SLEPR {
 		return req.parseErr.length == 0;
 	}
 
-	/* public */ processServiceListRequest(req, res) {
+	/* public */ processServiceListRequest(req : SLEPRRequestBody, res : Express.Response) {
 		this.numRequests++;
 		if (Object.prototype.hasOwnProperty.call(req?.query, "queryCapabilities")) {
 			res.type("text/plain");

@@ -226,7 +226,7 @@ export function SchemaVersionCheck(props : DocumentProperties, document : XmlDoc
 		errs.addError(err1);
 	}
 	if (publication_state & SpecificationState.DRAFT) {
-		let err2 : ErrorArgs= { type: WARNING, code: `${errCode}b`, message: "schema is in draft state", key: "schema version" };
+		let err2 : ErrorArgs = { type: WARNING, code: `${errCode}b`, message: "schema is in draft state", key: "schema version" };
 		if (ServiceList) err2.line = ServiceList.line;
 		errs.addError(err2);
 	}

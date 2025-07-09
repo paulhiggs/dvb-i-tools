@@ -114,7 +114,7 @@ if (!XmlElement.prototype.prettyPrint) {
 			let leaf = true,
 				kid = _this.firstChild;
 			while (leaf && kid) {
-				if (kid instanceof XmlText) leaf = false;
+				if (kid instanceof XmlElement) leaf = false;
 				kid = kid.next;
 			}
 			return leaf;
@@ -127,13 +127,13 @@ if (!XmlElement.prototype.prettyPrint) {
 		if (isLeafElement(this)) 
 			t += this.content.length ? `>${this.content}</${qualifyName(this)}>` : "/>";
 		else t += this.firstChild ? ">" : "/>";
-		let child = this.firstChild;
+		let child = this.firstChild as XmlElement;
 		while (child) {
 			if (child instanceof XmlComment) 
 				t += `\n${indent}<!--${child.content}-->`;
 			else if (isStructureElement(child)) 
 				t += "\n" + child.prettyPrint(indent + "  ");
-			child = child.next;
+			child = child.next as XmlElement;
 		}
 		t += !isLeafElement(this) ? `\n${indent}</${qualifyName(this)}>` : "";
 

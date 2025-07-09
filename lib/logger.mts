@@ -10,6 +10,8 @@ import fileupload from "express-fileupload";
 import { existsSync, writeFile } from "fs";
 import { join, sep } from "path";
 
+import type { TypedRequestBody }  from "./index.d.ts"; 
+
 import ErrorList from "./error_list.mts";
 import type { XMLline } from "./error_list.mts";
 import { MODE_URL, MODE_SL } from "./UI.mts";
@@ -21,7 +23,7 @@ declare module "express" {
 	}
 }
 
-export function createPrefix(req : Express.Request) : string | null {
+export function createPrefix(req : TypedRequestBody) : string | null {
 	const logDir = join(".", "arch");
 
 	if (!existsSync(logDir)) return null;
@@ -32,7 +34,7 @@ export function createPrefix(req : Express.Request) : string | null {
 	};
 
 	const xmlFileName = req?.files?.XMLfile?.name ? req.files.XMLfile.name: "";
-	const fname : string | null = req.body.doclocation == MODE_URL ? req.body.XMLurl.substr(req.body.XMLurl.lastIndexOf("/") + 1) : xmlFileName;
+	const fname = (req.body.doclocation == MODE_URL) ? req.body.XMLurl?.substring(req.body.XMLurl.lastIndexOf("/") + 1) : xmlFileName;
 	if (!fname) return null;
 
 	return `${logDir}${sep}${getDate(new Date())} (${req.body.testtype == MODE_SL ? "SL" : req.body.requestType}) ${fname.replace(/[/\\?%*:|"<>]/g, "-")}`;

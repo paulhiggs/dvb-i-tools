@@ -203,26 +203,26 @@ export function drawForm(req : Express.Request, res : Express.Response, modes : 
 	<form method="post" encType="multipart/form-data">
 		${
 			modes.hasSL
-				? `<input id="radSL" type="radio" name="testtype" value=${modes.sl.quote('"')} ${req.session.data.mode == modes.sl ? "checked" : ""} onclick="redrawForm()">Service List</input>`
+				? `<input id="radSL" type="radio" name="testtype" value=${modes.sl.quote('"')} ${req?.session?.data?.mode == modes.sl ? "checked" : ""} onclick="redrawForm()">Service List</input>`
 				: ""
 		}
 		${
 			modes.hasCG
-				? `<input id="radCG" type="radio" name="testtype" value=${modes.cg.quote('"')}${req.session.data.mode == modes.cg ? "checked" : ""} onclick="redrawForm()">Content Guide</input>`
+				? `<input id="radCG" type="radio" name="testtype" value=${modes.cg.quote('"')}${req?.session?.data?.mode == modes.cg ? "checked" : ""} onclick="redrawForm()">Content Guide</input>`
 				: ""
 		}
 		<br><br>
-		<input id="radURL" type="radio" name="doclocation" value=${modes.url.quote('"')} ${req.session.data.entry == modes.url ? "checked" : ""} onclick="redrawForm()">URL</input>
-		<input id="radFile" type="radio" name="doclocation" value=${modes.file.quote('"')} ${req.session.data.entry == modes.file ? "checked" : ""} onclick="redrawForm()">File</input>
+		<input id="radURL" type="radio" name="doclocation" value=${modes.url.quote('"')} ${req?.session?.data?.entry == modes.url ? "checked" : ""} onclick="redrawForm()">URL</input>
+		<input id="radFile" type="radio" name="doclocation" value=${modes.file.quote('"')} ${req?.session?.data?.entry == modes.file ? "checked" : ""} onclick="redrawForm()">File</input>
 		${LINE}
-		<div id="entryURL" ${req.session.data.entry == modes.url ? "" : "hidden"}><p><i>URL:</i><input type="url" name="XMLurl" value=${req.session.data.url ? req.session.data.url.quote('"') : "".quote('"')}></p></div>
-		<div id="entryFile" ${req.session.data.entry == modes.file ? "" : "hidden"}><p><i>FILE:</i><input type="file" name="XMLfile" value=""></p></div>
-		<div id="entryCGtype" ${req.session.data.mode == modes.cg ? "" : "hidden"}><p>Query type:</p>`);
+		<div id="entryURL" ${req?.session?.data?.entry == modes.url ? "" : "hidden"}><p><i>URL:</i><input type="url" name="XMLurl" value=${req?.session?.data?.url ? req.session.data.url.quote('"') : "".quote('"')}></p></div>
+		<div id="entryFile" ${req?.session?.data?.entry == modes.file ? "" : "hidden"}><p><i>FILE:</i><input type="file" name="XMLfile" value=""></p></div>
+		<div id="entryCGtype" ${req?.session?.data?.mode == modes.cg ? "" : "hidden"}><p>Query type:</p>`);
 
 	if (modes.supportedRequests)
 		modes?.supportedRequests?.forEach((choice) => {
 			res.write(
-				`<input type="radio" name=${ENTRY_FORM_REQUEST_TYPE_ID.quote('"')} value=${choice.value.quote('"')} ${choice.value == req.session.data.cgmode ? "checked" : ""}>${choice.label}</input>`
+				`<input type="radio" name=${ENTRY_FORM_REQUEST_TYPE_ID.quote('"')} value=${choice.value.quote('"')} ${choice.value == req?.session?.data?.cgmode ? "checked" : ""}>${choice.label}</input>`
 			);
 		});
 	res.write(`</div>
