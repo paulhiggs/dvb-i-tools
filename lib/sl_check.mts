@@ -369,7 +369,7 @@ export default class ServiceListCheck {
 		// <Region><Postcode>
 		let pc = 0,
 			Postcode;
-		while ((Postcode = Region.get(xPath(props.prefix, dvbi.e_Postcode, ++pc), props.schema)) != null)
+		while ((Postcode = Region.get(xPath(props.prefix, dvbi.e_Postcode, ++pc), props.schema) as XmlElement) != null)
 			if (!isPostcode(Postcode.content))
 				errs.addError({
 					code: "AR051",
@@ -380,7 +380,7 @@ export default class ServiceListCheck {
 
 		let rc = 0,
 			RegionChild;
-		while ((RegionChild = Region.get(xPath(props.prefix, dvbi.e_Region, ++rc), props.schema)) != null)
+		while ((RegionChild = Region.get(xPath(props.prefix, dvbi.e_Region, ++rc), props.schema) as XmlElement) != null)
 			this.addRegion(props, RegionChild, depth + 1, knownRegionIDs, countriesSpecified, errs);
 	}
 
@@ -651,7 +651,7 @@ export default class ServiceListCheck {
 			let i = 0,
 				elem;
 			while ((elem = node.get(xPath(props.prefix, tva.e_RelatedMaterial, ++i), props.schema)) != null) {
-				let hr = elem.get(xPath(props.prefix, tva.e_HowRelated), props.schema);
+				let hr = elem.get(xPath(props.prefix, tva.e_HowRelated), props.schema) as XmlElement;
 				if (hr && this.validServiceApplication(hr, SchemaVersion(props.namespace))) 
 					return true;
 			}
@@ -711,7 +711,7 @@ export default class ServiceListCheck {
 
 		let rm = 0,
 			RelatedMaterial;
-		while ((RelatedMaterial = source.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null)
+		while ((RelatedMaterial = source.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema) as XmlElement) != null)
 			this.validateRelatedMaterial(props, RelatedMaterial, loc, CONTENT_GUIDE_RM, errs, `${errCode}-3`);
 
 		// ContentGuideSourceType::ScheduleInfoEndpoint - should be a URL
@@ -799,8 +799,8 @@ export default class ServiceListCheck {
 			longLangs : Array<string> = [],
 			extendedLangs : Array<string> = [];
 		const ERROR_KEY = "synopsis";
-		while ((ste = Element.get(xPath(props.prefix, ElementName, ++s), props.schema)) != null) {
-			const synopsisLang : string = this.GetLanguage(ste as XmlElement, parentLanguage, false, errs, `${errCode}-2`);
+		while ((ste = Element.get(xPath(props.prefix, ElementName, ++s), props.schema) as XmlElement) != null) {
+			const synopsisLang : string = this.GetLanguage(ste, parentLanguage, false, errs, `${errCode}-2`);
 			const synopsisLength : string = ste.attrAnyNsValueOr(tva.a_length, "");
 
 			if (synopsisLength != "") {
@@ -1272,17 +1272,19 @@ export default class ServiceListCheck {
 
 			// Check ContentAttributes/CaptionLanguage
 			cp = 0;
-			while ((conf = ContentAttributes.get(xPath(props.prefix, tva.e_CaptionLanguage, ++cp), props.schema)) != null) checkLanguage(conf.content, conf, errs, "SI101");
+			while ((conf = ContentAttributes.get(xPath(props.prefix, tva.e_CaptionLanguage, ++cp), props.schema) as XmlElement) != null) 
+				checkLanguage(conf.content, conf, errs, "SI101");
 
 			// Check ContentAttributes/SignLanguage
 			cp = 0;
-			while ((conf = ContentAttributes.get(xPath(props.prefix, tva.e_SignLanguage, ++cp), props.schema)) != null) checkLanguage(conf.content, conf, errs, "SI111");
+			while ((conf = ContentAttributes.get(xPath(props.prefix, tva.e_SignLanguage, ++cp), props.schema) as XmlElement) != null) 
+				checkLanguage(conf.content, conf, errs, "SI111");
 
 			// Check ContentAttributes/AccessibilityAttributes
-			const aa = ContentAttributes.get(xPath(props.prefix, tva.e_AccessibilityAttributes), props.schema);
+			const aa = ContentAttributes.get(xPath(props.prefix, tva.e_AccessibilityAttributes), props.schema) as XmlElement;
 			if (aa) {
 				CheckAccessibilityAttributes(
-					aa as XmlElement,
+					aa,
 					{
 						AccessibilityPurposeCS: this.accessibilityPurposes,
 						VideoCodecCS: this.allowedVideoSchemes,

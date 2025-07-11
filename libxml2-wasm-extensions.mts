@@ -5,7 +5,8 @@
  * with the formerly used libxmljs2 (https://github.com/marudor/libxmljs2)
  */
 import chalk from "chalk";
-import { XmlDocument, XmlElement, XmlText, XmlComment, XmlAttribute } from "libxml2-wasm";
+import { XmlDocument, XmlElement, XmlComment, XmlAttribute } from "libxml2-wasm";
+import type { NamespaceMap } from "libxml2-wasm";
 
 console.log(chalk.yellow.underline("initialize extensions"));
 
@@ -142,7 +143,7 @@ if (!XmlElement.prototype.prettyPrint) {
 }
 
 export type DocumentProperties = {
-	schema;
+	schema : NamespaceMap;
 	namespace : string;
 	prefix : string;
 	datatypes_prefix? : string;

@@ -48,7 +48,7 @@ const allAppChildren = [tva.e_Purpose].concat(BaseAccessibilityAttributesType);
 
 
 
-export default function CheckAccessibilityAttributes(AccessibilityAttributes : XmlElement, cs, errs : ErrorList, errCode : string) {
+export default function CheckAccessibilityAttributes(AccessibilityAttributes : XmlElement, cs : any, errs : ErrorList, errCode : string) {
 	const ACCESSIBILITY_CHECK_KEY = "accessibility attributes";
 
 	if (!AccessibilityAttributes) {
@@ -137,7 +137,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 		return true; // AppInformation element is present
 	};
 
-	let checkCS = (elem : XmlElement, childName : Array<string> | string, cs, errNum : number, storage? : Array<string>) => {
+	let checkCS = (elem : XmlElement, childName : Array<string> | string, cs : any, errNum : number, storage? : Array<string>) => {
 		let rc = true;
 		elem?.childNodes().forEachNamedSubElement(childName, (child : XmlElement) => {
 			let href = child.attrAnyNsValueOr(tva.a_href, null);
