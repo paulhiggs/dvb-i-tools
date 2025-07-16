@@ -36,41 +36,41 @@ export const keys = {
 /**
  * An error message when the a required element is not present
  *
- * @param {string} missingElement         Name of the missing element
- * @param {XmlElement} parentElement      The element which should contain the missingElement
- * @param {string | null} schemaLocation  The location in the schema of the element
- * @param {string} errCode                The error number to show in the log
+ * @param {string} errCode             The error number to show in the log
+ * @param {string} missingElement      Name of the missing element
+ * @param {XmlElement} parentElement   The element which should contain the missingElement
+ * @param {string} [schemaLocation]     The location in the schema of the element
  */
-export let NoChildElement = (missingElement : string, parentElement : XmlElement, schemaLocation : string | null, errCode : string ) : ErrorArgs => ({
+export let NoChildElement = (errCode : string, missingElement : string, parentElement : XmlElement, schemaLocation? : string) : ErrorArgs => ({
 	code: errCode,
-	message: `${missingElement} element not specified for ${parentElement.name.elementize()}${schemaLocation ? " in " + schemaLocation : ""}`,
+	message: `${missingElement} element not specified for ${parentElement.name.elementize()}${schemaLocation ? ` in ${schemaLocation}` : ""}`,
 	line: parentElement.line,
 });
 
 /**
  * An error message when the @href contains an invalid value
  *
- * @param {string}     value    The invalid value for the href attribute
- * @param {XmlElement} element  The element containing the @href attribute
- * @param {string}     loc      The location of the element
- * @param {string}     errCode  The error number to show in the log
+ * @param {string}     errCode   The error number to show in the log
+ * @param {string}     value     The invalid value for the href attribute
+ * @param {XmlElement} element   The element containing the @href attribute
+ * @param {string}     location  The location of the element
  */
-export let cg_InvalidHrefValue = (value : string, element : XmlElement, loc : string, errCode : string) : ErrorArgs => ({
+export let cg_InvalidHrefValue = (errCode : string, value : string, element : XmlElement, location : string) : ErrorArgs => ({
 	code: errCode,
-	message: `invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${element.name.elementize()} in ${loc}`,
+	message: `invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${element.name.elementize()} in ${location}`,
 	line: element.line,
 	key: keys.k_InvalidHRef,
 });
 
-export let sl_InvalidHrefValue = (value : string, element : XmlElement, src : string, loc : string, errCode : string) : ErrorArgs => ({
+export let sl_InvalidHrefValue = (errCode : string, value : string, element : XmlElement, sourceElemName : string, location : string) : ErrorArgs => ({
 	code: errCode,
 	fragment: element,
 	line: element.line,
-	message: `invalid ${dvbi.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`,
+	message: `invalid ${dvbi.a_href.attribute()}=${value.quote()} specified for ${sourceElemName} in ${location}`,
 	key: keys.k_InvalidHRef,
 });
 
-export let InvalidURL = (value : string, element, src : string, errCode : string) : ErrorArgs => ({
+export let InvalidURL = (value : string, element : XmlElement, src : string, errCode : string) : ErrorArgs => ({
 	code: errCode,
 	fragment: element,
 	line: element.line,

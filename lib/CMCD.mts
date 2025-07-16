@@ -7,8 +7,7 @@
 import{ XmlElement } from "libxml2-wasm";
 
 import { dvbi, CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_EVENT, dvbiEA } from "./DVB-I_definitions.mts";
-import ErrorList from "./error_list.mts";
-import { APPLICATION, WARNING } from "./error_list.mts";
+import ErrorList, { APPLICATION, WARNING } from "./error_list.mts";
 import { checkAttributes } from "./schema_checks.mts";
 import { isIn } from "./utils.mts";
 
@@ -66,58 +65,62 @@ const CMCD_keys = {
 	CMCD_version: "v",
 };
 
-const all_reporting_modes : Array<string> = [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_EVENT];
+const _unique = (value : string ) : string => value.slice(-3);
+const idCMCD_MODE_REQUEST = _unique(CMCD_MODE_REQUEST),
+	idCMCD_MODE_RESPONSE = _unique(CMCD_MODE_RESPONSE),
+	idCMCD_MODE_EVENT = _unique(CMCD_MODE_EVENT);
+const all_reporting_modes : Array<string> = [idCMCD_MODE_REQUEST, idCMCD_MODE_RESPONSE, idCMCD_MODE_EVENT];
 
 const CMCDv1_keys : Array<CMCDKeyType> = [
 	{ key: CMCD_keys.encoded_bitrate, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.buffer_length, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.buffer_starvation, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.content_id, allow_modes: all_reporting_modes },
-	{ key: CMCD_keys.object_duration, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
-	{ key: CMCD_keys.deadline, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
+	{ key: CMCD_keys.object_duration, allow_modes: [idCMCD_MODE_REQUEST, idCMCD_MODE_RESPONSE] },
+	{ key: CMCD_keys.deadline, allow_modes: [idCMCD_MODE_REQUEST, idCMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.measured_throughput, allow_modes: all_reporting_modes },
-	{ key: CMCD_keys.next_object_request, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
-	{ key: CMCD_keys.object_type, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
+	{ key: CMCD_keys.next_object_request, allow_modes: [idCMCD_MODE_REQUEST, idCMCD_MODE_RESPONSE] },
+	{ key: CMCD_keys.object_type, allow_modes: [idCMCD_MODE_REQUEST, idCMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.playback_rate, allow_modes: all_reporting_modes },
-	{ key: CMCD_keys.requested_maximum_throughput, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
+	{ key: CMCD_keys.requested_maximum_throughput, allow_modes: [idCMCD_MODE_REQUEST, idCMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.streaming_format, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.session_id, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.stream_type, allow_modes: all_reporting_modes },
-	{ key: CMCD_keys.startup, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
+	{ key: CMCD_keys.startup, allow_modes: [idCMCD_MODE_REQUEST, idCMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.top_encoded_bitrate, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.CMCD_version, allow_modes: all_reporting_modes },
 ];
 
-const deprecated_CMCDv1_keys : Array<CMCDKeyType> = [{ key: CMCD_keys.next_range_request, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] }];
+const deprecated_CMCDv1_keys : Array<CMCDKeyType> = [{ key: CMCD_keys.next_range_request, allow_modes: [idCMCD_MODE_REQUEST, idCMCD_MODE_RESPONSE] }];
 
 // CMCv2 draft at https://docs.google.com/document/d/1isrbeAuauUwjTDUJCxJVltxls_qrFFx7/edit
 const CMCDv2_keys : Array<CMCDKeyType> = CMCDv1_keys.concat([
 	{ key: CMCD_keys.aggregate_encoded_bitrate, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.playhead_bitrate, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.target_buffer_length, allow_modes: all_reporting_modes },
-	{ key: CMCD_keys.buffer_starvation_duration, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
+	{ key: CMCD_keys.buffer_starvation_duration, allow_modes: [idCMCD_MODE_REQUEST, idCMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.cdn_id, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.live_stream_latency, allow_modes: all_reporting_modes },
-	{ key: CMCD_keys.response_code, allow_modes: [CMCD_MODE_RESPONSE] },
+	{ key: CMCD_keys.response_code, allow_modes: [idCMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.backgrounded, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.sequence_number, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.state, allow_modes: all_reporting_modes },
-	{ key: CMCD_keys.time_to_first_byte, allow_modes: [CMCD_MODE_RESPONSE] },
-	{ key: CMCD_keys.time_to_first_body_byte, allow_modes: [CMCD_MODE_RESPONSE] },
-	{ key: CMCD_keys.time_to_last_byte, allow_modes: [CMCD_MODE_RESPONSE] },
+	{ key: CMCD_keys.time_to_first_byte, allow_modes: [idCMCD_MODE_RESPONSE] },
+	{ key: CMCD_keys.time_to_first_body_byte, allow_modes: [idCMCD_MODE_RESPONSE] },
+	{ key: CMCD_keys.time_to_last_byte, allow_modes: [idCMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.timestamp, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.top_playable_bitrate, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.lowest_encoded_bitrate, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.top_aggregated_encoded_bitrate, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.lowest_aggregated_encoded_bitrate, allow_modes: all_reporting_modes },
-	{ key: CMCD_keys.request_url, allow_modes: [CMCD_MODE_RESPONSE] },
+	{ key: CMCD_keys.request_url, allow_modes: [idCMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.playhead_time, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.player_error_code, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.media_start_delay, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.event, allow_modes: all_reporting_modes },
-	{ key: CMCD_keys.CMSD_dynamic_header, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
-	{ key: CMCD_keys.CMSD_static_header, allow_modes: [CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE] },
-	{ key: CMCD_keys.SMT_header, allow_modes: [CMCD_MODE_RESPONSE] },
+	{ key: CMCD_keys.CMSD_dynamic_header, allow_modes: [idCMCD_MODE_REQUEST, idCMCD_MODE_RESPONSE] },
+	{ key: CMCD_keys.CMSD_static_header, allow_modes: [idCMCD_MODE_REQUEST, idCMCD_MODE_RESPONSE] },
+	{ key: CMCD_keys.SMT_header, allow_modes: [idCMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.dropped_frames, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.content_signature, allow_modes: all_reporting_modes },
 ]);
@@ -140,7 +143,7 @@ function checkCMCDkeys(CMCD : XmlElement | null, errs : ErrorList, errCode : str
 		keys.forEach((key) => {
 			const reserved_key = keys_to_use.find((e) => e.key == key);
 			if (reserved_key) {
-				if (!isIn(reserved_key.allow_modes, reporting_mode))
+				if (!isIn(reserved_key.allow_modes, _unique(reporting_mode)))
 					errs.addError({
 						code: `${errCode}a`,
 						message: `${key.quote()} is not allowed for the specified reporting mode (${reportingMode(reporting_mode)})`,
@@ -164,7 +167,7 @@ function checkCMCDkeys(CMCD : XmlElement | null, errs : ErrorList, errCode : str
 				});
 		});
 	}
-	if (reporting_mode == CMCD_MODE_EVENT && !isIn(keys, CMCD_keys.timestamp))
+	if (_unique(reporting_mode) == idCMCD_MODE_EVENT && !isIn(keys, CMCD_keys.timestamp))
 		errs.addError({
 			code: `${errCode}d`,
 			message: `the key ${CMCD_keys.timestamp.quote()} is required to be specified for ${reportingMode(reporting_mode)} reporting`,
@@ -179,10 +182,10 @@ function checkCMCDkeys(CMCD : XmlElement | null, errs : ErrorList, errCode : str
 		key: error_key,
 	});
 
-	if (reporting_mode == CMCD_MODE_RESPONSE) {
+	if (_unique(reporting_mode) == idCMCD_MODE_RESPONSE) {
 		if (!isIn(keys, CMCD_keys.request_url)) errs.addError(unprovided_key("response", CMCD_keys.request_url, 'e'));
 		if (!isIn(keys, CMCD_keys.timestamp)) errs.addError(unprovided_key("response", CMCD_keys.timestamp, 'f'));
-	} else if (reporting_mode == CMCD_MODE_EVENT) {
+	} else if (_unique(reporting_mode) == idCMCD_MODE_EVENT) {
 		if (!isIn(keys, CMCD_keys.timestamp)) errs.addError(unprovided_key("event", CMCD_keys.timestamp, 'g'));
 	}
 	if (version >= 2) {
@@ -204,11 +207,11 @@ function checkCMCDkeys(CMCD : XmlElement | null, errs : ErrorList, errCode : str
 export function check_CMCD(CMCDelem : XmlElement, counts : any, errs : ErrorList, errCode : string) {
 
 	const reporting_mode = CMCDelem.attrAnyNsValueOr(dvbi.a_reportingMode, null);
-	switch (reporting_mode) {
-		case CMCD_MODE_REQUEST:
+	switch (_unique(reporting_mode)) {
+		case idCMCD_MODE_REQUEST:
 			checkAttributes(CMCDelem, [dvbi.a_reportingMode, dvbi.a_reportingMethod], [dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability], dvbiEA.CMCD, errs, `${errCode}-1`);
 			break;
-		case CMCD_MODE_RESPONSE:
+		case idCMCD_MODE_RESPONSE:
 			checkAttributes(
 				CMCDelem,
 				[dvbi.a_reportingMode, dvbi.a_reportingMethod, dvbi.a_beaconURL],
@@ -218,7 +221,7 @@ export function check_CMCD(CMCDelem : XmlElement, counts : any, errs : ErrorList
 				`${errCode}-2`
 			);
 			break;
-		case CMCD_MODE_EVENT:
+		case idCMCD_MODE_EVENT:
 			checkAttributes(
 				CMCDelem,
 				[dvbi.a_reportingMode, dvbi.a_reportingMethod, dvbi.a_beaconURL],
@@ -255,7 +258,7 @@ export function check_CMCD(CMCDelem : XmlElement, counts : any, errs : ErrorList
 		if (!Object.prototype.hasOwnProperty.call(counts, reportingMode(reporting_mode)))
 			counts[reportingMode(reporting_mode)] = 1;
 		else counts[reportingMode(reporting_mode)]++;
-		if (counts[reportingMode(CMCD_MODE_REQUEST)] > 1)
+		if (counts[reportingMode(idCMCD_MODE_REQUEST)] > 1)
 			errs.addError({
 				code: `${errCode}-20`,
 				message: "only a single reporting configuration for Request Mode can be specified",

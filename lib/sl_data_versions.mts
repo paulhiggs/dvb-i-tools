@@ -33,7 +33,7 @@ export type SchemaReleaseVersion = {
 	namespace : string,
 	version : SchemaReleases,
 	filename : string,
-	schema : XmlDocument | null,
+	schema? : XmlDocument,
 	status : SpecificationState,
 	specVersion : string,
 	URN? : string,
@@ -45,7 +45,6 @@ let SchemaVersions : Array<SchemaReleaseVersion> = [
 		namespace: dvbi.A177r7_Namespace,
 		version: SchemaReleases.SCHEMA_r7,
 		filename: DVBI_ServiceListSchema.r7.file,
-		schema: null,
 		status: SpecificationState.CURRENT,
 		specVersion: "A177r7",
 		URN: "urn:dvb:metadata:dvbi:standardversion:7",
@@ -54,7 +53,6 @@ let SchemaVersions : Array<SchemaReleaseVersion> = [
 		namespace: dvbi.A177r6_Namespace,
 		version: SchemaReleases.SCHEMA_r6,
 		filename: DVBI_ServiceListSchema.r6.file,
-		schema: null,
 		status: SpecificationState.OLD,
 		specVersion: "A177r6",
 		URN: "urn:dvb:metadata:dvbi:standardversion:6",
@@ -63,7 +61,6 @@ let SchemaVersions : Array<SchemaReleaseVersion> = [
 		namespace: dvbi.A177r5_Namespace,
 		version: SchemaReleases.SCHEMA_r5,
 		filename: DVBI_ServiceListSchema.r5.file,
-		schema: null,
 		status: SpecificationState.OLD,
 		specVersion: "A177r5",
 	},
@@ -71,7 +68,6 @@ let SchemaVersions : Array<SchemaReleaseVersion> = [
 		namespace: dvbi.A177r4_Namespace,
 		version: SchemaReleases.SCHEMA_r4,
 		filename: DVBI_ServiceListSchema.r4.file,
-		schema: null,
 		status: SpecificationState.OLD,
 		specVersion: "A177r4",
 	},
@@ -79,7 +75,6 @@ let SchemaVersions : Array<SchemaReleaseVersion> = [
 		namespace: dvbi.A177r3_Namespace,
 		version: SchemaReleases.SCHEMA_r3,
 		filename: DVBI_ServiceListSchema.r3.file,
-		schema: null,
 		status: SpecificationState.OLD,
 		specVersion: "A177r3",
 	},
@@ -87,7 +82,6 @@ let SchemaVersions : Array<SchemaReleaseVersion> = [
 		namespace: dvbi.A177r2_Namespace,
 		version: SchemaReleases.SCHEMA_r2,
 		filename: DVBI_ServiceListSchema.r2.file,
-		schema: null,
 		status: SpecificationState.OLD,
 		specVersion: "A177r2",
 	},
@@ -95,7 +89,6 @@ let SchemaVersions : Array<SchemaReleaseVersion> = [
 		namespace: dvbi.A177r1_Namespace,
 		version: SchemaReleases.SCHEMA_r1,
 		filename: DVBI_ServiceListSchema.r1.file,
-		schema: null,
 		status: SpecificationState.ETSI,
 		specVersion: "A177r1",
 	},
@@ -103,7 +96,6 @@ let SchemaVersions : Array<SchemaReleaseVersion> = [
 		namespace: dvbi.A177_Namespace,
 		version: SchemaReleases.SCHEMA_r0,
 		filename: DVBI_ServiceListSchema.r0.file,
-		schema: null,
 		status: SpecificationState.OLD,
 		specVersion: "A177",
 	},
@@ -175,7 +167,7 @@ const ContentGuideSourceLogos : Array<CSversion> = [
 /**
  * determine the schema version (and hence the specificaion version) in use
  *
- * @param {string} namespace     The namespace used in defining the schema
+ * @param {string} namespace  The namespace used in defining the schema
  * @returns {SchemaReleases} Representation of the schema version or error code if unknown
  */
 export let SchemaVersion = (namespace : string) : SchemaReleases => {
@@ -186,7 +178,7 @@ export let SchemaVersion = (namespace : string) : SchemaReleases => {
 /**
  * determine the DVB Bluebook version for the specified schema namespace
  *
- * @param {string} namespace     The namespace used in defining the schema
+ * @param {string} namespace  The namespace used in defining the schema
  * @returns {string} Version of the DVB A177 specification where namespace is defined
  */
 export let SchemaSpecVersion = (namespace : string) : string => {

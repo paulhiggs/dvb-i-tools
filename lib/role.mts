@@ -46,14 +46,14 @@ export default class Role extends ClassificationScheme {
 			try {
 				resp = fetchS(rolesURL);
 			} catch (error) {
-				console.log(chalk.red(error.message));
+				console.log(chalk.red((error as any).message));
 			}
 			if (resp) {
 				if (resp.ok) {
 					resp
 						.text()
 						.split("\n")
-						.forEach((role) => {
+						.forEach((role : string) => {
 							this.insertValue(role.trim());
 						});
 				} else console.log(chalk.red(`error (${resp.status}:${resp.statusText}) handling ${rolesURL}`));

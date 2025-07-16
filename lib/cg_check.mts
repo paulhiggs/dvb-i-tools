@@ -40,6 +40,7 @@ import { cg_InvalidHrefValue, NoChildElement, keys } from "./common_errors.mts";
 import { TVAschema, __dirname_linux } from "./data_locations.mts";
 import { dvbi } from "./DVB-I_definitions.mts";
 import ErrorList, { WARNING, APPLICATION } from "./error_list.mts";
+import type { ErrorArgs } from "./error_list.mts";
 import { SpecificationState } from "./globals.mts";
 import IANAlanguages from "./IANA_languages.mts"
 import ISOcountries from "./ISO_countries.mts";
@@ -370,7 +371,7 @@ export default class ContentGuideCheck {
 		let shortLangs : Array<string> = [],
 			mediumLangs : Array<string> = [],
 			longLangs : Array<string> = [];
-		while ((Synopsis = BasicDescription.get(xPath(props.prefix, tva.e_Synopsis, ++s), props.schema)) != null) {
+		while ((Synopsis = BasicDescription.get(xPath(props.prefix, tva.e_Synopsis, ++s), props.schema) as XmlElement) != null) {
 			checkAttributes(Synopsis, [tva.a_length], [tva.a_lang], tvaEA.Synopsis, errs, `${errCode}-1`);
 
 			const synopsisLang = GetNodeLanguage(Synopsis, false, errs, `${errCode}-2`);
@@ -500,12 +501,12 @@ export default class ContentGuideCheck {
 		}
 		let k = 0,
 			Keyword,
-			counts :Array<Array<string>>= [];
-		while ((Keyword = BasicDescription.get(xPath(props.prefix, tva.e_Keyword, ++k), props.schema)) != null) {
+			counts :Array<Array<XmlElement>>= [];
+		while ((Keyword = BasicDescription.get(xPath(props.prefix, tva.e_Keyword, ++k), props.schema) as XmlElement) != null) {
 			checkAttributes(Keyword, [], [tva.a_lang, tva.a_type], tvaEA.Keyword, errs, `${errCode}-1`);
 
-			let keywordType = Keyword.attrAnyNsValueOr(tva.a_type, tva.DEFAULT_KEYWORD_TYPE);
-			let keywordLang = GetNodeLanguage(Keyword, false, errs, `${errCode}-2`);
+			let keywordType : any = Keyword.attrAnyNsValueOr(tva.a_type, tva.DEFAULT_KEYWORD_TYPE);
+			let keywordLang : any = GetNodeLanguage(Keyword, false, errs, `${errCode}-2`);
 
 			if (counts[keywordLang] === undefined) counts[keywordLang] = [Keyword];
 			else counts[keywordLang].push(Keyword);
@@ -555,7 +556,7 @@ export default class ContentGuideCheck {
 
 		let g = 0,
 			Genre;
-		while ((Genre = BasicDescription.get(xPath(props.prefix, tva.e_Genre, ++g), props.schema)) != null) {
+		while ((Genre = BasicDescription.get(xPath(props.prefix, tva.e_Genre, ++g), props.schema) as XmlElement) != null) {
 			const genreType = Genre.attrAnyNsValueOr(tva.a_type, tva.DEFAULT_GENRE_TYPE);
 			if (genreType != tva.GENRE_TYPE_MAIN)
 				errs.addError({
@@ -607,10 +608,11 @@ export default class ContentGuideCheck {
 		const UNSPECIFIED_COUNTRY = "*!*";
 		let foundCountries : Array<CountryInfo>= [];
 		let pg = 0,
-			ParentalGuidance;
-		while ((ParentalGuidance = BasicDescription.get(xPath(props.prefix, tva.e_ParentalGuidance, ++pg), props.schema)) != null) {
+			ParentalGuidance : XmlElement;
+		while ((ParentalGuidance = BasicDescription.get(xPath(props.prefix, tva.e_ParentalGuidance, ++pg), props.schema) as XmlElement) != null) {
 			let pgCountries = UNSPECIFIED_COUNTRY;
-			if (hasChild(ParentalGuidance, tva.e_CountryCodes)) pgCountries = ParentalGuidance.get(xPath(props.prefix, tva.e_CountryCodes), props.schema).content;
+			if (hasChild(ParentalGuidance, tva.e_CountryCodes)) 
+				pgCountries = (ParentalGuidance.get(xPath(props.prefix, tva.e_CountryCodes), props.schema) as XmlElement).content;
 
 			const pgCountriesList = pgCountries.split(",");
 			pgCountriesList.forEach((pgCountry) => {
@@ -625,7 +627,7 @@ export default class ContentGuideCheck {
 						code: `${errCode}-5`,
 						key: keys.k_ParentalGuidance,
 						message: `invalid country code (${pgCountry}) specified`,
-						fragment: ParentalGuidance.get(xPath(props.prefix, tva.e_CountryCodes), props.schema),
+						fragment: ParentalGuidance.get(xPath(props.prefix, tva.e_CountryCodes), props.schema) as XmlElement,
 					});
 
 				// first <ParentalGuidance> element must contain an <mpeg7:MinimumAge> element
@@ -670,8 +672,8 @@ export default class ContentGuideCheck {
 										fragment: pgChild,
 									});
 								}
-								if (pgChild.attrAnyNs(tva.a_href)) {
-									const rating = pgChild.attrAnyNs(tva.a_href).value;
+								const rating = pgChild.attrAnyNsValueOr(tva.a_href, null);
+								if (rating) {
 									if (this.allowedRatings.hasScheme(rating)) {
 										if (!this.allowedRatings.isIn(rating))
 											errs.addError({
@@ -816,12 +818,12 @@ export default class ContentGuideCheck {
 				});
 		}
 
-		const CreditsList = BasicDescription.get(xPath(props.prefix, tva.e_CreditsList), props.schema);
+		const CreditsList = BasicDescription.get(xPath(props.prefix, tva.e_CreditsList), props.schema) as XmlElement;
 		if (CreditsList) {
 			let ci = 0,
 				numCreditsItems = 0,
 				CreditsItem;
-			while ((CreditsItem = CreditsList.get(xPath(props.prefix, tva.e_CreditsItem, ++ci), props.schema)) != null) {
+			while ((CreditsItem = CreditsList.get(xPath(props.prefix, tva.e_CreditsItem, ++ci), props.schema) as XmlElement) != null) {
 				numCreditsItems++;
 				checkAttributes(CreditsItem, [tva.a_role], [], tvaEA.CreditsItem, errs, `${errCode}-1`);
 				const CreditsItemRole = CreditsItem.attrAnyNsValueOr(tva.a_role, null);
@@ -873,7 +875,8 @@ export default class ContentGuideCheck {
 									});
 						}
 					});
-				let singleElementError = (elementName, parentElementName) => `only a single ${elementName.elementize()} is permitted in ${parentElementName.elementize()}`;
+				let singleElementError = (elementName : string, parentElementName : string ) => 
+					`only a single ${elementName.elementize()} is permitted in ${parentElementName.elementize()}`;
 				checkXMLLangs(tva.e_OrganizationName, tva.e_CreditsItem, CreditsItem, errs, `${errCode}-11`);
 				if (foundPersonName.length > 1)
 					errs.addError({
@@ -915,7 +918,7 @@ export default class ContentGuideCheck {
 				errs.addError({
 					code: `${errCode}-16`,
 					message: `a maximum of ${dvbi.MAX_CREDITS_ITEMS} ${tva.e_CreditsItem.elementize()} elements are permitted in ${tva.e_CreditsList.elementize()}`,
-					line: CreditsItem.line,
+					line: CreditsList.line,
 					key: `excess ${tva.e_CreditsItem.elementize()}`,
 				});
 		}
@@ -939,7 +942,7 @@ export default class ContentGuideCheck {
 		}
 		let rm = 0,
 			RelatedMaterial;
-		while ((RelatedMaterial = BasicDescription.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null)
+		while ((RelatedMaterial = BasicDescription.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema) as XmlElement) != null)
 			ValidatePromotionalStillImage(RelatedMaterial, BasicDescription.name.elementize(), errs, "RMPSI001");
 	}
 
@@ -979,10 +982,10 @@ export default class ContentGuideCheck {
 			countPaginationLast : Array<XmlElement> = [];
 		let rm = 0,
 			RelatedMaterial;
-		while ((RelatedMaterial = BasicDescription.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
-			let HowRelated = RelatedMaterial.get(xPath(props.prefix, tva.e_HowRelated), props.schema);
+		while ((RelatedMaterial = BasicDescription.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema) as XmlElement) != null) {
+			const HowRelated = RelatedMaterial.get(xPath(props.prefix, tva.e_HowRelated), props.schema) as XmlElement;
 			if (!HowRelated) 
-				errs.addError(NoChildElement(tva.e_HowRelated.elementize(), RelatedMaterial, Location, "VP001"));
+				errs.addError(NoChildElement("VP001", tva.e_HowRelated.elementize(), RelatedMaterial, Location));
 			else {
 				checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "VP002");
 				const HowRelated_href = HowRelated.attrAnyNsValueOr(tva.a_href, null);
@@ -1000,7 +1003,7 @@ export default class ContentGuideCheck {
 						countPaginationLast.push(HowRelated);
 						break;
 				}
-				let MediaURI = RelatedMaterial.get(xPathM(props.prefix, [tva.e_MediaLocator, tva.e_MediaUri]), props.schema);
+				let MediaURI = RelatedMaterial.get(xPathM(props.prefix, [tva.e_MediaLocator, tva.e_MediaUri]), props.schema) as XmlElement;
 				if (MediaURI) {
 					if (!isHTTPURL(MediaURI.content))
 						errs.addError({
@@ -1072,7 +1075,7 @@ export default class ContentGuideCheck {
 				let rm = 0,
 					RelatedMaterial;
 				/* eslint-enable */
-				while ((RelatedMaterial = BasicDescription.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null)
+				while ((RelatedMaterial = BasicDescription.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema) as XmlElement) != null)
 					ValidatePromotionalStillImage(RelatedMaterial, BasicDescription.name, errs, "RMME001");
 				break;
 			case tva.e_GroupInformation:
@@ -1112,7 +1115,7 @@ export default class ContentGuideCheck {
 			});
 
 		if (!HowRelated) {
-			errs.addError(NoChildElement(tva.e_HowRelated.elementize(), RelatedMaterial, Location, "TA001"));
+			errs.addError(NoChildElement("TA001", tva.e_HowRelated.elementize(), RelatedMaterial, Location));
 			return;
 		}
 
@@ -1143,9 +1146,9 @@ export default class ContentGuideCheck {
 								});
 						});
 						if (!hasAuxiliaryURI) 
-							errs.addError(NoChildElement(tva.e_AuxiliaryURI.elementize(), locator, Location, "TA012"));
+							errs.addError(NoChildElement("TA012", tva.e_AuxiliaryURI.elementize(), locator, Location));
 					});
-				else errs.addError(NoChildElement(tva.e_MediaLocator.elementize(), RelatedMaterial, Location, "TA013"));
+				else errs.addError(NoChildElement("TA013", tva.e_MediaLocator.elementize(), RelatedMaterial, Location));
 			}
 		}
 	}
@@ -1173,10 +1176,10 @@ export default class ContentGuideCheck {
 		let rm = 0,
 			RelatedMaterial;
 
-		while ((RelatedMaterial = BasicDescription.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema)) != null) {
-			const HowRelated = RelatedMaterial.get(xPath(props.prefix, tva.e_HowRelated), props.schema);
+		while ((RelatedMaterial = BasicDescription.get(xPath(props.prefix, tva.e_RelatedMaterial, ++rm), props.schema) as XmlElement) != null) {
+			const HowRelated = RelatedMaterial.get(xPath(props.prefix, tva.e_HowRelated), props.schema) as XmlElement;
 			if (!HowRelated) 
-				errs.addError(NoChildElement(tva.e_HowRelated.elementize(), RelatedMaterial, null, "MB009"));
+				errs.addError(NoChildElement("MB009", tva.e_HowRelated.elementize(), RelatedMaterial));
 			else {
 				checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "MB010");
 				const HowRelated_href = HowRelated.attrAnyNsValueOr(tva.a_href, null);
@@ -1198,7 +1201,7 @@ export default class ContentGuideCheck {
 							ValidatePromotionalStillImage(RelatedMaterial, BasicDescription.name.elementize(), errs, "MB012");
 							break;
 						default:
-							errs.addError(cg_InvalidHrefValue(HowRelated_href, HowRelated, `${tva.e_RelatedMaterial.elementize()} in Box Set List`, "MB011"));
+							errs.addError(cg_InvalidHrefValue("MB011", HowRelated_href, HowRelated, `${tva.e_RelatedMaterial.elementize()} in Box Set List`));
 					}
 			}
 		}
@@ -1255,7 +1258,7 @@ export default class ContentGuideCheck {
 		if (TypeIsRequired) requiredAttributes.push(tva.a_type);
 		else optionalAttributes.push(tva.a_type);
 
-		while ((Title = containingNode.get(xPath(props.prefix, tva.e_Title, ++t), props.schema)) != null) {
+		while ((Title = containingNode.get(xPath(props.prefix, tva.e_Title, ++t), props.schema) as XmlElement) != null) {
 			checkAttributes(Title, requiredAttributes, optionalAttributes, tvaEA.Title, errs, `${errCode}-1`);
 
 			const titleType = Title.attrAnyNsValueOr(tva.a_type, mpeg7.DEFAULT_TITLE_TYPE);
@@ -1336,7 +1339,7 @@ export default class ContentGuideCheck {
 		let locations : Array<string> = [];
 		let release,
 			ri = 0;
-		while ((release = BasicDescription.get(xPath(props.prefix, tva.e_ReleaseInformation, ++ri), props.schema)) != null) {
+		while ((release = BasicDescription.get(xPath(props.prefix, tva.e_ReleaseInformation, ++ri), props.schema) as XmlElement) != null) {
 			if (!hasChild(release, tva.e_ReleaseDate) && !hasChild(release, tva.e_ReleaseLocation)) {
 				errs.addError({
 					code: `${errCode}-11`,
@@ -1346,7 +1349,7 @@ export default class ContentGuideCheck {
 					key: "empty element",
 				});
 			} else {
-				const location = release.get(xPath(props.prefix, tva.e_ReleaseLocation), props.schema);
+				const location = release.get(xPath(props.prefix, tva.e_ReleaseLocation), props.schema) as XmlElement;
 				const ReleaseLocation : string = location ? location.content : defaultLocation;
 				if (isIn(locations, ReleaseLocation))
 					errs.addError({
@@ -1387,7 +1390,7 @@ export default class ContentGuideCheck {
 		const isParentGroup = categoryGroup ? parentElement.line == categoryGroup.line : null;
 		const BasicDescription = parentElement.get(xPath(props.prefix, tva.e_BasicDescription), props.schema);
 		if (!BasicDescription) {
-			errs.addError(NoChildElement(tva.e_BasicDescription.elementize(), parentElement, null, "BD001"));
+			errs.addError(NoChildElement("BD001", tva.e_BasicDescription.elementize(), parentElement));
 			return;
 		}
 
@@ -1566,7 +1569,8 @@ export default class ContentGuideCheck {
 				});
 		}
 	}
-	/*private*/ #NotCRIDFormat(errs, error) {
+
+	private NotCRIDFormat(errs : ErrorList, error : ErrorArgs) {
 		error.description = "format of a CRID is defined in clause 8 of ETSI TS 102 822";
 		errs.addError(error);
 	}
@@ -1621,7 +1625,7 @@ export default class ContentGuideCheck {
 		const programCRID = ProgramInformation.attrAnyNsValueOr(tva.a_programId, null);
 		if (programCRID) {
 			if (!isCRIDURI(programCRID))
-				this.#NotCRIDFormat(errs, {
+				this.NotCRIDFormat(errs, {
 					code: "PI011",
 					message: `${tva.a_programId.attribute(ProgramInformation.name)} is not a valid CRID (${programCRID})`,
 					line: ProgramInformation.line,
@@ -1664,7 +1668,7 @@ export default class ContentGuideCheck {
 								fragment: child,
 							});
 						else if (!isCRIDURI(foundCRID))
-							this.#NotCRIDFormat(errs, {
+							this.NotCRIDFormat(errs, {
 								code: "PI033",
 								message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_EpisodeOf}`)}=${foundCRID.quote()} is not a valid CRID`,
 								fragment: child,
@@ -1675,10 +1679,10 @@ export default class ContentGuideCheck {
 					if ([CGrequests.SCHEDULE_NOWNEXT, CGrequests.SCHEDULE_WINDOW].includes(requestType)) {
 						// xsi:type is optional for Now/Next
 						checkAttributes(child, [tva.a_index, tva.a_crid], [tva.a_type], tvaEA.MemberOf, errs, "PI041");
-						if (child.attrAnyNs(tva.a_crid) && child.attrAnyNs(tva.a_crid).value == dvbi.CRID_NOW) isCurrentProgram = true;
+						if (child.attrAnyNsValueOr(tva.a_crid, null) == dvbi.CRID_NOW) isCurrentProgram = true;
 					} else checkAttributes(child, [tva.a_type, tva.a_index, tva.a_crid], [], tvaEA.MemberOf, errs, "PI042");
 					// <ProgramInformation><MemberOf>@xsi:type
-					if (child.attrAnyNs(tva.a_type) && child.attrAnyNs(tva.a_type).value != tva.t_MemberOfType)
+					if (child.attrAnyNsValueOr(tva.a_type, null) != tva.t_MemberOfType)
 						errs.addError({
 							code: "PI043",
 							message: `${attribute(`xsi:${tva.a_type}`)} must be ${tva.t_MemberOfType.quote()} for ${ProgramInformation.name}.${tva.e_MemberOf}`,
@@ -1696,7 +1700,7 @@ export default class ContentGuideCheck {
 								fragment: child,
 							});
 						else if (!isCRIDURI(foundCRID))
-							this.#NotCRIDFormat(errs, {
+							this.NotCRIDFormat(errs, {
 								code: "PI045",
 								message: `${tva.a_crid.attribute(`${ProgramInformation.name}.${tva.e_MemberOf}`)}=${foundCRID.quote()} is not a valid CRID`,
 								fragment: child,
@@ -1761,9 +1765,9 @@ export default class ContentGuideCheck {
 		let pi = 0,
 			ProgramInformation,
 			cnt = 0,
-			indexes = [],
+			indexes : Array<string> = [],
 			currentProgramCRID : string | null = null;
-		while ((ProgramInformation = ProgramInformationTable.get(xPath(props.prefix, tva.e_ProgramInformation, ++pi), props.schema)) != null) {
+		while ((ProgramInformation = ProgramInformationTable.get(xPath(props.prefix, tva.e_ProgramInformation, ++pi), props.schema) as XmlElement) != null) {
 			const t = this.ValidateProgramInformation(props, ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs);
 			if (t) 
 				currentProgramCRID = t;
@@ -1994,7 +1998,7 @@ export default class ContentGuideCheck {
 
 		const groupId = GroupInformation.attrAnyNsValueOr(tva.a_groupId, null);
 		if (groupId && !isCRIDURI(groupId))
-			this.#NotCRIDFormat(errs, {
+			this.NotCRIDFormat(errs, {
 				code: "GIM003",
 				message: `${tva.a_groupId.attribute(GroupInformation.name)} value ${groupId.quote()} is not a valid CRID`,
 				line: GroupInformation.line,
@@ -2127,12 +2131,12 @@ export default class ContentGuideCheck {
 
 		GetNodeLanguage(GroupInformationTable as XmlElement, false, errs, "GI102");
 
-		let gi, GroupInformation;
+		let gi, GroupInformation : XmlElement;
 		// find which GroupInformation element is the "category group"
 		let categoryGroup = null;
 		if ([CGrequests.BS_LISTS, CGrequests.BS_CATEGORIES].includes(requestType)) {
 			gi = 0;
-			while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
+			while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema) as XmlElement) != null) {
 				// this GroupInformation element is the "category group" if it does not contain a <MemberOf> element
 				if (CountChildElements(GroupInformation, tva.e_MemberOf) == 0) {
 					// this GroupInformation element is not a member of another GroupInformation so it must be the "category group"
@@ -2149,14 +2153,14 @@ export default class ContentGuideCheck {
 				errs.addError({
 					code: "GI112",
 					message: `a ${CATEGORY_GROUP_NAME} must be specified in ${tva.e_GroupInformationTable.elementize()} for this request type`,
-					line: GroupInformation.line,
+					line: GroupInformationTable.line,
 				});
 		}
 
-		let indexes = [],
+		let indexes : Array<string> = [],
 			giCount = 0;
 		gi = 0;
-		while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
+		while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema) as XmlElement) != null) {
 			this.ValidateGroupInformation(props, GroupInformation, requestType, categoryGroup ? (categoryGroup as XmlElement) : null, indexes, groupIds, errs);
 			if (categoryGroup && GroupInformation.line != (categoryGroup as XmlElement).line) 
 				giCount++;
@@ -2226,7 +2230,7 @@ export default class ContentGuideCheck {
 		let contentsGroup = null,
 			gi = 0,
 			GroupInformation;
-		while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
+		while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema) as XmlElement) != null) {
 			// this GroupInformation element is the "contents group" if it does not contain a <MemberOf> element
 			if (CountChildElements(GroupInformation, tva.e_MemberOf) == 0) {
 				// this GroupInformation element is not a member of another GroupInformation so it must be the "contents group"
@@ -2248,14 +2252,17 @@ export default class ContentGuideCheck {
 					errs,
 					"GIC113"
 				);
-			if (groupIds && GroupInformation.attrAnyNs(tva.a_groupId)) 
-				groupIds.push(GroupInformation.attrAnyNs(tva.a_groupId).value);
+			if (groupIds) {
+				const groupId = GroupInformation.attrAnyNsValueOr(tva.a_groupId, null);
+				if (groupId) 
+					groupIds.push(groupId);
+			}
 		}
 		if (!contentsGroup)
 			errs.addError({
 				code: "GIC115",
-				message: `a Contents group (a ${tva.e_GroupInformation} without a ${tva.e_MemberOf} child element) must be specified in ${tva.e_GroupInformationTable.elementize()} for this request type`,
-				line: GroupInformation.line,
+				message: `a Contents group (a ${tva.e_GroupInformation} element without a ${tva.e_MemberOf} child element) must be specified in ${tva.e_GroupInformationTable.elementize()} for this request type`,
+				line: GroupInformationTable.line,
 				key: ERROR_KEY,
 			});
 
@@ -2263,9 +2270,9 @@ export default class ContentGuideCheck {
 		if (contentsGroup) {
 			const cgCRID = (contentsGroup as XmlElement).attrAnyNsValueOr(tva.a_groupId, "none");
 			gi = 0;
-			while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
+			while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema) as XmlElement) != null) {
 				if (GroupInformation.line != (contentsGroup as XmlElement).line) {
-					const MemberOf = GroupInformation.get(xPath(props.prefix, tva.e_MemberOf), props.schema);
+					const MemberOf = GroupInformation.get(xPath(props.prefix, tva.e_MemberOf), props.schema) as XmlElement;
 					if (MemberOf) {
 						const MemberOf_crid = MemberOf.attrAnyNsValueOr(tva.a_crid, null);
 						if (MemberOf_crid && MemberOf_crid != cgCRID)
@@ -2396,7 +2403,7 @@ export default class ContentGuideCheck {
 
 		let gi = 0,
 			GroupInformation;
-		while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema)) != null) {
+		while ((GroupInformation = GroupInformationTable.get(xPath(props.prefix, tva.e_GroupInformation, ++gi), props.schema) as XmlElement) != null) {
 			switch (requestType) {
 				case CGrequests.SCHEDULE_NOWNEXT:
 					this.ValidateGroupInformationNowNext(props, GroupInformation, requestType, 0, 1, 1, groupIds, errs);
@@ -2431,10 +2438,10 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		let isValidAudioMixType = (mixType) => [mpeg7.AUDIO_MIX_MONO, mpeg7.AUDIO_MIX_STEREO, mpeg7.AUDIO_MIX_5_1].includes(mixType);
+		let isValidAudioMixType = (mixType : string) => [mpeg7.AUDIO_MIX_MONO, mpeg7.AUDIO_MIX_STEREO, mpeg7.AUDIO_MIX_5_1].includes(mixType);
 
 		const profiledAudioPurposeCS = [dvbi.AUDIO_PURPOSE_MAIN, dvbi.AUDIO_PURPOSE_VISUAL_IMPAIRED, dvbi.AUDIO_PURPOSE_HEARING_IMPAIRED, dvbi.AUDIO_PURPOSE_DIALOGUE_ENHANCEMENT];
-		let isValidAudioLanguagePurpose = (purpose) => profiledAudioPurposeCS.includes(purpose);
+		let isValidAudioLanguagePurpose = (purpose : string) => profiledAudioPurposeCS.includes(purpose);
 
 		checkTopElementsAndCardinality(
 			AVAttributes,
@@ -2464,7 +2471,7 @@ export default class ContentGuideCheck {
 			AudioAttributes,
 			foundAttributes : Array<string> = [],
 			audioCounts : Array<LanguageElements> = [];
-		while ((AudioAttributes = AVAttributes.get(xPath(props.prefix, tva.e_AudioAttributes, ++aa), props.schema)) != null) {
+		while ((AudioAttributes = AVAttributes.get(xPath(props.prefix, tva.e_AudioAttributes, ++aa), props.schema) as XmlElement) != null) {
 			checkTopElementsAndCardinality(
 				AudioAttributes,
 				[
@@ -2477,10 +2484,11 @@ export default class ContentGuideCheck {
 				"AV010"
 			);
 
-			const MixType = AudioAttributes.get(xPath(props.prefix, tva.e_MixType), props.schema);
+			const MixType = AudioAttributes.get(xPath(props.prefix, tva.e_MixType), props.schema) as XmlElement;
 			if (MixType) {
 				checkAttributes(MixType, [tva.a_href], [], tvaEA.MixType, errs, "AV011");
-				if (MixType.attrAnyNs(tva.a_href) && !isValidAudioMixType(MixType.attrAnyNs(tva.a_href).value))
+				const MixType_href = MixType.attrAnyNsValueOr(tva.a_href, null)
+				if (MixType_href && !isValidAudioMixType(MixType_href))
 					errs.addError({
 						code: "AV012",
 						message: `${tva.e_AudioAttributes}.${tva.e_MixType} is not valid`,
@@ -2537,7 +2545,7 @@ export default class ContentGuideCheck {
 		// <VideoAttributes>
 		let va = 0,
 			VideoAttributes;
-		while ((VideoAttributes = AVAttributes.get(xPath(props.prefix, tva.e_VideoAttributes, ++va), props.schema)) != null) {
+		while ((VideoAttributes = AVAttributes.get(xPath(props.prefix, tva.e_VideoAttributes, ++va), props.schema) as XmlElement) != null) {
 			checkTopElementsAndCardinality(
 				VideoAttributes,
 				[
@@ -2557,15 +2565,15 @@ export default class ContentGuideCheck {
 		if (CaptioningAttributes) {
 			checkTopElementsAndCardinality(CaptioningAttributes as XmlElement, [{ name: tva.e_Coding, minOccurs: 0 }], tvaEC.CaptioningAttributes, false, errs, "AV040");
 
-			const Coding = CaptioningAttributes.get(xPath(props.prefix, tva.e_Coding), props.schema);
+			const Coding = CaptioningAttributes.get(xPath(props.prefix, tva.e_Coding), props.schema) as XmlElement;
 			if (Coding) {
-				checkAttributes(Coding as XmlElement, [tva.a_href], [], tvaEA.Coding, errs, "AV041");
-				const Coding_href = (Coding as XmlElement).attrAnyNsValueOr(tva.a_href, null);
+				checkAttributes(Coding, [tva.a_href], [], tvaEA.Coding, errs, "AV041");
+				const Coding_href = Coding.attrAnyNsValueOr(tva.a_href, null);
 				if (Coding_href && ![dvbi.DVB_BITMAP_SUBTITLES, dvbi.DVB_CHARACTER_SUBTITLES, dvbi.EBU_TT_D].includes(Coding_href))
 						errs.addError({
 							code: "AV042",
 							message: `${tva.a_href.attribute(`${tva.e_CaptioningAttributes}.${tva.e_Coding}`)} is not valid - should be DVB (bitmap or character) or EBU TT-D`,
-							fragment: Coding as XmlElement,
+							fragment: Coding,
 						});
 			}
 		}
@@ -2609,7 +2617,7 @@ export default class ContentGuideCheck {
 			return false;
 		}
 
-		let isRestartLink = (str) => str == dvbi.RESTART_LINK;
+		let isRestartLink = (term : string) => term == dvbi.RESTART_LINK;
 
 		let isRestart = checkTopElementsAndCardinality(RelatedMaterial, [{ name: tva.e_HowRelated }, { name: tva.e_MediaLocator }], tvaEC.RelatedMaterial, false, errs, "RR001");
 
@@ -2669,9 +2677,9 @@ export default class ContentGuideCheck {
 			return genre.attrAnyNsValueOr(tva.a_href, null);
 		}
 
-		let isMediaAvailability = (str) => [dvbi.MEDIA_AVAILABLE, dvbi.MEDIA_UNAVAILABLE].includes(str);
-		let isEPGAvailability = (str) => [dvbi.FORWARD_EPG_AVAILABLE, dvbi.FORWARD_EPG_UNAVAILABLE].includes(str);
-		let isAvailability = (str) => isMediaAvailability(str) || isEPGAvailability(str);
+		let isMediaAvailability = (term : string) => [dvbi.MEDIA_AVAILABLE, dvbi.MEDIA_UNAVAILABLE].includes(term);
+		let isEPGAvailability = (term : string) => [dvbi.FORWARD_EPG_AVAILABLE, dvbi.FORWARD_EPG_UNAVAILABLE].includes(term);
+		let isAvailability = (term : string) => isMediaAvailability(term) || isEPGAvailability(term);
 
 		switch (VerifyType) {
 			case tva.e_OnDemandProgram:
@@ -2829,11 +2837,10 @@ export default class ContentGuideCheck {
 		// <OtherIdentifier>
 		let oi = 0,
 			OtherIdentifier;
-		while ((OtherIdentifier = InstanceDescription.get(xPath(props.prefix, tva.e_OtherIdentifier, ++oi), props.schema)) != null) {
+		while ((OtherIdentifier = InstanceDescription.get(xPath(props.prefix, tva.e_OtherIdentifier, ++oi), props.schema) as XmlElement) != null) {
 			checkAttributes(OtherIdentifier, [tva.a_type], [], tvaEA.OtherIdentifier, errs, "VID052");
-			if (OtherIdentifier.attrAnyNs(tva.a_type)) {
-				let oiType = OtherIdentifier.attrAnyNs(tva.a_type).value;
-
+			const oiType = OtherIdentifier.attrAnyNsValueOr(tva.a_type, null);
+			if (oiType) {
 				if (
 					(VerifyType == tva.e_ScheduleEvent && ["CPSIndex", dvbi.EIT_PROGRAMME_CRID_TYPE, dvbi.EIT_SERIES_CRID_TYPE].includes(oiType)) ||
 					(VerifyType == tva.e_OnDemandProgram && oiType == "CPSIndex")
@@ -3180,7 +3187,7 @@ export default class ContentGuideCheck {
 			const ProgramCRID = Program.attrAnyNsValueOr(tva.a_crid, null);
 			if (ProgramCRID) {
 				if (!isCRIDURI(ProgramCRID)) {
-					this.#NotCRIDFormat(errs, {
+					this.NotCRIDFormat(errs, {
 						code: `${prefix}011`,
 						message: `${tva.a_crid.attribute(tva.e_Program)} is not a valid CRID (${ProgramCRID})`,
 						fragment: Program,
@@ -3211,7 +3218,7 @@ export default class ContentGuideCheck {
 		let id = 0,
 			thisInstanceDescription,
 			serviceIDs : Array<string> = [];
-		while ((thisInstanceDescription = Event.get(xPath(props.prefix, tva.e_InstanceDescription, ++id), props.schema)) != null) {
+		while ((thisInstanceDescription = Event.get(xPath(props.prefix, tva.e_InstanceDescription, ++id), props.schema) as XmlElement) != null) {
 			this.ValidateInstanceDescription(props, Event.name, thisInstanceDescription, isCurrentProgram, errs);
 			const instanceServiceID = thisInstanceDescription.attrAnyNsValueOr(tva.a_serviceInstanceID, "dflt");
 			if (isIn(serviceIDs, instanceServiceID))
@@ -3330,7 +3337,7 @@ export default class ContentGuideCheck {
 
 		let se = 0,
 			ScheduleEvent;
-		while ((ScheduleEvent = Schedule.get(xPath(props.prefix, tva.e_ScheduleEvent, ++se), props.schema)) != null) {
+		while ((ScheduleEvent = Schedule.get(xPath(props.prefix, tva.e_ScheduleEvent, ++se), props.schema) as XmlElement) != null) {
 			this.ValidateEvent(props, ScheduleEvent, programCRIDs, plCRIDs, currentProgramCRID, Schedule, errs);
 		}
 	}
@@ -3436,7 +3443,7 @@ export default class ContentGuideCheck {
 			cntSE = 0,
 			cntBE = 0,
 			foundServiceIds: Array<string> = [],
-			plCRIDs = [];
+			plCRIDs : Array<string> = [];
 
 		ProgramLocationTable?.childNodes().forEachSubElement((child) => {
 			switch (child.name) {
@@ -3541,8 +3548,8 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		let programCRIDs = [],
-			groupIds = [],
+		let programCRIDs : Array<string> = [],
+			groupIds : Array<string> = [],
 			o = { childCount: 0 };
 
 		switch (requestType) {

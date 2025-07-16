@@ -97,7 +97,7 @@ export function checkXMLLangs(elementName : string, elementLocation : string, no
 			//!!
 			errs.addError({
 				code: `${errCode}-3`,
-				message: `value must be specified for ${child.parent.name.elementize()}${child.name.elementize()}`,
+				message: `value must be specified for ${child?.parent ? child.parent.name.elementize() : ""}${child.name.elementize()}`,
 				fragment: child,
 				key: "empty value",
 			});

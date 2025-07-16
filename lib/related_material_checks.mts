@@ -12,7 +12,7 @@ Array_extension_init();
 import { cg_InvalidHrefValue, InvalidURL, keys } from "./common_errors.mts";
 import { dvbi, dvbiEA } from "./DVB-I_definitions.mts";
 import ErrorList from "./error_list.mts";
-import { APPLICATION, WARNING } from "./error_list.mts";
+import { WARNING } from "./error_list.mts";
 import { isJPEGmime, isPNGmime, validImageSet, isAllowedImageMime } from "./MIME_checks.mts";
 import { mpeg7 } from "./MPEG7_definitions.mts";
 import { checkLanguage } from "./multilingual_element.mts";
@@ -25,17 +25,13 @@ import { tva, tvaEA, tvaEC } from "./TVA_definitions.mts";
  * verifies if the specified RelatedMaterial contains a image of the specified type(s). Only a single image is permitted and the format
  * specified in <MediaLocator><MediaURI> must match that specified in <Format>
  *
- * @param {XmlElement | null} RelatedMaterial  The <RelatedMaterial> element (a libxmls ojbect tree) to be checked
- * @param {string} location                    The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
- * @param {array<string>} allowedHowRelated    The set of permitted values for HowRelated@href
- * @param {ErrorList} errs                     The class where errors and warnings relating to the serivce list processing are stored
- * @param {string} errCode                     Error code prefix for reporting
+ * @param {XmlElement} RelatedMaterial       The <RelatedMaterial> element to be checked
+ * @param {string} location                  The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+ * @param {array<string>} allowedHowRelated  The set of permitted values for HowRelated@href
+ * @param {ErrorList} errs                   The class where errors and warnings relating to the serivce list processing are stored
+ * @param {string} errCode                   Error code prefix for reporting
  */
-function validateImageRelatedMaterial(RelatedMaterial : XmlElement | null, location : string , allowedHowRelated : Array<string>, errs : ErrorList, errCode : string) {
-	if (!RelatedMaterial) {
-		errs.addError({ type: APPLICATION, code: "PS000", message: "validateImageRelatedMaterial() called with RelatedMaterial==null" });
-		return;
-	}
+function validateImageRelatedMaterial(RelatedMaterial : XmlElement, location : string , allowedHowRelated : Array<string>, errs : ErrorList, errCode : string) {
 
 	checkTopElementsAndCardinality(
 		RelatedMaterial,
@@ -46,20 +42,20 @@ function validateImageRelatedMaterial(RelatedMaterial : XmlElement | null, locat
 		`${errCode}-1`
 	);
 
-	let HowRelated,
-		Format,
-		MediaLocator;
+	let HowRelated : XmlElement | null = null,
+		Format : XmlElement | null = null,
+		MediaLocator : XmlElement | null = null;
 
 	RelatedMaterial.childNodes().forEachSubElement((child) => {
 		switch (child.name) {
 			case tva.e_HowRelated:
-				if (!HowRelated) HowRelated = child as XmlElement;
+				if (!HowRelated) HowRelated = child;
 				break;
 			case tva.e_Format:
-				if (!Format) Format = child as XmlElement;
+				if (!Format) Format = child;
 				break;
 			case tva.e_MediaLocator:
-				if (!MediaLocator) MediaLocator = child as XmlElement;
+				if (!MediaLocator) MediaLocator = child;
 				break;
 		}
 	});
@@ -67,7 +63,7 @@ function validateImageRelatedMaterial(RelatedMaterial : XmlElement | null, locat
 	if (!HowRelated || !MediaLocator) return;
 	checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, `${errCode}-2`);
 
-	const hrHref = HowRelated.attrAnyNsValueOr(tva.a_href, null);
+	const hrHref = (HowRelated as XmlElement).attrAnyNsValueOr(tva.a_href, null);
 	if (hrHref && !allowedHowRelated.includes(hrHref)) {
 		errs.addError({
 			code: `${errCode}-10`,
@@ -79,10 +75,10 @@ function validateImageRelatedMaterial(RelatedMaterial : XmlElement | null, locat
 
 	let isJPEG = false,
 		isPNG = false,
-		StillPictureFormat = null;
+		StillPictureFormat : XmlElement | null = null;
 	if (Format) {
 		checkTopElementsAndCardinality(Format, [{ name: tva.e_StillPictureFormat }], tvaEC.Format, false, errs, `${errCode}-11`);
-		Format.childNodes().forEachNamedSubElement(tva.e_StillPictureFormat, (StillPicture) => {
+		(Format as XmlElement).childNodes().forEachNamedSubElement(tva.e_StillPictureFormat, (StillPicture) => {
 			StillPictureFormat = StillPicture;
 			checkAttributes(StillPicture, [tva.a_horizontalSize, tva.a_verticalSize, tva.a_href], [], tvaEA.SillPictureFormat, errs, `${errCode}-12`);
 			const childHref = StillPicture.attrAnyNsValueOr(tva.a_href, null);
@@ -96,7 +92,7 @@ function validateImageRelatedMaterial(RelatedMaterial : XmlElement | null, locat
 						break;
 					default:
 						errs.addError(
-							cg_InvalidHrefValue(childHref.value, StillPicture, `${RelatedMaterial.name}.${tva.e_Format}.${tva.e_StillPictureFormat}`, `${errCode}-13`)
+							cg_InvalidHrefValue(`${errCode}-13`, childHref.value, StillPicture, `${RelatedMaterial.name}.${tva.e_Format}.${tva.e_StillPictureFormat}`)
 						);
 				}
 		});
@@ -105,7 +101,7 @@ function validateImageRelatedMaterial(RelatedMaterial : XmlElement | null, locat
 	checkTopElementsAndCardinality(MediaLocator, [{ name: tva.e_MediaUri }], tvaEC.MediaLocator, false, errs, `${errCode}-21`);
 
 	let hasMediaURI = false;
-	MediaLocator.childNodes().forEachNamedSubElement(tva.e_MediaUri, (MediaUri) => {
+	(MediaLocator as XmlElement).childNodes().forEachNamedSubElement(tva.e_MediaUri, (MediaUri) => {
 		hasMediaURI = true;
 		checkAttributes(MediaUri, [tva.a_contentType], [], tvaEA.MediaUri, errs, `${errCode}-22`);
 		const MediaUri_contentType = MediaUri.attrAnyNsValueOr(tva.a_contentType, null);
@@ -132,7 +128,8 @@ function validateImageRelatedMaterial(RelatedMaterial : XmlElement | null, locat
 				fragment: MediaUri,
 			});
 	});
-	if (MediaLocator.attrAnyNs(dvbi.a_contentLanguage)) checkLanguage(MediaLocator.attrAnyNs(dvbi.a_contentLanguage).value, MediaLocator, errs, `${errCode}-27`);
+	const MediaLocator_contentLanguage = (MediaLocator as XmlElement).attrAnyNsValueOr(dvbi.a_contentLanguage, null)
+	if (MediaLocator_contentLanguage) checkLanguage(MediaLocator_contentLanguage, MediaLocator, errs, `${errCode}-27`);
 	if (!hasMediaURI)
 		errs.addError({
 			code: `${errCode}-26`,
@@ -146,10 +143,10 @@ function validateImageRelatedMaterial(RelatedMaterial : XmlElement | null, locat
  * verifies if the specified RelatedMaterial contains a Promotional Still Image (per A177 clause 6.10.13). Only a single image is permitted and the format
  * specified in <MediaLocator><MediaURI> must match that specified in <Format>
  *
- * @param {XmlElement} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
- * @param {string}     location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
- * @param {ErrorList}  errs              The class where errors and warnings relating to the serivce list processing are stored
- * @param {string}     errcode           Error code prefix for reporting
+ * @param {XmlElement} RelatedMaterial  The <RelatedMaterial> element (a libxmls ojbect tree) to be checked
+ * @param {string} location             The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+ * @param {ErrorList} errs              The class where errors and warnings relating to the serivce list processing are stored
+ * @param {string} errCode              Error code prefix for reporting
  */
 export function ValidatePromotionalStillImage(RelatedMaterial :XmlElement, location : string, errs : ErrorList, errCode : string) {
 	validateImageRelatedMaterial(RelatedMaterial, location, [tva.cs_PromotionalStillImage], errs, errCode);
@@ -158,14 +155,12 @@ export function ValidatePromotionalStillImage(RelatedMaterial :XmlElement, locat
 /**
  * verifies if the images provided in <MediaLocator> elments are valid according to specification
  *
- * @param {XmlElement | null} RelatedMaterial The <RelatedMaterial> element
- * @param {string}     location               The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
- * @param {ErrorList}  errs                   The class where errors and warnings relating to the service list processing are stored
- * @param {string}     errCode                Error code prefix for reporting
+ * @param {XmlElement} RelatedMaterial  The <RelatedMaterial> element
+ * @param {string} location             The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+ * @param {ErrorList} errs              The class where errors and warnings relating to the service list processing are stored
+ * @param {string} errCode              Error code prefix for reporting
  */
-export function checkValidLogos(RelatedMaterial : XmlElement | null, location : string, errs : ErrorList, errCode : string) {
-	if (!RelatedMaterial) return;
-
+export function checkValidLogos(RelatedMaterial : XmlElement, location : string, errs : ErrorList, errCode : string) {
 	let specifiedMediaTypes : Array<string> = [];
 	RelatedMaterial.childNodes().forEachNamedSubElement(tva.e_MediaLocator, (MediaLocator) => {
 		checkTopElementsAndCardinality(MediaLocator, [{ name: tva.e_MediaUri }], tvaEC.MediaLocator, false, errs, `${errCode}-1`);

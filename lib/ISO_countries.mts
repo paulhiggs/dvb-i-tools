@@ -6,6 +6,7 @@
  */
 import chalk from "chalk";
 import { readFile, readFileSync } from "fs";
+import { FetchError } from "node-fetch";
 import fetchS from "sync-fetch";
 
 import handleErrors from "./fetch_err_handler.mts";
@@ -63,9 +64,9 @@ export default class ISOcountries {
 			readFile(
 				countriesFile,
 				{ encoding: "utf-8" },
-				function (err, data) {
-					if (!err) this.countriesList = loadCountryData(data);
-					else console.log(chalk.red(err.error));
+				function (error : NodeJS.ErrnoException | null, data : string) {
+					if (!error) this.countriesList = loadCountryData(data);
+					else console.log(chalk.red((error as FetchError).message));
 				}.bind(this)
 			);
 		else {
@@ -98,7 +99,7 @@ export default class ISOcountries {
 			try {
 				resp = fetchS(countriesURL);
 			} catch (error) {
-				console.log(chalk.red(error.message));
+				console.log(chalk.red((error as FetchError).message));
 			}
 			if (resp) {
 				if (resp.ok) this.countriesList = loadCountryData(resp.text);
@@ -107,7 +108,7 @@ export default class ISOcountries {
 		}
 	}
 
-	loadCountries(options, async = true) {
+	loadCountries(options : any, async : boolean = true) {
 		if (!options) options = {};
 		if (!options.purge) options.purge = true;
 

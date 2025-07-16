@@ -5,7 +5,7 @@
  * 
  */
 import chalk from "chalk";
-import { statSync, readFileSync } from "fs";
+import { statSync, readFileSync } from "node:fs";
 import { XmlElement } from "libxml2-wasm";
 
 import { datatypeIs } from "../phlib/phlib.ts";
@@ -25,11 +25,11 @@ function readmyfile(filename : string, options : any | null = null) : string | N
 		const stats = statSync(filename);
 		if (stats.isFile()) return readFileSync(filename, options);
 	} catch (err) {
-		console.log(chalk.magenta(`${err.code}, ${err.path}`));
+		console.log(chalk.magenta(`${(err as any).code}, ${(err as any).path}`));
 	}
 	return null;
 }
-export function readmyfileB(filename) : NonSharedBuffer | null {
+export function readmyfileB(filename : string) : NonSharedBuffer | null {
 	const res = readmyfile(filename);
 	return res ? res as NonSharedBuffer : null;
 }
@@ -153,7 +153,7 @@ export function isEmpty(object : any) : boolean {
 /**
  * counts the number of named elements in the specificed node
  * *
- * @param {XmlElement} node         the libxmljs node to check
+ * @param {XmlElement} node          the libxmljs node to check
  * @param {string} childElementName  the name of the child element to count
  * @returns {number} the number of named child elments
  */
@@ -168,11 +168,11 @@ export function CountChildElements(node : XmlElement, childElementName : string)
 /**
  * determines if the specified value is already in the array and adds it if it is not
  * *
- * @param {Array} found  an array on non-duplicated values
- * @param {string} val   the value whose existance is to be checked
- * @returns {boolean} true if @val is already present in @found, else false
+ * @param {Array<string>} found  an array on non-duplicated values
+ * @param {string} val           the value whose existance is to be checked
+ * @return {boolean} true if @val is already present in @found, else false
  */
-export function DuplicatedValue(found, val) {
+export function DuplicatedValue(found : Array<string>, val : string) : boolean {
 	const f = found.includes(val);
 	if (!f) found.push(val);
 	return f;
@@ -190,11 +190,11 @@ export function DumpString(str : string) : string {
 export class parseISOduration2 {
 	
 	private durationRegex = /^(-)?P(?:(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?|(\d+)W)$/;
-	private parsed;
+	private parsed : any | undefined = undefined;
 
 	constructor(duration? : string) {
-		if (duration)
-			this.parsed = duration.replace(this.durationRegex, function(_, sign, year, month, day, hour, minute, second, week) : any {
+		if (duration) {
+			let temp = duration.replace(this.durationRegex, function(_, sign, year, month, day, hour, minute, second, week) : any {
 				sign = sign ? -1 : 1;
 				// parse number for each unit
 				let units = [year, month, day, hour, minute, second, week].map(function (num) {
@@ -202,6 +202,8 @@ export class parseISOduration2 {
 				});
 				return { year: units[0], month: units[1], week: units[6], day: units[2], hour: units[3], minute: units[4], second: units[5] };
 			});
+			this.parsed = temp;
+		}
 		// no regexp match
 		if (!this.parsed) {
 			throw new Error('Invalid duration "' + duration + '"');

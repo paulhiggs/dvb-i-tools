@@ -134,19 +134,21 @@ export default class SLEPR {
 		req.parseErr = [];
 		if (req.query) {
 
-			let checkIt = (argument : string | Array<string> | any, argName, checkFunction) => {
+			type checkFunctionType = ( testVal : string ) => boolean;
+
+			let checkIt = (argument : string | Array<string> | any, argName : string, checkFunction : checkFunctionType) => {
 				if (argument)
 					switch (datatypeIs(argument)) {
 						case "string":
-							if (!checkFunction(argument)) req.parseErr.push(`invalid ${argName} [${argument}]`);
+							if (!checkFunction(argument)) req.parseErr?.push(`invalid ${argName} [${argument}]`);
 							break;
 						case "array":
 							argument.forEach((item : string) => {
-								if (!checkFunction(item, false)) req.parseErr.push(`invalid ${argName} [${item}]`);
+								if (!checkFunction(item)) req.parseErr?.push(`invalid ${argName} [${item}]`);
 							});
 							break;
 						default:
-							req.parseErr.push(`invalid type [${datatypeIs(argument)}] for ${argName}`);
+							req.parseErr?.push(`invalid type [${datatypeIs(argument)}] for ${argName}`);
 							break;
 					}
 			};
@@ -170,15 +172,15 @@ export default class SLEPR {
 					update(params, target_key, req.query[key]);
 				} else req.parseErr.push(`invalid argument - ${key}`);
 			}
-			let checkBoolean = (bool : string) => ["true", "false"].includes(bool);
+			let checkBoolean : checkFunctionType = (bool : string) => ["true", "false"].includes(bool);
 			checkIt(params.regulatorListFlag, dvbisld.a_regulatorListFlag, checkBoolean);
 
 			//TargetCountry(s)
-			let checkTargetCountry = (country : string) => this.knownCountries.isISO3166code(country, false);
+			let checkTargetCountry : checkFunctionType = (country : string) => this.knownCountries.isISO3166code(country, false);
 			checkIt(params.TargetCountry, dvbi.e_TargetCountry, checkTargetCountry);
 
 			//Language(s)
-			let checkLanguage = (language : string) => isTVAAudioLanguageType(language, false);
+			let checkLanguage : checkFunctionType = (language : string) => isTVAAudioLanguageType(language, false);
 			checkIt(params.Language, dvbi.e_Language, checkLanguage);
 
 			//DeliverySystems(s)
@@ -186,7 +188,7 @@ export default class SLEPR {
 			checkIt(params.Delivery, dvbi.e_Delivery, checkDelivery);
 
 			// Genre(s)
-			let checkGenre = (genre : string) => this.knownGenres.isIn(genre);
+			let checkGenre : checkFunctionType = (genre : string) => this.knownGenres.isIn(genre);
 			checkIt(params.Genre, dvbi.e_Genre, checkGenre);
 
 			checkIt(params.inlineImages, dvbisld.q_inlineImages, checkBoolean);

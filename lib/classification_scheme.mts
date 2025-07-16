@@ -5,6 +5,7 @@
  * 
  */
 import { readFile, readFileSync } from "fs";
+import { FetchError } from "node-fetch";
 
 import chalk from "chalk";
 import { AvlTree } from "@datastructures-js/binary-search-tree";
@@ -133,7 +134,7 @@ export default class ClassificationScheme {
 			try {
 				resp = fetchS(csURL);
 			} catch (error) {
-				console.log(chalk.red(error.message));
+				console.log(chalk.red((error as FetchError).message));
 			}
 			if (resp) {
 				if (resp.ok) {

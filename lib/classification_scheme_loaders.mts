@@ -43,7 +43,7 @@ export function LoadCountries(useURLs : boolean, async : boolean = true) : ISOco
 	return c;
 }
 
-export function LoadLanguages(useURLs, async = true) {
+export function LoadLanguages(useURLs : boolean, async : boolean = true) : IANAlanguages {
 	console.log(chalk.yellow.underline("loading languages..."));
 	let l = new IANAlanguages();
 	l.loadLanguages(
@@ -61,7 +61,7 @@ export function LoadLanguages(useURLs, async = true) {
 	return l;
 }
 
-export function LoadVideoCodecCS(useURLs, async = true) {
+export function LoadVideoCodecCS(useURLs : boolean, async : boolean = true) : ClassificationScheme {
 	console.log(chalk.yellow.underline("loading Video Codecs..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(
@@ -80,7 +80,7 @@ export function LoadVideoCodecCS(useURLs, async = true) {
 }
 
 
-export function LoadAudioCodecCS(useURLs : boolean, async : boolean = true) {
+export function LoadAudioCodecCS(useURLs : boolean, async : boolean = true)  : ClassificationScheme {
 	console.log(chalk.yellow.underline("loading Audio Codecs..."));
 	let cs = new ClassificationScheme();
 	cs.loadCS(

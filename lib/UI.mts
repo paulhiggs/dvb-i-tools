@@ -5,6 +5,7 @@
  * 
  */
 import Express from 'express';
+import fileupload from 'express-fileupload';
 import { readFileSync } from "fs";
 
 import { HTMLize } from "../phlib/phlib.ts";
@@ -235,7 +236,7 @@ export function drawForm(req : Express.Request, res : Express.Response, modes : 
 			source = req.body?.XMLurl ? req.body?.XMLurl : "";
 			break;
 		case MODE_FILE:
-			source = req.files?.XMLfile?.name ? req.files?.XMLfile?.name : "";
+			source = (req.files?.XMLfile as fileupload.UploadedFile)?.name ? (req.files?.XMLfile as fileupload.UploadedFile).name : "";
 			break;
 	}
 	tabulateResults(source, res, error, errs);

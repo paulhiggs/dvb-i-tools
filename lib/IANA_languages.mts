@@ -6,6 +6,7 @@
  */
 import chalk from "chalk";
 import { readFile, readFileSync } from "fs";
+import { FetchError } from "node-fetch";
 import fetchS from "sync-fetch";
 
 import { datatypeIs } from "../phlib/phlib.ts";
@@ -41,16 +42,14 @@ export enum LanguageCheckResponse {
 }
 
 export default class IANAlanguages {
-	private languagesList : Array<string>;
-	private redundantLanguagesList : Array<RedundantType>;
-	private languageRanges : Array<RangeType>;
-	signLanguagesList : Array<string>;
-	regionsList : Array<string>;
-	private languageFileDate : string | undefined;
+	private languagesList : Array<string> = [];
+	private redundantLanguagesList : Array<RedundantType> = [];
+	private languageRanges : Array<RangeType> = [];
+	signLanguagesList : Array<string> = [];
+	regionsList : Array<string> = [];
+	private languageFileDate? : string;
 
 	constructor() {
-		this.languageFileDate = undefined;
-		this.empty();
 	}
 
 	empty() {
@@ -216,7 +215,7 @@ export default class IANAlanguages {
 			try {
 				resp = fetchS(languagesURL);
 			} catch (error) {
-				console.log(chalk.red(error.message));
+				console.log(chalk.red((error as FetchError).message));
 			}
 			if (resp) {
 				if (resp.ok) this.processLanguageData(resp.text);

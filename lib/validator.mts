@@ -76,7 +76,7 @@ declare module "express-session" {
 
 let csr : SLEPR | null = null;
 
-function DVB_I_check(req : TypedRequestBody, res : Express.Response, slcheck : ServiceListCheck | null, cgcheck : ContentGuideCheck | null, hasSL : boolean, hasCG : boolean, motd : string, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
+function DVB_I_check(req : Express.Request, res : Express.Response, slcheck : ServiceListCheck | null, cgcheck : ContentGuideCheck | null, hasSL : boolean, hasCG : boolean, motd : string, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
 	if (!req.session.data) {
 		// setup defaults
 		req.session.data = {};
@@ -165,10 +165,10 @@ function DVB_I_check(req : TypedRequestBody, res : Express.Response, slcheck : S
  * @param {Express.Request} req       The Express request that triggered the validation
  * @param {Express.Response} res      The Express response to be written to the requester
  * @param {ServiceListCheck} slcheck  Initialised Service List validator
- * @param {string} motd               HTML text for the Message Of The Day
+ * @param {string | null} motd        HTML text for the Message Of The Day
  * @param {boolean} jsonResponse      Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateServiceList(req : Express.Request, res : Express.Response, slcheck :ServiceListCheck, motd : string,  jsonResponse : boolean) {
+function validateServiceList(req : Express.Request, res : Express.Response, slcheck : ServiceListCheck, motd : string | null,  jsonResponse : boolean) {
 	let errs = new ErrorList();
 	let resp,
 		VVxml = null;
@@ -214,7 +214,7 @@ function validateServiceList(req : Express.Request, res : Express.Response, slch
  * @param {string} motd                HTML text for the Message Of The Day
  * @param {boolean} jsonResponse       Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateContentGuide(req :Express.Request, res : Express.Response, cgcheck :ContentGuideCheck, motd : string | null = null, jsonResponse : boolean) {
+function validateContentGuide(req : Express.Request, res : Express.Response, cgcheck :ContentGuideCheck, motd : string | null, jsonResponse : boolean) {
 	let errs = new ErrorList();
 	let resp,
 		VVxml : string | null = null;
@@ -405,10 +405,11 @@ export default function validator(options : any) {
 			});
 	}
 	if (!options.nosl) {
-		app.all("/validate_sl", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
-			validateServiceList(req, res, slcheck, motd, false);
-		});
-
+		if (slcheck) {
+				app.all("/validate_sl", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
+				validateServiceList(req, res, slcheck, motd, false);
+			});
+		}
 		app.all("/validate_sl_json", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
 			validateServiceList(req, res, slcheck, motd, true);
 		});
@@ -453,20 +454,22 @@ export default function validator(options : any) {
 
 	if (!options.nocsr) {
 		csr = new SLEPR(options.urls, knownLanguages, isoCountries, knownGenres);
-		csr.loadServiceListRegistry(options.CSRfile);
-
-		if (options.CORSmode == "manual") {
-			app.options(SLEPR_query_route, manualCORS);
-		}
-		app.get(SLEPR_query_route, manualCORS, (req, res) => {
-			csr.processServiceListRequest(req, res);
-			res.end();
-		});
-
-		app.get(SLEPR_reload_route, (req, res) => {
+		if (csr) {
 			csr.loadServiceListRegistry(options.CSRfile);
-			res.status(200).end();
-		});
+
+			if (options.CORSmode == "manual") {
+				app.options(SLEPR_query_route, manualCORS);
+			}
+			app.get(SLEPR_query_route, manualCORS, (req, res) => {
+				csr.processServiceListRequest(req, res);
+				res.end();
+			});
+
+			app.get(SLEPR_reload_route, (req, res) => {
+				csr.loadServiceListRegistry(options.CSRfile);
+				res.status(200).end();
+			});
+		}
 	}
 
 	app.get("/stats", (req, res) => {
@@ -495,7 +498,7 @@ export default function validator(options : any) {
 		res.status(404).end();
 	});
 
-	if (!StartServers(app, options)){
+	if (!StartServers(app, options)) {
 		console.log(chalk.red("No listeners - exiting!!"));
 		process.exit(1);
 	}
