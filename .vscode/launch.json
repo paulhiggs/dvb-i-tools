@@ -12,10 +12,12 @@
 				"<node_internals>/**"
 			],
 			"program": "${workspaceFolder}\\all-in-one.js",
-//			"args" : [
-//				 "--CSRfile .\\TESTgit-serviceListEntryPoint.xml",
-//				 "--port 3999"
-//			]
+			"args" : [
+				// split these up for correct process.qrv processing in command-line-args
+				// see: https://github.com/75lb/command-line-args/issues/141
+				"--CSRfile", ".\\TESTgit-serviceListEntryPoint.xml",
+				"--port", "3030",
+			]
 		}
 	]
 }
