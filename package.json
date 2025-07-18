@@ -17,9 +17,9 @@
 		"cors": "^2.8.5",
 		"express": "^5.1.0",
 		"express-fileupload": "^1.5.1",
-		"express-session": "^1.18.1",
+		"express-session": "^1.18.2",
 		"libxml2-wasm": "^0.5.0",
-		"morgan": "^1.10.0",
+		"morgan": "^1.10.1",
 		"serve-favicon": "^2.5.1",
 		"sync-fetch": "^0.6.0-2",
 		"xml-formatter": "^3.6.6"
