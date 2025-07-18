@@ -16,10 +16,10 @@ const allowedImageTypes : Array<string> = [JPEG_MIME, PNG_MIME, WebP_MIME];
 /**
  * determines if the value is a valid JPEG MIME type
  *
- * @param {string | undefined} mime the MIME type
+ * @param {string} mime the MIME type
  * @return {boolean} true if the MIME type represents a JPEG image, otherwise false
  */
-export let isJPEGmime = (mime : string | undefined) : boolean => mime ? mime == JPEG_MIME : false;
+export let isJPEGmime = (mime : string) : boolean => mime == JPEG_MIME;
 
 /**
  * determines if the value is a valid PNG MIME type
@@ -27,23 +27,23 @@ export let isJPEGmime = (mime : string | undefined) : boolean => mime ? mime == 
  * @param {string | undefined} mime the MIME type
  * @return {boolean} true if the MIME type represents a PNG image, otherwise false
  */
-export let isPNGmime = (mime : string | undefined) : boolean => mime ? mime == PNG_MIME : false;
+export let isPNGmime = (mime : string) : boolean => mime == PNG_MIME;
 
 /** BUG2937 - https://bugzilla.dvb.org/show_bug.cgi?id=2937
  * determines if the value is a valid WebP MIME type
  *
- * @param {string | undefined} mime the MIME type
+ * @param {string} mime the MIME type
  * @return {boolean} true if the MIME type represents a WebP image, otherwise false
  */
-export let isWebPmime = (mime: string | undefined) : boolean => mime ? mime == WebP_MIME : false;
+export let isWebPmime = (mime : string) : boolean => mime == WebP_MIME;
 
 /**
  * determines if the value is a DVB-I permitted image MIME type
  *
- * @param {string | undefined} mime the MIME type
+ * @param {string} mime the MIME type
  * @return {boolean} true if the MIME type is permitted by DVB-I, otherwise false
  */
-export let isAllowedImageMime = (mime : string | undefined) : boolean => mime ? allowedImageTypes.includes(mime) : false;
+export let isAllowedImageMime = (mime : string) : boolean => allowedImageTypes.includes(mime);
 
 /**
  * determines if the value is a DVB-I required image MIME type
@@ -51,7 +51,7 @@ export let isAllowedImageMime = (mime : string | undefined) : boolean => mime ? 
  * @param {string | undefined} mime the MIME type
  * @return {boolean} true if the MIME type is required by DVB-I, otherwise false
  */
-export let isRequiredImageMime = (mime : string | undefined) : boolean => mime ? REQUIRED_MIMES.includes(mime) : false;
+export let isRequiredImageMime = (mime : string) : boolean => REQUIRED_MIMES.includes(mime);
 
 /**
  *

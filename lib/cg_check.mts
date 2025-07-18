@@ -42,6 +42,7 @@ import { dvbi } from "./DVB-I_definitions.mts";
 import ErrorList, { WARNING, APPLICATION } from "./error_list.mts";
 import type { ErrorArgs } from "./error_list.mts";
 import { SpecificationState } from "./globals.mts";
+import { CGrequests } from "./index";
 import IANAlanguages from "./IANA_languages.mts"
 import ISOcountries from "./ISO_countries.mts";
 import writeOut from "./logger.mts";
@@ -61,16 +62,6 @@ import { parseISOduration2, xPath, xPathM, isIn, isIni, unEntity, CountChildElem
 const DEFAULT_LANGUAGE : string = "***";
 const CATEGORY_GROUP_NAME : string = '"category group"';
 
-enum CGrequests {
-	SCHEDULE_TIME = "Time",
-	SCHEDULE_NOWNEXT = "NowNext",
-	SCHEDULE_WINDOW = "Window",
-	PROGRAM = "ProgInfo",
-	MORE_EPISODES = "MoreEpisodes",
-	BS_CATEGORIES = "bsCategories",
-	BS_LISTS = "bsLists",
-	BS_CONTENTS = "bsContents",
-}
 
 export type CGRequestInfo = {
 	value : CGrequests,

@@ -112,7 +112,7 @@ export default class ClassificationScheme {
 	 * @param {boolean} async
 	 */
 	private loadFromURL(csURL : string, async : boolean = true) {
-		const isHTTPurl : boolean = isHTTPURL(csURL);
+		const isHTTPurl = isHTTPURL(csURL);
 		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving CS (${this.leafsOnly ? "leaf" : "all"} nodes) from ${csURL} via fetch()`));
 		if (!isHTTPurl) return;
 

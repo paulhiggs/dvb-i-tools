@@ -4,11 +4,12 @@
  */
 import chalk from "chalk";
 import cors from "cors";
-import express from "express";
+import express, { Request, Response } from "express";
 import fileupload from "express-fileupload";
 import session from "express-session";
 import { join } from "path";
 import morgan, { token } from "morgan";
+import FetchError from "node:fetch";
 import os from "node:os";
 import process from "process";
 import favicon from "serve-favicon";
@@ -46,19 +47,6 @@ import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults,MODE_URL, MODE_FILE, MODE_
 import type { FormOptions } from "./UI.mts";
 import { readmyfileS } from "./utils.mts";
 
-
-declare module "express" {
-	interface Request {
-		parseErr? : string;
-		files? : fileupload.FileArray | null | undefined;
-		diags : {
-			countErrors : number;
-			countWarnings : number;
-			countInforms : number;
-		}
-	}
-}
-
 export type FormSessionData = {
 	lastUrl? : string;
 	mode? : string;
@@ -76,7 +64,7 @@ declare module "express-session" {
 
 let csr : SLEPR | null = null;
 
-function DVB_I_check(req : Express.Request, res : Express.Response, slcheck : ServiceListCheck | null, cgcheck : ContentGuideCheck | null, hasSL : boolean, hasCG : boolean, motd : string, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
+function DVB_I_check(req : TypedRequestBody, res : Response, slcheck : ServiceListCheck | null, cgcheck : ContentGuideCheck | null, hasSL : boolean, hasCG : boolean, motd : string | null, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
 	if (!req.session.data) {
 		// setup defaults
 		req.session.data = {};
@@ -107,12 +95,12 @@ function DVB_I_check(req : Express.Request, res : Express.Response, slcheck : Se
 		if (!req.parseErr)
 			switch (req.body.doclocation) {
 				case MODE_URL:
-					if (isHTTPURL(req.body.XMLurl)) {
+					if (req.body.XMLurl && isHTTPURL(req.body.XMLurl)) {
 						let resp : any = null;
 						try {
 							resp = fetchS(req.body.XMLurl);
 						} catch (error) {
-							req.parseErr = error.message;
+							req.parseErr = (error as FetchError).message;
 						}
 						if (resp) {
 							if (resp.ok) VVxml = resp.text();
@@ -137,7 +125,8 @@ function DVB_I_check(req : Express.Request, res : Express.Response, slcheck : Se
 		if (!req.parseErr)
 			switch (req.body.testtype) {
 				case MODE_CG:
-					if (cgcheck) cgcheck.doValidateContentGuide(VVxml as string, req.body.requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
+					if (cgcheck && req.body.requestType) 
+						cgcheck.doValidateContentGuide(VVxml as string, req.body.requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
 					break;
 				case MODE_SL:
 					if (slcheck) slcheck.doValidateServiceList(VVxml as string, errs, { log_prefix: log_prefix, report_schema_version: true });
@@ -168,7 +157,7 @@ function DVB_I_check(req : Express.Request, res : Express.Response, slcheck : Se
  * @param {string | null} motd        HTML text for the Message Of The Day
  * @param {boolean} jsonResponse      Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateServiceList(req : Express.Request, res : Express.Response, slcheck : ServiceListCheck, motd : string | null,  jsonResponse : boolean) {
+function validateServiceList(req : TypedRequestBody, res : Express.Response, slcheck : ServiceListCheck, motd : string | null,  jsonResponse : boolean) {
 	let errs = new ErrorList();
 	let resp,
 		VVxml = null;
@@ -404,16 +393,16 @@ export default function validator(options : any) {
 				audiopres: audioPresentation,
 			});
 	}
-	if (!options.nosl) {
-		if (slcheck) {
-				app.all("/validate_sl", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
-				validateServiceList(req, res, slcheck, motd, false);
-			});
-		}
+	if (!options.nosl && slcheck) {
+		app.all("/validate_sl", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
+			validateServiceList(req, res, slcheck, motd, false);
+		});
 		app.all("/validate_sl_json", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
 			validateServiceList(req, res, slcheck, motd, true);
 		});
+	}
 
+	if (!options.nosl && cgcheck) {
 		app.all("/validate_cg", express.text({ type: "application/xml", limit: "10mb" }), (req, res) => {
 			validateContentGuide(req, res, cgcheck, motd, false);
 		});
@@ -426,7 +415,7 @@ export default function validator(options : any) {
 	const SLEPR_query_route = "/query",
 		SLEPR_reload_route = "/reload";
 
-	let manualCORS = function (res, req, next) {
+	let manualCORS = function (/* eslint-disable no-unused-vars */ res, req, /* eslint-enable */ next) {
 		next();
 	};
 	if (options.CORSmode == CORSlibrary) {
@@ -461,12 +450,12 @@ export default function validator(options : any) {
 				app.options(SLEPR_query_route, manualCORS);
 			}
 			app.get(SLEPR_query_route, manualCORS, (req, res) => {
-				csr.processServiceListRequest(req, res);
+				csr && csr.processServiceListRequest(req, res);
 				res.end();
 			});
 
 			app.get(SLEPR_reload_route, (req, res) => {
-				csr.loadServiceListRegistry(options.CSRfile);
+				csr && csr.loadServiceListRegistry(options.CSRfile);
 				res.status(200).end();
 			});
 		}

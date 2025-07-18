@@ -85,20 +85,20 @@ export const BCP47_Language_Tag = languageTag;
 /**
  * checks if the argument complies to the TV Anytime defintion of RatioType
  *
- * @param {string | undefined} ratio string contining value to check
+ * @param {string} ratio string contining value to check
  * @returns {boolean} true if the argment is compliant to a tva:RatioType
  */
 const ratioRegex = new RegExp(`^[${e_digit}]+:[${e_digit}]+$`);
-export let isRatioType = (ratio : string | undefined) : boolean => ratio ? ratioRegex.test(ratio.trim()) : false;
+export let isRatioType = (ratio : string) : boolean => ratioRegex.test(ratio.trim());
 
 /**
  * checks if the argument complies to an XML representation of UTC time
  *
- * @param {string | undefined} time string contining the UTC time
+ * @param {string} time string contining the UTC time
  * @returns {boolean}  true if the argment is formatted according to UTC ("Zulu") time
  */
 const UTCregex = new RegExp(/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]{1,3})?Z?$/);
-export let isUTCDateTime = (time : string | undefined ) : boolean => time ? UTCregex.test(time.trim()) : false;
+export let isUTCDateTime = (time : string) : boolean => UTCregex.test(time.trim());
 
 /**
  * checks of the specified argument matches an HTTP(s) URL where the protocol is required to be provided
@@ -109,7 +109,7 @@ export let isUTCDateTime = (time : string | undefined ) : boolean => time ? UTCr
  * see RFC 3986 - https://tools.ietf.org/html/rfc3986
  */
 const HTTPURLregex = new RegExp(`^https?:(//${e_AuthorityAndPath}|${e_PathNoAuthority})${e_Query}?${e_Fragment}?$`, "i");
-export let isHTTPURL = (url : string | undefined) : boolean => url ? HTTPURLregex.test(url.trim()) : false;
+export let isHTTPURL = (url : string) : boolean => HTTPURLregex.test(url.trim());
 
 /**
  * checks of the specified argument matches the scheme, authority and path syntax components of an HTTP(s) URL where the protocol is required to be provided
@@ -120,7 +120,7 @@ export let isHTTPURL = (url : string | undefined) : boolean => url ? HTTPURLrege
  * see RFC 3986 - https://tools.ietf.org/html/rfc3986
  */
 const HTTPPathURLregex = new RegExp(`^https?:(//${e_AuthorityAndPath}|${e_PathNoAuthority})$`, "i");
-export let isHTTPPathURL = (path : string | undefined) : boolean => path ? HTTPPathURLregex.test(path.trim()) : false;
+export let isHTTPPathURL = (path : string) : boolean => HTTPPathURLregex.test(path.trim());
 
 /**
  * isURL and isURN use the syntax from MPEG DASH - http://github.com/MPEGGroup/DASHSchema/
@@ -129,16 +129,16 @@ export let isHTTPPathURL = (path : string | undefined) : boolean => path ? HTTPP
  */
 const URNregex = new RegExp(`^${e_URN}$`, "i"),
 	URLregex = new RegExp(`^${e_URL}$`, "i");
-export let isURL = (url : string | undefined) : boolean => url ? URLregex.test(url) : false;
-export let isURN = (urn : string | undefined) : boolean => urn ? URNregex.test(urn) : false;
+export let isURL = (url : string) : boolean => URLregex.test(url);
+export let isURN = (urn : string) : boolean => URNregex.test(urn);
 
 /**
  * checks of the specified argument matches URL according to RFC 3986 - https://tools.ietf.org/html/rfc3986
  *
- * @param {string | undefined} uri  The value whose format is to be checked
+ * @param {string} uri  The value whose format is to be checked
  * @returns {boolean} true if @uri is an HTTP URL
  */
-export let isURI = (uri : string | undefined) : boolean => isURL(uri) || isURN(uri);
+export let isURI = (uri : string) : boolean => isURL(uri) || isURN(uri);
 
 /**
  * Checks the URI conforms to RFC 2397.
@@ -149,37 +149,37 @@ export let isURI = (uri : string | undefined) : boolean => isURL(uri) || isURN(u
  * Thanks to https://gist.github.com/khanzadimahdi/bab8a3416bdb764b9eda5b38b35735b8
  */
 const dataRegexp = new RegExp(`^data:((?:\w+\/(?:(?!;).)+)?)((?:;[\w\W]*?[^;])*),(.+)$`, "i");
-export let isDataURI = (uri : string | undefined) : boolean => uri ? dataRegexp.test(uri) : false;
+export let isDataURI = (uri : string) : boolean => dataRegexp.test(uri);
 
 /**
  * checks if the argument complies to an XML representation of UTC time (i.e. ISO 8601-2:2019)
  *
- * @param {string | undefined} duration string contining the UTC time
+ * @param {string} duration string contining the UTC time
  * @returns {boolean}  true if @duration is formatted according to UTC ("Zulu") time
  */
 // based on https://stackoverflow.com/questions/32044846/regex-for-iso-8601-durations
 const isoRegex = new RegExp(
 	/^[-+]?P(?!$)(([-+]?\d+Y)|([-+]?\d+\.\d+Y$))?(([-+]?\d+M)|([-+]?\d+\.\d+M$))?(([-+]?\d+W)|([-+]?\d+\.\d+W$))?(([-+]?\d+D)|([-+]?\d+\.\d+D$))?(T(?=[\d+-])(([-+]?\d+H)|([-+]?\d+\.\d+H$))?(([-+]?\d+M)|([-+]?\d+\.\d+M$))?([-+]?\d+(\.\d+)?S)?)??$/
 );
-export let isISODuration = (duration : string | undefined) : boolean => duration ? isoRegex.test(duration.trim()) : false;
+export let isISODuration = (duration : string) : boolean => isoRegex.test(duration.trim());
 
 /**
  * checks if the argument complies to a DVB locator according to clause 6.4.2 of ETSI TS 102 851
  * i.e. dvb://<original_network_id>..<service_id> ;<event_id>
  *
- * @param {string | undefined} locator string contining the DVB locator
+ * @param {string} locator string contining the DVB locator
  * @returns {boolean}  true if @locator is formatted as a DVB locator
  */
 const locatorRegex = new RegExp(`^dvb://[${e_digit}${e_hexChar}]+.[${e_digit}${e_hexChar}]*.[${e_digit}${e_hexChar}]+;[${e_digit}${e_hexChar}]+$`);
-export let isDVBLocator = (locator :string | undefined) : boolean  => locator ? locatorRegex.test(locator.trim()) : false;
+export let isDVBLocator = (locator : string) : boolean  => locatorRegex.test(locator.trim());
 
 /**
  *
- * @param {string | undefined} postcode  the postcode value to check
+ * @param {string} postcode  the postcode value to check
  * @returns {boolean} true if @postcode is a valid postcode, otherwise false
  */
 const postcodeRegex = new RegExp(`[${e_digit}${e_lowalpha}]+([- ][${e_digit}${e_lowalpha}]+)?$`, "i");
-export let isPostcode = (postcode : string | undefined) : boolean => postcode ? postcodeRegex.test(postcode.trim()) : false;
+export let isPostcode = (postcode : string) : boolean => postcodeRegex.test(postcode.trim());
 
 /**
  *

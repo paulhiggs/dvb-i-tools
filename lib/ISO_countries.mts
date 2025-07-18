@@ -12,6 +12,13 @@ import fetchS from "sync-fetch";
 import handleErrors from "./fetch_err_handler.mts";
 import { isHTTPURL } from "./pattern_checks.mts";
 
+type ISOcountryType = {
+	Country: string,
+	alpha2? : string,
+	alpha3? : string,
+	numeric?: number,
+}
+
 
 /**
  * load the countries list into the allowedCountries global array from the specified text
@@ -28,12 +35,13 @@ function loadCountryData(countryData : string) {
 		} else if (key == "alpha3") {
 			if (value.length != 3) return "***";
 			else return value;
-		} else return value;
+		} 
+		else return value;
 	});
 }
 
 export default class ISOcountries {
-	private countriesList : any;
+	private countriesList : Array<ISOcountryType>;
 	private use2CharCountries : boolean;
 	private use3CharCountries : boolean;
 
@@ -45,7 +53,7 @@ export default class ISOcountries {
 	 */
 	constructor(use2 : boolean = true, use3 : boolean = false) {
 		loadCountryData.bind(this);
-		this.countriesList = {};
+		this.countriesList = [];
 		this.use2CharCountries = use2;
 		this.use3CharCountries = use3;
 	}
@@ -53,9 +61,9 @@ export default class ISOcountries {
 	/**
 	 * load the countries list into the allowedCountries global array from the specified JSON file
 	 *
-	 * @param {string}  countriesFile  the file name to load
-	 * @param {boolean} purge          erase the existing values before loading new
-	 * @param {boolean} async          load contents asynchronously
+	 * @param {string} countriesFile  the file name to load
+	 * @param {boolean} purge         erase the existing values before loading new
+	 * @param {boolean} async         load contents asynchronously
 	 */
 	private loadCountriesFromFile(countriesFile : string, purge : boolean = false, async : boolean = true) {
 		console.log(chalk.yellow(`reading countries from ${countriesFile}`));
@@ -78,9 +86,9 @@ export default class ISOcountries {
 	/**
 	 * load the countries list into the allowedCountries global array from the specified JSON file
 	 *
-	 * @param {string}  countriesURL  the URL to the file to load
-	 * @param {boolean} purge         erase the existing values before loading new
-	 * @param {boolean} async         load contents asynchronously
+	 * @param {string} countriesURL  the URL to the file to load
+	 * @param {boolean} purge        erase the existing values before loading new
+	 * @param {boolean} async        load contents asynchronously
 	 */
 	private loadCountriesFromURL(countriesURL : string, purge : boolean = false, async : boolean = true) {
 		const isHTTPurl = isHTTPURL(countriesURL);
@@ -117,7 +125,7 @@ export default class ISOcountries {
 	}
 
 	reset() {
-		this.countriesList.length = 0;
+		this.countriesList = [];
 	}
 
 	count() {
@@ -127,7 +135,7 @@ export default class ISOcountries {
 	/**
 	 * determine if the argument contains a valid ISO 3166 country code
 	 *
-	 * @param {string}  countryCode    the country code to be checked for validity
+	 * @param {string} countryCode     the country code to be checked for validity
 	 * @param {boolean} caseSensitive  ignore case
 	 * @return {boolean} true if countryCode is known else false
 	 */
@@ -136,10 +144,10 @@ export default class ISOcountries {
 		const countryCode_lc : string = countryCode.toLowerCase();
 
 		if (this.use3CharCountries && countryCode.length == 3) {
-			if (caseSensitive ? this.countriesList.find((elem) => elem.alpha3 == countryCode) : this.countriesList.find((elem) => elem.alpha3.toLowerCase() == countryCode_lc))
+			if (caseSensitive ? this.countriesList.find((elem) => elem.alpha3 == countryCode) : this.countriesList.find((elem) => elem.alpha3?.toLowerCase() == countryCode_lc))
 				found = true;
 		} else if (this.use2CharCountries && countryCode.length == 2) {
-			if (caseSensitive ? this.countriesList.find((elem) => elem.alpha2 == countryCode) : this.countriesList.find((elem) => elem.alpha2.toLowerCase() == countryCode_lc))
+			if (caseSensitive ? this.countriesList.find((elem) => elem.alpha2 == countryCode) : this.countriesList.find((elem) => elem.alpha2?.toLowerCase() == countryCode_lc))
 				found = true;
 		}
 		return found;

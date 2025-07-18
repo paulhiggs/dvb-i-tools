@@ -5,7 +5,7 @@
  * 
  */
 import chalk from "chalk";
-import Express from "express";
+import Express, from "express";
 import fileupload from "express-fileupload";
 import { existsSync, writeFile } from "fs";
 import { join, sep } from "path";
@@ -40,7 +40,7 @@ export function createPrefix(req : TypedRequestBody) : string | null {
 	return `${logDir}${sep}${getDate(new Date())} (${req.body.testtype == MODE_SL ? "SL" : req.body.requestType}) ${fname.replace(/[/\\?%*:|"<>]/g, "-")}`;
 }
 
-export default function writeOut(errs : ErrorList, filebase : string | null , markup : boolean, req : Express.Request | null = null) {
+export default function writeOut(errs : ErrorList, filebase : string | null , markup : boolean, req : TypedRequestBody | null = null) {
 	if (!filebase || errs.markupXML?.length == 0) return;
 
 	let outputLines : Array<string> = [];

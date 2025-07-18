@@ -13,7 +13,7 @@ import { HTMLize } from "../phlib/phlib.ts";
 import ErrorList from "./error_list.mts";
 import { ERROR, WARNING } from "./error_list.mts";
 import type { LogIssue, DebugMessage } from "./error_list.mts";
-
+import type { TypedRequestBody }  from "./index.d.ts"; 
 
 export const MODE_UNSPECIFIED : string = "none",
 	MODE_SL : string = "sl",
@@ -188,7 +188,7 @@ export type FormOptions = {
 	supportedRequests? : Array<CGRequestInfo>;
 }
 
-export function drawForm(req : Express.Request, res : Express.Response, modes : FormOptions, motd : string | null = null, error : string | null = null, errs : ErrorList | null = null) {
+export function drawForm(req : TypedRequestBody, res : Express.Response, modes : FormOptions, motd : string | null = null, error : string | null = null, errs : ErrorList | null = null) {
 	const ENTRY_FORM_REQUEST_TYPE_ID = "requestType";
 
 	res.setHeader("Content-Type", "text/html");

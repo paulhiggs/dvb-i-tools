@@ -6,9 +6,9 @@
  */
 
 
-const MPEG7_CS  : string = "urn:mpeg:mpeg7:cs";
-const FILE_FORMAT_CS  : string = `${MPEG7_CS}:FileFormatCS:2001`;
-const AUDIO_PRESENTATION_CS  : string = `${MPEG7_CS}:AudioPresentationCS:2001`;
+const MPEG7_CS : string = "urn:mpeg:mpeg7:cs";
+const FILE_FORMAT_CS : string = `${MPEG7_CS}:FileFormatCS:2001`;
+const AUDIO_PRESENTATION_CS : string = `${MPEG7_CS}:AudioPresentationCS:2001`;
 
 export const mpeg7 = {
 	// A177 6.11.1 - Audio Mix Type

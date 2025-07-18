@@ -107,7 +107,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 		});
 	};
 
-	let checkAppInformation = (elem : XmlElement, errNum : number) => {
+	let checkAppInformation = (elem : XmlElement, errNum : number) : boolean => {
 		let appInfo = getFirstElementByTagName(elem, tva.e_AppInformation);
 		if (appInfo == undefined) return false; // AppInformation element is not present
 		appInfo?.childNodes().forEachNamedSubElement([tva.e_RequiredStandardVersion, tva.e_RequiredOptionalFeature], (child : XmlElement) => {
@@ -137,7 +137,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 		return true; // AppInformation element is present
 	};
 
-	let checkCS = (elem : XmlElement, childName : Array<string> | string, cs : any, errNum : number, storage? : Array<string>) => {
+	let checkCS = (elem : XmlElement, childName : Array<string> | string, cs : any, errNum : number, storage? : Array<string>) : boolean => {
 		let rc = true;
 		elem?.childNodes().forEachNamedSubElement(childName, (child : XmlElement) => {
 			let href = child.attrAnyNsValueOr(tva.a_href, null);
