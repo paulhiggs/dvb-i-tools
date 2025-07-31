@@ -26,7 +26,7 @@ type ISOcountryType = {
  * @param {string} countryData the text of the country JSON data
  * @returns {Object} processed JSON object of countries
  */
-function loadCountryData(countryData : string) {
+function loadCountryData(countryData : string) : Array<ISOcountryType> {
 	return JSON.parse(countryData, function (key, value) {
 		if (key == "numeric") return Number(value);
 		else if (key == "alpha2") {
@@ -39,6 +39,8 @@ function loadCountryData(countryData : string) {
 		else return value;
 	});
 }
+
+
 
 export default class ISOcountries {
 	private countriesList : Array<ISOcountryType>;
@@ -58,7 +60,7 @@ export default class ISOcountries {
 		this.use3CharCountries = use3;
 	}
 
-	/**
+		/**
 	 * load the countries list into the allowedCountries global array from the specified JSON file
 	 *
 	 * @param {string} countriesFile  the file name to load
@@ -69,6 +71,7 @@ export default class ISOcountries {
 		console.log(chalk.yellow(`reading countries from ${countriesFile}`));
 		if (purge) this.reset();
 		if (async)
+		//	this.WrapAsyncRead(countriesFile, this.setCountryData)
 			readFile(
 				countriesFile,
 				{ encoding: "utf-8" },
@@ -76,7 +79,7 @@ export default class ISOcountries {
 					if (!error) this.countriesList = loadCountryData(data);
 					else console.log(chalk.red((error as FetchError).message));
 				}.bind(this)
-			);
+			); 
 		else {
 			const langs = readFileSync(countriesFile, { encoding: "utf-8" }).toString();
 			this.countriesList = loadCountryData(langs);

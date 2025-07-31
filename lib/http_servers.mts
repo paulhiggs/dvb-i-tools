@@ -14,6 +14,9 @@ import { datatypeIs } from "../phlib/phlib.ts";
 
 import { readmyfileB } from "./utils.mts";
 
+/*	var https_server : httpsServer | undefined = undefined, 
+		http_server : httpServer;
+*/
 
 const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
@@ -35,20 +38,17 @@ let listening = ( server : NetServer, isSecure : boolean) => {
 	return `HTTP${isSecure ? "S" : ""} listening on port number ${_port}`;
 }
 
-export function StartServers(app : any, options : any) : boolean {
+export function StartServers(servers: any, app : any, options : any) : boolean {
 	// start the HTTP server
-	var https_server : httpsServer | undefined = undefined, 
-		http_server : httpServer;
-		
-		http_server = createServer({}, app);
-		http_server.on('listening', () => {
-			console.log(chalk.cyan(listening(http_server, false)));
+		servers.http = createServer({}, app);
+		servers.http.on('listening', () => {
+			console.log(chalk.cyan(listening(servers.http, false)));
 		});
-		http_server.on('error', function(error) {
+		servers.http.on('error', function(error : any) {
 			// TODO: this is not being invoked even when the port is in use
 			showError(error, options.port, true);
 		});
-		http_server.listen(options.port);
+		servers.http.listen(options.port);
 
 	// start the HTTPS server: SecureContextOptions
 	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
@@ -60,14 +60,14 @@ export function StartServers(app : any, options : any) : boolean {
 	if (https_options?.key && https_options?.cert) {
 		if (options.sport == options.port) options.sport = options.port + 1;
 
-		https_server = createServer(https_options, app)
+		servers.https = createServer(https_options, app)
 		.on('listening', () => {
-			console.log(chalk.cyan(listening(https_server as httpsServer, true)));
+			console.log(chalk.cyan(listening(servers.https as httpsServer, true)));
 		})
 		.on('error', (error) => {
 			showError(error, options.sport, true);
 		});
-		https_server.listen(options.sport);
+		servers.https.listen(options.sport);
 /*
 		https_server.listen(options.sport, (error) => {
 			if (error) {
@@ -77,5 +77,31 @@ export function StartServers(app : any, options : any) : boolean {
 		}); */
 	}
 
-	return (http_server.listening || (https_server != undefined && https_server.listening));
+	return (servers.http.listening || (servers.https != undefined && servers.https.listening));
+}
+
+
+
+export function StartServers_test(app : any, options : any) 
+{
+	var http_server = app.listen(options.port, function () {
+		if (http_server.address()?.port) console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}`));
+		else console.log(chalk.red(`HTTP port ${options.port} already in use -- HTTP server not started`));
+	});
+
+	// start the HTTPS server
+	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
+	var https_options = {
+		key: readmyfileB(keyFilename),
+		cert: readmyfileB(certFilename),
+	};
+
+	if (https_options.key && https_options.cert) {
+		if (options.sport == options.port) options.sport = options.port + 1;
+
+		var https_server = createServer(https_options, app);
+		https_server.listen(options.sport, function () {
+			console.log(chalk.cyan(`HTTPS listening on port number ${options.sport}`));
+		});
+	}
 }

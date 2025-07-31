@@ -30,6 +30,7 @@ const mediaAccessibilityElements : Array<ElementCardinality> = [
 	{ name: tva.e_DialogueEnhancementAttributes, minOccurs: 0, maxOccurs: Infinity },
 	{ name: tva.e_SpokenSubtitlesAttributes, minOccurs: 0, maxOccurs: Infinity },
 ];
+
 const applicationAccessibilityElement : Array<ElementCardinality> = [
 	{ name: tva.e_MagnificationUIAttributes, minOccurs: 0, maxOccurs: Infinity },
 	{ name: tva.e_HighContrastUIAttributes, minOccurs: 0, maxOccurs: Infinity },

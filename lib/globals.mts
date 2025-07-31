@@ -22,3 +22,14 @@ export enum SpecificationState {
 	ETSI = 0x04,
 	CURRENT = 0x08,
 }
+
+export enum CGrequests {
+	SCHEDULE_TIME = "Time",
+	SCHEDULE_NOWNEXT = "NowNext",
+	SCHEDULE_WINDOW = "Window",
+	PROGRAM = "ProgInfo",
+	MORE_EPISODES = "MoreEpisodes",
+	BS_CATEGORIES = "bsCategories",
+	BS_LISTS = "bsLists",
+	BS_CONTENTS = "bsContents",
+}

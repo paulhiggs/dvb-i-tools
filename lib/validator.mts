@@ -4,18 +4,25 @@
  */
 import chalk from "chalk";
 import cors from "cors";
-import express, { Request, Response } from "express";
+import express from "express";
 import fileupload from "express-fileupload";
 import session from "express-session";
-import { join } from "path";
+import { createServer } from "https";
+
 import morgan, { token } from "morgan";
-import FetchError from "node:fetch";
+import { FetchError } from 'node-fetch';
+import { Server as NetServer } from "node:net";
+import type { AddressInfo } from "node:net";
 import os from "node:os";
+//import { urlToHttpOptions } from "node:url";
+import { join } from "path";
 import process from "process";
 import favicon from "serve-favicon";
 import fetchS from "sync-fetch";
 
-import type { TypedRequestBody }  from "./index.d.ts";
+import { datatypeIs } from "../phlib/phlib.ts";
+
+//import type { IncomingMessage }  from "./index.d.ts";
 
 import { Libxml2_wasm_init } from "../libxml2-wasm-extensions.mts";
 Libxml2_wasm_init();
@@ -37,7 +44,7 @@ import {
 import { Default_SLEPR, __dirname } from "./data_locations.mts";
 import ErrorList from "./error_list.mts";
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts";
-import { StartServers } from "./http_servers.mts";
+//import { StartServers } from "./http_servers.mts";
 import ISOcountries from "./ISO_countries.mts";
 import writeOut, { createPrefix } from "./logger.mts";
 import { isHTTPURL } from "./pattern_checks.mts";
@@ -45,26 +52,15 @@ import SLEPR from "./slepr.mts";
 import ServiceListCheck from "./sl_check.mts";
 import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults,MODE_URL, MODE_FILE, MODE_SL, MODE_CG, MODE_UNSPECIFIED } from "./UI.mts";
 import type { FormOptions } from "./UI.mts";
-import { readmyfileS } from "./utils.mts";
+import { readmyfileS, readmyfileB } from "./utils.mts";
 
-export type FormSessionData = {
-	lastUrl? : string;
-	mode? : string;
-	linktype? : string;
-	entry? : string;
-	cgmode? : string;
-	url? : string;
-};
-
-declare module "express-session" {
-	interface SessionData {
-		data : FormSessionData;
-	}
-}
-
+import { Server as httpServer} from "http";
+import { Server as httpsServer } from "https";
 let csr : SLEPR | null = null;
+let https_server : httpsServer | undefined = undefined, 
+		http_server : httpServer;
 
-function DVB_I_check(req : TypedRequestBody, res : Response, slcheck : ServiceListCheck | null, cgcheck : ContentGuideCheck | null, hasSL : boolean, hasCG : boolean, motd : string | null, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
+function DVB_I_check(req : Express.Request, res : Express.Response, slcheck : ServiceListCheck | null, cgcheck : ContentGuideCheck | null, hasSL : boolean, hasCG : boolean, motd : string | null, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
 	if (!req.session.data) {
 		// setup defaults
 		req.session.data = {};
@@ -91,7 +87,7 @@ function DVB_I_check(req : TypedRequestBody, res : Response, slcheck : ServiceLi
 		else if (req.body.doclocation == MODE_URL && req.body.XMLurl?.length == 0) req.parseErr = "URL not specified";
 		else if (req.body.doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) req.parseErr = "File not provided";
 
-		const log_prefix = createPrefix(req);
+		const log_prefix = createPrefix(req?.files?.XMLfile?.name ? req.files.XMLfile.name: "", req.body.XMLurl, req.body.doclocation, req.body.testtype == MODE_SL ? "SL" : req.body.requestType);
 		if (!req.parseErr)
 			switch (req.body.doclocation) {
 				case MODE_URL:
@@ -157,11 +153,11 @@ function DVB_I_check(req : TypedRequestBody, res : Response, slcheck : ServiceLi
  * @param {string | null} motd        HTML text for the Message Of The Day
  * @param {boolean} jsonResponse      Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateServiceList(req : TypedRequestBody, res : Express.Response, slcheck : ServiceListCheck, motd : string | null,  jsonResponse : boolean) {
+function validateServiceList(req : Express.Request, res : Express.Response, slcheck : ServiceListCheck, motd : string | null,  jsonResponse : boolean) {
 	let errs = new ErrorList();
 	let resp,
 		VVxml = null;
-	const log_prefix = createPrefix(req);
+	const log_prefix = createPrefix(req?.files?.XMLfile?.name ? req.files.XMLfile.name: "", req.body.XMLurl, req.body.doclocation, req.body.testtype == MODE_SL ? "SL" : req.body.requestType);
 	if (req.method == "GET") {
 		try {
 			resp = fetchS(req.query.url);
@@ -207,16 +203,15 @@ function validateContentGuide(req : Express.Request, res : Express.Response, cgc
 	let errs = new ErrorList();
 	let resp,
 		VVxml : string | null = null;
-	const log_prefix = createPrefix(req);
+	const log_prefix = createPrefix(req?.files?.XMLfile?.name ? req.files.XMLfile.name: "", req.body.XMLurl, req.body.doclocation, req.body.testtype == MODE_SL ? "SL" : req.body.requestType);
 	if (req.method == "GET") {
 		try {
 			resp = fetchS(req.query.url);
-		} catch (error) {
+		} catch (error : any) {
 			console.log(error);
 			req.parseErr = error.message;
 		}
 		if (resp) {
-			console.log(resp.content);
 			if (resp.ok) VVxml = resp.text();
 			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
 		}
@@ -312,13 +307,13 @@ export default function validator(options : any) {
 	app.use(favicon(join("phlib", "ph-icon.ico")));
 
 	token("protocol", (req) => {
-		return req.protocol;
+		return req.protocol || "none";
 	});
 	token("agent", (req) => {
 		return `(${req.headers["user-agent"]})`;
 	});
 	token("parseErr", (req) => {
-		return req.parseErr ? `(${req.parseErr})` : "";
+		return req.parseErr || "";
 	});
 	token("location", (req) => {
 		return req?.body?.testtype
@@ -487,8 +482,50 @@ export default function validator(options : any) {
 		res.status(404).end();
 	});
 
-	if (!StartServers(app, options)) {
-		console.log(chalk.red("No listeners - exiting!!"));
-		process.exit(1);
+
+	let showError = (error: any, port : number, secure : boolean) => {
+		if (error?.code == 'EADDRINUSE')
+			console.log(chalk.red(`HTTP${secure ? "S" : ""} port ${port} already in use -- HTTP${secure ? "S" : ""} server not started`));
+		else console.dir(error);
+		}
+
+	let listening = ( server : NetServer, isSecure : boolean) => {
+		let _port : string= 'unknown'
+		const addr = server.address();
+		if (addr) {
+			if (datatypeIs(addr, "string"))
+				_port = addr as string;
+			else _port = `${(addr as AddressInfo).port}`
+		}
+		return `HTTP${isSecure ? "S" : ""} listening on port number ${_port}`;
 	}
+
+		// start the HTTP server
+	http_server = app.listen(options.port, function () {
+		if (http_server.listening) 
+			console.log(chalk.cyan(listening(http_server as NetServer, false)));
+		else console.log(chalk.red(`HTTP port ${options.port} already in use -- HTTP server not started`));
+	});
+
+	// start the HTTPS server: SecureContextOptions
+	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
+	const https_options : any = {
+		key: readmyfileB(join(".", "selfsigned.key")),
+		cert: readmyfileB(join(".", "selfsigned.crt")),
+	};
+
+	if (https_options?.key && https_options?.cert) {
+		if (options.sport == options.port) options.sport = options.port + 1;
+
+		https_server = createServer(https_options, app)
+		.on('listening', () => {
+			console.log(chalk.cyan(listening(https_server as NetServer, true)));
+		})
+		.on('error', (error) => {
+			showError(error, options.sport, true);
+		});
+		https_server.listen(options.sport);
+	}
+
+	console.log('running...')
 }

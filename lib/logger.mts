@@ -5,25 +5,19 @@
  * 
  */
 import chalk from "chalk";
-import Express, from "express";
-import fileupload from "express-fileupload";
+import Express from "express";
+//import fileupload from "express-fileupload";
 import { existsSync, writeFile } from "fs";
 import { join, sep } from "path";
 
-import type { TypedRequestBody }  from "./index.d.ts"; 
+//import type { IncomingMessage }  from "./index.d.ts"; 
 
 import ErrorList from "./error_list.mts";
 import type { XMLline } from "./error_list.mts";
 import { MODE_URL, MODE_SL } from "./UI.mts";
 
-
-declare module "express" {
-	interface Request {
-		files? : fileupload.FileArray | null | undefined;
-	}
-}
-
-export function createPrefix(req : TypedRequestBody) : string | null {
+/*
+export function createPrefix_old(req : Request) : string | null {
 	const logDir = join(".", "arch");
 
 	if (!existsSync(logDir)) return null;
@@ -39,8 +33,26 @@ export function createPrefix(req : TypedRequestBody) : string | null {
 
 	return `${logDir}${sep}${getDate(new Date())} (${req.body.testtype == MODE_SL ? "SL" : req.body.requestType}) ${fname.replace(/[/\\?%*:|"<>]/g, "-")}`;
 }
+*/
 
-export default function writeOut(errs : ErrorList, filebase : string | null , markup : boolean, req : TypedRequestBody | null = null) {
+export function createPrefix(xmlFileName : string, xmlURL : string, doclocation : string, testType : string) : string | null
+{
+	const logDir = join(".", "arch");
+
+	if (!existsSync(logDir)) return null;
+
+	const getDate = (d : Date) => {
+		const zeroPad = (num : number, places : number = 2) => String(num).padStart(places, '0');
+		return `${d.getFullYear()}-${zeroPad(d.getMonth()+1)}-${zeroPad(d.getDate())} ${zeroPad(d.getHours())}.${zeroPad(d.getMinutes())}.${zeroPad(d.getSeconds())}`;
+	};
+
+	const fname = (doclocation == MODE_URL) ? xmlURL.substring(xmlURL.lastIndexOf("/") + 1) : xmlFileName;
+	if (!fname) return null;
+
+	return `${logDir}${sep}${getDate(new Date())} (${testType}) ${fname.replace(/[/\\?%*:|"<>]/g, "-")}`;
+}
+
+export default function writeOut(errs : ErrorList, filebase : string | null , markup : boolean, req : Express.Request | null = null) {
 	if (!filebase || errs.markupXML?.length == 0) return;
 
 	let outputLines : Array<string> = [];

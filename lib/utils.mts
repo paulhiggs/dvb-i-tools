@@ -61,8 +61,8 @@ export let xPathM = (SCHEMA_PREFIX : string, elementNames : Array<string>) : str
 
 /**
  * returns the first child whose name matches the specified value
- * @param {XmlElement} element  The element to search in for the named child
- * @param {string} elementName  The name of the element to search for
+ * @param {XmlElement} element       The element to search in for the named child
+ * @param {string} childElementName  The name of the element to search for
  * @returns {XmlElement | undefined} the named child element or undefined if not present
  *
  */

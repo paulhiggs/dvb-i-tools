@@ -7,7 +7,8 @@
 import { XmlElement } from "libxml2-wasm";
 
 
-export const ERROR : string = "(E)",
+export const FATAL : string = "(F)", 
+	ERROR : string = "(E)",
 	DEBUG : string = "(D)",
 	WARNING : string = "(W)",
 	INFORMATION : string = "(I)",
@@ -69,9 +70,11 @@ export type DebugMessage = {
 
 export default class ErrorList {
 
+	countsFatal: Array<ErrorCount>;
 	countsErr : Array<ErrorCount>;
 	countsWarn  : Array<ErrorCount>;
 	countsInfo : Array<ErrorCount>;
+	fatals : Array<LogIssue>;
 	errors : Array<LogIssue>;
 	warnings : Array<LogIssue>;
 	informationals : Array<LogIssue>;
@@ -80,9 +83,11 @@ export default class ErrorList {
 	errorDescriptions : Array<ErrorDescription>;
 
 	constructor() {
+		this.countsFatal = [];
 		this.countsErr = [];
 		this.countsWarn = [];
 		this.countsInfo = [];
+		this.fatals = [];
 		this.errors = [];
 		this.warnings = [];
 		this.debugs = [];
@@ -124,6 +129,12 @@ export default class ErrorList {
 		else data.push({ key: key, count: value });
 	}
 
+	private incrementF(key : string) : void {
+		this.doIncrement(this.countsFatal, key);
+	}
+	setF(key : string, value : number = 1)  : void {
+		this.doSet(this.countsFatal, key, value);
+	}
 	private incrementE(key : string) : void {
 		this.doIncrement(this.countsErr, key);
 	}
@@ -151,6 +162,10 @@ export default class ErrorList {
 
 	private insertErrorData(type : string, key : string, err : LogIssue) {
 		switch (type) {
+			case FATAL:
+				this.fatals.push(err);
+				if (key !== "") this.incrementF(key);
+				break;
 			case ERROR:
 				this.errors.push(err);
 				if (key !== "") this.incrementE(key);
@@ -177,27 +192,27 @@ export default class ErrorList {
 	/**
 	 * log an error from the service list or program metadata analysis
 	 *
-	 * @param {string}                     e.type          (optional) ERROR(default) or WARNING
-	 * @param {string}                     e.code          Error code
-	 * @param {string}                     e.message       The error message
-	 * @param {string}                     e.key           (optional)The category of the message
+	 * @param {string} e.type                                  (optional) ERROR(default) or WARNING
+	 * @param {string} e.code                                  Error code
+	 * @param {string} e.message                               The error message
+	 * @param {string} e.key                                   (optional)The category of the message
 	 * @param {Array<string | XmlElement>} e.multiElementError (optional)
-	 * @param {string | XmlElement}        e.fragment      (optional) The XML fragment (or node in the XML document) triggering the error
-	 * @param {Array<string | XmlElement>} e.fragments
-	 * @param {number}                     e.line          (optional) the line number of the element in the XML document that triggered the error
-	 * @param {string}                     e.description   (optional) a description of the error
-	 * @param {string}                     e.clause        (optional) the specification clause/section that is violated (only used with @e.description is provided)
-	 * @param {boolean}                    e.reportInTable (optional)  true(default) to add this error into the list of errors found
+	 * @param {string | XmlElement} e.fragment                 (optional) The XML fragment (or node in the XML document) triggering the error
+	 * @param {Array<string | XmlElement>} e.fragments         (optional) Mutiple elements that contribute to the validation error
+	 * @param {number} e.line                                  (optional) the line number of the element in the XML document that triggered the error
+	 * @param {string} e.description                           (optional) a description of the error
+	 * @param {string} e.clause                                (optional) the specification clause/section that is violated (only used with @e.description is provided)
+	 * @param {boolean} e.reportInTable                        (optional) true(default) to add this error into the list of errors found
 	 */
 	addError(e : ErrorArgs) {
 		const _INVALID_CALL = "invalid addError call";
 		let argsOK = true;
-		if (!Object.prototype.hasOwnProperty.call(e, "type")) e.type = ERROR;
+		e.type = e.type || ERROR;
 		if (!Object.prototype.hasOwnProperty.call(e, "reportInTable")) e.reportInTable = true;
 		if (e.line && e.line < 0)
 			delete e.line;
 
-		if (![ERROR, WARNING, INFORMATION, APPLICATION, DEBUG].includes(e.type ? e.type : "")) {
+		if (![FATAL, ERROR, WARNING, INFORMATION, APPLICATION, DEBUG].includes(e.type ? e.type : "")) {
 			this.errors.push({ code: "ERR000", message: `addError() called with invalid type property (${e.type})` });
 			this.incrementE(_INVALID_CALL);
 			argsOK = false;
@@ -276,6 +291,9 @@ export default class ErrorList {
 		if (e.description) this.errorDescription({ code: e.code, description: e.description, clause: e.clause });
 	}
 
+	numFatals() {
+		return this.fatals.length;
+	}
 	numErrors() {
 		return this.errors.length;
 	}
@@ -286,6 +304,9 @@ export default class ErrorList {
 		return this.informationals.length;
 	}
 
+	numCountsFatal() {
+		return this.countsFatal.length;
+	}
 	numCountsErr() {
 		return this.countsErr.length;
 	}

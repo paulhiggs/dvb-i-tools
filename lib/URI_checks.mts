@@ -21,6 +21,7 @@ const TagRegex = new RegExp(
 export let isTAGURI = (identifier : string | undefined) : boolean => 
 	identifier ? TagRegex.test(identifier.trim()) : false;
 
+
 /**
  * check if the argument complies to a CRID format
  *

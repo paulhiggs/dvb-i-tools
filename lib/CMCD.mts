@@ -6,10 +6,11 @@
  */
 import{ XmlElement } from "libxml2-wasm";
 
+import type { DocumentProperties } from "../libxml2-wasm-extensions.mts";
 import { dvbi, CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_EVENT, dvbiEA } from "./DVB-I_definitions.mts";
 import ErrorList, { APPLICATION, WARNING } from "./error_list.mts";
 import { checkAttributes } from "./schema_checks.mts";
-import { isIn } from "./utils.mts";
+import { isIn, xPath } from "./utils.mts";
 
 type CMCDKeyType = {
 	key: string,
@@ -130,12 +131,11 @@ const reportingMode = (mode : string) : string => (mode.indexOf(":") != -1 ? mod
 
 const error_key = "CMCD";
 
-function checkCMCDkeys(CMCD : XmlElement | null, errs : ErrorList, errCode : string) {
+function checkCMCDkeys(CMCD : XmlElement | null, version: number, errs : ErrorList, errCode : string) {
 	if (!CMCD) {
 		errs.addError({ type: APPLICATION, code: `${errCode}-00`, message: "checkCMCDkeys() called with CMCD=null" });
 		return;
 	}
-	const version = Number(CMCD.attrAnyNsValueOr(dvbi.a_version, "1"));
 	const keys_to_use = version == 2 ? CMCDv2_keys : CMCDv1_keys.concat(deprecated_CMCDv1_keys);
 	const keys : Array<string> = CMCD.attrAnyNsValueOr(dvbi.a_enabledKeys, "").split(" ");
 	const reporting_mode = CMCD.attrAnyNsValueOr(dvbi.a_reportingMode, "undefined");
@@ -204,66 +204,73 @@ function checkCMCDkeys(CMCD : XmlElement | null, errs : ErrorList, errCode : str
 	}
 }
 
-export function check_CMCD(CMCDelem : XmlElement, counts : any, errs : ErrorList, errCode : string) {
+export function check_CMCD(props : DocumentProperties, CMCDelem : XmlElement, counts : any, errs : ErrorList, errCode : string) {
 
-	const reporting_mode = CMCDelem.attrAnyNsValueOr(dvbi.a_reportingMode, null);
-	switch (_unique(reporting_mode)) {
-		case idCMCD_MODE_REQUEST:
-			checkAttributes(CMCDelem, [dvbi.a_reportingMode, dvbi.a_reportingMethod], [dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability], dvbiEA.CMCD, errs, `${errCode}-1`);
-			break;
-		case idCMCD_MODE_RESPONSE:
-			checkAttributes(
-				CMCDelem,
-				[dvbi.a_reportingMode, dvbi.a_reportingMethod, dvbi.a_beaconURL],
-				[dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability],
-				dvbiEA.CMCD,
-				errs,
-				`${errCode}-2`
-			);
-			break;
-		case idCMCD_MODE_EVENT:
-			checkAttributes(
-				CMCDelem,
-				[dvbi.a_reportingMode, dvbi.a_reportingMethod, dvbi.a_beaconURL],
-				[dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability, dvbi.a_interval],
-				dvbiEA.CMCD,
-				errs,
-				`${errCode}-3`
-			);
-			break;
-	}
+	const version = Number(CMCDelem.attrAnyNsValueOr(dvbi.a_version, "1"));
+	let rep = 0,
+			CMCDreport;
+	while ((CMCDreport = CMCDelem.get(xPath(props.prefix, dvbi.e_Report, ++rep), props.schema) as XmlElement) != null) {
+		const reporting_mode = CMCDreport.attrAnyNsValueOr(dvbi.a_reportingMode, null);
+		switch (_unique(reporting_mode)) {
+			case idCMCD_MODE_REQUEST:
+				checkAttributes(CMCDreport, [dvbi.a_reportingMode, dvbi.a_transmissionMode, dvbi.a_reportingMethod], [dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability], dvbiEA.CMCD, errs, `${errCode}-1`);
+				break;
+			case idCMCD_MODE_RESPONSE:
+				checkAttributes(
+					CMCDreport,
+					[dvbi.a_reportingMode, dvbi.a_transmissionMode, dvbi.a_reportingMethod, dvbi.a_beaconURL],
+					[dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability],
+					dvbiEA.CMCD,
+					errs,
+					`${errCode}-2`
+				);
+				break;
+			case idCMCD_MODE_EVENT:
+				checkAttributes(
+					CMCDreport,
+					[dvbi.a_reportingMode, dvbi.a_transmissionMode, dvbi.a_reportingMethod, dvbi.a_beaconURL],
+					[dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability, dvbi.a_interval],
+					dvbiEA.CMCD,
+					errs,
+					`${errCode}-3`
+				);
+				break;
+		}
 
-	const enabledKeys = CMCDelem.attrAnyNs(dvbi.a_enabledKeys);
-	if (enabledKeys) {
-		const keys = enabledKeys.value.split(" ");
-		if (!CMCDelem.attrAnyNs(dvbi.a_contentId) && isIn(keys, CMCD_keys.content_id))
-			errs.addError({
-				code: `${errCode}-11`,
-				message: `${dvbi.a_contentId.attribute()} must be specified when ${dvbi.a_enabledKeys.attribute()} contains '${CMCD_keys.content_id}'`,
-				fragment: CMCDelem,
-				key: error_key,
-			});
-		else if (CMCDelem.attrAnyNs(dvbi.a_contentId) && !isIn(keys, CMCD_keys.content_id))
-			errs.addError({
-				type: WARNING,
-				code: `${errCode}-12`,
-				message: `${dvbi.a_contentId.attribute()} is specified by key '${CMCD_keys.content_id}' not requested for reporting`,
-				fragment: CMCDelem,
-				key: error_key,
-			});
-		checkCMCDkeys(CMCDelem, errs, `${errCode}-13`);
-	}
+		const enabledKeys = CMCDreport.attrAnyNs(dvbi.a_enabledKeys);
+		if (enabledKeys) {
+			const keys = enabledKeys.value.split(" ");
+			if (!CMCDreport.attrAnyNs(dvbi.a_contentId) && isIn(keys, CMCD_keys.content_id))
+				errs.addError({
+					code: `${errCode}-11`,
+					message: `${dvbi.a_contentId.attribute()} must be specified when ${dvbi.a_enabledKeys.attribute()} contains '${CMCD_keys.content_id}'`,
+					fragment: CMCDreport,
+					key: error_key,
+				});
+			else if (CMCDreport.attrAnyNs(dvbi.a_contentId) && !isIn(keys, CMCD_keys.content_id))
+				errs.addError({
+					type: WARNING,
+					code: `${errCode}-12`,
+					message: `${dvbi.a_contentId.attribute()} is specified but key '${CMCD_keys.content_id}' not requested for reporting`,
+					fragment: CMCDreport,
+					key: error_key,
+				});
+			checkCMCDkeys(CMCDreport, version, errs, `${errCode}-13`);
+		}
 
-	if (reporting_mode) {
-		if (!Object.prototype.hasOwnProperty.call(counts, reportingMode(reporting_mode)))
-			counts[reportingMode(reporting_mode)] = 1;
-		else counts[reportingMode(reporting_mode)]++;
-		if (counts[reportingMode(idCMCD_MODE_REQUEST)] > 1)
-			errs.addError({
-				code: `${errCode}-20`,
-				message: "only a single reporting configuration for Request Mode can be specified",
-				fragment: CMCDelem,
-				key: error_key,
-			});
+		if (reporting_mode) {
+			if (!Object.prototype.hasOwnProperty.call(counts, reportingMode(reporting_mode)))
+				counts[reportingMode(reporting_mode)] = 1;
+			else counts[reportingMode(reporting_mode)]++;
+			if (counts[reportingMode(idCMCD_MODE_REQUEST)] > 1)
+				errs.addError({
+					code: `${errCode}-20`,
+					message: "only a single reporting configuration for Request Mode can be specified",
+					fragment: CMCDelem,
+					key: error_key,
+				});
+		}
+
+
 	}
 }

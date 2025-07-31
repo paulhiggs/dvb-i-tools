@@ -41,8 +41,7 @@ import { TVAschema, __dirname_linux } from "./data_locations.mts";
 import { dvbi } from "./DVB-I_definitions.mts";
 import ErrorList, { WARNING, APPLICATION } from "./error_list.mts";
 import type { ErrorArgs } from "./error_list.mts";
-import { SpecificationState } from "./globals.mts";
-import { CGrequests } from "./index";
+import { CGrequests, SpecificationState } from "./globals.mts";
 import IANAlanguages from "./IANA_languages.mts"
 import ISOcountries from "./ISO_countries.mts";
 import writeOut from "./logger.mts";

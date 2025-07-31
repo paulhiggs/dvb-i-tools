@@ -13,7 +13,6 @@ import { HTMLize } from "../phlib/phlib.ts";
 import ErrorList from "./error_list.mts";
 import { ERROR, WARNING } from "./error_list.mts";
 import type { LogIssue, DebugMessage } from "./error_list.mts";
-import type { TypedRequestBody }  from "./index.d.ts"; 
 
 export const MODE_UNSPECIFIED : string = "none",
 	MODE_SL : string = "sl",
@@ -55,7 +54,8 @@ function tabulateResults(source : string , res : Express.Response, error : strin
 		var itemPos = document.getElementById(item).getBoundingClientRect();
 		window.scrollTo(window.scrollX+itemPos.x, window.scrollY+itemPos.y);
 	}</script>`;
-	let DETAIL_FORM_HEADER = (mode : string) : string => `${scrollFunc}<table><tr>${SHOW_LINE_NUMBER ? "<th>line</th>" : ""}<th>code</th><th>${mode}</th></tr>`;
+	let DETAIL_FORM_HEADER = (mode : string, colour : string | null = null) : string => 
+		`${scrollFunc}<table${colour ? ` style="color:${colour}"` : ""}><tr>${SHOW_LINE_NUMBER ? "<th>line</th>" : ""}<th>code</th><th>${mode}</th></tr>`;
 	let DESCRIPTION_TABLE_HEDER = () : string => `<table><tr><th>code</th><th>description</th></tr>`;
 	let DEBUG_FORM_HEADER = (mode : string) : string => `${scrollFunc}<table><tr><th>code</th><th>${mode}</th></tr>`;
 
@@ -83,6 +83,7 @@ function tabulateResults(source : string , res : Express.Response, error : strin
 
 		if (errs.numCountsErr() > 0 || errs.numCountsWarn() > 0 || errs.numCountsInfo() > 0) {
 			res.write(SUMMARY_FORM_HEADER);
+			errs.countsFatal.forEach((e) => res.write(`<tr style="color:red"><td>FATAL: ${HTMLize(e.key)}</td><td>${e.count}</td></tr>`));
 			errs.countsErr.forEach((e) => res.write(`<tr><td>${HTMLize(e.key)}</td><td>${e.count}</td></tr>`));
 			errs.countsWarn.forEach((w) => res.write(`<tr><td><i>W: ${HTMLize(w.key)}</i></td><td>${w.count}</td></tr>`));
 			errs.countsInfo.forEach((i) => res.write(`<tr><td><i>I: ${HTMLize(i.key)}</i></td><td>${i.count}</td></tr>`));
@@ -99,6 +100,15 @@ function tabulateResults(source : string , res : Express.Response, error : strin
 				return 1;
 			return 0;
 		};
+
+		if (errs.numFatals() > 0) {
+			res.write(DETAIL_FORM_HEADER("fatals (further valudation aborted", "red"));
+			if (MESSAGES_IN_ORDER)
+				errs.fatals.sort((a : LogIssue, b : LogIssue) => sortComparitor(a, b));
+			errs.fatals.forEach(tabluateMessage);
+			resultsShown = true;
+			res.write(TABLE_FOOTER);
+		}
 
 		if (errs.numErrors() > 0) {
 			res.write(DETAIL_FORM_HEADER("errors"));
@@ -149,13 +159,14 @@ function tabulateResults(source : string , res : Express.Response, error : strin
 
 	if (errs && errs.markupXML && errs.markupXML.length > 0) {
 		res.write(LINE);
-		const ERR = "errors",
+		const FATAL = "fatals",
+		  ERR = "errors",
 			WARN = "warnings",
 			INFO = "info",
 			style = (name : string, colour : string) => `<style>.${name} {position:relative; cursor:pointer; color:${colour};} .${name}[title]:hover:after {opacity:1; transition-delay:.1s; }</style>`;
 		let lineNum = 0;
 		const maxLineNumLength = errs.markupXML.length.toString().length;
-		res.write(`${style(ERR, "red")}${style(WARN, "blue")}${style(INFO, "orange")}<pre>`);
+		res.write(`${style(FATAL, "red")}${style(ERR, "red")}${style(WARN, "blue")}${style(INFO, "orange")}<pre>`);
 
 		errs.markupXML.forEach((line) => {
 			let cla = "";
@@ -188,7 +199,7 @@ export type FormOptions = {
 	supportedRequests? : Array<CGRequestInfo>;
 }
 
-export function drawForm(req : TypedRequestBody, res : Express.Response, modes : FormOptions, motd : string | null = null, error : string | null = null, errs : ErrorList | null = null) {
+export function drawForm(req : Express.Request, res : Express.Response, modes : FormOptions, motd : string | null = null, error : string | null = null, errs : ErrorList | null = null) {
 	const ENTRY_FORM_REQUEST_TYPE_ID = "requestType";
 
 	res.setHeader("Content-Type", "text/html");

@@ -20,7 +20,7 @@ Array_extension_init();
 
 import { keys } from "./common_errors.mts";
 import ErrorList from "./error_list.mts";
-import { APPLICATION, INFORMATION, WARNING, DEBUG } from "./error_list.mts";
+import { FATAL, APPLICATION, INFORMATION, WARNING, DEBUG } from "./error_list.mts";
 import type { ErrorArgs } from "./error_list.mts";
 import { SpecificationState } from "./globals.mts";
 import { isIn } from "./utils.mts";
@@ -87,7 +87,7 @@ export function checkAttributes(checkElement : XmlElement, requiredAttributes : 
  * NOTE: elements are described as an object containing "name", "minOccurs", "maxOccurs".
  *   Default values for minOccurs and maxOccurs are 1
  */
-export function checkTopElementsAndCardinality(parentElement : XmlElement, childElements : Array<ElementCardinality>, definedChildElements : Array<string>, allowOtherElements : boolean, errs : ErrorList, errCode : string) {
+export function checkTopElementsAndCardinality(parentElement : XmlElement, childElements : Array<ElementCardinality>, definedChildElements : Array<string>, allowOtherElements : boolean, errs : ErrorList, errCode : string) : boolean {
 	let findElementIn = (elementList : Array<ElementCardinality>, elementName : string) => (datatypeIs(elementList, "array") ? elementList.find((element) => element.name == elementName) : false);
 
 	function getNamedChildElements(node : XmlElement, childElementName : string) : Array<XmlElement> {
@@ -107,7 +107,7 @@ export function checkTopElementsAndCardinality(parentElement : XmlElement, child
 	// check that each of the specifid childElements exists
 	childElements.forEach((child : ElementCardinality) => {
 		const min = Object.prototype.hasOwnProperty.call(child, "minOccurs") ? child.minOccurs : 1;
-		const max  = Object.prototype.hasOwnProperty.call(child, "maxOccurs") ? child.maxOccurs : 1;
+		const max = Object.prototype.hasOwnProperty.call(child, "maxOccurs") ? child.maxOccurs : 1;
 		const namedChildren = getNamedChildElements(parentElement, child.name);
 		const count = namedChildren.length;
 
@@ -188,20 +188,20 @@ export function SchemaCheck(XML : XmlDocument, XSD : XmlDocument, errs : ErrorLi
 	try {
 		validator = XsdValidator.fromDoc(XSD);
 	} 
-	catch (err) {
+	catch (err : any) {
 		const x = err.details;
-		x.forEach((e) => {
+		x.forEach((e : any) => {
 			errs.addError({ code: "LS000", type: DEBUG, message: JSON.stringify(e) });
 		});
 	}
 
 	try {
 		if (validator) validator.validate(XML);
-	} catch (err) {
+	} catch (err : any) {
 		//console.log(err.message)
 		if (err.details) {
 			const lines = format(XML.toString(), { collapseContent: true, lineSeparator: "\n", strictMode: true }).split("\n");
-			err.details.forEach((ve) => {
+			err.details.forEach((ve : any) => {
 				errs.addError({ code: errCode, message: ve.message, fragment: lines[ve.line], line: ve.line, key: keys.k_XSDValidation });
 			});
 		}
@@ -246,24 +246,26 @@ export function SchemaLoad(document : string, errs : ErrorList, errcode : string
 
 	try {
 		tmp = XmlDocument.fromString(document);
-	} catch (err) {
-		errs.addError({ code: `${errcode}-1`, message: `Raw XML parsing failed: ${err.message}`, key: _key });
+	} catch (err : any) {
+		if (err.details && datatypeIs(err.details, "array"))
+			err.details.forEach((e : any) => errs.addError({ type: FATAL, code: `${errcode}-1b`, message: `Raw XML parsing failed: ${e.message} at char ${e.col}`, line: e.line, key: _key }));
+		else errs.addError({ type: FATAL, code: `${errcode}-1`, message: `Raw XML parsing failed: ${err.message}`, key: _key });
 	}
 	try {
 		prettyXML = format(document.replace(/(\n\t)/gm, "\n"), { collapseContent: true, lineSeparator: "\n" });
-	} catch (err) {
-		errs.addError({ code: `${errcode}-2`, message: `XML format failed: ${err.cause}`, key: _key });
+	} catch (err : any) {
+		errs.addError({ type: FATAL, code: `${errcode}-2`, message: `XML format failed: ${err.cause}`, key: _key });
 		return undefined;
 	}
 	try {
 		tmp = XmlDocument.fromString(prettyXML);
-	} catch (err) {
-		errs.addError({ code: `${errcode}-11`, message: `XML parsing failed: ${err.message}`, key: _key });
+	} catch (err : any) {
+		errs.addError({ type: FATAL, code: `${errcode}-11`, message: `XML parsing failed: ${err.message}`, key: _key });
 		errs.loadDocument(prettyXML);
 		return undefined;
 	}
 	if (!tmp || !tmp.root) {
-		errs.addError({ code: `${errcode}-12`, message: "XML document is empty", key: _key });
+		errs.addError({ type: FATAL, code: `${errcode}-12`, message: "XML document is empty", key: _key });
 		errs.loadDocument(prettyXML);
 		return undefined;
 	}

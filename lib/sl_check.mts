@@ -94,7 +94,7 @@ const EXTENSION_LOCATION_SERVICE_LIST_REGISTRY : number = 101,
  * determines if the identifer provided complies with the requirements for a service identifier
  * at this stage only IETF RFC 4151 TAG URIs are permitted
  *
- * @param {string} identifier    The service identifier
+ * @param {string} identifier  The service identifier
  * @returns {boolean} true if the service identifier complies with the specification otherwise false
  */
 let validServiceIdentifier = (identifier : string) : boolean => isTAGURI(identifier);
@@ -112,9 +112,9 @@ let uniqueServiceIdentifier = (identifier : string, identifiers : Array<string>)
 /**
  * Add an error message an incorrect country code is specified in transmission parameters
  *
- * @param {string} value    The invalid country code
- * @param {string | null} src      The transmission mechanism
- * @param {string} loc      The location of the element
+ * @param {string} value       The invalid country code
+ * @param {string | null} src  The transmission mechanism
+ * @param {string} loc         The location of the element
  * @returns {string}
  */
 let InvalidCountryCode = (value : string, src : string | null, loc : string) : string => 
@@ -132,10 +132,10 @@ let localizedSubscriptionPackage = (pkg : XmlElement, lang : string | null = nul
 /**
  * Construct	 an error message an unspecifed target region is used
  *
- * @param {string} region      The unspecified target region
- * @param {string} loc         The location of the element
- * @param {string} errCode     The error code to be reported
- * @param {XmlElement} element The element using an undefined region if
+ * @param {string} region       The unspecified target region
+ * @param {string} loc          The location of the element
+ * @param {string} errCode      The error code to be reported
+ * @param {XmlElement} element  The element using an undefined region if
  */
 let UnspecifiedTargetRegion = (region : string, loc : string, errCode : string, element : XmlElement) => ({
 	code: errCode,
@@ -1448,7 +1448,7 @@ export default class ServiceListCheck {
 			  CMCD_counts = {},
 				CMCDelem;
 			while ((CMCDelem = DASHDeliveryParameters.get(xPath(props.prefix, dvbi.e_CMCD, ++cc), props.schema) as XmlElement) != null) 
-				check_CMCD(CMCDelem, CMCD_counts, errs, "SI175");
+				check_CMCD(props, CMCDelem, CMCD_counts, errs, "SI175");
 
 			// <DASHDeliveryParameters><Extension>
 			let e = 0,
@@ -2293,7 +2293,7 @@ export default class ServiceListCheck {
 		const slGCS = ServiceList.get(xPath(props.prefix, dvbi.e_ContentGuideSource), props.schema);
 		if (slGCS) this.validateAContentGuideSource(props, slGCS as XmlElement, `${dvbi.e_ServiceList}.${dvbi.e_ContentGuideSource}`, errs, "SL080");
 
-		errs.setW("num services", 0);
+		errs.setI("num services", 0);
 
 		// check <Service>
 		let s = 0,
@@ -2301,7 +2301,7 @@ export default class ServiceListCheck {
 			knownServices : Array<string> = [];
 		while ((service = ServiceList.get(xPath(props.prefix, dvbi.e_Service, ++s), props.schema) as XmlElement) != null) {
 			// for each service
-			errs.setW("num services", s);
+			errs.setI("num services", s);
 			this.validateService(
 				props,
 				service,
@@ -2316,14 +2316,14 @@ export default class ServiceListCheck {
 		}
 
 		if (SchemaVersion(props.namespace) >= SchemaReleases.SCHEMA_r5) {
-			errs.setW("num test services", 0);
+			errs.setI("num test services", 0);
 
 			// check <TestService>
 			let ts = 0,
 				testService;
 			while ((testService = ServiceList.get(xPath(props.prefix, dvbi.e_TestService, ++ts), props.schema) as XmlElement) != null) {
 				// for each service
-				errs.setW("num test services", ts);
+				errs.setI("num test services", ts);
 				this.validateService(
 					props,
 					testService,
