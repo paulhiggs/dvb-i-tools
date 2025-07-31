@@ -120,7 +120,7 @@ export function checkTopElementsAndCardinality(parentElement : XmlElement, child
 			});
 			rv = false;
 		} else {
-			if (count < min || count > max) {
+			if ((min && count < min) || (max && count > max)) {
 				namedChildren.forEach((child) =>
 					errs.addError({
 						code: `${errCode}-2`,
