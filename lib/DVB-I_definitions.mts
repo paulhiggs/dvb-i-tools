@@ -43,7 +43,7 @@ export const CMCD_MODE_REQUEST : string = `${CMCDterm}:delivery:request`,
 
 export const CMCD_METHOD_HTTP_HEADER : string = `${CMCDterm}:delivery:customHTTPHeader`,
 	CMCD_METHOD_QUERY_ARGUMENT : string = `${CMCDterm}:delivery:queryArguments`,
-	CMCD_METHOD_JSON : string = `${CMCDterm}:delivery:JSON`;
+	CMCD_METHOD_BATCH: string = `${CMCDterm}:delivery:batch`;
 
 export const dvbi = {
 	A177_Namespace: `${DVB_metadata}:servicediscovery:2019`,

@@ -7,7 +7,7 @@
 import{ XmlElement } from "libxml2-wasm";
 
 import type { DocumentProperties } from "../libxml2-wasm-extensions.mts";
-import { dvbi, CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_EVENT, dvbiEA } from "./DVB-I_definitions.mts";
+import { dvbi, CMCD_MODE_REQUEST, CMCD_MODE_RESPONSE, CMCD_MODE_EVENT, CMCD_METHOD_BATCH, dvbiEA } from "./DVB-I_definitions.mts";
 import ErrorList, { APPLICATION, WARNING } from "./error_list.mts";
 import { checkAttributes } from "./schema_checks.mts";
 import { isIn, xPath } from "./utils.mts";
@@ -63,6 +63,7 @@ const CMCD_keys = {
 	SMT_header: "smrt",
 	dropped_frames: "df",
 	content_signature: "cs",
+	non_rendered: "nr",
 	CMCD_version: "v",
 };
 
@@ -124,6 +125,7 @@ const CMCDv2_keys : Array<CMCDKeyType> = CMCDv1_keys.concat([
 	{ key: CMCD_keys.SMT_header, allow_modes: [idCMCD_MODE_RESPONSE] },
 	{ key: CMCD_keys.dropped_frames, allow_modes: all_reporting_modes },
 	{ key: CMCD_keys.content_signature, allow_modes: all_reporting_modes },
+	{ key: CMCD_keys.non_rendered, allow_modes: all_reporting_modes },
 ]);
 
 const isCustomKey = (key : string) : boolean => key.includes("-");
@@ -236,6 +238,15 @@ export function check_CMCD(props : DocumentProperties, CMCDelem : XmlElement, co
 				);
 				break;
 		}
+		const transmission_moode = CMCDreport.attrAnyNsValueOr(dvbi.a_transmissionMode, null);
+		if (reporting_mode == CMCD_MODE_REQUEST && transmission_moode == CMCD_METHOD_BATCH)
+			errs.addError({
+				code: `${errCode}-5`,
+				message: "Batch transmission is not permitted with Request mode",
+				fragment: CMCDreport,
+				key: error_key,
+				clause: "CTA 5004 clause 2.1"
+			})
 
 		const enabledKeys = CMCDreport.attrAnyNs(dvbi.a_enabledKeys);
 		if (enabledKeys) {
@@ -270,7 +281,5 @@ export function check_CMCD(props : DocumentProperties, CMCDelem : XmlElement, co
 					key: error_key,
 				});
 		}
-
-
 	}
 }
