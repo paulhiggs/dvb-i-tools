@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2025" targetNamespace="urn:hbbtv:dvbi:schema:2021" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<import namespace="urn:dvb:metadata:servicediscovery-types:2025" schemaLocation="dvbi_types_v1.1.xsd"/>
+	<complexType name="ServiceIdentifierTriplet">
+		<complexContent>
+			<extension base="dvbi-types:ExtensionBaseType">
+				<sequence>
+					<element name="DVBTriplet" type="dvbi-types:DVBTripletType"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+</schema>
