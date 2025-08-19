@@ -66,7 +66,7 @@ Validates the value space of the instance document, validation against the schem
 - the A177r3 [:2022 schema](https://dvb.org/wp-content/uploads/2021/06/A177r3_Service-Discovery-and-Programme-Metadata-for-DVB-I_January-2022.pdf)
 - the A177r4 [:2022b schema](https://dvb.org/wp-content/uploads/2022/01/A177r4_Service-Discovery-and-Programme-Metadata-for-DVB-I_Interim-Draft_TS-103-770-v121_September-2022.pdf)
 - the A177r5 [:2023 schema](https://dvb.org/wp-content/uploads/2022/09/A177r5_Service-Discovery-and-Programme-Metadata-for-DVB-I_Interim-Draft_TS-103-770-v121_July-2023.pdf)
-- the A177r6 [:2024 schema](https://dvb.org/wp-content/uploads/2023/07/A177r6_Service-Discovery-and-Programme-Metadata-for-DVB-I_Draft_TS-103-770-v121_February-2024.pdf) 
+- the A177r6 [:2024 schema](https://dvb.org/wp-content/uploads/2023/07/A177r6_Service-Discovery-and-Programme-Metadata-for-DVB-I_Draft_TS-103-770-v121_February-2024.pdf)
 - the A177r7 [:2025 schema](https://dvb.org/wp-content/uploads/2024/09/A177r7_Service-Discovery-and-Programme-Metadata-for-DVB-I_Interim-Draft_TS-103-770-v131_July-2025.pdf) ([latest details](https://dvb.org/?standard=service-discovery-and-programme-metadata-for-dvb-i))
 - the A177r8 :202x schema - currently in development
 
@@ -116,6 +116,7 @@ Validates the value space of the instance document
 - &lt;BasicDescription&gt; sub-elements (&lt;Title&gt;, &lt;Synopsis&gt;, &lt;Keyword&gt;, &lt;Genre&gt;, &lt;CreditsList&gt;, &lt;ParentalGuidance&gt;, &lt;RelatedMaterial&gt;) in &lt;ProgramInformation&gt;
 
 ### Installation
+
 #### node.js
 
 1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
@@ -127,6 +128,7 @@ If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `s
 Occassionally, the language-subtag-registry file can be updated from https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
 
 #### Docker
+
 1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
 1. run it - `docker compose up`
 
@@ -139,6 +141,7 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 - `--nocsr` flag to disable SLR operation (default: false)
 - `--nocg` flag to disable Content Guide validation (default: false)
 - `--nosl` flag to disable Service List validation (default: false)
+- `--noslr` flag to disable Service List Registry validation (default: false)
 - `--CORSmode [-c] <mode>` select the type of CORS handling
   - `"library"` - default mode - use the Express CORS library
   - `"manual"` - do code based CORS header insertion (not fully implemented or tested)
@@ -210,24 +213,23 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 
 Type-parameter for all content guide validation requests is one of the following:
 
-
-* Schedule Info (time stamp): `Time`
-* Schedule Info (now/next): `NowNext`
-* Schedule Info (window): `Window`
-* Program Info: `ProgInfo`
-* More Episodes: `MoreEpisodes`
-* Box Set Categories: `bsCategories`
-* Box Set Lists: `bsLists`
-* Box Set Contents: `bsContents`
-
+- Schedule Info (time stamp): `Time`
+- Schedule Info (now/next): `NowNext`
+- Schedule Info (window): `Window`
+- Program Info: `ProgInfo`
+- More Episodes: `MoreEpisodes`
+- Box Set Categories: `bsCategories`
+- Box Set Lists: `bsLists`
+- Box Set Contents: `bsContents`
 
 `<server>/validate_cg?url=<content_guide_url>&type=<type>` gives the validation results of the content guide data in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the content guide data in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML
 
-`<server>/validate_gc_json?url=<content_guide_url>&type=<type>` validates the content guide data in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the content guide fragment in the request body with content type "application/xml" instead of the url query parameter.  The response is in the same format as `<server>/validate_sl__json?url=<service_list_url>` request
+`<server>/validate_gc_json?url=<content_guide_url>&type=<type>` validates the content guide data in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the content guide fragment in the request body with content type "application/xml" instead of the url query parameter. The response is in the same format as `<server>/validate_sl__json?url=<service_list_url>` request
 
 `<server>/validate_cg_json?url=<content_guide_url>&results=all&type=<type>` validates the content guide document in "url"-parameter and gives the complete validation results as JSON. Also accepts POST request with the content guide fragment in the request body with content type "application/xml" instead of the url query parameter. The response is in the same format as `<server>/validate_sl_json?url=<service_list_url>&results=all` request
 
 accepted valies for `<type>`
+
 - `Time` - Content guide fragment represents a Timestamp Filtered Schedule response according to DVB A177 clause 6.5.4.3.1
 - `NowNext` - Content guide fragment represents a Now/Next Filtered Schedule response according to DVB A177 clause 6.5.4.3.2
 - `Window` - Content guide fragment represents a Now/Next (window) Filtered Schedule response according to DVB A177 clause 6.5.4.3.3

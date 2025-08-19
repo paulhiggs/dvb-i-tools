@@ -33,6 +33,7 @@ const optionDefinitions = [
 	{ name: "nocsr", type: Boolean, defaultValue: false, typeLabel: "{underline flag}", description: "disallow SLR function" },
 	{ name: "nosl", type: Boolean, defaultValue: false, typeLabel: "{underline flag}", description: "disallow Service List validation" },
 	{ name: "nocg", type: Boolean, defaultValue: false, typeLabel: "{underline flag}", description: "disallow Content Guide validation" },
+	{ name: "noslr", type: Boolean, defaultValue: false, typeLabel: "{underline flag}", description: "disallow Service List Registry validation" },
 	{ name: "CSRfile", alias: "f", type: String, defaultValue: Default_SLEPR.file, typeLabel: "{underline filename}", description: "local file name of SLEPR file" },
 	{
 		name: "CORSmode",

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisld="urn:dvb:metadata:servicelistdiscovery:2021" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2019" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2021" targetNamespace="urn:dvb:metadata:servicelistdiscovery:2021" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<import namespace="urn:tva:metadata:2019" schemaLocation="tva_metadata_3-1.xsd"/>
+	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
+	<import namespace="urn:dvb:metadata:servicediscovery:2021" schemaLocation="dvbi_v3.0.xsd"/>
+	<element name="ServiceListEntryPoints" type="dvbisld:ServiceListEntryPointsType"/>
+	<complexType name="ServiceListEntryPointsType">
+		<sequence>
+			<element name="ServiceListRegistryEntity" type="dvbisld:OrganizationType"/>
+			<element name="ProviderOffering" type="dvbisld:ProviderOfferingType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Extension" type="dvbisd:ExtensionBaseType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+	</complexType>
+	<complexType name="OrganizationType">
+		<complexContent>
+			<extension base="mpeg7:AgentType">
+				<sequence>
+					<element name="Name" maxOccurs="unbounded">
+						<complexType>
+							<complexContent>
+								<extension base="mpeg7:TextualType">
+									<attribute name="type" use="optional">
+										<simpleType>
+											<restriction base="NMTOKEN">
+												<enumeration value="former"/>
+												<enumeration value="variant"/>
+												<enumeration value="main"/>
+											</restriction>
+										</simpleType>
+									</attribute>
+								</extension>
+							</complexContent>
+						</complexType>
+					</element>
+					<element name="Kind" type="mpeg7:TermUseType" minOccurs="0"/>
+					<element name="ContactName" type="mpeg7:PersonNameType" minOccurs="0"/>
+					<element name="Jurisdiction" type="mpeg7:PlaceType" minOccurs="0"/>
+					<element name="Address" type="mpeg7:PlaceType" minOccurs="0"/>
+					<element name="ElectronicAddress" type="mpeg7:ElectronicAddressType" minOccurs="0"/>
+				</sequence>
+				<attribute name="regulatorFlag" type="boolean" default="false"/>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="ProviderOfferingType">
+		<sequence>
+			<element name="Provider" type="dvbisld:OrganizationType"/>
+			<element name="ServiceListOffering" type="dvbisld:ServiceListOfferingType" maxOccurs="unbounded"/>
+		</sequence>
+	</complexType>
+	<complexType name="ServiceListOfferingType">
+		<sequence>
+			<element name="ServiceListName" type="mpeg7:TextualType" maxOccurs="unbounded"/>
+			<element name="ServiceListURI" type="dvbisd:ExtendedURIType" maxOccurs="unbounded"/>
+			<element name="Delivery" type="dvbisld:DeliveryType"/>
+			<element name="Language" type="tva:AudioLanguageType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Genre" type="tva:GenreType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="TargetCountry" type="dvbisd:ISO-3166-List" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+		<attribute name="regulatorListFlag" type="boolean" default="false"/>
+	</complexType>
+	<complexType name="DeliveryType">
+		<sequence>
+			<element name="DASHDelivery" type="dvbisld:NoAdditionalIPParametersType" minOccurs="0"/>
+			<element name="DVBTDelivery" type="dvbisld:DVBTDeliveryType" minOccurs="0"/>
+			<element name="DVBCDelivery" type="dvbisld:DVBCDeliveryType" minOccurs="0"/>
+			<element name="DVBSDelivery" type="dvbisld:DVBSDeliveryType" minOccurs="0"/>
+			<element name="RTSPDelivery" type="dvbisld:NoAdditionalIPParametersType" minOccurs="0"/>
+			<element name="MulticastTSDelivery" type="dvbisld:NoAdditionalIPParametersType" minOccurs="0"/>
+			<element name="ApplicationDelivery" type="dvbisld:ApplicationTypeListType" minOccurs="0"/>
+			<element name="OtherDeliveryParameters" type="dvbisd:ExtensionBaseType" minOccurs="0"/>
+		</sequence>
+	</complexType>
+	<complexType name="AbstractDeliveryType" abstract="true">
+		<attribute name="required" type="boolean" default="false"/>
+	</complexType>
+	<complexType name="AbstractIPDeliveryType" abstract="true">
+		<complexContent>
+			<extension base="dvbisld:AbstractDeliveryType">
+				<attribute name="minimumBitRate" type="unsignedInt"/>
+			</extension>
+		</complexContent>
+	</complexType>	
+	<complexType name="NoAdditionalIPParametersType">
+		<complexContent>
+			<extension base="dvbisld:AbstractIPDeliveryType">
+				<!-- no additional elements or attributes -->
+			</extension>
+		</complexContent>	
+	</complexType>
+	<complexType name="DVBTDeliveryType">
+		<complexContent>
+			<extension base="dvbisld:AbstractDeliveryType">
+				<!-- no additional elements or attributes -->
+			</extension>
+		</complexContent>	
+	</complexType>
+	<complexType name="DVBCDeliveryType">
+		<complexContent>
+			<extension base="dvbisld:AbstractDeliveryType">
+				<attribute name="networkID" type="dvbisd:NetworkIdType" use="required"/>
+			</extension>
+		</complexContent>	
+	</complexType>
+	<complexType name="DVBSDeliveryType">
+		<complexContent>
+			<extension base="dvbisld:AbstractDeliveryType">
+				<sequence>
+					<element name="OrbitalPosition" type="dvbisd:LongitudeType" maxOccurs="unbounded"/>
+				</sequence>
+			</extension>
+		</complexContent>	
+	</complexType>
+	<complexType name="ApplicationTypeListType">
+		<complexContent>
+			<extension base="dvbisld:AbstractDeliveryType">
+				<sequence>
+					<element name="ApplicationType" type="dvbisld:ApplicationType" maxOccurs="unbounded"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="ApplicationType">	
+		<attribute name="contentType" type="mpeg7:mimeType" use="required"/>
+		<attribute name="xmlAitApplicationType" type="mpeg7:mimeType"/>
+	</complexType>
+
+</schema>
