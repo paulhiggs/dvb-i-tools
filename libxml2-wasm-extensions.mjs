@@ -9,6 +9,8 @@ import { XmlDocument, XmlElement } from "libxml2-wasm";
 
 console.log(chalk.yellow.underline("initialize extensions"));
 
+const DEFAULT_TAG = "__DeFaUlT__";
+
 /**
  * find the named attribute in an element without considering the namespace
  * return a pointer to the XmlAttribute object or null if not found
@@ -61,37 +63,22 @@ if (!XmlDocument.prototype.childNodes) {
 	};
 }
 
-if (!XmlElement.prototype.prettyPrint) {
-	XmlElement.prototype.prettyPrint = function (indent = "") {
-		if (!this || !this?.name) return "";
-		let qualifyName = (_this) => (_this.namespacePrefix && _this.namespacePrefix.length ? `${_this.namespacePrefix}:` : "") + _this.name;
-		let isStructureElement = (_this) => _this.__proto__.constructor.name == "XmlElement";
-		// to be a leaf node, all child nodes must be textual
-		let isLeafElement = (_this) => {
-			let leaf = true,
-				kid = _this.firstChild;
-			while (leaf && kid) {
-				if (kid.__proto__.constructor.name != "XmlText") leaf = false;
-				kid = kid.next;
-			}
-			return leaf;
-		};
-
-		let t = indent + "<" + qualifyName(this);
-		this.attrs?.forEach((attr) => {
-			t += ` ${qualifyName(attr)}="${attr.value}"`;
-		});
-		if (isLeafElement(this)) t += this.content.length ? `>${this.content}</${qualifyName(this)}>` : "/>";
-		else t += this.firstChild ? ">" : "/>";
-		let child = this.firstChild;
+if (!XmlElement.prototype.getAnyNs) {
+	XmlElement.prototype.getAnyNs = function (_name, _index = 1) {
+		if (this == null) {
+			throw new TypeError("XmlDocument.prototype.getAnyNs called on null or undefined");
+		}
+		if (!_name) {
+			throw new TypeError("XmlDocument.prototype.getAnyNS called without name");
+		}
+		let ix = 0,
+			child = this.firstChild;
 		while (child) {
-			if (child.__proto__.constructor.name == "XmlComment") t += `\n${indent}<!--${child.content}-->`;
-			else if (isStructureElement(child)) t += "\n" + child.prettyPrint(indent + "  ");
+			if (child instanceof XmlElement && child.name == _name) {
+				if (++ix == _index) return child;
+			}
 			child = child.next;
 		}
-		t += !isLeafElement(this) ? `\n${indent}</${qualifyName(this)}>` : "";
-
-		return t;
 	};
 }
 
@@ -104,15 +91,17 @@ export let MakeDocumentProperties = (element) => {
 		datatypes_prefix: null,
 		tva_prefix: null,
 		mpeg7_prefix: null,
+		discovery_prefix: null,
 	};
 	if (res.prefix == "") {
-		res.prefix = "__DeFaUlT__";
+		res.prefix = DEFAULT_TAG;
 		res.schema[res.prefix] = res.namespace;
 		element.addNsDeclaration(res.namespace, res.prefix);
 	}
 	Object.getOwnPropertyNames(res.schema).forEach((property) => {
 		if (res.schema[property].includes("urn:tva")) res.tva_prefix = property;
 		if (res.schema[property].includes("servicediscovery-types")) res.datatypes_prefix = property;
+		if (res.schema[property].includes(":servicelistdiscovery:")) res.discovery_prefix = property;
 		if (res.schema[property].includes("tva:mpeg7")) res.mpeg7_prefix = property;
 	});
 	return res;
