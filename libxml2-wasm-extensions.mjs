@@ -7,9 +7,7 @@
 import chalk from "chalk";
 import { XmlDocument, XmlElement } from "libxml2-wasm";
 
-console.log(chalk.yellow.underline("initialize extensions"));
-
-const DEFAULT_TAG = "__DeFaUlT__";
+console.log(chalk.yellow.underline("initialize libxml2-wasm extensions"));
 
 /**
  * find the named attribute in an element without considering the namespace
@@ -69,7 +67,7 @@ if (!XmlElement.prototype.getAnyNs) {
 			throw new TypeError("XmlDocument.prototype.getAnyNs called on null or undefined");
 		}
 		if (!_name) {
-			throw new TypeError("XmlDocument.prototype.getAnyNS called without name");
+			throw new Error("XmlDocument.prototype.getAnyNs called without name");
 		}
 		let ix = 0,
 			child = this.firstChild;
@@ -82,29 +80,31 @@ if (!XmlElement.prototype.getAnyNs) {
 	};
 }
 
-export let MakeDocumentProperties = (element) => {
-	if (element.__proto__.constructor.name != "XmlElement") return {};
-	let res = {
-		schema: element.namespaces,
-		namespace: element.namespaceUri,
-		prefix: element.namespacePrefix,
-		datatypes_prefix: null,
-		tva_prefix: null,
-		mpeg7_prefix: null,
-		discovery_prefix: null,
+if (!XmlElement.prototype.hasChild) {
+	XmlElement.prototype.hasChild = function (_childName) {
+		if (this == null) {
+			throw new TypeError("XmlDocument.prototype.hasChild called on null or undefined");
+		}
+		if (!_childName) {
+			throw new Error("XmlDocument.prototype.hasChild called without name");
+		}
+		let child = this?.firstChild;
+		while (child) {
+			if (child?.name?.endsWith(_childName)) return true;
+			child = child.next;
+		}
+		return false;
 	};
-	if (res.prefix == "") {
-		res.prefix = DEFAULT_TAG;
-		res.schema[res.prefix] = res.namespace;
-		element.addNsDeclaration(res.namespace, res.prefix);
-	}
-	Object.getOwnPropertyNames(res.schema).forEach((property) => {
-		if (res.schema[property].includes("urn:tva")) res.tva_prefix = property;
-		if (res.schema[property].includes("servicediscovery-types")) res.datatypes_prefix = property;
-		if (res.schema[property].includes(":servicelistdiscovery:")) res.discovery_prefix = property;
-		if (res.schema[property].includes("tva:mpeg7")) res.mpeg7_prefix = property;
-	});
-	return res;
-};
+}
+
+if (!XmlElement.prototype.documentNamespace) {
+	XmlElement.prototype.documentNamespace = function () {
+		if (this == null) {
+			throw new TypeError("XmlDocument.prototype.hasChild called on null or undefined");
+		}
+		if (!this.parent) return this.namespaceUri;
+		return this.parent.documentNamespace();
+	};
+}
 
 export let Libxml2_wasm_init = () => {};
