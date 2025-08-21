@@ -19,7 +19,7 @@ After=network-online.target
 [Service]
 Restart=on-failure
 WorkingDirectory=/home/paul/dvb-i-tools/
-ExecStart=/usr/bin/node /home/paul/dvb-i-tools/all-in-one.js --port 3040
+ExecStart=/usr/bin/node /home/paul/dvb-i-tools/all-in-one.js --port 3030
 
 [Install]
 WantedBy=multi-user.target
