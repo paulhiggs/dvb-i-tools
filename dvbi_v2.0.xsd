@@ -1,21 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE schema [
-	<!ENTITY PostcodeChar "A-Za-z0-9">
-	<!ENTITY PostcodeSep "\- ">
-	<!ENTITY Postcode "[&PostcodeChar;]+([&PostcodeSep;][&PostcodeChar;]+)?">
-	<!ENTITY PostcodeWildFirst "\*[&PostcodeChar;]*[&PostcodeSep;]?[&PostcodeChar;]+">
-	<!ENTITY PostcodeWildMiddle "([&PostcodeChar;]+\*[&PostcodeSep;]?[&PostcodeChar;]+)|([&PostcodeChar;]+[&PostcodeSep;]?\*[&PostcodeChar;]+)">
-	<!ENTITY PostcodeWildLast "[&PostcodeChar;]+[&PostcodeSep;]?[&PostcodeChar;]*\*">
-	<!ENTITY ISOCountry "[A-Z]{3}">
-	<!ENTITY DecimalByte "(([1-9]?[0-9])|(1[0-9][0-9])|(2[0-4][0-9])|(25[0-5]))">
-	<!ENTITY IPv4Address "(&DecimalByte;\.){3}&DecimalByte;">
-	<!ENTITY HexDigit "[0-9A-Fa-f]">
-	<!ENTITY Hex32 "&HexDigit;{1,8}">
-	<!ENTITY Hex16 "&HexDigit;{1,4}">
-	<!ENTITY Hex8 "&HexDigit;{1,2}">
+	<!ENTITY PostcodeChar			"A-Za-z0-9">
+<!ENTITY PostcodeSep				"\- ">
+<!ENTITY Postcode						"[&PostcodeChar;]+([&PostcodeSep;][&PostcodeChar;]+)?">
+<!ENTITY PostcodeWildFirst		"\*[&PostcodeChar;]*[&PostcodeSep;]?[&PostcodeChar;]+">
+<!ENTITY PostcodeWildMiddle
+			"([&PostcodeChar;]+\*[&PostcodeSep;]?[&PostcodeChar;]+)|([&PostcodeChar;]+[&PostcodeSep;]?\*[&PostcodeChar;]+)">
+<!ENTITY PostcodeWildLast		"[&PostcodeChar;]+[&PostcodeSep;]?[&PostcodeChar;]*\*">
+<!ENTITY ISOCountry				"[A-Z]{3}">
+<!ENTITY DecimalByte				"(([1-9]?[0-9])|(1[0-9][0-9])|(2[0-4][0-9])|(25[0-5]))">
+<!ENTITY IPv4Address				"(&DecimalByte;\.){3}&DecimalByte;">
+<!ENTITY HexDigit							"[0-9A-Fa-f]">
+<!ENTITY Hex32									"&HexDigit;{1,8}">
+<!ENTITY Hex16									"&HexDigit;{1,4}">
+<!ENTITY Hex8										"&HexDigit;{1,2}">
 ]>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2020" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2019" targetNamespace="urn:dvb:metadata:servicediscovery:2020" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<import namespace="urn:tva:metadata:2019" schemaLocation="tva_metadata_3-1.xsd"/>
+<schema xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2020"
+	xmlns:mpeg7="urn:tva:mpeg7:2008"
+	xmlns:tva="urn:tva:metadata:2019" targetNamespace="urn:dvb:metadata:servicediscovery:2020" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<import namespace="urn:tva:metadata:2019" schemaLocation="tva_metadata_3-1_2019.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
 	<element name="ServiceList" type="dvbisd:ServiceListType"/>
 	<element name="Playlist" type="dvbisd:DASHPlaylistType"/>
@@ -36,30 +40,6 @@
 		</sequence>
 		<attribute name="version" type="positiveInteger" use="required"/>
 	</complexType>
-	<complexType name="ContentGuideSourceListType">
-		<sequence>
-			<element name="ContentGuideSource" type="dvbisd:ContentGuideSourceType" minOccurs="0" maxOccurs="unbounded"/>
-		</sequence>
-	</complexType>
-	<complexType name="ContentGuideSourceType">
-		<sequence>
-			<element name="Name" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="ProviderName" type="mpeg7:TextualType" maxOccurs="unbounded"/>
-			<element name="RelatedMaterial" type="dvbisd:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="ScheduleInfoEndpoint" type="dvbisd:ExtendedURIType"/>
-			<element name="ProgramInfoEndpoint" type="dvbisd:ExtendedURIType" minOccurs="0"/>
-			<element name="GroupInfoEndpoint" type="dvbisd:ExtendedURIType" minOccurs="0"/>
-			<element name="MoreEpisodesEndpoint" type="dvbisd:ExtendedURIType" minOccurs="0"/>
-		</sequence>
-		<attribute name="CGSID" type="dvbisd:ContentGuideProviderIdType" use="required"/>
-		<attribute name="minimumMetadataUpdatePeriod" type="duration"/>
-	</complexType>
-	<simpleType name="ContentGuideProviderIdType">
-		<restriction base="ID"/>
-	</simpleType>
-	<simpleType name="ContentGuideProviderRefIdType">
-		<restriction base="IDREF"/>
-	</simpleType>
 	<complexType name="ServiceType">
 		<sequence>
 			<element name="UniqueIdentifier" type="dvbisd:ServiceIdentifierType"/>
@@ -83,7 +63,7 @@
 	<complexType name="ServiceInstanceType">
 		<sequence>
 			<element name="DisplayName" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="RelatedMaterial" type="dvbisd:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="ContentProtection" type="dvbisd:ContentProtectionType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="ContentAttributes" type="dvbisd:ContentAttributesType" minOccurs="0"/>
 			<element name="Availability" type="dvbisd:ServiceAvailabilityType" minOccurs="0"/>
@@ -109,7 +89,7 @@
 				<element name="OtherDeliveryParameters" type="dvbisd:ExtensionBaseType"/>
 			</choice>
 		</sequence>
-		<attribute name="priority" type="integer"/>
+		<attribute name="priority" type="integer" default="0"/>
 	</complexType>
 	<complexType name="ContentProtectionType">
 		<sequence>
@@ -149,7 +129,7 @@
 	<complexType name="FTAContentManagementType">
 		<attribute name="userDefined" type="boolean" use="required"/>
 		<attribute name="doNotScramble" type="boolean" use="required"/>
-		<attribute name="controlRemoteAccessOverInternet">
+		<attribute name="controlRemoteAccessOverInternet" use="required">
 			<simpleType>
 				<restriction base="unsignedByte">
 					<minInclusive value="0"/>
@@ -170,7 +150,7 @@
 			<element name="DVBTriplet" type="dvbisd:DVBTripletType"/>
 			<element name="OrbitalPosition" type="dvbisd:LongitudeType" minOccurs="0"/>
 			<sequence minOccurs="0">
-				<element name="Frequency" type="positiveInteger"/>
+				<element name="Frequency" type="positiveInteger" />
 				<element name="Polarization">
 					<simpleType>
 						<restriction base="string">
@@ -192,10 +172,21 @@
 	<complexType name="DVBCDeliveryParametersType">
 		<sequence>
 			<element name="DVBTriplet" type="dvbisd:DVBTripletType" minOccurs="0"/>
-			<element name="TargetCountry" type="dvbisd:ISO-3166-Code"/>
-			<element name="NetworkID" type="dvbisd:NetworkIdType"/>
+			<element name="TargetCountry" type="dvbisd:ISO-3166-Code" />
+			<element name="NetworkID" type="dvbisd:NetworkIdType" />
 		</sequence>
 	</complexType>
+	<simpleType name="NetworkIdType">
+		<restriction base="unsignedShort"/>
+	</simpleType>
+	<simpleType name="ISO-3166-Code">
+		<annotation>
+			<documentation xml:lang="en">A country code, as defined by ISO-3166.</documentation>
+		</annotation>
+		<restriction base="string">
+			<pattern value="&ISOCountry;"/>
+		</restriction>
+	</simpleType>
 	<complexType name="RTSPDeliveryParametersType">
 		<sequence>
 			<element name="DVBTriplet" type="dvbisd:DVBTripletType" minOccurs="0"/>
@@ -217,17 +208,6 @@
 			<element name="Extension" type="dvbisd:ExtensionBaseType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 	</complexType>
-	<simpleType name="NetworkIdType">
-		<restriction base="unsignedShort"/>
-	</simpleType>
-	<simpleType name="ISO-3166-Code">
-		<annotation>
-			<documentation xml:lang="en">A country code, as defined by ISO-3166.</documentation>
-		</annotation>
-		<restriction base="string">
-			<pattern value="&ISOCountry;"/>
-		</restriction>
-	</simpleType>
 	<complexType name="ServiceAvailabilityType">
 		<sequence>
 			<element name="Period" maxOccurs="unbounded">
@@ -359,6 +339,30 @@
 			<extension base="mpeg7:TextualType"/>
 		</simpleContent>
 	</complexType>
+	<complexType name="ContentGuideSourceListType">
+		<sequence>
+			<element name="ContentGuideSource" type="dvbisd:ContentGuideSourceType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+	</complexType>
+	<complexType name="ContentGuideSourceType">
+		<sequence>
+			<element name="Name" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="ProviderName" type="mpeg7:TextualType" maxOccurs="unbounded"/>
+			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="ScheduleInfoEndpoint" type="dvbisd:ExtendedURIType"/>
+			<element name="ProgramInfoEndpoint" type="dvbisd:ExtendedURIType" minOccurs="0"/>
+			<element name="GroupInfoEndpoint" type="dvbisd:ExtendedURIType" minOccurs="0"/>
+			<element name="MoreEpisodesEndpoint" type="dvbisd:ExtendedURIType" minOccurs="0"/>
+		</sequence>
+		<attribute name="CGSID" type="dvbisd:ContentGuideProviderIdType" use="required"/>
+		<attribute name="minimumMetadataUpdatePeriod" type="duration"/>
+	</complexType>
+	<simpleType name="ContentGuideProviderIdType">
+		<restriction base="ID"/>
+	</simpleType>
+	<simpleType name="ContentGuideProviderRefIdType">
+		<restriction base="IDREF"/>
+	</simpleType>
 	<complexType name="DASHPlaylistType">
 		<sequence>
 			<element name="PlaylistEntry" type="anyURI" maxOccurs="unbounded"/>
@@ -374,7 +378,7 @@
 		</attribute>
 	</complexType>
 	<!-- -->
-	<!--  TV-Anytime extended data types -->
+	<!-- TV-Anytime extended data types -->
 	<!-- -->
 	<complexType name="RelatedMaterialType">
 		<sequence>
@@ -422,7 +426,7 @@
 		</complexContent>
 	</complexType>
 	<!-- -->
-	<!--  data types adapted from SDnS v1.4 -->
+	<!-- data types adapted from SDnS v1.4 -->
 	<!-- -->
 	<complexType name="DVBTripletType">
 		<attribute name="origNetId" type="dvbisd:OrigNetId" use="optional"/>
@@ -430,7 +434,7 @@
 		<attribute name="serviceId" type="dvbisd:ServiceId" use="required"/>
 	</complexType>
 	<!-- -->
-	<!--  items adapted from OSDT v1.2.1 -->
+	<!-- items adapted from OSDT v1.2.1 -->
 	<!-- -->
 	<complexType name="ContentAttributesType">
 		<sequence>
@@ -561,7 +565,10 @@
 	</attributeGroup>
 	<simpleType name="ISO-3166-List">
 		<annotation>
-			<documentation xml:lang="en">A comma separated list of one or more country codes, where the codes are defined by ISO-3166.</documentation>
+			<documentation xml:lang="en">
+				A comma separated list of one or more country codes, where the codes are defined by 
+				ISO-3166.
+			</documentation>
 		</annotation>
 		<restriction base="string">
 			<pattern value="&ISOCountry;(,&ISOCountry;)*"/>
@@ -581,19 +588,28 @@
 	</simpleType>
 	<simpleType name="OrigNetId">
 		<annotation>
-			<documentation xml:lang="en">A unique identifier of a network. This is managed by DVB through ETSI, and listed in ETSI TR 101 162</documentation>
+			<documentation xml:lang="en">
+				A unique identifier of a network. This is managed by DVB through ETSI, and listed in 
+				ETSI TR 101 162
+			</documentation>
 		</annotation>
 		<restriction base="unsignedShort"/>
 	</simpleType>
 	<simpleType name="TSId">
 		<annotation>
-			<documentation xml:lang="en">A number used to identify Transport Stream within an original_network. See ETSI EN 300 468</documentation>
+			<documentation xml:lang="en">
+				A number used to identify Transport Stream within an original_network. 
+				See ETSI EN 300 468
+			</documentation>
 		</annotation>
 		<restriction base="unsignedShort"/>
 	</simpleType>
 	<simpleType name="ServiceId">
 		<annotation>
-			<documentation xml:lang="en">A number used to identify a service within a Transport Stream. See ETSI EN 300 468</documentation>
+			<documentation xml:lang="en">
+				A number used to identify a service within a Transport Stream. 
+				See ETSI EN 300 468
+			</documentation>
 		</annotation>
 		<restriction base="unsignedShort"/>
 	</simpleType>
@@ -608,7 +624,10 @@
 	</simpleType>
 	<simpleType name="IPv4Type">
 		<annotation>
-			<documentation xml:lang="en">Regular expressions in pattern values for type define compatible address structures for IPv4 syntax</documentation>
+			<documentation xml:lang="en">
+				Regular expressions in pattern values for type define compatible address 
+				structures for IPv4 syntax
+			</documentation>
 		</annotation>
 		<restriction base="string">
 			<pattern value="&IPv4Address;"/>
@@ -616,21 +635,24 @@
 	</simpleType>
 	<simpleType name="IPv6Type">
 		<annotation>
-			<documentation xml:lang="en">Regular expressions in pattern values for type define compatible address structures IPv6 syntax</documentation>
+			<documentation xml:lang="en">
+				Regular expressions in pattern values for type define compatible address 
+				structures IPv6 syntax
+			</documentation>
 		</annotation>
 		<restriction base="string">
 			<pattern value="/^\s*(((&Hex16;:){7}(&Hex16;|:))|
-			                      ((&Hex16;:){6}(:&Hex16;|&IPv4Address;|:))|
-			                      ((&Hex16;:){5}(((:&Hex16;){1,2})|:&IPv4Address;|:))|
-			                      ((&Hex16;:){4}(((:&Hex16;){1,3})|((:&Hex16;)?:&IPv4Address;)|:))|
-			                      ((&Hex16;:){3}(((:&Hex16;){1,4})|((:&Hex16;){0,2}:&IPv4Address;)|:))|
-			                      ((&Hex16;:){2}(((:&Hex16;){1,5})|((:&Hex16;){0,3}:&IPv4Address;)|:))|
-			                      ((&Hex16;:){1}(((:&Hex16;){1,6})|((:&Hex16;){0,4}:&IPv4Address;)|:))|
-			                      (:(((:&Hex16;){1,7})|((:&Hex16;){0,5}:&IPv4Address;)|:)))(%.+)?\s*$/"/>
+			 			 			((&Hex16;:){6}(:&Hex16;|&IPv4Address;|:))|
+			 			 			 ((&Hex16;:){5}(((:&Hex16;){1,2})|:&IPv4Address;|:))|
+			 			 			 ((&Hex16;:){4}(((:&Hex16;){1,3})|((:&Hex16;)?:&IPv4Address;)|:))|
+			 			 			 ((&Hex16;:){3}(((:&Hex16;){1,4})|((:&Hex16;){0,2}:&IPv4Address;)|:))|
+			 			 			 ((&Hex16;:){2}(((:&Hex16;){1,5})|((:&Hex16;){0,3}:&IPv4Address;)|:))|
+			 			 			 ((&Hex16;:){1}(((:&Hex16;){1,6})|((:&Hex16;){0,4}:&IPv4Address;)|:))|	
+			 			 			 (:(((:&Hex16;){1,7})|((:&Hex16;){0,5}:&IPv4Address;)|:)))(%.+)?\s*$/"/>
 		</restriction>
 	</simpleType>
 	<!-- -->
-	<!--  items copied from OSDT v1.2.1 -->
+	<!-- items copied from OSDT v1.2.1 -->
 	<!-- -->
 	<complexType name="ExtendedURIType">
 		<sequence>
