@@ -57,6 +57,7 @@ const optionDefinitions = [
 		typeLabel: "{underline mode}",
 		description: `type of CORS habdling "${CORSlibrary}" (default), "${CORSmanual}" or "${CORSnone}"`,
 	},
+	{ name: "workers", alias: "w", type: Number, defaultValue: numCPUs, description: "The number of worker threads to spawn" },
 	{ name: "help", alias: "h", type: Boolean, defaultValue: false, description: "This help" },
 ];
 
@@ -134,7 +135,9 @@ const RELOAD = "RELOAD",
 	STATS = "STATS";
 
 if (cluster.isPrimary) {
-	console.log(chalk.green(`Number of CPUs is ${numCPUs}`));
+	if (options.workers > numCPUs) options.workers = numCPUs;
+	else if (options.workers < 1) options.workers = 1;
+	console.log(chalk.green(`Number of CPUs is ${numCPUs}, ${options.workers} workers`));
 	console.log(chalk.green(`Primary ${process.pid} is running`));
 
 	let metrics = {
@@ -144,7 +147,7 @@ if (cluster.isPrimary) {
 	};
 
 	// Fork workers.
-	for (let i = 0; i < numCPUs; i++) {
+	for (let i = 0; i < options.workers; i++) {
 		cluster.fork();
 	}
 
@@ -171,6 +174,7 @@ if (cluster.isPrimary) {
 					break;
 				case STATS:
 					console.log(`knownLanguages.length=${knownLanguages.languagesList.length}`);
+					console.log(`numCPUs=${numCPUs}`);
 					console.log(`knownCountries.length=${knownCountries.count()}`);
 					console.log(`requests=${metrics.numRequests} failed=${metrics.numFailed} reloads=${metrics.reloadRequests}`);
 					console.log(`SLEPR file=${options.file}`);
