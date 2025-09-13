@@ -1,6 +1,6 @@
 [submodule "phlib"]
 	path = phlib
-	url = http://github.com/paulhiggs/phlib
+	url = https://github.com/paulhiggs/phlib
 [submodule "testsuite"]
 	path = testsuite
 	url = https://github.com/paulhiggs/dvb-i-tools.testsuite
