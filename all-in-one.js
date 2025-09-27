@@ -10,6 +10,7 @@ import commandLineUsage from "command-line-usage";
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mjs";
 import { Default_SLEPR, MOTD } from "./lib/data_locations.mjs";
 import validator from "./lib/validator.mjs";
+import { DEFAULT_PROCESSING } from "./lib/slepr.mjs";
 
 // parse command line options
 const optionDefinitions = [
