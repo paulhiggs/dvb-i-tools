@@ -10,7 +10,7 @@ import commandLineUsage from "command-line-usage";
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mjs";
 import { Default_SLEPR, MOTD } from "./lib/data_locations.mjs";
 import validator from "./lib/validator.mjs";
-import { DEFAULT_PROCESSING } from "./lib/slepr.mjs";
+import { DEFAULT_PROCESSING, SLR_Processing_Modes } from "./lib/slepr.mjs";
 
 // parse command line options
 const optionDefinitions = [
@@ -50,7 +50,7 @@ const optionDefinitions = [
 		type: String,
 		defaultValue: DEFAULT_PROCESSING,
 		typeLabel: "{underline mode}",
-		description: `The type of processing for the SLR response [${SLR_processing_modes.join(",")}]`,
+		description: `The type of processing for the SLR response [${SLR_Processing_Modes.join(",")}]`,
 	},
 	{ name: "help", alias: "h", type: Boolean, defaultValue: false, description: "This help" },
 ];
