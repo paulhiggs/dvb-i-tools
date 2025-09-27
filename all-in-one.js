@@ -41,9 +41,16 @@ const optionDefinitions = [
 		type: String,
 		defaultValue: CORSlibrary,
 		typeLabel: "{underline mode}",
-		description: `type of CORS habdling "${CORSlibrary}" (default), "${CORSmanual}" or "${CORSnone}"`,
+		description: `type of CORS handling "${CORSlibrary}" (default), "${CORSmanual}" or "${CORSnone}"`,
 	},
 	{ name: "motd", alias: "m", type: String, defaultValue: MOTD.file, typeLabel: "{underline filename}", description: "local file name containing HTML for Message Of The Day" },
+	{
+		name: "SLRmode",
+		type: String,
+		defaultValue: DEFAULT_PROCESSING,
+		typeLabel: "{underline mode}",
+		description: `The type of processing for the SLR response [${SLR_processing_modes.join(",")}]`,
+	},
 	{ name: "help", alias: "h", type: Boolean, defaultValue: false, description: "This help" },
 ];
 
@@ -84,9 +91,19 @@ const commandLineHelp = [
 
 const options = commandLineArgs(optionDefinitions);
 
-if (!CORSoptions.includes(options.CORSmode) || options.help) {
+if (options.help) {
 	console.log(commandLineUsage(commandLineHelp));
 	process.exit(0);
+}
+
+if (!CORSoptions.includes(options.CORSmode)) {
+	console.log(chalk.red(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`));
+	process.exit(1);
+}
+
+if (!SLR_Processing_Modes.includes(options.SLRmode)) {
+	console.log(chalk.red(`SLRmode must be one of [${SLR_Processing_Modes.join(", ")}]`));
+	process.exit(1);
 }
 
 validator(options);

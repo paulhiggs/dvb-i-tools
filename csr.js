@@ -36,6 +36,8 @@ const numCPUs = cpus().length;
 // SLEPR == Service List Entry Point Registry
 import SLEPR from "./lib/slepr.mjs";
 
+import { DEFAULT_PROCESSING, SLR_Processing_Modes } from "./lib/slepr.mjs";
+
 // command line options
 const optionDefinitions = [
 	{ name: "urls", alias: "u", type: Boolean, defaultValue: false, description: "Load data files from network locations." },
@@ -55,9 +57,16 @@ const optionDefinitions = [
 		type: String,
 		defaultValue: "library",
 		typeLabel: "{underline mode}",
-		description: `type of CORS habdling "${CORSlibrary}" (default), "${CORSmanual}" or "${CORSnone}"`,
+		description: `type of CORS handling "${CORSlibrary}" (default), "${CORSmanual}" or "${CORSnone}"`,
 	},
 	{ name: "workers", alias: "w", type: Number, defaultValue: numCPUs, description: "The number of worker threads to spawn" },
+	{
+		name: "SLRmode",
+		type: String,
+		defaultValue: DEFAULT_PROCESSING,
+		typeLabel: "{underline mode}",
+		description: `The type of processing for the SLR response [${SLR_Processing_Modes.join(",")}]`,
+	},
 	{ name: "help", alias: "h", type: Boolean, defaultValue: false, description: "This help" },
 ];
 
@@ -105,14 +114,19 @@ try {
 	process.exit(1);
 }
 
+if (options.help) {
+	console.log(commandLineUsage(commandLineHelp));
+	process.exit(0);
+}
+
 if (!CORSoptions.includes(options.CORSmode)) {
 	console.log(chalk.red(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`));
 	process.exit(1);
 }
 
-if (options.help) {
-	console.log(commandLineUsage(commandLineHelp));
-	process.exit(0);
+if (!SLR_Processing_Modes.includes(options.SLRmode)) {
+	console.log(chalk.red(`SLRmode must be one of [${SLR_Processing_Modes.join(", ")}]`));
+	process.exit(1);
 }
 
 if (options.urls && options.file == Default_SLEPR.file) options.file = Default_SLEPR.url;
@@ -217,7 +231,7 @@ if (cluster.isPrimary) {
 			next();
 		};
 	}
-	let csr = new SLEPR(options.urls);
+	let csr = new SLEPR(options.urls, options.SLRmode);
 	csr.loadServiceListRegistry(options.CSRfile, knownLanguages, knownCountries, knownGenres);
 	app.use(morgan(":pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr"));
 	app.use(favicon(join("phlib", "ph-icon.ico")));
