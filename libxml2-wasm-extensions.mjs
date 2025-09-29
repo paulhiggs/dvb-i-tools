@@ -77,6 +77,7 @@ if (!XmlElement.prototype.getAnyNs) {
 			}
 			child = child.next;
 		}
+		return null;
 	};
 }
 
