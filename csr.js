@@ -231,8 +231,8 @@ if (cluster.isPrimary) {
 			next();
 		};
 	}
-	let csr = new SLEPR(options.urls, options.SLRmode);
-	csr.loadServiceListRegistry(options.CSRfile, knownLanguages, knownCountries, knownGenres);
+	let csr = new SLEPR(options.urls, options.SLRmode, knownLanguages, knownCountries, knownGenres);
+	csr.loadServiceListRegistry(options.CSRfile);
 	app.use(morgan(":pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr"));
 	app.use(favicon(join("phlib", "ph-icon.ico")));
 	if (options.CORSmode == CORSlibrary) app.options(SLEPR_query_route, cors());
