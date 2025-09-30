@@ -4,6 +4,7 @@
  * runner for all three DVB-I V&V tools
  */
 import process from "node:process";
+import chalk from "chalk";
 import commandLineArgs from "command-line-args";
 import commandLineUsage from "command-line-usage";
 
