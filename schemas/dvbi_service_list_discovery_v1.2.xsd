@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisld="urn:dvb:metadata:servicelistdiscovery:2021" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2019" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2021" targetNamespace="urn:dvb:metadata:servicelistdiscovery:2021" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<import namespace="urn:tva:metadata:2019" schemaLocation="tva_metadata_3-1.xsd"/>
-	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
-	<import namespace="urn:dvb:metadata:servicediscovery:2021" schemaLocation="dvbi_v3.0.xsd"/>
+<schema xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:dvbisld="urn:dvb:metadata:servicelistdiscovery:2021"
+	xmlns:mpeg7="urn:tva:mpeg7:2008"
+	xmlns:tva="urn:tva:metadata:2019"
+	xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2021" targetNamespace="urn:dvb:metadata:servicelistdiscovery:2021" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<import namespace="urn:tva:metadata:2019" schemaLocation="./tva_metadata_3-1_2019.xsd"/>
+	<import namespace="urn:tva:mpeg7:2008" schemaLocation="./tva_mpeg7.xsd"/>
+	<import namespace="urn:dvb:metadata:servicediscovery:2021" schemaLocation="./dvbi_v3.0.xsd"/>
 	<element name="ServiceListEntryPoints" type="dvbisld:ServiceListEntryPointsType"/>
 	<complexType name="ServiceListEntryPointsType">
 		<sequence>
@@ -80,27 +84,27 @@
 				<attribute name="minimumBitRate" type="unsignedInt"/>
 			</extension>
 		</complexContent>
-	</complexType>	
+	</complexType>
 	<complexType name="NoAdditionalIPParametersType">
 		<complexContent>
 			<extension base="dvbisld:AbstractIPDeliveryType">
 				<!-- no additional elements or attributes -->
 			</extension>
-		</complexContent>	
+		</complexContent>
 	</complexType>
 	<complexType name="DVBTDeliveryType">
 		<complexContent>
 			<extension base="dvbisld:AbstractDeliveryType">
 				<!-- no additional elements or attributes -->
 			</extension>
-		</complexContent>	
+		</complexContent>
 	</complexType>
 	<complexType name="DVBCDeliveryType">
 		<complexContent>
 			<extension base="dvbisld:AbstractDeliveryType">
 				<attribute name="networkID" type="dvbisd:NetworkIdType" use="required"/>
 			</extension>
-		</complexContent>	
+		</complexContent>
 	</complexType>
 	<complexType name="DVBSDeliveryType">
 		<complexContent>
@@ -109,7 +113,7 @@
 					<element name="OrbitalPosition" type="dvbisd:LongitudeType" maxOccurs="unbounded"/>
 				</sequence>
 			</extension>
-		</complexContent>	
+		</complexContent>
 	</complexType>
 	<complexType name="ApplicationTypeListType">
 		<complexContent>
@@ -120,7 +124,7 @@
 			</extension>
 		</complexContent>
 	</complexType>
-	<complexType name="ApplicationType">	
+	<complexType name="ApplicationType">
 		<attribute name="contentType" type="mpeg7:mimeType" use="required"/>
 		<attribute name="xmlAitApplicationType" type="mpeg7:mimeType"/>
 	</complexType>

@@ -1,22 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE schema [
 	<!ENTITY PostcodeChar "A-Za-z0-9">
-	<!ENTITY PostcodeSep "\- ">
-	<!ENTITY Postcode "[&PostcodeChar;]+([&PostcodeSep;][&PostcodeChar;]+)?">
-	<!ENTITY PostcodeWildFirst "\*[&PostcodeChar;]*[&PostcodeSep;]?[&PostcodeChar;]+">
-	<!ENTITY PostcodeWildMiddle "([&PostcodeChar;]+\*[&PostcodeSep;]?[&PostcodeChar;]+)|([&PostcodeChar;]+[&PostcodeSep;]?\*[&PostcodeChar;]+)">
-	<!ENTITY PostcodeWildLast "[&PostcodeChar;]+[&PostcodeSep;]?[&PostcodeChar;]*\*">
-	<!ENTITY DecimalByte "(([1-9]?[0-9])|(1[0-9][0-9])|(2[0-4][0-9])|(25[0-5]))">
-	<!ENTITY IPv4Address "(&DecimalByte;\.){3}&DecimalByte;">
-	<!ENTITY HexDigit "[0-9A-Fa-f]">
-	<!ENTITY Hex32 "&HexDigit;{1,8}">
-	<!ENTITY Hex16 "&HexDigit;{1,4}">
-	<!ENTITY Hex8 "&HexDigit;{1,2}">
+<!ENTITY PostcodeSep "\- ">
+<!ENTITY Postcode "[&PostcodeChar;]+([&PostcodeSep;][&PostcodeChar;]+)?">
+<!ENTITY PostcodeWildFirst "\*[&PostcodeChar;]*[&PostcodeSep;]?[&PostcodeChar;]+">
+<!ENTITY PostcodeWildMiddle "([&PostcodeChar;]+\*[&PostcodeSep;]?[&PostcodeChar;]+)|([&PostcodeChar;]+[&PostcodeSep;]?\*[&PostcodeChar;]+)">
+<!ENTITY PostcodeWildLast "[&PostcodeChar;]+[&PostcodeSep;]?[&PostcodeChar;]*\*">
+<!ENTITY DecimalByte "(([1-9]?[0-9])|(1[0-9][0-9])|(2[0-4][0-9])|(25[0-5]))">
+<!ENTITY IPv4Address "(&DecimalByte;\.){3}&DecimalByte;">
+<!ENTITY HexDigit "[0-9A-Fa-f]">
+<!ENTITY Hex32 "&HexDigit;{1,8}">
+<!ENTITY Hex16 "&HexDigit;{1,4}">
+<!ENTITY Hex8 "&HexDigit;{1,2}">
 ]>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2025" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2025" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2024" targetNamespace="urn:dvb:metadata:servicediscovery:2025" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<schema xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2025"
+	xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2025"
+	xmlns:mpeg7="urn:tva:mpeg7:2008"
+	xmlns:tva="urn:tva:metadata:2024" targetNamespace="urn:dvb:metadata:servicediscovery:2025" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<import namespace="urn:dvb:metadata:servicediscovery-types:2025" schemaLocation="dvbi_types_v1.1.xsd"/>
-	<import namespace="urn:tva:metadata:2024" schemaLocation="tva_metadata_3-1_2024.xsd"/>
-	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7.xsd"/>
+	<import namespace="urn:tva:metadata:2024" schemaLocation="./tva_metadata_3-1_2024.xsd"/>
+	<import namespace="urn:tva:mpeg7:2008" schemaLocation="./tva_mpeg7.xsd"/>
 	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
 	<import namespace="vnd:apple:mpegurl" schemaLocation="hls-url-7.0.xsd"/>
 	<import namespace="urn:hbbtv:dvbi:schema:2021" schemaLocation="hbbtv-ext-7.0.xsd"/>
@@ -132,7 +136,7 @@
 					<documentation>
 					The use of this element is deprecated in this version of the specification, in favour of the client application making 
 					a delivery system determination based on the specified delivery parameters.
-				</documentation>
+					</documentation>
 				</annotation>
 			</element>
 			<element name="AltServiceName" type="string" minOccurs="0" maxOccurs="unbounded"/>
