@@ -20,6 +20,9 @@ import cors from "cors";
 import { Libxml2_wasm_init } from "./libxml2-wasm-extensions.mjs";
 Libxml2_wasm_init();
 
+import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
+xmlRegisterFsInputProviders();
+
 import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./lib/data_locations.mjs";
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mjs";
 import { readmyfile } from "./lib/utils.mjs";

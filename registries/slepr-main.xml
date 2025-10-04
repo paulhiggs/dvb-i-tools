@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<sld:ServiceListEntryPoints xml:lang="en" xmlns:sld="urn:dvb:metadata:servicelistdiscovery:2024" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2024" 
-		xmlns:tva="urn:tva:metadata:2024" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023"
-		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-		xsi:schemaLocation="urn:dvb:metadata:servicelistdiscovery:2024 dvbi_service_list_discovery_v1.6.xsd">
+<sld:ServiceListEntryPoints xml:lang="en"
+	xmlns:sld="urn:dvb:metadata:servicelistdiscovery:2024"
+	xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2024"
+	xmlns:tva="urn:tva:metadata:2024"
+	xmlns:mpeg7="urn:tva:mpeg7:2008"
+	xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2023"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:dvb:metadata:servicelistdiscovery:2024 dvbi_service_list_discovery_v1.6.xsd">
 	<sld:ServiceListRegistryEntity regulatorFlag="false">
 		<mpeg7:Icon>
 			<mpeg7:MediaUri>http://dvb.org/img/f/dvb-logo.png</mpeg7:MediaUri>
@@ -48,7 +51,7 @@
 				<dvbi-types:DVBTDelivery required="true"/>
 			</dvbi-types:Delivery>
 			<dvbi-types:Language>it</dvbi-types:Language>
-			<dvbi-types:TargetCountry>ITA,SMR</dvbi-types:TargetCountry>
+			<dvbi-types:TargetCountry>ITA</dvbi-types:TargetCountry>
 			<dvbi-types:ServiceListId>it1</dvbi-types:ServiceListId>
 		</sld:ServiceListOffering>
 	</sld:ProviderOffering>
@@ -68,7 +71,7 @@
 			</sld:ElectronicAddress>
 		</sld:Provider>
 		<sld:ServiceListOffering>
-			<dvbi-types:ServiceListName xml:lang="en">TV services from the world in English</dvbi-types:ServiceListName>		
+			<dvbi-types:ServiceListName xml:lang="en">TV services from the world in English</dvbi-types:ServiceListName>
 			<dvbi-types:ServiceListName xml:lang="de">Fernsehen aus ter Welt in Englisch</dvbi-types:ServiceListName>
 			<dvbi-types:ServiceListName xml:lang="fr">Télévision du monde en anglais</dvbi-types:ServiceListName>
 			<dvbi-types:ServiceListName xml:lang="it">TV del mondo in inglese</dvbi-types:ServiceListName>
@@ -165,7 +168,8 @@
 			</dvbi-types:Delivery>
 			<dvbi-types:TargetCountry>DEU</dvbi-types:TargetCountry>
 			<dvbi-types:RelatedMaterial>
-				<tva:HowRelated href="urn:dvb:metadata:cs:HowRelatedCS:1001.1"/> <!-- service list logo -->
+				<tva:HowRelated href="urn:dvb:metadata:cs:HowRelatedCS:2021:1001.1"/>
+				<!-- service list logo -->
 				<tva:MediaLocator>
 					<tva:MediaUri contentType="image/jpeg">https://www.satip.info/wp-content/themes/afina-child/images/satip-spacer.jpg</tva:MediaUri>
 					<!-- 120 x 45 -->

@@ -47,6 +47,7 @@ The server can be reloaded with an updated `slepr-master.xml` file by invoking i
 - `--workers [-w] <number>` the number of worker threads (constrained interally to 1~num CPUs)
 - `--SLRmode <mode>` select the type of processing for the SLR response
   - `"default"` - default mode - according to A177 specification
+  - `"italy"` - process the SLR response accirding to Italian method
 - `--help [-h]` server and client command help
 
 If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`

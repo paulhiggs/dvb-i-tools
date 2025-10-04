@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools",
-	"version": "1.8.41",
+	"version": "1.8.42",
 	"description": "DVB-I V&V Tools - up to A177r8",
 	"main": "all-in-one.js",
 	"type": "module",
@@ -22,7 +22,7 @@
 		"morgan": "^1.10.1",
 		"serve-favicon": "^2.5.1",
 		"sync-fetch": "^0.6.0-2",
-		"xml-formatter": "^3.6.6"
+		"xml-formatter": "^3.6.7"
 	},
 	"engines": {
 		"node": ">= 22.1.0",

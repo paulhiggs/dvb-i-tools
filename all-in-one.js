@@ -8,6 +8,9 @@ import chalk from "chalk";
 import commandLineArgs from "command-line-args";
 import commandLineUsage from "command-line-usage";
 
+import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
+xmlRegisterFsInputProviders();
+
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mjs";
 import { Default_SLEPR, MOTD } from "./lib/data_locations.mjs";
 import validator from "./lib/validator.mjs";
