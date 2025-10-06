@@ -202,7 +202,7 @@ if (cluster.isPrimary) {
 	let app = express();
 	app.use(cors());
 	token("pid", () => {
-		return process.pid;
+		return `${process.pid}`;
 	});
 	token("protocol", (req) => {
 		return req.protocol;
