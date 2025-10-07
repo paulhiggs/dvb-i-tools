@@ -8,6 +8,7 @@ import { createServer } from "https";
 import cluster from "cluster";
 import { cpus } from "os";
 import process from "process";
+import { readFileSync } from "fs";
 
 import chalk from "chalk";
 import express from "express";
@@ -35,6 +36,7 @@ const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
 
 const numCPUs = cpus().length;
+const pkg = JSON.parse(readFileSync("package.json", { encoding: "utf-8" }).toString());
 
 // SLEPR == Service List Entry Point Registry
 import SLEPR from "./lib/slepr.mjs";
@@ -132,7 +134,7 @@ if (!SLR_Processing_Modes.includes(options.SLRmode)) {
 	process.exit(1);
 }
 
-if (options.urls && options.file == Default_SLEPR.file) options.file = Default_SLEPR.url;
+if (options.urls && options.CSRfile == Default_SLEPR.file) options.CSRfile = Default_SLEPR.url;
 
 let knownLanguages = new IANAlanguages();
 knownLanguages.loadLanguages(options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file });
@@ -190,11 +192,14 @@ if (cluster.isPrimary) {
 					metrics.numFailed++;
 					break;
 				case STATS:
-					console.log(`knownLanguages.length=${knownLanguages.languagesList.length}`);
+					let kl = {};
+					knownLanguages.stats(kl);
+					console.log(`knownLanguages.length=${kl.numLanguages}`);
 					console.log(`numCPUs=${numCPUs}`);
 					console.log(`knownCountries.length=${knownCountries.count()}`);
 					console.log(`requests=${metrics.numRequests} failed=${metrics.numFailed} reloads=${metrics.reloadRequests}`);
-					console.log(`SLEPR file=${options.file}`);
+					console.log(`SLEPR file=${options.CSRfile}`);
+					console.log(`application version=${pkg?.version ? pkg.version : "unknown"}`);
 					break;
 			}
 	});
@@ -268,7 +273,7 @@ if (cluster.isPrimary) {
 						options.urls ? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] } : { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] }
 					);
 					csr.loadDataFiles(options.urls, knownLanguages, knownCountries, knownGenres);
-					csr.loadServiceListRegistry(options.file);
+					csr.loadServiceListRegistry(options.CSRfile);
 					break;
 			}
 	});
