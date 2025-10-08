@@ -245,7 +245,7 @@ if (cluster.isPrimary) {
 	}
 	let csr = new SLEPR(options.urls, options.SLRmode, knownLanguages, knownCountries, knownGenres);
 	csr.loadServiceListRegistry(options.CSRfile);
-	app.use(morgan(":pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :vary :parseErr"));
+	app.use(morgan(":pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr"));
 	app.use(favicon(join("phlib", "ph-icon.ico")));
 	if (options.CORSmode == CORSlibrary) app.options(SLEPR_query_route, cors());
 	else if (options.CORSmode == CORSmanual) app.options(SLEPR_query_route, manualCORS);
