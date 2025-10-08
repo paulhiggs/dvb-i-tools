@@ -216,8 +216,8 @@ if (cluster.isPrimary) {
 		return `(${req.headers["user-agent"]})`;
 	});
 	token("vary", (req, res) => {
-		let unique = res.varyOn((value, index, array) => array.indexOf(value) === index);
-		return unique.length ? `vary(${unique.join(",")})` : "";
+		let unique = res.varyOn ? res.varyOn((value, index, array) => array.indexOf(value) === index) : [];
+		return unique.length ? `vary(${unique.join(",")})` : "-";
 	});
 	token("parseErr", (req) => {
 		if (req.parseErr?.length > 0) return `(query errors=${req.parseErr.length})`;
