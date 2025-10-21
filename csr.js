@@ -281,11 +281,9 @@ if (cluster.isPrimary) {
 					break;
 			}
 	});
+
 	// start the HTTP server
-	let http_server = app.listen(options.port, (error) => {
-		if (error) {
-			throw error;
-		}
+	let http_server = app.listen(options.port, () => {
 		console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}, PID=${process.pid}`));
 	});
 	// start the HTTPS server
@@ -298,10 +296,7 @@ if (cluster.isPrimary) {
 		if (options.sport == options.port) options.sport = options.port + 1;
 
 		let https_server = createServer(https_options, app);
-		https_server.listen(options.sport, (error) => {
-			if (error) {
-				throw error;
-			}
+		https_server.listen(options.sport, () => {
 			console.log(chalk.cyan(`HTTPS listening on port number ${https_server.address().port}, PID=${process.pid}`));
 		});
 	}
