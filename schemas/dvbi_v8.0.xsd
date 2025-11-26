@@ -242,12 +242,6 @@
 		</sequence>
 	</complexType>
 	<simpleType name="RatingConstrainedAgeType">
-		<annotation>
-			<documentation>
-					Representation of the minimum age rating values specifed in DVB-SI
-					0x01 = 4, 0xF = 18
-			</documentation>
-		</annotation>
 		<restriction base="nonNegativeInteger">
 			<minExclusive value="3"/>
 			<maxInclusive value="18"/>
