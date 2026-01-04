@@ -227,7 +227,7 @@ if (cluster.isPrimary) {
 	const SLEPR_query_route = "/query",
 		SLEPR_reload_route = "/reload",
 		SLEPR_stats_route = "/stats";
-	let manualCORS = function (res, req, next) {
+	let manualCORS = function (req, res, next) {
 		next();
 	};
 	if (options.CORSmode == CORSlibrary) {

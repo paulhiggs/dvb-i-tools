@@ -18,6 +18,7 @@
 			 "--CSRfile", ".\\registries\\slepr-vers-main.xml",
 				"--port", "3030",
 	//			"--SLRmode", "italy",
+	//			"--CORSmode", "manual",
 			]
 		}
 	]
