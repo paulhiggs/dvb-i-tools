@@ -1,0 +1,218 @@
+/**
+ * classification_scheme.mts
+ *
+ * Manages Classification Scheme loading and checking
+ */
+import { readFile, readFileSync } from "fs";
+
+import chalk from "chalk";
+import { AvlTree } from "@datastructures-js/binary-search-tree";
+import fetchS from "sync-fetch";
+
+import { XmlDocument, XmlElement } from "libxml2-wasm";
+
+import { datatypeIs } from "../phlib/phlib.js";
+
+import { dvb } from "./DVB_definitions.mts";
+import handleErrors from "./fetch_err_handler.mts";
+import { isHTTPURL } from "./pattern_checks.mts";
+
+
+export const CS_URI_DELIMITER = ":";
+
+/**
+ * Constructs a linear list of terms from a heirarical clssification schemes which are read from an XML document and parsed by libxmljs
+ *
+ * @param {Array<string>} vals     the array to add the CS term into
+ * @param {string} CSuri           the classification scheme domian
+ * @param {XmlElement} term        the classification scheme term that may include nested subterms
+ * @param {boolean} leafNodesOnly  flag to indicate if only the leaf <term> values are to be loaded
+ */
+function addCSTerm(vals :Array<string>, CSuri : string, term : XmlElement, leafNodesOnly : boolean = false) {
+	if (!(term instanceof XmlElement)) return;
+	if (term.name == dvb.e_Term) {
+		if (!leafNodesOnly || (leafNodesOnly && !term.hasChild(dvb.e_Term)))
+			if (term.attrAnyNs(dvb.a_termID)) vals.push(`${CSuri}${CS_URI_DELIMITER}${term.attrAnyNs(dvb.a_termID).value}`);
+		let subTerm = term.firstChild;
+		while (subTerm) {
+			addCSTerm(vals, CSuri, subTerm as XmlElement, leafNodesOnly);
+			subTerm = subTerm.next;
+		}
+	}
+}
+
+/**
+ * load the hierarical values from an XML classification scheme document into a linear list
+ *
+ * @param {XmlDocument} xmlCS          the XML document  of the classification scheme
+ * @param {boolean}     leafNodesOnly  flag to indicate if only the leaf <term> values are to be loaded
+ * @returns {Object} values parsed from the classification scheme in .vals and uri of classification scheme in .uri
+ */
+function loadClassificationScheme(xmlCS : XmlDocument, leafNodesOnly : boolean = false) {
+	let rc = { uri: undefined, vals: [] };
+	if (!xmlCS) return rc;
+
+	const CSnamespace = xmlCS.root.attrAnyNs(dvb.a_uri);
+	if (!CSnamespace) return rc;
+	rc.uri = CSnamespace.value;
+	let term = xmlCS.root.firstChild;
+	while (term) {
+		addCSTerm(rc.vals, rc.uri ? rc.uri : "undefined", term as XmlElement, leafNodesOnly);
+		term = term.next;
+	}
+	return rc;
+}
+
+export default class ClassificationScheme {
+	#values;
+	#useIteration; // introduced in 5.4.0 to reduce risk of stack overflow woth very large trees
+	#schemes;
+	#leafsOnly;
+
+	constructor() {
+		this.#values = new AvlTree();
+		this.#useIteration = this.#values?.insertIterative != undefined;
+		this.#schemes = [];
+		this.#leafsOnly = false;
+		loadClassificationScheme.bind(this);
+	}
+
+	count() {
+		return this.#values.count();
+	}
+
+	empty() {
+		this.#values.clear();
+		this.#schemes = [];
+	}
+
+	insertValue(key, value = true) {
+		if (key != "") this.#useIteration ? this.#values.insertIterative(key, value) : this.#values.insert(key, value);
+	}
+
+	valuesRange() {
+		return this.#leafsOnly ? "-only leaf nodes are used from the CS" : "all nodes in the CS are used";
+	}
+
+	/**
+	 * read a classification scheme from a URL and load its hierarical values into a linear list
+	 *
+	 * @param {string}  csURL URL to the classification scheme
+	 * @param {boolean} async
+	 */
+	#loadFromURL(csURL : string, async : boolean = true) {
+		const isHTTPurl = isHTTPURL(csURL);
+		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving CS (${this.#leafsOnly ? "leaf" : "all"} nodes) from ${csURL} via fetch()`));
+		if (!isHTTPurl) return;
+
+		if (async)
+			fetch(csURL)
+				.then(handleErrors)
+				.then((response) => response.text())
+				.then((strXML) => loadClassificationScheme(XmlDocument.fromString(strXML), this.#leafsOnly))
+				.then((res) => {
+					res.vals.forEach((e) => {
+						this.insertValue(e, true);
+					});
+					this.#schemes.push(res.uri);
+				})
+				.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${csURL}`)));
+		else {
+			let resp = null;
+			try {
+				resp = fetchS(csURL);
+			} catch (error) {
+				console.log(chalk.red(error.message));
+			}
+			if (resp) {
+				if (resp.ok) {
+					let CStext = loadClassificationScheme(XmlDocument.fromString(resp.content), this.#leafsOnly);
+					CStext.vals.forEach((e) => {
+						this.insertValue(e, true);
+					});
+					this.#schemes.push(CStext.uri);
+				} else console.log(chalk.red(`error (${resp.status}:${resp.statusText}) handling ${csURL}`));
+			}
+		}
+	}
+
+	/**
+	 * read a classification scheme from a local file and load its hierarical values into a linear list
+	 *
+	 * @param {String} classificationScheme the filename of the classification scheme
+	 * @param {boolean} async
+	 */
+	#loadFromFile(classificationScheme, async = true) {
+		console.log(chalk.yellow(`reading CS (${this.#leafsOnly ? "leaf" : "all"} nodes) from ${classificationScheme}`));
+
+		if (async)
+			readFile(classificationScheme, { encoding: "utf-8" }, (err: NodeJS.ErrnoException | null, data: string) => {
+				if (!err) {
+					let res = loadClassificationScheme(XmlDocument.fromString(data.replace(/(\r\n|\n|\r|\t)/gm, "")), this.#leafsOnly);
+					res.vals.forEach((e) => {
+						this.insertValue(e, true);
+					});
+					this.#schemes.push(res.uri);
+				} else console.log(chalk.red(err));
+			});
+		else {
+			let buff = readFileSync(classificationScheme, { encoding: "utf-8" });
+			let data = buff.toString();
+			let res = loadClassificationScheme(XmlDocument.fromString(data.replace(/(\r\n|\n|\r|\t)/gm, "")), this.#leafsOnly);
+			res.vals.forEach((e) => {
+				this.insertValue(e, true);
+			});
+			this.#schemes.push(res.uri);
+		}
+	}
+
+	loadCS(options : any, async : boolean = true, extra_vals : Array<string> | undefined  = undefined) {
+		if (!options) options = {};
+		if (!Object.prototype.hasOwnProperty.call(options, "leafNodesOnly")) options.leafNodesOnly = false;
+		this.#leafsOnly = options.leafNodesOnly;
+
+		if (options.file) this.#loadFromFile(options.file, async);
+		if (options.files) options.files.forEach((file : string) => this.#loadFromFile(file, async));
+		if (options.url) this.#loadFromURL(options.url, async);
+		if (options.urls) options.urls.forEach((url : string) => this.#loadFromURL(url, async));
+
+		if (extra_vals && datatypeIs(extra_vals, "array")) {
+			extra_vals.forEach((v) => {
+				if (datatypeIs(v, "string")) this.insertValue(v, true);
+			});
+		}
+	}
+
+	/**
+	 * determines if the value is in the classification scheme
+	 *
+	 * @param {string} value    The value to check for existance
+	 * @returns {boolean} true if value is in the classification scheme
+	 */
+	isIn(value : string)  : boolean {
+		return this.#useIteration ? this.#values.hasIterative(value) : this.#values.has(value);
+	}
+
+	/**
+	 * determines if the scheme used by the provided term is included
+	 * @param {string} term     The term whose scheme should bechecked
+	 * @returns {boolean}
+	 */
+	hasScheme(term : string) : boolean {
+		const pos = term.lastIndexOf(CS_URI_DELIMITER);
+		if (pos == -1) return false;
+		return this.#schemes.includes(term.slice(0, pos));
+	}
+
+	showMe(prefix : string = "") {
+		console.log(`in showme("${prefix}"), count=${this.#values.count()}`);
+		if (this.#useIteration)
+			this.#values.traverseInOrderIterative((node) => {
+				if (prefix == "" || node.getValue().beginsWith(prefix)) console.log(node.getValue());
+			});
+		else
+			this.#values.traverseInOrder((node) => {
+				if (prefix == "" || node.getValue().beginsWith(prefix)) console.log(node.getValue());
+			});
+	}
+}

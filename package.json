@@ -37,8 +37,21 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.28.0",
+		"@types/chalk": "^0.4.31",
+		"@types/command-line-args": "^5.2.3",
+		"@types/command-line-usage": "^5.0.4",
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.6",
+		"@types/express-fileupload": "^1.5.1",
+		"@types/express-session": "^1.18.2",
+		"@types/morgan": "^1.9.10",
+		"@types/serve-favicon": "^2.5.7",
+		"@types/sync-fetch": "^0.4.3",
+		"@types/typescript": "^0.4.29",
+		"@types/xml-formatter": "^1.2.0",
 		"eslint": "^9.28.0",
 		"globals": "^16.2.0",
-		"prettier": "^3.5.3"
+		"prettier": "^3.5.3",
+		"typescript": "^5.9.3"
 	}
 }

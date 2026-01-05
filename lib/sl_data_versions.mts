@@ -1,0 +1,358 @@
+/**
+ * sl_data_versions.mts
+ *
+ * version related checks (lifted from sl-check.js)
+ */
+
+import process from "process";
+
+import chalk from "chalk";
+import { XmlDocument } from "libxml2-wasm";
+
+import { OLD, DRAFT, ETSI, CURRENT } from "./globals.mts";
+import { slVersions, dvbi, CONTENT_FINISHED_TERM, OUTSIDE_AVAILABILITY_TERM } from "./DVB-I_definitions.mts";
+import { DVBI_ServiceListSchema } from "./data_locations.mts";
+import { SLR_SchemaVersion } from "./slr_data_versions.mts";
+import { readmyfile } from "./utils.mts";
+
+const versionURNprefix = "urn:dvb:metadata:dvbi:standardversion";
+
+let SchemaVersions = [
+	// schema property is loaded from specified filename
+	{
+		namespace: dvbi.A177r8_Namespace,
+		version: slVersions.r8,
+		filename: DVBI_ServiceListSchema.r8.file,
+		schema: null,
+		status: DRAFT,
+		specVersion: "A177r8",
+		URN: `${versionURNprefix}:${slVersions.r8}`,
+	},
+	{
+		namespace: dvbi.A177r7_Namespace,
+		version: slVersions.r7,
+		filename: DVBI_ServiceListSchema.r7.file,
+		schema: null,
+		status: CURRENT,
+		specVersion: "A177r7",
+		URN: `${versionURNprefix}:${slVersions.r7}`,
+	},
+	{
+		namespace: dvbi.A177r6_Namespace,
+		version: slVersions.r6,
+		filename: DVBI_ServiceListSchema.r6.file,
+		schema: null,
+		status: OLD,
+		specVersion: "A177r6",
+		URN: `${versionURNprefix}:${slVersions.r6}`,
+	},
+	{
+		namespace: dvbi.A177r5_Namespace,
+		version: slVersions.r5,
+		filename: DVBI_ServiceListSchema.r5.file,
+		schema: null,
+		status: OLD,
+		specVersion: "A177r5",
+	},
+	{
+		namespace: dvbi.A177r4_Namespace,
+		version: slVersions.r4,
+		filename: DVBI_ServiceListSchema.r4.file,
+		schema: null,
+		status: OLD,
+		specVersion: "A177r4",
+	},
+	{
+		namespace: dvbi.A177r3_Namespace,
+		version: slVersions.r3,
+		filename: DVBI_ServiceListSchema.r3.file,
+		schema: null,
+		status: OLD,
+		specVersion: "A177r3",
+	},
+	{
+		namespace: dvbi.A177r2_Namespace,
+		version: slVersions.r2,
+		filename: DVBI_ServiceListSchema.r2.file,
+		schema: null,
+		status: OLD,
+		specVersion: "A177r2",
+	},
+	{
+		namespace: dvbi.A177r1_Namespace,
+		version: slVersions.r1,
+		filename: DVBI_ServiceListSchema.r1.file,
+		schema: null,
+		status: ETSI,
+		specVersion: "A177r1",
+	},
+	{
+		namespace: dvbi.A177_Namespace,
+		version: slVersions.r0,
+		filename: DVBI_ServiceListSchema.r0.file,
+		schema: null,
+		status: OLD,
+		specVersion: "A177",
+	},
+];
+
+const OutOfScheduledHoursBanners = [
+	{ ver: slVersions.r8, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	{ ver: slVersions.r7, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	{ ver: slVersions.r6, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	{ ver: slVersions.r5, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	{ ver: slVersions.r4, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	{ ver: slVersions.r3, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
+	{ ver: slVersions.r2, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
+	{ ver: slVersions.r1, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
+	{ ver: slVersions.r0, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v1 },
+];
+const ContentFinishedBanners = [
+	{ ver: slVersions.r8, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	{ ver: slVersions.r7, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	{ ver: slVersions.r6, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	{ ver: slVersions.r5, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	{ ver: slVersions.r4, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	{ ver: slVersions.r3, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
+	{ ver: slVersions.r2, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
+	{ ver: slVersions.r1, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
+];
+const ServiceListLogos = [
+	{ ver: slVersions.r8, val: dvbi.LOGO_SERVICE_LIST_v3 },
+	{ ver: slVersions.r7, val: dvbi.LOGO_SERVICE_LIST_v3 },
+	{ ver: slVersions.r6, val: dvbi.LOGO_SERVICE_LIST_v3 },
+	{ ver: slVersions.r5, val: dvbi.LOGO_SERVICE_LIST_v3 },
+	{ ver: slVersions.r4, val: dvbi.LOGO_SERVICE_LIST_v3 },
+	{ ver: slVersions.r3, val: dvbi.LOGO_SERVICE_LIST_v3 },
+	{ ver: slVersions.r2, val: dvbi.LOGO_SERVICE_LIST_v2 },
+	{ ver: slVersions.r1, val: dvbi.LOGO_SERVICE_LIST_v2 },
+	{ ver: slVersions.r0, val: dvbi.LOGO_SERVICE_LIST_v1 },
+];
+const ServiceLogos = [
+	{ ver: slVersions.r8, val: dvbi.LOGO_SERVICE_v3 },
+	{ ver: slVersions.r7, val: dvbi.LOGO_SERVICE_v3 },
+	{ ver: slVersions.r6, val: dvbi.LOGO_SERVICE_v3 },
+	{ ver: slVersions.r5, val: dvbi.LOGO_SERVICE_v3 },
+	{ ver: slVersions.r4, val: dvbi.LOGO_SERVICE_v3 },
+	{ ver: slVersions.r3, val: dvbi.LOGO_SERVICE_v3 },
+	{ ver: slVersions.r2, val: dvbi.LOGO_SERVICE_v2 },
+	{ ver: slVersions.r1, val: dvbi.LOGO_SERVICE_v2 },
+	{ ver: slVersions.r0, val: dvbi.LOGO_SERVICE_v1 },
+];
+const ServiceBanners = [
+	{ ver: slVersions.r8, val: dvbi.SERVICE_BANNER_v4 },
+	{ ver: slVersions.r7, val: dvbi.SERVICE_BANNER_v4 },
+	{ ver: slVersions.r6, val: dvbi.SERVICE_BANNER_v4 },
+	{ ver: slVersions.r5, val: dvbi.SERVICE_BANNER_v4 },
+	{ ver: slVersions.r4, val: dvbi.SERVICE_BANNER_v4 },
+	{ ver: slVersions.r3, val: dvbi.SERVICE_BANNER_v4 },
+	{ ver: slVersions.r2, val: dvbi.SERVICE_BANNER_v4 },
+];
+const ContentGuideSourceLogos = [
+	{ ver: slVersions.r8, val: dvbi.LOGO_CG_PROVIDER_v3 },
+	{ ver: slVersions.r7, val: dvbi.LOGO_CG_PROVIDER_v3 },
+	{ ver: slVersions.r6, val: dvbi.LOGO_CG_PROVIDER_v3 },
+	{ ver: slVersions.r5, val: dvbi.LOGO_CG_PROVIDER_v3 },
+	{ ver: slVersions.r4, val: dvbi.LOGO_CG_PROVIDER_v3 },
+	{ ver: slVersions.r3, val: dvbi.LOGO_CG_PROVIDER_v3 },
+	{ ver: slVersions.r2, val: dvbi.LOGO_CG_PROVIDER_v2 },
+	{ ver: slVersions.r1, val: dvbi.LOGO_CG_PROVIDER_v2 },
+	{ ver: slVersions.r0, val: dvbi.LOGO_CG_PROVIDER_v1 },
+];
+
+/**
+ * determine the schema version (and hence the specificaion version) in use
+ *
+ * @param {string} namespace     The namespace used in defining the schema
+ * @returns {number} Representation of the schema version or error code if unknown
+ */
+export let SL_SchemaVersion = (namespace : string) : number => {
+	const x = SchemaVersions.find((ver) => ver.namespace == namespace);
+	return x ? x.version : slVersions.unknown;
+};
+
+/**
+ * determine the DVB Bluebook version for the specified schema namespace
+ *
+ * @param {number} version     The specification version used in defining the schema
+ * @returns {string} Version of the DVB A177 specification where namespace is defined
+ */
+export let SchemaSpecVersion = (version : number) => {
+	const x = SchemaVersions.find((ver) => ver.version == version);
+	return x ? x.specVersion : `r(${version})`;
+};
+
+/**
+ * determine the DVB Bluebook version for the specified schema namespace
+ *
+ * @param {string} namespace     The schema namespace
+ * @returns {XMLDocument} the schema corresponding to the namespace
+ */
+export let GetSchema = (namespace : string) => SchemaVersions.find((s) => s.namespace == namespace);
+
+/**
+ * determines if the identifer provided refers to a valid application being used with the service
+ *
+ * @param {string}  hrefType       The type of the service application
+ * @param {number} schemaVersion  The schema version of the XML document
+ * @returns {boolean} true if this is a valid application being used with the service else false
+ */
+export let validServiceControlApplication = (hrefType : string, schemaVersion : number)  : boolean => {
+	let appTypes = [dvbi.APP_IN_PARALLEL, dvbi.APP_IN_CONTROL]; // types 1.1 and 1.2
+	if (schemaVersion >= slVersions.r6) appTypes.push(dvbi.APP_SERVICE_PROVIDER); // type 3
+	if (schemaVersion >= slVersions.r7) appTypes.push(dvbi.APP_IN_SERIES); // type 1.3
+	return appTypes.includes(hrefType);
+};
+
+/**
+ * determines if the identifer provided refers to a valid application being used with the service instance
+ *
+ * @since DVB A177r7
+ * @param {string} hrefType  The type of the service application
+ * @param {number} schemaVersion  The schema version of the XML document
+ * @returns {boolean} true if this is a valid application being used with the service else false
+ */
+export let validServiceInstanceControlApplication = (hrefType : string, schemaVersion : number) : boolean => {
+	let appTypes = [dvbi.APP_IN_PARALLEL, dvbi.APP_IN_CONTROL];
+	if (schemaVersion >= slVersions.r7) appTypes.push(dvbi.APP_IN_SERIES);
+	return appTypes.includes(hrefType);
+};
+
+/**
+ * determines if the identifer provided refers to a valid application to be launched when a service is unavailable
+ *
+ * @param {string} hrefType  The type of the service application
+ * @returns {boolean} true if this is a valid application to be launched when a service is unavailable else false
+ */
+export let validServiceUnavailableApplication = (hrefType : string) : boolean => hrefType == dvbi.APP_OUTSIDE_AVAILABILITY;
+
+/**
+ * determines if the identifer provided refers to a valid DASH media type (single MPD or MPD playlist)
+ * per A177 clause 5.2.7.2
+ *
+ * @param {String} contentType  The contentType for the file
+ * @returns {boolean} true if this is a valid MPD or playlist identifier
+ */
+export let validDASHcontentType = (contentType) => [dvbi.CONTENT_TYPE_DASH_MPD, dvbi.CONTENT_TYPE_DVB_PLAYLIST].includes(contentType);
+
+/**
+ * looks for the {version, value} pair within the array of permitted values
+ *
+ * @param {Array} permittedValues  array of allowed value pairs {ver: , val:}
+ * @param {string} value           value to match with val: in the allowed values
+ * @param {number} version         value to match with ver: in the allowed values
+ * @returns {boolean} true if {version, value} pair exists in the list of allowed values when namespace is specific, else false
+ */
+function match(permittedValues : Array<string>, value : string, version : number) : boolean {
+	if (permittedValues && value) {
+		let _ver = SL_SchemaVersion(version);
+		if (_ver == slVersions.unknown) _ver = SLR_SchemaVersion(version);
+		const i = permittedValues.find((elem) => elem.ver == _ver);
+		return i && i.val == value;
+	}
+	return false;
+}
+
+/**
+ * determines if the identifer provided refers to a valid banner for out-of-servce-hours presentation
+ *
+ * @param {XmlElement} HowRelated  The banner identifier
+ * @returns {boolean} true if this is a valid banner for out-of-servce-hours presentation (A177 5.2.5.3) else false
+ */
+export let validOutScheduleHours = (HowRelated : XmlElement) : boolean => match(OutOfScheduledHoursBanners, HowRelated.attrAnyNsValueOr(dvbi.a_href, null), HowRelated.documentNamespace());
+
+export let isOutScheduleHours = (HowRelated : XmlElement) : boolean => HowRelated.attrAnyNsValueOr(dvbi.a_href, "none").endsWith(OUTSIDE_AVAILABILITY_TERM);
+
+/**
+ * determines if the identifer provided refers to a valid banner for content-finished presentation
+ *
+ * @since DVB A177r1
+ * @param {XmlElement} HowRelated  The banner identifier
+ * @returns {boolean} true if this is a valid banner for content-finished presentation (A177 5.2.7.3) else false
+ */
+export let validContentFinishedBanner = (HowRelated : XmlElement) : boolean => match(ContentFinishedBanners, HowRelated.attrAnyNsValueOr(dvbi.a_href, null), HowRelated.documentNamespace());
+
+export let isContentFinishedBanner = (HowRelated : XmlElement) : boolean => HowRelated.attrAnyNsValueOr(dvbi.a_href, "none").endsWith(CONTENT_FINISHED_TERM);
+
+/**
+ * determines if the identifer provided refers to a valid service list logo
+ *
+ * @param {XmlElement} HowRelated  The logo identifier
+ * @returns {boolean} true if this is a valid logo for a service list (A177 5.2.6.1) else false
+ */
+export let validServiceListLogo = (HowRelated : XmlElement) : boolean => match(ServiceListLogos, HowRelated.attrAnyNsValueOr(dvbi.a_href, null), HowRelated.documentNamespace());
+
+/**
+ * determines if the identifer provided refers to a valid service logo
+ *
+ * @param {XmlElement} HowRelated  The logo identifier
+ * @returns {boolean} true if this is a valid logo for a service (A177 5.2.6.2) else false
+ */
+export let validServiceLogo = (HowRelated : XmlElement) : boolean => match(ServiceLogos, HowRelated.attrAnyNsValueOr(dvbi.a_href, null), HowRelated.documentNamespace());
+
+/**
+ * determines if the identifer provided refers to a valid service banner
+ *
+ * @param {XmlElement} HowRelated  The logo identifier
+ * @returns {boolean} true if this is a valid banner for a service (A177 5.2.6.4) else false
+ */
+export let validServiceBanner = (HowRelated : XmlElement) : boolean => match(ServiceBanners, HowRelated.attrAnyNsValueOr(dvbi.a_href, null), HowRelated.documentNamespace());
+
+/**
+ * determines if the identifer provided refers to a valid content guide source logo
+ *
+ * @param {XmlElement} HowRelated  The logo identifier
+ * @returns {boolean} true if this is a valid logo for a content guide source (A177 5.2.6.3) else false
+ */
+export let validContentGuideSourceLogo = (HowRelated ; XmlElement) : boolean => match(ContentGuideSourceLogos, HowRelated.attrAnyNsValueOr(dvbi.a_href, null), HowRelated.documentNamespace());
+
+/**
+ * determines if the identifer provided refers to a validconsent application type
+ *
+ * @since DVB A177r7
+ * @param {string}  hrefType       The type of the service application
+ * @param {number} schemaVersion  The schema version of the XML document
+ * @returns {boolean} true if this is a valid application being used with the service else false
+ */
+const appTypes = [dvbi.APP_LIST_INSTALLATION, dvbi.APP_WITHDRAW_AGREEMENT, dvbi.APP_RENEW_AGREEMENT];
+let validAgreementApplication = (hrefType : string, schemaVersion : number) : boolean => 
+	schemaVersion >= slVersions.r7 && appTypes.includes(hrefType);
+
+/**
+ * determines if the identifer provided refers to a valid agreement app
+ *
+ * @param {XmlElement} HowRelated  The logo identifier
+ * @returns {boolean} true if this is a valid agreement app (A177 5.2.3.6) else false
+ */
+export function validServiceAgreementApp(HowRelated : XmlElement) : boolean {
+	const HRhref = HowRelated.attrAnyNsValueOr(dvbi.a_href, null);
+	return HRhref ? validAgreementApplication(HRhref, SL_SchemaVersion(HowRelated.documentNamespace())) : false;
+}
+
+/**
+ * determines if the provided URN is associated with a A177 specification verison
+ *
+ * @param {string} urn   The URN to check
+ * @returns {boolean} true is the specified URN is used to identify an A177 specification version, else false
+ */
+export let isA177specification_URN = (urn : string) : boolean => SchemaVersions.find((v) => v?.URN == urn) != undefined;
+
+/**
+ * determines if the A177 specification version from the  URN
+ *
+ * @param {string} urn   The URN to check
+ * @returns {number} A177 version number or "undefined"
+ */
+export let a177versionFromURN = (urn : string) : number => {
+	const u = SchemaVersions.find((v) => v?.URN == urn);
+	return u != undefined ? u.version : slVersions.unknown;
+};
+
+// TODO - change this to support sync/async and file/url reading
+console.log(chalk.yellow.underline("loading service list schemas..."));
+SchemaVersions.forEach((version) => {
+	process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
+	let buf = readmyfile(version.filename);
+	if (buf) version.schema = XmlDocument.fromBuffer(buf, { url: version.filename });
+	process.stdout.write(`${version.schema ? chalk.green("OK") : chalk.red.bold("FAIL")}\n`);
+});

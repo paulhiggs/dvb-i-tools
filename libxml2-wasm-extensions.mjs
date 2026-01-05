@@ -30,6 +30,12 @@ if (!XmlElement.prototype.attrAnyNsValueOr) {
 		return rc ? rc.value : default_value;
 	};
 }
+if (!XmlElement.prototype.attrAnyNsValueOrNull) {
+	XmlElement.prototype.attrAnyNsValueOrNull = function (name) {
+		let rc = this.attrs.find((a) => a.name == name);
+		return rc ? rc.value : null;
+	};
+}
 
 if (!XmlElement.prototype.childNodes) {
 	XmlElement.prototype.childNodes = function () {
