@@ -11,16 +11,15 @@ import { readFileSync } from "fs";
 
 import chalk from "chalk";
 import cors from "cors";
-import {Request as _Request, NextFunction} from "express";
 import express from "express";
 import session from "express-session";
 import morgan, { token } from "morgan";
 import fileupload from "express-fileupload";
 import favicon from "serve-favicon";
-import fetchS from "sync-fetch";
+import syncFetch from "sync-fetch";
 
-import { Libxml2_wasm_init } from "../libxml2-wasm-extensions.mts";
-Libxml2_wasm_init();
+//import { Libxml2_wasm_init } from "../libxml2-wasm-extensions.mts";
+//Libxml2_wasm_init();
 
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts";
 import { Default_SLEPR, __dirname } from "./data_locations.mts";
@@ -59,9 +58,11 @@ const keyFilename = join(".", "selfsigned.key"),
 function DVB_I_check(req : express.Request, res : express.Response, slcheck : ServiceListCheck, cgcheck : ContentGuideCheck, slrcheck : ServiceListRegistryCheck, hasSL : boolean, hasCG : boolean, hasSLR : boolean, motd : string, mode : string = MODE_UNSPECIFIED, linktype : string = MODE_UNSPECIFIED) {
 	if (!req.session.data) {
 		// setup defaults
-		req.session.data.lastUrl = "";
-		req.session.data.mode = mode == MODE_UNSPECIFIED ? (hasSL ? MODE_SL : MODE_CG) : mode;
-		req.session.data.entry = linktype == MODE_UNSPECIFIED ? MODE_URL : linktype;
+		req.session.data = {
+			lastUrl : "",
+			mode: mode == MODE_UNSPECIFIED ? (hasSL ? MODE_SL : MODE_CG) : mode,
+			entry: linktype == MODE_UNSPECIFIED ? MODE_URL : linktype,
+		}
 		if (cgcheck) req.session.data.cgmode = cgcheck.supportedRequests[0].value;
 	}
 	if (req.session.data.lastUrl != req.url) {
@@ -71,10 +72,10 @@ function DVB_I_check(req : express.Request, res : express.Response, slcheck : Se
 	}
 
 	let FormArguments = { cg: MODE_CG, sl: MODE_SL, slr: MODE_SLR, file: MODE_FILE, url: MODE_URL, hasSL: hasSL, hasCG: hasCG, hasSLR: hasSLR };
-	if (!req.body?.testtype) drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, motd, null, null);
+	if (!req.body?.testtype) drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, motd);
 	else {
 		let VVxml = null;
-		req.parseErr = null;
+		req.parseErr = undefined;
 
 		if (req.body.testtype == MODE_CG && req.body.requestType.length == 0) req.parseErr = "request type not specified";
 		else if (req.body.doclocation == MODE_URL && req.body.XMLurl.length == 0) req.parseErr = "URL not specified";
@@ -87,7 +88,7 @@ function DVB_I_check(req : express.Request, res : express.Response, slcheck : Se
 					if (isHTTPURL(req.body.XMLurl)) {
 						let resp = null;
 						try {
-							resp = fetchS(req.body.XMLurl);
+							resp = syncFetch(req.body.XMLurl);
 						} catch (error) {
 							req.parseErr = `(${error.code}) ${error.message}`;
 						}
@@ -104,7 +105,7 @@ function DVB_I_check(req : express.Request, res : express.Response, slcheck : Se
 					} catch (err) {
 						req.parseErr = `retrieval of FILE ${req.files.XMLfile.name} failed (${err})`;
 					}
-					req.session.data.url = null;
+					req.session.data.url = undefined;
 					break;
 				default:
 					req.parseErr = `method is not "${MODE_URL}" or "${MODE_FILE}"`;
@@ -128,10 +129,11 @@ function DVB_I_check(req : express.Request, res : express.Response, slcheck : Se
 		if (req.body.requestType) req.session.data.cgmode = req.body.requestType;
 		drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, motd, req.parseErr, errs);
 
-		req.diags = {};
-		req.diags.countErrors = errs.numErrors();
-		req.diags.countWarnings = errs.numWarnings();
-		req.diags.countInforms = errs.numInformationals();
+		req.diags = {
+			countErrors: errs.numErrors(),
+			countWarnings: errs.numWarnings(),
+			countInforms: errs.numInformationals(),
+		};
 
 		writeOut(errs, log_prefix, true, req);
 	}

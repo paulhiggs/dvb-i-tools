@@ -5,12 +5,10 @@
  */
 import { statSync, readFileSync } from "fs";
 import chalk from "chalk";
-import { XmlElement } from "libxml2-wasm";
+//import { XmlElement } from "libxml2-wasm";
 
-import { datatypeIs } from "../phlib/phlib.js";
-
-import { Array_extension_init } from "./Array-extensions.mts";
-Array_extension_init();
+//import { Array_extension_init } from "./Array-extensions.mts";
+//Array_extension_init();
 
 
 /* local */
@@ -83,63 +81,60 @@ export function readmyfile(filename : string, options = null) {
 	return undefined;
 }
 
-// credit to https://gist.github.com/adriengibrat/e0b6d16cdd8c584392d8#file-parseduration-es5-js
-export function parseISOduration(duration) {
-	const durationRegex = /^(-)?P(?:(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?|(\d+)W)$/;
-	let parsed = null;
-	if (duration)
-		duration.replace(durationRegex, function (_, sign, year, month, day, hour, minute, second, week) {
-			sign = sign ? -1 : 1;
-			// parse number for each unit
-			let units = [year, month, day, hour, minute, second, week].map(function (num) {
-				return parseInt(num, 10) * sign || 0;
-			});
-			parsed = { year: units[0], month: units[1], week: units[6], day: units[2], hour: units[3], minute: units[4], second: units[5] };
-		});
-	// no regexp match
-	if (!parsed) {
-		throw new Error('Invalid duration "' + duration + '"');
-	}
-	/**
-	 * Sum or substract parsed duration to date
-	 *
-	 * @param {Date} date A valid date instance
-	 * @throws {TypeError} When date is not valid
-	 * @returns {Date} Date plus or minus duration, according duration sign
-	 */
-	parsed.add = function add(date) {
-		if (Object.prototype.toString.call(date) !== "[object Date]" || isNaN(date.valueOf())) {
-			throw new TypeError("Invalid date");
+type iso_duration_type = {
+	year : number;
+	month : number;
+	week: number;
+	day : number;
+	hour : number;
+	minute : number;
+	second : number;
+};
+
+
+export class ISOduration {
+	
+	#year : number = 0;
+	#month : number = 0;
+	#week: number = 0;
+	#day : number = 0;
+	#hour : number = 0;
+	#minute : number = 0;
+	#second : number = 0;
+
+	durationRegex = /^(-)?P(?:(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?|(\d+)W)$/;
+
+	constructor (duration : string) {
+
+		let match = duration.match(this.durationRegex)
+		if (match) {
+			let sign = match[1] ? -1 : 1;
+			this.#year = parseInt(match[2], 10) * sign || 0;
+			this.#month = parseInt(match[3], 10) * sign || 0;
+			this.#week = parseInt(match[8], 10) * sign || 0;
+			this.#day = parseInt(match[4], 10) * sign || 0;
+			this.#hour = parseInt(match[5], 10) * sign || 0;
+			this.#minute = parseInt(match[6], 10) * sign || 0;
+			this.#second = parseInt(match[7], 10) * sign || 0;
 		}
+		else
+			throw new Error('Invalid duration "' + duration + '"');
+	}
+
+	add( date : Date ) : Date {
 		return new Date(
 			Date.UTC(
-				date.getUTCFullYear() + parsed.year,
-				date.getUTCMonth() + parsed.month,
-				date.getUTCDate() + parsed.day + parsed.week * 7,
-				date.getUTCHours() + parsed.hour,
-				date.getUTCMinutes() + parsed.minute,
-				date.getUTCSeconds() + parsed.second,
+				date.getUTCFullYear() + this.#year,
+				date.getUTCMonth() + this.#month,
+				date.getUTCDate() + this.#day + this.#week * 7,
+				date.getUTCHours() + this.#hour,
+				date.getUTCMinutes() + this.#minute,
+				date.getUTCSeconds() + this.#second,
 				date.getUTCMilliseconds()
 			)
 		);
 	};
 
-	return parsed;
-}
-
-/**
- * counts the number of named elements in the specificed node
- * *
- * @param {XmlElement} node             the libxmljs node to check
- * @param {String}     childElementName the name of the child element to count
- * @returns {integer} the number of named child elments
- */
-export function CountChildElements(node : XmlElement, childElementName : string) : number {
-	let r : number = 0;
-	node?.childNodes().forEachNamedSubElement(childElementName, (/* eslint-disable no-unused-vars*/ elem /* eslint-enable */) => {
-		r++;
-	});
-	return r;
 }
 
 /**
@@ -149,11 +144,12 @@ export function CountChildElements(node : XmlElement, childElementName : string)
  * @param {String}  val    the value whose existance is to be checked
  * @returns {boolean} true if @val is already present in @found, else false
  */
-export function DuplicatedValue(found : Array<string>, val : string) : boolean {
+export function DuplicatedValue<T>(found : Array<T>, val : T) : boolean {
 	const f = found.includes(val);
 	if (!f) found.push(val);
 	return f;
 }
+
 
 export function DumpString(str : string) : string {
 	let t = [];

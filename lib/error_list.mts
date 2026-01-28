@@ -18,7 +18,7 @@ type count = {
 };
 
 
-type error_report = {
+export type error_report = {
 	type? : string;
 	code : string;
 	message : string;
@@ -29,10 +29,11 @@ type error_report = {
 	description ?: string;
 	clause? : string;
 	reportInTable? : boolean;
-	multiElementError? : Array<XmlElement>;
+	multiElementError? : Array<XmlElement | null>;
+	fragments? : Array<XmlElement>;
 };
 
-type logged_error = {
+export type logged_error = {
 	code : string;
 	message : string;
 	key? : string;
@@ -197,7 +198,7 @@ export default class ErrorList {
 	addError(e : error_report) {
 		const _INVALID_CALL = "invalid addError call";
 		let argsOK = true;
-		if (!Object.prototype.hasOwnProperty.call(e, "type")) e.type = ERROR;
+		if (!e.type) e.type = ERROR;
 		if (!Object.prototype.hasOwnProperty.call(e, "reportInTable")) e.reportInTable = true;
 
 		if (![FATAL, ERROR, WARNING, INFORMATION, APPLICATION, DEBUG].includes(e.type)) {
@@ -253,7 +254,7 @@ export default class ErrorList {
 			});
 		} else if (e.fragment) {
 			// note that the line of the error is derived from the fragment -- e.line is only used when the fragment is already a string
-			let newError = { code: e.code, message: e.message, element: datatypeIs(e.fragment, "string") ? e.fragment : this.#prettyPrint(e.fragment) };
+			let newError = { code: e.code, message: e.message, element: datatypeIs(e.fragment, "string") ? e.fragment : this.#prettyPrint(e.fragment as XmlElement) };
 
 			if (datatypeIs(e.fragment, "string")) {
 				if (Object.prototype.hasOwnProperty.call(e, "line")) {
@@ -261,8 +262,8 @@ export default class ErrorList {
 					newError.line = e.line;
 				}
 			} else {
-				this.#setError(e.type, e.code, e.message, e.fragment.line);
-				newError.line = e.fragment.line;
+				this.#setError(e.type, e.code, e.message, (e.fragment as XmlElement).line);
+				newError.line = (e.fragment as XmlElement).line;
 			}
 			if (e.reportInTable) this.#insertErrorData(e.type, e.key, newError);
 		} else {

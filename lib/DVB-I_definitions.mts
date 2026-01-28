@@ -7,24 +7,24 @@ import { mpeg7 } from "./MPEG7_definitions.mts";
 import { tva, tvaEA, tvaEC, TVA_CSmetadata } from "./TVA_definitions.mts";
 import { HBBTV_APP_TYPE } from "./HbbTV_definitions.mts";
 
-export const slVersions = {
-	r0: 0,
-	r1: 1,
-	r2: 2,
-	r3: 3,
-	r4: 4,
-	r5: 5,
-	r6: 6,
-	r7: 7,
-	r8: 8,
-	unknown: -1,
+export enum slVersions {
+	r0 = 0,
+	r1 = 1,
+	r2 = 2,
+	r3 = 3,
+	r4 = 4,
+	r5 = 5,
+	r6 = 6,
+	r7 = 7,
+	r8 = 8,
+	unknown = -1,
 };
 
-export const cgVersions = {
-	r0: 0,
-	r1: 1,
-	r2: 2,
-	unknown: -1,
+export enum cgVersions {
+	r0 = 0,
+	r1 = 1,
+	r2 = 2,
+	unknown = -1,
 };
 
 const DVB_metadata = "urn:dvb:metadata";
@@ -260,6 +260,7 @@ export const dvbi = {
 	a_href: tva.a_href,
 	a_id: "id",
 	a_interval: "interval",
+	a_lang: tva.a_lang,
 	a_MaxBitrate: "MaxBitrate",
 	a_mode: "mode",
 	a_minimumMetadataUpdatePeriod: "minimumMetadataUpdatePeriod",
@@ -465,13 +466,13 @@ export const dvbisld = {
 	q_inlineImages: "inlineImages",
 };
 
-export const validApplicationTypes = [dvbi.XML_AIT_CONTENT_TYPE, dvbi.HTML5_APP, dvbi.XHTML_APP, dvbi.XML_APP];
+export const validApplicationTypes : Array<string> = [dvbi.XML_AIT_CONTENT_TYPE, dvbi.HTML5_APP, dvbi.XHTML_APP, dvbi.XML_APP];
 
 // ETSI TS 102 809 clause 5.4.4.12
-export const DvbApplicationType = ["DVB-J", "DVB-HTML"];
+export const DvbApplicationType  : Array<string>= ["DVB-J", "DVB-HTML"];
 
 // A177 clause 5.2.4.1
-export const DvbIApplicationTypes = [dvbi.HTML5_APP, dvbi.XHTML_APP, HBBTV_APP_TYPE];
+export const DvbIApplicationTypes  : Array<string>= [dvbi.HTML5_APP, dvbi.XHTML_APP, HBBTV_APP_TYPE];
 
 export const dvbiEA = {
 	// EA = Element-Attributes - the attributes that are defiend for each element

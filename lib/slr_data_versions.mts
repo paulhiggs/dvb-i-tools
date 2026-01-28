@@ -15,7 +15,9 @@ import { slVersions, dvbisld } from "./DVB-I_definitions.mts";
 import { DVBI_ServiceListRegistrySchema } from "./data_locations.mts";
 import { readmyfile } from "./utils.mts";
 
-let SchemaVersions = [
+import type { schema_version_info } from "./sl_data_versions.mjs";
+
+let SchemaVersions : schema_version_info[] = [
 	// schema property is loaded from specified filename
 	/*	{
 		namespace: dvbisld.A177r8_Namespace,
@@ -122,7 +124,7 @@ export let SLR_SchemaSpecVersion = (version : number) : string => {
  * @param {String} namespace     The schema namespace
  * @returns {XMLDocument} the schema corresponding to the namespace
  */
-export let SLR_GetSchema = (namespace) => SchemaVersions.find((s) => s.namespace == namespace);
+export let SLR_GetSchema = (namespace : string) => SchemaVersions.find((s) => s.namespace == namespace);
 
 // TODO - change this to support sync/async and file/url reading
 console.log(chalk.yellow.underline("loading service list registry schemas..."));

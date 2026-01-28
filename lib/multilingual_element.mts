@@ -3,18 +3,18 @@
  *
  * check that multiple elements for expressing multilingual values match DVB-I requirments
  */
-import { XmlElement } from "libxml2-wasm";
+//import { XmlElement } from "libxml2-wasm";
 
-import { Array_extension_init } from "./Array-extensions.mts";
-Array_extension_init();
+//import { Array_extension_init } from "./Array-extensions.mts";
+//Array_extension_init();
 
 import { tva } from "./TVA_definitions.mts";
 
-import { APPLICATION } from "./error_list.mts";
-import { CountChildElements, isIn } from "./utils.mts";
+import ErrorList from "./error_list.mts";
 import { isValidLangFormat } from "./IANA_languages.mts";
 import { slVersions } from "./DVB-I_definitions.mts";
 import { SL_SchemaVersion } from "./sl_data_versions.mts";
+import { isIn } from "./utils.mts";
 
 const NO_DOCUMENT_LANGUAGE = "**"; // this should not be needed as @xml:lang is required in <ServiceList> and <TVAMain> root elements
 
@@ -27,7 +27,7 @@ const NO_DOCUMENT_LANGUAGE = "**"; // this should not be needed as @xml:lang is 
  * @param {String}        errCode   the error code to be reported
  * @returns {boolean} true if the specified language is valid
  */
-export function checkLanguage(lang, element, errs, errCode) : boolean {
+export function checkLanguage(lang : string, element : XmlElement, errs : ErrorList, errCode : string) : boolean {
 	if (!isValidLangFormat(lang)) {
 		errs.addError({
 			code: `${errCode}-100`,
@@ -47,11 +47,11 @@ export function checkLanguage(lang, element, errs, errCode) : boolean {
  * @param {XmlElement} node    the multilingual element whose language is needed
  * @returns {String} the value of the xml:lang attribute for the element, or the teh closest ancestor
  */
-export function mlLanguage(node) {
+export function mlLanguage(node : XmlElement) : string {
 	if (!(node instanceof XmlElement)) return NO_DOCUMENT_LANGUAGE;
 	const langAttr = node.attrAnyNs(tva.a_lang);
 	if (langAttr) return langAttr.value;
-	return mlLanguage(node.parent);
+	return node.parent ? mlLanguage(node.parent as XmlElement) : NO_DOCUMENT_LANGUAGE;
 }
 
 /**
@@ -63,15 +63,10 @@ export function mlLanguage(node) {
  * @param {ErrorList}     errs             The class where errors and warnings relating to the service list processing are stored
  * @param {String}        errCode          The error code to be reported
  */
-export function checkXMLLangs(elementName, elementLocation, node, errs, errCode) {
-	if (!node) {
-		errs.addError({ type: APPLICATION, code: "XL000", message: "checkXMLLangs() called with node==null" });
-		return;
-	}
+export function checkXMLLangs(elementName : string, elementLocation : string, node : XmlElement, errs : ErrorList, errCode : string) {
 
-	let childElems = node.childNodes();
-	if (SL_SchemaVersion(node.documentNamespace()) >= slVersions.r5 && CountChildElements(node, elementName) > 1)
-		childElems?.forEachNamedSubElement(elementName, (child) => {
+	if (SL_SchemaVersion(node.documentNamespace()) >= slVersions.r5 && node.countChildren(elementName) > 1)
+		node?.forEachNamedSubElement(elementName, (child) => {
 			if (!child.attrAnyNs(tva.a_lang))
 				errs.addError({
 					code: `${errCode}-1`,
@@ -83,8 +78,8 @@ export function checkXMLLangs(elementName, elementLocation, node, errs, errCode)
 				});
 		});
 
-	let elementLanguages = [];
-	childElems?.forEachNamedSubElement(elementName, (child) => {
+	let elementLanguages : Array<string>= [];
+	node?.forEachNamedSubElement(elementName, (child) => {
 		let lang = mlLanguage(child);
 		if (isIn(elementLanguages, lang))
 			errs.addError({
@@ -101,7 +96,7 @@ export function checkXMLLangs(elementName, elementLocation, node, errs, errCode)
 			//!!
 			errs.addError({
 				code: `${errCode}-3`,
-				message: `value must be specified for ${child.parent.name.elementize()}${child.name.elementize()}`,
+				message: `value must be specified for ${child.name.elementize(child.parent?.name)}`,
 				fragment: child,
 				key: "empty value",
 			});
@@ -120,7 +115,7 @@ export function checkXMLLangs(elementName, elementLocation, node, errs, errCode)
  * @param {String}        errCode    error number to use
  * @returns {String} the @lang attribute of the node element of the parentLang if it does not exist of is not specified
  */
-export function GetNodeLanguage(node, isRequired, errs, errCode) {
+export function GetNodeLanguage(node : XmlElement, isRequired : boolean, errs : ErrorList, errCode : string) : string {
 	if (!node) return NO_DOCUMENT_LANGUAGE;
 	if (isRequired && !node.attrAnyNs(tva.a_lang))
 		errs.addError({ code: `${errCode}-1`, message: `${tva.a_lang.attribute()} is required for ${node.name.quote()}`, key: "unspecified language", line: node.line });

@@ -5,10 +5,10 @@
  */
 import chalk from "chalk";
 
-import { elementize, quote } from "../phlib/phlib.js";
+//import { elementize, quote } from "../phlib/phlib.js";
 
-import { Array_extension_init } from "./Array-extensions.mts";
-Array_extension_init();
+//import { Array_extension_init } from "./Array-extensions.mts";
+//Array_extension_init();
 
 import { tva, tvaEA } from "./TVA_definitions.mts";
 import { sats } from "./DVB_definitions.mts";
@@ -58,6 +58,7 @@ import {
 } from "./sl_data_versions.mts";
 import { ValidateCMCDinDASH } from "./CMCD.mts";
 import { CheckExtension, EXTENSION_LOCATION_SERVICE_ELEMENT, EXTENSION_LOCATION_DASH_INSTANCE, EXTENSION_LOCATION_OTHER_DELIVERY } from "./extension_check.mts";
+import type {shared_validation_options} from "./common.d.ts";
 
 const LCN_TABLE_NO_TARGETREGION = "unspecifiedRegion",
 	LCN_TABLE_NO_SUBSCRIPTION = "unspecifiedPackage";
@@ -74,8 +75,8 @@ const CONTENT_GUIDE_RM = "content guide";
  * @param {String} identifier    The service identifier
  * @returns {boolean} true if the service identifier complies with the specification otherwise false
  */
-let validServiceIdentifier = (identifier) => isTAGURI(identifier);
-let validServiceListIdentifier = (identifier) => isTAGURI(identifier);
+let validServiceIdentifier = (identifier : string)  : boolean => isTAGURI(identifier);
+let validServiceListIdentifier = (identifier : string) : boolean => isTAGURI(identifier);
 
 /**
  * determines if the identifer provided is unique against a list of known identifiers
@@ -84,7 +85,7 @@ let validServiceListIdentifier = (identifier) => isTAGURI(identifier);
  * @param {Array}  identifiers  The list of known service identifiers
  * @returns {boolean} true if the service identifier is unique otherwise false
  */
-let uniqueServiceIdentifier = (identifier, identifiers) => !isIn(identifiers, identifier);
+let uniqueServiceIdentifier = (identifier : string, identifiers : Array<string>) : boolean => !isIn(identifiers, identifier);
 
 /**
  * Create a label for the optional language and value provided
@@ -92,7 +93,7 @@ let uniqueServiceIdentifier = (identifier, identifiers) => !isIn(identifiers, id
  * @param {String}     lang
  * @returns {String}
  */
-let localizedSubscriptionPackage = (pkg, lang = null) => `${pkg.content}/lang=${lang ? lang : mlLanguage(pkg)}`;
+let localizedSubscriptionPackage = (pkg : XmlElement, lang? : string) => `${pkg.content}/lang=${lang ? lang : mlLanguage(pkg)}`;
 
 /**
  * Construct	 an error message an unspecifed target region is used
@@ -102,7 +103,7 @@ let localizedSubscriptionPackage = (pkg, lang = null) => `${pkg.content}/lang=${
  * @param {String} errCode     The error code to be reported
  * @param {XmlElement} element The element using an undefined region if
  */
-let UnspecifiedTargetRegion = (region, loc, errCode, element) => ({
+let UnspecifiedTargetRegion = (region : string, loc : string, errCode : string, element : XmlElement) => ({
 	code: errCode,
 	message: `${loc} has an unspecified ${dvbi.e_TargetRegion.elementize()} ${region.quote()}`,
 	key: "target region",
@@ -117,12 +118,20 @@ let UnspecifiedTargetRegion = (region, loc, errCode, element) => ({
  * @param {XmlElement} element    The <SourceType> element for which delivery parameters are not specified
  * @param {String}     errCode    The error code to be reported
  */
-let NoDeliveryParams = (source, serviceId, element, errCode) => ({
+let NoDeliveryParams = (source : string, serviceId : string, errCode : string, element : XmlElement) => ({
 	code: errCode,
 	message: `${source} delivery parameters not specified for service instance in service ${serviceId.quote()}`,
 	fragment: element,
 	key: "no delivery params",
 });
+
+type found_region_id = {
+	countries : Array<string>;
+	region : string;
+	selectable? : boolean;
+	used : boolean;
+	line : number;
+};
 
 export default class ServiceListCheck {
 	#numRequests;
@@ -144,7 +153,7 @@ export default class ServiceListCheck {
 	#allowedVideoConformancePoints;
 	#RecordingInfoCSvalues;
 
-	constructor(useURLs, opts, async = true) {
+	constructor(useURLs : boolean, opts : shared_validation_options, async : boolean = true) {
 		this.#numRequests = 0;
 
 		this.#knownLanguages = opts?.languages ? opts.languages : LoadLanguages(useURLs, async);
@@ -156,7 +165,7 @@ export default class ServiceListCheck {
 		this.#allowedAudioSchemes = opts?.audiofmts ? opts.audiofmts : LoadAudioCodecCS(useURLs, async);
 		this.#audioPresentations = opts?.audiopres ? opts?.audiopres : LoadAudioPresentationCS(useURLs, async);
 		this.#accessibilityPurposes = opts?.accessibilities ? opts.accessibilities : LoadAccessibilityPurpose(useURLs, async);
-		this.#audioPurposes = opts?.audiopurp ? opts.audiopurp : LoadAudioPurpose(useURLs, async);
+		this.#audioPurposes = opts?.audiopurps ? opts.audiopurps : LoadAudioPurpose(useURLs, async);
 		this.#subtitleCarriages = opts?.stcarriage ? opts.stcarriage : LoadSubtitleCarriages(useURLs, async);
 		this.#subtitleCodings = opts?.stcodings ? opts.stcodings : LoadSubtitleCodings(useURLs, async);
 		this.#subtitlePurposes = opts?.stpurposes ? opts.stpurposes : LoadSubtitlePurposes(useURLs, async);
@@ -171,7 +180,7 @@ export default class ServiceListCheck {
 	}
 
 	stats() {
-		let res = {};
+		let res : any = {};
 		res.numRequests = this.#numRequests;
 		res.numAllowedGenres = this.#allowedGenres?.count();
 		res.numKnownCountries = this.#knownCountries?.count();
@@ -198,7 +207,7 @@ export default class ServiceListCheck {
 	 * @param {Array}      countries
 	 * @param {ErrorList}  errs             The class where errors and warnings relating to the service list processing are stored
 	 */
-	/*private*/ #addRegion(Region, depth, knownRegionIDs, countries, errs) {
+	/*private*/ #addRegion(Region : XmlElement, depth : number, knownRegionIDs : Array<found_region_id>, countries : Array<string>, errs : ErrorList) {
 		if (!Region) {
 			errs.addError({
 				type: APPLICATION,
@@ -208,7 +217,7 @@ export default class ServiceListCheck {
 			return;
 		}
 		const schemaVersion = SL_SchemaVersion(Region.documentNamespace());
-		const regionID = Region.attrAnyNs(dvbi.a_regionID) ? Region.attrAnyNs(dvbi.a_regionID).value : null;
+		const regionID = Region.attrAnyNsValueOrNull(dvbi.a_regionID);
 		const displayRegionID = regionID ? regionID.quote() : '"noID"';
 		let countriesSpecified = [];
 		const countryCodesSpecified = Region.attrAnyNs(dvbi.a_countryCodes);
@@ -237,7 +246,7 @@ export default class ServiceListCheck {
 		} else countriesSpecified = countries;
 
 		if (schemaVersion >= slVersions.r4) {
-			const selectable = Region.attrAnyNs(dvbi.a_selectable) ? Region.attrAnyNs(dvbi.a_selectable).value == "true" : true;
+			const selectable = Region.attrAnyNsValueOrNull(dvbi.a_selectable) == "true";
 
 			if (!selectable && depth == dvbi.MAX_SUBREGION_LEVELS)
 				errs.addError({
@@ -341,8 +350,8 @@ export default class ServiceListCheck {
 	 * @param {String}     AppType       The type of application being checked, from HowRelated@href
 	 * @param {ErrorList}  errs          The class where errors and warnings relating to the service list processing are stored
 	 */
-	/*private*/ #checkSignalledApplication(MediaLocator, Location, AppType, errs) {
-		let isValidApplicationType = (type) => validApplicationTypes.includes(type);
+	/*private*/ #checkSignalledApplication(MediaLocator : XmlElement, Location : string, AppType : string, errs : ErrorList) {
+		let isValidApplicationType = (type : string) : boolean => validApplicationTypes.includes(type);
 
 		if (!MediaLocator)
 			errs.addError({
@@ -352,7 +361,7 @@ export default class ServiceListCheck {
 			});
 		else {
 			let hasMediaURI = false;
-			MediaLocator.childNodes().forEachNamedSubElement(tva.e_MediaUri, (MediaUri) => {
+			MediaLocator.forEachNamedSubElement(tva.e_MediaUri, (MediaUri) => {
 				hasMediaURI = true;
 				if (MediaUri.attrAnyNs(tva.a_contentType) && !isValidApplicationType(MediaUri.attrAnyNs(tva.a_contentType).value))
 					errs.addError({
@@ -401,11 +410,11 @@ export default class ServiceListCheck {
 	 * @param {integer}    schemaVersion  The schema version of the XML document
 	 * @returns {boolean} true if this is a valid application launching method else false
 	 */
-	/*private*/ #validServiceApplication(HowRelated, schemaVersion) {
+	/*private*/ #validServiceApplication(HowRelated : XmlElement, schemaVersion : number) {
 		// return true if the HowRelated element has a valid CS value for Service Related Applications (A177 5.2.3)
 		// urn:dvb:metadata:cs:LinkedApplicationCS:2019
 		if (!HowRelated) return false;
-		const val = HowRelated.attrAnyNsValueOr(dvbi.a_href, null);
+		const val = HowRelated.attrAnyNsValueOrNull(dvbi.a_href);
 		return val ? validServiceControlApplication(val, schemaVersion) || validServiceUnavailableApplication(val) : false;
 	}
 
@@ -416,7 +425,7 @@ export default class ServiceListCheck {
 	 * @param {integer}    schemaVersion  The schema version of the XML document
 	 * @returns {boolean} true if this is a valid application launching method else false
 	 */
-	/*private*/ #validServiceInstanceApplication(HowRelated, schemaVersion) {
+	/*private*/ #validServiceInstanceApplication(HowRelated : XmlElement, schemaVersion : number) {
 		// return true if the HowRelated element has a valid CS value for Service Related Applications (A177 5.2.3)
 		// urn:dvb:metadata:cs:LinkedApplicationCS:2019
 		if (!HowRelated) return false;
@@ -458,7 +467,7 @@ export default class ServiceListCheck {
 		let HowRelated = null,
 			MediaLocator = [],
 			AccessibilityAttribiutes = [];
-		RelatedMaterial.childNodes().forEachSubElement((child) => {
+		RelatedMaterial.forEachSubElement((child) => {
 			switch (child.name) {
 				case tva.e_HowRelated:
 					HowRelated = child;
@@ -1179,7 +1188,7 @@ export default class ServiceListCheck {
 			let cp = 0,
 				conf;
 			while ((conf = ContentAttributes.getAnyNs(tva.e_AudioAttributes, ++cp)) != null)
-				conf.childNodes().forEachSubElement((child) => {
+				conf.forEachSubElement((child) => {
 					switch (child.name) {
 						case tva.e_Coding:
 							if (child.attrAnyNs(dvbi.a_href) && !this.#allowedAudioSchemes.isIn(child.attrAnyNs(dvbi.a_href).value))
@@ -1256,7 +1265,7 @@ export default class ServiceListCheck {
 			// Check ContentAttributes/VideoAttributes - other subelements are checked with schema based validation
 			cp = 0;
 			while ((conf = ContentAttributes.getAnyNs(tva.e_VideoAttributes, ++cp)) != null)
-				conf.childNodes().forEachSubElement((child) => {
+				conf.forEachSubElement((child) => {
 					switch (child.name) {
 						case tva.e_Coding:
 							if (child.attrAnyNs(dvbi.a_href) && !this.#allowedVideoSchemes.isIn(child.attrAnyNs(dvbi.a_href).value))
@@ -1412,24 +1421,24 @@ export default class ServiceListCheck {
 			let v1Params = false;
 			switch (SourceType.content) {
 				case dvbi.DVBT_SOURCE_TYPE:
-					if (!ServiceInstance.hasChild(dvbi.e_DVBTDeliveryParameters)) errs.addError(NoDeliveryParams("DVB-T", thisServiceId, SourceType, "SI151"));
+					if (!ServiceInstance.hasChild(dvbi.e_DVBTDeliveryParameters)) errs.addError(NoDeliveryParams("DVB-T", thisServiceId, "SI151", SourceType));
 					v1Params = true;
 					break;
 				case dvbi.DVBS_SOURCE_TYPE:
-					if (!ServiceInstance.hasChild(dvbi.e_DVBSDeliveryParameters)) errs.addError(NoDeliveryParams("DVB-S", thisServiceId, SourceType, "SI152"));
+					if (!ServiceInstance.hasChild(dvbi.e_DVBSDeliveryParameters)) errs.addError(NoDeliveryParams("DVB-S", thisServiceId, "SI152", SourceType));
 					v1Params = true;
 					break;
 				case dvbi.DVBC_SOURCE_TYPE:
-					if (!ServiceInstance.hasChild(dvbi.e_DVBCDeliveryParameters)) errs.addError(NoDeliveryParams("DVB-C", thisServiceId, SourceType, "SI153"));
+					if (!ServiceInstance.hasChild(dvbi.e_DVBCDeliveryParameters)) errs.addError(NoDeliveryParams("DVB-C", thisServiceId, "SI153", SourceType));
 					v1Params = true;
 					break;
 				case dvbi.DVBDASH_SOURCE_TYPE:
-					if (!ServiceInstance.hasChild(dvbi.e_DASHDeliveryParameters)) errs.addError(NoDeliveryParams("DVB-DASH", thisServiceId, SourceType, "SI154"));
+					if (!ServiceInstance.hasChild(dvbi.e_DASHDeliveryParameters)) errs.addError(NoDeliveryParams("DVB-DASH", thisServiceId, "SI154", SourceType));
 					v1Params = true;
 					break;
 				case dvbi.DVBIPTV_SOURCE_TYPE:
 					if (!ServiceInstance.hasChild(dvbi.e_MulticastTSDeliveryParameters) && !ServiceInstance.hasChild(dvbi.e_RTSPDeliveryParameters))
-						errs.addError(NoDeliveryParams("Multicast or RTSP", thisServiceId, SourceType, "SI155"));
+						errs.addError(NoDeliveryParams("Multicast or RTSP", thisServiceId, "SI155", SourceType));
 					v1Params = true;
 					break;
 				case dvbi.DVBAPPLICATION_SOURCE_TYPE:
@@ -1837,9 +1846,6 @@ export default class ServiceListCheck {
 					fragment: ServiceType,
 					key: `invalid ${dvbi.a_href.attribute(dvbi.e_ServiceType)}`,
 				});
-			const schemaVersion = SL_SchemaVersion(service.documentNamespace());
-			if (schemaVersion >= slVersions.r8)
-				errs.addError(DeprecatedElement(ServiceType,  SchemaSpecVersion(slVersions.r8), "SL165"));
 		}
 
 		// check <ServiceDescription>
@@ -2588,8 +2594,6 @@ export default class ServiceListCheck {
 								fragment: LCNRange,
 								key: keys.k_InvalidValue,
 							});
-						if (schemaVersion >= slVersions.r8)
-							errs.addError(DeprecatedAttribute(serviceType, SchemaSpecVersion(slVersions.r8), "SL266"));
 					}
 
 					//<LCNRange@serviceGenre>

@@ -1,22 +1,24 @@
 /**
  * schema_checks.mts
  */
-import { XmlDocument, XsdValidator } from "libxml2-wasm";
+import { XsdValidator, XmlValidateError, XmlParseError } from "libxml2-wasm";
 import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
 xmlRegisterFsInputProviders();
 
 import format from "xml-formatter";
 
-import { elementize, datatypeIs } from "../phlib/phlib.js";
+//import { elementize, datatypeIs } from "../phlib/phlib.js";
 
-import { Array_extension_init } from "./Array-extensions.mts";
-Array_extension_init();
+//import { Array_extension_init } from "./Array-extensions.mts";
+//Array_extension_init();
 
 import { dvbi } from "./DVB-I_definitions.mts";
-import { FATAL, APPLICATION, INFORMATION, WARNING, DEBUG } from "./error_list.mts";
+import { FATAL, APPLICATION, INFORMATION, WARNING, DEBUG} from "./error_list.mts";
+import ErrorList from "./error_list.mts";
+import type { error_report } from "./error_list.mts";
 import { OLD, DRAFT } from "./globals.mts";
 import { isIn } from "./utils.mts";
-import { keys } from "./common_errors.mts";
+import { keys} from "./common_errors.mts";
 
 
 /**
@@ -29,7 +31,7 @@ import { keys } from "./common_errors.mts";
  * @param {ErrorList}  errs               errors found in validaton
  * @param {String}     errCode            error code to be used in reports,
  */
-export function checkAttributes(checkElement, requiredAttributes, optionalAttributes, definedAttributes, errs, errCode) {
+export function checkAttributes(checkElement : XmlElement, requiredAttributes : Array<string>, optionalAttributes : Array<string>, definedAttributes : Array<string>, errs : ErrorList, errCode : string) {
 	if (!checkElement || !requiredAttributes) {
 		errs.addError({ type: APPLICATION, code: "AT000", message: "checkAttributes() called with checkElement==null or requiredAttributes==null" });
 		return;
@@ -59,6 +61,12 @@ export function checkAttributes(checkElement, requiredAttributes, optionalAttrib
 	});
 }
 
+export type element_cardinality = {
+	name : string;
+	minOccurs? : number;
+	maxOccurs? : number;
+}
+
 /**
  * check that the specified child elements are in the parent element
  *
@@ -74,31 +82,19 @@ export function checkAttributes(checkElement, requiredAttributes, optionalAttrib
  * NOTE: elements are described as an object containing "name", "minOccurs", "maxOccurs".
  *   Default values for minOccurs and maxOccurs are 1
  */
-export function checkTopElementsAndCardinality(parentElement, childElements, definedChildElements, allowOtherElements, errs, errCode) {
-	let findElementIn = (elementList, elementName) => (datatypeIs(elementList, "array") ? elementList.find((element) => element.name == elementName) : false);
+export function checkTopElementsAndCardinality(parentElement : XmlElement, childElements : Array<element_cardinality>, definedChildElements : Array<string>, allowOtherElements : boolean, errs : ErrorList, errCode : string) {
+	let findElementIn = (elementList : Array<element_cardinality>, elementName : string) : boolean =>  elementList.find((element) => element.name == elementName) != undefined;
 
-	function getNamedChildElements(node, childElementName) {
-		let res = [];
-		node?.childNodes().forEachNamedSubElement(childElementName, (child) => {
-			res.push(child);
-		});
-		return res;
-	}
-	if (!parentElement) {
-		errs.addError({ type: APPLICATION, code: "TE000", message: "checkTopElementsAndCardinality() called with a 'null' element to check" });
-		return false;
-	}
 	let rv = true;
-	const thisElem = elementize(`${parentElement.parent.name}.${parentElement.name}`);
+	const thisElem = parentElement.name.elementize(parentElement.parent?.name);
 	// check that each of the specifid childElements exists
 	childElements.forEach((child) => {
 		if (child?.name) {
-			const min = Object.prototype.hasOwnProperty.call(child, "minOccurs") ? child.minOccurs : 1;
-			const max = Object.prototype.hasOwnProperty.call(child, "maxOccurs") ? child.maxOccurs : 1;
-			const namedChildren = getNamedChildElements(parentElement, child.name),
-				count = namedChildren.length;
+			const min = child.minOccurs != undefined ? child.minOccurs : 1;
+			const max = child.maxOccurs != undefined ? child.maxOccurs : 1;
+			const namedChildren = parentElement.childNodes(child.name);
 
-			if (count == 0 && min != 0) {
+			if (namedChildren.length == 0 && min != 0) {
 				errs.addError({
 					code: `${errCode}-1`,
 					line: parentElement.line,
@@ -107,7 +103,7 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 				});
 				rv = false;
 			} else {
-				if (count < min || count > max) {
+				if (namedChildren.length < min || namedChildren.length > max) {
 					namedChildren.forEach((child) =>
 						errs.addError({
 							code: `${errCode}-2`,
@@ -125,12 +121,12 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 	// check that no additional child elements existance if the "Other Child Elements are OK" flag is not set
 	if (parentElement.childNodes()) {
 		// create a set of child elements that are in the schema but not in DVB-I
-		let excludedChildren = [];
+		let excludedChildren : Array<string> = [];
 		definedChildElements.forEach((child) => {
 			if (!findElementIn(childElements, child)) excludedChildren.push(child);
 		});
 
-		parentElement.childNodes().forEachSubElement((child) => {
+		parentElement.forEachSubElement((child) => {
 			const childName = child.name;
 			if (!findElementIn(childElements, childName)) {
 				if (isIn(excludedChildren, childName))
@@ -151,6 +147,7 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
 	return rv;
 }
 
+
 /**
  * validate a XML document gainst the specified schema (included schemas must be in the same directory)
  *
@@ -160,13 +157,13 @@ export function checkTopElementsAndCardinality(parentElement, childElements, def
  * @param {ErrorList}   errs         array to record any errors
  * @param {String}      errCode      the error code to report with each error
  */
-export function SchemaCheck(XML, XSD, XSDfilename, errs, errCode) {
+export function SchemaCheck(XML : XmlDocument, XSD : XmlDocument, XSDfilename : string, errs : ErrorList, errCode : string) {
 	let validator = null;
 	try {
 		validator = XsdValidator.fromDoc(XSD);
-	} catch (err) {
+	} catch (err : any) {
 		const x = err.details;
-		x.forEach((e) => {
+		x.forEach((e : any) => {
 			errs.addError({ code: "LS000", type: DEBUG, message: `${JSON.stringify(e)}, url: ${XSDfilename}` });
 		});
 	}
@@ -177,11 +174,11 @@ export function SchemaCheck(XML, XSD, XSDfilename, errs, errCode) {
 	}
 	try {
 		validator.validate(XML);
-	} catch (err) {
+	} catch (err : any) {
 		//console.log(err.message)
-		if (err.details) {
+		if ((err as XmlValidateError).details) {
 			const lines = format(XML.toString(), { collapseContent: true, lineSeparator: "\n", strictMode: true }).split("\n");
-			err.details.forEach((ve) => {
+			(err as XmlValidateError).details.forEach((ve) => {
 				errs.addError({ code: errCode, message: ve.message, fragment: lines[ve.line - 1], line: ve.line, key: keys.k_XSDValidation });
 			});
 		}
@@ -196,15 +193,15 @@ export function SchemaCheck(XML, XSD, XSDfilename, errs, errCode) {
  * @param {ErrorList}   errs                 array to record any errors
  * @param {String}      errCode              the error code to report with each error
  */
-export function SchemaVersionCheck(document, publication_state, errs, errCode) {
-	const ServiceList = document.root.getAnyNs(dvbi.e_ServiceList);
+export function SchemaVersionCheck(document : XmlDocument, publication_state : number, errs : ErrorList, errCode : string) {
+	const ServiceList = (document.root as XmlElement).getAnyNs(dvbi.e_ServiceList);
 	if (publication_state & OLD) {
-		let err1 = { code: `${errCode}a`, message: "schema version is out of date", key: "schema version" };
+		let err1 : error_report = { code: `${errCode}a`, message: "schema version is out of date", key: "schema version" };
 		if (ServiceList) err1.line = ServiceList.line;
 		errs.addError(err1);
 	}
 	if (publication_state & DRAFT) {
-		let err2 = { type: WARNING, code: `${errCode}b`, message: "schema is in draft state", key: "schema version" };
+		let err2 : error_report = { type: WARNING, code: `${errCode}b`, message: "schema is in draft state", key: "schema version" };
 		if (ServiceList) err2.line = ServiceList.line;
 		errs.addError(err2);
 	}
@@ -212,20 +209,21 @@ export function SchemaVersionCheck(document, publication_state, errs, errCode) {
 
 /**
  * load the XML data
- * @param {XmlDocument} document 	   XMLdocument
+ * @param {string}      document 	   XMLdocument
  * @param {ErrorList}   errs         error handler for any loading errors
  * @param {String}      errcode      error code prefix to use for any loading issues
- * @returns {XMLDocument}  an XML document structure
+ * @returns {XmlDocument}  an XML document structure
  */
-export function SchemaLoad(document, errs, errcode) {
+export function SchemaLoad(document : string, errs : ErrorList, errcode : string) : XmlDocument | null{
 	let tmp = null,
 		prettyXML = null;
 
 	try {
 		tmp = XmlDocument.fromString(document);
 	} catch (err) {
-		if (err.details && datatypeIs(err.details, "array"))
-			err.details.forEach((e) =>
+		const e2 = err as XmlParseError;
+		if (e2.details && datatypeIs(e2.details, "array"))
+			e2.details.forEach((e) =>
 				errs.addError({ type: FATAL, code: `${errcode}-1`, message: `Raw XML parsing failed: ${e.message} at char ${e.col}`, line: e.line, key: keys.k_MalformedXML })
 			);
 		else errs.addError({ type: FATAL, code: `${errcode}-1`, message: `Raw XML parsing failed: ${err.message}`, key: keys.k_MalformedXML });
@@ -233,13 +231,15 @@ export function SchemaLoad(document, errs, errcode) {
 	try {
 		prettyXML = format(document.replace(/(\n\t)/gm, "\n"), { collapseContent: true, lineSeparator: "\n" });
 	} catch (err) {
-		errs.addError({ type: FATAL, code: `${errcode}-2`, message: `XML format failed: ${err.cause}`, key: keys.k_MalformedXML });
+		const cause = Object.prototype.hasOwnProperty.call(err, "cause") ? err.cause : "**unknown**";
+		errs.addError({ type: FATAL, code: `${errcode}-2`, message: `XML format failed: ${cause}`, key: keys.k_MalformedXML });
 		return null;
 	}
 	try {
 		tmp = XmlDocument.fromString(prettyXML);
 	} catch (err) {
-		errs.addError({ type: FATAL, code: `${errcode}-11`, message: `XML parsing failed: ${err.message}`, key: keys.k_MalformedXML });
+		const e2 = err as XmlParseError;
+		errs.addError({ type: FATAL, code: `${errcode}-11`, message: `XML parsing failed: ${e2.message}`, key: keys.k_MalformedXML });
 		errs.loadDocument(prettyXML);
 		return null;
 	}

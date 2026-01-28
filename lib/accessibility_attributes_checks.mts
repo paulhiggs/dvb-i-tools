@@ -5,10 +5,10 @@
  * values provided in DVB A177.
  */
 
-import type { XmlElement } from "../libxml2-wasm-extensions.d.ts";
+//import type { XmlElement } from "../libxml2-wasm-extensions.d.ts";
 
-import { Array_extension_init } from "./Array-extensions.mts";
-Array_extension_init();
+//import { Array_extension_init } from "./Array-extensions.mts";
+//Array_extension_init();
 
 import { tva, tvaEA, tvaEC, BaseAccessibilityAttributesType } from "./TVA_definitions.mts";
 import { dvbi } from "./DVB-I_definitions.mts";
@@ -17,10 +17,10 @@ import { keys } from "./common_errors.mts";
 import ErrorList  from "./error_list.mts";
 import { APPLICATION, WARNING } from "./error_list.mts";
 import { checkAttributes, checkTopElementsAndCardinality } from "./schema_checks.mts";
+import type { element_cardinality } from "./schema_checks.mts";
 import { CS_URI_DELIMITER } from "./classification_scheme.mts";
 
 import { isValidLangFormat } from "./IANA_languages.mts";
-import { getFirstElementByTagName } from "./utils.mts";
 
 import IANAlanguages from "./IANA_languages.mts";
 import ClassificationScheme from "./classification_scheme.mjs";
@@ -47,14 +47,14 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 
 	const accessibilityParent = AccessibilityAttributes.parent?.name || `${AccessibilityAttributes.name}-parent`;
 
-	const mediaAccessibilityElements = [
+	const mediaAccessibilityElements : Array<element_cardinality> = [
 		{ name: tva.e_SubtitleAttributes, minOccurs: 0, maxOccurs: Infinity },
 		{ name: tva.e_AudioDescriptionAttributes, minOccurs: 0, maxOccurs: Infinity },
 		{ name: tva.e_SigningAttributes, minOccurs: 0, maxOccurs: Infinity },
 		{ name: tva.e_DialogueEnhancementAttributes, minOccurs: 0, maxOccurs: Infinity },
 		{ name: tva.e_SpokenSubtitlesAttributes, minOccurs: 0, maxOccurs: Infinity },
 	];
-	const applicationAccessibilityElement = [
+	const applicationAccessibilityElement : Array<element_cardinality> = [
 		{ name: tva.e_MagnificationUIAttributes, minOccurs: 0, maxOccurs: Infinity },
 		{ name: tva.e_HighContrastUIAttributes, minOccurs: 0, maxOccurs: Infinity },
 		{ name: tva.e_ScreenReaderAttributes, minOccurs: 0, maxOccurs: Infinity },
@@ -91,7 +91,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 	}
 
 	let checkPurpose = (elem : XmlElement, mainTerm : string, errNum : number) => {
-		elem?.childNodes().forEachNamedSubElement(tva.e_Purpose, (purpose : XmlElement) => {
+		elem?.forEachNamedSubElement(tva.e_Purpose, (purpose : XmlElement) => {
 			const purposeTerm = purpose.attrAnyNsValueOrNull(tva.a_href);
 			if (purposeTerm) {
 				if (!cs.AccessibilityPurposeCS.isIn(purposeTerm))
@@ -116,9 +116,9 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 	};
 
 	let checkAppInformation = (elem : XmlElement, errNum : number) : boolean => {
-		const appInfo = getFirstElementByTagName(elem, tva.e_AppInformation);
-		if (appInfo == undefined) return false; // AppInformation element is not present
-		appInfo?.childNodes().forEachNamedSubElement([tva.e_RequiredStandardVersion, tva.e_RequiredOptionalFeature], (child : XmlElement) => {
+		const appInfo = elem.getAnyNs(tva.e_AppInformation);
+		if (appInfo == null) return false; // AppInformation element is not present
+		appInfo?.forEachNamedSubElement([tva.e_RequiredStandardVersion, tva.e_RequiredOptionalFeature], (child : XmlElement) => {
 			switch (child.name) {
 				case tva.e_RequiredStandardVersion:
 					if (!dvbi.ApplicationStandards.includes(child.content))
@@ -147,7 +147,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 
 	let checkCS = (elem : XmlElement, childName : string, cs : ClassificationScheme, errNum : number, storage? : Array<string>) : boolean => {
 		let rc = true;
-		elem?.childNodes().forEachNamedSubElement(childName, (child : XmlElement) => {
+		elem?.forEachNamedSubElement(childName, (child : XmlElement) => {
 			const href = child.attrAnyNsValueOrNull(tva.a_href);
 			if (href && !cs.isIn(href)) {
 				errs.addError({
@@ -164,7 +164,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 	};
 
 	let checkSignLanguage = (elem : XmlElement, childName : string, errNum : number) => {
-		elem?.childNodes().forEachNamedSubElement(childName, (child : XmlElement) => {
+		elem?.forEachNamedSubElement(childName, (child : XmlElement) => {
 			const languageCode = child.content;
 			if (cs.KnownLanguages.checkSignLanguage(languageCode) != cs.KnownLanguages.languageKnown)
 				errs.addError({
@@ -178,7 +178,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 	};
 
 	let checkLanguageFmt = (elem : XmlElement, childName : string, errNum : string) => {
-		elem?.childNodes().forEachNamedSubElement(childName, (child : XmlElement) => {
+		elem?.forEachNamedSubElement(childName, (child : XmlElement) => {
 			if (!isValidLangFormat(child.content))
 				errs.addError({
 					code: `${errCode}-${errNum}a`,
@@ -190,7 +190,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 	};
 
 	let checkLanguagePurpose = (elem : XmlElement, childName : string, errNum : string) => {
-		elem?.childNodes().forEachNamedSubElement(childName, (child : XmlElement) => {
+		elem?.forEachNamedSubElement(childName, (child : XmlElement) => {
 			// @purpose should not be specified for <AudioLanguage> when used in <AccessibilityAttributes>
 			if (child.attrAnyNs(tva.a_purpose))
 				errs.addError({
@@ -204,8 +204,8 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 		});
 	};
 
-	let checkAudioAttributes = (elem : XmlElement, childName : string, errNum : number) => {
-		elem?.childNodes().forEachNamedSubElement(childName, (child : XmlElement) => {
+	let checkAudioAttributes = (elem : XmlElement, childName : string, errNum : number, allowPurpose : boolean = false, disallowClause? : string) => {
+		elem?.forEachNamedSubElement(childName, (child : XmlElement) => {
 			checkTopElementsAndCardinality(
 				child,
 				[
@@ -221,7 +221,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 			// AccessibilityAttributes.*.AudioAttribites.AudioLanguage
 			checkLanguageFmt(child, tva.e_AudioLanguage, `${errNum}b`);
 			checkLanguagePurpose(child, tva.e_AudioLanguage, `${errNum}c`);
-			child?.childNodes().forEachNamedSubElement([tva.e_Coding, tva.e_MixType], (child2 : XmlElement) => {
+			child?.forEachNamedSubElement([tva.e_Coding, tva.e_MixType], (child2 : XmlElement) => {
 				const href = child2.attrAnyNsValueOrNull(tva.a_href);
 				switch (child2.name) {
 					case tva.e_Coding:
@@ -244,16 +244,28 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 								key: keys.k_Accessibility,
 							});
 						break;
+					case tva.e_AudioLanguage:
+						if (child2.attrAnyNs(tva.a_purpose) && allowPurpose == false) {
+							errs.addError({
+								code: `${errCode}-${errNum}f`,
+								fragment: child2,
+								message: `"${tva.a_purpose.attribute(child2.name)}" is not permitted for ${elem.name.elementize()}${child.name.elementize()}`,
+								key: keys.k_Accessibility,
+							});
+							if (disallowClause) {
+								errs.errorDescription({
+									code: `${errCode}-${errNum}f`,
+									clause: disallowClause,
+									description: "The @purpose attribute of the AudioAttributes.AudioLanguage element shall not be used.",
+								})
+							}
+						}
+						break;
 				}
 			});
 		});
 	};
 
-	type element_cardinality = {
-		name : string;
-		minOccurs? : number;
-		maxOccurs? : number;
-	}
 	const appInformationElements : Array<element_cardinality> = [
 		{ name: tva.e_AppInformation, minOccurs: 0 },
 		{ name: tva.e_Personalisation, minOccurs: 0 },
@@ -265,7 +277,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 	let carriages : Array<string> = [],
 		codings : Array<string> = [],
 		hasAppInformation = false;
-	AccessibilityAttributes?.childNodes().forEachSubElement((child : XmlElement) => {
+	AccessibilityAttributes?.forEachSubElement((child : XmlElement) => {
 		switch (child.name) {
 			case tva.e_MagnificationUIAttributes:
 				checkTopElementsAndCardinality(child, allowedAppChildren, allAppChildren, false, errs, `${errCode}-11`);
@@ -327,7 +339,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 					`${errCode}-61`
 				);
 				checkAppInformation(child, 62);
-				checkAudioAttributes(child, tva.e_AudioAttributes, 63);
+				checkAudioAttributes(child, tva.e_AudioAttributes, 63, false, "A177 clause 4.5.2.3");
 				break;
 			case tva.e_SigningAttributes:
 				checkTopElementsAndCardinality(
@@ -346,12 +358,12 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes : X
 			case tva.e_DialogueEnhancementAttributes:
 				checkTopElementsAndCardinality(child, [{ name: tva.e_AudioAttributes }].concat(appInformationElements), tvaEC.DialogEnhancementAttributes, false, errs, `${errCode}-81`);
 				checkAppInformation(child, 82);
-				checkAudioAttributes(child, tva.e_AudioAttributes, 83);
+				checkAudioAttributes(child, tva.e_AudioAttributes, 83, false, "A177 clause 4.5.2.5");
 				break;
 			case tva.e_SpokenSubtitlesAttributes:
 				checkTopElementsAndCardinality(child, [{ name: tva.e_AudioAttributes }].concat(appInformationElements), tvaEC.SpokenSubtitlesAttributes, false, errs, `${errCode}-91`);
 				checkAppInformation(child, 92);
-				checkAudioAttributes(child, tva.e_AudioAttributes, 93);
+				checkAudioAttributes(child, tva.e_AudioAttributes, 93, false, "A177 clause 4.5.2.6");
 				break;
 		}
 	});

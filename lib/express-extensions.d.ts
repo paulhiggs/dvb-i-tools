@@ -8,6 +8,13 @@ declare global {
 	namespace Express {
 		export interface Request {
 			parseErr? : string;
+
+			diags : {
+				countErrors : number;
+				countWarnings : number;
+				countInforms : number;
+
+			}
 		}
 
 		export interface Response {
@@ -18,11 +25,16 @@ declare global {
 
 
 declare module 'express-session' {
+
 	interface SessionData {
-		lastUrl : string;
-		mode : string;
-		entry: string;
-		cgmode? : string;
+
+		data : {
+			lastUrl : string;
+			mode : string;
+			entry: string;
+			cgmode? : string;
+			url? : string;
+		};
 
 	}
 }

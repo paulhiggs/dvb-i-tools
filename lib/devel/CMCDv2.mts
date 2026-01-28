@@ -5,6 +5,9 @@
  *
  */
 
+// CMCDv2 development is at 
+// https://docs.google.com/document/d/1isrbeAuauUwjTDUJCxJVltxls_qrFFx7/edit
+
 /**
  * CMCDv2 schema update for A177
  * 
@@ -124,14 +127,15 @@
 
  */
 
-import { dvbi } from "./DVB-I_definitions.mjs";
-import { CMCD_MODE_REQUEST, CMCD_MODE_EVENT, CMCD_METHOD_BATCH, dvbiEA } from "./DVB-I_definitions.mjs";
-import { APPLICATION, WARNING } from "./error_list.mjs";
-import { checkAttributes } from "./schema_checks.mjs";
-import { isIn } from "./utils.mjs";
-import { isObjectEmpty } from "../phlib/phlib.js";
-import { isHTTPURL } from "../pattern_checks.mjs";
-import { InvalidURL, keys } from "./common_errors.mjs";
+import { dvbi } from "../DVB-I_definitions.mts";
+import { CMCD_MODE_REQUEST, CMCD_MODE_EVENT, CMCD_METHOD_BATCH, dvbiEA } from "../DVB-I_definitions.mts";
+import { APPLICATION, WARNING } from "../error_list.mts";
+import ErrorList from "../error_list.mts";
+import { checkAttributes } from "../schema_checks.mts";
+import { isIn } from "../utils.mts";
+//import { isObjectEmpty } from "../phlib/phlib.js";
+import { isHTTPURL } from "../pattern_checks.mts";
+import { InvalidURL, keys } from "../common_errors.mts";
 
 const CMCD_keys = {
 	aggregate_encoded_bitrate: "ab",
@@ -139,7 +143,9 @@ const CMCD_keys = {
 	backgrounded: "bg",
 	encoded_bitrate: "br",
 	buffer_starvation: "bs",
+	buffer_starvation_absolute: "bsa",
 	buffer_starvation_duration: "bsd",
+	buffer_starvation_duration_absolute: "bsda",
 	custom_event_name: "cen",
 	content_id: "cid",
 	CMSD_dynamic_header: "cmsdd",
@@ -186,9 +192,14 @@ const CMCD_keys = {
 
 const request_mode_only = [CMCD_MODE_REQUEST],
 	event_mode_only = [CMCD_MODE_EVENT],
-	request_and_event_modes = [CMCD_MODE_REQUEST, CMCD_MODE_EVENT];
+	request_and_event_modes = [CMCD_MODE_REQUEST, CMCD_MODE_EVENT],
+	unspecified_modes : Array<string> = [];
 
-const CMCDv1_keys = [
+type version_keys = {
+	key: string;
+	allow_modes : Array<string>;
+}
+const CMCDv1_keys : Array<version_keys> = [
 	{ key: CMCD_keys.encoded_bitrate, allow_modes: request_mode_only },
 	{ key: CMCD_keys.buffer_length, allow_modes: request_mode_only },
 	{ key: CMCD_keys.buffer_starvation, allow_modes: request_mode_only },
@@ -210,13 +221,15 @@ const CMCDv1_keys = [
 ];
 
 // CMCDv2 draft at https://docs.google.com/document/d/1isrbeAuauUwjTDUJCxJVltxls_qrFFx7/edit
-const CMCDv2_keys = [
+const CMCDv2_keys : Array<version_keys> = [
 	{ key: CMCD_keys.aggregate_encoded_bitrate, allow_modes: request_and_event_modes },
 	{ key: CMCD_keys.buffer_length, allow_modes: request_and_event_modes },
 	{ key: CMCD_keys.backgrounded, allow_modes: request_and_event_modes },
 	{ key: CMCD_keys.encoded_bitrate, allow_modes: request_and_event_modes },
 	{ key: CMCD_keys.buffer_starvation, allow_modes: request_and_event_modes },
+	{ key: CMCD_keys.buffer_starvation_absolute, allow_modes: request_and_event_modes },
 	{ key: CMCD_keys.buffer_starvation_duration, allow_modes: request_and_event_modes },
+	{ key: CMCD_keys.buffer_starvation_duration_absolute, allow_modes: unspecified_modes },
 	{ key: CMCD_keys.custom_event_name, allow_modes: event_mode_only },
 	{ key: CMCD_keys.content_id, allow_modes: request_and_event_modes },
 	{ key: CMCD_keys.CMSD_dynamic_header, allow_modes: event_mode_only },
@@ -227,7 +240,7 @@ const CMCDv2_keys = [
 	{ key: CMCD_keys.deadline, allow_modes: request_and_event_modes },
 	{ key: CMCD_keys.event, allow_modes: event_mode_only },
 	{ key: CMCD_keys.player_error_code, allow_modes: request_and_event_modes },
-	{ key: CMCD_keys.hostname, allow_modes: request_and_event_modes },
+	{ key: CMCD_keys.hostname, allow_modes: event_mode_only },
 	{ key: CMCD_keys.lowest_aggregated_encoded_bitrate, allow_modes: request_and_event_modes },
 	{ key: CMCD_keys.lowest_encoded_bitrate, allow_modes: request_and_event_modes },
 	{ key: CMCD_keys.live_stream_latency, allow_modes: request_and_event_modes },
@@ -260,18 +273,18 @@ const CMCDv2_keys = [
 	{ key: CMCD_keys.CMCD_version, allow_modes: request_and_event_modes },
 ];
 
-const isCustomKey = (key) => key.includes("-");
-const reportingMode = (mode) => (mode.indexOf(":") != -1 ? mode.substring(mode.lastIndexOf(":") + 1) : "***");
+const isCustomKey = (key : string) : boolean => key.includes("-");
+const reportingMode = (mode : string) : string => (mode.indexOf(":") != -1 ? mode.substring(mode.lastIndexOf(":") + 1) : "***");
 
 const error_key = keys.k_CMCD;
 
-function checkCMCDkeys(Report, version, errs, errCode) {
-	if (!CMCD) {
+function checkCMCDkeys(Report : XmlElement, version : number, errs : ErrorList, errCode : string) {
+	if (!Report) {
 		errs.addError({ type: APPLICATION, code: `${errCode}-00`, message: "checkCMCDkeys() called with CMCD=null" });
 		return;
 	}
 	const keys_to_use = version == 2 ? CMCDv2_keys : CMCDv1_keys;
-	const configured_keys = Report.attrAnyNsValueOr(dvbi.a_enabledKeys, null);
+	const configured_keys = Report.attrAnyNsValueOrNull(dvbi.a_enabledKeys);
 	const reporting_mode = Report.attrAnyNsValueOr(dvbi.a_reportingMode, "undefined");
 	const obfuscate_url = Report.attrAnyNs(dvbi.a_obfuscateURL);
 
@@ -285,7 +298,7 @@ function checkCMCDkeys(Report, version, errs, errCode) {
 					errs.addError({
 						code: `${errCode}a`,
 						message: `${key.quote()} is not allowed for the specified reporting mode (${reportingMode(reporting_mode)})`,
-						fragment: CMCD,
+						fragment: Report,
 						key: error_key,
 					});
 			} else if (isCustomKey(key))
@@ -293,14 +306,14 @@ function checkCMCDkeys(Report, version, errs, errCode) {
 					type: WARNING,
 					code: `${errCode}b`,
 					message: `custom CMCD key ${key.quote()} in use`,
-					fragment: CMCD,
+					fragment: Report,
 					key: error_key,
 				});
 			else
 				errs.addError({
 					code: `${errCode}c`,
 					message: `${key.quote()} is not a reserved CMCDv${version} key or the correct format for a custom key`,
-					fragment: CMCD,
+					fragment: Report,
 					key: error_key,
 				});
 		});
@@ -312,17 +325,17 @@ function checkCMCDkeys(Report, version, errs, errCode) {
 			});
 	}
 	if (reporting_mode == CMCD_MODE_EVENT) {
-		let required_key = (reporting_mode, key) => ({
+		let required_key = (reporting_mode : string, key : string) => ({
 			code: `${errCode}d`,
 			message: `the key ${key.quote()} is required to be specified for ${reportingMode(reporting_mode)} reporting`,
-			fragment: CMCD,
+			fragment: Report,
 			key: error_key,
 		});
 
-		let unprovided_key = (report_type, key) => ({
+		let unprovided_key = (report_type : string, key : string) => ({
 			code: `${errCode}e`,
 			message: `${reportingMode(report_type)} mode report will include "${key.quote()}" - it is not specified here`,
-			fragment: CMCD,
+			fragment: Report,
 			key: error_key,
 		});
 		if (!isIn(keys, CMCD_keys.timestamp)) errs.addError(required_key(reporting_mode, CMCD_keys.timestamp));

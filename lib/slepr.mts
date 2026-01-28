@@ -59,8 +59,8 @@ export default class SLEPR {
 		this.loadDataFiles(useURLs, preloadedLanguageValidator, preloadedCountries, preloadedGenres);
 	}
 
-	stats() {
-		let res = {
+	stats() : any{
+		let res : any = {
 			numRequests: this.#numRequests,
 			SLRfile: this.#registryFilename || "not set",
 			SLRreadError: this.#readError || "",
@@ -253,9 +253,9 @@ export default class SLEPR {
 			// no UAS --> remove elements with @standardVersion
 			// with UAS --> remove with mismatching @standardVersion
 
-			let hasURIfor = (offering, version) => {
+			let hasURIfor = (offering : XmlElement, version) => {
 				let rc = false;
-				offering.childNodes()?.forEachNamedSubElement(dvbisld.e_ServiceListURI, (uri) => {
+				offering.forEachNamedSubElement(dvbisld.e_ServiceListURI, (uri) => {
 					const vers = uri.attrAnyNsValueOr(dvbisld.a_standardVersion, null);
 					if (vers && vers.lastIndexOf(":") != -1) {
 						const uri_version = Number.parseInt(vers.substring(1 + vers.lastIndexOf(":")));

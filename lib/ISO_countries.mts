@@ -6,7 +6,7 @@
 import { readFile, readFileSync } from "fs";
 
 import chalk from "chalk";
-import fetchS from "sync-fetch";
+import syncFetch from "sync-fetch";
 
 import handleErrors from "./fetch_err_handler.mts";
 import { isHTTPURL } from "./pattern_checks.mts";
@@ -17,7 +17,7 @@ import { isHTTPURL } from "./pattern_checks.mts";
  * @param {String} countryData the text of the country JSON data
  * @returns {Object} processed JSON object of countries
  */
-function loadCountryData(countryData) {
+function loadCountryData(countryData : string) {
 	return JSON.parse(countryData, function (key, value) {
 		if (key == "numeric") return Number(value);
 		else if (key == "alpha2") {
@@ -30,8 +30,14 @@ function loadCountryData(countryData) {
 	});
 }
 
+type country_code = {
+	numeric? : number;
+	alpha2? : string;
+	alpha3? : string;
+}
+
 export default class ISOcountries {
-	#countriesList : ;
+	#countriesList : Array<country_code>;
 	#use2CharCountries : boolean;
 	#use3CharCountries : boolean;
 
@@ -95,7 +101,7 @@ export default class ISOcountries {
 		else {
 			let resp = null;
 			try {
-				resp = fetchS(countriesURL);
+				resp = syncFetch(countriesURL);
 			} catch (error) {
 				console.log(chalk.red(error.message));
 			}
@@ -134,10 +140,10 @@ export default class ISOcountries {
 		const countryCode_lc = countryCode.toLowerCase();
 
 		if (this.#use3CharCountries && countryCode.length == 3) {
-			if (caseSensitive ? this.#countriesList.find((elem) => elem.alpha3 == countryCode) : this.#countriesList.find((elem) => elem.alpha3.toLowerCase() == countryCode_lc))
+			if (caseSensitive ? this.#countriesList.find((elem) => elem.alpha3 == countryCode) : this.#countriesList.find((elem) => elem.alpha3?.toLowerCase() == countryCode_lc))
 				found = true;
 		} else if (this.#use2CharCountries && countryCode.length == 2) {
-			if (caseSensitive ? this.#countriesList.find((elem) => elem.alpha2 == countryCode) : this.#countriesList.find((elem) => elem.alpha2.toLowerCase() == countryCode_lc))
+			if (caseSensitive ? this.#countriesList.find((elem) => elem.alpha2 == countryCode) : this.#countriesList.find((elem) => elem.alpha2?.toLowerCase() == countryCode_lc))
 				found = true;
 		}
 		return found;

@@ -211,7 +211,7 @@ export default class IANAlanguages {
 		}
 	}
 
-	loadLanguages(options : any, async : true = true) {
+	loadLanguages(options : any, async : boolean = true) {
 		if (!options) options = {};
 		if (!Object.prototype.hasOwnProperty.call(options, "purge")) options.purge = false;
 

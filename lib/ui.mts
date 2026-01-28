@@ -4,9 +4,10 @@
  * Drive the HTML user interface
  */
 import { readFileSync } from "fs";
+import express from "express";
 
-import { HTMLize } from "../phlib/phlib.js";
-import { ERROR, WARNING } from "./error_list.mts";
+import ErrorList, { ERROR, WARNING } from "./error_list.mts";
+import type {logged_error} from "./error_list.mts";
 
 export const MODE_UNSPECIFIED = "none",
 	MODE_SL = "sl",
@@ -20,7 +21,7 @@ const SHOW_LINE_NUMBER = false; // include the line number in the XML document w
 
 const pkg = JSON.parse(readFileSync("./package.json", { encoding: "utf-8" }).toString());
 
-export function PAGE_TOP(pageTitle, label = null, motd = null) {
+export function PAGE_TOP(pageTitle : string, label? : string, motd? : string) {
 	const TABLE_STYLE =
 		"<style>table {border-collapse: collapse;border: 1px solid black;} th, td {text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #f2f2f2;}	</style>";
 	const XML_STYLE = "<style>.xmlfont {font-family: Arial, Helvetica, sans-serif; font-size:90%;}</style>";
@@ -39,7 +40,7 @@ const BREAK = "<br/>",
 
 export const PAGE_BOTTOM = `${BREAK}${LINE}<p><i>Submit issues at </i><a href="${pkg?.bugs?.url}">${pkg?.bugs?.url}</a></p></body></html>`;
 
-function tabulateResults(source, res, error, errs) {
+function tabulateResults(source : string, res : express.Response, error : string, errs : ErrorList) {
 	const RESULT_WITH_INSTRUCTION = `${BREAK}<p><i>Results:</i> ${source}</p>`;
 	const SUMMARY_FORM_HEADER = "<table><tr><th>item</th><th>count</th></tr>";
 	const Dodger_Blue = "#1E90FF",
@@ -49,14 +50,14 @@ function tabulateResults(source, res, error, errs) {
 		var itemPos = document.getElementById(item).getBoundingClientRect();
 		window.scrollTo(window.scrollX+itemPos.x, window.scrollY+itemPos.y);
 	}</script>`;
-	let DETAIL_FORM_HEADER = (mode, colour = null) =>
+	let DETAIL_FORM_HEADER = (mode : string, colour? : string) =>
 		`${scrollFunc}<table ${colour ? ` style="color:${colour}"` : ""}><tr>${SHOW_LINE_NUMBER ? "<th>line</th>" : ""}<th>code</th><th>${mode}</th></tr>`;
 	let DESCRIPTION_TABLE_HEDER = () => `<table><tr><th>code</th><th>description</th></tr>`;
-	let DEBUG_FORM_HEADER = (mode) => `${scrollFunc}<table><tr><th>code</th><th>${mode}</th></tr>`;
+	let DEBUG_FORM_HEADER = (mode : string) => `${scrollFunc}<table><tr><th>code</th><th>${mode}</th></tr>`;
 
 	const TABLE_FOOTER = `</table>${BREAK}`;
 
-	function tabluateMessage(value) {
+	function tabluateMessage(value : logged_error) {
 		res.write("<tr>");
 		const anchor = Object.prototype.hasOwnProperty.call(value, "line") ? `line-${value.line}` : null;
 		if (SHOW_LINE_NUMBER) res.write(`<td>${Object.prototype.hasOwnProperty.call(value, "line") ? value.line : ""}</td>`);
@@ -71,7 +72,7 @@ function tabulateResults(source, res, error, errs) {
 	}
 
 	res.write(RESULT_WITH_INSTRUCTION);
-	if (error) res.write(`<p>${error.replace(/[\n]/g, (m) => ({ "\n": BREAK })[m])}</p>`);
+	if (error) res.write(`<p>${error.replace(/[\n]/g, (m) => ({ "\n" : BREAK })[m])}</p>`);
 	let resultsShown = false;
 	if (errs) {
 		res.write(`<style>span.${link_css} {} span.${link_css} {color: ${Dodger_Blue}; text-decoration: underline;} </style>`);
@@ -172,7 +173,7 @@ function tabulateResults(source, res, error, errs) {
 	}
 }
 
-export function drawForm(req, res, modes, supportedRequests, motd = null, error = null, errs = null) {
+export function drawForm(req : express.Request, res : express.Response, modes, supportedRequests, motd? : string, error? : string, errs? : ErrorList) {
 	const ENTRY_FORM_REQUEST_TYPE_ID = "requestType";
 
 	res.setHeader("Content-Type", "text/html");

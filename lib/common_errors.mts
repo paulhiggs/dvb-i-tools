@@ -7,7 +7,7 @@ import { tva } from "./TVA_definitions.mts";
 import { dvbi } from "./DVB-I_definitions.mts";
 import { WARNING } from "./error_list.mts";
 
-import type { XmlElement } from "libxml2-wasm";
+//import type { XmlElement } from "libxml2-wasm";
 
 export const keys = {
 	k_InvalidHRef: "invalid href",
@@ -44,7 +44,7 @@ export const keys = {
  * @param {string}      schemaLocation  The location in the schema of the element
  * @param {string}      errCode         The error number to show in the log
  */
-export let NoChildElement = (missingElement : string, parentElement : XmlElement, schemaLocation : string, errCode : string) => ({
+export let NoChildElement = (missingElement : string, parentElement : XmlElement, schemaLocation : string | undefined, errCode : string) => ({
 	code: errCode,
 	message: `${missingElement} element not specified for ${parentElement.name.elementize()}${schemaLocation ? " in " + schemaLocation : ""}`,
 	line: parentElement.line,
@@ -84,7 +84,7 @@ export let DeprecatedElement = (what : XmlElement, when: string, errCode : strin
 	type: WARNING,
 	code: errCode,
 	fragment: what,
-	message: `Element ${what.name.elementize()} in ${what.parent.name.elementize()} is deprecated since ${when}`,
+	message: `Element ${what.name.elementize()} ${what.parent ? `in ${what.parent.name.elementize()} ` : ""}is deprecated since ${when}`,
 	key: keys.k_DeprecatedElement,
 });
 
@@ -92,7 +92,7 @@ export let DeprecatedAttribute = (what : XmlElement, when : string, errCode : st
 	type: WARNING,
 	code: errCode,
 	fragment: what.parent,
-	message: `Attribute ${what.name.elementize(what.parent.name)} is deprecated since ${when}`,
+	message: `Attribute ${what.name.elementize(what.parent?.name)} is deprecated since ${when}`,
 	key: keys.k_DeprecatedAttribute,
 });
 

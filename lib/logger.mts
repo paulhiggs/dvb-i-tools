@@ -7,10 +7,12 @@ import { existsSync, writeFile } from "fs";
 import { join, sep } from "path";
 
 import chalk from "chalk";
+import express from "express";
 
+import ErrorList from "./error_list.mjs";
 import { MODE_URL, MODE_SL, MODE_SLR } from "./ui.mts";
 
-export function createPrefix(req) {
+export function createPrefix(req : express.Request) : string | null {
 	const logDir = join(".", "arch");
 
 	if (!existsSync(logDir)) return null;
@@ -20,7 +22,7 @@ export function createPrefix(req) {
 		return `${d.getFullYear()}-${fillZero(d.getMonth() + 1)}-${fillZero(d.getDate())} ${fillZero(d.getHours())}.${fillZero(d.getMinutes())}.${fillZero(d.getSeconds())}`;
 	};
 
-	const fname = req.body.doclocation == MODE_URL ? req.body.XMLurl.substr(req.body.XMLurl.lastIndexOf("/") + 1) : req?.files?.XMLfile?.name;
+	const fname = req.body.doclocation == MODE_URL ? req.body.XMLurl.substr(req.body.XMLurl.lastIndexOf("/") + 1) : req.files.XMLfile.name;
 	if (!fname) return null;
 
 	const mode = req.body.testtype == MODE_SL ? "SL" : req.body.testtype == MODE_SLR ? "SLR" : req.body.requestType;
@@ -28,7 +30,7 @@ export function createPrefix(req) {
 	return `${logDir}${sep}${getDate(new Date())} (${mode}) ${fname.replace(/[/\\?%*:|"<>]/g, "-")}`;
 }
 
-export default function writeOut(errs, filebase, markup : boolean, req = null) {
+export default function writeOut(errs : ErrorList, filebase : string | null, markup : boolean, req? : express.Request) : void {
 	if (!filebase || errs.markupXML?.length == 0) return;
 
 	let outputLines = [];

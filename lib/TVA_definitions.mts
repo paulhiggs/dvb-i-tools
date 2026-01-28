@@ -322,6 +322,19 @@ export const tvaEC = {
 		tva.e_Duration,
 		tva.e_PurchaseList,
 	],
+	BroadcastEvent: [
+		tva.e_PublishedStartTime,
+		tva.e_PublishedEndTime,
+		tva.e_PublishedDuration,
+		tva.e_ActualStartTime,
+		tva.e_ActualEndTime,
+		tva.e_ActualDuration,
+		tva.e_DeliveryMode,
+		tva.e_Repeat,
+		tva.e_FirstShowing,
+		tva.e_LastShowing,
+		tva.e_Free,
+	].concat(ProgramLocationType),
 	DialogEnhancementAttributes: [tva.e_AudioAttributes].concat(BaseAccessibilityAttributesType),
 	Format: [tva.e_AVAttributes, tva.e_StillPictureFormat],
 	GroupInformation: [tva.e_GroupType, tva.e_BasicDescription, tva.e_MemberOf, tva.e_OtherIdentifier, tva.e_PartOfAggregatedGroup, tva.e_AggregationOf],
@@ -410,4 +423,3 @@ export const tvaEC = {
 	SubtitleAttributes: [tva.e_Carriage, tva.e_Coding, tva.e_SubtitleLanguage, tva.e_Purpose, tva.e_SuitableForTTS].concat(BaseAccessibilityAttributesType),
 	VideoAttributes: [tva.e_Coding, tva.e_Scan, tva.e_HorizontalSize, tva.e_VerticalSize, tva.e_AspectRatio, tva.e_Color, tva.e_FrameRate, tva.e_BitRate, tva.e_BitsPerSample],
 };
-tvaEC.BroadcastEvent = tvaEC.ScheduleEvent;

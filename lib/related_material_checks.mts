@@ -3,14 +3,15 @@
  *
  * Checks performed in <RelatedMaterial> elements for based on their use in DVB-I
  */
-import { Array_extension_init } from "./Array-extensions.mts";
-Array_extension_init();
+//import { Array_extension_init } from "./Array-extensions.mts";
+//Array_extension_init();
 
 import { mpeg7 } from "./MPEG7_definitions.mts";
 import { tva, tvaEA, tvaEC } from "./TVA_definitions.mts";
 import { dvbi, dvbiEA } from "./DVB-I_definitions.mts";
 
 import { APPLICATION, WARNING } from "./error_list.mts";
+import ErrorList from "./error_list.mts";
 import { checkLanguage } from "./multilingual_element.mts";
 import { checkAttributes, checkTopElementsAndCardinality } from "./schema_checks.mts";
 import { isJPEGmime, isPNGmime, validImageSet, isAllowedImageMime } from "./MIME_checks.mts";
@@ -27,9 +28,9 @@ import { cg_InvalidHrefValue, InvalidURL, keys } from "./common_errors.mts";
  * @param {ErrorList}  errs              The class where errors and warnings relating to the serivce list processing are stored
  * @param {String}     errcode           Error code prefix for reporting
  */
-function validateImageRelatedMaterial(RelatedMaterial, location, allowedHowRelated, errs, errCode) {
-	if (!RelatedMaterial) {
-		errs.addError({ type: APPLICATION, code: "PS000", message: "validateImageRelatedMaterial() called with RelatedMaterial==null" });
+function validateImageRelatedMaterial(RelatedMaterial : XmlElement, location : string, allowedHowRelated : Array<string>, errs : ErrorList, errCode : string) {
+	if (RelatedMaterial.name != tva.e_RelatedMaterial) {
+		errs.addError({ type: APPLICATION, code: "PS000", message: `validateImageRelatedMaterial() called with ${RelatedMaterial.name} not ${tva.e_RelatedMaterial}` });
 		return;
 	}
 
@@ -42,11 +43,11 @@ function validateImageRelatedMaterial(RelatedMaterial, location, allowedHowRelat
 		`${errCode}-1`
 	);
 
-	let HowRelated = null,
-		Format = null,
-		MediaLocator = null;
+	let HowRelated : XmlElement | null = null,
+		Format : XmlElement | null = null,
+		MediaLocator : XmlElement | null = null;
 	// just use the first instance of any specified element
-	RelatedMaterial.childNodes().forEachSubElement((child) => {
+	RelatedMaterial.forEachSubElement((child) => {
 		switch (child.name) {
 			case tva.e_HowRelated:
 				if (!HowRelated) HowRelated = child;
@@ -63,7 +64,7 @@ function validateImageRelatedMaterial(RelatedMaterial, location, allowedHowRelat
 	if (!HowRelated || !MediaLocator) return;
 	checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, `${errCode}-2`);
 
-	const hrHref = HowRelated.attrAnyNsValueOr(tva.a_href, null);
+	const hrHref = (HowRelated as XmlElement).attrAnyNsValueOrNull(tva.a_href);
 	if (hrHref && !allowedHowRelated.includes(hrHref)) {
 		errs.addError({
 			code: `${errCode}-10`,
@@ -74,16 +75,16 @@ function validateImageRelatedMaterial(RelatedMaterial, location, allowedHowRelat
 		return;
 	}
 
-	let isJPEG = false,
-		isPNG = false,
-		StillPictureFormat = null;
+	let isJPEG : boolean = false,
+		isPNG : boolean = false,
+		StillPictureFormat : XmlElement | null = null;
 	if (Format) {
 		checkTopElementsAndCardinality(Format, [{ name: tva.e_StillPictureFormat }], tvaEC.Format, false, errs, `${errCode}-11`);
 		errs.errorDescription({code: `${errCode}-11`, description: "Only the StillPictureFormat sub-element is permitted.", clause: "A177 Table 59"});
-		Format.childNodes().forEachNamedSubElement(tva.e_StillPictureFormat, (StillPicture) => {
+		(Format as XmlElement).forEachNamedSubElement(tva.e_StillPictureFormat, (StillPicture) => {
 			StillPictureFormat = StillPicture;
 			checkAttributes(StillPicture, [tva.a_horizontalSize, tva.a_verticalSize, tva.a_href], [], tvaEA.StillPictureFormat, errs, `${errCode}-12`);
-			const childHref = StillPicture.attrAnyNsValueOr(tva.a_href, null);
+			const childHref = StillPicture.attrAnyNsValueOrNull(tva.a_href);
 			if (childHref)
 				switch (childHref) {
 					case mpeg7.JPEG_IMAGE_CS_VALUE:
@@ -93,7 +94,7 @@ function validateImageRelatedMaterial(RelatedMaterial, location, allowedHowRelat
 						isPNG = true;
 						break;
 					default:
-						cg_InvalidHrefValue(childHref.value, StillPicture, `${RelatedMaterial.name}.${tva.e_Format}.${tva.e_StillPictureFormat}`, location, errs, `${errCode}-13`);
+						errs.addError(cg_InvalidHrefValue(childHref, StillPicture, `${RelatedMaterial.name}.${tva.e_Format}.${tva.e_StillPictureFormat}`, `${errCode}-13`));
 				}
 		});
 	}
@@ -101,10 +102,10 @@ function validateImageRelatedMaterial(RelatedMaterial, location, allowedHowRelat
 	checkTopElementsAndCardinality(MediaLocator, [{ name: tva.e_MediaUri }], tvaEC.MediaLocator, false, errs, `${errCode}-21`);
 
 	let hasMediaURI = false;
-	MediaLocator.childNodes().forEachNamedSubElement(tva.e_MediaUri, (MediaUri) => {
+	(MediaLocator as XmlElement).forEachNamedSubElement(tva.e_MediaUri, (MediaUri) => {
 		hasMediaURI = true;
 		checkAttributes(MediaUri, [tva.a_contentType], [], tvaEA.MediaUri, errs, `${errCode}-22`);
-		const MediaUri_contentType = MediaUri.attrAnyNsValueOr(tva.a_contentType, null);
+		const MediaUri_contentType = MediaUri.attrAnyNsValueOrNull(tva.a_contentType);
 		if (MediaUri_contentType) {
 			if (!isAllowedImageMime(MediaUri_contentType))
 				errs.addError({
@@ -130,7 +131,9 @@ function validateImageRelatedMaterial(RelatedMaterial, location, allowedHowRelat
 				fragment: MediaUri,
 			});
 	});
-	if (MediaLocator.attrAnyNs(dvbi.a_contentLanguage)) checkLanguage(MediaLocator.attrAnyNs(dvbi.a_contentLanguage).value, MediaLocator, errs, `${errCode}-27`);
+	const MediaLocator_contentLanguage = (MediaLocator as XmlElement).attrAnyNsValueOrNull(dvbi.a_contentLanguage)
+	if (MediaLocator_contentLanguage) 
+		checkLanguage(MediaLocator_contentLanguage, MediaLocator, errs, `${errCode}-27`);
 	if (!hasMediaURI)
 		errs.addError({
 			code: `${errCode}-26`,
@@ -149,31 +152,31 @@ function validateImageRelatedMaterial(RelatedMaterial, location, allowedHowRelat
  * @param {ErrorList}  errs              The class where errors and warnings relating to the serivce list processing are stored
  * @param {String}     errcode           Error code prefix for reporting
  */
-export function ValidatePromotionalStillImage(RelatedMaterial, location, errs, errCode) {
+export function ValidatePromotionalStillImage(RelatedMaterial : XmlElement, location : string, errs : ErrorList, errCode : string) {
 	validateImageRelatedMaterial(RelatedMaterial, location, [tva.cs_PromotionalStillImage], errs, errCode);
 }
 
 /**
  * verifies if the images provided in <MediaLocator> elments are valid according to specification
  *
- * @param {XmlElement} Element            The <RelatedMaterial> element
+ * @param {XmlElement} RelatedMaterial    The <RelatedMaterial> element
  * @param {String}     location           The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
  * @param {ErrorList}  errs               The class where errors and warnings relating to the service list processing are stored
  * @param {String}     errCode            Error code prefix for reporting
  */
-export function checkValidLogos(RelatedMaterial, location, errs, errCode) {
+export function checkValidLogos(RelatedMaterial : XmlElement, location : string, errs : ErrorList, errCode : string) {
 	if (!RelatedMaterial) return;
 
-	let specifiedMediaTypes = [];
-	RelatedMaterial.childNodes().forEachNamedSubElement(tva.e_MediaLocator, (MediaLocator) => {
+	let specifiedMediaTypes : Array<string> = [];
+	RelatedMaterial.forEachNamedSubElement(tva.e_MediaLocator, (MediaLocator) => {
 		checkTopElementsAndCardinality(MediaLocator, [{ name: tva.e_MediaUri }], tvaEC.MediaLocator, false, errs, `${errCode}-1`);
 		checkAttributes(MediaLocator, [], [dvbi.a_contentLanguage], dvbiEA.MediaLocator, errs, `${errCode}-2`);
 
-		const MediaLocator_language = MediaLocator.attrAnyNsValueOr(dvbi.a_contentLanguage, null);
+		const MediaLocator_language = MediaLocator.attrAnyNsValueOrNull(dvbi.a_contentLanguage);
 		if (MediaLocator_language) checkLanguage(MediaLocator_language, MediaLocator, errs, `${errCode}-3`);
-		MediaLocator.childNodes().forEachNamedSubElement(tva.e_MediaUri, (MediaUri) => {
+		MediaLocator.forEachNamedSubElement(tva.e_MediaUri, (MediaUri) => {
 			checkAttributes(MediaUri, [tva.a_contentType], [], tvaEA.MediaUri, errs, `${errCode}-4`);
-			const MediaURI_contentType = MediaUri.attrAnyNsValueOr(tva.a_contentType, null);
+			const MediaURI_contentType = MediaUri.attrAnyNsValueOrNull(tva.a_contentType);
 			if (MediaURI_contentType) {
 				if (!isAllowedImageMime(MediaURI_contentType))
 					errs.addError({

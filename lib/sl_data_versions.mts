@@ -17,13 +17,23 @@ import { readmyfile } from "./utils.mts";
 
 const versionURNprefix = "urn:dvb:metadata:dvbi:standardversion";
 
-let SchemaVersions = [
+export type schema_version_info = {
+	namespace : string;
+	version : number;
+	filename : string;
+	schema?: XmlDocument;
+	status : number;
+	specVersion? : string;
+	URN? : string;
+};
+
+let SchemaVersions : Array<schema_version_info> = [
 	// schema property is loaded from specified filename
 	{
 		namespace: dvbi.A177r8_Namespace,
 		version: slVersions.r8,
 		filename: DVBI_ServiceListSchema.r8.file,
-		schema: null,
+		schema: undefined,
 		status: DRAFT,
 		specVersion: "A177r8",
 		URN: `${versionURNprefix}:${slVersions.r8}`,
@@ -32,7 +42,7 @@ let SchemaVersions = [
 		namespace: dvbi.A177r7_Namespace,
 		version: slVersions.r7,
 		filename: DVBI_ServiceListSchema.r7.file,
-		schema: null,
+		schema: undefined,
 		status: CURRENT,
 		specVersion: "A177r7",
 		URN: `${versionURNprefix}:${slVersions.r7}`,
@@ -41,7 +51,7 @@ let SchemaVersions = [
 		namespace: dvbi.A177r6_Namespace,
 		version: slVersions.r6,
 		filename: DVBI_ServiceListSchema.r6.file,
-		schema: null,
+		schema: undefined,
 		status: OLD,
 		specVersion: "A177r6",
 		URN: `${versionURNprefix}:${slVersions.r6}`,
@@ -50,7 +60,7 @@ let SchemaVersions = [
 		namespace: dvbi.A177r5_Namespace,
 		version: slVersions.r5,
 		filename: DVBI_ServiceListSchema.r5.file,
-		schema: null,
+		schema: undefined,
 		status: OLD,
 		specVersion: "A177r5",
 	},
@@ -58,7 +68,7 @@ let SchemaVersions = [
 		namespace: dvbi.A177r4_Namespace,
 		version: slVersions.r4,
 		filename: DVBI_ServiceListSchema.r4.file,
-		schema: null,
+		schema: undefined,
 		status: OLD,
 		specVersion: "A177r4",
 	},
@@ -66,7 +76,7 @@ let SchemaVersions = [
 		namespace: dvbi.A177r3_Namespace,
 		version: slVersions.r3,
 		filename: DVBI_ServiceListSchema.r3.file,
-		schema: null,
+		schema: undefined,
 		status: OLD,
 		specVersion: "A177r3",
 	},
@@ -74,7 +84,7 @@ let SchemaVersions = [
 		namespace: dvbi.A177r2_Namespace,
 		version: slVersions.r2,
 		filename: DVBI_ServiceListSchema.r2.file,
-		schema: null,
+		schema: undefined,
 		status: OLD,
 		specVersion: "A177r2",
 	},
@@ -82,7 +92,7 @@ let SchemaVersions = [
 		namespace: dvbi.A177r1_Namespace,
 		version: slVersions.r1,
 		filename: DVBI_ServiceListSchema.r1.file,
-		schema: null,
+		schema: undefined,
 		status: ETSI,
 		specVersion: "A177r1",
 	},
@@ -90,13 +100,18 @@ let SchemaVersions = [
 		namespace: dvbi.A177_Namespace,
 		version: slVersions.r0,
 		filename: DVBI_ServiceListSchema.r0.file,
-		schema: null,
+		schema: undefined,
 		status: OLD,
 		specVersion: "A177",
 	},
 ];
 
-const OutOfScheduledHoursBanners = [
+type version_related_information = {
+	ver : number;
+	val : string;
+}
+
+const OutOfScheduledHoursBanners : Array<version_related_information> = [
 	{ ver: slVersions.r8, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
 	{ ver: slVersions.r7, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
 	{ ver: slVersions.r6, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v3 },
@@ -107,7 +122,7 @@ const OutOfScheduledHoursBanners = [
 	{ ver: slVersions.r1, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v2 },
 	{ ver: slVersions.r0, val: dvbi.BANNER_OUTSIDE_AVAILABILITY_v1 },
 ];
-const ContentFinishedBanners = [
+const ContentFinishedBanners : Array<version_related_information> = [
 	{ ver: slVersions.r8, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
 	{ ver: slVersions.r7, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
 	{ ver: slVersions.r6, val: dvbi.BANNER_CONTENT_FINISHED_v3 },
@@ -117,7 +132,7 @@ const ContentFinishedBanners = [
 	{ ver: slVersions.r2, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
 	{ ver: slVersions.r1, val: dvbi.BANNER_CONTENT_FINISHED_v2 },
 ];
-const ServiceListLogos = [
+const ServiceListLogos : Array<version_related_information> = [
 	{ ver: slVersions.r8, val: dvbi.LOGO_SERVICE_LIST_v3 },
 	{ ver: slVersions.r7, val: dvbi.LOGO_SERVICE_LIST_v3 },
 	{ ver: slVersions.r6, val: dvbi.LOGO_SERVICE_LIST_v3 },
@@ -128,7 +143,7 @@ const ServiceListLogos = [
 	{ ver: slVersions.r1, val: dvbi.LOGO_SERVICE_LIST_v2 },
 	{ ver: slVersions.r0, val: dvbi.LOGO_SERVICE_LIST_v1 },
 ];
-const ServiceLogos = [
+const ServiceLogos : Array<version_related_information> = [
 	{ ver: slVersions.r8, val: dvbi.LOGO_SERVICE_v3 },
 	{ ver: slVersions.r7, val: dvbi.LOGO_SERVICE_v3 },
 	{ ver: slVersions.r6, val: dvbi.LOGO_SERVICE_v3 },
@@ -139,7 +154,7 @@ const ServiceLogos = [
 	{ ver: slVersions.r1, val: dvbi.LOGO_SERVICE_v2 },
 	{ ver: slVersions.r0, val: dvbi.LOGO_SERVICE_v1 },
 ];
-const ServiceBanners = [
+const ServiceBanners : Array<version_related_information> = [
 	{ ver: slVersions.r8, val: dvbi.SERVICE_BANNER_v4 },
 	{ ver: slVersions.r7, val: dvbi.SERVICE_BANNER_v4 },
 	{ ver: slVersions.r6, val: dvbi.SERVICE_BANNER_v4 },
@@ -148,7 +163,7 @@ const ServiceBanners = [
 	{ ver: slVersions.r3, val: dvbi.SERVICE_BANNER_v4 },
 	{ ver: slVersions.r2, val: dvbi.SERVICE_BANNER_v4 },
 ];
-const ContentGuideSourceLogos = [
+const ContentGuideSourceLogos : Array<version_related_information> = [
 	{ ver: slVersions.r8, val: dvbi.LOGO_CG_PROVIDER_v3 },
 	{ ver: slVersions.r7, val: dvbi.LOGO_CG_PROVIDER_v3 },
 	{ ver: slVersions.r6, val: dvbi.LOGO_CG_PROVIDER_v3 },
@@ -177,7 +192,7 @@ export let SL_SchemaVersion = (namespace : string) : number => {
  * @param {number} version     The specification version used in defining the schema
  * @returns {string} Version of the DVB A177 specification where namespace is defined
  */
-export let SchemaSpecVersion = (version : number) => {
+export let SchemaSpecVersion = (version : number) : string=> {
 	const x = SchemaVersions.find((ver) => ver.version == version);
 	return x ? x.specVersion : `r(${version})`;
 };
@@ -233,7 +248,7 @@ export let validServiceUnavailableApplication = (hrefType : string) : boolean =>
  * @param {String} contentType  The contentType for the file
  * @returns {boolean} true if this is a valid MPD or playlist identifier
  */
-export let validDASHcontentType = (contentType) => [dvbi.CONTENT_TYPE_DASH_MPD, dvbi.CONTENT_TYPE_DVB_PLAYLIST].includes(contentType);
+export let validDASHcontentType = (contentType : string) : boolean => [dvbi.CONTENT_TYPE_DASH_MPD, dvbi.CONTENT_TYPE_DVB_PLAYLIST].includes(contentType);
 
 /**
  * looks for the {version, value} pair within the array of permitted values
@@ -243,12 +258,12 @@ export let validDASHcontentType = (contentType) => [dvbi.CONTENT_TYPE_DASH_MPD, 
  * @param {number} version         value to match with ver: in the allowed values
  * @returns {boolean} true if {version, value} pair exists in the list of allowed values when namespace is specific, else false
  */
-function match(permittedValues : Array<string>, value : string, version : number) : boolean {
+function match(permittedValues : Array<version_related_information>, value : string, version : string) : boolean {
 	if (permittedValues && value) {
 		let _ver = SL_SchemaVersion(version);
 		if (_ver == slVersions.unknown) _ver = SLR_SchemaVersion(version);
 		const i = permittedValues.find((elem) => elem.ver == _ver);
-		return i && i.val == value;
+		return i != undefined && i.val == value;
 	}
 	return false;
 }
@@ -259,9 +274,9 @@ function match(permittedValues : Array<string>, value : string, version : number
  * @param {XmlElement} HowRelated  The banner identifier
  * @returns {boolean} true if this is a valid banner for out-of-servce-hours presentation (A177 5.2.5.3) else false
  */
-export let validOutScheduleHours = (HowRelated : XmlElement) : boolean => match(OutOfScheduledHoursBanners, HowRelated.attrAnyNsValueOr(dvbi.a_href, null), HowRelated.documentNamespace());
+export let validOutScheduleHours = (HowRelated : XmlElement) : boolean => match(OutOfScheduledHoursBanners, HowRelated.attrAnyNsValueOr(dvbi.a_href, ""), HowRelated.documentNamespace());
 
-export let isOutScheduleHours = (HowRelated : XmlElement) : boolean => HowRelated.attrAnyNsValueOr(dvbi.a_href, "none").endsWith(OUTSIDE_AVAILABILITY_TERM);
+export let isOutScheduleHours = (HowRelated : XmlElement) : boolean => HowRelated.attrAnyNsValueOr(dvbi.a_href, "").endsWith(OUTSIDE_AVAILABILITY_TERM);
 
 /**
  * determines if the identifer provided refers to a valid banner for content-finished presentation
@@ -270,9 +285,9 @@ export let isOutScheduleHours = (HowRelated : XmlElement) : boolean => HowRelate
  * @param {XmlElement} HowRelated  The banner identifier
  * @returns {boolean} true if this is a valid banner for content-finished presentation (A177 5.2.7.3) else false
  */
-export let validContentFinishedBanner = (HowRelated : XmlElement) : boolean => match(ContentFinishedBanners, HowRelated.attrAnyNsValueOr(dvbi.a_href, null), HowRelated.documentNamespace());
+export let validContentFinishedBanner = (HowRelated : XmlElement) : boolean => match(ContentFinishedBanners, HowRelated.attrAnyNsValueOr(dvbi.a_href, ""), HowRelated.documentNamespace());
 
-export let isContentFinishedBanner = (HowRelated : XmlElement) : boolean => HowRelated.attrAnyNsValueOr(dvbi.a_href, "none").endsWith(CONTENT_FINISHED_TERM);
+export let isContentFinishedBanner = (HowRelated : XmlElement) : boolean => HowRelated.attrAnyNsValueOr(dvbi.a_href, "").endsWith(CONTENT_FINISHED_TERM);
 
 /**
  * determines if the identifer provided refers to a valid service list logo
@@ -280,7 +295,7 @@ export let isContentFinishedBanner = (HowRelated : XmlElement) : boolean => HowR
  * @param {XmlElement} HowRelated  The logo identifier
  * @returns {boolean} true if this is a valid logo for a service list (A177 5.2.6.1) else false
  */
-export let validServiceListLogo = (HowRelated : XmlElement) : boolean => match(ServiceListLogos, HowRelated.attrAnyNsValueOr(dvbi.a_href, null), HowRelated.documentNamespace());
+export let validServiceListLogo = (HowRelated : XmlElement) : boolean => match(ServiceListLogos, HowRelated.attrAnyNsValueOr(dvbi.a_href, ""), HowRelated.documentNamespace());
 
 /**
  * determines if the identifer provided refers to a valid service logo
@@ -288,7 +303,7 @@ export let validServiceListLogo = (HowRelated : XmlElement) : boolean => match(S
  * @param {XmlElement} HowRelated  The logo identifier
  * @returns {boolean} true if this is a valid logo for a service (A177 5.2.6.2) else false
  */
-export let validServiceLogo = (HowRelated : XmlElement) : boolean => match(ServiceLogos, HowRelated.attrAnyNsValueOr(dvbi.a_href, null), HowRelated.documentNamespace());
+export let validServiceLogo = (HowRelated : XmlElement) : boolean => match(ServiceLogos, HowRelated.attrAnyNsValueOr(dvbi.a_href, ""), HowRelated.documentNamespace());
 
 /**
  * determines if the identifer provided refers to a valid service banner
@@ -296,7 +311,7 @@ export let validServiceLogo = (HowRelated : XmlElement) : boolean => match(Servi
  * @param {XmlElement} HowRelated  The logo identifier
  * @returns {boolean} true if this is a valid banner for a service (A177 5.2.6.4) else false
  */
-export let validServiceBanner = (HowRelated : XmlElement) : boolean => match(ServiceBanners, HowRelated.attrAnyNsValueOr(dvbi.a_href, null), HowRelated.documentNamespace());
+export let validServiceBanner = (HowRelated : XmlElement) : boolean => match(ServiceBanners, HowRelated.attrAnyNsValueOr(dvbi.a_href, ""), HowRelated.documentNamespace());
 
 /**
  * determines if the identifer provided refers to a valid content guide source logo
@@ -304,7 +319,7 @@ export let validServiceBanner = (HowRelated : XmlElement) : boolean => match(Ser
  * @param {XmlElement} HowRelated  The logo identifier
  * @returns {boolean} true if this is a valid logo for a content guide source (A177 5.2.6.3) else false
  */
-export let validContentGuideSourceLogo = (HowRelated ; XmlElement) : boolean => match(ContentGuideSourceLogos, HowRelated.attrAnyNsValueOr(dvbi.a_href, null), HowRelated.documentNamespace());
+export let validContentGuideSourceLogo = (HowRelated : XmlElement) : boolean => match(ContentGuideSourceLogos, HowRelated.attrAnyNsValueOr(dvbi.a_href, ""), HowRelated.documentNamespace());
 
 /**
  * determines if the identifer provided refers to a validconsent application type
@@ -325,7 +340,7 @@ let validAgreementApplication = (hrefType : string, schemaVersion : number) : bo
  * @returns {boolean} true if this is a valid agreement app (A177 5.2.3.6) else false
  */
 export function validServiceAgreementApp(HowRelated : XmlElement) : boolean {
-	const HRhref = HowRelated.attrAnyNsValueOr(dvbi.a_href, null);
+	const HRhref = HowRelated.attrAnyNsValueOrNull(dvbi.a_href);
 	return HRhref ? validAgreementApplication(HRhref, SL_SchemaVersion(HowRelated.documentNamespace())) : false;
 }
 
