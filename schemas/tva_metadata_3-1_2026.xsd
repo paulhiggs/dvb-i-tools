@@ -6,7 +6,7 @@
 	<!ENTITY digest_algorithm "[a-z][a-z0-9-]*">
 	<!ENTITY digest "&digest_algorithm;=:&digest_value;:">
 ]>
-<schema targetNamespace="urn:tva:metadata:2024" xmlns:tva="urn:tva:metadata:2024" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:xmldsig="http://www.w3.org/2000/09/xmldsig#" xmlns="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<schema targetNamespace="urn:tva:metadata:2026" xmlns:tva="urn:tva:metadata:2026" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:xmldsig="http://www.w3.org/2000/09/xmldsig#" xmlns="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<annotation>
 		<documentation xml:lang="en">This schema consists of datatypes that are normatively defined in ETSI TS 102 822-3-1 v1.13.1</documentation>
 	</annotation>
