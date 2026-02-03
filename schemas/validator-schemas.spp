@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+	<Folder FolderName="XML Files" ExtStr="xml;cml;math;rdf;smil;svg;wml"/>
+	<Folder FolderName="XSL Files" ExtStr="xsl;xslt"/>
+	<Folder FolderName="XQuery Files" ExtStr="xq;xql;xquery;xqu"/>
+	<Folder FolderName="HTML Files" ExtStr="html;htm;xhtml;asp"/>
+	<Folder FolderName="DTD/Schemas" ExtStr="dtd;dcd;xdr;biz;xsd">
+		<Folder FolderName="imports">
+			<File FilePath="tva_mpeg7.xsd" HomeFolder="Yes"/>
+			<File FilePath="xml.xsd" HomeFolder="Yes"/>
+		</Folder>
+		<File FilePath="dvbi_service_list_discovery_v1.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_service_list_discovery_v1.1.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_service_list_discovery_v1.2.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_service_list_discovery_v1.3.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_service_list_discovery_v1.4.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_service_list_discovery_v1.5.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_service_list_discovery_v1.6.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_service_list_discovery_v1.7.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_types_v1.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_types_v1.1.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_v1.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_v2.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_v3.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_v3.1.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_v4.0-with-hls-hbbtv.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_v4.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_v5.0-with-hls-hbbtv.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_v5.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_v6.0-with-hls-hbbtv.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_v6.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_v7.0-with-hls-hbbtv.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_v7.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_v8.0-with-hls-hbbtv.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_v8.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="hbbtv-ext-4.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="hbbtv-ext-5.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="hbbtv-ext-6.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="hbbtv-ext-7.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="hbbtv-ext-8.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="hls-url-4.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="hls-url-5.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="hls-url-6.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="hls-url-7.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="hls-url-8.0.xsd" HomeFolder="Yes"/>
+		<File FilePath="tva_metadata_3-1_2019.xsd" HomeFolder="Yes"/>
+		<File FilePath="tva_metadata_3-1_2023.xsd" HomeFolder="Yes"/>
+		<File FilePath="tva_metadata_3-1_2024.xsd" HomeFolder="Yes"/>
+	</Folder>
+	<Folder FolderName="Entities" ExtStr="ent"/>
+</Project>

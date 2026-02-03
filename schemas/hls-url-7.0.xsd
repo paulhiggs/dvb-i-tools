@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="vnd:apple:mpegurl"
 	xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2025" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<import namespace="urn:dvb:metadata:servicediscovery-types:2025" schemaLocation="./dvbi-types_v1.1.xsd"/>
+	<import namespace="urn:dvb:metadata:servicediscovery-types:2025" schemaLocation="./dvbi_types_v1.1.xsd"/>
 	<complexType name="m3u8RefType">
 		<complexContent>
 			<extension base="dvbi-types:ExtensionBaseType">
