@@ -17,9 +17,9 @@
 	xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2026"
 	xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2025"
 	xmlns:mpeg7="urn:tva:mpeg7:2008"
-	xmlns:tva="urn:tva:metadata:2024" targetNamespace="urn:dvb:metadata:servicediscovery:2026" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	xmlns:tva="urn:tva:metadata:2026" targetNamespace="urn:dvb:metadata:servicediscovery:2026" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<import namespace="urn:dvb:metadata:servicediscovery-types:2025" schemaLocation="dvbi_types_v1.1.xsd"/>
-	<import namespace="urn:tva:metadata:2024" schemaLocation="./tva_metadata_3-1_2024.xsd"/>
+	<import namespace="urn:tva:metadata:2026" schemaLocation="./tva_metadata_3-1_2026.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="./tva_mpeg7.xsd"/>
 	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
 	<import namespace="vnd:apple:mpegurl" schemaLocation="hls-url-8.0.xsd"/>
