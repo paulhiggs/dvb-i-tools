@@ -900,7 +900,7 @@
 	</complexType>
 	<complexType name="ScheduleType">
 		<sequence>
-			<element name="ScheduleEvent" type="tva:ScheduleEventType" maxOccurs="unbounded"/>
+			<element name="ScheduleEvent" type="tva:ScheduleEventType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 		<attribute name="serviceIDRef" type="tva:TVAIDRefsType" use="required"/>
 		<attribute name="start" type="dateTime"/>
