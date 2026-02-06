@@ -24,7 +24,7 @@ Note that these values are case sensitive, and a case sensitive matching is perf
 
 ### Installation
 
-1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
+1. Clone this repository `git clone https://github.com/paulhiggs/dvb-i-tools.git`
 1. Install necessary libraries (express, libxmljs, morgan) `npm install`
 
 ### Operation
@@ -123,7 +123,7 @@ Validates the value space of the instance document
 
 #### node.js
 
-1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
+1. Clone this repository `git clone https://github.com/paulhiggs/dvb-i-tools.git`
 1. Install necessary libraries (express, libxmljs, morgan) `npm install`
 1. run it - `node all-in-one [--urls] [--port 3030] [--sport 3031]`
 
@@ -133,7 +133,7 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 
 #### Docker
 
-1. Clone this repository `git clone --recurse-submodules https://github.com/paulhiggs/dvb-i-tools.git`
+1. Clone this repository `git clone  https://github.com/paulhiggs/dvb-i-tools.git`
 1. run it - `docker compose up`
 
 ### Command Line Arguments

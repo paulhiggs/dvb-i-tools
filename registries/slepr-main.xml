@@ -253,12 +253,12 @@ data:image/jpeg;base64,w7/DmMO/w6AAEEpGSUYAAQEBAMKoAMKoAADDv8ObAEMAAgEBAgEBAgICA
 				<tva:HowRelated href="urn:dvb:metadata:cs:HowRelatedCS:2021:1001.1"/>
 				<tva:MediaLocator>
 					<tva:MediaUri contentType="image/jpeg">
-					  https://github.com/paulhiggs/phlib/blob/e7ea54d8f82fec95899d954ed7fb9f933ae8f342/ph-icon.jpg
+					  https://raw.githubusercontent.com/paulhiggs/dvb-i-tools/refs/heads/main/ph-icon.jpg
 					</tva:MediaUri>
 				</tva:MediaLocator>
 				<tva:MediaLocator>
 					<tva:MediaUri contentType="image/png">
-					  https://github.com/paulhiggs/phlib/blob/e7ea54d8f82fec95899d954ed7fb9f933ae8f342/ph-icon.png
+					  https://raw.githubusercontent.com/paulhiggs/dvb-i-tools/refs/heads/main/ph-icon.png
 					</tva:MediaUri>
 				</tva:MediaLocator>
 			</dvbi-types:RelatedMaterial>
