@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools",
-	"version": "1.8.69",
+	"version": "1.8.70",
 	"description": "DVB-I V&V Tools - up to A177r8",
 	"main": "all-in-one.js",
 	"type": "module",
@@ -20,7 +20,7 @@
 		"express-session": "^1.19.0",
 		"libxml2-wasm": "^0.6.0",
 		"morgan": "^1.10.1",
-		"qs": "^6.14.2",
+		"qs": "^6.15.0",
 		"serve-favicon": "^2.5.1",
 		"sync-fetch": "^0.6.0",
 		"xml-formatter": "^3.6.7"
@@ -37,9 +37,9 @@
 		"url": "https://github.com/paulhiggs/dvb-i-tools"
 	},
 	"devDependencies": {
-		"@eslint/js": "^9.39.2",
-		"eslint": "^9.39.0",
-		"globals": "^17.2.0",
+		"@eslint/js": "^10.0.1",
+		"eslint": "^10.0.0",
+		"globals": "^17.3.0",
 		"prettier": "^3.8.1"
 	}
 }

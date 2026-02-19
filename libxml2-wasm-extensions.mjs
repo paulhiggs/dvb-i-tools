@@ -31,35 +31,6 @@ if (!XmlElement.prototype.attrAnyNsValueOr) {
 	};
 }
 
-if (!XmlElement.prototype.childNodes) {
-	XmlElement.prototype.childNodes = function () {
-		if (this == null) {
-			throw new TypeError("XmlElement.prototype.childNodes called on null or undefined");
-		}
-		let res = [];
-		let child = this.firstChild;
-		while (child) {
-			if (child instanceof XmlElement) res.push(child);
-			child = child.next;
-		}
-		return res;
-	};
-}
-
-if (!XmlDocument.prototype.childNodes) {
-	XmlDocument.prototype.childNodes = function () {
-		if (this == null) {
-			throw new TypeError("XmlDocument.prototype.childNodes called on null or undefined");
-		}
-		let res = [];
-		let child = this.root.firstChild;
-		while (child) {
-			if (child instanceof XmlElement) res.push(child);
-			child = child.next;
-		}
-		return res;
-	};
-}
 
 if (!XmlElement.prototype.getAnyNs) {
 	XmlElement.prototype.getAnyNs = function (_name, _index = 1) {
@@ -81,6 +52,7 @@ if (!XmlElement.prototype.getAnyNs) {
 	};
 }
 
+
 if (!XmlElement.prototype.hasChild) {
 	XmlElement.prototype.hasChild = function (_childName) {
 		if (this == null) {
@@ -97,6 +69,103 @@ if (!XmlElement.prototype.hasChild) {
 		return false;
 	};
 }
+
+
+if (!XmlElement.prototype.hasChilden) {
+	XmlElement.prototype.hasChildren = function () {
+		if (this == null) {
+			throw new TypeError("XmlDocument.prototype.hasChilden called on null or undefined");
+		}
+		let child = this?.firstChild;
+		while (child) {
+			if (child instanceof XmlElement) return true;
+			child = child.next;
+		}
+		return false;
+	};
+}
+
+
+if (!XmlElement.prototype.forEachChildElement) {
+	XmlElement.prototype.forEachChildElement = function (func) {
+		if (this == null) {
+			throw new TypeError("XmlElement.prototype.forEachChildElement called on null or undefined");
+		}
+		let child = this?.firstChild;
+		while (child) {
+			if (child instanceof XmlElement) 
+				func(child);
+			child = child.next;
+		}
+	}
+}
+
+
+if (!XmlElement.prototype.forEachNamedChildElement) {
+	XmlElement.prototype.forEachNamedChildElement = function (name, func) {
+		if (this == null) {
+			throw new TypeError("XmlElement.prototype.forEachNamedChildElement called on null or undefined");
+		}
+		if (!name) {
+			throw new Error("XmlElement.prototype.forEachNamedChildElement called without name");
+		}
+		let child = this?.firstChild;
+		while (child) {
+			if (child instanceof XmlElement && (Array.isArray(name) ? name.includes(child.name) : child.name == name)) 
+				func(child);
+			child = child.next;
+		}
+	}
+}
+
+
+if (!XmlDocument.prototype.hasChilden) {
+	XmlDocument.prototype.hasChildren = function () {
+		if (this == null) {
+			throw new TypeError("XmlDocument.prototype.hasChilden called on null or undefined");
+		}
+		let child = this?.root.firstChild;
+		while (child) {
+			if (child instanceof XmlElement) return true;
+			child = child.next;
+		}
+		return false;
+	};
+}
+
+
+if (!XmlDocument.prototype.forEachChildElement) {
+	XmlDocument.prototype.forEachChildElement = function (func) {
+		if (this == null) {
+			throw new TypeError("XmlDocument.prototype.forEachChildElement called on null or undefined");
+		}
+		let child = this?.firstChild;
+		while (child) {
+			if (child instanceof XmlElement) 
+				func(child);
+			child = child.next;
+		}
+	}
+}
+
+
+if (!XmlDocument.prototype.forEachNamedChildElement) {
+	XmlDocument.prototype.forEachNamedChildElement = function (name, func) {
+		if (this == null) {
+			throw new TypeError("XmlDocument.prototype.forEachNamedChildElement called on null or undefined");
+		}
+		if (!name) {
+			throw new Error("XmlDocument.prototype.forEachNamedChildElement called without name");
+		}
+		let child = this?.root.firstChild;
+		while (child) {
+			if (child instanceof XmlElement && (Array.isArray(name) ? name.includes(child.name) : child.name == name)) 
+				func(child);
+			child = child.next;
+		}
+	}
+}
+
 
 if (!XmlElement.prototype.documentNamespace) {
 	XmlElement.prototype.documentNamespace = function () {
