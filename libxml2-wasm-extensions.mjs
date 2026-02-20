@@ -177,4 +177,31 @@ if (!XmlElement.prototype.documentNamespace) {
 	};
 }
 
+
+if (!XmlElement.prototype.countChildElements) {
+	XmlElement.prototype.countChildElements = function (childElementName) {
+		if (this == null) {
+			throw new TypeError("XmlElement.prototype.countChildElements called on null or undefined");
+		}
+		let r = 0;
+		this?.forEachNamedChildElement(childElementName, (/* eslint-disable no-unused-vars*/ elem /* eslint-enable */) => r++);
+		return r;
+	}
+}
+
+/**
+ * counts the number of named elements in the specificed node
+ * *
+ * @param {XmlElement} node             the libxmljs node to check
+ * @param {String}     childElementName the name of the child element to count
+ * @returns {integer} the number of named child elments
+ */
+export function CountChildElements(node, childElementName) {
+	let r = 0;
+	node?.forEachNamedChildElement(childElementName, (/* eslint-disable no-unused-vars*/ elem /* eslint-enable */) => {
+		r++;
+	});
+	return r;
+}
+
 export let Libxml2_wasm_init = () => {};
