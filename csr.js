@@ -31,12 +31,13 @@ import { readmyfile } from "./lib/utils.mjs";
 import IANAlanguages from "./lib/IANA_languages.mjs";
 import ISOcountries from "./lib/ISO_countries.mjs";
 import ClassificationScheme from "./lib/classification_scheme.mjs";
+import { __dirname } from "./lib/data_locations.mjs";
 
 const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
 
 const numCPUs = cpus().length;
-const pkg = JSON.parse(readFileSync("package.json", { encoding: "utf-8" }).toString());
+const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), { encoding: "utf-8" }).toString());
 
 // SLEPR == Service List Entry Point Registry
 import SLEPR from "./lib/slepr.mjs";
