@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools",
-	"version": "1.8.71",
+	"version": "1.8.72",
 	"description": "DVB-I V&V Tools - up to A177r8",
 	"main": "all-in-one.js",
 	"type": "module",
@@ -30,7 +30,9 @@
 		"npm": ">= 10.8.1"
 	},
 	"scripts": {
-		"start": "node all-in-one.js"
+		"start": "node all-in-one.js",
+		"lint": "eslint . ",
+		"lint:fix": "eslint . --fix "
 	},
 	"repository": {
 		"type": "git",
@@ -38,8 +40,9 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
-		"eslint": "^10.0.0",
-		"globals": "^17.3.0",
-		"prettier": "^3.8.1"
+		"eslint": "^10.0.2",
+		"globals": "^17.4.0",
+		"prettier": "^3.8.1",
+		"typescript-eslint": "^8.56.1"
 	}
 }

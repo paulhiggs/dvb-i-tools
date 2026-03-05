@@ -114,7 +114,8 @@ const commandLineHelp = [
 let options = null;
 try {
 	options = commandLineArgs(optionDefinitions);
-} catch (/* eslint-disable no-unused-vars*/ err /* eslint-enable */) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+} catch (err) {
 	console.log(commandLineUsage(commandLineHelp));
 	process.exit(1);
 }
@@ -170,12 +171,14 @@ if (cluster.isPrimary) {
 		cluster.fork();
 	}
 
-	cluster.on("exit", (worker, /* eslint-disable no-unused-vars*/ code, signal /* eslint-enable */) => {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	cluster.on("exit", (worker, code, signal) => {
 		console.log(chalk.red(`worker ${worker.process.pid} died`));
 		console.log(chalk.red("Let's fork another worker!"));
 		cluster.fork();
 	});
-	cluster.on("message", (worker, msg, /* eslint-disable no-unused-vars*/ handle /* eslint-enable */) => {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	cluster.on("message", (worker, msg, handle) => {
 		if (msg.topic)
 			switch (msg.topic) {
 				case RELOAD:
@@ -192,6 +195,7 @@ if (cluster.isPrimary) {
 					metrics.numFailed++;
 					break;
 				case STATS:
+					// eslint-disable-next-line no-case-declarations
 					let kl = {};
 					knownLanguages.stats(kl);
 					console.log(`knownLanguages.length=${kl.numLanguages}`);
