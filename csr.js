@@ -43,6 +43,7 @@ const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), { encoding:
 import SLEPR from "./lib/slepr.mjs";
 
 import { DEFAULT_PROCESSING, SLR_Processing_Modes } from "./lib/slepr.mjs";
+import { init_spam_blocker } from "./lib/spam_disruptions.mjs";
 
 // command line options
 const optionDefinitions = [
@@ -63,7 +64,7 @@ const optionDefinitions = [
 		type: String,
 		defaultValue: "library",
 		typeLabel: "{underline mode}",
-		description: `type of CORS handling "${CORSlibrary}" (default), "${CORSmanual}" or "${CORSnone}"`,
+		description: `type of CORS handling ${CORSlibrary.quote()} (default), ${CORSmanual.quote()} or ${CORSnone.quote()}`,
 	},
 	{ name: "workers", alias: "w", type: Number, defaultValue: numCPUs, description: "The number of worker threads to spawn" },
 	{
@@ -73,6 +74,7 @@ const optionDefinitions = [
 		typeLabel: "{underline mode}",
 		description: `The type of processing for the SLR response [${SLR_Processing_Modes.join(",")}]`,
 	},
+	{ name: "spam_blocker", alias: "b", type: Boolean, defaultValue: false, description: "enable frustrator for network scanners"},
 	{ name: "help", alias: "h", type: Boolean, defaultValue: false, description: "This help" },
 ];
 
@@ -127,7 +129,7 @@ if (options.help) {
 }
 
 if (!CORSoptions.includes(options.CORSmode)) {
-	console.log(chalk.red(`CORSmode must be "${CORSnone}", "${CORSlibrary}" to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`));
+	console.log(chalk.red(`CORSmode must be ${CORSnone.quote()}, ${CORSlibrary.quote()} to use the Express cors() handler, or ${CORSmanual.quote()} to have headers inserted manually`));
 	process.exit(1);
 }
 
@@ -266,6 +268,10 @@ if (cluster.isPrimary) {
 		process.send({ topic: STATS });
 		res.status(404).end();
 	});
+
+	if (options.spam_blocker) {
+		init_spam_blocker(app);
+	}
 
 	app.get("{*splat}", (req, res) => {
 		res.status(404).end();
