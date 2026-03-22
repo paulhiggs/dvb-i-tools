@@ -226,8 +226,10 @@ if (cluster.isPrimary) {
 		return res?.varyOn?.size > 0 ? `vary(${[...res.varyOn].join(",")})` : "-";
 	});
 	token("parseErr", (req) => {
-		if (req.parseErr?.length > 0) return `(query errors=${req.parseErr.length})`;
-		return "";
+		return (req.parseErr?.length > 0) ? `(query errors=${req.parseErr.length})` : "";
+	});
+	token("redirect", (req, res) => {
+		return [301,302].includes(res.statusCode) ? `redirect(${req.socket.remoteFamily} - ${req._remoteAddress}` : "";
 	});
 
 	const SLEPR_query_route = "/query",
@@ -251,7 +253,7 @@ if (cluster.isPrimary) {
 	}
 	let csr = new SLEPR(options.urls, options.SLRmode, knownLanguages, knownCountries, knownGenres);
 	csr.loadServiceListRegistry(options.CSRfile);
-	app.use(morgan(":pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr"));
+	app.use(morgan(":pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr :vary :redirect"));
 	app.use(favicon(join("icon", "ph-icon.ico")));
 	if (options.CORSmode == CORSlibrary) app.options(SLEPR_query_route, cors());
 	else if (options.CORSmode == CORSmanual) app.options(SLEPR_query_route, manualCORS);
