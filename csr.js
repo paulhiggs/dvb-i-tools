@@ -229,7 +229,7 @@ if (cluster.isPrimary) {
 		return (req.parseErr?.length > 0) ? `(query errors=${req.parseErr.length})` : "";
 	});
 	token("redirect", (req, res) => {
-		return [301,302].includes(res.statusCode) ? `redirect(${req.socket.remoteFamily} - ${req._remoteAddress}` : "";
+		return [301,302].includes(res.statusCode) ? `redirect(${req.socket.remoteFamily}-${req._remoteAddress})` : "";
 	});
 
 	const SLEPR_query_route = "/query",
