@@ -414,7 +414,7 @@
 		<sequence>
 			<element name="UriBasedLocation" type="dvbi-types:ExtendedURIType"/>
 			<element name="MinimumBitRate" type="unsignedInt" minOccurs="0"/>
-			<element name="CMCD" type="dvbisd:CMCDInitialisationType" minOccurs="0"/>
+			<element name="CMCD" type="dvbisd:CMCDInitialisationType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="Extension" type="dvbi-types:ExtensionBaseType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 	</complexType>
@@ -427,27 +427,33 @@
 	</complexType>
 	<complexType name="CMCDInitialisationType">
 		<sequence>
-			<element name="Report">
+			<element name="Report" maxOccurs="unbounded">
 				<complexType>
 					<attribute name="reportingMode" use="required">
 						<simpleType>
 							<restriction base="string">
 								<enumeration value="urn:dvb:metadata:cmcd:delivery:request">
 									<annotation>
-										<documentation>CMCD Request Mode</documentation>
+										<documentation>CMCD Request Reporting Mode</documentation>
 									</annotation>
+								</enumeration>
+								<enumeration value="urn:dvb:metadata:cmcd:delivery:event">
+									<annotation><documentation>CMCD Event Reporting Mode</documentation></annotation>
 								</enumeration>
 							</restriction>
 						</simpleType>
 					</attribute>
+					<attribute name="eventURL" type="anyURI"/>
 					<attribute name="transmissionMode" use="required">
 						<simpleType>
 							<restriction base="string">
-								<enumeration value="urn:dvb:metadata:cmcd:delivery:customHTTPHeader"/>
-								<enumeration value="urn:dvb:metadata:cmcd:delivery:queryArguments"/>
+								<enumeration value="urn:dvb:metadata:cmcd:delivery:customHTTPHeader "/>
+								<enumeration value="urn:dvb:metadata:cmcd:delivery:queryArguments "/>
+								<enumeration value="urn:dvb:metadata:cmcd:delivery:batch"/>
 							</restriction>
 						</simpleType>
 					</attribute>
+					<attribute name="batchSize" type="positiveInteger"/>
 					<attribute name="reportingMethod" use="required">
 						<simpleType>
 							<list>
@@ -463,7 +469,7 @@
 					<attribute name="contentId">
 						<simpleType>
 							<restriction base="string">
-								<maxLength value="64"/>
+								<maxLength value="128"/>
 							</restriction>
 						</simpleType>
 					</attribute>
@@ -476,6 +482,7 @@
 							</restriction>
 						</simpleType>
 					</attribute>
+					<attribute name="obfuscateURL" type="boolean" default="true"/>
 				</complexType>
 			</element>
 		</sequence>
@@ -483,7 +490,7 @@
 			<simpleType>
 				<restriction base="unsignedInt">
 					<minInclusive value="1"/>
-					<maxInclusive value="1"/>
+					<maxInclusive value="2"/>
 				</restriction>
 			</simpleType>
 		</attribute>
