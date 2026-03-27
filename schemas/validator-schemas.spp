@@ -6,6 +6,7 @@
 	<Folder FolderName="HTML Files" ExtStr="html;htm;xhtml;asp"/>
 	<Folder FolderName="DTD/Schemas" ExtStr="dtd;dcd;xdr;biz;xsd">
 		<Folder FolderName="imports">
+			<File FilePath="DASH-IF_CPS.xsd" HomeFolder="Yes"/>
 			<File FilePath="tva_mpeg7.xsd" HomeFolder="Yes"/>
 			<File FilePath="xml.xsd" HomeFolder="Yes"/>
 		</Folder>
