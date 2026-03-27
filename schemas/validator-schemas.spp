@@ -19,6 +19,7 @@
 		<File FilePath="dvbi_service_list_discovery_v1.7.xsd" HomeFolder="Yes"/>
 		<File FilePath="dvbi_types_v1.0.xsd" HomeFolder="Yes"/>
 		<File FilePath="dvbi_types_v1.1.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_types_v1.2.xsd" HomeFolder="Yes"/>
 		<File FilePath="dvbi_v1.0.xsd" HomeFolder="Yes"/>
 		<File FilePath="dvbi_v2.0.xsd" HomeFolder="Yes"/>
 		<File FilePath="dvbi_v3.0.xsd" HomeFolder="Yes"/>
