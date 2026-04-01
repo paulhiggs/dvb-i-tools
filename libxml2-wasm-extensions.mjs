@@ -1,6 +1,10 @@
 /**
  * libxml2-wasm-extensions.mjs
  *
+ *  DVB-I-tools
+ *  Copyright (c) 2021-2026, Paul Higgs
+ *  BSD-2-Clause license, see LICENSE.txt file
+ * 
  * Additional functions to help libxml2-wasm (https://jameslan.github.io/libxml2-wasm/v0.5/) align
  * with the formerly used libxmljs2 (https://github.com/marudor/libxmljs2)
  */

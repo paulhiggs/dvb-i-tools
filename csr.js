@@ -1,6 +1,10 @@
 /**
  * csr.js
  *
+ *  DVB-I-tools
+ *  Copyright (c) 2021-2026, Paul Higgs
+ *  BSD-2-Clause license, see LICENSE.txt file
+ * 
  * An standalone runner for a service list entry point registry (SLEPR) that can be used as a Central Service List Registry (CSR)
  */
 import { join } from "path";

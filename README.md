@@ -253,3 +253,6 @@ This standalone app is now removed. Use `all-in-one.js --nocsr --nocg` instead.
 ## validate_cg.js
 
 This standalone app is now removed. Use `all-in-one.js --nocsr --nosl` instead.
+
+*Copyright (c) 2021-2026, Paul Higgs*<br/>
+*All rights reserved*

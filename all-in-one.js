@@ -1,6 +1,10 @@
 /**
  * all-in-one.js
  *
+ *  DVB-I-tools
+ *  Copyright (c) 2021-2026, Paul Higgs
+ *  BSD-2-Clause license, see LICENSE.txt file
+ * 
  * runner for all three DVB-I V&V tools
  */
 import process from "node:process";
