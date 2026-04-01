@@ -651,6 +651,7 @@
 			<element name="LCN" type="dvbisd:LCNTableEntryType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="LCNRange" type="dvbisd:LCNRangeType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
+		<attribute name="version" type="positiveInteger" use="required"/>
 		<attribute name="preserveBroadcastLCN" type="boolean" default="false"/>
 	</complexType>
 	<complexType name="LCNTableEntryType">

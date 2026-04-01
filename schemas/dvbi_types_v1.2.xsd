@@ -160,16 +160,6 @@
 		</sequence>
 		<attribute name="contentType" type="mpeg7:mimeType" use="required"/>
 	</complexType>
-	<simpleType name="IdentifierType">
-		<restriction base="token">
-			<pattern value="&Identifier;"/>
-		</restriction>
-	</simpleType>
-	<simpleType name="UUIDType">
-		<restriction base="token">
-			<pattern value="&UUID;"/>
-		</restriction>
-	</simpleType>
 	<simpleType name="IdentifierOrUUIDType">
 		<restriction base="token">
 			<pattern value="&Identifier;"/>		
