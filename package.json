@@ -1,8 +1,8 @@
 {
-	"name": "dvb-i-tools",
+	"name": "dvb-i-tools.ts",
 	"version": "1.8.84",
 	"description": "DVB-I V&V Tools - up to A177r8",
-	"main": "all-in-one.js",
+	"main": "all-in-one.ts",
 	"type": "module",
 	"private": true,
 	"author": "Paul Higgs <paul_higgs@hotmail.com>",
@@ -41,9 +41,21 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
+		"@types/command-line-args": "^5.2.3",
+		"@types/command-line-usage": "^5.0.4",
+		"@types/cors": "^2.8.19",
+		"@types/eslint": "^9.6.1",
+		"@types/express": "^5.0.6",
+		"@types/express-fileupload": "^1.5.1",
+		"@types/express-session": "^1.18.2",
+		"@types/morgan": "^1.9.10",
+		"@types/serve-favicon": "^2.5.7",
+		"@types/sync-fetch": "^0.4.3",
 		"eslint": "^10.0.2",
 		"globals": "^17.4.0",
 		"prettier": "^3.8.1",
+		"tsx": "^4.21.0",
+		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.56.1"
 	}
 }

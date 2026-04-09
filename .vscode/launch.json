@@ -11,7 +11,7 @@
 			"skipFiles": [
 				"<node_internals>/**"
 			],
-			"program": "${workspaceFolder}\\all-in-one.js",
+			"program": "${workspaceFolder}\\all-in-one.ts",
 			"args" : [
 				// split these up for correct process.qrv processing in command-line-args
 				// see: https://github.com/75lb/command-line-args/issues/141
