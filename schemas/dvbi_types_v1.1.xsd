@@ -52,7 +52,7 @@
 			<element name="SRSSupport" minOccurs="0">
 				<complexType>
 					<attribute name="postcode" type="boolean" default="false"/>
-					<attribute name="regionId" type="boolean" default="false"/>
+					<attribute name="regionID" type="boolean" default="false"/>
 					<attribute name="receivedMultiplex" type="boolean" default="false"/>
 				</complexType>
 			</element>
