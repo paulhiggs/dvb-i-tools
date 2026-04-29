@@ -625,7 +625,7 @@
 					<element name="Coding" type="tva:ControlledTermType" maxOccurs="unbounded"/>
 					<element name="SubtitleLanguage" type="language"/>
 					<element name="Purpose" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded"/>
-					<element name="SuitableForTTS" type="boolean"/>
+					<element name="SuitableForTTS" type="boolean" minOccurs="0"/>
 				</sequence>
 			</extension>
 		</complexContent>
