@@ -6,7 +6,7 @@
 	<!-- NOTE: This CS replaces the CaptionCodingFormatCS.                     -->
 	<!-- ##################################################################### -->
 	<Term termID="1">
-		<Name xml:lang="en">WST Subtitles</Name>
+		<Name xml:lang="en">Teletext Subtitles</Name>
 		<Definition xml:lang="en">World System Teletext subtitles.</Definition>
 	</Term>
 	<Term termID="2">
