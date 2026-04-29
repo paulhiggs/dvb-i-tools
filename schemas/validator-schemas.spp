@@ -18,6 +18,7 @@
 		<File FilePath="dvbi_service_list_discovery_v1.5.xsd" HomeFolder="Yes"/>
 		<File FilePath="dvbi_service_list_discovery_v1.6.xsd" HomeFolder="Yes"/>
 		<File FilePath="dvbi_service_list_discovery_v1.7.xsd" HomeFolder="Yes"/>
+		<File FilePath="dvbi_service_list_discovery_v1.8.xsd" HomeFolder="Yes"/>
 		<File FilePath="dvbi_types_v1.0.xsd" HomeFolder="Yes"/>
 		<File FilePath="dvbi_types_v1.1.xsd" HomeFolder="Yes"/>
 		<File FilePath="dvbi_types_v1.2.xsd" HomeFolder="Yes"/>
@@ -48,6 +49,7 @@
 		<File FilePath="tva_metadata_3-1_2019.xsd" HomeFolder="Yes"/>
 		<File FilePath="tva_metadata_3-1_2023.xsd" HomeFolder="Yes"/>
 		<File FilePath="tva_metadata_3-1_2024.xsd" HomeFolder="Yes"/>
+		<File FilePath="tva_metadata_3-1_v1141.xsd" HomeFolder="Yes"/>
 	</Folder>
 	<Folder FolderName="Entities" ExtStr="ent"/>
 </Project>

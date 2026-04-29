@@ -19,7 +19,7 @@
 	xmlns:mpeg7="urn:tva:mpeg7:2008"
 	xmlns:tva="urn:tva:metadata:2024" targetNamespace="urn:dvb:metadata:servicediscovery:2025" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<import namespace="urn:dvb:metadata:servicediscovery-types:2025" schemaLocation="dvbi_types_v1.1.xsd"/>
-	<import namespace="urn:tva:metadata:2024" schemaLocation="./tva_metadata_3-1_2024.xsd"/>
+	<import namespace="urn:tva:metadata:2024" schemaLocation="./tva_metadata_3-1_2004.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="./tva_mpeg7.xsd"/>
 	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
 	<element name="ServiceList" type="dvbisd:ServiceListType"/>
