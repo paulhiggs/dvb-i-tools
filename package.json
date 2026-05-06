@@ -21,7 +21,7 @@
 		"express-session": "^1.19.0",
 		"libxml2-wasm": "^0.7.1",
 		"morgan": "^1.10.1",
-		"qs": "^6.15.0",
+		"qs": "^6.15.1",
 		"serve-favicon": "^2.5.1",
 		"sync-fetch": "^0.6.0",
 		"xml-formatter": "^3.7.0"
@@ -41,9 +41,9 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
-		"eslint": "^10.0.2",
-		"globals": "^17.4.0",
-		"prettier": "^3.8.1",
-		"typescript-eslint": "^8.56.1"
+		"eslint": "^10.3.0",
+		"globals": "^17.6.0",
+		"prettier": "^3.8.3",
+		"typescript-eslint": "^8.59.2"
 	}
 }

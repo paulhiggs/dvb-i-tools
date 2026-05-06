@@ -17,7 +17,8 @@
 				// see: https://github.com/75lb/command-line-args/issues/141
 				"--CSRfile", ".\\registries\\slepr-vers-main.xml",
 				"--port", "3030",
-				"-b",
+	//			"-spam_blocker",
+	//			"--urls",
 	//			"--SLRmode", "italy",
 	//			"--CORSmode", "manual",
 			]
