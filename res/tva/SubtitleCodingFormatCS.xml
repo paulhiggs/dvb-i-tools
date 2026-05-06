@@ -79,7 +79,7 @@
 			<Definition xml:lang="en">Internet Media Subtitles and Captions.</Definition>
 			<Term termID="3.6.1">
 				<Name xml:lang="en">IMSC Subtitles Text Profile</Name>
-				<Definition xml:lang="en">Internet Media Subtitles and Captions, text-only profile.		</Definition>
+				<Definition xml:lang="en">Internet Media Subtitles and Captions, text-only profile.</Definition>
 				<Term termID="3.6.1.1">
 					<Name xml:lang="en">IMSC Subtitles Text Profile Version 1.0</Name>
 				</Term>
@@ -95,7 +95,7 @@
 			</Term>
 			<Term termID="3.6.2">
 				<Name xml:lang="en">IMSC Subtitles Image Profile</Name>
-				<Definition xml:lang="en">Internet Media Subtitles and Captions, image-only 		profile.</Definition>
+				<Definition xml:lang="en">Internet Media Subtitles and Captions, image-only profile.</Definition>
 				<Term termID="3.6.2.1">
 					<Name xml:lang="en">IMSC Subtitles Image Profile Version 1.0</Name>
 				</Term>
@@ -133,7 +133,6 @@
 	</Term>
 	<Term termID="99">
 		<Name xml:lang="en">Other Subtitles</Name>
-		<Definition xml:lang="en">Other subtitling format not specifically identified in this
-			classification scheme.</Definition>
+		<Definition xml:lang="en">Other subtitling format not specifically identified in this classification scheme.</Definition>
 	</Term>
 </ClassificationScheme>

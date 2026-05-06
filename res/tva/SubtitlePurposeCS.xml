@@ -18,7 +18,7 @@
 		<Name xml:lang="en">Audio description</Name>
 		<Definition>Subtitles that include the description of the visual scene and intended 
 			to be used by the receiver to render audio description 
-			(e.g. with text-to-speech technology.</Definition>
+			(e.g. with text-to-speech technology).</Definition>
 	</Term>
 	<Term termID="4">
 		<Name xml:lang="en">Content related commentary</Name>
