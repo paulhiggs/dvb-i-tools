@@ -144,13 +144,13 @@ if (!SLR_Processing_Modes.includes(options.SLRmode)) {
 
 if (options.urls && options.CSRfile == Default_SLEPR.file) options.CSRfile = Default_SLEPR.url;
 
-let knownLanguages = new IANAlanguages();
+const knownLanguages = new IANAlanguages();
 knownLanguages.loadLanguages(options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file });
 
-let knownCountries = new ISOcountries(false, true);
+const knownCountries = new ISOcountries(false, true);
 knownCountries.loadCountries(options.urls ? { url: ISO3166.url } : { file: ISO3166.file });
 
-let knownGenres = new ClassificationScheme();
+const knownGenres = new ClassificationScheme();
 knownGenres.loadCS(
 	options.urls ? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] } : { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] }
 );
@@ -167,7 +167,7 @@ if (cluster.isPrimary) {
 	console.log(chalk.green(`Number of CPUs is ${numCPUs}, ${options.workers} workers`));
 	console.log(chalk.green(`Primary ${process.pid} is running`));
 
-	let metrics = {
+	const metrics = {
 		numRequests: 0,
 		numFailed: 0,
 		reloadRequests: 0,
@@ -215,7 +215,7 @@ if (cluster.isPrimary) {
 			}
 	});
 } else {
-	let app = express();
+	const app = express();
 	app.use(cors());
 	token("pid", () => {
 		return `${process.pid}`;
@@ -255,7 +255,7 @@ if (cluster.isPrimary) {
 			next();
 		};
 	}
-	let csr = new SLEPR(options.urls, options.SLRmode, knownLanguages, knownCountries, knownGenres);
+	const csr = new SLEPR(options.urls, options.SLRmode, knownLanguages, knownCountries, knownGenres);
 	csr.loadServiceListRegistry(options.CSRfile);
 	app.use(morgan(":pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr :vary :redirect"));
 	app.use(favicon(join("icon", "ph-icon.ico")));
@@ -299,19 +299,19 @@ if (cluster.isPrimary) {
 	});
 
 	// start the HTTP server
-	let http_server = app.listen(options.port, () => {
+	const http_server = app.listen(options.port, () => {
 		console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}, PID=${process.pid}`));
 	});
 	// start the HTTPS server
 	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
-	let https_options = {
+	const https_options = {
 		key: readmyfile(keyFilename),
 		cert: readmyfile(certFilename),
 	};
 	if (https_options.key && https_options.cert) {
 		if (options.sport == options.port) options.sport = options.port + 1;
 
-		let https_server = createServer(https_options, app);
+		const https_server = createServer(https_options, app);
 		https_server.listen(options.sport, () => {
 			console.log(chalk.cyan(`HTTPS listening on port number ${https_server.address().port}, PID=${process.pid}`));
 		});

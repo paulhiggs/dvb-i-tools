@@ -19,7 +19,7 @@ console.log(chalk.yellow.underline("initialize libxml2-wasm extensions"));
  */
 if (!XmlElement.prototype.attrAnyNs) {
 	XmlElement.prototype.attrAnyNs = function (name) {
-		let rc = this.attrs.find((a) => a.name == name);
+		const rc = this.attrs.find((a) => a.name == name);
 		return rc ? rc : null;
 	};
 }
@@ -30,7 +30,7 @@ if (!XmlElement.prototype.attrAnyNs) {
  */
 if (!XmlElement.prototype.attrAnyNsValueOr) {
 	XmlElement.prototype.attrAnyNsValueOr = function (name, default_value) {
-		let rc = this.attrs.find((a) => a.name == name);
+		const rc = this.attrs.find((a) => a.name == name);
 		return rc ? rc.value : default_value;
 	};
 }
@@ -195,4 +195,4 @@ if (!XmlElement.prototype.countChildElements) {
 }
 
 
-export let Libxml2_wasm_init = () => {};
+export const Libxml2_wasm_init = () => {};
