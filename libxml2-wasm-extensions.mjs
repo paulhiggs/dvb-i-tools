@@ -14,7 +14,7 @@ import { XmlDocument, XmlElement } from "libxml2-wasm";
 console.log(chalk.yellow.underline("initialize libxml2-wasm extensions"));
 
 /**
- * find the named attribute in an element without considering the namespace
+ * find the named attribute without considering the namespace
  * return a pointer to the XmlAttribute object or null if not found
  */
 if (!XmlElement.prototype.attrAnyNs) {
@@ -24,31 +24,36 @@ if (!XmlElement.prototype.attrAnyNs) {
 	};
 }
 
+
 /**
- * find the named attribute in an element without considering the namespace and return its value
- * if not found, return the @default_value value
+ * find the named attribute without considering the namespace and return its value
+ * return a pointer to the XmlAttribute object or the @default_value value
  */
 if (!XmlElement.prototype.attrAnyNsValueOr) {
-	XmlElement.prototype.attrAnyNsValueOr = function (name, default_value) {
+	XmlElement.prototype.attrAnyNsValueOr = function (name, default_value = null) {
 		const rc = this.attrs.find((a) => a.name == name);
 		return rc ? rc.value : default_value;
 	};
 }
 
 
+/**
+ * find the nth instance of the named element without considering the namespace
+ * return a pointer to the XmlElement object or null if not found
+ */
 if (!XmlElement.prototype.getAnyNs) {
-	XmlElement.prototype.getAnyNs = function (_name, _index = 1) {
+	XmlElement.prototype.getAnyNs = function (name, index = 1) {
 		if (this == null) {
 			throw new TypeError("XmlDocument.prototype.getAnyNs called on null or undefined");
 		}
-		if (!_name) {
+		if (!name) {
 			throw new Error("XmlDocument.prototype.getAnyNs called without name");
 		}
 		let ix = 0,
 			child = this.firstChild;
 		while (child) {
-			if (child instanceof XmlElement && child.name == _name) {
-				if (++ix == _index) return child;
+			if (child instanceof XmlElement && child.name == name) {
+				if (++ix == index) return child;
 			}
 			child = child.next;
 		}
@@ -57,17 +62,20 @@ if (!XmlElement.prototype.getAnyNs) {
 }
 
 
+/**
+ * return true there is at least one child element as named
+ */
 if (!XmlElement.prototype.hasChild) {
-	XmlElement.prototype.hasChild = function (_childName) {
+	XmlElement.prototype.hasChild = function (childName) {
 		if (this == null) {
-			throw new TypeError("XmlDocument.prototype.hasChild called on null or undefined");
+			throw new TypeError("XmlElement.prototype.hasChild called on null or undefined");
 		}
-		if (!_childName) {
-			throw new Error("XmlDocument.prototype.hasChild called without name");
+		if (!childName) {
+			throw new Error("XmlElement.prototype.hasChild called without name");
 		}
-		let child = this?.firstChild;
+		let child = this.firstChild;
 		while (child) {
-			if (child?.name?.endsWith(_childName)) return true;
+			if (child.name?.endsWith(childName)) return true;
 			child = child.next;
 		}
 		return false;
@@ -75,12 +83,15 @@ if (!XmlElement.prototype.hasChild) {
 }
 
 
+/**
+ * return true there is at least one child element
+ */
 if (!XmlElement.prototype.hasChilden) {
 	XmlElement.prototype.hasChildren = function () {
 		if (this == null) {
-			throw new TypeError("XmlDocument.prototype.hasChilden called on null or undefined");
+			throw new TypeError("XmlElement.prototype.hasChilden called on null or undefined");
 		}
-		let child = this?.firstChild;
+		let child = this.firstChild;
 		while (child) {
 			if (child instanceof XmlElement) return true;
 			child = child.next;
@@ -90,12 +101,15 @@ if (!XmlElement.prototype.hasChilden) {
 }
 
 
+/**
+ * invoke the given callback for each child element
+ */
 if (!XmlElement.prototype.forEachChildElement) {
 	XmlElement.prototype.forEachChildElement = function (func) {
 		if (this == null) {
 			throw new TypeError("XmlElement.prototype.forEachChildElement called on null or undefined");
 		}
-		let child = this?.firstChild;
+		let child = this.firstChild;
 		while (child) {
 			if (child instanceof XmlElement) 
 				func(child);
@@ -105,6 +119,9 @@ if (!XmlElement.prototype.forEachChildElement) {
 }
 
 
+/**
+ * invoke the given callback for each child with the given name (irrespective of namespace)
+ */
 if (!XmlElement.prototype.forEachNamedChildElement) {
 	XmlElement.prototype.forEachNamedChildElement = function (name, func) {
 		if (this == null) {
@@ -113,7 +130,7 @@ if (!XmlElement.prototype.forEachNamedChildElement) {
 		if (!name) {
 			throw new Error("XmlElement.prototype.forEachNamedChildElement called without name");
 		}
-		let child = this?.firstChild;
+		let child = this.firstChild;
 		while (child) {
 			if (child instanceof XmlElement && (Array.isArray(name) ? name.includes(child.name) : child.name == name)) 
 				func(child);
@@ -123,12 +140,15 @@ if (!XmlElement.prototype.forEachNamedChildElement) {
 }
 
 
+/**
+ * return true there is at least one child element
+ */
 if (!XmlDocument.prototype.hasChilden) {
 	XmlDocument.prototype.hasChildren = function () {
 		if (this == null) {
 			throw new TypeError("XmlDocument.prototype.hasChilden called on null or undefined");
 		}
-		let child = this?.root.firstChild;
+		let child = this.root.firstChild;
 		while (child) {
 			if (child instanceof XmlElement) return true;
 			child = child.next;
@@ -138,6 +158,9 @@ if (!XmlDocument.prototype.hasChilden) {
 }
 
 
+/**
+ * invoke the given callback for each child element
+ */
 if (!XmlDocument.prototype.forEachChildElement) {
 	XmlDocument.prototype.forEachChildElement = function (func) {
 		if (this == null) {
@@ -153,6 +176,9 @@ if (!XmlDocument.prototype.forEachChildElement) {
 }
 
 
+/**
+ * invoke the given callback for each child with the given name (irrespective of namespace)
+ */
 if (!XmlDocument.prototype.forEachNamedChildElement) {
 	XmlDocument.prototype.forEachNamedChildElement = function (name, func) {
 		if (this == null) {
@@ -161,7 +187,7 @@ if (!XmlDocument.prototype.forEachNamedChildElement) {
 		if (!name) {
 			throw new Error("XmlDocument.prototype.forEachNamedChildElement called without name");
 		}
-		let child = this?.root.firstChild;
+		let child = this.root.firstChild;
 		while (child) {
 			if (child instanceof XmlElement && (Array.isArray(name) ? name.includes(child.name) : child.name == name)) 
 				func(child);
@@ -171,6 +197,9 @@ if (!XmlDocument.prototype.forEachNamedChildElement) {
 }
 
 
+/**
+ * return the namespace where the element is defined
+ */
 if (!XmlElement.prototype.documentNamespace) {
 	XmlElement.prototype.documentNamespace = function () {
 		if (this == null) {
@@ -182,6 +211,9 @@ if (!XmlElement.prototype.documentNamespace) {
 }
 
 
+/**
+ * return a count of the number of named child elements (irrespective of namespace)
+ */
 if (!XmlElement.prototype.countChildElements) {
 	XmlElement.prototype.countChildElements = function (childElementName) {
 		if (this == null) {
@@ -189,7 +221,7 @@ if (!XmlElement.prototype.countChildElements) {
 		}
 		let r = 0;
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		this?.forEachNamedChildElement(childElementName, (elem) => r++);
+		this.forEachNamedChildElement(childElementName, (elem) => r++);
 		return r;
 	}
 }
