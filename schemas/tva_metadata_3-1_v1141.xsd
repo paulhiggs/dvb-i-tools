@@ -644,7 +644,7 @@
 		<complexContent>
 			<extension base="tva:BaseAccessibilityAttributesType">
 				<sequence>
-					<element name="Coding" type="tva:ControlledTermType" maxOccurs="unbounded"/>
+					<element name="Coding" type="tva:ControlledTermType" minOccurs="0"/>
 					<element name="SignLanguage" type="language" minOccurs="0"/>
 					<element name="Closed" type="boolean" default="false" minOccurs="0"/>
 				</sequence>
