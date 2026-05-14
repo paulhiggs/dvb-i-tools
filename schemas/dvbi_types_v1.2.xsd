@@ -144,20 +144,8 @@
 			</extension>
 		</complexContent>
 	</complexType>
-	<simpleType name="LinkedApplicationType">
-		<restriction base="string">
-			<pattern value="1.1"/>
-			<pattern value="1.2"/>
-			<pattern value="1.3"/>
-			<pattern value="2"/>
-			<pattern value="3"/>
-			<pattern value="4.1"/>
-			<pattern value="4.2"/>
-			<pattern value="4.3"/>			
-		</restriction>	
-	</simpleType>
 	<simpleType name="ApplicationTypeList">
-		<list itemType="dvbi-types:LinkedApplicationType"/>
+		<list itemType="anyURI"/>
 	</simpleType>
 	<complexType name="ApplicationType">
 		<simpleContent>	
