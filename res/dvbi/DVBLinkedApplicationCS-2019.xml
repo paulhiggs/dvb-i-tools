@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassificationScheme uri="urn:dvb:metadata:cs:LinkedApplicationCS:2019" xmlns="urn:tva:mpeg7:2008" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:tva:mpeg7:2008 tva_mpeg7.xsd" xsi:type="ClassificationSchemeType">
+	<!-- ###################################################################### -->
+	<!-- LINKEDAPPLICATION                                                      -->
+	<!-- Definition: Application links and associated relationships with media  -->
+	<!-- ###################################################################### -->
+	<Term termID="1">
+		<Name xml:lang="en">App for service when available</Name>
+		<Definition xml:lang="en">An associated application that is intended to be started 
+				during the availability period of a service instance</Definition>
+		<Term termID="1.1">
+			<Name xml:lang="en">App with media in parallel</Name>
+			<Definition xml:lang="en">An associated application to be started in parallel with 
+					commencing presentation of any A/V media</Definition>
+		</Term>
+		<Term termID="1.2">
+			<Name xml:lang="en">App controlling media presentation</Name>
+			<Definition xml:lang="en">An associated application that controls media presentation 
+					or has no media</Definition>
+		</Term>
+		<Term termID="1.3">
+			<Name xml:lang="en">App in series with media presentation</Name>
+			<Definition xml:lang="en">An associated application that is to be run before media
+				presentation starts</Definition>
+		</Term>
+	</Term>
+	<Term termID="2">
+		<Name xml:lang="en">App for outside availability period</Name>
+		<Definition xml:lang="en">An associated application to be started outside the availability 
+				period of a service instance</Definition>
+	</Term>
+	<Term termID="3">
+		<Name xml:lang="en">A service provider's home page</Name>
+		<Definition xml:lang="en">
+			Run a service provider's home page as a linked application, e.g. from the 
+			DVB-I content guide or a UI giving a list of available services (perhaps 
+			without guide data).
+		</Definition>
+	</Term>
+	<Term termID="4">
+		<Name xml:lang="en">An application associated with a whole service list</Name>
+		<Definition xml:lang="en">An associated application to be started in connection with
+				actions related to a whole service list. </Definition>
+		<Term termID="4.1">
+			<Name xml:lang="en">App during service list installation</Name>
+			<Definition xml:lang="en">
+				An application associated with a whole service list to be run during the process of
+				selecting (installing) that service list, e.g. immediately before or after region
+				selection as defined in clause 5.6.3.
+			</Definition>
+		</Term>
+		<Term termID="4.2">
+			<Name xml:lang="en">Withdrawal of agreement</Name>
+			<Definition xml:lang="en">
+				An application associated with a whole service list to be run if the user indicates
+				that they withdraw agreement or consent given when the service list was selected.
+			</Definition>
+		</Term>
+		<Term termID="4.3">
+			<Name xml:lang="en">Renew agreement</Name>
+			<Definition xml:lang="en">
+				An application associated with a whole service list to be run if the user needs
+				To renew agreement or consent given when the service list was selected, e.g.
+				due to significant changes.
+			</Definition>
+		</Term>
+	</Term>
+</ClassificationScheme>
