@@ -145,6 +145,7 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 - `--nocsr` flag to disable SLR operation (default: false)
 - `--nocg` flag to disable Content Guide validation (default: false)
 - `--nosl` flag to disable Service List validation (default: false)
+- `--nopl` flag to disable Playlist validation (default: false)
 - `--noslr` flag to disable Service List Registry validation (default: false)
 - `--CORSmode [-c] <mode>` select the type of CORS handling
   - `"library"` - default mode - use the Express CORS library
