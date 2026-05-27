@@ -3,7 +3,8 @@
 	<!-- ##################################################################### -->
 	<!-- ACCESSIBILITYPURPOSE                                                  -->
 	<!-- Definition: Contains terms that describe the purpose of access        -->
-	<!--             services provided by a linked application.                -->
+	<!--             services provided by a linked application or a video      -->
+	<!--             track.               	                                   -->
 	<!-- ##################################################################### -->
 	<Term termID="1">
 		<Name xml:lang="en">Magnification UI Parameters</Name>
@@ -58,12 +59,18 @@
 		</Term>
 	</Term>
 	<Term termID="5">
-		<Name xml:lang="en">Sign Language track</Name>
+		<Name xml:lang="en">Sign language track</Name>
 		<Term termID="5.1">
-			<Name xml:lang="en">Closed</Name>
+			<Name>Auxiliary Sign-Language</Name>
+			<Definition xml:lang="en">
+				A track that contains a sign-language interpreter or signer and is intended to be rendered concurrently with a primary video component
+			</Definition>
 		</Term>
 		<Term termID="5.2">
-			<Name xml:lang="en">Open</Name>
+			<Name>In-Image Sign-Language</Name>
+			<Definition xml:lang="en">
+				A track that that contains the programme video and the sign-language interpretation in a single pre-composited video presentation
+			</Definition>
 		</Term>
 	</Term>
 </ClassificationScheme>
