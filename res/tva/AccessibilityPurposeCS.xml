@@ -57,4 +57,13 @@
 			<Name>haptic</Name>
 		</Term>
 	</Term>
+	<Term termID="5">
+		<Name xml:lang="en">Sign Language track</Name>
+		<Term termID="5.1">
+			<Name xml:lang="en">Closed</Name>
+		</Term>
+		<Term termID="5.2">
+			<Name xml:lang="en">Open</Name>
+		</Term>
+	</Term>
 </ClassificationScheme>
