@@ -117,6 +117,7 @@
 		<complexContent>
 			<extension base="dvbi-types:AbstractDeliveryType">
 				<sequence>
+<<<<<<< HEAD
 					<element name="OrbitalPosition" maxOccurs="unbounded">
 						<complexType>
 							<simpleContent>
@@ -126,6 +127,9 @@
 							</simpleContent>
 						</complexType>
 					</element>
+=======
+					<element name="OrbitalPosition" type="dvbi-types:LongitudeType" maxOccurs="unbounded"/>
+>>>>>>> security-updates
 				</sequence>
 				<attribute name="originalNetworkID" type="dvbi-types:NetworkIdType" use="optional">
 					<annotation>
@@ -144,6 +148,7 @@
 			</extension>
 		</complexContent>
 	</complexType>
+<<<<<<< HEAD
 	<simpleType name="ApplicationTypeList">
 		<list itemType="anyURI"/>
 	</simpleType>
@@ -154,6 +159,11 @@
 				<attribute name="xmlAitApplicationType" type="mpeg7:mimeType"/>
 			</extension>
 		</simpleContent>
+=======
+	<complexType name="ApplicationType">
+		<attribute name="contentType" type="mpeg7:mimeType" use="required"/>
+		<attribute name="xmlAitApplicationType" type="mpeg7:mimeType"/>
+>>>>>>> security-updates
 	</complexType>
 	<complexType name="ExtendedURIPathType">
 		<sequence>
@@ -167,12 +177,15 @@
 		</sequence>
 		<attribute name="contentType" type="mpeg7:mimeType" use="required"/>
 	</complexType>
+<<<<<<< HEAD
 	<simpleType name="IdentifierOrUUIDType">
 		<restriction base="token">
 			<pattern value="&Identifier;"/>		
 			<pattern value="&UUID;"/>
 		</restriction>
 	</simpleType>
+=======
+>>>>>>> security-updates
 	<!-- -->
 	<!-- data types adapted from  SDnS v1.4 -->
 	<!-- -->
