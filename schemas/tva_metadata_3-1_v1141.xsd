@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE schema [
+	<!-- for content digest values -->
+	<!ENTITY base64_char "a-zA-Z0-9+/=">
+	<!ENTITY digest_value "[&base64_char;]*">
+	<!ENTITY digest_algorithm "[a-z][a-z0-9-]*">
+	<!ENTITY digest "&digest_algorithm;=:&digest_value;:">
+]>
 <schema targetNamespace="urn:tva:metadata:2026" xmlns:tva="urn:tva:metadata:2026" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<annotation>
 		<documentation xml:lang="en">This schema consists of datatypes that are normatively defined in ETSI TS 102 822-3-1 v1.13.1</documentation>
@@ -47,9 +54,16 @@
 			<extension base="anyURI">
 				<attribute name="contentType" type="mpeg7:mimeType"/>
 				<attribute name="uriType" type="mpeg7:termReferenceType"/>
+				<attribute name="integrity" type="tva:integrityListType"/>
+				<attribute name="verificationPolicy" type="anyURI"/>
 			</extension>
 		</simpleContent>
 	</complexType>
+	<simpleType name="integrityListType">
+		<restriction base="string">
+			<pattern value="&digest;(,&digest;)*"/>
+		</restriction>
+	</simpleType>
 	<complexType name="TVAMediaLocatorType">
 		<sequence>
 			<choice minOccurs="0">
