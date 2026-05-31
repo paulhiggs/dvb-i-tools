@@ -13,7 +13,7 @@
 	<!ENTITY Hex16 "&HexDigit;{1,4}">
 	<!ENTITY Hex8 "&HexDigit;{1,2}">
 ]>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2026" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2026" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2026" xmlns:dashif="https://dashif.org/CPS" targetNamespace="urn:dvb:metadata:servicediscovery:2026" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<schema targetNamespace="urn:dvb:metadata:servicediscovery:2026" elementFormDefault="qualified" attributeFormDefault="unqualified" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2026" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2026" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2026" >
 	<import namespace="urn:dvb:metadata:servicediscovery-types:2026" schemaLocation="dvbi_types_v1.2.xsd"/>
 	<import namespace="urn:tva:metadata:2026" schemaLocation="./tva_metadata_3-1_v1141.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="./tva_mpeg7.xsd"/>
@@ -27,6 +27,7 @@
 			<element name="Name" type="mpeg7:TextualType" maxOccurs="unbounded"/>
 			<element name="ProviderName" type="mpeg7:TextualType" maxOccurs="unbounded"/>
 			<element name="Requires" type="dvbisd:InstallationRequirementsType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="SignaturePolicies" type="dvbi-types:SignaturePoliciesType" minOccurs="0"/>
 			<element name="LanguageList" type="dvbisd:LanguageListType" minOccurs="0"/>
 			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="RegionList" type="dvbisd:RegionListType" minOccurs="0"/>
@@ -41,7 +42,6 @@
 				<element name="TestService" type="dvbisd:ServiceType"/>
 			</choice>
 			<element name="SubscriptionPackageList" type="dvbisd:SubscriptionPackageListType" minOccurs="0"/>
-			<element ref="xmldsig:Signature" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 		<attribute name="id" type="dvbi-types:ServiceIdentifierType" use="required"/>
 		<attribute name="version" type="positiveInteger" use="required"/>

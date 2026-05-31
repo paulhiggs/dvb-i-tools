@@ -117,7 +117,6 @@
 		<complexContent>
 			<extension base="dvbi-types:AbstractDeliveryType">
 				<sequence>
-<<<<<<< HEAD
 					<element name="OrbitalPosition" maxOccurs="unbounded">
 						<complexType>
 							<simpleContent>
@@ -127,9 +126,6 @@
 							</simpleContent>
 						</complexType>
 					</element>
-=======
-					<element name="OrbitalPosition" type="dvbi-types:LongitudeType" maxOccurs="unbounded"/>
->>>>>>> security-updates
 				</sequence>
 				<attribute name="originalNetworkID" type="dvbi-types:NetworkIdType" use="optional">
 					<annotation>
@@ -148,22 +144,16 @@
 			</extension>
 		</complexContent>
 	</complexType>
-<<<<<<< HEAD
 	<simpleType name="ApplicationTypeList">
 		<list itemType="anyURI"/>
 	</simpleType>
 	<complexType name="ApplicationType">
-		<simpleContent>	
+		<simpleContent>
 			<extension base="dvbi-types:ApplicationTypeList">
 				<attribute name="contentType" type="mpeg7:mimeType" use="required"/>
 				<attribute name="xmlAitApplicationType" type="mpeg7:mimeType"/>
 			</extension>
 		</simpleContent>
-=======
-	<complexType name="ApplicationType">
-		<attribute name="contentType" type="mpeg7:mimeType" use="required"/>
-		<attribute name="xmlAitApplicationType" type="mpeg7:mimeType"/>
->>>>>>> security-updates
 	</complexType>
 	<complexType name="ExtendedURIPathType">
 		<sequence>
@@ -177,15 +167,58 @@
 		</sequence>
 		<attribute name="contentType" type="mpeg7:mimeType" use="required"/>
 	</complexType>
-<<<<<<< HEAD
 	<simpleType name="IdentifierOrUUIDType">
 		<restriction base="token">
-			<pattern value="&Identifier;"/>		
+			<pattern value="&Identifier;"/>
 			<pattern value="&UUID;"/>
 		</restriction>
 	</simpleType>
-=======
->>>>>>> security-updates
+	<complexType name="SignaturePoliciesType">
+		<sequence>
+			<element name="SignaturePolicy" type="dvbi-types:SignaturePolicyType" maxOccurs="unbounded"/>
+		</sequence>
+	</complexType>
+	<complexType name="SignaturePolicyType">
+		<sequence>
+			<element name="Enforcement">
+				<simpleType>
+					<restriction base="string">
+						<enumeration value="required"/>
+						<enumeration value="warn"/>
+						<enumeration value="vendor"/>
+					</restriction>
+				</simpleType>
+			</element>
+			<element name="TrustAnchor">
+				<complexType>
+					<sequence>
+						<element name="CAFingerprint" maxOccurs="unbounded">
+							<complexType>
+								<simpleContent>
+									<extension base="dvbi-types:CAFingerprintType">
+										<attribute name="algorithm" type="string" use="required"/>
+									</extension>
+								</simpleContent>
+							</complexType>
+						</element>
+					</sequence>
+				</complexType>
+			</element>
+			<element name="SubjectConstraint" minOccurs="0">
+				<complexType>
+					<sequence>
+						<element name="CN" type="anyURI" maxOccurs="unbounded"/>
+					</sequence>
+				</complexType>
+			</element>
+		</sequence>
+		<attribute name="policyId" type="anyURI" use="required"/>
+	</complexType>
+	<simpleType name="CAFingerprintType">
+		<restriction base="string">
+			<pattern value="&HexDigit;{2}(:&HexDigit;{2})*"/>
+		</restriction>
+	</simpleType>
 	<!-- -->
 	<!-- data types adapted from  SDnS v1.4 -->
 	<!-- -->
@@ -226,8 +259,16 @@
 	<!-- -->
 	<complexType name="ExtendedURIType">
 		<sequence>
-			<element name="URI" type="anyURI"/>
+			<element name="URI" type="dvbi-types:uriWithVerificationPolicy"/>
 		</sequence>
 		<attribute name="contentType" type="mpeg7:mimeType" use="required"/>
 	</complexType>
+	<complexType name="uriWithVerificationPolicy">
+		<simpleContent>
+			<extension base="anyURI">
+				<attribute name="verificationPolicy" type="anyURI"/>
+			</extension>
+		</simpleContent>
+	</complexType>
+
 </schema>
