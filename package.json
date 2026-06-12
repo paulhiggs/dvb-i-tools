@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools.js",
-	"version": "1.8.98",
+	"version": "1.9.0",
 	"description": "DVB-I V&V Tools - up to A177r8",
 	"main": "all-in-one.js",
 	"type": "module",
@@ -43,7 +43,7 @@
 		"@eslint/js": "^10.0.1",
 		"eslint": "^10.4.1",
 		"globals": "^17.6.0",
-		"prettier": "^3.8.3",
-		"typescript-eslint": "^8.60.0"
+		"prettier": "^3.8.4",
+		"typescript-eslint": "^8.61.0"
 	}
 }
