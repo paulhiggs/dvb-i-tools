@@ -468,6 +468,7 @@
 					<attribute name="batchSize" type="positiveInteger"/>
 					<attribute name="enabledKeys" type="string"/>
 					<attribute name="eventTypes" type="string"/>
+					<attribute name="objectTypes" type="string"/>
 					<attribute name="probability" default="1000">
 						<simpleType>
 							<restriction base="unsignedInt">
