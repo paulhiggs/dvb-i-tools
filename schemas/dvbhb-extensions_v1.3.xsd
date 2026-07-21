@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="urn:dvb:metadata:dvbhb-extensions:2023" 
+		xmlns="http://www.w3.org/2001/XMLSchema" 
+		xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2026" 
+		elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<import namespace="urn:dvb:metadata:servicediscovery-types:2026" schemaLocation="dvbi_types_v1.2.xsd"/> 
+	<complexType name="HBxDASHDeliveryParametersType" abstract="false">
+		<annotation>
+			<documentation xml:lang="en">
+				DVB-HB extension to dvbi-types:DASHDeliveryParametersType
+			</documentation>
+		</annotation>
+		<complexContent>  
+			<extension base="dvbi-types:ExtensionBaseType">
+				<sequence>
+					<element name="OriginalDeliverySource" minOccurs="0">
+						<simpleType>
+							<restriction base="anyURI">
+								<enumeration value="urn:dvb:metadata:source:dvb-t"/>
+								<enumeration value="urn:dvb:metadata:source:dvb-s"/>
+								<enumeration value="urn:dvb:metadata:source:dvb-c"/>
+							</restriction>
+						</simpleType>
+					</element>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType> 
+ </schema>
