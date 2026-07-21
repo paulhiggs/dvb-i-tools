@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema xmlns="http://www.w3.org/2001/XMLSchema"
-	xmlns:dvbisld="urn:dvb:metadata:servicelistdiscovery:2023"
+	xmlns:dvbisld="urn:dvb:metadata:servicelistdiscovery:2022b"
 	xmlns:mpeg7="urn:tva:mpeg7:2008"
-	xmlns:tva="urn:tva:metadata:2023"
-	xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2023" targetNamespace="urn:dvb:metadata:servicelistdiscovery:2023" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<import namespace="urn:tva:metadata:2023" schemaLocation="./tva_metadata_3-1_2023.xsd"/>
+	xmlns:tva="urn:tva:metadata:2019"
+	xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2022b" targetNamespace="urn:dvb:metadata:servicelistdiscovery:2022b" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<import namespace="urn:tva:metadata:2019" schemaLocation="./tva_metadata_3-1_2019.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="./tva_mpeg7.xsd"/>
-	<import namespace="urn:dvb:metadata:servicediscovery:2023" schemaLocation="./dvbi_v5.0.xsd"/>
+	<import namespace="urn:dvb:metadata:servicediscovery:2022b" schemaLocation="./dvbi_v4.0.xsd"/>
 	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="./xml.xsd"/>
+	<import namespace="vnd:apple:mpegurl" schemaLocation="hls-url-8.0.xsd"/>
 	<element name="ServiceListEntryPoints" type="dvbisld:ServiceListEntryPointsType"/>
 	<complexType name="ServiceListEntryPointsType">
 		<sequence>
@@ -62,8 +63,8 @@
 			<element name="Delivery" type="dvbisld:DeliveryType"/>
 			<element name="Language" type="tva:AudioLanguageType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="Genre" type="tva:GenreType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="TargetCountry" type="tva:ISO-3166-List" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="TargetCountry" type="dvbisd:ISO-3166-List" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="RelatedMaterial" type="dvbisd:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="SRSSupport" minOccurs="0">
 				<complexType>
 					<attribute name="postcode" type="boolean" default="false"/>
@@ -78,13 +79,13 @@
 	<complexType name="DeliveryType">
 		<sequence>
 			<element name="DASHDelivery" type="dvbisld:NoAdditionalIPParametersType" minOccurs="0"/>
-			<element name="DVBTDelivery" type="dvbisld:DVBTDeliveryType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="DVBCDelivery" type="dvbisld:DVBCDeliveryType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="DVBSDelivery" type="dvbisld:DVBSDeliveryType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="DVBTDelivery" type="dvbisld:DVBTDeliveryType" minOccurs="0"/>
+			<element name="DVBCDelivery" type="dvbisld:DVBCDeliveryType" minOccurs="0"/>
+			<element name="DVBSDelivery" type="dvbisld:DVBSDeliveryType" minOccurs="0"/>
 			<element name="RTSPDelivery" type="dvbisld:NoAdditionalIPParametersType" minOccurs="0"/>
 			<element name="MulticastTSDelivery" type="dvbisld:NoAdditionalIPParametersType" minOccurs="0"/>
 			<element name="ApplicationDelivery" type="dvbisld:ApplicationTypeListType" minOccurs="0"/>
-			<element name="OtherDeliveryParameters" type="dvbisd:ExtensionBaseType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="OtherDeliveryParameters" type="dvbisd:ExtensionBaseType" minOccurs="0"/>
 		</sequence>
 	</complexType>
 	<complexType name="AbstractDeliveryType" abstract="true">
@@ -123,11 +124,7 @@
 				<sequence>
 					<element name="OrbitalPosition" type="dvbisd:LongitudeType" maxOccurs="unbounded"/>
 				</sequence>
-				<attribute name="originalNetworkID" type="dvbisd:NetworkIdType" use="optional">
-					<annotation>
-						<documentation>The use of this attribute is deprecated.</documentation>
-					</annotation>
-				</attribute>
+				<attribute name="originalNetworkID" type="dvbisd:NetworkIdType" use="optional"/>
 			</extension>
 		</complexContent>
 	</complexType>
