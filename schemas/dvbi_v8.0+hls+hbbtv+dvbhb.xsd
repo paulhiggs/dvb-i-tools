@@ -44,6 +44,7 @@
 				<element name="TestService" type="dvbisd:ServiceType"/>
 			</choice>
 			<element name="SubscriptionPackageList" type="dvbisd:SubscriptionPackageListType" minOccurs="0"/>
+			<any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 		<attribute name="id" type="dvbi-types:ServiceIdentifierType" use="required"/>
 		<attribute name="version" type="positiveInteger" use="required"/>
