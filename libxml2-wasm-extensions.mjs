@@ -11,7 +11,7 @@
 import chalk from "chalk";
 import { XmlDocument, XmlElement } from "libxml2-wasm";
 
-console.log(chalk.yellow.underline("initialize libxml2-wasm extensions"));
+//console.log(chalk.yellow.underline("initialize libxml2-wasm extensions"));
 
 /**
  * find the named attribute without considering the namespace

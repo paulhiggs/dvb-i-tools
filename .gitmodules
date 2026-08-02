@@ -2,5 +2,5 @@
 	path = testsuite
 	url = https://github.com/paulhiggs/dvb-i-tools.testsuite
 [submodule "testsuite2"]
-	path = testsuite2
+	path = testsuite
 	url = https://github.com/paulhiggs/dvb-i-tools.testsuite
