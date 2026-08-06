@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema targetNamespace="vnd:apple:mpegurl" xmlns="http://www.w3.org/2001/XMLSchema" 
-	xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2026" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2026" targetNamespace="vnd:apple:mpegurl" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<import namespace="urn:dvb:metadata:servicediscovery-types:2026" schemaLocation="./dvbi_types_v1.2.xsd"/>
 	<complexType name="m3u8RefType">
 		<complexContent>

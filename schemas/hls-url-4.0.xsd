@@ -1,11 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dvbisd="urn:dvb:metadata:servicediscovery:2022b" xmlns:hls="vnd:apple:mpegurl" targetNamespace="vnd:apple:mpegurl" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<import namespace="urn:dvb:metadata:servicediscovery:2022b" schemaLocation="./dvbi_v4.0-with-hls-hbbtv.xsd"/>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="vnd:apple:mpegurl" xmlns:hls="vnd:apple:mpegurl" xmlns:mpeg7="urn:tva:mpeg7:2008" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<import namespace="urn:tva:mpeg7:2008" schemaLocation="./tva_mpeg7.xsd"/>
+	<!-- 
+		the following types (ExtensionBaseType and ExtendedURIType) are copied from the A177r4 schema, 
+		as importing them would cause a circular reference
+	-->
+	<complexType name="ExtensionBaseType" abstract="true">
+		<attribute name="extensionName" use="required">
+			<simpleType>
+				<restriction base="string">
+					<pattern value="[A-Za-z0-9][A-Za-z0-9:\-/\.]*[A-Za-z0-9]"/>
+				</restriction>
+			</simpleType>
+		</attribute>
+	</complexType>
+	<complexType name="ExtendedURIType">
+		<sequence>
+			<element name="URI" type="anyURI"/>
+		</sequence>
+		<attribute name="contentType" type="mpeg7:mimeType" use="required"/>
+	</complexType>
+	<!-- -->
 	<complexType name="m3u8RefType">
 		<complexContent>
-			<extension base="dvbisd:ExtensionBaseType">
+			<extension base="hls:ExtensionBaseType">
 				<sequence>
-					<element name="UriBasedLocation" type="dvbisd:ExtendedURIType"/>
+					<element name="UriBasedLocation" type="hls:ExtendedURIType"/>
 				</sequence>
 			</extension>
 		</complexContent>
