@@ -8,7 +8,6 @@
  * Additional functions to help libxml2-wasm (https://jameslan.github.io/libxml2-wasm/v0.5/) align
  * with the formerly used libxmljs2 (https://github.com/marudor/libxmljs2)
  */
-import chalk from "chalk";
 import { XmlDocument, XmlElement } from "libxml2-wasm";
 
 //console.log(chalk.yellow.underline("initialize libxml2-wasm extensions"));
