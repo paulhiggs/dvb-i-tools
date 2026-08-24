@@ -37,6 +37,7 @@
 		"lint:fix": "eslint . --fix ",
 		"test-expressions": "node testsuite/test-expressions.js",
 		"test-documents": "node testsuite/test-documents.js",
+		"test-lookups": "node testsuite/test-lookups.js",
 		"test": "node testsuite/test-runner.js"
 	},
 	"repository": {
