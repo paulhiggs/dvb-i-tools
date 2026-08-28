@@ -1,7 +1,8 @@
 {
 	"name": "dvb-i-tools.js",
-	"version": "1.9.29",
+	"version": "1.9.30",
 	"description": "DVB-I V&V Tools - up to A177r8",
+	"keywords" : ["DVB-I"],
 	"main": "all-in-one.js",
 	"type": "module",
 	"private": true,
@@ -38,6 +39,7 @@
 		"test-expressions": "node testsuite/test-expressions.js",
 		"test-documents": "node testsuite/test-documents.js",
 		"test-lookups": "node testsuite/test-lookups.js",
+		"test-languages": "node testsuite/test-languages.js",
 		"test": "node testsuite/test-runner.js"
 	},
 	"repository": {
