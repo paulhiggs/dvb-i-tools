@@ -135,7 +135,7 @@
 		<sequence>
 			<element name="DisplayName" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
 			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="ContentProtection" type="dvbisd:ContentProtectionType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="ContentProtection" type="dvbisd:ContentProtectionType" minOccurs="0"/>
 			<element name="ContentAttributes" type="dvbisd:ContentAttributesType" minOccurs="0"/>
 			<element name="Availability" type="dvbisd:ServiceAvailabilityType" minOccurs="0"/>
 			<element name="SubscriptionPackage" type="dvbisd:SubscriptionPackageType" minOccurs="0" maxOccurs="unbounded"/>
@@ -179,27 +179,35 @@
 			<element name="DRMSystemId" type="dvbisd:DRMSystemType" minOccurs="0" maxOccurs="unbounded"/>
 		</sequence>
 	</complexType>
-	<complexType name="ProtectionSystemType" abstract="true">
+
+	<simpleType name="CASIdType">
+		<restriction base="string">
+			<pattern value="0x&HexDigit;{4}"/>
+		</restriction>
+	</simpleType>
+	<complexType name="CASystemType">
 		<simpleContent>
-			<extension base="string">
+			<extension base="dvbisd:CASIdType">
 				<attribute name="cpsIndex" type="string"/>
 			</extension>
 		</simpleContent>
 	</complexType>
-	<complexType name="CASystemType">
-		<complexContent>
-			<extension base="dvbisd:ProtectionSystemType"/>
-		</complexContent>
-	</complexType>
+	<simpleType name="DRMSystemIdType">
+		<restriction base="string">
+			<pattern value="urn:uuid:&HexDigit;{8}-&HexDigit;{4}-&HexDigit;{4}-&HexDigit;{4}-&HexDigit;{12}"/>
+		</restriction>
+	</simpleType>
 	<complexType name="DRMSystemType">
-		<complexContent>
-			<extension base="dvbisd:ProtectionSystemType">
+		<simpleContent>
+			<extension base="dvbisd:DRMSystemIdType">
+				<attribute name="cpsIndex" type="string"/>
 				<attribute name="encryptionScheme" type="dvbisd:EncryptionSchemeType" use="required"/>
 				<attribute name="LAURL" type="anyURI"/>
 				<attribute name="certificateURL" type="anyURI"/>
 			</extension>
-		</complexContent>
+		</simpleContent>
 	</complexType>
+
 	<simpleType name="EncryptionSchemeType">
 		<restriction base="string">
 			<enumeration value="cenc"/>
