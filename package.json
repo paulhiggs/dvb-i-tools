@@ -22,7 +22,7 @@
 		"express-session": "^1.19.0",
 		"libxml2-wasm": "^0.7.1",
 		"morgan": "^1.11.0",
-		"qs": "^6.15.3",
+		"qs": "^6.16.0",
 		"serve-favicon": "^2.5.1",
 		"sha.js": "^2.4.12",
 		"sync-fetch": "^0.6.0",
