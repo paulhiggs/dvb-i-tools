@@ -1,8 +1,10 @@
 {
 	"name": "dvb-i-tools.js",
-	"version": "1.9.32",
+	"version": "1.9.33",
 	"description": "DVB-I V&V Tools - up to A177r8",
-	"keywords" : ["DVB-I"],
+	"keywords": [
+		"DVB-I"
+	],
 	"main": "all-in-one.js",
 	"type": "module",
 	"private": true,
@@ -20,8 +22,8 @@
 		"express": "^5.2.1",
 		"express-fileupload": "^1.5.2",
 		"express-session": "^1.19.0",
-		"libxml2-wasm": "^0.7.1",
-		"morgan": "^1.11.0",
+		"libxml2-wasm": "^0.7.2",
+		"morgan": "^1.12.0",
 		"qs": "^6.16.0",
 		"serve-favicon": "^2.5.1",
 		"sha.js": "^2.4.12",
@@ -48,9 +50,10 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
-		"eslint": "^10.8.0",
-		"globals": "^17.11.0",
+		"chai": "^6.2.2",
+		"eslint": "^10.10.0",
+		"globals": "^17.12.0",
 		"prettier": "^3.9.6",
-		"typescript-eslint": "^8.67.0"
+		"typescript-eslint": "^8.70.0"
 	}
 }
