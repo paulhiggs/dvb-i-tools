@@ -2,7 +2,7 @@
 
 Pauls DVB Tools
 
-## csr.js - a DVB-I CSR / SLR
+## csr.ts - a DVB-I CSR / SLR
 
 ### Description
 
@@ -30,7 +30,7 @@ Note that these values are case sensitive, and a case sensitive matching is perf
 ### Operation
 
 1. Edit the Service List Entry Point Registry XML document (`slepr-master.xml`) as needed
-1. run it - `node csr.js [--port 3000] [--sport 3001] [--file ./slepr-master.xml] [--CORSmode library]`
+1. run it - `node csr.ts [--port 3000] [--sport 3001] [--file ./slepr-master.xml] [--CORSmode library]`
 
 The server can be reloaded with an updated `slepr-master.xml` file by invoking it with /reload, i.e. `http://localhost:3000/reload`
 
@@ -54,7 +54,7 @@ If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `s
 
 ## all-in-one.js
 
-Implements csr.js, validate_cg.js and validate_sl.js in a single node
+Implements csr.ts along with service list registry, service list and content guide document validation.
 
 ### Description
 
@@ -78,7 +78,7 @@ Validates the syntax and semantic value space of DVB-I service list registry, se
 
 1. Clone this repository `git clone https://github.com/paulhiggs/dvb-i-tools.git`
 1. Install necessary libraries (express, libxmljs, morgan) `npm install`
-1. run it - `node all-in-one [--urls] [--port 3030] [--sport 3031]`
+1. run it - `node all-in-one.ts [--urls] [--port 3030] [--sport 3031]`
 
 If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
 

@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "types": [
+      "node",
+			"./extensions.d.ts",
+    ],
+    "rootDir": "./",
+    "declaration": true,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "inlineSources": true,
+    "jsx": "react",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "noUncheckedIndexedAccess": false,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "esnext",
+
+		"emitDeclarationOnly": true,
+    "allowImportingTsExtensions": true
+  }
+}

@@ -1,11 +1,12 @@
 {
-	"name": "dvb-i-tools.js",
+	"name": "dvb-i-tools.ts",
 	"version": "1.9.33",
 	"description": "DVB-I V&V Tools - up to A177r8",
 	"keywords": [
 		"DVB-I"
 	],
 	"main": "all-in-one.js",
+	"types": "./lib/extensions.d.ts",
 	"type": "module",
 	"private": true,
 	"author": "Paul Higgs <paul_higgs@hotmail.com>",
@@ -35,7 +36,7 @@
 		"npm": ">= 10.8.1"
 	},
 	"scripts": {
-		"start": "node all-in-one.js",
+		"start": "node all-in-one.ts",
 		"lint": "eslint . ",
 		"lint:fix": "eslint . --fix ",
 		"test-expressions": "node testsuite/test-expressions.js",
@@ -50,10 +51,25 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
+		"@types/chalk": "^0.4.31",
+		"@types/command-line-args": "^5.2.3",
+		"@types/command-line-usage": "^5.0.4",
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.6",
+		"@types/express-fileupload": "^1.5.1",
+		"@types/express-session": "^1.19.0",
+		"@types/morgan": "^1.9.10",
+		"@types/node": "^22.20.2",
+		"@types/qs": "^6.15.1",
+		"@types/serve-favicon": "^2.5.7",
+		"@types/sha.js": "^2.4.4",
+		"@types/sync-fetch": "^0.4.4",
+		"@types/xml-formatter": "^1.2.0",
 		"chai": "^6.2.2",
 		"eslint": "^10.10.0",
 		"globals": "^17.12.0",
 		"prettier": "^3.9.6",
+		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.70.0"
 	}
 }
