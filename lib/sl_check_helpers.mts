@@ -1,5 +1,5 @@
 /**
- * sl_check_helpers.mjs
+ * sl_check_helpers.mts
  *
  *  DVB-I-tools
  *  Copyright (c) 2021-2026, Paul Higgs
@@ -9,11 +9,14 @@
  */
 
 import { elementize, quote } from "./utils.mts";
-import { mlLanguage } from "./multilingual_element.mjs";
+import { mlLanguage } from "./multilingual_element.mts";
 import { isTAGURI, isDomainName, isHTTPURL } from "./pattern_checks.mts";
 import { dvbi, validApplicationTypes } from "./DVB-I_definitions.mts";
 import { tva } from "./TVA_definitions.mts";
 import { keys } from "./common_errors.mts";
+
+import type { ReportedErrorType, ErrorDescriptionType } from "./error_list.mts"
+import ErrorList from "./error_list.mts"
 
 export default class SL_helpers {
 
@@ -24,8 +27,8 @@ export default class SL_helpers {
 	 * @param {String} identifier    The service identifier
 	 * @returns {boolean} true if the service identifier complies with the specification otherwise false
 	 */
-	static validServiceIdentifier = (identifier) => isTAGURI(identifier);
-	static validServiceListIdentifier = (identifier) => isTAGURI(identifier);
+	static validServiceIdentifier = (identifier: string) => isTAGURI(identifier);
+	static validServiceListIdentifier = (identifier: string) => isTAGURI(identifier);
 
 
 	/**
@@ -34,7 +37,8 @@ export default class SL_helpers {
 	 * @param {String}     lang
 	 * @returns {String}
 	 */
-	static localizedSubscriptionPackage = (pkg, lang = null) => `${pkg.content}/lang=${lang ? lang : mlLanguage(pkg)}`;
+	static localizedSubscriptionPackage = (pkg: XmlElement, lang?: string) : string => 
+		`${pkg.content}/lang=${lang ? lang : mlLanguage(pkg)}`;
 
 	/**
 	 * Construct	 an error message an unspecifed target region is used
@@ -44,7 +48,7 @@ export default class SL_helpers {
 	 * @param {String} errCode     The error code to be reported
 	 * @param {XmlElement} element The element using an undefined region if
 	 */
-	static UnspecifiedTargetRegion = (region, loc, errCode, element) => ({
+	static UnspecifiedTargetRegion = (region: string, loc: string, errCode: string, element: XmlElement) : ReportedErrorType => ({
 		code: errCode,
 		message: `${loc} has an unspecified ${dvbi.e_TargetRegion.elementize()} ${region.quote()}`,
 		key: "target region",
@@ -59,33 +63,41 @@ export default class SL_helpers {
 	 * @param {XmlElement} element    The <SourceType> element for which delivery parameters are not specified
 	 * @param {String}     errCode    The error code to be reported
 	 */
-	static NoDeliveryParams = (source, serviceId, element, errCode) => ({
+	static NoDeliveryParams = (source: string, serviceId: string, element: XmlElement, errCode: string) : ReportedErrorType => ({
 		code: errCode,
 		message: `${source} delivery parameters not specified for service instance in service ${serviceId.quote()}`,
 		fragment: element,
 		key: "no delivery params",
 	});
 
-	static isValidApplicationType = (type) => validApplicationTypes.includes(type);
+	static isValidApplicationType = (type: string) : boolean => validApplicationTypes.includes(type);
 
-	static RMErrorDescription = (code, elem, table) => ({
+	static RMErrorDescription = (code: string, elem: string, table: string) : ErrorDescriptionType => ({
 		code: code,
 		description: `The application type indicated by the specified ${dvbi.a_href.attribute()} value is not permitted in a ${elem.elementize()}. Refer to the semantic defintiion of ${dvbi.e_RelatedMaterial.elementize()} in table ${table} of A177.`,
 	});
 
-	static synopsisLengthError = (ElementName,label, length) => `length of ${elementize(`${tva.a_length.attribute(ElementName)}=${label.quote()}`)} exceeds ${length} characters`;
-	static synopsisToShortError = (ElementName, label, length) => `length of ${elementize(`${tva.a_length.attribute(ElementName)}=${label.quote()}`)} is less than ${length} characters`;
-	static singleLengthLangError = (ElementName, length, lang) => `only a single ${ElementName.elementize()} is permitted per length (${length}) and language (${lang})`;
-	static requiredSynopsisError = (ElementName, length) => `a ${ElementName.elementize()} element with ${tva.a_length.attribute()}=${quote(length)} is required`;
+	static synopsisLengthError = (ElementName: string, label: string, length: number) : string => 
+		`length of ${elementize(`${tva.a_length.attribute(ElementName)}=${label.quote()}`)} exceeds ${length} characters`;
+
+	static synopsisToShortError = (ElementName: string, label: string, length: number) : string => 
+		`length of ${elementize(`${tva.a_length.attribute(ElementName)}=${label.quote()}`)} is less than ${length} characters`;
+
+	static singleLengthLangError = (ElementName: string, length: string, lang: string) : string => 
+		`only a single ${ElementName.elementize()} is permitted per length (${length}) and language (${lang})`;
+
+	static requiredSynopsisError = (ElementName: string, length: string) : string => 
+		`a ${ElementName.elementize()} element with ${tva.a_length.attribute()}=${quote(length)} is required`;
 
 	// HDR DMI terms are in the 2.3 series
-	static isHDRDMISystem = (CSterm) => CSterm.substring(CSterm.lastIndexOf(":") + 1).startsWith("2.3.");
+	static isHDRDMISystem = (CSterm: string) : boolean => CSterm.substring(CSterm.lastIndexOf(":") + 1).startsWith("2.3.");
 
-	static ZuluIfNeeded = (dt) => (dt.endsWith("Z") || dt.lastIndexOf("+") > 12 || dt.lastIndexOf("-") > 12) ? dt : `${dt}Z`; 
+	static ZuluIfNeeded = (dt: string) : string => 
+		(dt.endsWith("Z") || dt.lastIndexOf("+") > 12 || dt.lastIndexOf("-") > 12) ? dt : `${dt}Z`; 
 
-	static unzone = (time) => time.includes("Z") ? time.substring(0, time.indexOf("Z")) : time;
+	static unzone = (time: string) : string => time.includes("Z") ? time.substring(0, time.indexOf("Z")) : time;
 
-	static checkElement = (element, elementName, allowed, modulation, key, errs, errCode) => {
+	static checkElement = (element: XmlElement, elementName: string, allowed: string[], modulation: string, key: string, errs: ErrorList, errCode: string) : void => {
 		if (element && !allowed.includes(element.content))
 			errs.addError({
 				code: errCode,
@@ -94,13 +106,14 @@ export default class SL_helpers {
 				fragment: element,
 			});
 	};
-	static DisallowedElement = (element, childElementName, modulation, key, errs, suffix = "-0") => {
+
+	static DisallowedElement = (element: XmlElement, childElementName: string, modulation: string, key: string, errs: ErrorList, suffix: string = "-0") : void => {
 		if (element.hasChild(childElementName))
 			errs.addError({
 				code: `SI204${suffix}`,
 				key: key,
 				message: `${childElementName.elementize()} is not permitted for ${dvbi.e_ModulationSystem}=${modulation.quote()}`,
-				fragment: element.getAnyNs(childElementName),
+				fragment: element.getAnyNs(childElementName) as XmlElement,
 			});
 	};
 
@@ -110,7 +123,7 @@ export default class SL_helpers {
 	 * @param {XmlElement} instance  the service instance to check
 	 * @returns {Boolean} true if at least one media delivery system is specified on the instance
 	 */
-	static deliveryParameters = (instance) =>
+	static deliveryParameters = (instance: XmlElement) : XmlElement | null =>
 		instance.getAnyNs(dvbi.e_DVBTDeliveryParameters) ||
 		instance.getAnyNs(dvbi.e_DVBSDeliveryParameters) ||
 		instance.getAnyNs(dvbi.e_DVBCDeliveryParameters) ||
@@ -123,10 +136,10 @@ export default class SL_helpers {
 	 * Verify the MulticastTSDeliveryParameters
 	 * 
 	 * @param {XmlElement} params  the MulticastTSDeliveryParameters element
-	 * @param {*} errs             errors found in validaton
-	 * @param {*} errCode          error code prefix to be used in reports
+	 * @param {ErrorList} errs  errors found in validaton
+	 * @param {string} errCode  error code prefix to be used in reports
 	 */
-	static checkMulticastDeliveryParams = (params, errs, errCode) => {
+	static checkMulticastDeliveryParams = (params: XmlElement, errs: ErrorList, errCode: string) : void => {
 		const IPMulticastAddress = params.getAnyNs(dvbi.e_IPMulticastAddress);
 		if (IPMulticastAddress) {
 			const CNAME = IPMulticastAddress.getAnyNs(dvbi.e_CNAME);
@@ -145,10 +158,10 @@ export default class SL_helpers {
 	 * Verify the IdentifierBasedDeliveryParameters
 	 * 
 	 * @param {XmlElement} params  the IdentifierBasedDeliveryParameters element
-	 * @param {*} errs             errors found in validaton
-	 * @param {*} errCode          error code prefix to be used in reports
+	 * @param {ErrorList} errs  errors found in validaton
+	 * @param {string} errCode  error code prefix to be used in reports
 	 */
-	static checkIdDelivery = (params, errs, errCode) => {
+	static checkIdDelivery = (params: XmlElement, errs: ErrorList, errCode: string) : void => {
 
 		if (params.content.startsWith(dvbi.ICECAST_V1_IDENTIFIER)) {
 			const IcecastURL = params.content.substring(dvbi.ICECAST_V1_IDENTIFIER.length+1);

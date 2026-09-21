@@ -1,5 +1,5 @@
 /**
- * slepr.mjs
+ * slepr.mts
  *
  *  DVB-I-tools
  *  Copyright (c) 2021-2026, Paul Higgs
@@ -115,7 +115,7 @@ export default class SLEPR {
 					masterSLEPR = EMPTY_SLEPR(this.#readError);
 				});
 		} else
-			readFile(filename, { encoding: "utf-8" }, function (err, data) {
+			readFile(filename, { encoding: "utf-8" }, function (err: NodeJS.ErrnoException | null, data: string | NonSharedBuffer) {
 				if (!err) masterSLEPR = data;
 				else {
 					this.#readError = err;

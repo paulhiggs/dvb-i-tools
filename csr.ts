@@ -7,35 +7,35 @@
  * 
  * An standalone runner for a service list entry point registry (SLEPR) that can be used as a Central Service List Registry (CSR)
  */
-import { join } from "path";
-import { createServer } from "https";
-import cluster from "cluster";
-import { cpus } from "os";
-import process from "process";
-import { readFileSync } from "fs";
+import { join } from "path"
+import { createServer } from "https"
+import cluster from "cluster"
+import { cpus } from "os"
+import process from "process"
+import { readFileSync } from "fs"
 
-import chalk from "chalk";
-import express from "express";
-import morgan, { token } from "morgan";
-import favicon from "serve-favicon";
-import commandLineArgs from "command-line-args";
-import commandLineUsage from "command-line-usage";
-import cors from "cors";
+import chalk from "chalk"
+import express from "express"
+import morgan, { token } from "morgan"
+import favicon from "serve-favicon"
+import commandLineArgs from "command-line-args"
+import commandLineUsage from "command-line-usage"
+import cors from "cors"
 
-import { Libxml2_wasm_init } from "./libxml2-wasm-extensions.mts";
-Libxml2_wasm_init();
+//import { Libxml2_wasm_init } from "./libxml2-wasm-extensions.mts"
+//Libxml2_wasm_init();
 
-import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
+import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs"
 xmlRegisterFsInputProviders();
 
-import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./lib/data_locations.mts";
-import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mts";
-import { readmyfile } from "./lib/utils.mts";
+import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./lib/data_locations.mts"
+import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mts"
+import { readmyfile } from "./lib/utils.mts"
 
-import IANAlanguages from "./lib/IANA_languages.mts";
-import ISOcountries from "./lib/ISO_countries.mjs";
-import ClassificationScheme from "./lib/classification_scheme.mts";
-import { __dirname } from "./lib/data_locations.mts";
+import IANAlanguages from "./lib/IANA_languages.mts"
+import ISOcountries from "./lib/ISO_countries.mts"
+import ClassificationScheme from "./lib/classification_scheme.mts"
+import { __dirname } from "./lib/data_locations.mts"
 
 const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
@@ -44,9 +44,9 @@ const numCPUs = cpus().length;
 const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), { encoding: "utf-8" }).toString());
 
 // SLEPR == Service List Entry Point Registry
-import SLEPR from "./lib/slepr.mjs";
+import SLEPR from "./lib/slepr.mts";
+import { DEFAULT_PROCESSING, SLR_Processing_Modes } from "./lib/slepr.mts";
 
-import { DEFAULT_PROCESSING, SLR_Processing_Modes } from "./lib/slepr.mjs";
 import { init_spam_blocker } from "./lib/spam_disruptions.mjs";
 
 // command line options
@@ -145,17 +145,23 @@ if (!SLR_Processing_Modes.includes(options.SLRmode)) {
 if (options.urls && options.CSRfile == Default_SLEPR.file) options.CSRfile = Default_SLEPR.url;
 
 const knownLanguages = new IANAlanguages();
-knownLanguages.loadLanguages(options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file });
+knownLanguages.loadLanguages(
+	options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file },
+	{async: true, verbose: true, useURLs: options.urls}
+);
 
 const knownCountries = new ISOcountries(false, true);
-knownCountries.loadCountries(options.urls ? { url: ISO3166.url } : { file: ISO3166.file });
+knownCountries.loadCountries(
+	options.urls ? { url: ISO3166.url } : { file: ISO3166.file },
+{async: true, verbose: true, useURLs: options.urls}
+);
 
 const knownGenres = new ClassificationScheme();
 knownGenres.loadCS(
 	options.urls 
-		? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] } 
+		? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] as string[] } 
 		: { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] },
-	{async: true, verbose: true}
+	{async: true, verbose: true, useURLs: options.urls}
 );
 
 const RELOAD = "RELOAD",

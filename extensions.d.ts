@@ -1,5 +1,5 @@
 
-import { XmlAttribute, XmlElement as libXmlElement, XmlDocument as libXmlDocument } from "libxml2-wasm";
+import { XmlAttribute as libXmlAttribute, XmlElement as libXmlElement, XmlDocument as libXmlDocument } from "libxml2-wasm";
 
 export {}
 
@@ -15,6 +15,9 @@ declare global {
 }
 
 declare global {
+
+	export declare class XmlAttribute extends libXmlAttribute {
+	}
 
 	export declare class XmlElement extends libXmlElement {
 
@@ -35,7 +38,13 @@ declare global {
 
 	export declare class XmlDocument extends libXmlDocument {
 		hasChildren() : boolean
+		forEachChildElement(func: (child: XmlElement) => void) : void
+		forEachNamedChildElement(childName: string | string[], func: (child: XmlElement) => void) : void
+
 	}
+
+
+
 
 }
 

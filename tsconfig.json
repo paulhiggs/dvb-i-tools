@@ -1,8 +1,11 @@
 {
+	"include": ["**/*.ts", "**/*.mts", "**/*.d.mts"],
+
   "compilerOptions": {
     "types": [
       "node",
 			"./extensions.d.ts",
+			"./lib/CMCD_custom_keys.d.ts",
     ],
     "rootDir": "./",
     "declaration": true,

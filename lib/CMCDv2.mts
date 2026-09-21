@@ -44,11 +44,12 @@ import { dvbi } from "./DVB-I_definitions.mts"
 import { CMCD_MODE_REQUEST, CMCD_MODE_EVENT } from "./DVB-I_definitions.mts"
 import { CMCD_METHOD_HTTP_HEADER, CMCD_METHOD_QUERY_ARGUMENT, CMCD_METHOD_BODY } from "./DVB-I_definitions.mts"
 import { WARNING } from "./error_list.mts"
+import type { ReportedErrorType } from "./error_list.mts"
 import { HasProperty, parameterCheck } from "./utils.mts"
 import { isObjectEmpty } from "./utils.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
 import { InvalidURL, keys } from "./common_errors.mts"
-import { isKnownCMCDCustomKey } from "./CMCD_custom_keys.mts"
+import { isKnownCMCDCustomKey } from "./CMCD_custom_keys.js"
 
 import ErrorList from "./error_list.mts"
 
@@ -192,8 +193,10 @@ const reportingMode = (mode: string) => (mode.indexOf(":") != -1 ? mode.substrin
 
 const error_key = keys.k_CMCD;
 
+type CountsAccumulator = Record<string, number[]>;
+
 function checkCMCDkeys(Report: XmlElement, version: number, errs: ErrorList, errCode: string) {
-	if (!parameterCheck("checkCMCDkeys", Report, dvbi.e_Report, errs, `${errCode}-00`)) return;
+	if (!parameterCheck("checkCMCDkeys", Report, dvbi.e_Report as string, errs, `${errCode}-00`)) return;
 	if (Number.isNaN(version)) return;
 
 	const keys_to_use = version == 1 ? CMCDv1_keys : CMCDv2_keys;
@@ -247,12 +250,12 @@ function checkCMCDkeys(Report: XmlElement, version: number, errs: ErrorList, err
 				type: WARNING,
 				code: `${errCode}-11`,
 				fragment: Report,
-				message: `${dvbi.a_obfuscateURL.attribute()}="true" is only relevant when '${CMCD_keys.request_url}' is specified in ${dvbi.a_enabledKeys.attribute()}`,
+				message: `${(dvbi.a_obfuscateURL as string).attribute()}="true" is only relevant when '${CMCD_keys.request_url}' is specified in ${(dvbi.a_enabledKeys as string).attribute()}`,
 				key: error_key,
 			});
 	}
-	const configured_keys_array = configured_keys.split(" ");
-	if (reporting_mode == CMCD_MODE_EVENT) {
+	const configured_keys_array = configured_keys ? configured_keys.split(" ") : null;
+	if (configured_keys_array && reporting_mode == CMCD_MODE_EVENT) {
 		if (!configured_keys_array.includes(CMCD_keys.timestamp)) 
 			errs.addError({
 				code: `${errCode}-21`,
@@ -269,7 +272,7 @@ function checkCMCDkeys(Report: XmlElement, version: number, errs: ErrorList, err
 			});
 	}
 	if (version >= 2) {
-		const missingMandatoryKeyError = (key) => ({
+		const missingMandatoryKeyError = (key: string) => ({
 			code: `${errCode}-31`,
 			type: WARNING,
 			message: `key ${key.quote()} is required in all reports since CMCDv2 and should be included`,
@@ -278,14 +281,16 @@ function checkCMCDkeys(Report: XmlElement, version: number, errs: ErrorList, err
 			description: "All keys are OPTIONAL except for 'bs', 'su', and 'v' which are now required as of version 2.",
 			clause: "CTA-5004-A clause 4.2 item 8",
 		});
-		// CTA-5004-A clause 4.2 item 8 says that "bs", "su" and "v" are mandatory
-		if (!configured_keys_array.includes(CMCD_keys.buffer_starvation)) errs.addError(missingMandatoryKeyError(CMCD_keys.buffer_starvation));
-		if (!configured_keys_array.includes(CMCD_keys.startup)) errs.addError(missingMandatoryKeyError(CMCD_keys.startup));
-		if (!configured_keys_array.includes(CMCD_keys.CMCD_version)) errs.addError(missingMandatoryKeyError(CMCD_keys.CMCD_version));
+		if (configured_keys_array) {
+			// CTA-5004-A clause 4.2 item 8 says that "bs", "su" and "v" are mandatory
+			if (!configured_keys_array.includes(CMCD_keys.buffer_starvation)) errs.addError(missingMandatoryKeyError(CMCD_keys.buffer_starvation));
+			if (!configured_keys_array.includes(CMCD_keys.startup)) errs.addError(missingMandatoryKeyError(CMCD_keys.startup));
+			if (!configured_keys_array.includes(CMCD_keys.CMCD_version)) errs.addError(missingMandatoryKeyError(CMCD_keys.CMCD_version));
+		}
 	}
 }
 
-function list_versions(version_numbers) {
+function list_versions(version_numbers: number[]) {
 	if (version_numbers.length == 0) return ` NONE `;
 	if (version_numbers.length == 1) return ` ${version_numbers[0]} is`;
 	let rc = "s "
@@ -297,12 +302,12 @@ function list_versions(version_numbers) {
 }
 
 
-function ValidateContentIdLength(contentId, element, CMCDversion, errs, errPrefix) {
+function ValidateContentIdLength(contentId: string, element: XmlElement, CMCDversion: number, errs: ErrorList, errPrefix: string) {
 	if (!contentId)
 		return;
-	const contentIdLengthError = (_errCode, version, maxLen, foundLen) => ({
+	const contentIdLengthError = (_errCode: string, version: number, maxLen: number, foundLen: number) : ReportedErrorType => ({
 		code: _errCode,
-		message: `length of ${dvbi.a_contentId.attribute(element.name)} must be less than or equal to ${maxLen} (counted ${foundLen}) for CMCDv${version}`,
+		message: `length of ${(dvbi.a_contentId as string).attribute(element.name)} must be less than or equal to ${maxLen} (counted ${foundLen}) for CMCDv${version}`,
 		fragment: element,
 		key: error_key,
 	});
@@ -314,7 +319,7 @@ function ValidateContentIdLength(contentId, element, CMCDversion, errs, errPrefi
 					errs.errorDescription({
 						code: `${errPrefix}a`,
 						clause: "CTA-5004 Table 1",
-						reference: "https://cdn.cta.tech/cta/media/media/resources/standards/pdfs/cta-5004-final.pdf",
+					//TODO	reference: "https://cdn.cta.tech/cta/media/media/resources/standards/pdfs/cta-5004-final.pdf",
 						description: "A unique string identifying the current content. Maximum length is 64 characters.",
 					});
 				}
@@ -326,7 +331,7 @@ function ValidateContentIdLength(contentId, element, CMCDversion, errs, errPrefi
 					errs.errorDescription({
 						code: `${errPrefix}b`,
 						clause: "CTA-5004-B Table 1",
-						reference: "https://shop.cta.tech/collections/standards/products/cta-5004-b",
+					//TODO	reference: "https://shop.cta.tech/collections/standards/products/cta-5004-b",
 						description: "A unique string identifying the current content. Maximum length is 128 characters.",
 					});
 				}
@@ -334,10 +339,9 @@ function ValidateContentIdLength(contentId, element, CMCDversion, errs, errPrefi
 		}
 }
 
-
-function ValidateReportType(Report, errs, errCode) {
-	const reporting_mode = Report.attrAnyNsValueOr(dvbi.a_reportingMode),
-			transmission_mode = Report.attrAnyNsValueOr(dvbi.a_transmissionMode);
+function ValidateReportType(Report: XmlElement, errs: ErrorList, errCode: string) {
+	const reporting_mode = Report.attrAnyNsValueOr(dvbi.a_reportingMode as string),
+			transmission_mode = Report.attrAnyNsValueOr(dvbi.a_transmissionMode as string);
 	switch (reporting_mode) {
 		case CMCD_MODE_REQUEST:
 			if (transmission_mode && ![CMCD_METHOD_HTTP_HEADER, CMCD_METHOD_QUERY_ARGUMENT].includes(transmission_mode))
@@ -402,14 +406,14 @@ function ValidateReportType(Report, errs, errCode) {
 }
 
 
-function ValidateKeys(Report, CMCDversion, errs, errCode) {
+function ValidateKeys(Report: XmlElement, CMCDversion: number, errs: ErrorList, errCode: string) {
 	const enabledKeys = Report.attrAnyNsValueOr(dvbi.a_enabledKeys);
 	if (!enabledKeys) return;
 
 	const keys = enabledKeys.split(" ");
 	let contentId = Report.attrAnyNsValueOr(dvbi.a_contentId);
 	if (!contentId)
-		contentId = Report.parent.attrAnyNsValueOr(dvbi.a_contentId);
+		contentId = (Report.parent as XmlElement).attrAnyNsValueOr(dvbi.a_contentId);
 	if (!contentId && keys.includes(CMCD_keys.content_id))
 		errs.addError({
 			code: `${errCode}a`,
@@ -422,7 +426,7 @@ function ValidateKeys(Report, CMCDversion, errs, errCode) {
 }
 
 
-function ValidateAttributes(Report, CMCDversion, counts, errs, errCode) {
+function ValidateAttributes(Report: XmlElement, CMCDversion: number, counts: CountsAccumulator, errs: ErrorList, errCode: string) {
 	const objectTypes = Report.attrAnyNsValueOr(dvbi.a_objectTypes);
 	if (objectTypes) {
 		const objectTypes_array = objectTypes.split(" ");
@@ -459,13 +463,13 @@ function ValidateAttributes(Report, CMCDversion, counts, errs, errCode) {
 			errs.addError({
 				code: `${errCode}c`,
 				message: "only a single reporting configuration for Request Mode can be specified",
-				fragment: Report.parent,
+				fragment: Report.parent as XmlElement,
 				key: error_key,
 			});
 	}
 }
 
-function ValidateCMCDv1Element(CMCDelem, counts, errs, errCode) {
+function ValidateCMCDv1Element(CMCDelem: XmlElement, counts: CountsAccumulator, errs: ErrorList, errCode: string) {
 	CMCDelem.forEachNamedChildElement(dvbi.e_Report, (Report) => {
 		const reporting_mode = Report.attrAnyNsValueOr(dvbi.a_reportingMode);
 		if (reporting_mode != CMCD_MODE_REQUEST)
@@ -476,7 +480,8 @@ function ValidateCMCDv1Element(CMCDelem, counts, errs, errCode) {
 				key: error_key,
 			});
 		ValidateReportType(Report, errs, `${errCode}-21`);
-		const contentId = Report.attrAnyNsValueOr(dvbi.a_contentId) | CMCDelem.attrAnyNsValueOr(dvbi.a_contentId);
+		let contentId = Report.attrAnyNsValueOr(dvbi.a_contentId)
+		if (!contentId) contentId = CMCDelem.attrAnyNsValueOr(dvbi.a_contentId);
 		if (contentId)
 			ValidateContentIdLength(contentId, Report, 1, errs, `${errCode}-23`)
 		ValidateKeys(Report, 1, errs, `${errCode}-25`);
@@ -498,10 +503,10 @@ function ValidateCMCDv1Element(CMCDelem, counts, errs, errCode) {
 	});
 }
 
-function ValidateCMCDv2Element(CMCDelem, counts, errs, errCode) {
+function ValidateCMCDv2Element(CMCDelem: XmlElement, counts:CountsAccumulator, errs: ErrorList, errCode: string) {
 	const contentId = CMCDelem.attrAnyNsValueOr(dvbi.a_contentId);
 	if (contentId) {
-		ValidateContentIdLength(contentId, 2, errs,`${errCode}-23`);
+		ValidateContentIdLength(contentId, CMCDelem, 2, errs,`${errCode}-23`);
 	}
 	CMCDelem.forEachNamedChildElement(dvbi.e_Report, (Report) => {
 		ValidateReportType(Report, errs, `${errCode}-21`);
@@ -510,7 +515,7 @@ function ValidateCMCDv2Element(CMCDelem, counts, errs, errCode) {
 	});
 }
 
-function cidRequested(CMCDelem) {
+function cidRequested(CMCDelem: XmlElement) : boolean {
 	// return true if the 'cid' metric is used in any child <Report>
 	let rc = false;
 	CMCDelem.forEachNamedChildElement(dvbi.e_Report, (Report) => {
@@ -524,7 +529,7 @@ function cidRequested(CMCDelem) {
 	return rc;
 }
 
-function check_CMCD(CMCDelem, counts, errs) {
+function check_CMCD(CMCDelem: XmlElement, counts: CountsAccumulator, errs: ErrorList) {
 	if (!parameterCheck("check_CMCD", CMCDelem, dvbi.e_CMCD, errs, "CD000")) return;
 	
 	if (isObjectEmpty(counts)) {
@@ -538,7 +543,7 @@ function check_CMCD(CMCDelem, counts, errs) {
 		};
 	}
 
-	const CMCDversion = parseInt(CMCDelem.attrAnyNsValueOr(dvbi.a_CMCDversion)); // should result in a number or NaN, which is handled in the checks below
+	const CMCDversion = parseInt(CMCDelem.attrAnyNsValueOr(dvbi.a_CMCDversion) as string); // should result in a number or NaN, which is handled in the checks below
 
 	if (supported_CMCD_versions.includes(CMCDversion)) {
 		if (counts.version[CMCDversion-1] != 0)
@@ -586,7 +591,7 @@ function check_CMCD(CMCDelem, counts, errs) {
 
 
 export function ValidateCMCDinDASH(DASHDeliveryParameters: XmlElement, errs: ErrorList) {
-	const mode_counts: unknown = {}; // accumulator of each request type
+	const mode_counts: CountsAccumulator = {}; // accumulator of each request type
 	DASHDeliveryParameters.forEachNamedChildElement(dvbi.e_CMCD as string, (CMCDelem) => {
 		check_CMCD(CMCDelem, mode_counts, errs);
 	});	

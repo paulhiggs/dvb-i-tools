@@ -81,7 +81,7 @@ export default class Role extends ClassificationScheme {
 		if (verbose) console.log(chalk.yellow(`reading Roles from ${rolesFile}`));
 
 		if (async)
-			readFile(rolesFile, { encoding: "utf-8" }, (err, data) => {
+			readFile(rolesFile, { encoding: "utf-8" }, (err: NodeJS.ErrnoException | null, data: string | NonSharedBuffer) => {
 				if (!err)
 					data.split("\n").forEach((role) => {
 						this.#addRole(role);

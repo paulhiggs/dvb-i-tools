@@ -11,7 +11,7 @@
 import chalk from "chalk";
 
 import IANAlanguages from "./IANA_languages.mts";
-import ISOcountries from "./ISO_countries.mjs";
+import ISOcountries from "./ISO_countries.mts";
 import {
 	IANA_Subtag_Registry,
 	TVA_ContentCS,
@@ -44,9 +44,8 @@ import { MPEG1_layer_2 } from "./MPEG7_definitions.mts";
 
 import Role from "./role.mts";
 
-
-import { Libxml2_wasm_init } from "../libxml2-wasm-extensions.mts";
-Libxml2_wasm_init();
+//import { Libxml2_wasm_init } from "../libxml2-wasm-extensions.mts";
+//Libxml2_wasm_init();
 
 import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
 xmlRegisterFsInputProviders();
@@ -448,8 +447,8 @@ export function LoadCredits(opts: LoadOptions): ClassificationScheme {
 	const credits = new Role();
 	credits.loadRoles(
 		opts.useURLs 
-			? { urls: [DVBI_CreditsItemRoles.url, DVBIv2_CreditsItemRoles.url] } 
-			: { files: [DVBI_CreditsItemRoles.file, DVBIv2_CreditsItemRoles.file] }, 
+			? { urls: [DVBI_CreditsItemRoles.url, DVBIv2_CreditsItemRoles.url] as string[]} 
+			: { files: [DVBI_CreditsItemRoles.file, DVBIv2_CreditsItemRoles.file] as string[]}, 
 		opts
 	);
 	return credits;

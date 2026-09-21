@@ -14,7 +14,7 @@ import chalk from "chalk";
 import { AvlTree, AvlTreeNode } from "@datastructures-js/binary-search-tree";
 import fetchS from "sync-fetch";
 
-import { XmlDocument, XmlElement } from "libxml2-wasm";
+import { XmlDocument } from "libxml2-wasm"
 import {} from "../libxml2-wasm-extensions.mts"
 
 import { fetch_options } from "./globals.mts";
@@ -40,7 +40,8 @@ export type FileLocations = {
 export type LoadOptions = {
 	useURLs: boolean	// when true, load from network locations, else use local files
 	async: boolean		// load asynchronously - OK for service, not NOT for command line validator
-	verbose: boolean	//display verbose output
+	verbose: boolean	// display verbose output
+	purge?: boolean   // clear the storage before loading/reloading
 }
 
 /**
@@ -58,12 +59,18 @@ function addCSTerm(vals: CSnode[], CSuri: string, term: XmlElement) {
 				term:`${CSuri}${CS_URI_DELIMITER}${termId}`,
 				leaf: !term.hasChild(dvb.e_Term),		
 			});
-		let subTerm = term.firstChild;
+		let subTerm: XmlElement | null = term.firstChild;
 		while (subTerm) {
 			addCSTerm(vals, CSuri, subTerm);
-			subTerm = subTerm.next;
+			subTerm = subTerm.next as XmlElement;
 		}
 	}
+}
+
+
+type CSData = {
+	uri? : string
+	vals: CSnode[]
 }
 
 /**
@@ -72,14 +79,14 @@ function addCSTerm(vals: CSnode[], CSuri: string, term: XmlElement) {
  * @param {XmlDocument} xmlCS          the XML document  of the classification scheme
  * @returns {Object} values parsed from the classification scheme in .vals and uri of classification scheme in .uri
  */
-function loadClassificationScheme(xmlCS : XmlDocument) {
-	const rc = { uri: null, vals: [] };
+function loadClassificationScheme(xmlCS : XmlDocument): CSData {
+	const rc: CSData = { vals: [] };
 	if (!xmlCS) return rc;
 
-	const CSnamespace = xmlCS.root.attrAnyNs(dvb.a_uri);
+	const CSnamespace = (xmlCS.root as XmlElement).attrAnyNs(dvb.a_uri);
 	if (!CSnamespace) return rc;
 	rc.uri = CSnamespace.value;
-	let term = xmlCS.root.firstChild;
+	let term = xmlCS.root.firstChild as XmlElement;
 	while (term) {
 		addCSTerm(rc.vals, rc.uri, term);
 		term = term.next;
@@ -180,7 +187,7 @@ export default class ClassificationScheme {
 		if (verbose) console.log(chalk.yellow(`reading CS from ${classificationScheme}`));
 
 		if (async)
-			readFile(classificationScheme, { encoding: "utf-8" }, (err, data) => {
+			readFile(classificationScheme, { encoding: "utf-8" }, (err: NodeJS.ErrnoException | null, data: string | NonSharedBuffer) => {
 				if (!err) {
 					const res = loadClassificationScheme(XmlDocument.fromString(data.replace(/(\r\n|\n|\r|\t)/gm, "")));
 					res.vals.forEach((e) => this.add(e));

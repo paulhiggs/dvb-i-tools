@@ -236,7 +236,7 @@ export default class IANAlanguages {
 			readFile(
 				languagesFile,
 				{ encoding: "utf-8" },
-				function (err, data) {
+				function (err: NodeJS.ErrnoException | null, data: string | NonSharedBuffer) {
 					if (!err) {
 						this.#processLanguageData(data);
 					} else console.log(chalk.red(`error loading languages ${err}`));

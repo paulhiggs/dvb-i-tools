@@ -7,18 +7,18 @@
  * 
  * runner for all three DVB-I V&V tools
  */
-import process from "node:process";
-import chalk from "chalk";
-import commandLineArgs from "command-line-args";
-import commandLineUsage from "command-line-usage";
+import process from "node:process"
+import chalk from "chalk"
+import commandLineArgs from "command-line-args"
+import commandLineUsage from "command-line-usage"
 
-import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
+import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs"
 xmlRegisterFsInputProviders();
 
-import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mts";
-import { Default_SLEPR, MOTD } from "./lib/data_locations.mts";
-import validator from "./lib/validator.mts";
-import { DEFAULT_PROCESSING, SLR_Processing_Modes } from "./lib/slepr.mjs";
+import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mts"
+import { Default_SLEPR, MOTD } from "./lib/data_locations.mts"
+import validator from "./lib/validator.mts"
+import { DEFAULT_PROCESSING, SLR_Processing_Modes } from "./lib/slepr.mts";
 
 // parse command line options
 const optionDefinitions = [

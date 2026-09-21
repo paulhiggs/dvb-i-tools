@@ -33,7 +33,7 @@ import { ValidatePromotionalStillImage, ValidateAnySignaturePolicy } from "./rel
 import { ValidateAnyContentDigests } from "./digest_validation.mts";
 import { cg_InvalidHrefValue, NoChildElement, keys } from "./common_errors.mts";
 import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.mts";
-import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./multilingual_element.mjs";
+import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./multilingual_element.mts";
 import writeOut from "./logger.mts";
 import { StandardStatus } from "./globals.mts";
 import {
@@ -52,7 +52,7 @@ import {
 	LoadCredits,
 } from "./classification_scheme_loaders.mts";
 import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts";
-import { mlLanguage, NO_DOCUMENT_LANGUAGE } from "./multilingual_element.mjs";
+import { mlLanguage, NO_DOCUMENT_LANGUAGE } from "./multilingual_element.mts";
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";

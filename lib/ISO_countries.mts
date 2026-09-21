@@ -1,5 +1,5 @@
 /**
- * ISO_countries.mjs
+ * ISO_countries.mts
  *
  *  DVB-I-tools
  *  Copyright (c) 2021-2026, Paul Higgs
@@ -10,36 +10,48 @@
 
 import { readFile, readFileSync } from "fs";
 
-import chalk from "chalk";
-import fetchS from "sync-fetch";
+import chalk from "chalk"
+import fetchS from "sync-fetch"
+import FetchError from "sync-fetch"
 
-import handleErrors from "./fetch_err_handler.mts";
-import { isHTTPURL } from "./pattern_checks.mts";
-import { fetch_options } from "./globals.mts";
+import { DefaultProperty } from "./utils.mts"
+import handleErrors from "./fetch_err_handler.mts"
+import { isHTTPURL } from "./pattern_checks.mts"
+import { fetch_options } from "./globals.mts"
+import type { FileLocations, LoadOptions } from "./classification_scheme.mts"
+
+type CountryDeclaration = {
+	country: string
+	alpha2: string
+	alpha3: string
+	numeric: string
+}
 
 /**
  * load the countries list into the allowedCountries global array from the specified text
  *
  * @param {String} countryData the text of the country JSON data
- * @returns {Object} processed JSON object of countries
+ * @returns {} processed JSON object of countries
  */
-function loadCountryData(countryData) {
+function loadCountryData(countryData: string) : CountryDeclaration[] {
 	return JSON.parse(countryData, function (key, value) {
 		if (key == "numeric") return Number(value);
 		else if (key == "alpha2") {
 			if (value.length != 2) return "**";
 			else return value;
-		} else if (key == "alpha3") {
+		} 
+		else if (key == "alpha3") {
 			if (value.length != 3) return "***";
 			else return value;
-		} else return value;
+		} 
+		else return value;
 	});
 }
 
 export default class ISOcountries {
-	#countriesList;
-	#use2CharCountries;
-	#use3CharCountries;
+	#countriesList: CountryDeclaration[];
+	#use2CharCountries: boolean;
+	#use3CharCountries: boolean;
 
 	/**
 	 * constructor
@@ -47,7 +59,7 @@ export default class ISOcountries {
 	 * @param {boolean} use2 allow the 2 digit country codes to be searched
 	 * @param {boolean} use3 allow the 3 digit country codes to be searched
 	 */
-	constructor(use2 = true, use3 = false) {
+	constructor(use2: boolean = true, use3: boolean = false) {
 		loadCountryData.bind(this);
 		this.#countriesList = [];
 		this.#use2CharCountries = use2;
@@ -60,14 +72,14 @@ export default class ISOcountries {
 	 * @param {String}  countriesFile   the file name to load
 	 * @param {boolean} purge           erase the existing values before loading new
 	 */
-	#loadCountriesFromFile(countriesFile, purge = false, async = true, verbose = true) {
+	#loadCountriesFromFile(countriesFile: string, purge: boolean = false, async: boolean = true, verbose: boolean = true) {
 		if (verbose) console.log(chalk.yellow(`reading countries from ${countriesFile}`));
 		if (purge) this.reset();
 		if (async)
 			readFile(
 				countriesFile,
 				{ encoding: "utf-8" },
-				function (err, data) {
+				function (err: NodeJS.ErrnoException | null, data: string) {
 					if (!err) this.#countriesList = loadCountryData(data);
 					else console.log(chalk.red(err.message));
 				}.bind(this)
@@ -81,10 +93,12 @@ export default class ISOcountries {
 	/**
 	 * load the countries list into the allowedCountries global array from the specified JSON file
 	 *
-	 * @param {String}  countriesURL  the URL to the file to load
-	 * @param {boolean} purge         erase the existing values before loading new
+	 * @param {string}  countriesURL  the URL to the file to load
+	 * @param {boolean} purge  erase the existing values before loading new
+	 * @param {boolean} async  load asynchronously
+	 * @param {boolean} verbose  display verbose output
 	 */
-	#loadCountriesFromURL(countriesURL, purge = false, async = true, verbose = true) {
+	#loadCountriesFromURL(countriesURL: string, purge: boolean = false, async: boolean = true, verbose: boolean = true) {
 		const isHTTPurl = isHTTPURL(countriesURL);
 		if (verbose) console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving countries from ${countriesURL} using fetch()`));
 		if (!isHTTPurl) return;
@@ -101,18 +115,19 @@ export default class ISOcountries {
 			try {
 				resp = fetchS(countriesURL, fetch_options);
 			} catch (error) {
-				console.log(chalk.red(error.message));
+				if (error instanceof FetchError)
+					console.log(chalk.red(error.message));
 			}
 			if (resp) {
 				if (resp.ok) this.#countriesList = loadCountryData(resp.text());
-				else console.log(chalk.red(`error (${resp.error()}) retrieving ${countriesURL}`));
+				else console.log(chalk.red(`error (${resp.status} ${resp.statusText}) retrieving ${countriesURL}`));
 			}
 		}
 	}
 
-	loadCountries(source, options) {
-		if (!options) options = {};
-		if (!options.purge) options.purge = true;
+	loadCountries(source: FileLocations, options: LoadOptions) {
+	
+		DefaultProperty(options, "purge", true);
 
 		if (source.file) this.#loadCountriesFromFile(source.file, options.purge, options.async, options.verbose);
 		else if (source.url) this.#loadCountriesFromURL(source.url, options.purge, options.async, options.verbose);
@@ -129,11 +144,11 @@ export default class ISOcountries {
 	/**
 	 * determine if the argument contains a valid ISO 3166 country code
 	 *
-	 * @param {String}  countryCode     the country code to be checked for validity
+	 * @param {string}  countryCode     the country code to be checked for validity
 	 * @param {boolean} caseSensitive   ignore case
 	 * @return {boolean} true if countryCode is known else false
 	 */
-	isISO3166code(countryCode, caseSensitive = true) {
+	isISO3166code(countryCode: string, caseSensitive:boolean = true) : boolean {
 		let found = false;
 		const countryCode_lc = countryCode.toLowerCase();
 
@@ -147,7 +162,7 @@ export default class ISOcountries {
 		return found;
 	}
 
-	has(countryCode) {
+	has(countryCode: string) {
 		return this.isISO3166code(countryCode);
 	}
 }

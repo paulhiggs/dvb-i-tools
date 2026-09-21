@@ -52,7 +52,7 @@ The server can be reloaded with an updated `slepr-master.xml` file by invoking i
 
 If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
 
-## all-in-one.js
+## all-in-one.ts
 
 Implements csr.ts along with service list registry, service list and content guide document validation.
 

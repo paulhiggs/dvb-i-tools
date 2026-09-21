@@ -7,7 +7,7 @@
  * 
  */
 
-import { XsdValidator, XmlAttribute, XmlValidateError } from "libxml2-wasm";
+import { XsdValidator, XmlDocument, XmlAttribute, XmlValidateError } from "libxml2-wasm";
 import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
 xmlRegisterFsInputProviders();
 

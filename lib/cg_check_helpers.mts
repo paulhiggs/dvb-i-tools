@@ -8,9 +8,6 @@
  * static self contained helper fuctions for content guide validation 
  */
 
-import { XmlElement } from "libxml2-wasm"
-import {} from "./extensions.ts"
-
 import { parameterCheck } from "./utils.mts"
 import { dvbi } from "./DVB-I_definitions.mts"
 import { tva } from "./TVA_definitions.mts"
@@ -37,13 +34,13 @@ export default class CG_helpers {
 			if (!allowed.includes(attr_value))
 				errs.addError({
 					code: `${errCode}-1`,
-					message: `${attrName.attribute(`${elem.parent.name}.${elem.name}`)} must be ${allowed.join(" or ")}`,
+					message: `${attrName.attribute(`${elem.parent?.name}.${elem.name}`)} must be ${allowed.join(" or ")}`,
 					fragment: elem,
 				});
 		} else if (isRequired)
 			errs.addError({
 				code: `${errCode}-2`,
-				message: `${attrName.attribute()} must be specified for ${elem.parent.name}.${elem.name}`,
+				message: `${attrName.attribute()} must be specified for ${elem.parent?.name}.${elem.name}`,
 				fragment: elem,
 			});
 	}
@@ -57,7 +54,8 @@ export default class CG_helpers {
 	 * @param {String}     errCode    the error number used as a prefix for reporting errors
 	 * @param {boolean}    isRequired true if the specified attribute is required to be specified for the element
 	 */
-	static BooleanValue = (elem, attrName, errs, errCode, isRequired = true) => this.AllowedValue(elem, attrName, ["true", "false"], errs, errCode, isRequired);
+	static BooleanValue = (elem: XmlElement, attrName: string, errs: ErrorList, errCode: string, isRequired: boolean = true): void => 
+		this.AllowedValue(elem, attrName, ["true", "false"], errs, errCode, isRequired);
 
 	/**
 	 * checks is the specified element (elem) has an attribute named attrName and that its value is "true"
@@ -68,7 +66,8 @@ export default class CG_helpers {
 	 * @param {String}     errCode    the error number used as a prefix for reporting errors
 	 * @param {boolean}    isRequired true if the specified attribute is required to be specified for the element
 	 */
-	static TrueValue = (elem, attrName, errs, errCode, isRequired = true) => this.AllowedValue(elem, attrName, ["true"], errs, errCode, isRequired);
+	static TrueValue = (elem: XmlElement, attrName: string, errs: ErrorList, errCode: string, isRequired: boolean = true) : void => 
+		this.AllowedValue(elem, attrName, ["true"], errs, errCode, isRequired);
 	
 	/**
 	 * checks is the specified element (elem) has an attribute named attrName and that its value is "false"
@@ -79,22 +78,28 @@ export default class CG_helpers {
 	 * @param {String}     errCode    the error number used as a prefix for reporting errors
 	 * @param {boolean}    isRequired true if the specified attribute is required to be specified for the element
 	 */
-	static FalseValue = (elem, attrName, errs, errCode, isRequired = true) => this.AllowedValue(elem, attrName, ["false"], errs, errCode, isRequired);
+	static FalseValue = (elem: XmlElement, attrName: string, errs: ErrorList, errCode: string, isRequired: boolean = true) : void => 
+		this.AllowedValue(elem, attrName, ["false"], errs, errCode, isRequired);
 	
 
 	/**
 	 * @param {String} genre the value to check as being a restart availability genre
 	 * @returns {boolean} true if the value provided is a valid restart availability genre
 	 */
-	static isRestartAvailability = (genre) => [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(genre);
+	static isRestartAvailability = (genre: string) : boolean => 
+		[dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(genre);
 
 
-	static isRestartLink = (str) => str == dvbi.RESTART_LINK;	
+	static isRestartLink = (href: string) : boolean => href == dvbi.RESTART_LINK;	
 
-	static synopsisLengthError = (label, length, actual) => `length of ${tva.a_length.attribute(tva.e_Synopsis)}=${label.quote()} exceeds ${length} characters, measured(${actual})`;
-	static singleLengthLangError = (length, lang) => `only a single ${tva.e_Synopsis.elementize()} is permitted per length (${length}) and language (${lang})`;
-	static requiredSynopsisError = (length) => `a ${tva.e_Synopsis.elementize()} with ${tva.a_length.attribute()}=${length.quote()} is required`;
+	static synopsisLengthError = (label: string, length: number, actual: number) => 
+		`length of ${tva.a_length.attribute(tva.e_Synopsis)}=${label.quote()} exceeds ${length} characters, measured(${actual})`;
 
+	static singleLengthLangError = (length: string, lang: string) : string => 
+		`only a single ${tva.e_Synopsis.elementize()} is permitted per length (${length}) and language (${lang})`;
+
+	static requiredSynopsisError = (length: string) : string => 
+		`a ${tva.e_Synopsis.elementize()} with ${tva.a_length.attribute()}=${length.quote()} is required`;
 
 	static {
 		// initialise static variables here

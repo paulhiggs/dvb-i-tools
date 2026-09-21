@@ -8,12 +8,11 @@
  * error templates used by different validatirs
  */
 
-import { XmlAttribute, XmlElement } from "libxml2-wasm";
-import {} from "./string-extensions.ts"
 
-import { tva } from "./TVA_definitions.mts";
-import { dvbi } from "./DVB-I_definitions.mts";
-import { WARNING } from "./error_list.mts";
+import { tva } from "./TVA_definitions.mts"
+import { dvbi } from "./DVB-I_definitions.mts"
+import { WARNING } from "./error_list.mts"
+import type { ReportedErrorType } from "./error_list.mts"
 
 import {} from "./string-extensions.ts"
 
@@ -55,7 +54,7 @@ export const keys = {
  * @param {String}      schemaLocation  The location in the schema of the element
  * @param {String}      errCode         The error number to show in the log
  */
-export const NoChildElement = (missingElement: string, parentElement: XmlElement, schemaLocation: string, errCode: string) => ({
+export const NoChildElement = (missingElement: string, parentElement: XmlElement, schemaLocation: string, errCode: string)  : ReportedErrorType => ({
 	code: errCode,
 	message: `${missingElement} element not specified for ${parentElement.name.elementize()}${schemaLocation ? " in " + schemaLocation : ""}`,
 	line: parentElement.line,
@@ -69,21 +68,21 @@ export const NoChildElement = (missingElement: string, parentElement: XmlElement
  * @param {String}     loc       The location of the element
  * @param {String}     errCode   The error number to show in the log
  */
-export const cg_InvalidHrefValue = (value: string, element: XmlElement, loc: string, errCode: string) => ({
+export const cg_InvalidHrefValue = (value: string, element: XmlElement, loc: string, errCode: string)  : ReportedErrorType => ({
 	code: errCode,
 	message: `invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${element.name.elementize()} in ${loc}`,
 	line: element.line,
 	key: keys.k_InvalidHRef,
 });
 
-export const sl_InvalidHrefValue = (value: string, element: XmlElement, src: string, loc: string, errCode: string) => ({
+export const sl_InvalidHrefValue = (value: string, element: XmlElement, src: string, loc: string, errCode: string)  : ReportedErrorType=> ({
 	code: errCode,
 	fragment: element,
 	message: `invalid ${dvbi.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`,
 	key: keys.k_InvalidHRef,
 });
 
-export const InvalidURL = (value: string, element: XmlElement, src: string, errCode: string) => ({
+export const InvalidURL = (value: string, element: XmlElement, src: string, errCode: string) : ReportedErrorType => ({
 	code: errCode,
 	fragment: element,
 	message: `invalid URL ${value.quote()} value specified for ${src}`,

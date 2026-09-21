@@ -9,15 +9,14 @@
  * with the formerly used libxmljs2 (https://github.com/marudor/libxmljs2)
  */
 
-import { XmlDocument, XmlElement, XmlAttribute } from "libxml2-wasm"
-
+import { XmlAttribute, XmlElement, XmlDocument } from "libxml2-wasm"
 //console.log(chalk.yellow.underline("initialize libxml2-wasm extensions"));
 
 /**
  * find the named attribute without considering the namespace
  * return a pointer to the XmlAttribute object or null if not found
  */
-XmlElement.prototype.attrAnyNs = function (name: string) : XmlAttribute | null{
+XmlElement.prototype.attrAnyNs = function (name: string) : XmlAttribute | null {
 	const rc = this.attrs.find((a) => a.name == name);
 	return rc ? rc : null;
 };
@@ -71,7 +70,7 @@ XmlElement.prototype.hasChild = function (childName: string) : boolean {
 	let child = this.firstChild as XmlElement;
 	while (child) {
 		if (child.name?.endsWith(childName)) return true;
-		child = child.next;
+		child = child.next as XmlElement;
 	}
 	return false;
 };
@@ -147,14 +146,14 @@ XmlDocument.prototype.hasChildren = function () : boolean {
 /**
  * invoke the given callback for each child element
  */
-XmlDocument.prototype.forEachChildElement = function (func: (child: XmlElement) => void) {
+XmlDocument.prototype.forEachChildElement = function (callback: (child: XmlElement) => void) : void {
 	if (this == null) {
 		throw new TypeError("XmlDocument.prototype.forEachChildElement called on null or undefined");
 	}
-	let child = this?.firstChild;
+	let child = this.root.firstChild;
 	while (child) {
 		if (child instanceof XmlElement) 
-			func(child);
+			callback(child);
 		child = child.next;
 	}
 }
@@ -163,7 +162,7 @@ XmlDocument.prototype.forEachChildElement = function (func: (child: XmlElement) 
 /**
  * invoke the given callback for each child with the given name (irrespective of namespace)
  */
-XmlDocument.prototype.forEachNamedChildElement = function (name: string, func: (child: XmlElement) => void) {
+XmlDocument.prototype.forEachNamedChildElement = function (name: string, callback: (child: XmlElement) => void) : void {
 	if (this == null) {
 		throw new TypeError("XmlDocument.prototype.forEachNamedChildElement called on null or undefined");
 	}
@@ -173,7 +172,7 @@ XmlDocument.prototype.forEachNamedChildElement = function (name: string, func: (
 	let child = this.root.firstChild;
 	while (child) {
 		if (child instanceof XmlElement && (Array.isArray(name) ? name.includes(child.name) : child.name == name)) 
-			func(child);
+			callback(child);
 		child = child.next;
 	}
 }
@@ -186,8 +185,9 @@ XmlElement.prototype.documentNamespace = function () : string {
 	if (this == null) {
 		throw new TypeError("XmlDocument.prototype.hasChild called on null or undefined");
 	}
-	if (!this.parent) return this.namespaceUri;
-	return this.parent.documentNamespace();
+	return this.parent
+		? (this.parent as XmlElement).documentNamespace()
+		: this.namespaceUri
 };
 
 

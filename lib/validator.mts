@@ -22,8 +22,8 @@ import fileupload from "express-fileupload";
 import favicon from "serve-favicon";
 import fetchS from "sync-fetch";
 
-import { Libxml2_wasm_init } from "../libxml2-wasm-extensions.mts";
-Libxml2_wasm_init();
+//import { Libxml2_wasm_init } from "../libxml2-wasm-extensions.mts";
+//Libxml2_wasm_init();
 
 import { fetch_options } from "./globals.mts";
 import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts";
@@ -51,7 +51,7 @@ import ServiceListCheck from "./sl_check.mjs";
 import PlaylistCheck from "./playlist_check.mts";
 import ContentGuideCheck from "./cg_check.mts";
 import ServiceListRegistryCheck from "./slr_check.mjs";
-import SLEPR from "./slepr.mjs";
+import SLEPR from "./slepr.mts";
 import writeOut, { createPrefix } from "./logger.mts";
 import { MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "./ui.mts";
 import type {FormModes} from './ui.mts'

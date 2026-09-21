@@ -42,7 +42,7 @@ export type ErrorType = {
 	line?: number
 }
 
-type ErrorDescriptionType = {
+export type ErrorDescriptionType = {
 	code: string;
 	description: string;
 	clause?: string;
@@ -238,7 +238,8 @@ export default class ErrorList {
 
 		if (e.type == DEBUG) {
 			this.#debugMessage({ code: e.code, message: e.message });
-		} else if (e.multiElementError) {
+		} 
+		else if (e.multiElementError) {
 			/**
 			 * this type of error involves multiple elements, for example when the cardinality exceeds a specified limit.
 			 * each element of multiElementError is an element that is marked up, but the error message is
@@ -248,7 +249,8 @@ export default class ErrorList {
 			e.multiElementError.forEach((fragment) => {
 				if (fragment && !datatypeIs(fragment, "string")) this.#setError(e.type as string, e.code, e.message, fragment.line);
 			});
-		} else if (e.fragments) {
+		} 
+		else if (e.fragments) {
 			// note that the line of the error is derived from the fragment -- e.line is only used with the fragment is already a string
 			e.fragments.forEach((fragment) => {
 				const newError: ErrorType = { type: e.type as string, code: e.code, message: e.message };
@@ -267,7 +269,8 @@ export default class ErrorList {
 					if (e.reportInTable) this.#insertErrorData(e.key, newError);
 				}
 			});
-		} else if (e.fragment) {
+		} 
+		else if (e.fragment) {
 			// note that the line of the error is derived from the fragment -- e.line is only used when the fragment is already a string
 			const newError: ErrorType = { 
 				type: e.type as string, 
@@ -287,7 +290,8 @@ export default class ErrorList {
 				this.#setError(e.type as string, e.code, e.message, newError.line);
 			}
 			if (e.reportInTable) this.#insertErrorData(e.key, newError);
-		} else {
+		} 
+		else {
 			const newError: ErrorType  = { type: e.type as string, code: e.code, message: e.message, element: null };
 			if (e.line) {
 				this.#setError(e.type as string, e.code, e.message, e.line);

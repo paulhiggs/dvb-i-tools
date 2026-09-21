@@ -76,7 +76,358 @@ const dvbi_types: Record<string, string> = {
 	a_verificationPolicy : tva.a_verificationPolicy,
 }
 
-export const dvbi: Record<string, string | string[] | number> = {
+
+type dvbi_info_type  = {
+	A177_Namespace: string
+	A177r1_Namespace: string
+	A177r2_Namespace: string
+	A177r3_Namespace: string
+	A177r4_Namespace: string
+	A177r5_Namespace: string
+	A177r6_Namespace: string
+	A177r7_Namespace: string
+	A177r8_Namespace: string
+
+	ApplicationStandards: string[]
+	ApplicationOptions: string[]
+
+	MIN_LCN: number
+	MAX_LCN: number
+
+	MAX_TITLE_LENGTH: number
+	MAX_KEYWORD_LENGTH: number
+	MAX_ORGANIZATION_NAME_LENGTH: number
+	MAX_NAME_PART_LENGTH: number
+	MAX_EXPLANATORY_TEXT_LENGTH: number
+
+	MAX_CREDITS_ITEMS: number
+
+	XML_AIT_CONTENT_TYPE: string
+	HTML5_APP: string
+	XHTML_APP: string
+	XML_APP: string
+	//	iOS_APP: string
+	//	ANDROID_APP: string
+	TEMPLATE_AIT_URI: string
+
+	PAGINATION_FIRST_URI: string
+	PAGINATION_PREV_URI: string
+	PAGINATION_NEXT_URI: string
+	PAGINATION_LAST_URI: string
+
+	CRID_NOW: string
+	CRID_LATER: string
+	CRID_EARLIER: string
+
+	MAX_SUBREGION_LEVELS: number
+
+	EIT_PROGRAMME_CRID_TYPE: string
+	EIT_SERIES_CRID_TYPE:string
+
+	DVBT_SOURCE_TYPE: string
+	DVBS_SOURCE_TYPE: string
+	DVBC_SOURCE_TYPE: string
+	DVBIPTV_SOURCE_TYPE: string
+	DVBDASH_SOURCE_TYPE: string
+	DVBAPPLICATION_SOURCE_TYPE: string
+
+	CONTENT_TYPE_DASH_MPD: string 
+	old_CONTENT_TYPE_DVB_PLAYLIST: string
+	CONTENT_TYPE_DVB_PLAYLIST: string
+
+	CONTENT_TYPE_SERVCE_LIST: string
+
+	DTG_CONTENT_WARNING_CS_SCHEME: string
+
+	AUDIO_PURPOSE_VISUAL_IMPAIRED: string
+	AUDIO_PURPOSE_HEARING_IMPAIRED: string
+	AUDIO_PURPOSE_MAIN: string
+	AUDIO_PURPOSE_DIALOGUE_ENHANCEMENT: string
+
+	DVB_BITMAP_SUBTITLES: string
+	DVB_CHARACTER_SUBTITLES: string
+	EBU_TT_D: string
+
+	MEDIA_AVAILABLE: string
+	MEDIA_UNAVAILABLE: string
+
+	FORWARD_EPG_AVAILABLE: string
+	FORWARD_EPG_UNAVAILABLE: string
+
+	RESTART_LINK: string
+
+	RESTART_AVAILABLE: string
+	RESTART_CHECK: string
+	RESTART_PENDING: string
+
+	BANNER_OUTSIDE_AVAILABILITY_v1: string
+	LOGO_SERVICE_LIST_v1: string
+	LOGO_SERVICE_v1: string
+	LOGO_CG_PROVIDER_v1: string
+
+	BANNER_OUTSIDE_AVAILABILITY_v2: string
+	BANNER_CONTENT_FINISHED_v2: string
+	LOGO_SERVICE_LIST_v2: string
+	LOGO_SERVICE_v2:string
+	LOGO_CG_PROVIDER_v2: string
+
+	BANNER_OUTSIDE_AVAILABILITY_v3: string
+	BANNER_CONTENT_FINISHED_v3: string
+	LOGO_SERVICE_LIST_v3: string
+	LOGO_SERVICE_v3: string
+	LOGO_CG_PROVIDER_v3: string
+
+	SERVICE_BANNER_v4: string
+
+	APP_IN_PARALLEL: string
+	APP_IN_CONTROL: string
+	APP_OUTSIDE_AVAILABILITY: string
+	APP_SERVICE_PROVIDER: string
+
+	APP_IN_SERIES: string
+	APP_LIST_INSTALLATION: string
+	APP_WITHDRAW_AGREEMENT: string
+	APP_RENEW_AGREEMENT: string
+
+	NVOD_MODE_REFERENCE: string
+	NVOD_MODE_TIMESHIFTED: string
+
+	DVBS_POLARIZATION_VALUES: string[]
+
+	ENCRYPTION_VALID_TYPES: string[]
+
+	ALLOWED_TRANSPORT_PROTOCOLS: string[]
+
+	ALLOWED_DIGESTS: string[]
+
+	ALLOWED_FINGERPRINT_ALGOS: string[]
+
+	ICECAST_V1_IDENTIFIER: string
+}
+
+type dvbi_attributes	= {
+	a_algorithm: string
+	a_Address: string
+	a_batchSize: string
+	a_certificateURL: string
+	a_CGSID: string
+	a_channelNumber: string
+	a_CMCDversion: string
+	a_contentId: string
+	a_contentLanguage: typeof tva.a_contentLanguage
+	a_contentType: typeof tva.a_contentType
+	a_controlRemoteAccessOverInternet: string
+	a_country: string
+	a_countryCodes: string
+	a_cpsIndex: string
+	a_days: string
+	a_DestinationAddress: string
+	a_DestinationPort: string
+	a_DestinationPort_ForRTCPReporting: string
+	a_dvb_disable_rtcp_rr: string
+	a_doNotApplyRevocation: string
+	a_doNotScramble: string
+	a_dvb_t_ret: string
+	a_dynamic: string
+	a_dvb_enable_byte: string
+	a_dvb_original_copy_ret: string
+	a_dvb_rsi_mc_ret: string
+	a_dvb_ssrc_bitmask: string
+	a_dvb_ssrc_upstream_client: string
+	a_dvb_t_wait_max: string
+	a_dvb_t_wait_min: string
+	a_enabledKeys: string
+	a_encryptionScheme: string
+	a_end: string
+	a_endTime: string
+	a_eventTypes: string
+	a_eventURL: string
+	a_extensionName: string
+	a_extraCapabilities: string
+	a_FECMaxBlockSize: string
+	a_FECMaxBlockTime: string
+	a_FECOTI:string
+	a_from: string
+	a_GroupAddress: string
+	a_href: typeof tva.a_href,
+	a_id: string
+	a_lang: typeof tva.a_lang,
+	a_LAURL: string
+	a_MaxBitrate: string
+	a_mode: string
+	a_minimumMetadataUpdatePeriod: string
+	a_obfuscateURL: string
+	a_objectTypes: string
+	a_offset: string
+	a_origNetId: string
+	a_PayloadTypeNumber: string
+	a_policyId: string
+	a_Port: string
+	a_primary: string
+	a_priority: string
+	a_probability: string
+	a_ranking: string
+	a_recurrence: string
+	a_reference: string
+	a_referenceType: string
+	a_region: string
+	a_regionID: string
+	a_replayAvailable: string
+	a_reportingMethod: string
+	a_reportingMode: string
+	a_responseStatus: string
+	a_rtcp_bandwidth: string
+	a_rtcp_mux: string
+	a_rtcp_rsize: string
+	a_RTPPayloadTypeNumber: string
+	a_RTSPControlURL: string
+	a_rtx_time: string
+	a_selectable: string
+	a_serviceGenre: string
+	a_serviceId: string
+	a_serviceRef: string
+	a_serviceType: string
+	a_Source: string
+	a_SourceAddress: string
+	a_SourcePort: string
+	a_ssrc: string
+	a_start: string
+	a_startTime: string
+	a_Streaming: string
+	a_to: string
+	a_transmissionMode: string
+	a_TransportProtocol: string
+	a_trr_int: string
+	a_tsId: string
+	a_userDefined: string
+	a_validFrom: string
+	a_validTo: string,
+	a_verificationPolicy: typeof dvbi_types.a_verificationPolicy,
+	a_version: string
+	a_visible: string
+}
+
+type dvbi_elements = {
+	e_AdditionalServiceParameters: string
+	e_AltServiceName: string
+	e_AudioConformancePoint: string
+	e_Availability: string
+	e_CAFingerprint: string
+	e_CASystemId: string
+	e_ChannelBonding: string
+	e_CMCD: string
+	e_CNAME: string
+	e_Colorimetry: string
+	e_ContentAttributes: string
+	e_ContentGuideServiceRef: string
+	e_ContentGuideSource: string,
+	e_ContentGuideSourceList: string
+	e_ContentGuideSourceRef: string
+	e_ContentProtection: string
+	e_Coordinates: string
+	e_Delivery: string
+	e_DASHDeliveryParameters: string
+	e_DisplayName: string
+	e_DRMSystemId: string
+	e_DVBCDeliveryParameters: string
+	e_DVBSDeliveryParameters: string
+	e_DVBTDeliveryParameters: string
+	e_DVBTriplet: string
+	e_Extension: string
+	e_FEC: string
+	e_FECBaseLayer: string
+	e_FECEnhancementLayer: string
+	e_Format: string
+	e_Frequency: string
+	e_FTAContentManagement: string
+	e_Genre: string
+	e_GroupInfoEndpoint:string
+	e_IdentifierBasedDeliveryParameters: string
+	e_InputStreamIdentifier: string
+	e_Interval: string
+	e_IPMulticastAddress: string
+	e_Language: string
+	e_LanguageList: string
+	e_Latitude: string
+	e_LCN: string
+	e_LCNRange: string
+	e_LCNTable: string
+	e_LCNTableList: string
+	e_Longitude: string
+	e_MinimumAge: string
+	e_MinimumBitRate: string
+	e_ModcodMode: string
+	e_ModulationSystem: string
+	e_ModulationType: string
+	e_MoreEpisodesEndpoint: string
+	e_MulticastRET: string
+	e_MulticastTSDeliveryParameters: string
+	e_Name: typeof mpeg7.e_Name,
+	e_NetworkID: string
+	e_NVOD: string
+	e_OrbitalPosition:string
+	e_OtherDeliveryParameters: string
+	e_ParentalRating: string
+	e_Period:string
+	e_Playlist: string
+	e_PlaylistEntry: string
+	e_Polarization: string
+	e_Postcode: string
+	e_PostcodeRange: string
+	e_ProgramInfoEndpoint:string
+	e_Prominence: string
+	e_ProminenceList: string
+	e_PromotionalMedia: string
+	e_PromotionalText: string
+	e_ProviderName: string
+	e_QueryParameters: string
+	e_Radius: string
+	e_RecordingInfo: string
+	e_Region: string
+	e_RegionList: string
+	e_RegionName: string
+	e_RelatedMaterial: typeof tva.e_RelatedMaterial,
+	e_RollOff: string
+	e_Report: string
+	e_Requires: string
+	e_RTCPReporting: string
+	e_RTPRetransmission: string
+	e_RTSPDeliveryParameters: string
+	e_RTSPURL: string
+	e_SATIPDeliveryParameters: string
+	e_ScheduleInfoEndpoint: string
+	e_SegmentReference: string
+	e_Service: string
+	e_ServiceDescription: string
+	e_ServiceInstance: string
+	e_ServiceGenre: string
+	e_ServiceList: string
+	e_ServiceName: string
+	e_ServiceType: string
+	e_SignaturePolicies: string
+	e_SignaturePolicy: string
+	e_SocialMediaReference: string
+	e_SourceMediaReference: string
+	e_SourceType: string
+	e_ssrc: string
+	e_StandardVersion: string
+	e_StillPictureFormat: string
+	e_SubscriptionPackage: string
+	e_SubscriptionPackageList: string
+	e_SymbolRate: string
+	e_TargetCountry: string
+	e_TargetRegion: string
+	e_TestService: string
+	e_TrustAnchor: string
+	e_UnicastRET: string
+	e_UniqueIdentifier: string
+	e_URI: string
+	e_UriBasedLocation: string
+	e_VideoConformancePoint: string
+	e_WildcardPostcode: string
+}
+
+export const dvbi: dvbi_info_type & dvbi_attributes & dvbi_elements = {
 	A177_Namespace: `${DVB_metadata}:servicediscovery:2019`,
 	A177r1_Namespace: `${DVB_metadata}:servicediscovery:2020`,
 	A177r2_Namespace: `${DVB_metadata}:servicediscovery:2021`,

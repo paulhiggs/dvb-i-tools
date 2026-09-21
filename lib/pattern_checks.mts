@@ -9,6 +9,7 @@
  */
 
 import { datatypeIs } from "./utils.mts";
+import { allowedImageTypes } from "./MIME_checks.mts";
 
 const e_pct: string = "%", 
 	e_lowalpha: string = "a-z",
@@ -86,7 +87,7 @@ export const isRatioType = (ratio: string): boolean => (datatypeIs(ratio, "strin
 const UTCregex: RegExp = new RegExp(/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]{1,3})?Z?$/);
 export const isUTCDateTime = (time: string): boolean => (datatypeIs(time, "string") ? UTCregex.test(time.trim()) : false);
 
-import { allowedImageTypes } from "./MIME_checks.mjs";
+
 export function isInlineImage(data: string): boolean {
 	let valid: boolean	 = false;
 	allowedImageTypes.forEach((image_MIME) => {

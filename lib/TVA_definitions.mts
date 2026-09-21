@@ -10,7 +10,7 @@
 
 import { mpeg7 } from "./MPEG7_definitions.mts";
 
-export const TVA_CSmetadata = "urn:tva:metadata:cs";
+export const TVA_CSmetadata: string = "urn:tva:metadata:cs";
 
 export const tva = {
 	SYNOPSIS_BRIEF_LABEL: "brief",
@@ -239,13 +239,13 @@ export const tva = {
 	cs_PromotionalStillImage: `${TVA_CSmetadata}:HowRelatedCS:2012:19`,
 };
 
-const tvaBaseMemberOfTypeAttributes = [tva.a_crid, tva.a_index],
-	tvaControlledTermTypeAttributes = [tva.a_href],
-	tvafragmentIdentificationAttributes = [tva.a_fragmentId, tva.a_fragmentVersion, tva.a_fragmentExpirationDate],
-	tvaExtendedURITypeAttributes = [tva.a_contentType, tva.a_uriType, tva.a_integrity, tva.a_verificationPolicy],
-	mpeg7UniqueIDTypeAttributes = [mpeg7.a_type, mpeg7.a_organization, mpeg7.a_authority, mpeg7.a_encoding];
+const tvaBaseMemberOfTypeAttributes: string[] = [tva.a_crid, tva.a_index],
+	tvaControlledTermTypeAttributes: string[] = [tva.a_href],
+	tvafragmentIdentificationAttributes: string[] = [tva.a_fragmentId, tva.a_fragmentVersion, tva.a_fragmentExpirationDate],
+	tvaExtendedURITypeAttributes: string[] = [tva.a_contentType, tva.a_uriType, tva.a_integrity, tva.a_verificationPolicy],
+	mpeg7UniqueIDTypeAttributes: string[] = [mpeg7.a_type, mpeg7.a_organization, mpeg7.a_authority, mpeg7.a_encoding];
 
-export const tvaEA = {
+export const tvaEA: Record<string, string[]> = {
 	// EA = Element-Attributes - the attributes that are defiend for each element
 	AudioLanguage: [tva.a_purpose, mpeg7.a_type, mpeg7.a_supplemental],
 	AuxiliaryURI: tvaExtendedURITypeAttributes,
@@ -277,10 +277,10 @@ export const tvaEA = {
 	Title: [tva.a_type, tva.a_lang],
 };
 
-const ProgramLocationType = [tva.e_Program, tva.e_ProgramURL, tva.e_AuxiliaryURL, tva.e_InstanceMetadataId, tva.e_InstanceDescription];
-export const BaseAccessibilityAttributesType = [tva.e_AppInformation, tva.e_Personalisation];
+const ProgramLocationType: string[] = [tva.e_Program, tva.e_ProgramURL, tva.e_AuxiliaryURL, tva.e_InstanceMetadataId, tva.e_InstanceDescription];
+export const BaseAccessibilityAttributesType: string[] = [tva.e_AppInformation, tva.e_Personalisation];
 
-export const tvaEC = {
+export const tvaEC : Record<string, string[]>= {
 	// EC = Element-Children - the child elements or each element
 	AccessibilityAttributes: [
 		tva.e_SubtitleAttributes,
@@ -336,6 +336,7 @@ export const tvaEC = {
 		tva.e_Duration,
 		tva.e_PurchaseList,
 	],
+	BroadcastEvent: [],
 	DialogEnhancementAttributes: [tva.e_AudioAttributes].concat(BaseAccessibilityAttributesType),
 	Format: [tva.e_AVAttributes, tva.e_StillPictureFormat],
 	GroupInformation: [tva.e_GroupType, tva.e_BasicDescription, tva.e_MemberOf, tva.e_OtherIdentifier, tva.e_PartOfAggregatedGroup, tva.e_AggregationOf],
