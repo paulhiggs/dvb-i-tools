@@ -47,10 +47,10 @@ import {
 	LoadSubtitleCarriages,
 	LoadLinkedApplicationCS,
 } from "./classification_scheme_loaders.mts";
-import ServiceListCheck from "./sl_check.mjs";
+import ServiceListCheck from "./sl_check.mts";
 import PlaylistCheck from "./playlist_check.mts";
 import ContentGuideCheck from "./cg_check.mts";
-import ServiceListRegistryCheck from "./slr_check.mjs";
+import ServiceListRegistryCheck from "./slr_check.mts";
 import SLEPR from "./slepr.mts";
 import writeOut, { createPrefix } from "./logger.mts";
 import { MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "./ui.mts";

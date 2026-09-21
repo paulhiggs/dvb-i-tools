@@ -9,7 +9,7 @@
  * the SVTA (Streaming Video Technology Alliance)
  */
 
-import { LoadOptions } from "./classification_scheme.mts"
+import type { LoadOptions } from "./globals.mts"
 
 function LoadKnownCustomKeysRegistry(opts: LoadOptions): void
 

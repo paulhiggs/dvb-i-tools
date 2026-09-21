@@ -83,7 +83,7 @@ export function checkAttributes(checkElement: XmlElement, requiredAttributes: st
 }
 
 export type ElementCardinalityType = {
-	name: string
+	name?: string
 	minOccurs?: number
 	maxOccurs?: number
 }
@@ -92,12 +92,12 @@ export type ElementCardinalityType = {
  * check that the specified child elements are in the parent element
  *
  * @param {XMLElement} parentElement         the element whose children should be checked
- * @param {Array}      childElements         the names of elements and their cardinality
- * @param {Array}      definedChildElements  the names of all child elements of parentElement that are defined in the schema, including
+ * @param {ElementCardinalityType[]}      childElements         the names of elements and their cardinality
+ * @param {string[]}      definedChildElements  the names of all child elements of parentElement that are defined in the schema, including
  *                                           those which are profiled out of DVB-I
  * @param {boolean}    allowOtherElements    flag indicating if other elements, i.e. those defined in the another are permitted
  * @param {ErrorList}  errs                  errors found in validaton
- * @param {String}     errCode               error code to be used for any error found
+ * @param {string}     errCode               error code to be used for any error found
  * @returns {boolean} true if no errors are found (all mandatory elements are present and no extra elements are specified)
  *
  * NOTE: elements are described as an object containing "name", "minOccurs", "maxOccurs".
@@ -120,7 +120,7 @@ export function checkTopElementsAndCardinality(parentElement: XmlElement, childE
 	const thisElem = elementize(`${parentElement.parent?.name}.${parentElement.name}`);
 	// check that each of the specifid childElements exists
 	childElements.forEach((child) => {
-		if (child?.name) {
+		if (child.name) {
 			const min = child.minOccurs != undefined ? child.minOccurs : 1;
 			const max = child.maxOccurs != undefined ? child.maxOccurs : 1;
 			const namedChildren = getNamedChildElements(parentElement, child.name),

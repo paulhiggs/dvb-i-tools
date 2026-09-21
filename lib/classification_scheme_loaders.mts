@@ -51,7 +51,7 @@ import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
 xmlRegisterFsInputProviders();
 
 import ClassificationScheme from "./classification_scheme.mts"
-import type { LoadOptions } from "./classification_scheme.mts"
+import type { LoadOptions } from "./globals.mts"
 
 /**
  * Load countries

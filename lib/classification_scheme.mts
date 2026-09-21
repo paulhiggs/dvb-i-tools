@@ -18,6 +18,7 @@ import { XmlDocument } from "libxml2-wasm"
 import {} from "../libxml2-wasm-extensions.mts"
 
 import { fetch_options } from "./globals.mts";
+import type { LoadOptions } from "./globals.mts"
 import { dvb } from "./DVB_definitions.mts";
 import handleErrors from "./fetch_err_handler.mts";
 import { isHTTPURL } from "./pattern_checks.mts";
@@ -35,13 +36,6 @@ export type FileLocations = {
 	url?: string
 	files?: string[]
 	urls?: string[]
-}
-
-export type LoadOptions = {
-	useURLs: boolean	// when true, load from network locations, else use local files
-	async: boolean		// load asynchronously - OK for service, not NOT for command line validator
-	verbose: boolean	// display verbose output
-	purge?: boolean   // clear the storage before loading/reloading
 }
 
 /**

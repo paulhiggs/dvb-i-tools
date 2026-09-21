@@ -8,24 +8,24 @@
  * Check a service list
  */
 
-import chalk from "chalk";
+import chalk from "chalk"
 import { Temporal } from '@js-temporal/polyfill'
 
 import SL_helpers from "./sl_check_helpers.mts"
 
-import { tva, tvaEA } from "./TVA_definitions.mts";
-import { sats } from "./DVB_definitions.mts";
-import { slVersions, dvbi, dvbisld, dvbiEC, dvbiEA, XMLdocumentType} from "./DVB-I_definitions.mts";
+import { tva, tvaEA } from "./TVA_definitions.mts"
+import { sats } from "./DVB_definitions.mts"
+import { slVersions, dvbi, dvbisld, dvbiEC, dvbiEA, XMLdocumentType} from "./DVB-I_definitions.mts"
 
-import ErrorList, { WARNING, APPLICATION } from "./error_list.mts";
-import { isIni, unEntity, DuplicatedValue, parameterCheck, HexOrDecValue, DefaultProperty, HasProperty } from "./utils.mts";
-import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isRTSPURL, isTAGURI, isUUIDformat } from "./pattern_checks.mts";
-import { checkValidLogos } from "./related_material_checks.mjs";
-import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys, InvalidCountryCode } from "./common_errors.mts";
-import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./multilingual_element.mts";
-import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.mts";
-import writeOut from "./logger.mts";
-import { ValidateLanguage } from "./IANA_languages.mts";
+import ErrorList, { WARNING, APPLICATION } from "./error_list.mts"
+import { isIni, unEntity, DuplicatedValue, parameterCheck, HexOrDecValue, DefaultProperty, HasProperty } from "./utils.mts"
+import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isRTSPURL, isTAGURI, isUUIDformat } from "./pattern_checks.mts"
+import { checkValidLogos } from "./related_material_checks.mts"
+import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys, InvalidCountryCode } from "./common_errors.mts"
+import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./multilingual_element.mts"
+import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.mts"
+import writeOut from "./logger.mts"
+import { ValidateLanguage } from "./IANA_languages.mts"
 import {
 	LoadGenres,
 	LoadVideoCodecCS,
@@ -45,12 +45,12 @@ import {
 	LoadLanguages,
 	LoadCountries,
 	LoadLinkedApplicationCS,
-} from "./classification_scheme_loaders.mts";
-import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts";
-import { DASH_IF_Content_Protection_List, UUID_type, CA_SYSTEM_ID_REGISTRY, KnownDRMScheme, KnownCASystemID} from "./identifiers.mts";
-import { CheckDelivery } from "./slr_check.mjs";
-import { LoadSLschemas, SL_GetSchema, SL_SchemaVersion, SL_SchemaSpecVersion, isA177specification_URN, isContentFinishedBanner, isOutScheduleHours } from "./sl_data_versions.mts";
-import { validServiceControlApplication, validServiceInstanceControlApplication, validServiceUnavailableApplication, validDASHcontentType } from "./sl_data_versions.mts";
+} from "./classification_scheme_loaders.mts"
+import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts"
+import { DASH_IF_Content_Protection_List, UUID_type, CA_SYSTEM_ID_REGISTRY, KnownDRMScheme, KnownCASystemID} from "./identifiers.mts"
+import { CheckDelivery } from "./slr_check.mts"
+import { LoadSLschemas, SL_GetSchema, SL_SchemaVersion, SL_SchemaSpecVersion, isA177specification_URN, isContentFinishedBanner, isOutScheduleHours } from "./sl_data_versions.mts"
+import { validServiceControlApplication, validServiceInstanceControlApplication, validServiceUnavailableApplication, validDASHcontentType } from "./sl_data_versions.mts"
 import {
 	validOutScheduleHours,
 	validContentFinishedBanner,
@@ -59,13 +59,13 @@ import {
 	validServiceLogo,
 	validServiceBanner,
 	validContentGuideSourceLogo,
-} from "./sl_data_versions.mts";
-import { ValidateCMCDinDASH } from "./CMCDv2.mts";
-import { CMCD_custom_stats, LoadKnownCustomKeysRegistry } from "./CMCD_custom_keys.js";
-import { CheckExtension, EXTENSION_LOCATION_SERVICE_ELEMENT, EXTENSION_LOCATION_DASH_INSTANCE, EXTENSION_LOCATION_OTHER_DELIVERY } from "./extension_check.mts";
-import { ValidateAnySignaturePolicy } from "./related_material_checks.mjs";
-import { ValidateAnyContentDigests } from "./digest_validation.mts";
-import { ValidateSignaturePolicies } from "./signature_policies.mts";
+} from "./sl_data_versions.mts"
+import { ValidateCMCDinDASH } from "./CMCDv2.mts"
+import { CMCD_custom_stats, LoadKnownCustomKeysRegistry } from "./CMCD_custom_keys.js"
+import { CheckExtension, EXTENSION_LOCATION_SERVICE_ELEMENT, EXTENSION_LOCATION_DASH_INSTANCE, EXTENSION_LOCATION_OTHER_DELIVERY } from "./extension_check.mts"
+import { ValidateAnySignaturePolicy } from "./related_material_checks.mts"
+import { ValidateAnyContentDigests } from "./digest_validation.mts"
+import { ValidateSignaturePolicies } from "./signature_policies.mts"
 
 
 const LCN_TABLE_NO_TARGETREGION = "unspecifiedRegion",
@@ -76,6 +76,40 @@ const SERVICE_RM = "service";
 const SERVICE_INSTANCE_RM = "service instance";
 const CONTENT_GUIDE_RM = "content guide";
 
+type FoundRegion = {
+	countries: string[],
+	region: string,
+	selectable: boolean,
+	used: boolean,
+	line: number,
+}
+
+export type FoundDocumentItems = {
+	knownRegionIDs : FoundRegion[]
+	signaturePolicyIDs: Set<string>
+	declaredAudioLanguages: { language: string, used: boolean, fragment: XmlElement }[]
+	declaredSubscriptionPackages: Set<string>
+}
+
+import ISOCountries from "./ISO_countries.mts"
+import IANAlanguages from "./IANA_languages.mts"
+import ClassificationScheme from "./classification_scheme.mts"
+
+import type { LoadOptions, StatsType } from "./globals.mts"
+type ValidatorOptions = LoadOptions & {
+	countries? : ISOCountries
+	languages? : IANAlanguages
+	accessibilities? : ClassificationScheme
+	audiopres?: ClassificationScheme
+	audiopurps?: ClassificationScheme
+	genres?: ClassificationScheme
+	stcarriage?: ClassificationScheme
+	stpurposes?: ClassificationScheme
+	videofmts?: ClassificationScheme
+	audiofmts?: ClassificationScheme
+	appfmts?: ClassificationScheme
+	stcodings?: ClassificationScheme
+}
 
 export default class ServiceListCheck {
 	#numRequests;
@@ -98,9 +132,8 @@ export default class ServiceListCheck {
 	#allowedApplicationTypes;
 	#RecordingInfoCSvalues;
 
-	constructor(opts) {
+	constructor(opts: ValidatorOptions) {
 
-		if (!opts) opts = {};
 		DefaultProperty(opts, "useURLs", false);
 		DefaultProperty(opts, "async", true);
 		DefaultProperty(opts, "verbose", true);
@@ -114,7 +147,7 @@ export default class ServiceListCheck {
 
 		if (opts.verbose) console.log(chalk.yellow.underline("SL: loading classification schemes..."));
 		this.#accessibilityPurposes = opts?.accessibilities || LoadAccessibilityPurpose(opts);
-		this.#allowedAudioSchemes = opts?.audiofmts || LoadAudioCodecCS(opts);
+		this.#allowedAudioSchemes = opts?.videofmts || LoadAudioCodecCS(opts);
 		this.#audioPresentations = opts?.audiopres || LoadAudioPresentationCS(opts);
 		this.#audioPurposes = opts?.audiopurps || LoadAudioPurpose(opts);
 		this.#allowedGenres = opts?.genres || LoadGenres(opts);
@@ -136,7 +169,7 @@ export default class ServiceListCheck {
 	}
 
 	stats() {
-		let res = {};
+		const res: StatsType = {};
 		res.numRequests = this.#numRequests;
 		res.numKnownCountries = this.#knownCountries?.count();
 		this.#knownLanguages?.stats(res);
@@ -164,7 +197,7 @@ export default class ServiceListCheck {
 		return res;
 	}
 
-	langs(sort) {
+	langs(sort: boolean) {
 		return this.#knownLanguages.loadedLanguages(sort);
 	}
 
@@ -173,19 +206,19 @@ export default class ServiceListCheck {
 	 * parses the region element, checks the values and adds it and its children (through recursion) to the linear list of region ids
 	 *
 	 * @param {XmlElement} Region           The <Region> element to process
-	 * @param {integer}    depth            The current depth in the hierarchial structure of regions
-	 * @param {Array}      documentInfo
+	 * @param {number}    depth            The current depth in the hierarchial structure of regions
+	 * @param {FoundDocumentItems}      documentInfo
 	 *                       knownRegionIDs The list of region IDs that have been found
-	 * @param {Array}      countries
+	 * @param {string[] | null} countries
 	 * @param {ErrorList}  errs             The class where errors and warnings relating to the service list processing are stored
 	 */
-	/*private*/ #addRegion(Region, depth, documentInfo, countries, errs) {
+	/*private*/ #addRegion(Region: XmlElement, depth: number, documentInfo: FoundDocumentItems, countries : string[] | null, errs: ErrorList) {
 		if (!parameterCheck("addRegion", Region, dvbi.e_Region, errs, "AR000")) return;
 
 		const schemaVersion = SL_SchemaVersion(Region.documentNamespace());
 		const regionID = Region.attrAnyNsValueOr(dvbi.a_regionID);
 		const displayRegionID = regionID ? regionID.quote() : '"noID"';
-		let countriesSpecified = [];
+		let countriesSpecified: string[] = [];
 		const countryCodesSpecified = Region.attrAnyNs(dvbi.a_countryCodes);
 
 		if (depth != 0 && countryCodesSpecified && schemaVersion < slVersions.r5)
@@ -199,7 +232,7 @@ export default class ServiceListCheck {
 		if (countryCodesSpecified) {
 			countriesSpecified = countryCodesSpecified.value.split(",");
 			if (countriesSpecified) {
-				const countriesList = new Set();
+				const countriesList = new Set<string>();
 				countriesSpecified.forEach((country) => {
 					if (DuplicatedValue(countriesList, country))
 						errs.addError({
@@ -217,10 +250,12 @@ export default class ServiceListCheck {
 						});
 				});
 			}
-		} else countriesSpecified = countries;
+		} 
+		else countriesSpecified = countries as string[];
 
 		if (schemaVersion >= slVersions.r4) {
-			const selectable = Region.attrAnyNs(dvbi.a_selectable) ? Region.attrAnyNs(dvbi.a_selectable).value == "true" : true;
+			const Region_selectable = Region.attrAnyNs(dvbi.a_selectable)
+			const selectable = Region_selectable ? Region_selectable.value == "true" : true;
 
 			if (!selectable && !Region.hasChild(dvbi.e_Region))
 				errs.addError({
@@ -231,7 +266,7 @@ export default class ServiceListCheck {
 				});
 
 			if (regionID) {
-				if (documentInfo.knownRegionIDs.find((r) => r.region == regionID) != undefined)
+				if (documentInfo.knownRegionIDs?.find((r) => r.region == regionID) != undefined)
 					errs.addError({
 						code: "AR012",
 						message: `Duplicate ${dvbi.a_regionID.attribute()} ${displayRegionID}`,
@@ -307,74 +342,66 @@ export default class ServiceListCheck {
 	 * verifies if the specified application is valid according to specification
 	 *
 	 * @param {XmlElement} MediaLocator  The <MediaLocator> subelement (a libxmls object tree) of the <RelatedMaterial> element
-	 * @param {String}     Location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
-	 * @param {String}     AppType       The type of application being checked, from HowRelated@href
-	 * @param  {} documentInfo
+	 * @param {string}     Location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+	 * @param {string}     AppType       The type of application being checked, from HowRelated@href
+	 * @param  {FoundDocumentItems} documentInfo
 	 *              signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
 	 * @param {ErrorList}  errs          The class where errors and warnings relating to the service list processing are stored
 	 */
-	/*private*/ #checkSignalledApplication(MediaLocator, Location, AppType, documentInfo, errs) {
+	/*private*/ #checkSignalledApplication(MediaLocator: XmlElement, Location: string, AppType: string, documentInfo: FoundDocumentItems, errs: ErrorList) {
 		
-		if (!MediaLocator)
+		let hasMediaURI = false;
+		MediaLocator.forEachNamedChildElement(tva.e_MediaUri, (MediaUri) => {
+			hasMediaURI = true;
+			const MediaUri_contentType = MediaUri.attrAnyNsValueOr(tva.a_contentType);
+			if (MediaUri_contentType && !SL_helpers.isValidApplicationType(MediaUri_contentType))
+				errs.addError({
+					code: "SA003",
+					message: `${tva.a_contentType.attribute()} ${MediaUri_contentType.quote()} is not supported application type for ${tva.e_RelatedMaterial.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`,
+					fragment: MediaUri,
+					key: `invalid ${tva.a_contentType.attribute(tva.e_MediaUri)}`,
+				});
+			if (!isASCII(MediaUri.content))
+				errs.addError({
+					code: "SA014",
+					message: `URL ${MediaUri.content.quote()} contains non-ASCII characters in ${MediaUri.name.elementize()}`,
+					fragment: MediaUri,
+					key: "invalid resource URL",
+				});
+			if (!isHTTPURL(MediaUri.content))
+				errs.addError({
+					code: "SA004",
+					message: `invalid URL ${MediaUri.content.quote()} specified for ${MediaUri.name.elementize()}`,
+					fragment: MediaUri,
+					key: "invalid resource URL",
+				});
+			if (AppType == dvbi.APP_SERVICE_PROVIDER && MediaUri_contentType && MediaUri_contentType != dvbi.XML_AIT_CONTENT_TYPE)
+				errs.addError({
+					code: "SA006",
+					message: `invalid application type ${MediaUri_contentType.quote()} for Serivce Provider Application (only XMLAIT allowed)`,
+					fragment: MediaUri,
+					key: "invalid app type",
+				});
+			ValidateAnyContentDigests(MediaUri, errs, "SA015");
+			ValidateAnySignaturePolicy(MediaUri, documentInfo, errs, "SI126");
+		});
+		if (!hasMediaURI)
 			errs.addError({
-				code: "SA001",
-				message: `${tva.e_MediaLocator.elementize()} not specified for application ${tva.e_RelatedMaterial.elementize()} in ${Location}`,
+				code: "SA005",
+				message: `${tva.e_MediaUri.elementize()} not specified for application ${tva.e_MediaLocator.elementize()} in ${Location}`,
+				fragment: MediaLocator,
 				key: `no ${tva.e_MediaUri}`,
 			});
-		else {
-			let hasMediaURI = false;
-			MediaLocator.forEachNamedChildElement(tva.e_MediaUri, (MediaUri) => {
-				hasMediaURI = true;
-				const MediaUri_contentType = MediaUri.attrAnyNsValueOr(tva.a_contentType);
-				if (MediaUri_contentType && !SL_helpers.isValidApplicationType(MediaUri_contentType))
-					errs.addError({
-						code: "SA003",
-						message: `${tva.a_contentType.attribute()} ${MediaUri_contentType.quote()} is not supported application type for ${tva.e_RelatedMaterial.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`,
-						fragment: MediaUri,
-						key: `invalid ${tva.a_contentType.attribute(tva.e_MediaUri)}`,
-					});
-				if (!isASCII(MediaUri.content))
-					errs.addError({
-						code: "SA014",
-						message: `URL ${MediaUri.content.quote()} contains non-ASCII characters in ${MediaUri.name.elementize()}`,
-						fragment: MediaUri,
-						key: "invalid resource URL",
-					});
-				if (!isHTTPURL(MediaUri.content))
-					errs.addError({
-						code: "SA004",
-						message: `invalid URL ${MediaUri.content.quote()} specified for ${MediaUri.name.elementize()}`,
-						fragment: MediaUri,
-						key: "invalid resource URL",
-					});
-				if (AppType == dvbi.APP_SERVICE_PROVIDER && MediaUri_contentType && MediaUri_contentType != dvbi.XML_AIT_CONTENT_TYPE)
-					errs.addError({
-						code: "SA006",
-						message: `invalid application type ${MediaUri_contentType.quote()} for Serivce Provider Application (only XMLAIT allowed)`,
-						fragment: MediaUri,
-						key: "invalid app type",
-					});
-				ValidateAnyContentDigests(MediaUri, errs, "SA015");
-				ValidateAnySignaturePolicy(MediaUri, documentInfo, errs, "SI126");
-			});
-			if (!hasMediaURI)
-				errs.addError({
-					code: "SA005",
-					message: `${tva.e_MediaUri.elementize()} not specified for application ${tva.e_MediaLocator.elementize()} in ${Location}`,
-					fragment: MediaLocator,
-					key: `no ${tva.e_MediaUri}`,
-				});
-		}
 	}
 
 	/**
 	 * determines if the identifer provided refers to a valid application launching method signalled in a service
 	 *
 	 * @param {XmlElement} HowRelated     The service identifier
-	 * @param {integer}    schemaVersion  The schema version of the XML document
+	 * @param {number}    schemaVersion  The schema version of the XML document
 	 * @returns {boolean} true if this is a valid application launching method else false
 	 */
-	/*private*/ #validServiceApplication(HowRelated, schemaVersion) {
+	/*private*/ #validServiceApplication(HowRelated: XmlElement, schemaVersion: number) : boolean {
 		// return true if the HowRelated element has a valid CS value for Service Related Applications (A177 5.2.3)
 		// urn:dvb:metadata:cs:LinkedApplicationCS:2019
 		if (!HowRelated) return false;
@@ -386,10 +413,10 @@ export default class ServiceListCheck {
 	 * determines if the identifer provided refers to a valid application launching method signalled in a service instance
 	 *
 	 * @param {XmlElement} HowRelated     The service identifier
-	 * @param {integer}    schemaVersion  The schema version of the XML document
+	 * @param {number}    schemaVersion  The schema version of the XML document
 	 * @returns {boolean} true if this is a valid application launching method else false
 	 */
-	/*private*/ #validServiceInstanceApplication(HowRelated, schemaVersion) {
+	/*private*/ #validServiceInstanceApplication(HowRelated: XmlElement, schemaVersion: number) : boolean {
 		// return true if the HowRelated element has a valid CS value for Service Related Applications (A177 5.2.3)
 		// urn:dvb:metadata:cs:LinkedApplicationCS:2019
 		if (!HowRelated) return false;
@@ -401,15 +428,15 @@ export default class ServiceListCheck {
 	 * verifies if the specified RelatedMaterial element is valid according to specification (contents and location)
 	 *
 	 * @param {XmlElement} RelatedMaterial   The <RelatedMaterial> element (a libxmls object tree) to be checked
-	 * @param {String}     Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
-	 * @param {String}     LocationType      The type of element containing the <RelatedMaterial> element. Different validation rules apply to different location types
-	 * @param  {} documentInfo
+	 * @param {string}     Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+	 * @param {string}     LocationType      The type of element containing the <RelatedMaterial> element. Different validation rules apply to different location types
+	 * @param  {FoundDocumentItems} documentInfo
 	 *                  signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
 	 * @param {ErrorList}  errs              The class where errors and warnings relating to the service list processing are stored
-	 * @param {String}     errCode           The prefix to use for any errors found
-	 * @returns {String} an href value if valid, else ""
+	 * @param {string}     errCode           The prefix to use for any errors found
+	 * @returns {string} an href value if valid, else ""
 	 */
-	/*private*/ #validateRelatedMaterial(RelatedMaterial, Location, LocationType, documentInfo, errs, errCode) {
+	/*private*/ #validateRelatedMaterial(RelatedMaterial: XmlElement, Location: string, LocationType: string, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) : string {
 		if (!parameterCheck("validateRelatedMaterial", RelatedMaterial, dvbi.e_RelatedMaterial, errs, `${errCode}-a`)) return "";
 
 		let rc = "";
@@ -423,9 +450,9 @@ export default class ServiceListCheck {
 			`${errCode}-1`
 		);
 
-		let HowRelated = null;
-		const MediaLocator = [],
-			AccessibilityAttributes = [];
+		let HowRelated: XmlElement | null = null;
+		const MediaLocator: XmlElement[] = [],
+			AccessibilityAttributes: XmlElement[] = [];
 		RelatedMaterial.forEachChildElement((child) => {
 			switch (child.name) {
 				case tva.e_HowRelated:
@@ -452,8 +479,8 @@ export default class ServiceListCheck {
 
 		checkAttributes(HowRelated, [dvbi.a_href], [], tvaEA.HowRelated, errs, `${errCode}-5`);
 
-		const HowRelated_href = HowRelated.attrAnyNsValueOr(dvbi.a_href);
-		if (HowRelated.attrAnyNs(dvbi.a_href)) {
+		const HowRelated_href = (HowRelated as XmlElement).attrAnyNsValueOr(dvbi.a_href);
+		if (HowRelated_href) {
 
 			switch (LocationType) {
 				case SERVICE_LIST_RM:
@@ -565,11 +592,11 @@ export default class ServiceListCheck {
 	 * @param {XmlElement} node      The XML tree node (either a <Service>, <TestService> or a <ServiceInstance>) to be checked
 	 * @returns {boolean} true if the node contains a <RelatedMaterial> element which signals an application else false
 	 */
-	/*private*/ #hasSignalledApplication(node) {
+	/*private*/ #hasSignalledApplication(node: XmlElement) {
 		if (node) {
 			node.forEachNamedChildElement(tva.e_RelatedMaterial, (elem) => {
 				const hr = elem.get(tva.e_HowRelated);
-				if (hr && this.#validServiceApplication(hr, SL_SchemaVersion(node.documentNamespace()))) return true;
+				if (hr && this.#validServiceApplication(hr as XmlElement, SL_SchemaVersion(node.documentNamespace()))) return true;
 			});
 		}
 		return false;
@@ -579,16 +606,16 @@ export default class ServiceListCheck {
 	 * perform any validation on a ContentTypeSourceType element
 	 *
 	 * @param {XmlElement} source        The <ContentGuideSource> element to be checked
-	 * @param {XmlElement} loc           The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
-	 * @param  {} documentInfo
+	 * @param {string} loc           The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
+	 * @param  {FoundDocumentItems} documentInfo
 	 *                signaturePolicyIDs Set() of Signature Verification policy identifiers defined in this service list
 	 * @param {ErrorList}  errs          Errors found in validaton
 	 * @param {String}     errCode       Error code prefix to be used in reports
 	 */
-	/*private*/ #validateAContentGuideSource(source, loc, documentInfo, errs, errCode) {
+	/*private*/ #validateAContentGuideSource(source: XmlElement, loc: string, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
 		if (!parameterCheck("validateAContentGuideSource", source, dvbi.e_ContentGuideSource, errs, `${errCode}-a`)) return;
 
-		const CheckEndpoint = (elementName, suffix, MustEndWithSlash = false) => {
+		const CheckEndpoint = (elementName: string, suffix: number, MustEndWithSlash: boolean = false) => {
 			const ep = source.getAnyNs(elementName);
 			if (ep) {
 				const epURL = ep.getAnyNs(dvbi.e_URI);
@@ -617,7 +644,7 @@ export default class ServiceListCheck {
 					});
 			}
 		};
-		loc = loc ? loc : source.parent.name.elementize();
+		loc = loc ? loc :(source.parent ? source.parent.name.elementize() : "unknown");
 
 		checkXMLLangs(dvbi.e_Name, loc, source, errs, `${errCode}-1`);
 		checkXMLLangs(dvbi.e_ProviderName, loc, source, errs, `${errCode}-2`);
@@ -643,13 +670,13 @@ export default class ServiceListCheck {
 	 * validate the language specified record any errors
 	 *
 	 * @param {XmlElement} node       the XML node whose @lang attribute should be checked
-	 * @param {String}     parentLang the language of the XML element which is the parent of node
+	 * @param {string}     parentLang the language of the XML element which is the parent of node
 	 * @param {boolean}    isRequired report an error if @lang is not explicitly stated
 	 * @param {ErrorList}  errs       errors found in validaton
-	 * @param {String}     errCode    error number to use instead of local values
-	 * @returns {String} the @lang attribute of the node element of the parentLang if it does not exist of is not specified
+	 * @param {string}     errCode    error number to use instead of local values
+	 * @returns {string | null} the @lang attribute of the node element of the parentLang if it does not exist of is not specified
 	 */
-	/* private */ #GetLanguage(node, parentLang, isRequired, errs, errCode) {
+	/* private */ #GetLanguage(node: XmlElement | null, parentLang: string, isRequired: boolean, errs: ErrorList, errCode: string) : string | null {
 		if (!node) return parentLang;
 		if (!node.attrAnyNs(tva.a_lang) && isRequired) {
 			errs.addError({
@@ -672,14 +699,14 @@ export default class ServiceListCheck {
 	 * validate the SynopsisType elements
 	 *
 	 * @param {XmlElement} Element            the element whose children should be checked
-	 * @param {String}     ElementName        the name of the child element to be checked
-	 * @param {Array}      requiredLengths    @length attributes that are required to be present
-	 * @param {Array}      optionalLengths    @length attributes that can optionally be present
-	 * @param {String}     parentLanguage	    the xml:lang of the parent element
+	 * @param {string}     ElementName        the name of the child element to be checked
+	 * @param {string[]}      requiredLengths    @length attributes that are required to be present
+	 * @param {string[]}      optionalLengths    @length attributes that can optionally be present
+	 * @param {string}     parentLanguage	    the xml:lang of the parent element
 	 * @param {ErrorList}  errs               errors found in validaton
-	 * @param {String}     errCode            error code prefix to be used in reports
+	 * @param {string}     errCode            error code prefix to be used in reports
 	 */
-	/*private*/ #ValidateSynopsisType(Element, ElementName, requiredLengths, optionalLengths, parentLanguage, errs, errCode) {
+	/*private*/ #ValidateSynopsisType(Element: XmlElement, ElementName: string, requiredLengths: string[], optionalLengths: string[], parentLanguage: string, errs: ErrorList, errCode: string) {
 		if (!parameterCheck("ValidateSynopsisType", Element, dvbi.e_Service, errs, `${errCode}-a`)) return;
 
 		let hasBrief = false,
@@ -687,11 +714,11 @@ export default class ServiceListCheck {
 			hasMedium = false,
 			hasLong = false,
 			hasExtended = false;
-		const briefLangs = new Set(),
-			shortLangs = new Set(),
-			mediumLangs = new Set(),
-			longLangs = new Set(),
-			extendedLangs = new Set();
+		const briefLangs = new Set<string>(),
+			shortLangs = new Set<string>(),
+			mediumLangs = new Set<string>(),
+			longLangs = new Set<string>(),
+			extendedLangs = new Set<string>();
 		const ERROR_KEY = "synopsis";
 		Element.forEachNamedChildElement(ElementName, (ste) => {
 			const synopsisLang = this.#GetLanguage(ste, parentLanguage, false, errs, `${errCode}-2`);
@@ -851,11 +878,11 @@ export default class ServiceListCheck {
 	/**
 	 * Determine if the specified node includes a RelatedMaterial element with the provided application type and format
 	 * @param {XmlElement} node         The elements whose <RelatedMaterial> elements are to be checked
-	 * @param {String}     href         The type of application to look for
-	 * @param {String}     contentType  The format of the application to look for
-	 * @returns true if the node contains an application with the indicated type, otherwise false
+	 * @param {string}     href         The type of application to look for
+	 * @param {string}     contentType  The format of the application to look for
+	 * @returns {boolean} true if the node contains an application with the indicated type, otherwise false
 	 */
-	/*private*/ #hasServiceApplication(node, href, contentType) {
+	/*private*/ #hasServiceApplication(node: XmlElement, href: string, contentType: string) : boolean {
 		let rc = false;
 		let rm = 0,
 			RelatedMaterial;
@@ -878,12 +905,12 @@ export default class ServiceListCheck {
 	 *
 	 * @param {XmlElement} ServiceInstance               the service instance element to check
 	 * @param {String}     thisServiceId                 the identifier of the service
-	 * @param {} documentInfo
+	 * @param {FoundDocumentItems} documentInfo
 	 *                     declaredSubscriptionPackages  subscription packages that are declared in the service list
 	 *                     declaredAudioLanguages        audio langiages defined as being used in the service list
 	 * @param {ErrorList}  errs                          errors found in validaton
 	 */
-	/*private*/ #validateServiceInstance(ServiceInstance, thisServiceId, documentInfo, errs) {
+	/*private*/ #validateServiceInstance(ServiceInstance: XmlElement, thisServiceId: string, documentInfo: FoundDocumentItems, errs: ErrorList) {
 		if (!parameterCheck("validateServiceInstance", ServiceInstance, dvbi.e_ServiceInstance, errs, "SI000a")) return;
 
 		const documentNamespace = ServiceInstance.documentNamespace();
@@ -943,7 +970,7 @@ export default class ServiceListCheck {
 		checkXMLLangs(dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010");
 
 		// check @href of <ServiceInstance><RelatedMaterial>
-		const controlApps = [];
+		const controlApps: XmlElement[] = [];
 		ServiceInstance.forEachNamedChildElement(dvbi.e_RelatedMaterial, (RelatedMaterial) => {
 			const foundHref = this.#validateRelatedMaterial(RelatedMaterial, `service instance of ${thisServiceId.quote()}`, SERVICE_INSTANCE_RM, documentInfo, errs, "SI020");
 			if (foundHref != "" && validServiceInstanceControlApplication(foundHref, SL_SchemaVersion(documentNamespace))) controlApps.push(RelatedMaterial);
@@ -974,7 +1001,7 @@ export default class ServiceListCheck {
 					const MediaUri = MediaLocator.getAnyNs(tva.e_MediaUri);
 					if (MediaUri) {
 						const contentType = MediaUri.attrAnyNsValueOr(tva.a_contentType);
-						if (contentType && this.#hasServiceApplication(ServiceInstance.parent, foundHref, contentType))
+						if (contentType && this.#hasServiceApplication(ServiceInstance.parent as XmlElement, foundHref, contentType))
 							errs.addError({
 								code: "SI024",
 								message: "same application type can only be signalled at the service or service instance level, not both",
@@ -1086,7 +1113,7 @@ export default class ServiceListCheck {
 							clause: "A177 Table 35",
 						});
 					const DRMSystemID_LAurl = DRMSystemID.attrAnyNsValueOr(dvbi.a_LAURL),
-						DRMSystemID_Certificateurl = DRMSystemID.attrAnyNsValueOr(dvbi.a_CertificateURL);
+						DRMSystemID_Certificateurl = DRMSystemID.attrAnyNsValueOr(dvbi.a_certificateURL);
 					if (DRMSystemID_LAurl && !isHTTPURL(DRMSystemID_LAurl))
 						errs.addError({
 							code: "SI044",
@@ -1097,7 +1124,7 @@ export default class ServiceListCheck {
 					if (DRMSystemID_Certificateurl && !isHTTPURL(DRMSystemID_Certificateurl))
 						errs.addError({
 							code: "SI045",
-							message: `${dvbi.a_CertificateURL.attribute(dvbi.e_DRMSystemId)} value (${DRMSystemID_Certificateurl}) is not a valid URL`,
+							message: `${dvbi.a_certificateURL.attribute(dvbi.e_DRMSystemId)} value (${DRMSystemID_Certificateurl}) is not a valid URL`,
 							fragment: DRMSystemID,
 							key: "invalid certificate URL",
 						});
@@ -1105,7 +1132,7 @@ export default class ServiceListCheck {
 						errs.addError({
 							type: WARNING,
 							code: "SI046",
-							message: `${dvbi.a_CertificateURL.attribute(dvbi.e_DRMSystemId)} is specified without a corresponding ${dvbi.a_LAURL.attribute(dvbi.e_DRMSystemId)} value`,
+							message: `${dvbi.a_certificateURL.attribute(dvbi.e_DRMSystemId)} is specified without a corresponding ${dvbi.a_LAURL.attribute(dvbi.e_DRMSystemId)} value`,
 							fragment: DRMSystemID,
 							key: "unnecessary certificate URL",
 						});
@@ -1145,7 +1172,7 @@ export default class ServiceListCheck {
 							break;
 						case tva.e_AudioLanguage:
 							// check if the specificed audio language is included in the LanguageList for the Service List
-							if (documentInfo?.declaredAudioLanguages.length != 0) {
+							if (documentInfo.declaredAudioLanguages.length != 0) {
 								const audioLanguage = child.content.toLowerCase();
 								const found = documentInfo.declaredAudioLanguages.find((el) => (el.language == audioLanguage));
 								if (found == undefined) {
@@ -1298,11 +1325,12 @@ export default class ServiceListCheck {
 		const Availability = ServiceInstance.getAnyNs(dvbi.e_Availability);
 		if (Availability) {
 			Availability.forEachNamedChildElement(dvbi.e_Period, (Period) => {
-				if (Period.attrAnyNs(dvbi.a_validFrom) && Period.attrAnyNs(dvbi.a_validTo)) {
+				const Period_from = Period.attrAnyNsValueOr(dvbi.a_validFrom), Period_to = Period.attrAnyNsValueOr(dvbi.a_validTo);
+				if (Period_from && Period_to) {
 					// validTo should be >= validFrom
 					try {
-						const fr = Temporal.Instant.from(SL_helpers.ZuluIfNeeded(Period.attrAnyNs(dvbi.a_validFrom).value)),
-							to = Temporal.Instant.from(SL_helpers.ZuluIfNeeded(Period.attrAnyNs(dvbi.a_validTo).value));
+						const fr = Temporal.Instant.from(SL_helpers.ZuluIfNeeded(Period_from)),
+							to = Temporal.Instant.from(SL_helpers.ZuluIfNeeded(Period_to));
 						if (Temporal.Instant.compare(fr, to) == 1)
 							errs.addError({
 								code: "SI124",
@@ -1321,8 +1349,8 @@ export default class ServiceListCheck {
 					}
 				}
 				Period.forEachNamedChildElement(dvbi.e_Interval, (Interval) => {
-					const startTime = SL_helpers.unzone(Interval.attrAnyNsValueOr(dvbi.a_startTime, "00:00:00Z")),
-						endTime = SL_helpers.unzone(Interval.attrAnyNsValueOr(dvbi.a_endTime, "23:59:59.999Z"));
+					const startTime = SL_helpers.unzone(Interval.attrAnyNsValueOr(dvbi.a_startTime, "00:00:00Z") as string),
+						endTime = SL_helpers.unzone(Interval.attrAnyNsValueOr(dvbi.a_endTime, "23:59:59.999Z") as string);
 					try {
 						if (Temporal.PlainTime.compare(Temporal.PlainTime.from(startTime), Temporal.PlainTime.from(endTime)) == 1) 
 							errs.addError({
@@ -2154,7 +2182,7 @@ export default class ServiceListCheck {
 		}
 
 		const ns = SL.root.namespaceUri;
-		const documentInfo = {}; // collectiom of things we learn when parsing the service list
+		const documentInfo: FoundDocumentItems = {}; // collectiom of things we learn when parsing the service list
 
 		if (!this.#doSchemaVerification(SL, errs, "SL005", options.report_schema_version, options.variants)) {
 			errs.addError({

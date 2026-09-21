@@ -72,7 +72,7 @@ export default class SL_helpers {
 
 	static isValidApplicationType = (type: string) : boolean => validApplicationTypes.includes(type);
 
-	static RMErrorDescription = (code: string, elem: string, table: string) : ErrorDescriptionType => ({
+	static RMErrorDescription = (code: string, elem: string, table: string | number) : ErrorDescriptionType => ({
 		code: code,
 		description: `The application type indicated by the specified ${dvbi.a_href.attribute()} value is not permitted in a ${elem.elementize()}. Refer to the semantic defintiion of ${dvbi.e_RelatedMaterial.elementize()} in table ${table} of A177.`,
 	});

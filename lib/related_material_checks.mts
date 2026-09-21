@@ -1,5 +1,5 @@
 /**
- * related_material_checks.mjs
+ *trelated_material_checks.mjs
  *
  *  DVB-I-tools
  *  Copyright (c) 2021-2026, Paul Higgs
@@ -8,32 +8,34 @@
  * Checks performed in <RelatedMaterial> elements based on their use in DVB-I
  */
 
-import { mpeg7 } from "./MPEG7_definitions.mts";
-import { tva, tvaEA, tvaEC } from "./TVA_definitions.mts";
-import { dvbi, dvbiEA } from "./DVB-I_definitions.mts";
+import { mpeg7 } from "./MPEG7_definitions.mts"
+import { tva, tvaEA, tvaEC } from "./TVA_definitions.mts"
+import { dvbi, dvbiEA } from "./DVB-I_definitions.mts"
 
-import { APPLICATION, INFORMATION, WARNING } from "./error_list.mts";
-import { checkLanguage } from "./multilingual_element.mts";
-import { checkAttributes, checkTopElementsAndCardinality } from "./schema_checks.mts";
-import { isJPEGmime, isPNGmime, validImageSet, isAllowedImageMime } from "./MIME_checks.mts";
-import { isHTTPURL, isInlineImage, isDataURI, isHTTSPURL } from "./pattern_checks.mts";
-import { cg_InvalidHrefValue, InvalidURL, keys } from "./common_errors.mts";
-import { parameterCheck, HasProperty } from "./utils.mts";
-import { CG_SchemaVersion} from "./cg_check.mts";
-import { cgVersions } from "./DVB-I_definitions.mts";
-import { ValidateAnyContentDigests } from "./digest_validation.mts";
+import { APPLICATION, INFORMATION, WARNING } from "./error_list.mts"
+import ErrorList from "./error_list.mts"
+import { checkLanguage } from "./multilingual_element.mts"
+import { checkAttributes, checkTopElementsAndCardinality } from "./schema_checks.mts"
+import { isJPEGmime, isPNGmime, validImageSet, isAllowedImageMime } from "./MIME_checks.mts"
+import { isHTTPURL, isInlineImage, isDataURI, isHTTSPURL } from "./pattern_checks.mts"
+import { cg_InvalidHrefValue, InvalidURL, keys } from "./common_errors.mts"
+import { parameterCheck, HasProperty } from "./utils.mts"
+import { CG_SchemaVersion} from "./cg_check.mts"
+import { cgVersions } from "./DVB-I_definitions.mts"
+import { ValidateAnyContentDigests } from "./digest_validation.mts"
 
+import type { FoundDocumentItems } from "./sl_check.mts"
 
 /**
 	* verifies that any specified signature policy is already defined in the service list
 	*  
 	* @param {Xmlelement} element              The XML element possibly containing the @verificationPolicy attribute
-	* @param {} documentInfo
+	* @param {FoundDocumentItems} documentInfo
 	*                     signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
 	* @param {ErrorList}  errs                 The class where errors and warnings relating to the serivce list processing are stored
 	* @param {String}     errCode              error code prefix for reporting
 	*/
- export function ValidateAnySignaturePolicy(element, documentInfo, errs, errCode) {
+ export function ValidateAnySignaturePolicy(element: XmlElement, documentInfo:FoundDocumentItems, errs: ErrorList, errCode: string) {
 	if (!element) {
 		errs.addError({ type: APPLICATION, code: "VSP000", message: "ValidateAnySignaturePolicy() called with element==null" });
 		return;
@@ -74,9 +76,9 @@ import { ValidateAnyContentDigests } from "./digest_validation.mts";
  
  
 const mimeExtractor = new RegExp(/^data:(?<mime>(?:\w+\/(?:(?!;).)+)?)((?:;[\w=]*[^;])*),(.+)$/, "i");
-function contentMatches(dataURI, contentType) {
+function contentMatches(dataURI: string, contentType: string) : boolean {
 	const prse = dataURI.match(mimeExtractor);
-	return prse.groups.mime == contentType || prse.groups.mime.length == 0;
+	return prse?.groups?.mime == contentType || prse?.groups?.mime.length == 0;
 }
 
 /**
@@ -84,14 +86,14 @@ function contentMatches(dataURI, contentType) {
  * specified in <MediaLocator><MediaURI> must match that specified in <Format>
  *
  * @param {XmlElement} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
- * @param {String}     location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
- * @param {Array}      allowedHowRelated The set of permitted values
- * @param  {} documentInfo
+ * @param {string}     location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+ * @param {string[]}      allowedHowRelated The set of permitted values
+ * @param  {FoundDocumentItems} documentInfo
  *                  signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
  * @param {ErrorList}  errs              The class where errors and warnings relating to the serivce list processing are stored
- * @param {String}     errcode           Error code prefix for reporting
+ * @param {string}     errcode           Error code prefix for reporting
  */
-function validateImageRelatedMaterial(RelatedMaterial, location, allowedHowRelated, documentInfo, errs, errCode) {
+function validateImageRelatedMaterial(RelatedMaterial: XmlElement, location: string, allowedHowRelated: string[], documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
 	if (!parameterCheck("validateImageRelatedMaterial", RelatedMaterial, tva.e_RelatedMaterial, errs, "PS000")) return;
 
 	checkTopElementsAndCardinality(
@@ -103,9 +105,9 @@ function validateImageRelatedMaterial(RelatedMaterial, location, allowedHowRelat
 		`${errCode}-1`
 	);
 
-	let HowRelated = null,
-		Format = null,
-		MediaLocator = null;
+	let HowRelated: XmlElement | undefined = undefined,
+		Format: XmlElement | undefined = undefined,
+		MediaLocator: XmlElement | undefined = undefined;
 	// just use the first instance of any specified element
 	RelatedMaterial.forEachChildElement((child) => {
 		switch (child.name) {
@@ -124,7 +126,7 @@ function validateImageRelatedMaterial(RelatedMaterial, location, allowedHowRelat
 	if (!HowRelated || !MediaLocator) return;
 	checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, `${errCode}-2`);
 
-	const hrHref = HowRelated.attrAnyNsValueOr(tva.a_href);
+	const hrHref = (HowRelated as XmlElement).attrAnyNsValueOr(tva.a_href);
 	if (hrHref && !allowedHowRelated.includes(hrHref)) {
 		errs.addError({
 			code: `${errCode}-10`,
@@ -135,13 +137,13 @@ function validateImageRelatedMaterial(RelatedMaterial, location, allowedHowRelat
 		return;
 	}
 
-	let isJPEG = false,
-		isPNG = false,
-		StillPictureFormat = null;
+	let isJPEG: boolean = false,
+		isPNG: boolean = false,
+		StillPictureFormat: XmlElement | undefined = undefined;
 	if (Format) {
 		checkTopElementsAndCardinality(Format, [{ name: tva.e_StillPictureFormat }], tvaEC.Format, false, errs, `${errCode}-11`);
 		errs.errorDescription({code: `${errCode}-11`, description: "Only the StillPictureFormat sub-element is permitted.", clause: "A177 Table 59"});
-		Format.forEachNamedChildElement(tva.e_StillPictureFormat, (StillPicture) => {
+		(Format as XmlElement).forEachNamedChildElement(tva.e_StillPictureFormat, (StillPicture) => {
 			StillPictureFormat = StillPicture;
 			checkAttributes(StillPicture, [tva.a_horizontalSize, tva.a_verticalSize, tva.a_href], [], tvaEA.StillPictureFormat, errs, `${errCode}-12`);
 			const childHref = StillPicture.attrAnyNsValueOr(tva.a_href);
@@ -162,7 +164,7 @@ function validateImageRelatedMaterial(RelatedMaterial, location, allowedHowRelat
 	checkTopElementsAndCardinality(MediaLocator, [{ name: tva.e_MediaUri }], tvaEC.MediaLocator, false, errs, `${errCode}-21`);
 
 	let hasMediaURI = false;
-	MediaLocator.forEachNamedChildElement(tva.e_MediaUri, (MediaUri) => {
+	(MediaLocator as XmlElement).forEachNamedChildElement(tva.e_MediaUri, (MediaUri) => {
 		hasMediaURI = true;
 		checkAttributes(MediaUri, 
 			[tva.a_contentType], 
@@ -208,7 +210,7 @@ function validateImageRelatedMaterial(RelatedMaterial, location, allowedHowRelat
 			});
 
 		});
-	const MediaLocator_contentLanguage = MediaLocator.attrAnyNsValueOr(dvbi.a_contentLanguage)
+	const MediaLocator_contentLanguage = (MediaLocator as XmlElement).attrAnyNsValueOr(dvbi.a_contentLanguage)
 	if (MediaLocator_contentLanguage) 
 		checkLanguage(MediaLocator_contentLanguage, MediaLocator, errs, `${errCode}-29`);
 	if (!hasMediaURI)
@@ -225,13 +227,13 @@ function validateImageRelatedMaterial(RelatedMaterial, location, allowedHowRelat
  * specified in <MediaLocator><MediaURI> must match that specified in <Format>
  *
  * @param {XmlElement} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
- * @param {String}     location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
- * @param {} documentInfo
+ * @param {string}     location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+ * @param {FoundDocumentItems} documentInfo
  *                  signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
  * @param {ErrorList}  errs              The class where errors and warnings relating to the serivce list processing are stored
- * @param {String}     errcode           Error code prefix for reporting
+ * @param {string}     errCode           Error code prefix for reporting
  */
-export function ValidatePromotionalStillImage(RelatedMaterial, location, documentInfo, errs, errCode) {
+export function ValidatePromotionalStillImage(RelatedMaterial: XmlElement, location: string, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
 	validateImageRelatedMaterial(RelatedMaterial, location, [tva.cs_PromotionalStillImage], documentInfo, errs, errCode);
 }
 
@@ -239,16 +241,16 @@ export function ValidatePromotionalStillImage(RelatedMaterial, location, documen
  * verifies if the images provided in <MediaLocator> elments are valid according to specification
  *
  * @param {XmlElement} Element            The <RelatedMaterial> element
- * @param {String}     location           The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
- * @param  {} documentInfo
+ * @param {string}     location           The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
+ * @param  {FoundDocumentItems} documentInfo
  *                  signaturePolicyIDs    Set() of Signature Verification policy identifiers defined in this service list
  * @param {ErrorList}  errs               The class where errors and warnings relating to the service list processing are stored
- * @param {String}     errCode            Error code prefix for reporting
+ * @param {string}     errCode            Error code prefix for reporting
  */
-export function checkValidLogos(RelatedMaterial, location, documentInfo, errs, errCode) {
+export function checkValidLogos(RelatedMaterial: XmlElement, location: string, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
 	if (!RelatedMaterial) return;
 
-	const specifiedMediaTypes = [];
+	const specifiedMediaTypes: string[] = [];
 	RelatedMaterial.forEachNamedChildElement(tva.e_MediaLocator, (MediaLocator) => {
 		checkTopElementsAndCardinality(MediaLocator, [{ name: tva.e_MediaUri }], tvaEC.MediaLocator, false, errs, `${errCode}-1`);
 		checkAttributes(MediaLocator, [], [dvbi.a_contentLanguage, dvbi.a_verificationPolicy], dvbiEA.MediaLocator, errs, `${errCode}-2`);

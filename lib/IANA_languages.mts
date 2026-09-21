@@ -94,7 +94,7 @@ export default class IANAlanguages {
 	}
 
 
-	loadedLanguages(sort) {
+	loadedLanguages(sort: boolean) {
 		let res = {};
 
 		if (this.#languagesList.size) {

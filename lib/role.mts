@@ -17,7 +17,8 @@ import { isHTTPURL } from "./pattern_checks.mts";
 import { fetch_options } from "./globals.mts";
 
 import ClassificationScheme from "./classification_scheme.mts"
-import type {FileLocations, LoadOptions} from "./classification_scheme.mts"
+import type {FileLocations } from "./classification_scheme.mts"
+import type { LoadOptions } from "./globals.mts"
 
 export default class Role extends ClassificationScheme {
 	constructor() {

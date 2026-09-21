@@ -1,5 +1,5 @@
 /**
- * TVA_defintions.mjs
+ * TVA_defintions.mts
  *
  *  DVB-I-tools
  *  Copyright (c) 2021-2026, Paul Higgs

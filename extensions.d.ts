@@ -22,7 +22,7 @@ declare global {
 	export declare class XmlElement extends libXmlElement {
 
 		attrAnyNs(name: string) : XmlAttribute | null
-		attrAnyNsValueOr(name: string, default_value?: string | null) : string | null
+		attrAnyNsValueOr(name: string, default_value?: string) : string | null
 		getAnyNs(name: string, index?: number) : XmlElement | null
 
 		hasChild(childName: string) : boolean

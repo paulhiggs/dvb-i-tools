@@ -29,7 +29,7 @@ import { TVAschema } from "./data_locations.mts";
 import ErrorList, { WARNING, APPLICATION } from "./error_list.mts";
 import { isIni, unEntity, DuplicatedValue, parameterCheck } from "./utils.mts";
 import { isHTTPURL, isDVBLocator, isUTCDateTime, isCRIDURI, isTAGURI } from "./pattern_checks.mts";
-import { ValidatePromotionalStillImage, ValidateAnySignaturePolicy } from "./related_material_checks.mjs";
+import { ValidatePromotionalStillImage, ValidateAnySignaturePolicy } from "./related_material_checks.mts";
 import { ValidateAnyContentDigests } from "./digest_validation.mts";
 import { cg_InvalidHrefValue, NoChildElement, keys } from "./common_errors.mts";
 import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.mts";

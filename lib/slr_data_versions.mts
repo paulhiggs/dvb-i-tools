@@ -1,5 +1,5 @@
 /**
- * slr_data_versions.mjs
+ * slr_data_versions.mts
  *
  *  DVB-I-tools
  *  Copyright (c) 2021-2026, Paul Higgs
@@ -19,14 +19,26 @@ import { DVBI_ServiceListRegistrySchema } from "./data_locations.mts";
 import { readmyfile } from "./utils.mts";
 
 import { GERMAN_A177r6_VARIANT } from "./globals.mts";
+import type { LoadOptions } from "./globals.mts"
 
-const SchemaVersions = [
+export type LoadedVersionInfo = {
+	namespace: string
+	version: number
+	filename: string
+	schema? : XmlDocument
+	status: number
+	specVersion: string
+	URN?: string
+	flags: number
+}
+
+const SchemaVersions: LoadedVersionInfo[] = [
 	// schema property is loaded from specified filename
 	{
 		namespace: dvbisld.A177r8_Namespace,
 		version: slVersions.r8,
 		filename: DVBI_ServiceListRegistrySchema.r8.file,
-		schema: null,
+		schema: undefined,
 		status: StandardStatus.CURRENT,
 		specVersion: "A177r8",
 		URN: "urn:dvb:metadata:dvbi:standardversion:8",
@@ -36,7 +48,7 @@ const SchemaVersions = [
 		namespace: dvbisld.A177r7_Namespace,
 		version: slVersions.r7,
 		filename: DVBI_ServiceListRegistrySchema.r7.file,
-		schema: null,
+		schema: undefined,
 		status: StandardStatus.OLD,
 		specVersion: "A177r7",
 		URN: "urn:dvb:metadata:dvbi:standardversion:7",
@@ -46,7 +58,7 @@ const SchemaVersions = [
 		namespace: dvbisld.A177r6_Namespace,
 		version: slVersions.r6,
 		filename: DVBI_ServiceListRegistrySchema.r6_Germany.file,
-		schema: null,
+		schema: undefined,
 		status: StandardStatus.ETSI,
 		specVersion: "A177r6",
 		URN: "urn:dvb:metadata:dvbi:standardversion:6",
@@ -56,7 +68,7 @@ const SchemaVersions = [
 		namespace: dvbisld.A177r6_Namespace,
 		version: slVersions.r6,
 		filename: DVBI_ServiceListRegistrySchema.r6.file,
-		schema: null,
+		schema: undefined,
 		status: StandardStatus.ETSI,
 		specVersion: "A177r6",
 		URN: "urn:dvb:metadata:dvbi:standardversion:6",
@@ -66,7 +78,7 @@ const SchemaVersions = [
 		namespace: dvbisld.A177r5_Namespace,
 		version: slVersions.r5,
 		filename: DVBI_ServiceListRegistrySchema.r5.file,
-		schema: null,
+		schema: undefined,
 		status: StandardStatus.OLD,
 		specVersion: "A177r5",
 		flags: 0,
@@ -75,7 +87,7 @@ const SchemaVersions = [
 		namespace: dvbisld.A177r4_Namespace,
 		version: slVersions.r4,
 		filename: DVBI_ServiceListRegistrySchema.r4.file,
-		schema: null,
+		schema: undefined,
 		status: StandardStatus.OLD,
 		specVersion: "A177r4",
 		flags: 0,
@@ -84,7 +96,7 @@ const SchemaVersions = [
 		namespace: dvbisld.A177r3_Namespace,
 		version: slVersions.r3,
 		filename: DVBI_ServiceListRegistrySchema.r3.file,
-		schema: null,
+		schema: undefined,
 		status: StandardStatus.OLD,
 		specVersion: "A177r3",
 		flags: 0,
@@ -93,7 +105,7 @@ const SchemaVersions = [
 		namespace: dvbisld.A177r2_Namespace,
 		version: slVersions.r2,
 		filename: DVBI_ServiceListRegistrySchema.r2.file,
-		schema: null,
+		schema: undefined,
 		status: StandardStatus.OLD,
 		specVersion: "A177r2",
 		flags: 0,
@@ -102,7 +114,7 @@ const SchemaVersions = [
 		namespace: dvbisld.A177r1_Namespace,
 		version: slVersions.r1,
 		filename: DVBI_ServiceListRegistrySchema.r1.file,
-		schema: null,
+		schema: undefined,
 		status: StandardStatus.ETSI,
 		specVersion: "A177r1",
 		flags: 0,
@@ -111,7 +123,7 @@ const SchemaVersions = [
 		namespace: dvbisld.A177_Namespace,
 		version: slVersions.r0,
 		filename: DVBI_ServiceListRegistrySchema.r0.file,
-		schema: null,
+		schema: undefined,
 		status: StandardStatus.OLD,
 		specVersion: "A177",
 		flags: 0,
@@ -121,10 +133,10 @@ const SchemaVersions = [
 /**
  * determine the schema version (and hence the specificaion version) in use
  *
- * @param {String} namespace     The namespace used in defining the schema
- * @returns {Number} Representation of the schema version or error code if unknown
+ * @param {string} namespace     The namespace used in defining the schema
+ * @returns {numberumber} Representation of the schema version or error code if unknown
  */
-export const SLR_SchemaVersion = (namespace) => {
+export const SLR_SchemaVersion = (namespace: string) : number => {
 	const x = SchemaVersions.find((ver) => ver.namespace == namespace);
 	return x ? x.version : slVersions.unknown;
 };
@@ -132,10 +144,10 @@ export const SLR_SchemaVersion = (namespace) => {
 /**
  * determine the DVB Bluebook version for the specified schema namespace
  *
- * @param {String} version     The specification version used in defining the schema
- * @returns {Number} Version of the DVB A177 specification where namespace is defined
+ * @param {number} version     The specification version used in defining the schema
+ * @returns {string} Version of the DVB A177 specification where namespace is defined
  */
-export const SLR_SchemaSpecVersion = (version) => {
+export const SLR_SchemaSpecVersion = (version: number) : string => {
 	const x = SchemaVersions.find((ver) => ver.version == version);
 	return x ? x.specVersion : `r(${version})`;
 };
@@ -147,18 +159,19 @@ export const SLR_SchemaSpecVersion = (version) => {
  * @param {integer} variant      The schema variant (0 for default)
  * @returns {XMLDocument} the schema corresponding to the namespace
  */
-export const SLR_GetSchema = (namespace, variant = 0) => SchemaVersions.find((s) => (s.namespace == namespace && s.flags == variant));
+export const SLR_GetSchema = (namespace: string, variant: number = 0) : LoadedVersionInfo | undefined => 
+	SchemaVersions.find((s) => (s.namespace == namespace && s.flags == variant));
 
 
 let SLRschemasLoaded = false;
-export function LoadSLRschemas(opts) {
+export function LoadSLRschemas(opts: LoadOptions) {
 	if (SLRschemasLoaded) return;
 	SLRschemasLoaded = true;
 	// TODO: implement useURLs and async options to load from URL rather than local file
 	if (opts.verbose) console.log(chalk.yellow.underline("loading service list registry schemas..."));
 	SchemaVersions.forEach((version) => {
 		if (opts.verbose) process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
-		const buf = readmyfile(version.filename);
+		const buf = readmyfile(version.filename, {});
 		if (buf) version.schema = XmlDocument.fromBuffer(buf, { url: version.filename });
 		if (opts.verbose) process.stdout.write(`${version.schema ? chalk.green("OK") : chalk.red.bold("FAIL")}\n`);
 	});

@@ -18,7 +18,8 @@ import { DefaultProperty } from "./utils.mts"
 import handleErrors from "./fetch_err_handler.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
 import { fetch_options } from "./globals.mts"
-import type { FileLocations, LoadOptions } from "./classification_scheme.mts"
+import type { FileLocations } from "./classification_scheme.mts"
+import type { LoadOptions } from "./globals.mts"
 
 type CountryDeclaration = {
 	country: string

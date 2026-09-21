@@ -1,5 +1,5 @@
 /**
- * slr_check.mjs
+ * slr_check.mts
  *
  *  DVB-I-tools
  *  Copyright (c) 2021-2026, Paul Higgs
@@ -22,10 +22,10 @@ import { mpeg7 } from "./MPEG7_definitions.mts";
 import { isMIME } from "./MIME_checks.mts";
 import { checkXMLLangs } from "./multilingual_element.mts";
 import { isHTTPURL, isTAGURI } from "./pattern_checks.mts";
-import { checkValidLogos, ValidateAnySignaturePolicy } from "./related_material_checks.mjs";
+import { checkValidLogos, ValidateAnySignaturePolicy } from "./related_material_checks.mts";
 import { checkAttributes, SchemaCheck, SchemaVersionCheck, SchemaLoad, checkTopElementsAndCardinality } from "./schema_checks.mts";
 import { LoadSLschemas, validServiceListLogo, isA177specification_URN, a177versionFromURN } from "./sl_data_versions.mts";
-import { LoadSLRschemas, SLR_GetSchema, SLR_SchemaVersion, SLR_SchemaSpecVersion } from "./slr_data_versions.mjs";
+import { LoadSLRschemas, SLR_GetSchema, SLR_SchemaVersion, SLR_SchemaSpecVersion } from "./slr_data_versions.mts";
 import { tva, tvaEA } from "./TVA_definitions.mts";
 import { parameterCheck, DefaultProperty } from "./utils.mts";
 import { ValidateSignaturePolicies } from "./signature_policies.mts";

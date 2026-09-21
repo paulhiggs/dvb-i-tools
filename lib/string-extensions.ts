@@ -1,3 +1,12 @@
+/**
+ * string-extensions
+ *
+ *  DVB-I-tools
+ *  Copyright (c) 2026, Paul Higgs
+ *  BSD-2-Clause license, see LICENSE.txt file
+ * 
+ * Context specific things to do with strings
+ */
 
 
 import { datatypeIs } from "./utils.mts";
@@ -16,7 +25,7 @@ String.prototype.quote = function() : string {
 /**
  * convert characters in the string to HTML entities
  */
-String.prototype.HTMLize = function() {
+String.prototype.HTMLize = function() : string {
 	return datatypeIs(this, "string") 
 	? (this as string).replace(/[&<>"'-]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;", "-": "&#8209;" }[m])) 
 	: this as string;
@@ -29,7 +38,7 @@ String.prototype.HTMLize = function() {
  * @param {String} elemName  the name of the element (optional)
  * @returns {String} the attribute expressed in the form of element@attribute
  */
-String.prototype.attribute = function	(elemName : string= ""): string {
+String.prototype.attribute = function	(elemName : string= "") : string {
 	return `${elemName}@${this}`;
 }
 

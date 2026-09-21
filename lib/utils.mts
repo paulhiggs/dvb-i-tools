@@ -39,21 +39,22 @@ const findInSet = (values : string | string[], value : string, caseSensitive : b
 /**
  * determines if a value is in a set of values
  *
- * @param {String or Array} values         The set of values to check existance in
- * @param {String}          value          The value to check for existance
- * @param {Boolean}         caseSensitive  Control case sensitive/insensitive matching (default: true)
- * @return {Boolean}  true if value is in the set of values
+ * @param {string | string[]} values         The set of values to check existance in
+ * @param {string}          value          The value to check for existance
+ * @param {boolean}         caseSensitive  Control case sensitive/insensitive matching (default: true)
+ * @return {boolean}  true if value is in the set of values
  */
-export const isIn = (values : string | string[], value : string, caseSensitive = true) : boolean => findInSet(values, value, caseSensitive);
+export const isIn = (values: string | string[], value: string, caseSensitive: boolean = true) : boolean => 
+	findInSet(values, value, caseSensitive);
 
 /**
  * determines if a value is in a set of values using a case insensitive comparison
  *
- * @param {String or Array} values     The set of values to check existance in
- * @param {String}          value      The value to check for existance
+ * @param {string | string[]} values     The set of values to check existance in
+ * @param {string}          value      The value to check for existance
  * @return {boolean} true if value is in the set of values
  */
-export const isIni = (values : string | string[], value : string) : boolean => findInSet(values, value, false);
+export const isIni = (values: string | string[], value: string) : boolean => findInSet(values, value, false);
 
 /**
  * replace ENTITY strings with a generic characterSet
@@ -61,7 +62,7 @@ export const isIni = (values : string | string[], value : string) : boolean => f
  * @param {String} str    string containing HTML or XML entities (starts with & ends with ;)
  * @return {String} the string with entities replaced with a single character '*'
  */
-export const unEntity = (str : string) : string => str.replace(/(&.+;)/gi, "*");
+export const unEntity = (str: string) : string => str.replace(/(&.+;)/gi, "*");
 
 /**
  * checks is an object has none of its own properties
@@ -80,13 +81,14 @@ export function isEmpty(object: Record<string, unknown>) : boolean {
  * Synchronously reads a file (if it exists)
  *
  * @param {String} filename  The name of the file to read
- * @param {unknown} options  Options to pass to readFileSync
+ * @param {Record<string,unknown>} options  Options to pass to readFileSync
  * @returns {Buffer} the buffer containing the data from the file, or null if there is a problem reading
  */
-export function readmyfile(filename: string, options: Record<string, unknown>) {
+export function readmyfile(filename: string, options: Record<string, unknown>) : Buffer | null {
 	try {
 		const stats = statSync(filename);
-		if (stats.isFile()) return readFileSync(filename, options);
+		if (stats.isFile()) 
+			return readFileSync(filename, options);
 	} catch (err) {
 		console.log(chalk.magenta(`${err.code}, ${err.path}`));
 	}
@@ -142,7 +144,7 @@ export function parameterCheck(functionName: string, node: XmlElement | null, ex
  * @param {string} val the value whose existance is to be checked
  * @returns {boolean} true if @val is already present in @found, else false
  */
-export function DuplicatedValue(found: Set<string>, val: string): boolean {
+export function DuplicatedValue<TYPE>(found: Set<TYPE>, val: TYPE): boolean {
 	const included = found.has(val);
 	if (!included) found.add(val);
 	return included;

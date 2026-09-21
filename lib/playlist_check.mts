@@ -17,7 +17,7 @@ import writeOut from "./logger.mts";
 import { isHTTPURL } from "./pattern_checks.mts";
 import { DefaultProperty } from "./utils.mts";
 
-import type { LoadOptions } from "./classification_scheme.mts"
+import type { LoadOptions } from "./globals.mts"
 
 export default class PlaylistCheck {
 	#numRequests;

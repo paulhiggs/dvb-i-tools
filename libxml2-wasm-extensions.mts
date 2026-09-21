@@ -26,9 +26,9 @@ XmlElement.prototype.attrAnyNs = function (name: string) : XmlAttribute | null {
  * find the named attribute without considering the namespace and return its value
  * return a pointer to the XmlAttribute object or the @default_value value
  */
-XmlElement.prototype.attrAnyNsValueOr = function (name: string, default_value: string | null = null) : string | null {
+XmlElement.prototype.attrAnyNsValueOr = function (name: string, default_value: string | undefined) : string | null {
 	const rc = this.attrs.find((a) => a.name == name);
-	return rc ? rc.value : default_value;
+	return rc ? rc.value : (default_value != undefined ? default_value : null);
 };
 
 
