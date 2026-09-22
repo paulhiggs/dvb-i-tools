@@ -161,7 +161,7 @@ function DVB_I_check(req, res, slcheck, plcheck, cgcheck, slrcheck, hasSL, hasPL
  * @param {Express request}  req           The Express request that triggered the validation
  * @param {Express response} res           The Express response to be written to the requester
  * @param {ServiceListCheck} slcheck       Initialised Service List validator
- * @param {String}           motd          HTML text for the Message Of The Day
+ * @param {string}           motd          HTML text for the Message Of The Day
  * @param {boolean}          jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
 function validateServiceList(req, res, slcheck, motd, jsonResponse) {
@@ -208,7 +208,7 @@ function validateServiceList(req, res, slcheck, motd, jsonResponse) {
  * @param {Express request}  req           The Express request that triggered the validation
  * @param {Express response} res           The Express response to be written to the requester
  * @param {PlaylistCheck}    plcheck       Initialised play List validator
- * @param {String}           motd          HTML text for the Message Of The Day
+ * @param {string}           motd          HTML text for the Message Of The Day
  * @param {boolean}          jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
 function validatePlaylist(req, res, plcheck, motd, jsonResponse) {
@@ -256,7 +256,7 @@ function validatePlaylist(req, res, plcheck, motd, jsonResponse) {
  * @param {Express request}          req           The Express request that triggered the validation
  * @param {Express response}         res           The Express response to be written to the requester
  * @param {ServiceListRegistryCheck} slrcheck       Initialised Service List validator
- * @param {String}                   motd           HTML text for the Message Of The Day
+ * @param {string}                   motd           HTML text for the Message Of The Day
  * @param {boolean}                  jsonResponse   Flag indicating that the response should ne JSON format rather than HTML
  */
 function validateServiceListRegistry(req, res, slrcheck, motd, jsonResponse) {
@@ -302,7 +302,7 @@ function validateServiceListRegistry(req, res, slrcheck, motd, jsonResponse) {
  * @param {Express request}   req           The Express request that triggered the validation
  * @param {Express response}  res           The Express response to be written to the requester
  * @param {ContentGuideCheck} cgcheck       Initialised Content Guide Metadata validator
- * @param {String}            motd          HTML text for the Message Of The Day
+ * @param {string}            motd          HTML text for the Message Of The Day
  * @param {boolean}           jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
 function validateContentGuide(req, res, cgcheck, motd, jsonResponse) {

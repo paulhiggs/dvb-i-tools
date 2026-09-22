@@ -201,7 +201,7 @@ function checkCMCDkeys(Report: XmlElement, version: number, errs: ErrorList, err
 
 	const keys_to_use = version == 1 ? CMCDv1_keys : CMCDv2_keys;
 	const configured_keys = Report.attrAnyNsValueOr(dvbi.a_enabledKeys as string);
-	const reporting_mode: string = Report.attrAnyNsValueOr(dvbi.a_reportingMode as string, "undefined") as string;
+	const reporting_mode: string = Report.attrAnyNsValueOr(dvbi.a_reportingMode as string, "undefined")!
 	const obfuscate_url = Report.attrAnyNsValueOr(dvbi.a_obfuscateURL as string);
 
 	if (configured_keys && configured_keys.length > 0) {
@@ -340,8 +340,8 @@ function ValidateContentIdLength(contentId: string, element: XmlElement, CMCDver
 }
 
 function ValidateReportType(Report: XmlElement, errs: ErrorList, errCode: string) {
-	const reporting_mode = Report.attrAnyNsValueOr(dvbi.a_reportingMode as string),
-			transmission_mode = Report.attrAnyNsValueOr(dvbi.a_transmissionMode as string);
+	const reporting_mode = Report.attrAnyNsValueOr(dvbi.a_reportingMode),
+			transmission_mode = Report.attrAnyNsValueOr(dvbi.a_transmissionMode);
 	switch (reporting_mode) {
 		case CMCD_MODE_REQUEST:
 			if (transmission_mode && ![CMCD_METHOD_HTTP_HEADER, CMCD_METHOD_QUERY_ARGUMENT].includes(transmission_mode))

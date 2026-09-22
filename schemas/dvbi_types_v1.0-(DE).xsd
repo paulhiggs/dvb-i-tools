@@ -95,7 +95,7 @@
 	<complexType name="DVBCDeliveryType">
 		<complexContent>
 			<extension base="dvbi-types:AbstractDeliveryType">
-				<attribute name="networkID" type="dvbi-types:NetworkIdType" use="required"/>
+				<attribute name="networkID" type="dvbi-types:NetworkIdType" use="optional"/>
 			</extension>
 		</complexContent>
 	</complexType>

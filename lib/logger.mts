@@ -8,20 +8,21 @@
  * log stuff from the validator
  */
 
+import * as Express from "express"
 import chalk from "chalk";
-import { Temporal } from '@js-temporal/polyfill'
 
 import { existsSync, writeFile } from "fs";
 import { join, sep } from "path";
 import { MODE_URL, MODE_SL, MODE_SLR } from "./ui.mts";
+import ErrorList from "./error_list.mts";
 
-export function createPrefix(req) {
+export function createPrefix(req: Express.Request) {
 	const logDir = join(".", "arch");
 
 	if (!existsSync(logDir)) return null;
 
-	const getDate = (i) => {
-		const fillZero = (t) => (t < 10 ? `0${t}` : t);
+	const getDate = (i : Temporal.Instant) => {
+		const fillZero = (t: number) : string => `${t < 10 ? "0" : ""}${t}`;
 		const d = Temporal.Instant.fromEpochMilliseconds(i.epochMilliseconds).toZonedDateTimeISO("UTC");
 		return `${d.year}-${fillZero(d.month)}-${fillZero(d.day)} ${fillZero(d.hour)}.${fillZero(d.minute)}.${fillZero(d.second)}`;
 	};
@@ -35,7 +36,7 @@ export function createPrefix(req) {
 }
 
 
-export default function writeOut(errs, filebase, markup, req = null) {
+export default function writeOut(errs: ErrorList, filebase: string | undefined, markup: boolean, req?: Express.Request) {
 	if (!filebase || errs.markupXML?.length == 0) return;
 
 	const outputLines = [];

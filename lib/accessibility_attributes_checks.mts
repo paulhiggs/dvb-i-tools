@@ -215,7 +215,7 @@ const checkAudioAttributes = (elem: XmlElement, childName: string, csCodec: Clas
  * @param {XmlElement} AccessibilityAttributes  the <AccessibilityAttribitues> element to check
  * @param {*} cs                                a set of classification schemes for value checks
  * @param {ErrorList} errs                      the class where errors and warnings relating to the service list processing are stored
- * @param {String} errCode                      the prefix to use for any errors found
+ * @param {string} errCode                      the prefix to use for any errors found
  * 
  * cs contains relevant classification schemes and validators in its properties
  *   cs.AccessibilityPurposeCS

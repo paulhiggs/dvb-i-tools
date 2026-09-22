@@ -25,7 +25,7 @@ export function CheckExtension(extn: XmlElement, extLoc: number, errs: ErrorList
 
 	// extension type is checked in schema validation
 
-	const extn_extensionName = extn.attrAnyNsValueOr(dvbi.a_extensionName as string);
+	const extn_extensionName = extn.attrAnyNsValueOr(dvbi.a_extensionName);
 	if (extn_extensionName) {
 		const where = (extension: string, location: string) => `${extension} extension only permitted in ${location}`;
 		switch (extn_extensionName) {

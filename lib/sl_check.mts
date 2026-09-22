@@ -9,7 +9,6 @@
  */
 
 import chalk from "chalk"
-import { Temporal } from '@js-temporal/polyfill'
 
 import SL_helpers from "./sl_check_helpers.mts"
 
@@ -18,6 +17,7 @@ import { sats } from "./DVB_definitions.mts"
 import { slVersions, dvbi, dvbisld, dvbiEC, dvbiEA, XMLdocumentType} from "./DVB-I_definitions.mts"
 
 import ErrorList, { WARNING, APPLICATION } from "./error_list.mts"
+import type { ReportedErrorType } from "./error_list.mts"
 import { isIni, unEntity, DuplicatedValue, parameterCheck, HexOrDecValue, DefaultProperty, HasProperty } from "./utils.mts"
 import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isRTSPURL, isTAGURI, isUUIDformat } from "./pattern_checks.mts"
 import { checkValidLogos } from "./related_material_checks.mts"
@@ -68,13 +68,13 @@ import { ValidateAnyContentDigests } from "./digest_validation.mts"
 import { ValidateSignaturePolicies } from "./signature_policies.mts"
 
 
-const LCN_TABLE_NO_TARGETREGION = "unspecifiedRegion",
-	LCN_TABLE_NO_SUBSCRIPTION = "unspecifiedPackage";
+const LCN_TABLE_NO_TARGETREGION: string = "unspecifiedRegion",
+	LCN_TABLE_NO_SUBSCRIPTION: string = "unspecifiedPackage";
 
-const SERVICE_LIST_RM = "service list";
-const SERVICE_RM = "service";
-const SERVICE_INSTANCE_RM = "service instance";
-const CONTENT_GUIDE_RM = "content guide";
+const SERVICE_LIST_RM: string = "service list";
+const SERVICE_RM: string = "service";
+const SERVICE_INSTANCE_RM: string = "service instance";
+const CONTENT_GUIDE_RM: string = "content guide";
 
 type FoundRegion = {
 	countries: string[],
@@ -84,11 +84,29 @@ type FoundRegion = {
 	line: number,
 }
 
-export type FoundDocumentItems = {
-	knownRegionIDs : FoundRegion[]
+export class FoundDocumentItems {
+	knownRegionIDs: FoundRegion[]
 	signaturePolicyIDs: Set<string>
 	declaredAudioLanguages: { language: string, used: boolean, fragment: XmlElement }[]
 	declaredSubscriptionPackages: Set<string>
+	knownServices: Set<string>
+	ContentGuideSourceIDs: Set<string>
+	thisServiceListId: string | null
+	definesPolicies: boolean
+
+	constructor(document_defines_policies: boolean) {
+		this.knownRegionIDs = []
+		this.signaturePolicyIDs = new Set()
+		this.declaredAudioLanguages = []
+		this.declaredSubscriptionPackages = new Set()
+		this.knownServices = new Set()
+		this.ContentGuideSourceIDs = new Set()
+		this.thisServiceListId = null
+
+		this.definesPolicies = document_defines_policies
+	}
+
+	
 }
 
 import ISOCountries from "./ISO_countries.mts"
@@ -96,7 +114,7 @@ import IANAlanguages from "./IANA_languages.mts"
 import ClassificationScheme from "./classification_scheme.mts"
 
 import type { LoadOptions, StatsType } from "./globals.mts"
-type ValidatorOptions = LoadOptions & {
+export type ValidatorOptions = LoadOptions & {
 	countries? : ISOCountries
 	languages? : IANAlanguages
 	accessibilities? : ClassificationScheme
@@ -109,6 +127,14 @@ type ValidatorOptions = LoadOptions & {
 	audiofmts?: ClassificationScheme
 	appfmts?: ClassificationScheme
 	stcodings?: ClassificationScheme
+	credits?: ClassificationScheme
+	ratings?: ClassificationScheme
+}
+
+export type SL_Validator_Options = {
+	log_prefix? : string
+	report_schema_version?: boolean
+	variants?: number
 }
 
 export default class ServiceListCheck {
@@ -610,7 +636,7 @@ export default class ServiceListCheck {
 	 * @param  {FoundDocumentItems} documentInfo
 	 *                signaturePolicyIDs Set() of Signature Verification policy identifiers defined in this service list
 	 * @param {ErrorList}  errs          Errors found in validaton
-	 * @param {String}     errCode       Error code prefix to be used in reports
+	 * @param {string}     errCode       Error code prefix to be used in reports
 	 */
 	/*private*/ #validateAContentGuideSource(source: XmlElement, loc: string, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
 		if (!parameterCheck("validateAContentGuideSource", source, dvbi.e_ContentGuideSource, errs, `${errCode}-a`)) return;
@@ -904,7 +930,7 @@ export default class ServiceListCheck {
 	 * validate a ServiceInstance element
 	 *
 	 * @param {XmlElement} ServiceInstance               the service instance element to check
-	 * @param {String}     thisServiceId                 the identifier of the service
+	 * @param {string}     thisServiceId                 the identifier of the service
 	 * @param {FoundDocumentItems} documentInfo
 	 *                     declaredSubscriptionPackages  subscription packages that are declared in the service list
 	 *                     declaredAudioLanguages        audio langiages defined as being used in the service list
@@ -1349,8 +1375,8 @@ export default class ServiceListCheck {
 					}
 				}
 				Period.forEachNamedChildElement(dvbi.e_Interval, (Interval) => {
-					const startTime = SL_helpers.unzone(Interval.attrAnyNsValueOr(dvbi.a_startTime, "00:00:00Z") as string),
-						endTime = SL_helpers.unzone(Interval.attrAnyNsValueOr(dvbi.a_endTime, "23:59:59.999Z") as string);
+					const startTime = SL_helpers.unzone(Interval.attrAnyNsValueOr(dvbi.a_startTime, "00:00:00Z")!),
+						endTime = SL_helpers.unzone(Interval.attrAnyNsValueOr(dvbi.a_endTime, "23:59:59.999Z")!);
 					try {
 						if (Temporal.PlainTime.compare(Temporal.PlainTime.from(startTime), Temporal.PlainTime.from(endTime)) == 1) 
 							errs.addError({
@@ -1445,7 +1471,7 @@ export default class ServiceListCheck {
 						// no xxxxDeliveryParameters is signalled
 						// check for appropriate Service.RelatedMaterial or Service.ServiceInstance.RelatedMaterial
 						const service = ServiceInstance.parent;
-						if (!this.#hasSignalledApplication(service) && !this.#hasSignalledApplication(ServiceInstance)) {
+						if (service && !this.#hasSignalledApplication(service as XmlElement) && !this.#hasSignalledApplication(ServiceInstance)) {
 							errs.addError({
 								code: "SI157a",
 								message: `No Application is signalled for ${dvbi.e_SourceType}=${dvbi.DVBAPPLICATION_SOURCE_TYPE.quote()} in Service ${thisServiceId.quote()}`,
@@ -1690,8 +1716,8 @@ export default class ServiceListCheck {
 	 * validate a Service or TestService element
 	 *
 	 * @param {XmlElement} service                       the service or testservice element to check
-	 * @param {String}     thisServiceId                 the identifier of the service
-	 * @param {} documentInfo
+	 * @param {string}     thisServiceId                 the identifier of the service
+	 * @param {FoundDocumentItems} documentInfo
 	 *                     knownServices                 Set() of service identifiers found and checked thus far
 	 *                     knownRegionIDs                regions identifiers from the RegionList
 	 *                     signaturePolicyIDs            Set() of Signature Verification policy identifiers defined in this service list
@@ -1700,7 +1726,7 @@ export default class ServiceListCheck {
 	 *                     ContentGuideSourceIDs         identifiers of content guide sources found in the service list
 	 * @param {ErrorList}  errs                          errors found in validaton
 	 */
-	/*private*/ #validateService(service, thisServiceId, documentInfo, errs) {
+	/*private*/ #validateService(service: XmlElement, thisServiceId: string, documentInfo: FoundDocumentItems, errs: ErrorList) {
 		if (!parameterCheck("validateService", service, [dvbi.e_Service, dvbi.e_TestService], errs, "SL100")) return;
 		checkAttributes(service, [], [dvbi.a_dynamic, dvbi.a_version, dvbi.a_replayAvailable, tva.a_lang], dvbiEA.ServiceType, errs, "SL104");
 		checkTopElementsAndCardinality(
@@ -1900,7 +1926,7 @@ export default class ServiceListCheck {
 			if (NVOD_mode && NVOD_mode == dvbi.NVOD_MODE_TIMESHIFTED) {
 				checkAttributes(NVOD, [dvbi.a_mode, dvbi.a_reference], [dvbi.a_offset], dvbiEA.NVOD, errs, "SL223");
 
-				const ServiceList = service.parent;
+				const ServiceList = (service as XmlElement).parent;
 
 				const NVOD_reference = NVOD.attrAnyNsValueOr(dvbi.a_reference);
 				if (NVOD_reference) {
@@ -1925,9 +1951,8 @@ export default class ServiceListCheck {
 					let s2 = 0,
 						service2,
 						referredService = null;
-					const referenced_service = NVOD.attrAnyNs(dvbi.a_reference).value;
-
-					while ((service2 = ServiceList.getAnyNs(dvbi.e_Service, ++s2)) != null && !referredService) {
+					
+					while (ServiceList && (service2 = (ServiceList as XmlElement).getAnyNs(dvbi.e_Service, ++s2)) != null && !referredService) {
 						const ui = service2.getAnyNs(dvbi.e_UniqueIdentifier);
 						if (ui?.content == NVOD_reference) {
 							referredService = service2;
@@ -1945,7 +1970,7 @@ export default class ServiceListCheck {
 						if (!refNVOD)
 							errs.addError({
 								code: "SL225b",
-								message: `service ${referenced_service} has no ${dvbi.e_NVOD.elementize()} information`,
+								message: `service ${NVOD_reference} has no ${dvbi.e_NVOD.elementize()} information`,
 								fragment: NVOD,
 								key: "not NVOD",
 							});
@@ -1954,7 +1979,7 @@ export default class ServiceListCheck {
 							if (refNVOD_mode && refNVOD_mode != dvbi.NVOD_MODE_REFERENCE)
 								errs.addError({
 									code: "SL225c",
-									message: `service ${referenced_service} is not defined as an NVOD reference`,
+									message: `service ${NVOD_reference} is not defined as an NVOD reference`,
 									fragment: NVOD,
 									key: "not NVOD",
 								});
@@ -1963,9 +1988,10 @@ export default class ServiceListCheck {
 				}
 			}
 			const svcType = service.getAnyNs(dvbi.e_ServiceType);
-			if (svcType && svcType.attrAnyNs(dvbi.a_href) 
-					&& !svcType.attrAnyNs(dvbi.a_href).value.endsWith("linear")
-					&& !svcType.attrAnyNs(dvbi.a_href).value.endsWith("linear-radio"))
+			const svcType_href = svcType?.attrAnyNsValueOr(dvbi.a_href)
+			if (svcType && svcType_href 
+					&& !svcType_href.endsWith("linear")
+					&& !svcType_href.endsWith("linear-radio"))
 				// this is a but of a hack, but sufficient to determine linear service type
 				errs.addError({
 					code: "SL227",
@@ -1978,7 +2004,7 @@ export default class ServiceListCheck {
 		// check <Prominence>
 		const ProminenceList = service.getAnyNs(dvbi.e_ProminenceList);
 		if (ProminenceList) {
-			const	known = [];
+			const	known: string[] = [];
 			ProminenceList.forEachNamedChildElement(dvbi.e_Prominence, (PE) => {
 				// if @region is used, it must be in the RegionList
 				const PE_region = PE.attrAnyNsValueOr(dvbi.a_region);
@@ -2094,7 +2120,7 @@ export default class ServiceListCheck {
 		}
 	}
 
-	/*private*/ #ValidateRequirements(Requires, errs, errCode) {
+	/*private*/ #ValidateRequirements(Requires: XmlElement, errs: ErrorList, errCode: string) {
 		if (!parameterCheck("ValidateRequirements", Requires, dvbi.e_Requires, errs, `${errCode}-a`)) return;
 
 		const Delivery = Requires.getAnyNs(dvbisld.e_Delivery);
@@ -2117,7 +2143,7 @@ export default class ServiceListCheck {
 	}
 
 
-	/*private*/ #doSchemaVerification(ServiceList, errs, errCode, report_schema_version = true, variants = 0) {
+	/*private*/ #doSchemaVerification(ServiceList: XmlDocument, errs: ErrorList, errCode: string, report_schema_version: boolean = true, variants: number = 0) : boolean {
 		const x = SL_GetSchema(ServiceList.root.namespaceUri, variants);
 		if (x && x.schema) {
 			SchemaCheck(ServiceList, x.schema, x.filename, errs, `${errCode}:${SL_SchemaVersion(ServiceList.root.namespaceUri)}`);
@@ -2130,15 +2156,15 @@ export default class ServiceListCheck {
 	/**
 	 * validate the service list and record any errors
 	 *
-	 * @param {String}    SLtext      The service list text to be validated
+	 * @param {string}    SLtext      The service list text to be validated
 	 * @param {ErrorList} errs        Errors found in validaton
-	 * @param {Object}    options
+	 * @param {SL_Validator_Options}    options
 	 *                      log_prefix            the first part of the logging location (or null if no logging)
 	 *                      report_schema_version report the state of the schema in the error/warning list
 	 *                      variants              flags from input
 	 *                                              GERMAN_A177r6_VARIANT  use the German schema variants for A177r6
 	 */
-	/*public*/ doValidateServiceList(SLtext, errs, options = {}) {
+	/*public*/ doValidateServiceList(SLtext: string, errs: ErrorList, options: SL_Validator_Options = {}) {
 		this.#numRequests++;
 		if (!SLtext) {
 			errs.addError({
@@ -2182,9 +2208,9 @@ export default class ServiceListCheck {
 		}
 
 		const ns = SL.root.namespaceUri;
-		const documentInfo: FoundDocumentItems = {}; // collectiom of things we learn when parsing the service list
+		const documentInfo = new FoundDocumentItems(true); // collection of things we learn when parsing the service list
 
-		if (!this.#doSchemaVerification(SL, errs, "SL005", options.report_schema_version, options.variants)) {
+		if (!this.#doSchemaVerification(SL as XmlDocument, errs, "SL005", options.report_schema_version, options.variants)) {
 			errs.addError({
 				code: "SL010",
 				message: `Unsupported namespace ${ns.quote()}`,
@@ -2192,7 +2218,7 @@ export default class ServiceListCheck {
 			});
 			return;
 		}
-		const ServiceList = SL.root;
+		const ServiceList = SL.root as XmlElement;
 		const slRequiredAttributes = [dvbi.a_version];
 		if (SL_SchemaVersion(ns) >= slVersions.r3) slRequiredAttributes.push(tva.a_lang);
 		if (SL_SchemaVersion(ns) >= slVersions.r6) slRequiredAttributes.push(dvbi.a_id);
@@ -2250,7 +2276,6 @@ export default class ServiceListCheck {
 		documentInfo.signaturePolicyIDs = ValidateSignaturePolicies(ServiceList, errs, "SL060");
 
 		//check <ServiceList><LanguageList>
-		documentInfo.declaredAudioLanguages = [];
 		const LanguageList = ServiceList.getAnyNs(dvbi.e_LanguageList);
 		if (LanguageList) {
 			LanguageList.forEachNamedChildElement(tva.e_Language, (Language) => {
@@ -2275,7 +2300,6 @@ export default class ServiceListCheck {
 		});
 
 		// check <ServiceList><RegionList> and remember regionID values
-		documentInfo.knownRegionIDs = [];
 		const RegionList = ServiceList.getAnyNs(dvbi.e_RegionList);
 		if (RegionList) {
 			// recurse the regionlist - Regions can be nested in Regions
@@ -2308,7 +2332,6 @@ export default class ServiceListCheck {
 		});
 
 		// check <ServiceList><SubscriptionPackageList>
-		documentInfo.declaredSubscriptionPackages = new Set();
 		const SubscriptionPackageList = ServiceList.getAnyNs(dvbi.e_SubscriptionPackageList);
 		if (SubscriptionPackageList) {
 			SubscriptionPackageList.forEachNamedChildElement(dvbi.e_SubscriptionPackage, (SubscriptionPackage) => {
@@ -2327,7 +2350,6 @@ export default class ServiceListCheck {
 		// <ServiceList><LCNTableList> is checked below, after the services are enumerated
 
 		//check service list <ContentGuideSourceList>
-		documentInfo.ContentGuideSourceIDs = new Set();
 		const CGSourceList = ServiceList.getAnyNs(dvbi.e_ContentGuideSourceList);
 		if (CGSourceList) {
 			let cgs = 0;
@@ -2360,7 +2382,6 @@ export default class ServiceListCheck {
 
 		// check <Service>
 		let s = 0;
-		documentInfo.knownServices = new Set();
 		ServiceList.forEachNamedChildElement(dvbi.e_Service, (service) => {
 			s++;
 			errs.setW("num services", s);
@@ -2427,10 +2448,10 @@ export default class ServiceListCheck {
 		// check <ServiceList><LCNTableList>
 		const LCNtableList = ServiceList.getAnyNs(dvbi.e_LCNTableList);
 		if (LCNtableList) {
-			const tableQualifiers = new Set();
+			const tableQualifiers = new Set<string>();
 			LCNtableList.forEachNamedChildElement(dvbi.e_LCNTable, (LCNTable) => {
 				// <LCNTable><TargetRegion>
-				const TargetRegions = new Set();
+				const TargetRegions = new Set<string>();
 				LCNTable.forEachNamedChildElement(dvbi.e_TargetRegion, (TargetRegion) => {
 					const targetRegionID = TargetRegion.content;
 					const foundRegion = documentInfo.knownRegionIDs.find((r) => r.region == targetRegionID);
@@ -2463,9 +2484,9 @@ export default class ServiceListCheck {
 				});
 
 				// <LCNTable><SubscriptionPackage>
-				const SubscriptionPackages = new Set();
+				const SubscriptionPackages = new Set<string>();
 				LCNTable.forEachNamedChildElement(dvbi.e_SubscriptionPackage, (SubscriptionPackage) => {
-					let packageLanguage = null;
+					let packageLanguage = undefined;
 					if (SL_SchemaVersion(ns) >= slVersions.r5) {
 						errs.addError(DeprecatedElement(SubscriptionPackage, SL_SchemaSpecVersion(slVersions.r5), "SL244"));
 					}
@@ -2515,7 +2536,7 @@ export default class ServiceListCheck {
 					});
 				});
 
-				const OutOfRangeChannelNumber = (code, frag, chanNum) => ({
+				const OutOfRangeChannelNumber = (code: string, frag: XmlElement, chanNum: number) : ReportedErrorType => ({
 					code: code,
 					message: `Channel number must be in the range ${dvbi.MIN_LCN}..${dvbi.MAX_LCN}, found ${chanNum}`,
 					key: "invalid value",
@@ -2636,10 +2657,10 @@ export default class ServiceListCheck {
 	/**
 	 * validate the service list and record any errors
 	 *
-	 * @param {String} SLtext  The service list text to be validated
-	 * @returns {Class} Errors found in validaton
+	 * @param {string} SLtext  The service list text to be validated
+	 * @returns {ErrorList} Errors found in validaton
 	 */
-	/*public*/ validateServiceList(SLtext) {
+	/*public*/ validateServiceList(SLtext: string) {
 		const errs = new ErrorList();
 		this.doValidateServiceList(SLtext, errs);
 

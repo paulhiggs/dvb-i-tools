@@ -42,7 +42,7 @@ export type FileLocations = {
  * Constructs a linear list of terms from a heirarical clssification schemes which are read from an XML document and parsed by libxmljs
  *
  * @param {Array}      vals           the array to add the CS term into
- * @param {String}     CSuri          the classification scheme domian
+ * @param {string}     CSuri          the classification scheme domian
  * @param {XmlElement} term           the classification scheme term that may include nested subterms
  */
 function addCSTerm(vals: CSnode[], CSuri: string, term: XmlElement) {

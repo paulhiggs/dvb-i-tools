@@ -129,7 +129,7 @@ export default class IANAlanguages {
 	 * load the languages into knownLanguages global array from the specified text
 	 * file is formatted according to www.iana.org/assignments/language-subtag-registry/language-subtag-registry
 	 *
-	 * @param {String} languagesData the text of the language data
+	 * @param {string} languagesData the text of the language data
 	 */
 	/* private method */
 	#processLanguageData(languageData) {
@@ -222,7 +222,7 @@ export default class IANAlanguages {
 	 * load the languages list into the knownLanguages global array from the specified file
 	 * file is formatted according to www.iana.org/assignments/language-subtag-registry/language-subtag-registry
 	 *
-	 * @param {String}  languagesFile   the file name to load
+	 * @param {string}  languagesFile   the file name to load
 	 * @param {boolean} purge           erase the existing values before loading new
 	 * @param {boolean} async           use asynchronous loading (sync needed for command line execution)
 	 * @param {boolean} verbose         display verbose output
@@ -251,7 +251,7 @@ export default class IANAlanguages {
 	/**
 	 * load the languages list into the knownLanguages global array from the specified URL
 	 *
-	 * @param {String}  languagesURL   the URL to load
+	 * @param {string}  languagesURL   the URL to load
 	 * @param {boolean} purge          erase the existing values before loading new
 	 * @param {boolean} async          use asynchronous loading (sync needed for command line execution)
 	 * @param {boolean} verbose         display verbose output
@@ -294,7 +294,7 @@ export default class IANAlanguages {
 	/**
 	 * determines if a language is known
 	 *
-	 * @param {String} value The value to check for existance
+	 * @param {string} value The value to check for existance
 	 * @return {integer} indicating the "known" state of the language
 	 */
 	isKnown(value) {
@@ -327,7 +327,7 @@ export default class IANAlanguages {
 	/**
 	 * determines if a signing language is known
 	 *
-	 * @param {String} value The value to check for existance in the list of known signing languages
+	 * @param {string} value The value to check for existance in the list of known signing languages
 	 * @return {integer} indicating the "known" state of the language
 	 */
 	checkSignLanguage(language) {

@@ -19,7 +19,7 @@ import { checkAttributes, checkTopElementsAndCardinality } from "./schema_checks
 import { isJPEGmime, isPNGmime, validImageSet, isAllowedImageMime } from "./MIME_checks.mts"
 import { isHTTPURL, isInlineImage, isDataURI, isHTTSPURL } from "./pattern_checks.mts"
 import { cg_InvalidHrefValue, InvalidURL, keys } from "./common_errors.mts"
-import { parameterCheck, HasProperty } from "./utils.mts"
+import { parameterCheck } from "./utils.mts"
 import { CG_SchemaVersion} from "./cg_check.mts"
 import { cgVersions } from "./DVB-I_definitions.mts"
 import { ValidateAnyContentDigests } from "./digest_validation.mts"
@@ -33,9 +33,9 @@ import type { FoundDocumentItems } from "./sl_check.mts"
 	* @param {FoundDocumentItems} documentInfo
 	*                     signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
 	* @param {ErrorList}  errs                 The class where errors and warnings relating to the serivce list processing are stored
-	* @param {String}     errCode              error code prefix for reporting
+	* @param {string}     errCode              error code prefix for reporting
 	*/
- export function ValidateAnySignaturePolicy(element: XmlElement, documentInfo:FoundDocumentItems, errs: ErrorList, errCode: string) {
+ export function ValidateAnySignaturePolicy(element: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
 	if (!element) {
 		errs.addError({ type: APPLICATION, code: "VSP000", message: "ValidateAnySignaturePolicy() called with element==null" });
 		return;
@@ -44,11 +44,11 @@ import type { FoundDocumentItems } from "./sl_check.mts"
 	const policy = element.attrAnyNsValueOr(dvbi.a_verificationPolicy);
 	if (!policy) return;
  
-	if (!HasProperty(documentInfo, "signaturePolicyIDs")) {
+	if (!documentInfo.definesPolicies) {
 		errs.addError({
 			type: INFORMATION,
 			code: `${errCode}-1`,
-			message: "document type does not define signature policies. ID cheking is skipped",
+			message: "document type does not define signature policies. ID checking is skipped",
 			fragment: element,
 			key: keys.k_SignaturePolicies,
 		})
@@ -59,7 +59,7 @@ import type { FoundDocumentItems } from "./sl_check.mts"
 		errs.addError({
 			type: WARNING,
 			code: `${errCode}-2`,
-			message: `${policy.quote()} is not defined in this service list`,
+			message: `${policy.quote()} is not defined in this document`,
 			fragment: element,
 			key: keys.k_SignaturePolicies,
 		});
@@ -91,7 +91,7 @@ function contentMatches(dataURI: string, contentType: string) : boolean {
  * @param  {FoundDocumentItems} documentInfo
  *                  signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
  * @param {ErrorList}  errs              The class where errors and warnings relating to the serivce list processing are stored
- * @param {string}     errcode           Error code prefix for reporting
+ * @param {string}     errCode           Error code prefix for reporting
  */
 function validateImageRelatedMaterial(RelatedMaterial: XmlElement, location: string, allowedHowRelated: string[], documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
 	if (!parameterCheck("validateImageRelatedMaterial", RelatedMaterial, tva.e_RelatedMaterial, errs, "PS000")) return;

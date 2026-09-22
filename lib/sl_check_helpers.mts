@@ -24,7 +24,7 @@ export default class SL_helpers {
 	 * determines if the identifer provided complies with the requirements for a service identifier
 	 * at this stage only IETF RFC 4151 TAG URIs are permitted
 	 *
-	 * @param {String} identifier    The service identifier
+	 * @param {string} identifier    The service identifier
 	 * @returns {boolean} true if the service identifier complies with the specification otherwise false
 	 */
 	static validServiceIdentifier = (identifier: string) => isTAGURI(identifier);
@@ -34,8 +34,8 @@ export default class SL_helpers {
 	/**
 	 * Create a label for the optional language and value provided
 	 * @param {XmlElement} pkg
-	 * @param {String}     lang
-	 * @returns {String}
+	 * @param {string}     lang
+	 * @returns {string}
 	 */
 	static localizedSubscriptionPackage = (pkg: XmlElement, lang?: string) : string => 
 		`${pkg.content}/lang=${lang ? lang : mlLanguage(pkg)}`;
@@ -43,9 +43,9 @@ export default class SL_helpers {
 	/**
 	 * Construct	 an error message an unspecifed target region is used
 	 *
-	 * @param {String} region      The unspecified target region
-	 * @param {String} loc         The location of the element
-	 * @param {String} errCode     The error code to be reported
+	 * @param {string} region      The unspecified target region
+	 * @param {string} loc         The location of the element
+	 * @param {string} errCode     The error code to be reported
 	 * @param {XmlElement} element The element using an undefined region if
 	 */
 	static UnspecifiedTargetRegion = (region: string, loc: string, errCode: string, element: XmlElement) : ReportedErrorType => ({
@@ -58,10 +58,10 @@ export default class SL_helpers {
 	/**
 	 * Construct an error message for missing <xxxDeliveryParameters>
 	 *
-	 * @param {String}     source     The missing source type
-	 * @param {String}     serviceId  The serviceId whose instance is missing delivery parameters
+	 * @param {string}     source     The missing source type
+	 * @param {string}     serviceId  The serviceId whose instance is missing delivery parameters
 	 * @param {XmlElement} element    The <SourceType> element for which delivery parameters are not specified
-	 * @param {String}     errCode    The error code to be reported
+	 * @param {string}     errCode    The error code to be reported
 	 */
 	static NoDeliveryParams = (source: string, serviceId: string, element: XmlElement, errCode: string) : ReportedErrorType => ({
 		code: errCode,
@@ -97,7 +97,7 @@ export default class SL_helpers {
 
 	static unzone = (time: string) : string => time.includes("Z") ? time.substring(0, time.indexOf("Z")) : time;
 
-	static checkElement = (element: XmlElement, elementName: string, allowed: string[], modulation: string, key: string, errs: ErrorList, errCode: string) : void => {
+	static checkElement = (element: XmlElement | null, elementName: string, allowed: string[], modulation: string, key: string, errs: ErrorList, errCode: string) : void => {
 		if (element && !allowed.includes(element.content))
 			errs.addError({
 				code: errCode,

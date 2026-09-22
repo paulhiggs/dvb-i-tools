@@ -37,7 +37,7 @@ const DigestRegexp = /^(?<algorithm>([a-z\d]+))=:(?<digest>([a-zA-Z0-9]+)):$/;
 *  
 * @param {XmlElement} element  The XML element possibly containing the @integrity attribute
 * @param {ErrorList}  errs     The class where errors and warnings relating to the serivce list processing are stored
-* @param {String}     errCode  Error code prefix for reporting
+* @param {string}     errCode  Error code prefix for reporting
 */
 export function ValidateAnyContentDigests(element: XmlElement, errs: ErrorList, errCode: string) {
 	if (!element) {

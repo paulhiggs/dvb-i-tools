@@ -19,6 +19,11 @@ import { DefaultProperty } from "./utils.mts";
 
 import type { LoadOptions } from "./globals.mts"
 
+export type PL_Validator_Options = {
+	log_prefix? : string
+	report_schema_version?: boolean
+}
+
 export default class PlaylistCheck {
 	#numRequests;
 
@@ -32,7 +37,7 @@ export default class PlaylistCheck {
 	}
 
 
-	/*private*/ #doSchemaVerification(Playlist: XmlDocument, errs: ErrorList, errCode: string, report_schema_version: boolean = true) {
+	/*private*/ #doSchemaVerification(Playlist: XmlDocument, errs: ErrorList, errCode: string, report_schema_version: boolean = true) : boolean {
 		const x = SL_GetSchema(Playlist.root.namespaceUri, 0);
 		if (x && x.schema) {
 			SchemaCheck(Playlist, x.schema, x.filename, errs, `${errCode}:${SL_SchemaVersion(Playlist.root.namespaceUri)}`);
@@ -45,13 +50,13 @@ export default class PlaylistCheck {
 	/**
 	 * validate the service list and record any errors
 	 *
-	 * @param {String}    PLtext      The play list text to be validated
+	 * @param {string}    PLtext      The play list text to be validated
 	 * @param {ErrorList} errs        Errors found in validaton
-	 * @param {Object}    options
+	 * @param {PL_Validator_Options}    options
 	 *                      log_prefix            the first part of the logging location (or null if no logging)
 	 *                      report_schema_version report the state of the schema in the error/warning list
 	 */
-	/*public*/ doValidatePlaylist(PLtext: string, errs: ErrorList, options = {}) {
+	/*public*/ doValidatePlaylist(PLtext: string, errs: ErrorList, options: PL_Validator_Options = {}) {
 		this.#numRequests++;
 		if (!PLtext) {
 			errs.addError({
@@ -65,7 +70,7 @@ export default class PlaylistCheck {
 		DefaultProperty(options, "log_prefix", null);
 		DefaultProperty(options, "report_schema_version", true);
 
-		const PL = SchemaLoad(PLtext, errs, "SL001");
+		const PL = SchemaLoad(PLtext, errs, "PL001");
 		if (!PL) return;
 		writeOut(errs, options.log_prefix, false);
 
@@ -95,7 +100,7 @@ export default class PlaylistCheck {
 
 		const ns = PL.root.namespaceUri;
 
-		if (!this.#doSchemaVerification(PL, errs, "PL005", options.report_schema_version)) {
+		if (!this.#doSchemaVerification(PL as XmlDocument, errs, "PL005", options.report_schema_version)) {
 			errs.addError({
 				code: "PL010",
 				message: `Unsupported namespace ${ns.quote()}`,
@@ -103,7 +108,7 @@ export default class PlaylistCheck {
 			});
 			return;
 		}
-		const Playlist = PL.root;
+		const Playlist = PL.root as XmlElement;
 
 		// <Playlist><PlaylistEntry>
 		Playlist.forEachNamedChildElement(dvbi.e_PlaylistEntry, (PlaylistEntry) => {
@@ -118,12 +123,12 @@ export default class PlaylistCheck {
 
 
 	/**
-	 * validate the service list and record any errors
+	 * validate the playlist and record any errors
 	 *
-	 * @param {String} SLtext  The service list text to be validated
-	 * @returns {Class} Errors found in validaton
+	 * @param {string} PLtext  The playlist text to be validated
+	 * @returns {ErrorList} Errors found in validaton
 	 */
-	/*public*/ validatePlaylist(PLtext) {
+	/*public*/ validatePlaylist(PLtext: string) {
 		const errs = new ErrorList();
 		this.doValidatePlaylist(PLtext, errs);
 

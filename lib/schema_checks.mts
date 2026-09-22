@@ -40,7 +40,7 @@ function isSchemaAttribute(attribute : XmlAttribute) {
  * @param {Array}      optionalAttributes the element names permitted within the parent
  * @param {Array}      definedAttributes  attributes that defined in the schema, whether requited, optional or profiled out
  * @param {ErrorList}  errs               errors found in validaton
- * @param {String}     errCode            error code to be used in reports,
+ * @param {string}     errCode            error code to be used in reports,
  */
 export function checkAttributes(checkElement: XmlElement, requiredAttributes: string[], optionalAttributes: string[], definedAttributes: string[], errs: ErrorList, errCode: string) {
 	if (!parameterCheck("checkAttributes", checkElement, null, errs, "AT000")) return;
@@ -184,9 +184,9 @@ export function checkTopElementsAndCardinality(parentElement: XmlElement, childE
  *
  * @param {XmlDocument} XML          the XML document to check
  * @param {XmlDocument} XSD          the schema
- * @param {String}      XSDfilename  location of the schema in @XSd to serve as the root for relative paths
+ * @param {string}      XSDfilename  location of the schema in @XSd to serve as the root for relative paths
  * @param {ErrorList}   errs         array to record any errors
- * @param {String}      errCode      the error code to report with each error
+ * @param {string}      errCode      the error code to report with each error
  */
 export function SchemaCheck(XML: XmlDocument, XSD: XmlDocument, XSDfilename: string, errs: ErrorList, errCode: string) {
 	let validator = null;
@@ -221,7 +221,7 @@ export function SchemaCheck(XML: XmlDocument, XSD: XmlDocument, XSDfilename: str
  * @param {XmlDocument} document             the XML document
  * @param {enum}        publication_state    the publication status of the schema
  * @param {ErrorList}   errs                 array to record any errors
- * @param {String}      errCode              the error code to report with each error
+ * @param {string}      errCode              the error code to report with each error
  */
 export function SchemaVersionCheck(document: XmlDocument, publication_state: number, errs: ErrorList, errCode: string) {
 	const ServiceList = (document.root as XmlElement)?.getAnyNs(dvbi.e_ServiceList as string);
@@ -241,10 +241,10 @@ export function SchemaVersionCheck(document: XmlDocument, publication_state: num
  * load the XML data
  * @param {string} document  XMLdocument
  * @param {ErrorList} errs  error handler for any loading errors
- * @param {String} errCode  error code prefix to use for any loading issues
+ * @param {string} errCode  error code prefix to use for any loading issues
  * @returns {XMLDocument}  an XML document structure
  */
-export function SchemaLoad(document: string, errs: ErrorList, errCode: string): XmlDocument | null{
+export function SchemaLoad(document: string, errs: ErrorList, errCode: string): XmlDocument | null {
 	// eslint-disable-next-line no-useless-assignment
 	let tmp = null, prettyXML = null;
 	try {

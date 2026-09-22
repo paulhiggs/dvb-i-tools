@@ -55,8 +55,8 @@ export default class Role extends ClassificationScheme {
 			let resp = null;
 			try {
 				resp = fetchS(rolesURL, fetch_options);
-			} catch (error) {
-				console.log(chalk.red(error.message));
+			} catch (err) {
+				console.log(chalk.red(err.message));
 			}
 			if (resp) {
 				if (resp.ok) {
@@ -82,7 +82,7 @@ export default class Role extends ClassificationScheme {
 		if (verbose) console.log(chalk.yellow(`reading Roles from ${rolesFile}`));
 
 		if (async)
-			readFile(rolesFile, { encoding: "utf-8" }, (err: NodeJS.ErrnoException | null, data: string | NonSharedBuffer) => {
+			readFile(rolesFile, { encoding: "utf-8" }, (err: NodeJS.ErrnoException | null, data: string) => {
 				if (!err)
 					data.split("\n").forEach((role) => {
 						this.#addRole(role);

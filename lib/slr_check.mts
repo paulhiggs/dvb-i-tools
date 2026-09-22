@@ -29,17 +29,21 @@ import { LoadSLRschemas, SLR_GetSchema, SLR_SchemaVersion, SLR_SchemaSpecVersion
 import { tva, tvaEA } from "./TVA_definitions.mts";
 import { parameterCheck, DefaultProperty } from "./utils.mts";
 import { ValidateSignaturePolicies } from "./signature_policies.mts";
+import { FoundDocumentItems} from "./sl_check.mts";
+import type { SL_Validator_Options, ValidatorOptions } from "./sl_check.mts";
+import ClassificationScheme from "./classification_scheme.mts";
 
-export function CheckDelivery(Delivery, SchemaVersion, ApplicationTypeCS, errs, errCode) {
+export function CheckDelivery(Delivery: XmlElement, SchemaVersion: number, ApplicationTypeCS: ClassificationScheme, errs: ErrorList, errCode: string) {
 	Delivery.forEachNamedChildElement(dvbisld.e_DVBTDelivery, (DVBTDelivery) => {
 		if (DVBTDelivery.attr(dvbisld.a_originalNetworkID) && SchemaVersion >= slVersions.r6) 
-			errs.addError(DeprecatedAttribute(DVBTDelivery.attr(dvbisld.a_originalNetworkID), SLR_SchemaSpecVersion(slVersions.r6), `${errCode}a`));
+			errs.addError(DeprecatedAttribute(DVBTDelivery.attr(dvbisld.a_originalNetworkID)!, SLR_SchemaSpecVersion(slVersions.r6), `${errCode}a`));
 	});
 
 	Delivery.forEachNamedChildElement(dvbisld.e_DVBSDelivery, (DVBSDelivery) => {
 		if (DVBSDelivery.attr(dvbisld.a_originalNetworkID) && SchemaVersion >= slVersions.r6)
-			errs.addError(DeprecatedAttribute(DVBSDelivery.attr(dvbisld.a_originalNetworkID), SLR_SchemaSpecVersion(slVersions.r6), `${errCode}b`));
+			errs.addError(DeprecatedAttribute(DVBSDelivery.attr(dvbisld.a_originalNetworkID)!, SLR_SchemaSpecVersion(slVersions.r6), `${errCode}b`));
 	});
+	
 	const ApplicationDelivery = Delivery.getAnyNs(dvbisld.e_ApplicationDelivery);
 	if (ApplicationDelivery) {
 		ApplicationDelivery.forEachNamedChildElement(dvbisld.e_ApplicationType, (ApplicationType) => {
@@ -106,15 +110,16 @@ export function CheckDelivery(Delivery, SchemaVersion, ApplicationTypeCS, errs, 
 	});
 }
 
+ type SLR_Validator_Options = SL_Validator_Options
+
 export default class ServiceListRegistryCheck {
 	#numRequests;
 	#knownCountries;
 	#allowedGenres;
 	#allowedApplicationTypes;
 
-	constructor(opts) {
+	constructor(opts : ValidatorOptions) {
 
-		if (!opts) opts = {};
 		DefaultProperty(opts, "useURLs", false);
 		DefaultProperty(opts, "async", true);
 		DefaultProperty(opts, "verbose", true);
@@ -141,10 +146,10 @@ export default class ServiceListRegistryCheck {
 	}
 
 
-	/*private*/ #doSchemaVerification(ServiceListRegistry, errs, errCode, report_schema_version = true, variants = 0) {
+	/*private*/ #doSchemaVerification(ServiceListRegistry: XmlDocument, errs: ErrorList, errCode: string, report_schema_version: boolean = true, variants: number = 0) {
 		const x = SLR_GetSchema(ServiceListRegistry.root.namespaceUri, variants);
 		if (x && x.schema) {
-			SchemaCheck(ServiceListRegistry, x.schema, x.filename, errs, `${errCode}:${SLR_SchemaVersion(ServiceListRegistry.root.documentNamespace())}`);
+			SchemaCheck(ServiceListRegistry, x.schema, x.filename, errs, `${errCode}:${SLR_SchemaVersion((ServiceListRegistry.root as XmlElement).documentNamespace())}`);
 			if (report_schema_version) SchemaVersionCheck(ServiceListRegistry, x.status, errs, `${errCode}:`);
 			return true;
 		}
@@ -156,9 +161,9 @@ export default class ServiceListRegistryCheck {
 	 *
 	 * @param {XmlElement} Offering  the element whose children should be checked
 	 * @param {ErrorList}  errs      errors found in validaton
-	 * @param {String}     errCode   error code prefix to be used in reports
+	 * @param {string}     errCode   error code prefix to be used in reports
 	 */
-	/* private */ #ValidateGenre(Offering, errs, errCode) {
+	/* private */ #ValidateGenre(Offering: XmlElement, errs: ErrorList, errCode: string) {
 		if (!parameterCheck("ValidateGenre", Offering, dvbisld.e_ServiceListOffering, errs, "GE000")) return;
 
 		Offering.forEachNamedChildElement(tva.e_Genre, (Genre) => {
@@ -179,12 +184,12 @@ export default class ServiceListRegistryCheck {
 	 * validate the <RelatedMaterial> element
 	 *
 	 * @param {XmlElement} RelatedMaterial  the element whose children should be checked
-	 * @param  {} documentInfo
+	 * @param  {FoundDocumentItems} documentInfo
 	 *                  signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
 	 * @param {ErrorList}  errs              errors found in validaton
-	 * @param {String}     errCode           error code prefix to be used in reports
+	 * @param {string}     errCode           error code prefix to be used in reports
 	 */
-	/* private */ #ValidateRelatedMaterial(RelatedMaterial, documentInfo, errs, errCode) {
+	/* private */ #ValidateRelatedMaterial(RelatedMaterial: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
 		const HowRelated = RelatedMaterial.getAnyNs(tva.e_HowRelated);
 		if (!HowRelated) {
 			errs.addError({
@@ -208,7 +213,7 @@ export default class ServiceListRegistryCheck {
 		checkValidLogos(RelatedMaterial, "Service List Registry", documentInfo, errs, `${errCode}-7`);
 	}
 
-	/* private */ #CheckOrganisationType(Organisation, errs, errCode) {
+	/* private */ #CheckOrganisationType(Organisation: XmlElement, errs: ErrorList, errCode: string) {
 		/**
 		 * A DVB OrganisationType is a reduced set of the elements defined in mpeg7:OrganisationType (ISO/IEC 15938-5: 7.4.5)
 		 */
@@ -238,7 +243,7 @@ export default class ServiceListRegistryCheck {
 		);
 	}
 
-	/* private */ #CheckServiceListOffering(Offering, documentInfo, errs, errCode) {
+	/* private */ #CheckServiceListOffering(Offering: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
 		const offeringNamespace = Offering.documentNamespace();
 		// ServiceListOfferingType @regulatorListFlag checked by schema
 
@@ -324,7 +329,7 @@ export default class ServiceListRegistryCheck {
 				}
 			}
 
-			if (ListURI_contentType && a177versionFromURN(ListURI_standardVersion) >= slVersions.r7 && ListURI_contentType != dvbi.XML_APP) {
+			if (ListURI_contentType && ListURI_standardVersion && a177versionFromURN(ListURI_standardVersion) >= slVersions.r7 && ListURI_contentType != dvbi.XML_APP) {
 				errs.addError({
 					code: `${errCode}-35`,
 					message: `${dvbisld.a_contentType.attribute()} must be ${dvbi.XML_APP.quote()} for A177r7 and above`,
@@ -393,7 +398,7 @@ export default class ServiceListRegistryCheck {
 	/**
 	 * validate the service list and record any errors
 	 *
-	 * @param {String}    SLRtext     The service list registry text to be validated
+	 * @param {string}    SLRtext     The service list registry text to be validated
 	 * @param {ErrorList} errs        Errors found in validaton
 	 * @param {Object}    options
 	 *                      log_prefix            the first part of the logging location (or null if no logging)
@@ -401,7 +406,7 @@ export default class ServiceListRegistryCheck {
 	 *                      variants              flags from input
 	 *                                              GERMAN_A177r6_VARIANT  use the German schema variants for A177r6
 	 */
-	/*public*/ doValidateServiceListRegistry(SLRtext, errs, options = {}) {
+	/*public*/ doValidateServiceListRegistry(SLRtext: string, errs: ErrorList, options: SLR_Validator_Options = {}) {
 		this.#numRequests++;
 
 		if (!SLRtext) {
@@ -444,16 +449,16 @@ export default class ServiceListRegistryCheck {
 			return;
 		}
 
-		if (!this.#doSchemaVerification(SLR, errs, "SR005", options.report_schema_version, options.variants)) {
+		if (!this.#doSchemaVerification(SLR as XmlDocument, errs, "SR005", options.report_schema_version, options.variants)) {
 			errs.addError({
 				code: "SR010",
-				message: `Unsupported namespace ${SLR.root.documentNamespace().quote()}`,
+				message: `Unsupported namespace ${(SLR.root as XmlElement).documentNamespace().quote()}`,
 				key: keys.k_XSDValidation,
 			});
 			return;
 		}
 
-		const ServiceListRegistry = SLR.root;
+		const ServiceListRegistry = SLR.root as XmlElement;
 		const slrRequiredAttributes = [],
 			slrOptionalAttributes = ["schemaLocation"];
 		const SLRversion = SLR_SchemaVersion(ServiceListRegistry.documentNamespace());
@@ -470,7 +475,7 @@ export default class ServiceListRegistryCheck {
 		if (RegistryEntity) this.#CheckOrganisationType(RegistryEntity, errs, "SR051");
 
 		//<ServiceListEntryPoints><SignaturePolicies>
-		const documentInfo = {};  // collectiom of things we learn when parsing the service list
+		const documentInfo = new FoundDocumentItems(true);  // collectiom of things we learn when parsing the service list
 		documentInfo.signaturePolicyIDs = ValidateSignaturePolicies(ServiceListRegistry, errs, "SR060");
 
 		//<ServiceListEntryPoints><ProviderOffering>
@@ -487,15 +492,17 @@ export default class ServiceListRegistryCheck {
 		ServiceListRegistry.forEachNamedChildElement(dvbi.e_Extension, (Extension) => {
 			CheckExtension(Extension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY, errs, "SR089");
 		});
+
+		SLR.dispose()
 	}
 
 	/**
 	 * validate the service list and record any errors
 	 *
-	 * @param {String} SLRtext  The service list text to be validated
-	 * @returns {Class} Errors found in validaton
+	 * @param {string} SLRtext  The service list text to be validated
+	 * @returns {ErrorList} Errors found in validaton
 	 */
-	/*public*/ validateServiceListRegistry(SLRtext) {
+	/*public*/ validateServiceListRegistry(SLRtext: string) {
 		const errs = new ErrorList();
 		this.doValidateServiceListRegistry(SLRtext, errs);
 

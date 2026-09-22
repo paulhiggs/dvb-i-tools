@@ -55,7 +55,7 @@ export type ReportedErrorType = {
 	key?: string;
 	fragment?: string | XmlElement;
 	fragments?: Array< string | XmlElement>;
-	multiElementError?: XmlElement[];
+	multiElementError?: Array<XmlElement | null>;
 	line? : number;
 	description?: string;
 	clause?: string;
@@ -100,7 +100,7 @@ export default class ErrorList {
 
 	/**
 	 * loads the text that can be marked up with any validation errors/warnings etc
-	 * @param {String} doc   The document received for validation
+	 * @param {string} doc   The document received for validation
 	 */
 	loadDocument(doc: string) {
 		this.markupXML = doc.split("\n").map((str, index) => ({ value: str, ix: index + 1 }));
@@ -108,9 +108,9 @@ export default class ErrorList {
 
 	/**
 	 * attach an error message to a particular line in the received text
-	 * @param {String} type     the type of error message, e.g. APPLICATION, ERROR, WARNING...
-	 * @param {String} code     the short code of the error
-	 * @param {String} message  the verbose error message
+	 * @param {string} type     the type of error message, e.g. APPLICATION, ERROR, WARNING...
+	 * @param {string} code     the short code of the error
+	 * @param {string} message  the verbose error message
 	 * @param {integer} lineNo  the line number in the received text to attach the error to
 	 */
 	/* private method */ #setError(type: string, code: string, message: string, lineNo: number) {
@@ -201,14 +201,14 @@ export default class ErrorList {
 	/**
 	 * log an error from the service list or program metadata analysis
 	 *
-	 * @param {String}              e.type        (optional) ERROR(default) or WARNING
-	 * @param {String}              e.code        Error code
-	 * @param {String}              e.message     The error message
-	 * @param {String}              e.key         (optional)The category of the message
-	 * @param {String | XmlElement} e.fragment    (optional) The XML fragment (or node in the XML document) triggering the error
+	 * @param {string}              e.type        (optional) ERROR(default) or WARNING
+	 * @param {string}              e.code        Error code
+	 * @param {string}              e.message     The error message
+	 * @param {string}              e.key         (optional)The category of the message
+	 * @param {string | XmlElement} e.fragment    (optional) The XML fragment (or node in the XML document) triggering the error
 	 * @param {integer}             e.line        (optional) the line number of the element in the XML document that triggered the error
-	 * @param {String}              e.description (optional) a description of the error
-	 * @param {String}              e.clause      (optional) the specification clause/section that is violated (only used with @e.description is provided)
+	 * @param {string}              e.description (optional) a description of the error
+	 * @param {string}              e.clause      (optional) the specification clause/section that is violated (only used with @e.description is provided)
 	 */
 	addError(e: ReportedErrorType) {
 		const _INVALID_CALL = "invalid addError call";
@@ -348,9 +348,9 @@ export default class ErrorList {
 	/**
 	 * built up descriptive information on the errors found in the analysis
 	 *
-	 * @param {String}  e.code         Error code, should be the same as @e.code passed to addError
-	 * @param {String}  e.description  A long form description of the stated error code
-	 * @param {String}  e.clause      (optional) the specification clause/section that is violated (only used with @e.description is provided)
+	 * @param {string}  e.code         Error code, should be the same as @e.code passed to addError
+	 * @param {string}  e.description  A long form description of the stated error code
+	 * @param {string}  e.clause      (optional) the specification clause/section that is violated (only used with @e.description is provided)
 	 */
 	errorDescription(e: ErrorDescriptionType) {
 		if (!e.code || !e.description) return;

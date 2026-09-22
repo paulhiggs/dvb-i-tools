@@ -31,7 +31,7 @@ type CountryDeclaration = {
 /**
  * load the countries list into the allowedCountries global array from the specified text
  *
- * @param {String} countryData the text of the country JSON data
+ * @param {string} countryData the text of the country JSON data
  * @returns {} processed JSON object of countries
  */
 function loadCountryData(countryData: string) : CountryDeclaration[] {
@@ -70,7 +70,7 @@ export default class ISOcountries {
 	/**
 	 * load the countries list into the allowedCountries global array from the specified JSON file
 	 *
-	 * @param {String}  countriesFile   the file name to load
+	 * @param {string}  countriesFile   the file name to load
 	 * @param {boolean} purge           erase the existing values before loading new
 	 */
 	#loadCountriesFromFile(countriesFile: string, purge: boolean = false, async: boolean = true, verbose: boolean = true) {

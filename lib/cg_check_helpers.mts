@@ -49,9 +49,9 @@ export default class CG_helpers {
 	 * checks is the specified element (elem) has an attribute named attrName and that its value is "true" or "false"
 	 *
 	 * @param {XmlElement} elem       the XML element to be checked
-	 * @param {String}     attrName   the name of the attribute carrying the boolean value
+	 * @param {string}     attrName   the name of the attribute carrying the boolean value
 	 * @param {ErrorList}  errs       errors found in validaton
-	 * @param {String}     errCode    the error number used as a prefix for reporting errors
+	 * @param {string}     errCode    the error number used as a prefix for reporting errors
 	 * @param {boolean}    isRequired true if the specified attribute is required to be specified for the element
 	 */
 	static BooleanValue = (elem: XmlElement, attrName: string, errs: ErrorList, errCode: string, isRequired: boolean = true): void => 
@@ -61,9 +61,9 @@ export default class CG_helpers {
 	 * checks is the specified element (elem) has an attribute named attrName and that its value is "true"
 	 *
 	 * @param {XmlElement} elem       the XML element to be checked
-	 * @param {String}     attrName   the name of the attribute carrying the boolean value
+	 * @param {string}     attrName   the name of the attribute carrying the boolean value
 	 * @param {ErrorList}  errs       errors found in validaton
-	 * @param {String}     errCode    the error number used as a prefix for reporting errors
+	 * @param {string}     errCode    the error number used as a prefix for reporting errors
 	 * @param {boolean}    isRequired true if the specified attribute is required to be specified for the element
 	 */
 	static TrueValue = (elem: XmlElement, attrName: string, errs: ErrorList, errCode: string, isRequired: boolean = true) : void => 
@@ -73,9 +73,9 @@ export default class CG_helpers {
 	 * checks is the specified element (elem) has an attribute named attrName and that its value is "false"
 	 *
 	 * @param {XmlElement} elem       the XML element to be checked
-	 * @param {String}     attrName   the name of the attribute carrying the boolean value
+	 * @param {string}     attrName   the name of the attribute carrying the boolean value
 	 * @param {ErrorList}  errs       errors found in validaton
-	 * @param {String}     errCode    the error number used as a prefix for reporting errors
+	 * @param {string}     errCode    the error number used as a prefix for reporting errors
 	 * @param {boolean}    isRequired true if the specified attribute is required to be specified for the element
 	 */
 	static FalseValue = (elem: XmlElement, attrName: string, errs: ErrorList, errCode: string, isRequired: boolean = true) : void => 
@@ -83,7 +83,7 @@ export default class CG_helpers {
 	
 
 	/**
-	 * @param {String} genre the value to check as being a restart availability genre
+	 * @param {string} genre the value to check as being a restart availability genre
 	 * @returns {boolean} true if the value provided is a valid restart availability genre
 	 */
 	static isRestartAvailability = (genre: string) : boolean => 

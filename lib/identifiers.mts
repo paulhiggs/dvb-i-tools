@@ -46,7 +46,7 @@ export const ContentProtectionIDs: {id: string; description: string}[] = [
 /**
  * Check is the DRM System Id is known
  * 
- * @param {String} systemId  the DRM System ID to verify 
+ * @param {string} systemId  the DRM System ID to verify 
  * @returns true is @schemeId is a known DRM System ID, otherwise false
  */
 export const KnownDRMScheme = (systemId: string): boolean => 

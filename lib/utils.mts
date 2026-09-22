@@ -59,8 +59,8 @@ export const isIni = (values: string | string[], value: string) : boolean => fin
 /**
  * replace ENTITY strings with a generic characterSet
  *
- * @param {String} str    string containing HTML or XML entities (starts with & ends with ;)
- * @return {String} the string with entities replaced with a single character '*'
+ * @param {string} str    string containing HTML or XML entities (starts with & ends with ;)
+ * @return {string} the string with entities replaced with a single character '*'
  */
 export const unEntity = (str: string) : string => str.replace(/(&.+;)/gi, "*");
 
@@ -80,7 +80,7 @@ export function isEmpty(object: Record<string, unknown>) : boolean {
 /**
  * Synchronously reads a file (if it exists)
  *
- * @param {String} filename  The name of the file to read
+ * @param {string} filename  The name of the file to read
  * @param {Record<string,unknown>} options  Options to pass to readFileSync
  * @returns {Buffer} the buffer containing the data from the file, or null if there is a problem reading
  */
@@ -104,14 +104,14 @@ export function readmyfile(filename: string, options: Record<string, unknown>) :
  * @param {XmlElement | null} node  the XmlElement being used in validation
  * @param {string[] | string | null} expectedType  the name of names that the @node needs to be 
  * @param {ErrorList} errs  the class where errors and warnings relating to the service list processing are stored
- * @param {string} errcode  the prefix to use for any errors found
+ * @param {string} errCode  the prefix to use for any errors found
  * @returns {boolean} true if @node is an XmlElement and has the correct name, else false
  */
-export function parameterCheck(functionName: string, node: XmlElement | null, expectedType: string | string[] | null, errs: ErrorList, errcode: string): boolean {
+export function parameterCheck(functionName: string, node: XmlElement | null, expectedType: string | string[] | null, errs: ErrorList, errCode: string): boolean {
 	if (!node) {
 		errs.addError({
 			type: APPLICATION,
-			code: `${errcode}-a`,
+			code: `${errCode}-a`,
 			message: `${functionName}() called with ${expectedType}==null`,
 		});
 		return false;
@@ -119,7 +119,7 @@ export function parameterCheck(functionName: string, node: XmlElement | null, ex
 	if (!(node instanceof XmlElement)) {
 		errs.addError({
 			type: APPLICATION,
-			code: `${errcode}-b`,
+			code: `${errCode}-b`,
 			message: `${functionName}() called with type ${(node as XmlElement).constructor.name} instead of XmlElement`,
 		});
 		return false;
@@ -128,7 +128,7 @@ export function parameterCheck(functionName: string, node: XmlElement | null, ex
 		if (Array.isArray(expectedType) ? !expectedType.includes(node.name) : node.name != expectedType) {
 		errs.addError({
 			type: APPLICATION,
-			code: `${errcode}-c`,
+			code: `${errCode}-c`,
 			message: `${functionName}() called with wrong element type ${node.name}, expected ${expectedType}`,
 		});
 		return false;
@@ -166,8 +166,8 @@ export function DumpString(str : string) : string {
 /**
  * encapsulate the specified string in quotes
  *
- * @param {String} str  the string to be encapsulated in quotes
- * @returns {String} the string encapsulated in quotes
+ * @param {string} str  the string to be encapsulated in quotes
+ * @returns {string} the string encapsulated in quotes
  */
 export const quote = (str : string) : string => str.quote();
 
@@ -175,8 +175,8 @@ export const quote = (str : string) : string => str.quote();
 /**
  * express the name of an element in the form of <element>
  * 
- * @param {String} elem  the name of the element
- * @returns {String} the element expressed in the form of <element>
+ * @param {string} elem  the name of the element
+ * @returns {string} the element expressed in the form of <element>
  */
 export const elementize = (elem : string) : string => elem.elementize();
 
@@ -184,9 +184,9 @@ export const elementize = (elem : string) : string => elem.elementize();
 /**
  * express the name of at atribute in the form of element@attribute
  * 
- * @param {String} attr  the name of the attribute
- * @param {String} elem  the name of the element (optional)
- * @returns {String} the attribute expressed in the form of element@attribute
+ * @param {string} attr  the name of the attribute
+ * @param {string} elem  the name of the element (optional)
+ * @returns {string} the attribute expressed in the form of element@attribute
  */
 export const attribute = (attr : string, elem : string= "") : string => attr.attribute(elem);
 
@@ -254,7 +254,7 @@ export function HexOrDecValue(str: string) : number{
  * Checks if the named property exists in the object and is not undefined
  * 
  * @param {*} obj        The object to check for the property
- * @param {String} prop  The name of the property to check for
+ * @param {string} prop  The name of the property to check for
  * @returns true if the property exists in the object and is not undefined
  **/
 export const HasProperty = (obj: unknown, prop: string) => {
@@ -265,7 +265,7 @@ export const HasProperty = (obj: unknown, prop: string) => {
  * Sets the default value of a property in an object if the property does not exist or is undefined
  * 
  * @param {*} obj        The object to set the property in
- * @param {String} prop  The name of the property to set
+ * @param {string} prop  The name of the property to set
  * @param {*} defaultValue  The default value to set if the property does not exist or is undefined
  **/
 export const DefaultProperty = (obj: Record<string, unknown>, prop: string, defaultValue: unknown) => {

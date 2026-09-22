@@ -300,7 +300,7 @@ export const validOutScheduleHours = (HowRelated: XmlElement) : boolean =>
 	match(OutOfScheduledHoursBanners, HowRelated.attrAnyNsValueOr(dvbi.a_href), HowRelated.documentNamespace());
 
 export const isOutScheduleHours = (HowRelated: XmlElement) : boolean =>
-	(HowRelated.attrAnyNsValueOr(dvbi.a_href, "none") as string).endsWith(OUTSIDE_AVAILABILITY_TERM);
+	(HowRelated.attrAnyNsValueOr(dvbi.a_href, "none")!).endsWith(OUTSIDE_AVAILABILITY_TERM);
 
 /**
  * determines if the identifer provided refers to a valid banner for content-finished presentation
@@ -313,7 +313,7 @@ export const validContentFinishedBanner = (HowRelated: XmlElement) : boolean =>
 	match(ContentFinishedBanners, HowRelated.attrAnyNsValueOr(dvbi.a_href), HowRelated.documentNamespace());
 
 export const isContentFinishedBanner = (HowRelated: XmlElement) : boolean => 
-	(HowRelated.attrAnyNsValueOr(dvbi.a_href, "none") as string).endsWith(CONTENT_FINISHED_TERM);
+	(HowRelated.attrAnyNsValueOr(dvbi.a_href, "none")!).endsWith(CONTENT_FINISHED_TERM);
 
 /**
  * determines if the identifer provided refers to a valid service list logo

@@ -32,7 +32,7 @@ export function ValidateSignaturePolicies(element: XmlElement, errs: ErrorList, 
 			const TrustAnchor = SignaturePolicy.getAnyNs(dvbi.e_TrustAnchor as string);
 			if (TrustAnchor)
 				TrustAnchor.forEachNamedChildElement(dvbi.e_CAFingerprint as string, (CAFingerprint) => {
-					const Fingerprint_algorithm = CAFingerprint.attrAnyNsValueOr(dvbi.a_algorithm as string);
+					const Fingerprint_algorithm = CAFingerprint.attrAnyNsValueOr(dvbi.a_algorithm);
 					if (Fingerprint_algorithm && (dvbi.ALLOWED_FINGERPRINT_ALGOS as string[]).length > 0 && !(dvbi.ALLOWED_FINGERPRINT_ALGOS as string[]).includes(Fingerprint_algorithm))
 						errs.addError({
 							code: `${errCode}-02`,

@@ -72,7 +72,7 @@ export const BCP47_Language_Tag: string = languageTag;
 /**
  * checks if the argument complies to the TV Anytime defintion of RatioType
  *
- * @param {String} ratio string contining value to check
+ * @param {string} ratio string contining value to check
  * @returns {boolean} true if the argment is compliant to a tva:RatioType
  */
 const ratioRegex: RegExp = new RegExp(`^[${e_digit}]+:[${e_digit}]+$`);
@@ -81,7 +81,7 @@ export const isRatioType = (ratio: string): boolean => (datatypeIs(ratio, "strin
 /**
  * checks if the argument complies to an XML representation of UTC time
  *
- * @param {String} time string contining the UTC time
+ * @param {string} time string contining the UTC time
  * @returns {boolean}  true if the argment is formatted according to UTC ("Zulu") time
  */
 const UTCregex: RegExp = new RegExp(/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]{1,3})?Z?$/);
@@ -99,7 +99,7 @@ export function isInlineImage(data: string): boolean {
 /**
  * checks of the specified argument matches an HTTP(s) URL where the protocol is required to be provided
  *
- * @param {String} url  The value whose format is to be checked
+ * @param {string} url  The value whose format is to be checked
  * @returns {boolean} true if the argument is an HTTP URL
  *
  * see RFC 3986 - https://tools.ietf.org/html/rfc3986
@@ -120,7 +120,7 @@ export function isHTTPURL(url: string): boolean {
 /**
  * checks of the specified argument matches an HTTP(s) URL where the protocol is required to be provided
  *
- * @param {String} url  The value whose format is to be checked
+ * @param {string} url  The value whose format is to be checked
  * @returns {boolean} true if the argument is an HTTP URL
  *
  * see RFC 3986 - https://tools.ietf.org/html/rfc3986
@@ -143,7 +143,7 @@ export function isHTTSPURL(url: string): boolean {
 /**
  * checks of the specified argument matches the scheme, authority and path syntax components of an HTTP(s) URL where the protocol is required to be provided
  *
- * @param {String} path  The value whose format is to be checked
+ * @param {string} path  The value whose format is to be checked
  * @returns {boolean} true if the argument is an HTTP URL path (no query or fragment componenets)
  *
  * see RFC 3986 - https://tools.ietf.org/html/rfc3986
@@ -179,7 +179,7 @@ export const isURN = (urn: string): boolean => (datatypeIs(urn, "string") ? URNr
 /**
  * checks of the specified argument matches URL according to RFC 3986 - https://tools.ietf.org/html/rfc3986
  *
- * @param {String} uri  The value whose format is to be checked
+ * @param {string} uri  The value whose format is to be checked
  * @returns {boolean} true if @uri is an HTTP URL
  */
 export const isURI = (uri: string): boolean => isURL(uri) || isURN(uri);
@@ -191,7 +191,7 @@ export const isURI = (uri: string): boolean => isURL(uri) || isURN(uri);
  *   data := *urlchar 
  *   parameter := attribute "=" value
  *
- * @param {String} uri  the value to be checked
+ * @param {string} uri  the value to be checked
  * @returns {boolean}  true if @uri is a string and mateches teh format of a data: URI, otherwise false
  * Thanks to https://gist.github.com/khanzadimahdi/bab8a3416bdb764b9eda5b38b35735b8
  */
@@ -201,7 +201,7 @@ export const isDataURI = (uri: string): boolean => (datatypeIs(uri, "string") ? 
 /**
  * checks if the argument complies to an XML representation of UTC time (i.e. ISO 8601-2:2019)
  *
- * @param {String} duration string contining the UTC time
+ * @param {string} duration string contining the UTC time
  * @returns {boolean}  true if @duration is formatted according to UTC ("Zulu") time
  */
 // based on https://stackoverflow.com/questions/32044846/regex-for-iso-8601-durations
@@ -214,7 +214,7 @@ export const isISODuration = (duration: string): boolean => (datatypeIs(duration
  * checks if the argument complies to a DVB locator according to clause 6.4.2 of ETSI TS 102 851
  * i.e. dvb://<original_network_id>..<service_id> ;<event_id>
  *
- * @param {String} locator string contining the DVB locator
+ * @param {string} locator string contining the DVB locator
  * @returns {boolean}  true if @locator is formatted as a DVB locator
  */
 const locatorRegex: RegExp = new RegExp(`^dvb://[${e_hex}]+.[${e_hex}]*.[${e_hex}]+;[${e_hex}]+$`);
@@ -222,7 +222,7 @@ export const isDVBLocator = (locator: string): boolean => (datatypeIs(locator, "
 
 /**
  *
- * @param {String} postcode  the postcode value to check
+ * @param {string} postcode  the postcode value to check
  * @returns {boolean} true if @postcode is a valid postcode, otherwise false
  */
 const postcodeRegex: RegExp = new RegExp(`^[${e_digit}${e_lowalpha}]+([- ][${e_digit}${e_lowalpha}]+)?$`, "i");
@@ -230,7 +230,7 @@ export const isPostcode = (postcode: string): boolean => (datatypeIs(postcode, "
 
 /**
  *
- * @param {String} postcode  the postcode value to check
+ * @param {string} postcode  the postcode value to check
  * @returns {boolean} true if @postcode is a valid wildcarded postcode (single asterix '*' in beginning, middle or end), otherwise false
  */
 const WildcardFirstRegex: RegExp = new RegExp(`^(\\*[${e_digit}${e_lowalpha}]*[\\- ]?[${e_digit}${e_lowalpha}]+)`, "i"),
@@ -242,7 +242,7 @@ export const isWildcardPostcode = (postcode: string): boolean =>
 /**
  * check if the argument is in the correct format for an DVB-I extension identifier
  *
- * @param {String} ext  the signalled extensionName
+ * @param {string} ext  the signalled extensionName
  * @returns {boolean} true if the signalled extensionName is in the specification defined format, else false
  */
 const ExtensionRegex: RegExp = new RegExp(`^[${e_digit}${e_lowalpha}][${e_digit}${e_lowalpha}:\\-/\\.]*[${e_digit}${e_lowalpha}]$`, "i");
@@ -252,7 +252,7 @@ export const validExtensionName = (ext: string): boolean => (datatypeIs(ext, "st
  * check if the argument is in the correct format for a TV-Anytime FrameRateType
  *    <pattern value="([0-9]{1,3}(.[0-9]{1,3})?)|([0-9]{1,3}/1.001)"/>
  *
- * @param {String} ratre  the signalled frameRate
+ * @param {string} ratre  the signalled frameRate
  * @returns {boolean} true if the signalled frameRate is a valid TV-Anytime FrameRateType, else false
  */
 const FrameRateRegex1: RegExp = new RegExp(`^[${e_digit}]{1,3}(\\.[${e_digit}]{1,3})?$`);
@@ -262,7 +262,7 @@ export const validFrameRate = (rate: string): boolean => (datatypeIs(rate, "stri
 /**
  * checks of the specified argument matches an domain name (RFC 1034)
  *
- * @param {String} domain  The value whose format is to be checked
+ * @param {string} domain  The value whose format is to be checked
  * @returns {boolean} true if the argument is a domain name
  */
 const DomainNameRegex: RegExp = new RegExp(/^[a-z\d]+([-.]{1}[a-z\d]+)*\.[a-z]{2,5}(:[\d]{1,5})?(\/.*)?$/, "i");
@@ -272,7 +272,7 @@ export const isDomainName = (domain: string): boolean => (datatypeIs(domain, "st
  * checks of the specified argument matches an RTSP URL
  *  <restriction base="anyURI"><pattern value="rtsp://.*"/></restriction>
  *
- * @param {String} url  The value whose format is to be checked
+ * @param {string} url  The value whose format is to be checked
  * @returns {boolean} true if the argument is an RTSP URL
  */
 const RTSPRegex: RegExp = new RegExp(/^rtsp:\/\/.*$/, "i");
@@ -281,7 +281,7 @@ export const isRTSPURL = (url: string): boolean => (datatypeIs(url, "string") ? 
 /**
  * check that a values conforms to the ServiceDaysList type
  *
- * @param {String} daysList  the value to check, likely from an Interval@days attribute
+ * @param {string} daysList  the value to check, likely from an Interval@days attribute
  * @returns {boolean} true if the value is properly formated
  */
 const DaysListRegex: RegExp = new RegExp(/^([1-7]\s+)*[1-7]$/); // list of values 1-7 separeted by spaces
@@ -290,7 +290,7 @@ export const validServiceDaysList = (daysList: string): boolean => (datatypeIs(d
 /**
  * check that a values conforms to the ZuluTimeType type
  *
- * @param {String} time the value to check, likely from an Interval@startTime or @endTime attributes
+ * @param {string} time the value to check, likely from an Interval@startTime or @endTime attributes
  * @returns {boolean} true if @time is properly formated
  */
 const ZuluRegex: RegExp = new RegExp(/^(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?)Z$/);
@@ -298,7 +298,7 @@ export const validZuluTimeType = (time: string): boolean => (datatypeIs(time, "s
 
 /**
  * checks that the supplied argument conforms to the pattern for a TVA LanguageType
- * @param {String} languageCode  the language code to check
+ * @param {string} languageCode  the language code to check
  * @returns {boolean}  true if @languageCode matches the specified format for a TV Anytime language (i.e. XML languge)
  */
 const languageFormat = `^[${e_alpha}]{1,8}(-[${e_alpha}${e_digit}]{1,8})*$`;
@@ -307,7 +307,7 @@ export const  isTVAAudioLanguageType = (languageCode: string): boolean => dataty
 
 /**
  * checks if the supplied string only contains ASCII values
- * @param {String} ascii_str   the string to check
+ * @param {string} ascii_str   the string to check
  * @returns {boolean} true of @ascii_str is a string any contains only ASCII characters, otherwise false
  */
 const ASCIIregexp: RegExp = new RegExp(`^[${ASCII_chars}]*$`);
@@ -316,7 +316,7 @@ export const isASCII = (ascii_str: string): boolean => (datatypeIs(ascii_str, "s
 /**
  * determine if the passed value conforms to am IETF RFC4151 TAG URI
  *
- * @param {String} identifier  The service identifier to be checked
+ * @param {string} identifier  The service identifier to be checked
  * @return {boolean} true if the service identifier is in RFC4151 TAG URI format
  */
 
@@ -345,7 +345,7 @@ export const isTAGURI = (identifier: string): boolean => (datatypeIs(identifier,
 /**
  * check if the argument complies to a CRID format
  *
- * @param {String} value  value whose format to check
+ * @param {string} value  value whose format to check
  * @returns	{boolean} true if the argument confirms to the CRID format, else false
  **/
 const CRIDRegex: RegExp = new RegExp("crid://(.*)/(.*)", "i");
@@ -353,7 +353,7 @@ export const isCRIDURI = (value: string): boolean => (datatypeIs(value, "string"
 
 /**
  * check if the argument only contains printable ascii characters ("space" --> "tilda")
- * @param {String} value  value whose format to check
+ * @param {string} value  value whose format to check
  * @returns {boolean} true if the value only contains ASCII characters, else false
  */
 const ASCIIPrint: RegExp = new RegExp(/^[ -~]*$/);
@@ -365,7 +365,7 @@ export const hasNonPrintableChars = (value: string): boolean => (datatypeIs(valu
 
 /**
  * check if the argument contains a UUID value in the hyphenated format of IETF RFC 4122 (https://datatracker.ietf.org/doc/html/rfc4122#section-3)
- * @param {String} value  value whose format to check
+ * @param {string} value  value whose format to check
  * @returns {boolean} true if the value contains a formatted UUID, else false
  */
 const UUIDRegex: RegExp = new RegExp(`^[${e_hex}]{8}-[${e_hex}]{4}-[${e_hex}]{4}-[${e_hex}]{4}-[${e_hex}]{12}$`, "i");

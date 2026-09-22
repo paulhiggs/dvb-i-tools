@@ -24,10 +24,10 @@ export const NO_DOCUMENT_LANGUAGE: string = "**"; // this should not be needed a
 /**
  * check a language code and log its result
  *
- * @param {String}        lang      the language to check
+ * @param {string}        lang      the language to check
  * @param {XmlElement}    element   the element containing the language value
  * @param {ErrorList}     errs      the class where errors and warnings relating to the service list processing are stored
- * @param {String}        errCode   the error code to be reported
+ * @param {string}        errCode   the error code to be reported
  * @returns {boolean} true if the specified language is valid
  */
 export function checkLanguage(lang: string, element: XmlElement, errs: ErrorList, errCode: string) : boolean {
@@ -39,7 +39,7 @@ export function checkLanguage(lang: string, element: XmlElement, errs: ErrorList
  * value of topmost level element does not contain @xml:lang
  *
  * @param {XmlElement} node    the multilingual element whose language is needed
- * @returns {String} the value of the xml:lang attribute for the element, or the teh closest ancestor
+ * @returns {string} the value of the xml:lang attribute for the element, or the teh closest ancestor
  */
 export function mlLanguage(node: XmlElement) : string {
 	if (!(node instanceof XmlElement)) return NO_DOCUMENT_LANGUAGE;
@@ -51,11 +51,11 @@ export function mlLanguage(node: XmlElement) : string {
 /**
  * checks that all the @xml:lang values for an element are unique and that only one instace of the element does not contain an xml:lang attribute
  *
- * @param {String}        elementName      The multilingual XML element to check
- * @param {String}        elementLocation  The descriptive location of the element being checked (for reporting)
+ * @param {string}        elementName      The multilingual XML element to check
+ * @param {string}        elementLocation  The descriptive location of the element being checked (for reporting)
  * @param {XmlElement}    node             The XML tree node containing the element being checked
  * @param {ErrorList}     errs             The class where errors and warnings relating to the service list processing are stored
- * @param {String}        errCode          The error code to be reported
+ * @param {string}        errCode          The error code to be reported
  */
 export function checkXMLLangs(elementName: string, elementLocation: string, node: XmlElement, errs: ErrorList, errCode: string) {
 	if (!parameterCheck("checkXMLLangs", node, null, errs, "XL000")) return;
@@ -105,8 +105,8 @@ export function checkXMLLangs(elementName: string, elementLocation: string, node
  * @param {XmlElement}    node       the XML node whose @lang attribute should be checked
  * @param {boolean}       isRequired report an error if @lang is not explicitly stated
  * @param {ErrorList}     errs       errors found in validaton
- * @param {String}        errCode    error number to use
- * @returns {String} the @lang attribute of the node element or the parentLang if it does not exist or is not specified
+ * @param {string}        errCode    error number to use
+ * @returns {string} the @lang attribute of the node element or the parentLang if it does not exist or is not specified
  */
 export function GetNodeLanguage(node: XmlElement, isRequired: boolean, errs: ErrorList, errCode: string) : string {
 	if (!node) return NO_DOCUMENT_LANGUAGE;

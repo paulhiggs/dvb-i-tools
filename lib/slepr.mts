@@ -98,7 +98,7 @@ export default class SLEPR {
 	/**
 	 * read in the master XML document as text
 	 *
-	 * @param {String} filename   filename or URL of the master XML document
+	 * @param {string} filename   filename or URL of the master XML document
 	 */
 	/* public */ loadServiceListRegistry(filename) {
 		console.log(chalk.yellow(`loading SLR from ${filename}`));

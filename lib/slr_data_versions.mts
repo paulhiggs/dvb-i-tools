@@ -27,9 +27,9 @@ export type LoadedVersionInfo = {
 	filename: string
 	schema? : XmlDocument
 	status: number
-	specVersion: string
+	specVersion?: string
 	URN?: string
-	flags: number
+	flags?: number
 }
 
 const SchemaVersions: LoadedVersionInfo[] = [
@@ -149,13 +149,13 @@ export const SLR_SchemaVersion = (namespace: string) : number => {
  */
 export const SLR_SchemaSpecVersion = (version: number) : string => {
 	const x = SchemaVersions.find((ver) => ver.version == version);
-	return x ? x.specVersion : `r(${version})`;
+	return x ? x.specVersion || "unknown" : `r(${version})`;
 };
 
 /**
  * determine the DVB Bluebook version for the specified schema namespace
  *
- * @param {String} namespace     The schema namespace
+ * @param {string} namespace     The schema namespace
  * @param {integer} variant      The schema variant (0 for default)
  * @returns {XMLDocument} the schema corresponding to the namespace
  */
