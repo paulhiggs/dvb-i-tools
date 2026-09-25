@@ -8,11 +8,200 @@
  * Definitions made by TV-Anytime in versions of ETSI TS 102 822-3-1
  */
 
-import { mpeg7 } from "./MPEG7_definitions.mts";
+import { mpeg7 } from "./MPEG7_definitions.mts"
 
 export const TVA_CSmetadata: string = "urn:tva:metadata:cs";
 
-export const tva = {
+type TVAattributesType = {
+	a_average: string
+	a_closed: string
+	a_contentLanguage: string
+	a_contentType: string
+	a_crid: string
+	a_end: string
+	a_fragmentId: string
+	a_fragmentVersion: string
+	a_fragmentExpirationDate: string
+	a_groupId: string
+	a_horizontalSize: string
+	a_href: string
+	a_index: string
+	a_integrity: string
+	a_lang: typeof mpeg7.a_lang
+	a_length: string
+	a_maximum: string
+	a_metadataOriginIDRef: string
+	a_minimum: string
+	a_numOfItems: string
+	a_ordered: string
+	a_primary: string
+	a_programId: string
+	a_purpose: string
+	a_role: string
+	a_serviceIDRef: string
+	a_serviceInstanceID: string
+	a_start: string
+	a_supplemental: string
+	a_translation: string
+	a_type: string
+	a_uriType: string
+	a_variable: string
+	a_value: string
+	a_verificationPolicy: string
+	a_verticalSize: string
+}
+
+type TVAelementsType = {
+	e_TVAMain: string
+	e_ProgramInformationTable: string
+	e_ProgramLocationTable: string
+	e_GroupInformationTable: string
+
+	e_AccessibilityAttributes: string
+	e_ActualDuration: string
+	e_ActualEndTime: string
+	e_ActualStartTime: string
+	e_AggregationOf: string
+	e_AppInformation: string
+	e_AspectRatio: string
+	e_AVAttributes: string
+	e_AudioAttributes: string
+	e_AudioDescriptionAttributes: string
+	e_AudioLanguage: string
+	e_AuxiliaryURI: string
+	e_AuxiliaryURL: string
+	e_AwardsList: string
+	e_BasicDescription: string
+	e_BitRate: string
+	e_BitsPerSample: string
+	e_BroadcastEvent: string
+	e_CaptioningAttributes: string
+	e_CaptionLanguage: string
+	e_Carriage: string
+	e_Character: string
+	e_Closed: string
+	e_Coding: string
+	e_Color: string
+	e_ContentVersion: string
+	e_CountryCodes: string
+	e_CreationCoordinates: string
+	e_CreditsInformationTable: string
+	e_CreditsItem: string
+	e_CreditsList: string
+	e_DeliveryMode: string
+	e_DepictedCoordinates: string
+	e_DerivedFrom: string
+	e_DialogueEnhancementAttributes: string
+	e_Duration: string
+	e_EarlyPlayout: string
+	e_EmbargoTime: string
+	e_EndOfAvailability: string
+	e_EpisodeOf: string
+	e_ExpiryTimeAfterDownload: string
+	e_ExpiryTimeAfterDownloadFirstStart: string
+	e_ExpiryTimeAfterFirstStart: string
+	e_ExpiryTime: string
+	e_ExplanatoryText: string
+	e_FamilyName: string
+	e_FileFormat: string
+	e_FileSize: string
+	e_FirstAvailability: string
+	e_FirstShowing: string
+	e_Format: string
+	e_FrameRate: string
+	e_Free: string
+	e_Genre: string
+	e_GivenName: string
+	e_GroupInformation: string
+	e_GroupType: string
+	e_HighContrastUIAttributes: string
+	e_HorizontalSize: string
+	e_HowRelated: string
+	e_ImmediateViewing: string
+	e_InlineMedia: string
+	e_InstanceDescription: string
+	e_InstanceMetadataId: string
+	e_Keyword: string
+	e_Language: string
+	e_LastAvailability: string
+	e_LastShowing: string
+	e_Live: string
+	e_MagnificationUIAttributes: string
+	e_MaxNumberOfDownloads: string
+	e_MediaLocator: string
+	e_MediaTitle: string
+	e_MediaUri: string
+	e_MemberOf: string
+	e_MinimumAge: string
+	e_MixType: string
+	e_NumOfChannels: string
+	e_OnDemandProgram: string
+	e_OnDemandService: string
+	e_OrganizationName: string
+	e_OtherIdentifier: string
+	e_ParentalGuidance: string
+	e_ParentalRating: string
+	e_PartOfAggregatedGroup: string
+	e_PartOfAggregateProgram: string
+	e_Personalisation: string
+	e_PersonName: string
+	e_PictureFormat: string
+	e_ProductionDate: string
+	e_ProductionLocation: string
+	e_ProgramDescription: string
+	e_ProgramInformation: string
+	e_Program: string
+	e_ProgramReviewTable: string
+	e_ProgramURL: string
+	e_PromotionalInformation: string
+	e_PromotionalMedia: string
+	e_PromotionalText: string
+	e_PublishedDuration: string
+	e_PublishedEndTime: string
+	e_PublishedStartTime: string
+	e_PurchaseInformationTable: string
+	e_PurchaseList: string
+	e_Purpose: string
+	e_PushDownloadProgram: string
+	e_ReceiverMix: string
+	e_RelatedMaterial: string
+	e_ReleaseDate: string
+	e_ReleaseInformation: string
+	e_ReleaseLocation: string
+	e_Repeat:string
+	e_RequiredStandardVersion: string
+	e_RequiredOptionalFeature: string
+	e_ResponseToUserActionAttributes: string
+	e_RightsInformationTable: string
+	e_SampleFrequency: string
+	e_Scan: string
+	e_Schedule: string
+	e_ScheduleEvent: string
+	e_ScreenReaderAttributes: string
+	e_ScreenReaderLanguage: string
+	e_SegmentInformationTable: string
+	e_ServiceInformationTable: string
+	e_SegmentReference: string
+	e_ShortTitle: string
+	e_SigningAttributes: string
+	e_SignLanguage: string
+	e_SocialMediaReference: string
+	e_SourceMediaLocator: string
+	e_SpokenSubtitlesAttributes: string
+	e_StartOfAvailability: string
+	e_StillPictureFormat: string
+	e_StreamID: string
+	e_SubtitleAttributes: string
+	e_SubtitleLanguage: string
+	e_SuitableForTTS: string
+	e_Synopsis: string
+	e_System: string
+	e_Title: string
+	e_VerticalSize: string
+	e_VideoAttributes: string
+}
+
+export const tva: Record<string, string | number | string[]> & TVAattributesType & TVAelementsType= {
 	SYNOPSIS_BRIEF_LABEL: "brief",
 	SYNOPSIS_BRIEF_LENGTH: 30,
 	SYNOPSIS_SHORT_LABEL: "short",

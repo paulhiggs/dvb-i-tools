@@ -8,17 +8,17 @@
  * version related checks
  */
 
-import process from "process";
+import process from "process"
 
-import chalk from "chalk";
-import { XmlDocument } from "libxml2-wasm";
+import chalk from "chalk"
+import { XmlDocument } from "libxml2-wasm"
 
-import { StandardStatus } from "./globals.mts";
-import { slVersions, dvbisld } from "./DVB-I_definitions.mts";
-import { DVBI_ServiceListRegistrySchema } from "./data_locations.mts";
-import { readmyfile } from "./utils.mts";
+import { StandardStatus } from "./globals.mts"
+import { slVersions, dvbisld } from "./DVB-I_definitions.mts"
+import { DVBI_ServiceListRegistrySchema } from "./data_locations.mts"
+import { readmyfile } from "./utils.mts"
 
-import { GERMAN_A177r6_VARIANT } from "./globals.mts";
+import { GERMAN_A177r6_VARIANT } from "./globals.mts"
 import type { LoadOptions } from "./globals.mts"
 
 export type LoadedVersionInfo = {

@@ -8,14 +8,14 @@
  * Check a play list
  */
 
-import ErrorList, { APPLICATION } from "./error_list.mts";
-import { dvbi} from "./DVB-I_definitions.mts";
-import { InvalidURL, keys } from "./common_errors.mts";
-import { SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.mts";
-import { LoadSLschemas, SL_GetSchema, SL_SchemaVersion } from "./sl_data_versions.mts";
-import writeOut from "./logger.mts";
-import { isHTTPURL } from "./pattern_checks.mts";
-import { DefaultProperty } from "./utils.mts";
+import ErrorList, { APPLICATION } from "./error_list.mts"
+import { dvbi} from "./DVB-I_definitions.mts"
+import { InvalidURL, keys } from "./common_errors.mts"
+import { SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.mts"
+import { LoadSLschemas, SL_GetSchema, SL_SchemaVersion } from "./sl_data_versions.mts"
+import writeOut from "./logger.mts"
+import { isHTTPURL } from "./pattern_checks.mts"
+import { DefaultProperty } from "./utils.mts"
 
 import type { LoadOptions } from "./globals.mts"
 

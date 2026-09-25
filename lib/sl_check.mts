@@ -1366,10 +1366,11 @@ export default class ServiceListCheck {
 							});
 					}
 					catch (err) {
+						const err_message = (err instanceof TypeError || err instanceof RangeError) ? err.message : "no message"
 						errs.addError({
 							type: APPLICATION,
 							code: "SI124bis",
-							message: `exception parsing ${dvbi.a_validFrom.attribute()} and/or ${dvbi.a_validTo.attribute()}, code="${err.code}"`,
+							message: `exception parsing ${dvbi.a_validFrom.attribute()} and/or ${dvbi.a_validTo.attribute()}, message="${err_message}"`,
 							fragment: Period,
 						})
 					}
@@ -1387,10 +1388,11 @@ export default class ServiceListCheck {
 							});
 					}
 					catch (err) {
+						const err_message = (err instanceof TypeError || err instanceof RangeError) ? err.message : "no message"
 						errs.addError({
 							type: APPLICATION,
 							code: "SI125bis",
-							message: `exception parsing ${dvbi.a_startTime.attribute()} and/or ${dvbi.a_endTime.attribute()}, code="${err.code}"`,
+							message: `exception parsing ${dvbi.a_startTime.attribute()} and/or ${dvbi.a_endTime.attribute()}, message="${err_message}"`,
 							fragment: Interval,
 						});
 					}

@@ -9,9 +9,7 @@
  */
 
 import { XmlElement } from "libxml2-wasm"
-import {} from "../libxml2-wasm-extensions.mts"
-
-import { tva } from "./TVA_definitions.mts";
+import { tva } from "./TVA_definitions.mts"
 
 import { DuplicatedValue, parameterCheck } from "./utils.mts"
 import { ValidateLanguage } from "./IANA_languages.mts"

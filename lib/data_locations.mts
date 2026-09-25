@@ -8,8 +8,8 @@
  * paths and URLs to various files used by the validation toole
  */
 
-import { join } from "path";
-import process from "node:process";
+import { join } from "path"
+import process from "node:process"
 
 const TESTSUITE_DIR: string = "testsuite";
 export const __dirname: string = process.cwd().endsWith(TESTSUITE_DIR) ? process.cwd().substring(0, process.cwd().length - TESTSUITE_DIR.length) : process.cwd();

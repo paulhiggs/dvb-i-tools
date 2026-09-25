@@ -22,9 +22,6 @@ import commandLineArgs from "command-line-args"
 import commandLineUsage from "command-line-usage"
 import cors from "cors"
 
-//import { Libxml2_wasm_init } from "./libxml2-wasm-extensions.mts"
-//Libxml2_wasm_init();
-
 import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs"
 xmlRegisterFsInputProviders();
 

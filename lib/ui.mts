@@ -21,6 +21,7 @@ import type { ErrorType } from "./error_list.mts"
 import type { CGRequestType } from "./cg_check.mts"
 
 import { HasProperty } from "./utils.mts"
+import type { UploadedFile } from "express-fileupload"
 
 export const MODE_UNSPECIFIED = "none",
 	MODE_SL = "sl",
@@ -93,17 +94,18 @@ const ErrorTable = (res: Express.Response, errors: ErrorType[], title: string, c
 	res.write(TABLE_FOOTER);
 }
 
-function tabulateResults(source: string, res: Express.Response, error: string | null, errs: ErrorList) {
+function tabulateResults(source: string, res: Express.Response, error: string | undefined, errs: ErrorList | undefined) {
 
 	res.write(RESULT_WITH_INSTRUCTION(source));
-	if (error) res.write(`<p>${error.replace(/[\n]/g, (m) => ({ "\n": BREAK })[m])}</p>`);
+	if (error)
+		res.write(`<p>${error.HTMLize()}</p>`);
 	let resultsShown = false;
 	if (errs) {
 		res.write(`<style>span.${link_css} {} span.${link_css} {color: ${Dodger_Blue}; text-decoration: underline;} </style>`);
 
 		if (errs.numCountsFatal() > 0 || errs.numCountsErr() > 0 || errs.numCountsWarn() > 0 || errs.numCountsInfo() > 0) {
 			res.write(SUMMARY_FORM_HEADER);
-			errs.countsFatal.forEach((e) => res.write(`<tr style="color:red;"><td>FATAL: ${e.key.HTMLize()}</td><td>${e.count}</td></tr>`));
+			errs.countsFatal.forEach((f) => res.write(`<tr style="color:red;"><td>FATAL: ${f.key.HTMLize()}</td><td>${f.count}</td></tr>`));
 			errs.countsErr.forEach((e) => res.write(`<tr><td>${e.key.HTMLize()}</td><td>${e.count}</td></tr>`));
 			errs.countsWarn.forEach((w) => res.write(`<tr><td><i>W: ${w.key.HTMLize()}</i></td><td>${w.count}</td></tr>`));
 			errs.countsInfo.forEach((i) => res.write(`<tr><td><i>I: ${i.key.HTMLize()}</i></td><td>${i.count}</td></tr>`));
@@ -140,7 +142,7 @@ function tabulateResults(source: string, res: Express.Response, error: string | 
 	}
 
 	if (!error && !resultsShown) res.write(`no errors, warnings or informationals${BREAK}`);
-	else if (errs.errorDescriptions.length) {
+	else if (errs?.errorDescriptions.length) {
 		res.write(DESCRIPTION_TABLE_HEADER());
 		errs.errorDescriptions.forEach((desc) => {
 			res.write(`<tr><td>${desc.code.HTMLize()}</td>`);
@@ -151,7 +153,7 @@ function tabulateResults(source: string, res: Express.Response, error: string | 
 		res.write(TABLE_FOOTER);
 	}
 
-	if (errs && errs.markupXML?.length > 0) {
+	if (errs && errs.markupXML && errs.markupXML.length > 0) {
 		res.write(LINE);
 		const FATAL = "fatals",
 			ERR = "errors",
@@ -159,10 +161,10 @@ function tabulateResults(source: string, res: Express.Response, error: string | 
 			INFO = "info",
 			style = (name: string, colour: string) => `<style>.${name} {position:relative; cursor:pointer; color:${colour};} .${name}[title]:hover:after {opacity:1; transition-delay:.1s; }</style>`;
 		let lineNum = 0;
-		const maxLineNumLength = errs.markupXML.length.toString().length;
+		const maxLineNumLength = errs.markupXML!.length.toString().length;
 		res.write(`${style(FATAL, "red")}${style(ERR, "red")}${style(WARN, "blue")}${style(INFO, "orange")}<pre>`);
 
-		errs.markupXML.forEach((line) => {
+		errs.markupXML!.forEach((line) => {
 			let cla = "";
 			const tip = line.validationErrors ? line.validationErrors.map((err) => err.HTMLize()).join("&#10;") : null;
 			if (tip) {
@@ -211,53 +213,53 @@ export function drawForm(req: Express.Request, res: Express.Response, modes: For
 	<form method="post" encType="multipart/form-data">
 		${
 			modes.hasSL
-				? `<input id="radSL" type="radio" name="testtype" value="${modes.sl}" ${req.session.data.mode == modes.sl ? "checked" : ""} onclick="redrawForm()">Service List</input>`
+				? `<input id="radSL" type="radio" name="testtype" value="${modes.sl}" ${req.session.data?.mode == modes.sl ? "checked" : ""} onclick="redrawForm()">Service List</input>`
 				: ""
 		}
 		${
 			modes.hasPL
-				? `<input id="radPL" type="radio" name="testtype" value="${modes.pl}" ${req.session.data.mode == modes.pl ? "checked" : ""} onclick="redrawForm()">Playist</input>`
+				? `<input id="radPL" type="radio" name="testtype" value="${modes.pl}" ${req.session.data?.mode == modes.pl ? "checked" : ""} onclick="redrawForm()">Playist</input>`
 				: ""
 		}
 		${
 			modes.hasCG
-				? `<input id="radCG" type="radio" name="testtype" value="${modes.cg}" ${req.session.data.mode == modes.cg ? "checked" : ""} onclick="redrawForm()">Content Guide</input>`
+				? `<input id="radCG" type="radio" name="testtype" value="${modes.cg}" ${req.session.data?.mode == modes.cg ? "checked" : ""} onclick="redrawForm()">Content Guide</input>`
 				: ""
 		}
 		${
 			modes.hasSLR
-				? `<input id="radSLR" type="radio" name="testtype" value="${modes.slr}" ${req.session.data.mode == modes.slr ? "checked" : ""} onclick="redrawForm()">Service List Registry</input>`
+				? `<input id="radSLR" type="radio" name="testtype" value="${modes.slr}" ${req.session.data?.mode == modes.slr ? "checked" : ""} onclick="redrawForm()">Service List Registry</input>`
 				: ""
 		}
 
 		<br><br>
-		<input id="radURL" type="radio" name="doclocation" value="${modes.url}" ${req.session.data.entry == modes.url ? "checked" : ""} onclick="redrawForm()">URL</input>
-		<input id="radFile" type="radio" name="doclocation" value="${modes.file}" ${req.session.data.entry == modes.file ? "checked" : ""} onclick="redrawForm()">File</input>
+		<input id="radURL" type="radio" name="doclocation" value="${modes.url}" ${req.session.data?.entry == modes.url ? "checked" : ""} onclick="redrawForm()">URL</input>
+		<input id="radFile" type="radio" name="doclocation" value="${modes.file}" ${req.session.data?.entry == modes.file ? "checked" : ""} onclick="redrawForm()">File</input>
 		<br/>
 		${LINE}
-		<div id="entryURL" ${req.session.data.entry == modes.url ? "" : "hidden"}><p><i>URL:</i><input type="url" size="70" name="XMLurl" value="${
-			req.session.data.url ? req.session.data.url : ""
+		<div id="entryURL" ${req.session.data?.entry == modes.url ? "" : "hidden"}><p><i>URL:</i><input type="url" size="70" name="XMLurl" value="${
+			req.session.data?.url ? req.session.data!.url : ""
 		}"></p></div>
-		<div id="entryFile" ${req.session.data.entry == modes.file ? "" : "hidden"}><p><i>FILE:</i><input type="file" name="XMLfile" value=""></p></div>
-		<div id="variants">Variants: <input id="cbGermany" type="checkbox" name="forGermany" ${req.session.data.forGermany == true ? "checked" : ""} onclick="redrawForm()">Germany</input></div>
-		<div id="entryCGtype" ${req.session.data.mode == modes.cg ? "" : "hidden"}><p>Query type:</p>`);
+		<div id="entryFile" ${req.session.data?.entry == modes.file ? "" : "hidden"}><p><i>FILE:</i><input type="file" name="XMLfile" value=""></p></div>
+		<div id="variants">Variants: <input id="cbGermany" type="checkbox" name="forGermany" ${req.session.data?.forGermany == true ? "checked" : ""} onclick="redrawForm()">Germany</input></div>
+		<div id="entryCGtype" ${req.session.data?.mode == modes.cg ? "" : "hidden"}><p>Query type:</p>`);
 	if (supportedRequests)
 		supportedRequests.forEach((choice) => {
 			res.write(
-				`<input type="radio" id="${choice.value}" name="${ENTRY_FORM_REQUEST_TYPE_ID}" value="${choice.value}" ${choice.value == req.session.data.cgmode ? "checked" : ""} onclick="redrawForm()">${choice.label}</input>`
+				`<input type="radio" id="${choice.value}" name="${ENTRY_FORM_REQUEST_TYPE_ID}" value="${choice.value}" ${choice.value == req.session.data?.cgmode ? "checked" : ""} onclick="redrawForm()">${choice.label}</input>`
 			);
 		});
 	res.write(`</div>
 		<br><input type="submit" value="Validate!"><br>	
 	</form>
 	`);
-	let source = "";
+	let source: string = "";
 	switch (req.body?.doclocation) {
 		case MODE_URL:
 			source = req.body?.XMLurl ? req.body?.XMLurl : "";
 			break;
 		case MODE_FILE:
-			source = req.files?.XMLfile?.name ? req.files?.XMLfile?.name : "";
+			source = (req.files?.XMLfile as UploadedFile).name ? (req.files?.XMLfile as UploadedFile).name : "";
 			break;
 	}
 	tabulateResults(source, res, error, errs);
@@ -269,10 +271,10 @@ export function drawForm(req: Express.Request, res: Express.Response, modes: For
 	});
 }
 
-export function drawResults(req, res, motd = null, error = null, errs = null) {
+export function drawResults(req: Express.Request, res: Express.Response, motd?: string, error?: string, errs?: ErrorList) {
 	res.setHeader("Content-Type", "text/html");
 	res.write(PAGE_TOP("DVB-I Validator", req.secure, "DVB-I Validator", motd));
-	tabulateResults(req.query.url ? req.query.url : "uploaded list", res, error, errs);
+	tabulateResults(req.query.url ? req.query.url as string: "uploaded list", res, error, errs);
 	res.write(PAGE_BOTTOM);
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	return new Promise((resolve, reject) => {

@@ -8,22 +8,19 @@
  * SLEPR - Service List End Point Resolver
  */
 
-import { readFile } from "fs";
+import { readFile } from "fs"
+import chalk from "chalk"
+import { XmlDocument } from "libxml2-wasm"
+import qs from "qs"
 
-import chalk from "chalk";
-import { XmlDocument } from "libxml2-wasm";
+import { datatypeIs, HasProperty } from "./utils.mts"
+import { tva } from "./TVA_definitions.mts"
+import { dvbi, dvbisld } from "./DVB-I_definitions.mts"
 
-import qs from "qs";
-
-import { datatypeIs, HasProperty } from "./utils.mts";
-
-import { tva } from "./TVA_definitions.mts";
-import { dvbi, dvbisld } from "./DVB-I_definitions.mts";
-
-import { fetch_options } from "./globals.mts";
-import handleErrors from "./fetch_err_handler.mts";
-import { isHTTPURL, isTVAAudioLanguageType } from "./pattern_checks.mts";
-import { LoadLanguages, LoadCountries, LoadGenres } from "./classification_scheme_loaders.mts";
+import { fetch_options } from "./globals.mts"
+import handleErrors from "./fetch_err_handler.mts"
+import { isHTTPURL, isTVAAudioLanguageType } from "./pattern_checks.mts"
+import { LoadLanguages, LoadCountries, LoadGenres } from "./classification_scheme_loaders.mts"
 
 let masterSLEPR = "";
 const EMPTY_SLEPR = (err = undefined) =>

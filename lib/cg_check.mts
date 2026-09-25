@@ -2080,7 +2080,7 @@ export default class ContentGuideCheck {
 	 * @param {integer}    _o.childCount       the value from the @numItems attribute of the "category group" (not used)
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	/* private */ #CheckGroupInformationBoxsetContents(ProgramDescription: XmlElement, requestType: string, groupIds: string[], errs: ErrorList, _o: {childCount: number}) {
+	/* private */ #CheckGroupInformationBoxsetContents(ProgramDescription: XmlElement, requestType: string, groupIds: string[] | null, errs: ErrorList, _o: {childCount: number}|null) {
 		if (!parameterCheck("CheckGroupInformationBoxsetContents", ProgramDescription, tva.e_ProgramDescription, errs, "GIC000")) return;
 
 		if (requestType != CG_REQUEST_BS_CONTENTS) {
@@ -2125,7 +2125,8 @@ export default class ContentGuideCheck {
 					errs,
 					"GIC113"
 				);
-			if (GroupInformation.attrAnyNs(tva.a_groupId)) groupIds.push(GroupInformation.attrAnyNs(tva.a_groupId)!.value);
+			if (groupIds && GroupInformation.attrAnyNs(tva.a_groupId)) 
+				groupIds.push(GroupInformation.attrAnyNs(tva.a_groupId)!.value);
 		});
 		if (!contentsGroup)
 			errs.addError({
@@ -2928,10 +2929,11 @@ export default class ContentGuideCheck {
 					});
 			}
 			catch (err) {
+				const err_message = (err instanceof TypeError || err instanceof RangeError) ? err.message : "no message"
 				errs.addError({
 					type: APPLICATION,
 					code: "OD063",
-					message: `exception parsing ${tva.e_StartOfAvailability.elementize()} and/or ${tva.e_EndOfAvailability.elementize()}, code="${err.code}"`,
+					message: `exception parsing ${tva.e_StartOfAvailability.elementize()} and/or ${tva.e_EndOfAvailability.elementize()}, message="${err_message}"`,
 					multiElementError: [soa, eoa],
 				})
 			}
@@ -2977,10 +2979,11 @@ export default class ContentGuideCheck {
 				start_schedule_period = Temporal.Instant.from(startSchedule.value);
 		}
 		catch (err) {
+			const err_message = (err instanceof TypeError || err instanceof RangeError) ? err.message : "no message"
 			errs.addError({
 				type: APPLICATION,
 				code: "VE000a",
-				message: `exception parsing ${tva.a_start.attribute()}, code="${err.code}"`,
+				message: `exception parsing ${tva.a_start.attribute()}, message="${err_message}"`,
 				fragment: Schedule!,
 			});
 		}
@@ -2989,10 +2992,11 @@ export default class ContentGuideCheck {
 				end_schedule_period = Temporal.Instant.from(endSchedule.value);
 		}
 		catch (err) {
+			const err_message = (err instanceof TypeError || err instanceof RangeError) ? err.message : "no message"
 			errs.addError({
 				type: APPLICATION,
 				code: "VE000b",
-				message: `exception parsing ${tva.a_end.attribute()}, code="${err.code}"`,
+				message: `exception parsing ${tva.a_end.attribute()}, message="${err_message}"`,
 				fragment: Schedule!,
 			});
 		}
@@ -3006,9 +3010,10 @@ export default class ContentGuideCheck {
 					});
 		}
 		catch (err) {
+			const err_message = (err instanceof TypeError || err instanceof RangeError) ? err.message : "no message"
 			errs.addError({
 				code: `${prefix}006`,
-				message: `could not compare ${tva.a_start.attribute(tva.e_Schedule)} and ${tva.a_end.attribute(tva.e_Schedule)} values, code="${err.code}"`,
+				message: `could not compare ${tva.a_start.attribute(tva.e_Schedule)} and ${tva.a_end.attribute(tva.e_Schedule)} values, mesage="${err_message}"`,
 				fragment: Schedule!,
 			});
 		}
@@ -3104,10 +3109,11 @@ export default class ContentGuideCheck {
 					PublishedStartTime = Temporal.Instant.from(pstElem.content);
 				}
 				catch (err) {
+					const err_message = (err instanceof TypeError || err instanceof RangeError) ? err.message : "no message"
 					errs.addError({
 						type: APPLICATION,
 						code: "VE000c",
-						message: `exception parsing ${tva.e_PublishedStartTime.elementize()}, code="${err.code}"`,
+						message: `exception parsing ${tva.e_PublishedStartTime.elementize()}, message="${err_message}"`,
 						fragment: pstElem,
 					});
 				}
@@ -3131,10 +3137,11 @@ export default class ContentGuideCheck {
 						parsedPublishedDuration = Temporal.Duration.from(pdElem.content);
 					}
 					catch (err) {
+						const err_message = (err instanceof TypeError || err instanceof RangeError) ? err.message : "no message"
 						errs.addError({
 							type: APPLICATION,
 							code: "VE000d",
-							message: `exception parsing ${tva.e_PublishedDuration.elementize()}, code="${err.code}"`,
+							message: `exception parsing ${tva.e_PublishedDuration.elementize()}, code="${err_message}"`,
 							fragment: pdElem,
 						});
 					}
@@ -3147,10 +3154,11 @@ export default class ContentGuideCheck {
 							});
 					}
 					catch (err) {
+						const err_message = (err instanceof TypeError || err instanceof RangeError) ? err.message : "no message"
 						errs.addError({
 							type: APPLICATION,
 							code: "VE000e",
-							message: `exception comparing endtime, code="${err.code}"`,
+							message: `exception comparing endtime, code="${err_message}"`,
 							fragment: pdElem,
 						});
 					}
@@ -3242,10 +3250,11 @@ export default class ContentGuideCheck {
 			if (endSchedule) to = Temporal.Instant.from(endSchedule.value);
 		}
 		catch (err) {
+			const err_message = (err instanceof TypeError || err instanceof RangeError) ? err.message : "no message"
 			errs.addError({
 					type: APPLICATION,
 					code: "VS011",
-					message: `exception parsing ${tva.a_start.attribute()} and/or ${tva.a_end.attribute()}, code="${err.code}"`,
+					message: `exception parsing ${tva.a_start.attribute()} and/or ${tva.a_end.attribute()}, code="${err_message}"`,
 					fragment: Schedule,
 			});
 		}

@@ -7,11 +7,11 @@
  * 
  */
 
-import { XsdValidator, XmlDocument, XmlAttribute, XmlValidateError } from "libxml2-wasm";
-import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
+import { XsdValidator, XmlDocument, XmlAttribute, XmlValidateError } from "libxml2-wasm"
+import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs"
 xmlRegisterFsInputProviders();
 
-import formatXml from "xml-formatter";
+import formatXml from "xml-formatter"
 
 import { elementize, datatypeIs } from "./utils.mts"
 

@@ -9,7 +9,7 @@
  */
 
 
-import { datatypeIs } from "./utils.mts";
+import { datatypeIs } from "./utils.mts"
 
 /**
  * encapsulate the specified string in quotes
@@ -25,12 +25,23 @@ String.prototype.quote = function() : string {
 /**
  * convert characters in the string to HTML entities
  */
+const ESCAPES: Record<string, string>= {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#x27;',
+  '`': '&#x60;',
+  '=': '&#x3D;',
+	'-': '&#8209;',
+};
+const escapeChar = (chr: string) => ESCAPES[chr];
+const BAD_CHARS = /[&<>"'`=-]/g;
 String.prototype.HTMLize = function() : string {
 	return datatypeIs(this, "string") 
-	? (this as string).replace(/[&<>"'-]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;", "-": "&#8209;" }[m])) 
+	? (this as string).replace(BAD_CHARS, escapeChar) 
 	: this as string;
 }
-
 
 /**
  * express the name of at atribute in the form of element@attribute

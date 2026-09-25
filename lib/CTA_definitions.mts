@@ -8,7 +8,6 @@
  * Defintions made in the CTA specifications
  */
 
-
 // CTA-5000
 const CTAStandardPrefix: string = "urn:cta:wave:appinformation:standardversion";
 

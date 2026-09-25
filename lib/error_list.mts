@@ -8,8 +8,7 @@
  * Manages errors and warnings for the application
  */
 
-
-import { datatypeIs, DefaultProperty, HasProperty } from "./utils.mts";
+import { datatypeIs, DefaultProperty, HasProperty } from "./utils.mts"
 
 export const ERROR: string = "(E)",
 	DEBUG: string = "(D)",
@@ -82,7 +81,7 @@ export default class ErrorList {
 
 	errorDescriptions: ErrorDescriptionType[];
 
-	markupXML: { value: string; ix: number; validationErrors?: string[] }[];
+	markupXML?: { value: string; ix: number; validationErrors?: string[] }[];
 
 	constructor() {
 		this.countsFatal = [];
@@ -114,7 +113,7 @@ export default class ErrorList {
 	 * @param {integer} lineNo  the line number in the received text to attach the error to
 	 */
 	/* private method */ #setError(type: string, code: string, message: string, lineNo: number) {
-		const found = this.markupXML.find((line) => line.ix == lineNo);
+		const found = this.markupXML!.find((line) => line.ix == lineNo);
 		if (found) {
 			if (!found.validationErrors) found.validationErrors = [];
 			found.validationErrors.push(`${type} ${code}: ${message}`);

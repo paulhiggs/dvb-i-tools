@@ -8,7 +8,6 @@
  * error templates used by different validatirs
  */
 
-
 import { tva } from "./TVA_definitions.mts"
 import { dvbi } from "./DVB-I_definitions.mts"
 import { WARNING } from "./error_list.mts"

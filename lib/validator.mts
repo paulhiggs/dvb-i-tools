@@ -7,31 +7,29 @@
  * 
  *
  */
-import { join } from "path";
-import { createServer } from "https";
-import os from "node:os";
-import process from "process";
-import { readFileSync } from "fs";
 
-import chalk from "chalk";
-import cors from "cors";
-import express from "express";
-import session from "express-session";
-import morgan, { token } from "morgan";
-import fileupload from "express-fileupload";
-import favicon from "serve-favicon";
-import fetchS from "sync-fetch";
+import { join } from "path"
+import { createServer } from "https"
+import os from "node:os"
+import process from "process"
+import { readFileSync } from "fs"
 
-//import { Libxml2_wasm_init } from "../libxml2-wasm-extensions.mts";
-//Libxml2_wasm_init();
+import chalk from "chalk"
+import cors from "cors"
+import express from "express"
+import session from "express-session"
+import morgan, { token } from "morgan"
+import fileupload from "express-fileupload"
+import favicon from "serve-favicon"
+import fetchS from "sync-fetch"
 
-import { fetch_options } from "./globals.mts";
-import { CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts";
-import { Default_SLEPR, __dirname } from "./data_locations.mts";
-import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults, LINE } from "./ui.mts";
-import ErrorList from "./error_list.mts";
-import { isHTTPURL } from "./pattern_checks.mts";
-import { readmyfile, HasProperty } from "./utils.mts";
+import { fetch_options, CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts"
+import { Default_SLEPR, __dirname } from "./data_locations.mts"
+import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults, LINE, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "./ui.mts"
+import type {FormModes} from './ui.mts'
+import ErrorList from "./error_list.mts"
+import { isHTTPURL } from "./pattern_checks.mts"
+import { readmyfile, HasProperty } from "./utils.mts"
 import {
 	LoadGenres,
 	LoadRatings,
@@ -46,17 +44,15 @@ import {
 	LoadCountries,
 	LoadSubtitleCarriages,
 	LoadLinkedApplicationCS,
-} from "./classification_scheme_loaders.mts";
-import ServiceListCheck from "./sl_check.mts";
-import PlaylistCheck from "./playlist_check.mts";
-import ContentGuideCheck from "./cg_check.mts";
-import ServiceListRegistryCheck from "./slr_check.mts";
-import SLEPR from "./slepr.mts";
-import writeOut, { createPrefix } from "./logger.mts";
-import { MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "./ui.mts";
-import type {FormModes} from './ui.mts'
-import { init_spam_blocker } from "./spam_disruptions.mjs";
-import { GERMAN_A177r6_VARIANT } from "./globals.mts";
+} from "./classification_scheme_loaders.mts"
+import ServiceListCheck from "./sl_check.mts"
+import PlaylistCheck from "./playlist_check.mts"
+import ContentGuideCheck from "./cg_check.mts"
+import ServiceListRegistryCheck from "./slr_check.mts"
+import SLEPR from "./slepr.mts"
+import writeOut, { createPrefix } from "./logger.mts"
+import { init_spam_blocker } from "./spam_disruptions.mjs"
+import { GERMAN_A177r6_VARIANT } from "./globals.mts"
 
 let csr = null;
 

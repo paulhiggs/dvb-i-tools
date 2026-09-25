@@ -8,21 +8,21 @@
  * Manages Classification Scheme loading and checking
  */
 
-import { readFile, readFileSync } from "fs";
+import { readFile, readFileSync } from "fs"
 
-import chalk from "chalk";
-import { AvlTree, AvlTreeNode } from "@datastructures-js/binary-search-tree";
-import fetchS from "sync-fetch";
+import chalk from "chalk"
+import { AvlTree, AvlTreeNode } from "@datastructures-js/binary-search-tree"
+import fetchS from "sync-fetch"
 
 import { XmlDocument } from "libxml2-wasm"
 import {} from "../libxml2-wasm-extensions.mts"
 
-import { fetch_options } from "./globals.mts";
+import { fetch_options } from "./globals.mts"
 import type { LoadOptions } from "./globals.mts"
-import { dvb } from "./DVB_definitions.mts";
-import handleErrors from "./fetch_err_handler.mts";
-import { isHTTPURL } from "./pattern_checks.mts";
-import { datatypeIs } from "./utils.mts";
+import { dvb } from "./DVB_definitions.mts"
+import handleErrors from "./fetch_err_handler.mts"
+import { isHTTPURL } from "./pattern_checks.mts"
+import { datatypeIs } from "./utils.mts"
 
 export const CS_URI_DELIMITER = ":";
 
@@ -53,7 +53,7 @@ function addCSTerm(vals: CSnode[], CSuri: string, term: XmlElement) {
 				term:`${CSuri}${CS_URI_DELIMITER}${termId}`,
 				leaf: !term.hasChild(dvb.e_Term),		
 			});
-		let subTerm: XmlElement | null = term.firstChild;
+		let subTerm = term.firstChild as XmlElement;
 		while (subTerm) {
 			addCSTerm(vals, CSuri, subTerm);
 			subTerm = subTerm.next as XmlElement;
@@ -83,7 +83,7 @@ function loadClassificationScheme(xmlCS : XmlDocument): CSData {
 	let term = xmlCS.root.firstChild as XmlElement;
 	while (term) {
 		addCSTerm(rc.vals, rc.uri, term);
-		term = term.next;
+		term = term.next as XmlElement;
 	}
 	return rc;
 }
@@ -138,9 +138,9 @@ export default class ClassificationScheme {
 	 * @param {string}  csURL URL to the classification scheme
 	 * @param {boolean} async whether to use asynchronous fetch (true by default)
 	 */
-	#loadFromURL(csURL: string, async: boolean = true): void {
+	#loadFromURL(csURL: string, async: boolean = true, verbose: boolean = true): void {
 		const isHTTPurl = isHTTPURL(csURL);
-		console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving CS from ${csURL} via fetch()`));
+		if (verbose) console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving CS from ${csURL} via fetch()`));
 		if (!isHTTPurl) return;
 
 		if (async)
@@ -157,15 +157,17 @@ export default class ClassificationScheme {
 			let resp = null;
 			try {
 				resp = fetchS(csURL, fetch_options);
-			} catch (error) {
-				console.log(chalk.red(error.message));
+			} catch (err) {
+				const err_message = (err instanceof TypeError || err instanceof RangeError) ? err.message : "no message"
+				console.log(chalk.red(err_message));
 			}
 			if (resp) {
 				if (resp.ok) {
 					const CStext = loadClassificationScheme(XmlDocument.fromString(resp.text()));
 					CStext.vals.forEach((e) => this.add(e));
 					this.#schemes.add(CStext.uri);
-				} else console.log(chalk.red(`error (${resp.status}:${resp.statusText}) handling ${csURL}`));
+				} 
+				else if (verbose) console.log(chalk.red(`error (${resp.status}:${resp.statusText}) handling ${csURL}`));
 			}
 		}
 	}
@@ -181,7 +183,7 @@ export default class ClassificationScheme {
 		if (verbose) console.log(chalk.yellow(`reading CS from ${classificationScheme}`));
 
 		if (async)
-			readFile(classificationScheme, { encoding: "utf-8" }, (err: NodeJS.ErrnoException | null, data: string | NonSharedBuffer) => {
+			readFile(classificationScheme, { encoding: "utf-8" }, (err: NodeJS.ErrnoException | null, data: string) => {
 				if (!err) {
 					const res = loadClassificationScheme(XmlDocument.fromString(data.replace(/(\r\n|\n|\r|\t)/gm, "")));
 					res.vals.forEach((e) => this.add(e));
@@ -213,7 +215,7 @@ export default class ClassificationScheme {
 
 		if (extra_vals && datatypeIs(extra_vals, "array")) {
 			extra_vals.forEach((v) => {
-				if (datatypeIs(v, "string")) this.add(v);
+				if (datatypeIs(v, "string")) this.add({term:v, leaf:true});
 			});
 		}
 	}
@@ -258,7 +260,7 @@ export default class ClassificationScheme {
 
 	showMe(prefix = "") {
 		console.log(`in showme(${prefix.quote()}), count=${this.count()}`);
-		const showNode = (node) => {
+		const showNode = (node: CSnode) => {
 			if (prefix == "" || node.term.startsWith(prefix)) 
 				console.log(`${node.term}${node.leaf?" \u{1f33f}":""}`);
 			}

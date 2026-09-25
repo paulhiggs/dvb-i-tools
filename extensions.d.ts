@@ -1,5 +1,8 @@
 
-import { XmlAttribute as libXmlAttribute, XmlElement as libXmlElement, XmlDocument as libXmlDocument } from "libxml2-wasm";
+import { 
+	XmlAttribute as libXmlAttribute, 
+	XmlElement as libXmlElement, 
+	XmlDocument as libXmlDocument } from "libxml2-wasm"
 
 export {}
 
@@ -40,22 +43,25 @@ declare global {
 		hasChildren() : boolean
 		forEachChildElement(func: (child: XmlElement) => void) : void
 		forEachNamedChildElement(childName: string | string[], func: (child: XmlElement) => void) : void
-
 	}
 
+}
 
+declare module "express-session" {
+	interface SessionData {
+		data : {
+			mode?: string
+			entry?: string
+			url?: string
+			cgmode?: string
 
-
+			forGermany?: boolean
+		}
+	}
 }
 
 declare global {
 
-	export interface SessionData {
-		data? : {
-			mode?: string
-		}
-
-	}
 	export interface Request {
 		parseErr? : string
 	}

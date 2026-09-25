@@ -9,14 +9,14 @@
  */
 
 
-import { statSync, readFileSync } from "fs";
-import chalk from "chalk";
-import { XmlElement } from "libxml2-wasm";
+import { statSync, readFileSync } from "fs"
+import chalk from "chalk"
+import { XmlElement } from "libxml2-wasm"
 
-import { APPLICATION } from "./error_list.mts";
-import ErrorList from  "./error_list.mts";
+import { APPLICATION } from "./error_list.mts"
+import ErrorList from  "./error_list.mts"
 
-import {} from "./string-extensions.ts";
+import {} from "./string-extensions.ts"
 
 /* local */
 const findInSet = (values : string | string[], value : string, caseSensitive : boolean) : boolean => {

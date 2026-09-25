@@ -8,8 +8,8 @@
  * useful regular expression based checks
  */
 
-import { datatypeIs } from "./utils.mts";
-import { allowedImageTypes } from "./MIME_checks.mts";
+import { datatypeIs } from "./utils.mts"
+import { allowedImageTypes } from "./MIME_checks.mts"
 
 const e_pct: string = "%", 
 	e_lowalpha: string = "a-z",
@@ -89,7 +89,7 @@ export const isUTCDateTime = (time: string): boolean => (datatypeIs(time, "strin
 
 
 export function isInlineImage(data: string): boolean {
-	let valid: boolean	 = false;
+	let valid: boolean = false;
 	allowedImageTypes.forEach((image_MIME) => {
 		valid = valid || data.startsWith(`data:${image_MIME};base64,`);
 	});
@@ -112,9 +112,10 @@ export function isHTTPURL(url: string): boolean {
 	try {
 		const sss = new URL(url);
 		return HTTPprotocolRegex.test(sss.protocol);
-	} catch (/* eslint-disable @typescript-eslint/no-unused-vars */ err /* eslint-enable @typescript-eslint/no-unused-vars */) {
-		return false;
-	}
+	} 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars, no-empty 
+	catch (err) {}
+	return false;
 }
 
 /**
@@ -134,10 +135,9 @@ export function isHTTSPURL(url: string): boolean {
 		const sss = new URL(url);
 		return HTTPSprotocolRegex.test(sss.protocol);
 	} 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	catch (err) {
-		return false;
-	}
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars, no-empty
+	catch (err) {}
+	return false;
 }
 
 /**
@@ -153,9 +153,10 @@ export function isHTTPPathURL(url: string): boolean {
 	try {
 		const sss = new URL(url);
 		return url.endsWith("/") && HTTPprotocolRegex.test(sss.protocol);
-	} catch (/* eslint-disable @typescript-eslint/no-unused-vars */ err /* eslint-enable @typescript-eslint/no-unused-vars */) {
-		return false;
-	}
+	} 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars, no-empty
+	catch (err) {}
+	return false;
 }
 
 /**
@@ -170,10 +171,11 @@ export const isURL = (url: string) : boolean => {
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const sss = new URL(url);
 		return true;
-	} catch (/* eslint-disable @typescript-eslint/no-unused-vars */ err /* eslint-enable @typescript-eslint/no-unused-vars */) {
-		return false;
-	}
-	};
+	} 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars, no-empty
+	catch (err) {}
+	return false;
+};
 export const isURN = (urn: string): boolean => (datatypeIs(urn, "string") ? URNregex.test(urn) : false);
 
 /**

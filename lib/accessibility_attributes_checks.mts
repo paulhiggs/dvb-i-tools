@@ -9,7 +9,6 @@
  * values provided in DVB A177.
  */
 
-
 import { datatypeIs, parameterCheck } from "./utils.mts"
 
 import { tva, tvaEA, tvaEC, BaseAccessibilityAttributesType } from "./TVA_definitions.mts"
@@ -309,14 +308,14 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes: Xm
 				const carriages: string[] = [],	codings: string[] = [];
 				checkTopElementsAndCardinality(
 					child,
-					[
+					appInformationElements.concat([
 						{ name: tva.e_Carriage },
 						{ name: tva.e_Coding, maxOccurs: Infinity },
 						{ name: tva.e_SubtitleLanguage },
 						{ name: tva.e_Purpose, minOccurs: 0, maxOccurs: Infinity },
 						CG_SchemaVersion(child.documentNamespace()) < cgVersions.r3 
 							? { name: tva.e_SuitableForTTS } : { name: tva.e_SuitableForTTS, minOccurs: 0 },
-					].concat(appInformationElements),
+					]),
 					tvaEC.SubtitleAttributes,
 					false,
 					errs,
@@ -347,7 +346,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes: Xm
 			case tva.e_AudioDescriptionAttributes:
 				checkTopElementsAndCardinality(
 					child,
-					[{ name: tva.e_AudioAttributes }, { name: tva.e_ReceiverMix, minOccurs: 0 }].concat(appInformationElements),
+					appInformationElements.concat([{ name: tva.e_AudioAttributes }, { name: tva.e_ReceiverMix, minOccurs: 0 }]),
 					tvaEC.AudioDescriptionAttributes,
 					false,
 					errs,
@@ -398,12 +397,16 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes: Xm
 				checkSignLanguage(child, tva.e_SignLanguage, cs.KnownLanguages, errs, errCode, 75);
 				break;
 			case tva.e_DialogueEnhancementAttributes:
-				checkTopElementsAndCardinality(child, [{ name: tva.e_AudioAttributes }].concat(appInformationElements), tvaEC.DialogEnhancementAttributes, false, errs, `${errCode}-81`);
+				checkTopElementsAndCardinality(child, 
+					appInformationElements.concat([{ name: tva.e_AudioAttributes }]), 
+					tvaEC.DialogEnhancementAttributes, false, errs, `${errCode}-81`);
 				checkAppInformation(child,errs, errCode,  82);
 				checkAudioAttributes(child, tva.e_AudioAttributes, cs.AudioCodecCS, cs.AudioPresentationCS, errs, errCode, 83, false, "A177 clause 4.5.2.5");
 				break;
 			case tva.e_SpokenSubtitlesAttributes:
-				checkTopElementsAndCardinality(child, [{ name: tva.e_AudioAttributes }].concat(appInformationElements), tvaEC.SpokenSubtitlesAttributes, false, errs, `${errCode}-91`);
+				checkTopElementsAndCardinality(child, 
+					appInformationElements.concat([{ name: tva.e_AudioAttributes }]), 
+					tvaEC.SpokenSubtitlesAttributes, false, errs, `${errCode}-91`);
 				checkAppInformation(child, errs, errCode, 92);
 				checkAudioAttributes(child, tva.e_AudioAttributes, cs.AudioCodecCS, cs.AudioPresentationCS, errs, errCode, 93, false, "A177 clause 4.5.2.6");
 				break;

@@ -211,7 +211,7 @@ export const SL_SchemaVersion = (namespace: string) : number => {
  */
 export const SL_SchemaSpecVersion = (version: number) : string => {
 	const x = SL_SchemaVersions.find((ver) => ver.version == version);
-	return x ? x.specVersion : `r(${version})`;
+	return x ? x.specVersion || "unknown": `r(${version})`;
 };
 
 /**

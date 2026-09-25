@@ -45,6 +45,7 @@ export default class CG_helpers {
 			});
 	}
 
+
 	/**
 	 * checks is the specified element (elem) has an attribute named attrName and that its value is "true" or "false"
 	 *
@@ -56,6 +57,7 @@ export default class CG_helpers {
 	 */
 	static BooleanValue = (elem: XmlElement, attrName: string, errs: ErrorList, errCode: string, isRequired: boolean = true): void => 
 		this.AllowedValue(elem, attrName, ["true", "false"], errs, errCode, isRequired);
+
 
 	/**
 	 * checks is the specified element (elem) has an attribute named attrName and that its value is "true"
@@ -69,6 +71,7 @@ export default class CG_helpers {
 	static TrueValue = (elem: XmlElement, attrName: string, errs: ErrorList, errCode: string, isRequired: boolean = true) : void => 
 		this.AllowedValue(elem, attrName, ["true"], errs, errCode, isRequired);
 	
+
 	/**
 	 * checks is the specified element (elem) has an attribute named attrName and that its value is "false"
 	 *
@@ -90,16 +93,39 @@ export default class CG_helpers {
 		[dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(genre);
 
 
+	/**
+	 * @param {string} href the value to check as being a link to a restart Template XML AIT link
+	 * @returns {boolean} true if the value provided is a valid restart link
+	 */
 	static isRestartLink = (href: string) : boolean => href == dvbi.RESTART_LINK;	
 
+
+	/**
+	 * @param {string} label the synopsis length type
+	 * @param {number} length the number of characters allowed for the length type
+	 * @param {number} actual the number of characters found in the synopsis
+	 * @returns {string} a reportable error message
+	 */
 	static synopsisLengthError = (label: string, length: number, actual: number) => 
 		`length of ${tva.a_length.attribute(tva.e_Synopsis)}=${label.quote()} exceeds ${length} characters, measured(${actual})`;
 
+
+	/**
+	 * @param {string} length the synopsis length type
+	 * @param {string} lang the language specified for the synopsis
+	 * @returns {string} a reportable error message
+	 */
 	static singleLengthLangError = (length: string, lang: string) : string => 
 		`only a single ${tva.e_Synopsis.elementize()} is permitted per length (${length}) and language (${lang})`;
 
+
+	/**
+	 * @param {string} length the synopsis length type
+	 * @returns {string} a reportable error message
+	 */
 	static requiredSynopsisError = (length: string) : string => 
 		`a ${tva.e_Synopsis.elementize()} with ${tva.a_length.attribute()}=${length.quote()} is required`;
+
 
 	static {
 		// initialise static variables here

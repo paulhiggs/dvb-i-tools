@@ -8,13 +8,13 @@
  * Manages Classification Scheme checking based in a flat list of roles
  */
 
-import chalk from "chalk";
-import { readFile, readFileSync } from "fs";
-import fetchS from "sync-fetch";
+import chalk from "chalk"
+import { readFile, readFileSync } from "fs"
+import fetchS from "sync-fetch"
 
-import handleErrors from "./fetch_err_handler.mts";
-import { isHTTPURL } from "./pattern_checks.mts";
-import { fetch_options } from "./globals.mts";
+import handleErrors from "./fetch_err_handler.mts"
+import { isHTTPURL } from "./pattern_checks.mts"
+import { fetch_options } from "./globals.mts"
 
 import ClassificationScheme from "./classification_scheme.mts"
 import type {FileLocations } from "./classification_scheme.mts"
@@ -56,7 +56,7 @@ export default class Role extends ClassificationScheme {
 			try {
 				resp = fetchS(rolesURL, fetch_options);
 			} catch (err) {
-				console.log(chalk.red(err.message));
+				console.log(chalk.red(err));
 			}
 			if (resp) {
 				if (resp.ok) {

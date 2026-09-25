@@ -8,12 +8,12 @@
  * static self contained helper fuctions for service list validation 
  */
 
-import { elementize, quote } from "./utils.mts";
-import { mlLanguage } from "./multilingual_element.mts";
-import { isTAGURI, isDomainName, isHTTPURL } from "./pattern_checks.mts";
-import { dvbi, validApplicationTypes } from "./DVB-I_definitions.mts";
-import { tva } from "./TVA_definitions.mts";
-import { keys } from "./common_errors.mts";
+import { elementize, quote } from "./utils.mts"
+import { mlLanguage } from "./multilingual_element.mts"
+import { isTAGURI, isDomainName, isHTTPURL } from "./pattern_checks.mts"
+import { dvbi, validApplicationTypes } from "./DVB-I_definitions.mts"
+import { tva } from "./TVA_definitions.mts"
+import { keys } from "./common_errors.mts"
 
 import type { ReportedErrorType, ErrorDescriptionType } from "./error_list.mts"
 import ErrorList from "./error_list.mts"

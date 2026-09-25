@@ -22,15 +22,28 @@ import handleErrors from "./fetch_err_handler.mts"
 import { isHTTPURL, BCP47_Language_Tag } from "./pattern_checks.mts"
 import ErrorList from "./error_list.mts"
 
+import type { FileLocations } from "./classification_scheme.mts"
+import type { LoadOptions } from "./globals.mts"
+
 type RedundntLanguageType = {
 	tag?: string
 	preferred?: string
 }
 
+type LanguageRangeType = {
+	start: string
+	end: string
+}
+
+export type LanguageLookupResponse = {
+	resp: number
+	pref?: string
+} 
+
 export default class IANAlanguages {
 	#languagesList;
 	#redundantLanguagesList: RedundntLanguageType[];
-	#languageRanges: string[];
+	#languageRanges: LanguageRangeType[];
 	#signLanguagesList;
 	#regionsList;
 	#languageFileDate?: string;
@@ -77,14 +90,14 @@ export default class IANAlanguages {
 		this.#languageFileDate = undefined;
 	}
 
-	count() {
+	count() : string {
 		return `lang=${this.#languagesList.size},sign=${this.#signLanguagesList.size},redun=${this.#redundantLanguagesList.length}`;
 	}
 
-	stats(res) {
+	stats(res: Record<string, string|number>) {
 		res.numLanguages = this.#languagesList.size;
 		res.numRedundantLanguages = this.#redundantLanguagesList.length;
-		const t = [];
+		const t: string[] = [];
 		this.#redundantLanguagesList.forEach((lang) => t.push(`${lang.tag}${lang.preferred ? `~${lang.preferred}` : ""}`));
 		res.RedundantLanguages = t.join(", ");
 		res.numLanguageRanges = this.#languageRanges.length;
@@ -94,8 +107,8 @@ export default class IANAlanguages {
 	}
 
 
-	loadedLanguages(sort: boolean) {
-		let res = {};
+	loadedLanguages(sort: boolean) : Record<string, string[]> {
+		const res: Record<string, string[]> = {};
 
 		if (this.#languagesList.size) {
 			res.languages = Array.from(this.#languagesList);
@@ -132,26 +145,28 @@ export default class IANAlanguages {
 	 * @param {string} languagesData the text of the language data
 	 */
 	/* private method */
-	#processLanguageData(languageData) {
+	#processLanguageData(languageData: string) {
 		/**
 		 * determines if provided language information relates to a sign language
 		 *
 		 * @param {Array} items the language subtag
 		 * @return {boolean} true if the language subtag is a sign language
 		 */
-		function isSignLanguage(items) {
-			for (let i = 0; i < items.length; i++) if (items[i].startsWith("Description") && items[i].toLowerCase().includes("sign")) return true;
+		function isSignLanguage(items: string[]) : boolean {
+			for (let i = 0; i < items.length; i++)
+				 if (items[i].startsWith("Description") && items[i].toLowerCase().includes("sign")) 
+					return true;
 			return false;
 		}
 
-		function parseRegion(region) {
-			const res = [];
+		function parseRegion(region: string) : string[] {
+			const res: string[] = [];
 			if (region.indexOf('..') == -1)
 				res.push(region);
 			else {
 				const RegionRange = new RegExp(/^(?<start>(?:[A-Z]{2}))\.\.(?<end>(?:[A-Z]{2}))$/)
 				const match = region.match(RegionRange);
-				if (match) {
+				if (match && match.groups) {
 					const start1 = match.groups.start.charCodeAt(0), start2 = match.groups.start.charCodeAt(1);
 					const end1 = match.groups.end.charCodeAt(0), end2 = match.groups.end.charCodeAt(1);
 					for (let a = start1; a <= end1; a++)
@@ -189,8 +204,11 @@ export default class IANAlanguages {
 						}
 					}
 			} else if (items.includes("Type: variant")) {
-				let subtag = null;
-				items.forEach((item) => { if (item.startsWith("Subtag:")) subtag = item.split(":")[1].trim() });
+				let subtag : string | undefined;
+				items.forEach((item) => { 
+					if (item.startsWith("Subtag:")) 
+						subtag = item.split(":")[1].trim() 
+				});
 				if (subtag) {
 					for (let i = 0; i < items.length; i++)
 					items.forEach((item) => {
@@ -228,7 +246,7 @@ export default class IANAlanguages {
 	 * @param {boolean} verbose         display verbose output
 	 */
 	/* private method */
-	#loadLanguagesFromFile(languagesFile, purge = false, async = true, verbose = true) {
+	#loadLanguagesFromFile(languagesFile: string, purge: boolean = false, async: boolean = true, verbose: boolean = true) {
 		if (verbose) console.log(chalk.yellow(`reading languages from ${languagesFile}`));
 		if (purge) this.clear();
 
@@ -236,7 +254,7 @@ export default class IANAlanguages {
 			readFile(
 				languagesFile,
 				{ encoding: "utf-8" },
-				function (err: NodeJS.ErrnoException | null, data: string | NonSharedBuffer) {
+				function (err: NodeJS.ErrnoException | null, data: string) {
 					if (!err) {
 						this.#processLanguageData(data);
 					} else console.log(chalk.red(`error loading languages ${err}`));
@@ -257,7 +275,7 @@ export default class IANAlanguages {
 	 * @param {boolean} verbose         display verbose output
 	 */
 	/* private method */
-	#loadLanguagesFromURL(languagesURL, purge = false, async = true, verbose = true) {
+	#loadLanguagesFromURL(languagesURL: string, purge: boolean = false, async: boolean = true, verbose: boolean = true) {
 		const isHTTPurl = isHTTPURL(languagesURL);
 		if (verbose) console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving languages from ${languagesURL} using fetch()`));
 		if (!isHTTPurl) return;
@@ -274,21 +292,22 @@ export default class IANAlanguages {
 			let resp = null;
 			try {
 				resp = fetchS(languagesURL, fetch_options);
-			} catch (error) {
-				console.log(chalk.red(error.message));
+			} catch (err) {
+				const err_message = (err instanceof TypeError || err instanceof RangeError) ? err.message : "no message"
+				console.log(chalk.red(err_message));
 			}
 			if (resp) {
 				if (resp.ok) this.#processLanguageData(resp.text());
-				else console.log(chalk.red(`error (${resp.error}) retrieving ${languagesURL}`));
+				else console.log(chalk.red(`status (${resp.status}) retrieving ${languagesURL}`));
 			}
 		}
 	}
 
-	loadLanguages(source, options) {
+	loadLanguages(source: FileLocations, options: LoadOptions) {
 		DefaultProperty(source, "purge", false);
 
-		if (source.file) this.#loadLanguagesFromFile(source.file, source.purge, options.async, options.verbose);
-		else if (source.url) this.#loadLanguagesFromURL(source.url, source.purge, options.async, options.verbose);
+		if (source.file) this.#loadLanguagesFromFile(source.file, options.purge, options.async, options.verbose);
+		else if (source.url) this.#loadLanguagesFromURL(source.url, options.purge, options.async, options.verbose);
 	}
 
 	/**
@@ -297,15 +316,15 @@ export default class IANAlanguages {
 	 * @param {string} value The value to check for existance
 	 * @return {integer} indicating the "known" state of the language
 	 */
-	isKnown(value) {
+	isKnown(value: string) : LanguageLookupResponse {
 		if (value === null || value === undefined) return { resp: this.languageNotSpecified };
 
 		if (datatypeIs(value, "string")) {
 			if (this.#languageRanges.find((range) => range.start <= value && value <= range.end)) return { resp: this.languageKnown };
 
-			const found = this.#redundantLanguagesList.find((e) => e.tag.toLowerCase() == value.toLowerCase());
+			const found = this.#redundantLanguagesList.find((e) => e.tag!.toLowerCase() == value.toLowerCase());
 			if (found) {
-				const res = { resp: this.languageRedundant };
+				const res: LanguageLookupResponse = { resp: this.languageRedundant };
 				if (found?.preferred) res.pref = found.preferred;
 				return res;
 			}
@@ -314,7 +333,7 @@ export default class IANAlanguages {
 				let matches = true;
 				const parts = value.split("-");
 				parts.forEach((part) => {
-					matches &= this.#languagesList.has(part);
+					matches &&= this.#languagesList.has(part);
 				});
 				if (matches) return { resp: this.languageKnown };
 			}
@@ -330,11 +349,11 @@ export default class IANAlanguages {
 	 * @param {string} value The value to check for existance in the list of known signing languages
 	 * @return {integer} indicating the "known" state of the language
 	 */
-	checkSignLanguage(language) {
+	checkSignLanguage(language: string) : number{
 		return this.#signLanguagesList.has(language.toLowerCase()) ? this.languageKnown : this.languageUnknown;
 	}
 
-	isKnownSignLanguage(value) {
+	isKnownSignLanguage(value: string) : number {
 		const lcValue = value.toLowerCase();
 		let res = this.checkSignLanguage(lcValue);
 		if (res == this.languageUnknown) res = this.checkSignLanguage("sgn-" + lcValue);

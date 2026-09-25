@@ -8,12 +8,12 @@
  */
 
 /**
- * Throw a nice error is there is a problem fetching the information
+ * Throw a nice error if there is a problem fetching the information
  *
- * @param {*} response
+ * @param {Response} response
  * @returns
  */
-export default function handleErrors(response) {
+export default function handleErrors(response: Response) {
 	if (response && !response.ok) throw Error(`fetch() returned (${response.status}) ${response.statusText.quote()}`);
 	return response;
 }

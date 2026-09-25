@@ -8,30 +8,30 @@
  * Check a service list registry response
  */
 
-import chalk from "chalk";
+import chalk from "chalk"
 
-import { DeprecatedAttribute } from "./common_errors.mts";
-import { LoadGenres, LoadCountries, LoadLinkedApplicationCS } from "./classification_scheme_loaders.mts";
-import { keys, InvalidCountryCode, InvalidURL } from "./common_errors.mts";
-import { slVersions, dvbi, dvbiEA, dvbiEC, dvbisld, validApplicationTypes, DvbIApplicationTypes, XMLdocumentType } from "./DVB-I_definitions.mts";
-import ErrorList, { APPLICATION, WARNING } from "./error_list.mts";
-import { CheckExtension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY } from "./extension_check.mts";
-import { ValidateLanguage } from "./IANA_languages.mts";
-import writeOut from "./logger.mts";
-import { mpeg7 } from "./MPEG7_definitions.mts";
-import { isMIME } from "./MIME_checks.mts";
-import { checkXMLLangs } from "./multilingual_element.mts";
-import { isHTTPURL, isTAGURI } from "./pattern_checks.mts";
-import { checkValidLogos, ValidateAnySignaturePolicy } from "./related_material_checks.mts";
-import { checkAttributes, SchemaCheck, SchemaVersionCheck, SchemaLoad, checkTopElementsAndCardinality } from "./schema_checks.mts";
-import { LoadSLschemas, validServiceListLogo, isA177specification_URN, a177versionFromURN } from "./sl_data_versions.mts";
-import { LoadSLRschemas, SLR_GetSchema, SLR_SchemaVersion, SLR_SchemaSpecVersion } from "./slr_data_versions.mts";
-import { tva, tvaEA } from "./TVA_definitions.mts";
-import { parameterCheck, DefaultProperty } from "./utils.mts";
-import { ValidateSignaturePolicies } from "./signature_policies.mts";
-import { FoundDocumentItems} from "./sl_check.mts";
-import type { SL_Validator_Options, ValidatorOptions } from "./sl_check.mts";
-import ClassificationScheme from "./classification_scheme.mts";
+import { DeprecatedAttribute } from "./common_errors.mts"
+import { LoadGenres, LoadCountries, LoadLinkedApplicationCS } from "./classification_scheme_loaders.mts"
+import { keys, InvalidCountryCode, InvalidURL } from "./common_errors.mts"
+import { slVersions, dvbi, dvbiEA, dvbiEC, dvbisld, validApplicationTypes, DvbIApplicationTypes, XMLdocumentType } from "./DVB-I_definitions.mts"
+import ErrorList, { APPLICATION, WARNING } from "./error_list.mts"
+import { CheckExtension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY } from "./extension_check.mts"
+import { ValidateLanguage } from "./IANA_languages.mts"
+import writeOut from "./logger.mts"
+import { mpeg7 } from "./MPEG7_definitions.mts"
+import { isMIME } from "./MIME_checks.mts"
+import { checkXMLLangs } from "./multilingual_element.mts"
+import { isHTTPURL, isTAGURI } from "./pattern_checks.mts"
+import { checkValidLogos, ValidateAnySignaturePolicy } from "./related_material_checks.mts"
+import { checkAttributes, SchemaCheck, SchemaVersionCheck, SchemaLoad, checkTopElementsAndCardinality } from "./schema_checks.mts"
+import { LoadSLschemas, validServiceListLogo, isA177specification_URN, a177versionFromURN } from "./sl_data_versions.mts"
+import { LoadSLRschemas, SLR_GetSchema, SLR_SchemaVersion, SLR_SchemaSpecVersion } from "./slr_data_versions.mts"
+import { tva, tvaEA } from "./TVA_definitions.mts"
+import { parameterCheck, DefaultProperty } from "./utils.mts"
+import { ValidateSignaturePolicies } from "./signature_policies.mts"
+import { FoundDocumentItems} from "./sl_check.mts"
+import type { SL_Validator_Options, ValidatorOptions } from "./sl_check.mts"
+import ClassificationScheme from "./classification_scheme.mts"
 
 export function CheckDelivery(Delivery: XmlElement, SchemaVersion: number, ApplicationTypeCS: ClassificationScheme, errs: ErrorList, errCode: string) {
 	Delivery.forEachNamedChildElement(dvbisld.e_DVBTDelivery, (DVBTDelivery) => {

@@ -38,11 +38,11 @@
 		"start": "node all-in-one.ts",
 		"lint": "eslint . ",
 		"lint:fix": "eslint . --fix ",
-		"test-expressions": "node testsuite/test-expressions.js",
-		"test-documents": "node testsuite/test-documents.js",
-		"test-lookups": "node testsuite/test-lookups.js",
-		"test-languages": "node testsuite/test-languages.js",
-		"test": "node testsuite/test-runner.js"
+		"test-expressions": "node testsuite/test-expressions.ts",
+		"test-documents": "node testsuite/test-documents.ts",
+		"test-lookups": "node testsuite/test-lookups.ts",
+		"test-languages": "node testsuite/test-languages.ts",
+		"test": "node testsuite/test-runner.ts"
 	},
 	"repository": {
 		"type": "git",

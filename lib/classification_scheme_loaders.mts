@@ -8,10 +8,10 @@
  * Load Classification Schemes and other File related resources
  */
 
-import chalk from "chalk";
+import chalk from "chalk"
 
-import IANAlanguages from "./IANA_languages.mts";
-import ISOcountries from "./ISO_countries.mts";
+import IANAlanguages from "./IANA_languages.mts"
+import ISOcountries from "./ISO_countries.mts"
 import {
 	IANA_Subtag_Registry,
 	TVA_ContentCS,
@@ -40,14 +40,11 @@ import {
 	DVBIv2_CreditsItemRoles,
 	DVBI_LinkedApplicationCS,
 } from "./data_locations.mts";
-import { MPEG1_layer_2 } from "./MPEG7_definitions.mts";
+import { MPEG1_layer_2 } from "./MPEG7_definitions.mts"
 
-import Role from "./role.mts";
+import Role from "./role.mts"
 
-//import { Libxml2_wasm_init } from "../libxml2-wasm-extensions.mts";
-//Libxml2_wasm_init();
-
-import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs";
+import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs"
 xmlRegisterFsInputProviders();
 
 import ClassificationScheme from "./classification_scheme.mts"
@@ -77,11 +74,12 @@ export function LoadCountries(opts: LoadOptions, allow2char: boolean = false, al
  */
 export function LoadLanguages(opts: LoadOptions): IANAlanguages {
 	if (opts.verbose) console.log(chalk.yellow.underline("loading languages..."));
+	opts.purge = true
 	const l = new IANAlanguages();
 	l.loadLanguages(
 		opts.useURLs
-			? { url: IANA_Subtag_Registry.url, purge: true }
-			: { file: IANA_Subtag_Registry.file, purge: true },
+			? { url: IANA_Subtag_Registry.url }
+			: { file: IANA_Subtag_Registry.file },
 		opts
 	);
 	return l;

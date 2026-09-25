@@ -17,7 +17,7 @@ export const CORSmanual: string = "manual",
 	CORSlibrary: string = "library",
 	CORSnone: string = "none";
 
-export const CORSoptions: Array<string>= [CORSmanual, CORSlibrary, CORSnone];
+export const CORSoptions: string[]= [CORSmanual, CORSlibrary, CORSnone];
 
 export const StandardStatus: Record<string, number> = {
 	DRAFT: 0x01,
