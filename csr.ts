@@ -47,7 +47,7 @@ const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), { encoding:
 import SLEPR from "./lib/slepr.mts";
 import { DEFAULT_PROCESSING, SLR_Processing_Modes } from "./lib/slepr.mts";
 
-import { init_spam_blocker } from "./lib/spam_disruptions.mjs";
+import { init_spam_blocker } from "./lib/spam_disruptions.mts";
 
 // command line options
 const optionDefinitions = [

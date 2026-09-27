@@ -64,7 +64,6 @@
 		"@types/serve-favicon": "^2.5.7",
 		"@types/sha.js": "^2.4.4",
 		"@types/sync-fetch": "^0.4.4",
-		"@types/xml-formatter": "^1.2.0",
 		"chai": "^6.2.2",
 		"eslint": "^10.10.0",
 		"globals": "^17.12.0",

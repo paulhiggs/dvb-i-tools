@@ -208,7 +208,7 @@ export function SchemaCheck(XML: XmlDocument, XSD: XmlDocument, XSDfilename: str
 		//console.log(err.message)
 		if ((err as XmlValidateError).details) {
 			const lines = formatXml(XML.toString(), { collapseContent: true, lineSeparator: "\n", strictMode: true }).split("\n");
-			err.details.forEach((ve) => {
+			(err as XmlValidateError).details.forEach((ve) => {
 				errs.addError({ code: errCode, message: ve.message, fragment: lines[ve.line - 1], line: ve.line, key: keys.k_XSDValidation });
 			});
 		}

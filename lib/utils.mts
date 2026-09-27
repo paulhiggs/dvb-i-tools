@@ -90,7 +90,7 @@ export function readmyfile(filename: string, options: Record<string, unknown>) :
 		if (stats.isFile()) 
 			return readFileSync(filename, options);
 	} catch (err) {
-		console.log(chalk.magenta(`${err.code}, ${err.path}`));
+		console.log(chalk.magenta(err));
 	}
 	return null;
 }

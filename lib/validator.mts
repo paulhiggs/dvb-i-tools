@@ -54,7 +54,7 @@ import ContentGuideCheck from "./cg_check.mts"
 import ServiceListRegistryCheck from "./slr_check.mts"
 import SLEPR from "./slepr.mts"
 import writeOut, { createPrefix } from "./logger.mts"
-import { init_spam_blocker } from "./spam_disruptions.mjs"
+import { init_spam_blocker } from "./spam_disruptions.mts"
 import { GERMAN_A177r6_VARIANT } from "./globals.mts"
 
 let csr: SLEPR | null= null;
@@ -107,7 +107,7 @@ function DVB_I_check(
 						try {
 							resp = fetchS(req.body.XMLurl, fetch_options);
 						} catch (error) {
-							req.parseErr = [`(${error.code}) ${error.message}`];
+							req.parseErr = [`${error}`];
 						}
 						if (resp) {
 							if (resp.ok) VVxml = resp.text();
@@ -178,7 +178,7 @@ function validateServiceList(req: express.Request, res: express.Response, slchec
 		try {
 			resp = fetchS(req.query.url as string, fetch_options);
 		} catch (error) {
-			req.parseErr = [error.message];
+			req.parseErr = [`${error}`];
 		}
 		if (resp) {
 			if (resp.ok) VVxml = resp.text();
@@ -225,7 +225,7 @@ function validatePlaylist(req: express.Request, res: express.Response, plcheck: 
 		try {
 			resp = fetchS(req.query.url as string, fetch_options);
 		} catch (error) {
-			req.parseErr = error.message;
+			req.parseErr = [`${error}`]
 		}
 		if (resp) {
 			if (resp.ok) VVxml = resp.text();
@@ -273,7 +273,7 @@ function validateServiceListRegistry(req: express.Request, res: express.Response
 		try {
 			resp = fetchS(req.query.url as string, fetch_options);
 		} catch (error) {
-			req.parseErr = error.message;
+			req.parseErr =  [`${error}`]
 		}
 		if (resp) {
 			if (resp.ok) VVxml = resp.text();
@@ -320,7 +320,7 @@ function validateContentGuide(req: express.Request, res: express.Response, cgche
 			resp = fetchS(req.query.url as string, fetch_options);
 		} catch (error) {
 			console.log(error);
-			req.parseErr = error.message;
+			req.parseErr =  [`${error}`]
 		}
 		if (resp) {
 			if (resp.ok) VVxml = resp.text();

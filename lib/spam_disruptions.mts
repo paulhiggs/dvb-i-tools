@@ -1,5 +1,5 @@
 /**
- * spam_disruptions.mjs
+ * spam_disruptions.mts
  *
  *  DVB-I-tools
  *  Copyright (c) 2021-2026, Paul Higgs
@@ -22,15 +22,17 @@
 
  */
 
+import express from "express"
 import { readFileSync } from "fs"
 
 import {spam_blocker_config} from "./data_locations.mts"
+import { Socket } from "net"
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function random_redirect(app, endpoint, protocol, targets) {
-	app.all(endpoint, (req, res) => {
+function random_redirect(app: express.Application, endpoint: string, protocol: string, targets: string[]) {
+	app.all(endpoint, (req:express.Request, res: express.Response) => {
 
-		const clientAddress = (socket) => {
+		const clientAddress = (socket: Socket) => {
 			switch (socket.remoteFamily) {
 				case "IPv6":
 					return "www.example.com";
@@ -45,10 +47,10 @@ function random_redirect(app, endpoint, protocol, targets) {
 	})
 }
 
-export function init_spam_blocker(app) {
+export function init_spam_blocker(app: express.Application) : void {
 	try {
 		const config = JSON.parse(readFileSync(spam_blocker_config,  { encoding: "utf-8" }).toString())
-		config?.endpoints.forEach((endpoint) => {
+		config?.endpoints.forEach((endpoint: string) => {
 			random_redirect(app, endpoint, config.protocol, config.redirections);
 		})
 	}
