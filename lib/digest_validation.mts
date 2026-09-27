@@ -52,7 +52,7 @@ export function ValidateAnyContentDigests(element: XmlElement, errs: ErrorList, 
 			const result = contentDigest.match(DigestRegexp);
 			if (result && result.groups) {
 
-				if (!(dvbi.ALLOWED_DIGESTS as string[]).includes(result.groups.algorithm))
+				if (!dvbi.ALLOWED_DIGESTS.includes(result.groups.algorithm))
 					errs.addError({
 						code: `${errCode}a`,
 						message: `invalid digest algorithm specified (${result.groups.algorithm})`,

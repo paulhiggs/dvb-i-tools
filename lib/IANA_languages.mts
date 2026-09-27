@@ -231,7 +231,7 @@ export default class IANAlanguages {
 						const regions = parseRegion(item.split(":")[1].trim());
 						regions.forEach((region) =>	this.#regionsList.add(region));
 					}
-					});
+				});
 			}
 		});
 	}

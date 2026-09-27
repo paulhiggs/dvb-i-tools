@@ -8,7 +8,8 @@
  * Drive the HTML user interface
  */
 
-import * as Express from "express"
+//import * as Express from "express"
+import express from "express"
 import { readFileSync } from "fs"
 import { join } from "path"
 
@@ -71,7 +72,7 @@ const DESCRIPTION_TABLE_HEADER = () => `<table><tr><th>code</th><th>description<
 const DEBUG_FORM_HEADER = (mode: string) => `${scrollFunc}<table><tr><th>code</th><th>${mode}</th></tr>`;
 const TABLE_FOOTER = `</table>${BREAK}`;
 
-const tabluateMessage = (res: Express.Response, value: ErrorType) => {
+const tabluateMessage = (res: express.Response, value: ErrorType) => {
 	res.write(`<tr>`);
 	const anchor = HasProperty(value, "line") ? `line-${value.line}` : null;
 	if (SHOW_LINE_NUMBER) res.write(`<td>${Object.prototype.hasOwnProperty.call(value, "line") ? value.line : ""}</td>`);
@@ -81,24 +82,25 @@ const tabluateMessage = (res: Express.Response, value: ErrorType) => {
 	res.write("</tr>");
 };
 
-const simpleMessage = (res: Express.Response, value: {code: string, message: string}) => {
+const simpleMessage = (res: express.Response, value: {code: string, message: string}) => {
 	res.write(`<tr><td>${value.code}</td><td>${value.message}</td></tr>`);
 };
 
 const lineCompareFn = (a: ErrorType, b: ErrorType) => a?.line && b?.line ? a.line - b.line : 0;
 
-const ErrorTable = (res: Express.Response, errors: ErrorType[], title: string, colour?: string) => {
+const ErrorTable = (res: express.Response, errors: ErrorType[], title: string, colour?: string) => {
 	res.write(DETAIL_FORM_HEADER(title, colour));
 	if (MESSAGES_IN_ORDER) errors.sort(lineCompareFn);
 	errors.forEach((e) => tabluateMessage(res, e));
 	res.write(TABLE_FOOTER);
 }
 
-function tabulateResults(source: string, res: Express.Response, error: string | undefined, errs: ErrorList | undefined) {
+function tabulateResults(source: string, res: express.Response, error: string[] | undefined, errs: ErrorList | undefined) {
 
 	res.write(RESULT_WITH_INSTRUCTION(source));
 	if (error)
-		res.write(`<p>${error.HTMLize()}</p>`);
+		error.forEach((e) => res.write(`<p>${e.HTMLize()}</p>`))
+		
 	let resultsShown = false;
 	if (errs) {
 		res.write(`<style>span.${link_css} {} span.${link_css} {color: ${Dodger_Blue}; text-decoration: underline;} </style>`);
@@ -196,7 +198,12 @@ export type FormModes = {
 	hasSLR: boolean
 }
 
-export function drawForm(req: Express.Request, res: Express.Response, modes: FormModes, supportedRequests: CGRequestType[], motd?: string, error?: string, errs?: ErrorList) {
+export function drawForm(
+		req: express.Request, res: express.Response,
+		modes: FormModes, 
+		supportedRequests: CGRequestType[] | null, 
+		motd?: string, error?: string[], errs?: ErrorList) {
+			
 	const ENTRY_FORM_REQUEST_TYPE_ID = "requestType";
 
 	res.setHeader("Content-Type", "text/html");
@@ -271,7 +278,7 @@ export function drawForm(req: Express.Request, res: Express.Response, modes: For
 	});
 }
 
-export function drawResults(req: Express.Request, res: Express.Response, motd?: string, error?: string, errs?: ErrorList) {
+export function drawResults(req: express.Request, res: express.Response, motd?: string, error?: string[], errs?: ErrorList) {
 	res.setHeader("Content-Type", "text/html");
 	res.write(PAGE_TOP("DVB-I Validator", req.secure, "DVB-I Validator", motd));
 	tabulateResults(req.query.url ? req.query.url as string: "uploaded list", res, error, errs);

@@ -21,6 +21,9 @@ import favicon from "serve-favicon"
 import commandLineArgs from "command-line-args"
 import commandLineUsage from "command-line-usage"
 import cors from "cors"
+import { Server } from "https"
+import { AddressInfo } from "node:net"
+
 
 import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs"
 xmlRegisterFsInputProviders();
@@ -167,6 +170,10 @@ const RELOAD = "RELOAD",
 	INCR_FAILURES = "FAILURES++",
 	STATS = "STATS";
 
+type IPCmessage = {
+	topic: string
+}
+
 if (cluster.isPrimary) {
 	if (options.workers > numCPUs) options.workers = numCPUs;
 	else if (options.workers < 1) options.workers = 1;
@@ -180,9 +187,8 @@ if (cluster.isPrimary) {
 	};
 
 	// Fork workers.
-	for (let i = 0; i < options.workers; i++) {
+	for (let i = 0; i < options.workers; i++) 
 		cluster.fork();
-	}
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	cluster.on("exit", (worker, code, signal) => {
@@ -191,14 +197,14 @@ if (cluster.isPrimary) {
 		cluster.fork();
 	});
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	cluster.on("message", (worker, msg, handle) => {
+	cluster.on("message", (worker, msg: IPCmessage, handle) => {
 		if (msg.topic)
 			switch (msg.topic) {
 				case RELOAD:
 					metrics.reloadRequests++;
 					for (const id in cluster.workers) {
 						// Here we notify each worker of the updated value
-						cluster.workers[id].send({ topic: UPDATE });
+						cluster.workers[id]?.send({ topic: UPDATE });
 					}
 					break;
 				case INCR_REQUESTS:
@@ -223,58 +229,69 @@ if (cluster.isPrimary) {
 } else {
 	const app = express();
 	app.use(cors());
-	token("protocol", (req) => {
+	token("protocol", (req: express.Request) => {
 		return req.protocol;
 	});
-	token("agent", (req) => {
+	token("agent", (req: express.Request) => {
 		return `(${req.headers["user-agent"]})`;
 	});
-	token("vary", (req, res) => {
-		return res?.varyOn?.size > 0 ? `vary(${[...res.varyOn].join(",")})` : "-";
+	token("vary", (req: express.Request, res: express.Response) => {
+		return (res.varyOn && res.varyOn.size > 0) ? `vary(${[...res.varyOn!].join(",")})` : "-";
 	});
-	token("parseErr", (req) => {
-		return (req.parseErr?.length > 0) ? `(query errors=${req.parseErr.length})` : "";
+	token("parseErr", (req: express.Request) => {
+		return req?.parseErr ? `(${req.parseErr})` : "";
 	});
-	token("redirect", (req, res) => {
-		return [301,302].includes(res.statusCode) ? `redirect(${req.socket.remoteFamily}-${req._remoteAddress})` : "";
+
+	const getSource = (req: express.Request) => req.ip || req._remoteAddress || (req.socket && req.socket.remoteAddress) ||  undefined;
+	token("redirect", (req: express.Request, res: express.Response) => {
+		return [301,302].includes(res.statusCode) ? `redirect(${req.socket.remoteFamily}-${getSource(req)}` : "";
 	});
 
 	const SLEPR_query_route = "/query",
 		SLEPR_reload_route = "/reload",
 		SLEPR_stats_route = "/stats";
-	let manualCORS = function (req, res, next) {
+
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	type nextFn = (err?: any) => any  // cors module doesnot strictly type this
+	let manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
 		next();
 	};
 	if (options.CORSmode == CORSlibrary) {
 		app.use(cors());
 	} else if (options.CORSmode == CORSmanual) {
-		manualCORS = function (req, res, next) {
-			let opts = res.getHeader("X-Frame-Options");
+		manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
+			let opts : string[] | undefined = res.getHeader("X-Frame-Options") as string[] | undefined;
 			if (opts) {
-				if (!opts.includes("SAMEORIGIN")) opts.push("SAMEORIGIN");
-			} else opts = ["SAMEORIGIN"];
+				if (!opts.includes("SAMEORIGIN")) 
+					opts.push("SAMEORIGIN");
+			} 
+			else opts = ["SAMEORIGIN"];
 			res.setHeader("X-Frame-Options", opts);
 			res.setHeader("Access-Control-Allow-Origin", "*");
 			next();
 		};
 	}
+
 	const csr = new SLEPR(options.urls, options.SLRmode, knownLanguages, knownCountries, knownGenres);
 	csr.loadServiceListRegistry(options.CSRfile);
 	app.use(morgan(":pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr :vary :redirect"));
 	app.use(favicon(join("icon", "ph-icon.ico")));
-	if (options.CORSmode == CORSlibrary) app.options(SLEPR_query_route, cors());
-	else if (options.CORSmode == CORSmanual) app.options(SLEPR_query_route, manualCORS);
-	app.get(SLEPR_query_route, (req, res) => {
-		process.send({ topic: INCR_REQUESTS });
-		if (!csr.processServiceListRequest(req, res)) process.send({ topic: INCR_FAILURES });
+	if (options.CORSmode == CORSlibrary) 
+		app.options(SLEPR_query_route, cors());
+	else if (options.CORSmode == CORSmanual) 
+		app.options(SLEPR_query_route, manualCORS);
+	app.get(SLEPR_query_route, (req: express.Request, res: express.Response) => {
+		if (process.send) process.send({ topic: INCR_REQUESTS });
+		if (!csr.processServiceListRequest(req, res)) 
+			if (process.send) process.send({ topic: INCR_FAILURES });
 		res.end();
 	});
-	app.get(SLEPR_reload_route, (req, res) => {
-		process.send({ topic: RELOAD });
+	app.get(SLEPR_reload_route, (req: express.Request, res: express.Response) => {
+		if (process.send) process.send({ topic: RELOAD });
 		res.status(404).end();
 	});
-	app.get(SLEPR_stats_route, (req, res) => {
-		process.send({ topic: STATS });
+	app.get(SLEPR_stats_route, (req: express.Request, res: express.Response) => {
+		if (process.send) process.send({ topic: STATS });
 		res.status(404).end();
 	});
 
@@ -282,18 +299,25 @@ if (cluster.isPrimary) {
 		init_spam_blocker(app);
 	}
 
-	app.get("{*splat}", (req, res) => {
+	app.get("{*splat}", (req: express.Request, res: express.Response) => {
 		res.status(404).end();
 	});
 
-	process.on("message", (msg) => {
+	process.on("message", (msg: IPCmessage) => {
 		if (msg.topic)
 			switch (msg.topic) {
 				case UPDATE:
-					knownCountries.loadCountries(options.urls ? { url: ISO3166.url } : { file: ISO3166.file });
-					knownLanguages.loadLanguages(options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file });
+					knownCountries.loadCountries(
+						options.urls ? { url: ISO3166.url } : { file: ISO3166.file },
+						{useURLs: options.urls, async: true, verbose: false},
+					);
+					knownLanguages.loadLanguages(
+						options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file },
+						{useURLs: options.urls, async: true, verbose: false},
+					);
 					knownGenres.loadCS(
-						options.urls ? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] } : { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] }
+						options.urls ? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] } : { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] },
+						{useURLs: options.urls, async: true, verbose: false},
 					);
 					csr.loadDataFiles(options.urls, knownLanguages, knownCountries, knownGenres);
 					csr.loadServiceListRegistry(options.CSRfile);
@@ -303,20 +327,22 @@ if (cluster.isPrimary) {
 
 	// start the HTTP server
 	const http_server = app.listen(options.port, () => {
-		console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}, PID=${process.pid}`));
+		if ((http_server.address() as AddressInfo).port) 
+			console.log(chalk.cyan(`HTTP listening on port number ${(http_server.address() as AddressInfo).port}`));
+		else console.log(chalk.red(`HTTP port ${options.port} already in use -- HTTP server not started`));
 	});
 	// start the HTTPS server
 	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
 	const https_options = {
-		key: readmyfile(keyFilename),
-		cert: readmyfile(certFilename),
+		key: readmyfile(keyFilename, {}) as Buffer,
+		cert: readmyfile(certFilename, {}) as Buffer,
 	};
 	if (https_options.key && https_options.cert) {
 		if (options.sport == options.port) options.sport = options.port + 1;
 
-		const https_server = createServer(https_options, app);
+		const https_server : Server = createServer(https_options, app);
 		https_server.listen(options.sport, () => {
-			console.log(chalk.cyan(`HTTPS listening on port number ${https_server.address().port}, PID=${process.pid}`));
+			console.log(chalk.cyan(`HTTPS listening on port number ${(https_server!.address() as AddressInfo).port}, PID=${process.pid}`));
 		});
 	}
 }

@@ -10,8 +10,8 @@
 
 import { readFile } from "fs"
 import chalk from "chalk"
-import { XmlDocument } from "libxml2-wasm"
-import qs from "qs"
+import { XmlDocument, XmlError } from "libxml2-wasm"
+import express from "express"
 
 import { datatypeIs, HasProperty } from "./utils.mts"
 import { tva } from "./TVA_definitions.mts"
@@ -21,11 +21,14 @@ import { fetch_options } from "./globals.mts"
 import handleErrors from "./fetch_err_handler.mts"
 import { isHTTPURL, isTVAAudioLanguageType } from "./pattern_checks.mts"
 import { LoadLanguages, LoadCountries, LoadGenres } from "./classification_scheme_loaders.mts"
+import IANAlanguages from "./IANA_languages.mts"
+import ISOcountries from "./ISO_countries.mts"
+import ClassificationScheme from "./classification_scheme.mts"
 
 let masterSLEPR = "";
-const EMPTY_SLEPR = (err = undefined) =>
+const EMPTY_SLEPR = (err?: string) =>
 	`<ServiceListEntryPoints xmlns="urn:dvb:metadata:servicelistdiscovery:2024">${err ? `\n<!--${err} -->\n` : ""}<ServiceListRegistryEntity><Name>EMPTY</Name></ServiceListRegistryEntity></ServiceListEntryPoints>`;
-const REGISTRY_ERROR = (message, document) => `<Error><Message><![CDATA[${message}]]></Message>\n<SLRDocument><![CDATA[\n${document}]]>\n</SLRDocument></Error>`;
+const REGISTRY_ERROR = (message: string, document: string) => `<Error><Message><![CDATA[${message}]]></Message>\n<SLRDocument><![CDATA[\n${document}]]>\n</SLRDocument></Error>`;
 
 const RFC2397_PREFIX = "data:";
 
@@ -49,23 +52,39 @@ export const SLR_Processing_Modes = [DEFAULT_PROCESSING, ITALY_PROCESSING];
 //    return found ? {ok: true, version: parseInt(found[2]), capabilities: found[4], vendorname: found[5], modelName: found[6], softwareVersion: found[7], hardwareVersion: found[8], family: found[9], reserved: found[10]} : {ok:false};
 //}
 
+type parsedUAS = {
+	ok: boolean
+	version?: number
+	capabilities?: string
+	vendorName?: string
+	modelName?: string
+	softwareVersion?: string
+	hardwareVersion?: string
+	family?: string
+	reserved?: string
+}
 const DVBi_UAS_Regexp = /(DVB-I\/A177r)(\d+)( \(([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*);([^;]*)\))?/;
-function parse_UAS_loose(uas) {
+function parse_UAS_loose(uas?: string): parsedUAS {
     const found=uas?.match(DVBi_UAS_Regexp);
-    return found ? {ok: true, version: parseInt(found[2]), capabilities: found[4], vendorname: found[5], modelName: found[6], softwareVersion: found[7], hardwareVersion: found[8], family: found[9], reserved: found[10]} : {ok:false};
+    return found 
+		? {ok: true, version: parseInt(found[2]), capabilities: found[4], vendorName: found[5], modelName: found[6], softwareVersion: found[7], hardwareVersion: found[8], family: found[9], reserved: found[10]} 
+		: {ok: false};
 }
 
 
 export default class SLEPR {
-	#numRequests;
-	#knownLanguages;
-	#knownCountries;
-	#knownGenres;
-	#processingMode;
-	#registryFilename;
-	#readError;
+	#numRequests: number
+	#knownLanguages: IANAlanguages
+	#knownCountries: ISOcountries
+	#knownGenres: ClassificationScheme
+	#processingMode: string
+	#registryFilename: string | undefined
+	#readError: string | undefined
 
-	constructor(useURLs, SLRmode, preloadedLanguageValidator = null, preloadedCountries = null, preloadedGenres = null) {
+	constructor(useURLs: boolean, SLRmode: string,
+			preloadedLanguageValidator : IANAlanguages | null = null, 
+			preloadedCountries : ISOcountries | null= null, 
+			preloadedGenres: ClassificationScheme | null  = null) {
 		this.#numRequests = 0;
 		this.#processingMode = SLRmode;
 		this.#registryFilename = undefined;
@@ -73,7 +92,7 @@ export default class SLEPR {
 	}
 
 	stats() {
-		let res = {
+		const res = {
 			numRequests: this.#numRequests,
 			SLRfile: this.#registryFilename ? this.#registryFilename : "not set",
 			SLRreadError: this.#readError ? this.#readError : "",
@@ -86,10 +105,13 @@ export default class SLEPR {
 	}
 
 	
-	/* public */ loadDataFiles(useURLs, preloadedLanguageValidator = null, preloadedCountries = null, preloadedGenres = null) {
-		this.#knownLanguages = preloadedLanguageValidator || LoadLanguages({useURLs: useURLs});
-		this.#knownCountries = preloadedCountries || LoadCountries({useURLs: useURLs});
-		this.#knownGenres = preloadedGenres || LoadGenres({useURLs: useURLs});
+	/* public */ loadDataFiles(useURLs: boolean, 
+			preloadedLanguageValidator: IANAlanguages | null = null, 
+			preloadedCountries: ISOcountries | null = null, 
+			preloadedGenres: ClassificationScheme | null = null) {
+		this.#knownLanguages = preloadedLanguageValidator || LoadLanguages({useURLs: useURLs, async: true, verbose: true});
+		this.#knownCountries = preloadedCountries || LoadCountries({useURLs: useURLs, async: true, verbose: true});
+		this.#knownGenres = preloadedGenres || LoadGenres({useURLs: useURLs, async: true, verbose: true});
 	}
 
 	/**
@@ -97,7 +119,7 @@ export default class SLEPR {
 	 *
 	 * @param {string} filename   filename or URL of the master XML document
 	 */
-	/* public */ loadServiceListRegistry(filename) {
+	/* public */ loadServiceListRegistry(filename: string) {
 		console.log(chalk.yellow(`loading SLR from ${filename}`));
 		this.#readError = undefined;
 
@@ -112,10 +134,10 @@ export default class SLEPR {
 					masterSLEPR = EMPTY_SLEPR(this.#readError);
 				});
 		} else
-			readFile(filename, { encoding: "utf-8" }, function (err: NodeJS.ErrnoException | null, data: string | NonSharedBuffer) {
+			readFile(filename, { encoding: "utf-8" }, (err: NodeJS.ErrnoException | null, data: string) => {
 				if (!err) masterSLEPR = data;
 				else {
-					this.#readError = err;
+					this.#readError = `readfile error: errno=${err.errno}, code=${err.code}`
 					console.log(chalk.red(this.#readError));
 					masterSLEPR = EMPTY_SLEPR(this.#readError);
 				}
@@ -123,35 +145,41 @@ export default class SLEPR {
 		this.#registryFilename = filename;
 	}
 
-	/* private */ #checkQuery(req, params) {
+	/* private */ #checkQuery(req: express.Request, params: Record<string, string | string[]>) {
 		req.parseErr = [];
 		if (req.query) {
-			const checkIt = (argument, argName, checkFunction) => {
+
+		type checkFn = (value: string) => boolean
+
+			const checkIt = (argument: string | string[], argName: string, checkFunction: checkFn) => {
 				if (argument)
 					switch (datatypeIs(argument)) {
 						case "string":
-							if (!checkFunction(argument)) req.parseErr.push(`invalid ${argName} [${argument}]`);
+							if (!checkFunction(argument as string)) 
+								req.parseErr!.push(`invalid ${argName} [${argument}]`);
 							break;
 						case "array":
-							argument.forEach((item) => {
-								if (!checkFunction(item, false)) req.parseErr.push(`invalid ${argName} [${item}]`);
+							(argument as string[]).forEach((item: string) => {
+								if (!checkFunction(item)) 
+									req.parseErr!.push(`invalid ${argName} [${item}]`);
 							});
 							break;
 						default:
-							req.parseErr.push(`invalid type [${datatypeIs(argument)}] for ${argName}`);
+							req.parseErr!.push(`invalid type [${datatypeIs(argument)}] for ${argName}`);
 							break;
 					}
 			};
 
-			const queryParams = qs.parse(req.query);
-			for (let key in queryParams) {
+			//const queryParams = qs.parse(req.query) as qs.ParsedQs;
+			const queryParams = req.query
+			for (const key in queryParams) {
 				if (allowed_arguments.includes(key)) 
-					params[key] = datatypeIs(queryParams[key], "array") ? queryParams[key] : [queryParams[key]];
+					params[key] = datatypeIs(queryParams[key], "array") as boolean ? queryParams[key] as string : [queryParams[key]] as string[];
 				else req.parseErr.push(`invalid argument - ${key}`);
 			}
 
 
-			const checkBoolean = (bool) => ["true", "false"].includes(bool);
+			const checkBoolean = (bool: string) => ["true", "false"].includes(bool);
 			checkIt(params.regulatorListFlag, dvbisld.a_regulatorListFlag, checkBoolean);
 			if (params.regulatorListFlag?.length > 1)
 				req.parseErr.push(`only a single &regulatorListFlag can be specified`);
@@ -161,33 +189,33 @@ export default class SLEPR {
 				req.parseErr.push(`only a single &inlineImages can be specified`);
 
 			//TargetCountry(s)
-			const checkTargetCountry = (country) => this.#knownCountries.isISO3166code(country, false);
+			const checkTargetCountry: checkFn = (country) => this.#knownCountries.isISO3166code(country, false);
 			checkIt(params.TargetCountry, dvbi.e_TargetCountry, checkTargetCountry);
 
 			//Language(s)
-			const checkLanguage = (language) => isTVAAudioLanguageType(language);
+			const checkLanguage: checkFn = (language) => isTVAAudioLanguageType(language);
 			checkIt(params.Language, dvbi.e_Language, checkLanguage);
 
 			//DeliverySystems(s)
-			const checkDelivery = (system) => [DVB_DASH_DELIVERY, DVB_T_DELIVERY, DVB_S_DELIVERY, DVB_C_DELIVERY, DVB_IPTV_DELIVERY, DVB_APPLICATION_DELIVERY].includes(system);
+			const checkDelivery: checkFn = (system) => [DVB_DASH_DELIVERY, DVB_T_DELIVERY, DVB_S_DELIVERY, DVB_C_DELIVERY, DVB_IPTV_DELIVERY, DVB_APPLICATION_DELIVERY].includes(system);
 			checkIt(params.Delivery, dvbi.e_Delivery, checkDelivery);
 
 			// Genre(s)
-			const checkGenre = (genre) => this.#knownGenres.has(genre);
+			const checkGenre: checkFn = (genre) => this.#knownGenres.has(genre);
 			checkIt(params.Genre, dvbi.e_Genre, checkGenre);
 
 			if (params.inlineImages && !datatypeIs(params.inlineImages, "string")) req.parseErr.push(`invalid type for ${dvbisld.q_inlineImages} [${typeof req.query.inlineImages}]`);
 
 			/* value space of this argument is not checked
 			//Provider Name(s)
-			const checkProvider = (provider) => true;
+			const checkProvider: checkFn = (provider) => true;
 			checkIt(params.ProviderName, dvbi.e_ProviderName, checkProvider) 
 			*/
 		}
 		return req.parseErr.length == 0;
 	}
 
-	/* public */ processServiceListRequest(req, res) {
+	/* public */ processServiceListRequest(req: express.Request, res: express.Response) {
 		this.#numRequests++;
 		if (HasProperty(req?.query, "queryCapabilities")) {
 			res.type("text/plain");
@@ -198,8 +226,8 @@ export default class SLEPR {
 
 		res.varyOn = new Set();
 		const UASinfo = parse_UAS_loose(req.get("user-agent")); // we only care about the A177 version
-		const requestedVersion = (UASinfo.ok && UASinfo.version >= 6) ? UASinfo.version : -1;
-		let queryParams = {};
+		const requestedVersion = (UASinfo.ok && UASinfo.version! >= 6) ? UASinfo.version! : -1;
+		const queryParams: Record<string, string> = {};
 		if (!this.#checkQuery(req, queryParams)) {
 			if (req.parseErr) res.write(`[${req.parseErr.join(",\n\t")}]`);
 			res.status(400);
@@ -213,17 +241,18 @@ export default class SLEPR {
 		} catch (err) {
 			res.type("application/xml");
 			res.status(500);
-			res.send(REGISTRY_ERROR(err.message, masterSLEPR));
+			const message = (err instanceof XmlError) ? err.message : "sometghign bad happened"
+			res.send(REGISTRY_ERROR(message, masterSLEPR));
 			return false;
 		}
 		if (queryParams.ProviderName) {
 			// if ProviderName is specified, remove any ProviderOffering entries that do not match the name
 			let prov,
-				p = 0,
-				providerCleanup = [];
-			while ((prov = slepr.root.getAnyNs(dvbisld.e_ProviderOffering, ++p)) != null) {
-				let Provider = prov.getAnyNs(dvbisld.e_Provider),
-					provName,
+				p = 0
+			const providerCleanup: XmlElement[] = []
+			while ((prov = (slepr.root as XmlElement).getAnyNs(dvbisld.e_ProviderOffering, ++p)) != null) {
+				const Provider: XmlElement | null = prov.getAnyNs(dvbisld.e_Provider)
+				let provName,
 					n = 0,
 					matchedProvider = false;
 				while (!matchedProvider && Provider && (provName = Provider.getAnyNs(dvbi.e_Name, ++n)) != null)
@@ -238,7 +267,7 @@ export default class SLEPR {
 			// no UAS --> remove elements with @standardVersion
 			// with UAS --> remove with mismatching @standardVersion
 
-			let hasURIfor = (offering, version) => {
+			const hasURIfor = (offering: XmlElement, version: number): boolean => {
 				let rc = false;
 				offering?.forEachNamedChildElement(dvbisld.e_ServiceListURI, (uri) => {
 					const vers = uri.attrAnyNsValueOr(dvbisld.a_standardVersion);
@@ -252,7 +281,7 @@ export default class SLEPR {
 			
 			let prov,
 				p = 0;
-			while ((prov = slepr.root.getAnyNs(dvbisld.e_ProviderOffering, ++p)) != null) {
+			while ((prov = (slepr.root as XmlElement).getAnyNs(dvbisld.e_ProviderOffering, ++p)) != null) {
 				let serv,
 					s = 0;
 				while ((serv = prov.getAnyNs(dvbisld.e_ServiceListOffering, ++s)) != null) {
@@ -294,9 +323,9 @@ export default class SLEPR {
 
 		if (queryParams.regulatorListFlag || queryParams.Language || queryParams.TargetCountry || queryParams.Genre || requestedVersion != -1) {
 			let prov,
-				p = 0,
-				servicesToRemove = [];
-			while ((prov = slepr.root.getAnyNs(dvbisld.e_ProviderOffering, ++p)) != null) {
+				p = 0
+			const servicesToRemove = [];
+			while ((prov = (slepr.root as XmlElement).getAnyNs(dvbisld.e_ProviderOffering, ++p)) != null) {
 				let serv,
 					s = 0;
 				while ((serv = prov.getAnyNs(dvbisld.e_ServiceListOffering, ++s)) != null) {
@@ -305,7 +334,7 @@ export default class SLEPR {
 					// remove services that do not match the specified regulator list flag
 					if (queryParams.regulatorListFlag) {
 						// The regulatorListFlag has been specified in the query, so it has to match. Default in instance document is "false"
-						const flag = serv.attrAnyNs(dvbisld.a_regulatorListFlag) ? serv.attrAnyNs(dvbisld.a_regulatorListFlag).value : "false";
+						const flag = serv.attrAnyNsValueOr(dvbisld.a_regulatorListFlag, "false") as string;
 						if (queryParams.regulatorListFlag[0] != flag) removeService = true;
 					}
 
@@ -404,9 +433,9 @@ export default class SLEPR {
 
 		// remove any <ProviderOffering> elements that no longer have any <ServiceListOffering>
 		let prov,
-			p = 0,
-			providersToRemove = [];
-		while ((prov = slepr.root.getAnyNs(dvbisld.e_ProviderOffering, ++p)) != null) {
+			p = 0
+		const providersToRemove = []
+		while ((prov = (slepr.root as XmlElement).getAnyNs(dvbisld.e_ProviderOffering, ++p)) != null) {
 			if (!prov.getAnyNs(dvbisld.e_ServiceListOffering)) providersToRemove.push(prov);
 		}
 		providersToRemove.forEach((provider) => provider.remove());
@@ -416,7 +445,7 @@ export default class SLEPR {
 			// remove any 'data:' URLs from RelatedMaterial elements. if there are no remaining MediaLocator elements, then remove the RelatedMaterial
 			let prov,
 				p = 0;
-			while ((prov = slepr.root.getAnyNs(dvbisld.e_ProviderOffering, ++p)) != null) {
+			while ((prov = (slepr.root as XmlElement).getAnyNs(dvbisld.e_ProviderOffering, ++p)) != null) {
 				let serv,
 					s = 0;
 				while ((serv = prov.getAnyNs(dvbisld.e_ServiceListOffering, ++s)) != null) {

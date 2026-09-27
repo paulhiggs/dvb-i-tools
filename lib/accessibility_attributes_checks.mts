@@ -72,7 +72,7 @@ const checkAppInformation = (elem: XmlElement, errs: ErrorList, errCode: string,
 	appInfo?.forEachNamedChildElement([tva.e_RequiredStandardVersion, tva.e_RequiredOptionalFeature], (child: XmlElement) => {
 		switch (child.name) {
 			case tva.e_RequiredStandardVersion:
-				if (!(dvbi.ApplicationStandards as string[]).includes(child.content))
+				if (!dvbi.ApplicationStandards.includes(child.content))
 					errs.addError({
 						type: WARNING,
 						code: `${errCode}-${errNum}a`,
@@ -82,7 +82,7 @@ const checkAppInformation = (elem: XmlElement, errs: ErrorList, errCode: string,
 					});
 				break;
 			case tva.e_RequiredOptionalFeature:
-				if (!(dvbi.ApplicationOptions as string[]).includes(child.content))
+				if (!dvbi.ApplicationOptions.includes(child.content))
 					errs.addError({
 						type: WARNING,
 						code: `${errCode}-${errNum}b`,

@@ -84,7 +84,7 @@ export function isEmpty(object: Record<string, unknown>) : boolean {
  * @param {Record<string,unknown>} options  Options to pass to readFileSync
  * @returns {Buffer} the buffer containing the data from the file, or null if there is a problem reading
  */
-export function readmyfile(filename: string, options: Record<string, unknown>) : Buffer | null {
+export function readmyfile(filename: string, options: Record<string, unknown>) : string | Buffer | null {
 	try {
 		const stats = statSync(filename);
 		if (stats.isFile()) 

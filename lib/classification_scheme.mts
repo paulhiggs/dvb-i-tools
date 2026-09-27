@@ -89,8 +89,8 @@ function loadClassificationScheme(xmlCS : XmlDocument): CSData {
 }
 
 export default class ClassificationScheme {
-	#values;
-	#schemes;
+	#values: AvlTree<CSnode>
+	#schemes: Set<string>
 
 	constructor() {
 		this.#values = new AvlTree<CSnode>((a: CSnode, b: CSnode) => a.term ? a.term.localeCompare(b.term) : 1, {key: 'term'});
@@ -150,7 +150,7 @@ export default class ClassificationScheme {
 				.then((strXML) => loadClassificationScheme(XmlDocument.fromString(strXML)))
 				.then((res) => {
 					res.vals.forEach((e) => this.add(e));
-					this.#schemes.add(res.uri);
+					this.#schemes.add(res.uri as string);
 				})
 				.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${csURL}`)));
 		else {
@@ -165,7 +165,7 @@ export default class ClassificationScheme {
 				if (resp.ok) {
 					const CStext = loadClassificationScheme(XmlDocument.fromString(resp.text()));
 					CStext.vals.forEach((e) => this.add(e));
-					this.#schemes.add(CStext.uri);
+					this.#schemes.add(CStext.uri as string);
 				} 
 				else if (verbose) console.log(chalk.red(`error (${resp.status}:${resp.statusText}) handling ${csURL}`));
 			}
@@ -179,7 +179,7 @@ export default class ClassificationScheme {
 	 * @param {boolean} async whether to use asynchronous file read (true by default)
 	 * @param {boolean} verbose  display verbose output
 	 */
-	#loadFromFile(classificationScheme: string, async: boolean = true, verbose: boolean = true): void {
+	#loadFromFile(classificationScheme: string, async: boolean, verbose: boolean): void {
 		if (verbose) console.log(chalk.yellow(`reading CS from ${classificationScheme}`));
 
 		if (async)
@@ -187,7 +187,7 @@ export default class ClassificationScheme {
 				if (!err) {
 					const res = loadClassificationScheme(XmlDocument.fromString(data.replace(/(\r\n|\n|\r|\t)/gm, "")));
 					res.vals.forEach((e) => this.add(e));
-					this.#schemes.add(res.uri);
+					this.#schemes.add(res.uri as string);
 				} else console.log(chalk.red(err));
 			});
 		else {
@@ -195,7 +195,7 @@ export default class ClassificationScheme {
 			const data = buff.toString();
 			const res = loadClassificationScheme(XmlDocument.fromString(data.replace(/(\r\n|\n|\r|\t)/gm, "")));
 			res.vals.forEach((e) => this.add(e));
-			this.#schemes.add(res.uri);
+			this.#schemes.add(res.uri as string);
 		}
 	}
 
@@ -228,7 +228,8 @@ export default class ClassificationScheme {
 	 * @returns {boolean} true if value is in the classification scheme
 	 */
 	has(value: string): boolean {
-		return this.#values.findKey(value) != null;
+		const found = this.#values.findKey(value)
+		return found != null;
 	}
 
 

@@ -17,10 +17,10 @@ import ErrorList from "./error_list.mts"
 export function ValidateSignaturePolicies(element: XmlElement, errs: ErrorList, errCode: string) {
 	const policies_found = new Set<string>();
 
-	const SignaturePolicies = element.getAnyNs(dvbi.e_SignaturePolicies as string);
+	const SignaturePolicies = element.getAnyNs(dvbi.e_SignaturePolicies);
 	if (SignaturePolicies) {
-		SignaturePolicies.forEachNamedChildElement(dvbi.e_SignaturePolicy as string, (SignaturePolicy) => {
-			const policyID = SignaturePolicy.attrAnyNsValueOr(dvbi.a_policyId as string);
+		SignaturePolicies.forEachNamedChildElement(dvbi.e_SignaturePolicy, (SignaturePolicy) => {
+			const policyID = SignaturePolicy.attrAnyNsValueOr(dvbi.a_policyId);
 			if (policyID && DuplicatedValue(policies_found, policyID))
 				errs.addError({
 					code: `${errCode}-01`,
@@ -29,14 +29,14 @@ export function ValidateSignaturePolicies(element: XmlElement, errs: ErrorList, 
 					fragment: SignaturePolicy,
 				});
 
-			const TrustAnchor = SignaturePolicy.getAnyNs(dvbi.e_TrustAnchor as string);
+			const TrustAnchor = SignaturePolicy.getAnyNs(dvbi.e_TrustAnchor);
 			if (TrustAnchor)
-				TrustAnchor.forEachNamedChildElement(dvbi.e_CAFingerprint as string, (CAFingerprint) => {
+				TrustAnchor.forEachNamedChildElement(dvbi.e_CAFingerprint, (CAFingerprint) => {
 					const Fingerprint_algorithm = CAFingerprint.attrAnyNsValueOr(dvbi.a_algorithm);
-					if (Fingerprint_algorithm && (dvbi.ALLOWED_FINGERPRINT_ALGOS as string[]).length > 0 && !(dvbi.ALLOWED_FINGERPRINT_ALGOS as string[]).includes(Fingerprint_algorithm))
+					if (Fingerprint_algorithm && dvbi.ALLOWED_FINGERPRINT_ALGOS.length > 0 && !dvbi.ALLOWED_FINGERPRINT_ALGOS.includes(Fingerprint_algorithm))
 						errs.addError({
 							code: `${errCode}-02`,
-							message: `${Fingerprint_algorithm} is not a valid algorithm for ${(dvbi.e_CAFingerprint as string).elementize()}`,
+							message: `${Fingerprint_algorithm} is not a valid algorithm for ${dvbi.e_CAFingerprint.elementize()}`,
 							key: keys.k_SignaturePolicies,
 							fragment: CAFingerprint,
 						})

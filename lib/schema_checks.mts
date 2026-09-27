@@ -224,7 +224,7 @@ export function SchemaCheck(XML: XmlDocument, XSD: XmlDocument, XSDfilename: str
  * @param {string}      errCode              the error code to report with each error
  */
 export function SchemaVersionCheck(document: XmlDocument, publication_state: number, errs: ErrorList, errCode: string) {
-	const ServiceList = (document.root as XmlElement)?.getAnyNs(dvbi.e_ServiceList as string);
+	const ServiceList = (document.root as XmlElement)?.getAnyNs(dvbi.e_ServiceList);
 	if (publication_state & StandardStatus.OLD) {
 		const err1: ReportedErrorType = { code: `${errCode}a`, message: "schema version is out of date", key: "schema version" };
 		if (ServiceList) err1.line = ServiceList.line;

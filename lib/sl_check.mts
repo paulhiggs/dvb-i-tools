@@ -115,20 +115,20 @@ import ClassificationScheme from "./classification_scheme.mts"
 
 import type { LoadOptions, StatsType } from "./globals.mts"
 export type ValidatorOptions = LoadOptions & {
-	countries? : ISOCountries
-	languages? : IANAlanguages
 	accessibilities? : ClassificationScheme
+	appfmts?: ClassificationScheme
+	audiofmts?: ClassificationScheme
 	audiopres?: ClassificationScheme
 	audiopurps?: ClassificationScheme
+	credits?: ClassificationScheme
+	countries? : ISOCountries
 	genres?: ClassificationScheme
+	languages? : IANAlanguages
+	ratings?: ClassificationScheme
 	stcarriage?: ClassificationScheme
+	stcodings?: ClassificationScheme
 	stpurposes?: ClassificationScheme
 	videofmts?: ClassificationScheme
-	audiofmts?: ClassificationScheme
-	appfmts?: ClassificationScheme
-	stcodings?: ClassificationScheme
-	credits?: ClassificationScheme
-	ratings?: ClassificationScheme
 }
 
 export type SL_Validator_Options = {
@@ -138,7 +138,7 @@ export type SL_Validator_Options = {
 }
 
 export default class ServiceListCheck {
-	#numRequests;
+	#numRequests: number
 	#knownLanguages;
 	#allowedGenres;
 	#allowedVideoSchemes;
@@ -173,7 +173,7 @@ export default class ServiceListCheck {
 
 		if (opts.verbose) console.log(chalk.yellow.underline("SL: loading classification schemes..."));
 		this.#accessibilityPurposes = opts?.accessibilities || LoadAccessibilityPurpose(opts);
-		this.#allowedAudioSchemes = opts?.videofmts || LoadAudioCodecCS(opts);
+		this.#allowedAudioSchemes = opts?.audiofmts || LoadAudioCodecCS(opts);
 		this.#audioPresentations = opts?.audiopres || LoadAudioPresentationCS(opts);
 		this.#audioPurposes = opts?.audiopurps || LoadAudioPurpose(opts);
 		this.#allowedGenres = opts?.genres || LoadGenres(opts);
@@ -223,7 +223,7 @@ export default class ServiceListCheck {
 		return res;
 	}
 
-	langs(sort: boolean) {
+	langs(sort: boolean) : Record<string, string[]> {
 		return this.#knownLanguages.loadedLanguages(sort);
 	}
 
@@ -1176,7 +1176,9 @@ export default class ServiceListCheck {
 					const child_href = child.attrAnyNsValueOr(dvbi.a_href);
 					switch (child.name) {
 						case tva.e_Coding:
-							if (child_href && !this.#allowedAudioSchemes.has(child_href))
+							if (child_href) {
+								const found = this.#allowedAudioSchemes.has(child_href)
+								if (!found)
 								errs.addError({
 									code: "SI052",
 									message: `invalid ${dvbi.a_href.attribute(child.name)} value (${child_href}) -only leaf nodes are used from the CS`,
@@ -1185,6 +1187,7 @@ export default class ServiceListCheck {
 									description: `The value specified for ${dvbi.a_href.attribute(child.name)} is constrained in DVB-I.`,
 									clause: "A177 Table 56",
 								});
+							}
 							break;
 						case tva.e_MixType:
 							// taken from MPEG-7 AudioPresentationCS

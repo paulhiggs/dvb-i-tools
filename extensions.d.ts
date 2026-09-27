@@ -54,21 +54,29 @@ declare module "express-session" {
 			entry?: string
 			url?: string
 			cgmode?: string
+			lastUrl?: string
 
 			forGermany?: boolean
 		}
 	}
 }
 
-declare global {
+//declare global {
+declare module "express" {
 
 	export interface Request {
-		parseErr? : string
+		parseErr? : string[]
+
+		diags?: {
+			countErrors?: number
+			countWarnings?: number
+			countInforms?: number
+		}
 	}
 
 	export interface Response {
 		parseErr?: string
-		varyon? : string[]
+		varyOn? : Set<string>
 	}
 }
 

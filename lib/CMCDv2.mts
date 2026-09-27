@@ -196,13 +196,13 @@ const error_key = keys.k_CMCD;
 type CountsAccumulator = Record<string, number[]>;
 
 function checkCMCDkeys(Report: XmlElement, version: number, errs: ErrorList, errCode: string) {
-	if (!parameterCheck("checkCMCDkeys", Report, dvbi.e_Report as string, errs, `${errCode}-00`)) return;
+	if (!parameterCheck("checkCMCDkeys", Report, dvbi.e_Report, errs, `${errCode}-00`)) return;
 	if (Number.isNaN(version)) return;
 
 	const keys_to_use = version == 1 ? CMCDv1_keys : CMCDv2_keys;
-	const configured_keys = Report.attrAnyNsValueOr(dvbi.a_enabledKeys as string);
-	const reporting_mode: string = Report.attrAnyNsValueOr(dvbi.a_reportingMode as string, "undefined")!
-	const obfuscate_url = Report.attrAnyNsValueOr(dvbi.a_obfuscateURL as string);
+	const configured_keys = Report.attrAnyNsValueOr(dvbi.a_enabledKeys);
+	const reporting_mode: string = Report.attrAnyNsValueOr(dvbi.a_reportingMode, "undefined")!
+	const obfuscate_url = Report.attrAnyNsValueOr(dvbi.a_obfuscateURL);
 
 	if (configured_keys && configured_keys.length > 0) {
 		let hasURL = false;
@@ -250,7 +250,7 @@ function checkCMCDkeys(Report: XmlElement, version: number, errs: ErrorList, err
 				type: WARNING,
 				code: `${errCode}-11`,
 				fragment: Report,
-				message: `${(dvbi.a_obfuscateURL as string).attribute()}="true" is only relevant when '${CMCD_keys.request_url}' is specified in ${(dvbi.a_enabledKeys as string).attribute()}`,
+				message: `${dvbi.a_obfuscateURL.attribute()}="true" is only relevant when '${CMCD_keys.request_url}' is specified in ${dvbi.a_enabledKeys.attribute()}`,
 				key: error_key,
 			});
 	}
@@ -307,7 +307,7 @@ function ValidateContentIdLength(contentId: string, element: XmlElement, CMCDver
 		return;
 	const contentIdLengthError = (_errCode: string, version: number, maxLen: number, foundLen: number) : ReportedErrorType => ({
 		code: _errCode,
-		message: `length of ${(dvbi.a_contentId as string).attribute(element.name)} must be less than or equal to ${maxLen} (counted ${foundLen}) for CMCDv${version}`,
+		message: `length of ${dvbi.a_contentId.attribute(element.name)} must be less than or equal to ${maxLen} (counted ${foundLen}) for CMCDv${version}`,
 		fragment: element,
 		key: error_key,
 	});
@@ -592,7 +592,7 @@ function check_CMCD(CMCDelem: XmlElement, counts: CountsAccumulator, errs: Error
 
 export function ValidateCMCDinDASH(DASHDeliveryParameters: XmlElement, errs: ErrorList) {
 	const mode_counts: CountsAccumulator = {}; // accumulator of each request type
-	DASHDeliveryParameters.forEachNamedChildElement(dvbi.e_CMCD as string, (CMCDelem) => {
+	DASHDeliveryParameters.forEachNamedChildElement(dvbi.e_CMCD, (CMCDelem) => {
 		check_CMCD(CMCDelem, mode_counts, errs);
 	});	
 }

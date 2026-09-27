@@ -12,421 +12,234 @@ import { mpeg7 } from "./MPEG7_definitions.mts"
 
 export const TVA_CSmetadata: string = "urn:tva:metadata:cs";
 
-type TVAattributesType = {
-	a_average: string
-	a_closed: string
-	a_contentLanguage: string
-	a_contentType: string
-	a_crid: string
-	a_end: string
-	a_fragmentId: string
-	a_fragmentVersion: string
-	a_fragmentExpirationDate: string
-	a_groupId: string
-	a_horizontalSize: string
-	a_href: string
-	a_index: string
-	a_integrity: string
-	a_lang: typeof mpeg7.a_lang
-	a_length: string
-	a_maximum: string
-	a_metadataOriginIDRef: string
-	a_minimum: string
-	a_numOfItems: string
-	a_ordered: string
-	a_primary: string
-	a_programId: string
-	a_purpose: string
-	a_role: string
-	a_serviceIDRef: string
-	a_serviceInstanceID: string
-	a_start: string
-	a_supplemental: string
-	a_translation: string
-	a_type: string
-	a_uriType: string
-	a_variable: string
-	a_value: string
-	a_verificationPolicy: string
-	a_verticalSize: string
-}
+class TVAterms {
+	SYNOPSIS_BRIEF_LABEL: string = "brief"
+	SYNOPSIS_BRIEF_LENGTH: number = 30
+	SYNOPSIS_SHORT_LABEL: string = "short"
+	SYNOPSIS_SHORT_LENGTH: number = 90
+	SYNOPSIS_MEDIUM_LABEL: string = "medium"
+	SYNOPSIS_MEDIUM_LENGTH: number = 250
+	SYNOPSIS_LONG_LABEL: string = "long"
+	SYNOPSIS_LONG_LENGTH: number = 1200
+	SYNOPSIS_EXTENDED_LABEL: string = "extended"
+	SYNOPSIS_EXTENDED_MIN_LENGTH: number = 1200
 
-type TVAelementsType = {
-	e_TVAMain: string
-	e_ProgramInformationTable: string
-	e_ProgramLocationTable: string
-	e_GroupInformationTable: string
+	KEYWORD_TYPE_MAIN: string = "main"
+	KEYWORD_TYPE_SECONDARY: string = "secondary"
+	KEYWORD_TYPE_OTHER: string = "other"
+	DEFAULT_KEYWORD_TYPE: string = "main"
 
-	e_AccessibilityAttributes: string
-	e_ActualDuration: string
-	e_ActualEndTime: string
-	e_ActualStartTime: string
-	e_AggregationOf: string
-	e_AppInformation: string
-	e_AspectRatio: string
-	e_AVAttributes: string
-	e_AudioAttributes: string
-	e_AudioDescriptionAttributes: string
-	e_AudioLanguage: string
-	e_AuxiliaryURI: string
-	e_AuxiliaryURL: string
-	e_AwardsList: string
-	e_BasicDescription: string
-	e_BitRate: string
-	e_BitsPerSample: string
-	e_BroadcastEvent: string
-	e_CaptioningAttributes: string
-	e_CaptionLanguage: string
-	e_Carriage: string
-	e_Character: string
-	e_Closed: string
-	e_Coding: string
-	e_Color: string
-	e_ContentVersion: string
-	e_CountryCodes: string
-	e_CreationCoordinates: string
-	e_CreditsInformationTable: string
-	e_CreditsItem: string
-	e_CreditsList: string
-	e_DeliveryMode: string
-	e_DepictedCoordinates: string
-	e_DerivedFrom: string
-	e_DialogueEnhancementAttributes: string
-	e_Duration: string
-	e_EarlyPlayout: string
-	e_EmbargoTime: string
-	e_EndOfAvailability: string
-	e_EpisodeOf: string
-	e_ExpiryTimeAfterDownload: string
-	e_ExpiryTimeAfterDownloadFirstStart: string
-	e_ExpiryTimeAfterFirstStart: string
-	e_ExpiryTime: string
-	e_ExplanatoryText: string
-	e_FamilyName: string
-	e_FileFormat: string
-	e_FileSize: string
-	e_FirstAvailability: string
-	e_FirstShowing: string
-	e_Format: string
-	e_FrameRate: string
-	e_Free: string
-	e_Genre: string
-	e_GivenName: string
-	e_GroupInformation: string
-	e_GroupType: string
-	e_HighContrastUIAttributes: string
-	e_HorizontalSize: string
-	e_HowRelated: string
-	e_ImmediateViewing: string
-	e_InlineMedia: string
-	e_InstanceDescription: string
-	e_InstanceMetadataId: string
-	e_Keyword: string
-	e_Language: string
-	e_LastAvailability: string
-	e_LastShowing: string
-	e_Live: string
-	e_MagnificationUIAttributes: string
-	e_MaxNumberOfDownloads: string
-	e_MediaLocator: string
-	e_MediaTitle: string
-	e_MediaUri: string
-	e_MemberOf: string
-	e_MinimumAge: string
-	e_MixType: string
-	e_NumOfChannels: string
-	e_OnDemandProgram: string
-	e_OnDemandService: string
-	e_OrganizationName: string
-	e_OtherIdentifier: string
-	e_ParentalGuidance: string
-	e_ParentalRating: string
-	e_PartOfAggregatedGroup: string
-	e_PartOfAggregateProgram: string
-	e_Personalisation: string
-	e_PersonName: string
-	e_PictureFormat: string
-	e_ProductionDate: string
-	e_ProductionLocation: string
-	e_ProgramDescription: string
-	e_ProgramInformation: string
-	e_Program: string
-	e_ProgramReviewTable: string
-	e_ProgramURL: string
-	e_PromotionalInformation: string
-	e_PromotionalMedia: string
-	e_PromotionalText: string
-	e_PublishedDuration: string
-	e_PublishedEndTime: string
-	e_PublishedStartTime: string
-	e_PurchaseInformationTable: string
-	e_PurchaseList: string
-	e_Purpose: string
-	e_PushDownloadProgram: string
-	e_ReceiverMix: string
-	e_RelatedMaterial: string
-	e_ReleaseDate: string
-	e_ReleaseInformation: string
-	e_ReleaseLocation: string
-	e_Repeat:string
-	e_RequiredStandardVersion: string
-	e_RequiredOptionalFeature: string
-	e_ResponseToUserActionAttributes: string
-	e_RightsInformationTable: string
-	e_SampleFrequency: string
-	e_Scan: string
-	e_Schedule: string
-	e_ScheduleEvent: string
-	e_ScreenReaderAttributes: string
-	e_ScreenReaderLanguage: string
-	e_SegmentInformationTable: string
-	e_ServiceInformationTable: string
-	e_SegmentReference: string
-	e_ShortTitle: string
-	e_SigningAttributes: string
-	e_SignLanguage: string
-	e_SocialMediaReference: string
-	e_SourceMediaLocator: string
-	e_SpokenSubtitlesAttributes: string
-	e_StartOfAvailability: string
-	e_StillPictureFormat: string
-	e_StreamID: string
-	e_SubtitleAttributes: string
-	e_SubtitleLanguage: string
-	e_SuitableForTTS: string
-	e_Synopsis: string
-	e_System: string
-	e_Title: string
-	e_VerticalSize: string
-	e_VideoAttributes: string
-}
+	GENRE_TYPE_MAIN: string = "main"
+	GENRE_TYPE_SECONDARY: string = "secondary"
+	GENRE_TYPE_OTHER: string = "other"
+	DEFAULT_GENRE_TYPE: string = "main"
+	ALL_GENRE_TYPES: string[] = ["main", "secondary", "other"]
 
-export const tva: Record<string, string | number | string[]> & TVAattributesType & TVAelementsType= {
-	SYNOPSIS_BRIEF_LABEL: "brief",
-	SYNOPSIS_BRIEF_LENGTH: 30,
-	SYNOPSIS_SHORT_LABEL: "short",
-	SYNOPSIS_SHORT_LENGTH: 90,
-	SYNOPSIS_MEDIUM_LABEL: "medium",
-	SYNOPSIS_MEDIUM_LENGTH: 250,
-	SYNOPSIS_LONG_LABEL: "long",
-	SYNOPSIS_LONG_LENGTH: 1200,
-	SYNOPSIS_EXTENDED_LABEL: "extended",
-	SYNOPSIS_EXTENDED_MIN_LENGTH: 1200,
+	DELIVERY_MODE_STREAMING: string = "streaming"
 
-	KEYWORD_TYPE_MAIN: "main",
-	KEYWORD_TYPE_SECONDARY: "secondary",
-	KEYWORD_TYPE_OTHER: "other",
-	DEFAULT_KEYWORD_TYPE: "main",
+	SCAN_TYPES: string[] = ["interlaced", "progressive"]
+	COLOR_TYPES: string[] = ["color", "blackAndWhite", "blackAndWhiteAndColor", "colorized"]
 
-	GENRE_TYPE_MAIN: "main",
-	GENRE_TYPE_SECONDARY: "secondary",
-	GENRE_TYPE_OTHER: "other",
-	DEFAULT_GENRE_TYPE: "main",
-	ALL_GENRE_TYPES: ["main", "secondary", "other"],
+	ALLOWED_ASPECT_RATIO_TYPES: string[] = ["original", "publication"]
 
-	DELIVERY_MODE_STREAMING: "streaming",
+	APPLICATION_SUBTITLE_CODING: string = "urn:tva:metadata:cs:SubtitleCodingFormatCS:2023:8"
+	APPLICATION_SUBTITLE_CARRIAGE: string = "urn:tva:metadata:cs:SubtitleCarriageCS:2023:1"
 
-	SCAN_TYPES: ["interlaced", "progressive"],
-	COLOR_TYPES: ["color", "blackAndWhite", "blackAndWhiteAndColor", "colorized"],
+	e_TVAMain: string = "TVAMain"
+	e_ProgramInformationTable: string = "ProgramInformationTable"
+	e_ProgramLocationTable: string = "ProgramLocationTable"
+	e_GroupInformationTable: string = "GroupInformationTable"
 
-	ALLOWED_ASPECT_RATIO_TYPES: ["original", "publication"],
+	e_AccessibilityAttributes: string = "AccessibilityAttributes"
+	e_ActualDuration: string = "ActualDuration"
+	e_ActualEndTime: string = "ActualEndTime"
+	e_ActualStartTime: string = "ActualStartTime"
+	e_AggregationOf: string = "AggregationOf"
+	e_AppInformation: string = "AppInformation"
+	e_AspectRatio: string = "AspectRatio"
+	e_AVAttributes: string = "AVAttributes"
+	e_AudioAttributes: string = "AudioAttributes"
+	e_AudioDescriptionAttributes: string = "AudioDescriptionAttributes"
+	e_AudioLanguage: string = "AudioLanguage"
+	e_AuxiliaryURI: string = "AuxiliaryURI"
+	e_AuxiliaryURL: string = "AuxiliaryURL"
+	e_AwardsList: string = "AwardsList"
+	e_BasicDescription: string = "BasicDescription"
+	e_BitRate: string = "BitRate"
+	e_BitsPerSample: string = "BitsPerSample"
+	e_BroadcastEvent: string = "BroadcastEvent"
+	e_CaptioningAttributes: string = "CaptioningAttributes"
+	e_CaptionLanguage: string = "CaptionLanguage"
+	e_Carriage: string = "Carriage"
+	e_Character: string = "Character"
+	e_Closed: string = "Closed"
+	e_Coding: string = "Coding"
+	e_Color: string = "Color"
+	e_ContentVersion: string = "ContentVersion"
+	e_CountryCodes: string = "CountryCodes"
+	e_CreationCoordinates: string = "CreationCoordinates"
+	e_CreditsInformationTable: string = "CreditsInformationTable"
+	e_CreditsItem: string = "CreditsItem"
+	e_CreditsList: string = "CreditsList"
+	e_DeliveryMode: string = "DeliveryMode"
+	e_DepictedCoordinates: string = "DepictedCoordinates"
+	e_DerivedFrom: string = "DerivedFrom"
+	e_DialogueEnhancementAttributes: string = "DialogueEnhancementAttributes"
+	e_Duration: string = "Duration"
+	e_EarlyPlayout: string = "EarlyPlayout"
+	e_EmbargoTime: string = "EmbargoTime"
+	e_EndOfAvailability: string = "EndOfAvailability"
+	e_EpisodeOf: string = "EpisodeOf"
+	e_ExpiryTimeAfterDownload: string = "ExpiryTimeAfterDownload"
+	e_ExpiryTimeAfterDownloadFirstStart: string = "ExpiryTimeAfterDownloadFirstStart"
+	e_ExpiryTimeAfterFirstStart: string = "ExpiryTimeAfterFirstStart"
+	e_ExpiryTime: string = "ExpiryTime"
+	e_ExplanatoryText: string = "ExplanatoryText"
+	e_FamilyName: string = "FamilyName"
+	e_FileFormat: string = "FileFormat"
+	e_FileSize: string = "FileSize"
+	e_FirstAvailability: string = "FirstAvailability"
+	e_FirstShowing: string = "FirstShowing"
+	e_Format: string = "Format"
+	e_FrameRate: string = "FrameRate"
+	e_Free: string = "Free"
+	e_Genre: string = "Genre"
+	e_GivenName: string = "GivenName"
+	e_GroupInformation: string = "GroupInformation"
+	e_GroupType: string = "GroupType"
+	e_HighContrastUIAttributes: string = "HighContrastUIAttributes"
+	e_HorizontalSize: string = "HorizontalSize"
+	e_HowRelated: string = "HowRelated"
+	e_ImmediateViewing: string = "ImmediateViewing"
+	e_InlineMedia: string = "InlineMedia"
+	e_InstanceDescription: string = "InstanceDescription"
+	e_InstanceMetadataId: string = "InstanceMetadataId"
+	e_Keyword: string = "Keyword"
+	e_Language: string = "Language"
+	e_LastAvailability: string = "LastAvailability"
+	e_LastShowing: string = "LastShowing"
+	e_Live: string = "Live"
+	e_MagnificationUIAttributes: string = "MagnificationUIAttributes"
+	e_MaxNumberOfDownloads: string = "MaxNumberOfDownloads"
+	e_MediaLocator: string = "MediaLocator"
+	e_MediaTitle: string = "MediaTitle"
+	e_MediaUri: string = "MediaUri"
+	e_MemberOf: string = "MemberOf"
+	e_MinimumAge: string = "MinimumAge"
+	e_MixType: string = "MixType"
+	e_NumOfChannels: string = "NumOfChannels"
+	e_OnDemandProgram: string = "OnDemandProgram"
+	e_OnDemandService: string = "OnDemandService"
+	e_OrganizationName: string = "OrganizationName"
+	e_OtherIdentifier: string = "OtherIdentifier"
+	e_ParentalGuidance: string = "ParentalGuidance"
+	e_ParentalRating: string = "ParentalRating"
+	e_PartOfAggregatedGroup: string = "PartOfAggregatedGroup"
+	e_PartOfAggregateProgram: string = "PartOfAggregateProgram"
+	e_Personalisation: string = "Personalisation"
+	e_PersonName: string = "PersonName"
+	e_PictureFormat: string = "PictureFormat"
+	e_ProductionDate: string = "ProductionDate"
+	e_ProductionLocation: string = "ProductionLocation"
+	e_ProgramDescription: string = "ProgramDescription"
+	e_ProgramInformation: string = "ProgramInformation"
+	e_Program: string = "Program"
+	e_ProgramReviewTable: string = "ProgramReviewTable"
+	e_ProgramURL: string = "ProgramURL"
+	e_PromotionalInformation: string = "PromotionalInformation"
+	e_PromotionalMedia: string = "PromotionalMedia"
+	e_PromotionalText: string = "PromotionalText"
+	e_PublishedDuration: string = "PublishedDuration"
+	e_PublishedEndTime: string = "PublishedEndTime"
+	e_PublishedStartTime: string = "PublishedStartTime"
+	e_PurchaseInformationTable: string = "PurchaseInformationTable"
+	e_PurchaseList: string = "PurchaseList"
+	e_Purpose: string = "Purpose"
+	e_PushDownloadProgram: string = "PushDownloadProgram"
+	e_ReceiverMix: string = "ReceiverMix"
+	e_RelatedMaterial: string = "RelatedMaterial"
+	e_ReleaseDate: string = "ReleaseDate"
+	e_ReleaseInformation: string = "ReleaseInformation"
+	e_ReleaseLocation: string = "ReleaseLocation"
+	e_Repeat: string = "Repeat"
+	e_RequiredStandardVersion: string = "RequiredStandardVersion"
+	e_RequiredOptionalFeature: string = "RequiredOptionalFeature"
+	e_ResponseToUserActionAttributes: string = "ResponseToUserActionAttributes"
+	e_RightsInformationTable: string = "RightsInformationTable"
+	e_SampleFrequency: string = "SampleFrequency"
+	e_Scan: string = "Scan"
+	e_Schedule: string = "Schedule"
+	e_ScheduleEvent: string = "ScheduleEvent"
+	e_ScreenReaderAttributes: string = "ScreenReaderAttributes"
+	e_ScreenReaderLanguage: string = "ScreenReaderLanguage"
+	e_SegmentInformationTable: string = "SegmentInformationTable"
+	e_ServiceInformationTable: string = "ServiceInformationTable"
+	e_SegmentReference: string = "SegmentReference"
+	e_ShortTitle: string = "ShortTitle"
+	e_SigningAttributes: string = "SigningAttributes"
+	e_SignLanguage: string = "SignLanguage"
+	e_SocialMediaReference: string = "SocialMediaReference"
+	e_SourceMediaLocator: string = "SourceMediaLocator"
+	e_SpokenSubtitlesAttributes: string = "SpokenSubtitlesAttributes"
+	e_StartOfAvailability: string = "StartOfAvailability"
+	e_StillPictureFormat: string = "StillPictureFormat"
+	e_StreamID: string = "StreamID"
+	e_SubtitleAttributes: string = "SubtitleAttributes"
+	e_SubtitleLanguage: string = "SubtitleLanguage"
+	e_SuitableForTTS: string = "SuitableForTTS"
+	e_Synopsis: string = "Synopsis"
+	e_System: string = "System"
+	e_Title: string = "Title"
+	e_VerticalSize: string = "VerticalSize"
+	e_VideoAttributes: string = "VideoAttributes"
 
-	APPLICATION_SUBTITLE_CODING: "urn:tva:metadata:cs:SubtitleCodingFormatCS:2023:8",
-	APPLICATION_SUBTITLE_CARRIAGE: "urn:tva:metadata:cs:SubtitleCarriageCS:2023:1",
+	a_average: string = "average"
+	a_closed: string = "closed"
+	a_contentLanguage: string = "contentLanguage"
+	a_contentType: string = "contentType"
+	a_crid: string = "crid"
+	a_end: string = "end"
+	a_fragmentId: string = "fragmentId"
+	a_fragmentVersion: string = "fragmentVersion"
+	a_fragmentExpirationDate: string = "fragmentExpirationDate"
+	a_groupId: string = "groupId"
+	a_horizontalSize: string = "horizontalSize"
+	a_href: string = "href"
+	a_index: string = "index"
+	a_integrity: string = "integrity"
+	a_lang= mpeg7.a_lang
+	a_length: string = "length"
+	a_maximum: string = "maximum"
+	a_metadataOriginIDRef: string = "metadataOriginIDRef"
+	a_minimum: string = "minimum"
+	a_numOfItems: string = "numOfItems"
+	a_ordered: string = "ordered"
+	a_primary: string = "primary"
+	a_programId: string = "programId"
+	a_purpose: string = "purpose"
+	a_role: string = "role"
+	a_serviceIDRef: string = "serviceIDRef"
+	a_serviceInstanceID: string = "serviceInstanceID"
+	a_start: string = "start"
+	a_supplemental: string = "supplemental"
+	a_translation: string = "translation"
+	a_type: string = "type"
+	a_uriType: string = "uriType"
+	a_variable: string = "variable"
+	a_value: string = "value"
+	a_verificationPolicy: string = "verificationPolicy"
+	a_verticalSize: string = "verticalSize"
 
-	e_TVAMain: "TVAMain",
-	e_ProgramInformationTable: "ProgramInformationTable",
-	e_ProgramLocationTable: "ProgramLocationTable",
-	e_GroupInformationTable: "GroupInformationTable",
+	v_lengthLong: string = "long"
+	v_otherCollection: string = "otherCollection"
 
-	e_AccessibilityAttributes: "AccessibilityAttributes",
-	e_ActualDuration: "ActualDuration",
-	e_ActualEndTime: "ActualEndTime",
-	e_ActualStartTime: "ActualStartTime",
-	e_AggregationOf: "AggregationOf",
-	e_AppInformation: "AppInformation",
-	e_AspectRatio: "AspectRatio",
-	e_AVAttributes: "AVAttributes",
-	e_AudioAttributes: "AudioAttributes",
-	e_AudioDescriptionAttributes: "AudioDescriptionAttributes",
-	e_AudioLanguage: "AudioLanguage",
-	e_AuxiliaryURI: "AuxiliaryURI",
-	e_AuxiliaryURL: "AuxiliaryURL",
-	e_AwardsList: "AwardsList",
-	e_BasicDescription: "BasicDescription",
-	e_BitRate: "BitRate",
-	e_BitsPerSample: "BitsPerSample",
-	e_BroadcastEvent: "BroadcastEvent",
-	e_CaptioningAttributes: "CaptioningAttributes",
-	e_CaptionLanguage: "CaptionLanguage",
-	e_Carriage: "Carriage",
-	e_Character: "Character",
-	e_Closed: "Closed",
-	e_Coding: "Coding",
-	e_Color: "Color",
-	e_ContentVersion: "ContentVersion",
-	e_CountryCodes: "CountryCodes",
-	e_CreationCoordinates: "CreationCoordinates",
-	e_CreditsInformationTable: "CreditsInformationTable",
-	e_CreditsItem: "CreditsItem",
-	e_CreditsList: "CreditsList",
-	e_DeliveryMode: "DeliveryMode",
-	e_DepictedCoordinates: "DepictedCoordinates",
-	e_DerivedFrom: "DerivedFrom",
-	e_DialogueEnhancementAttributes: "DialogueEnhancementAttributes",
-	e_Duration: "Duration",
-	e_EarlyPlayout: "EarlyPlayout",
-	e_EmbargoTime: "EmbargoTime",
-	e_EndOfAvailability: "EndOfAvailability",
-	e_EpisodeOf: "EpisodeOf",
-	e_ExpiryTimeAfterDownload: "ExpiryTimeAfterDownload",
-	e_ExpiryTimeAfterDownloadFirstStart: "ExpiryTimeAfterDownloadFirstStart",
-	e_ExpiryTimeAfterFirstStart: "ExpiryTimeAfterFirstStart",
-	e_ExpiryTime: "ExpiryTime",
-	e_ExplanatoryText: "ExplanatoryText",
-	e_FamilyName: "FamilyName",
-	e_FileFormat: "FileFormat",
-	e_FileSize: "FileSize",
-	e_FirstAvailability: "FirstAvailability",
-	e_FirstShowing: "FirstShowing",
-	e_Format: "Format",
-	e_FrameRate: "FrameRate",
-	e_Free: "Free",
-	e_Genre: "Genre",
-	e_GivenName: "GivenName",
-	e_GroupInformation: "GroupInformation",
-	e_GroupType: "GroupType",
-	e_HighContrastUIAttributes: "HighContrastUIAttributes",
-	e_HorizontalSize: "HorizontalSize",
-	e_HowRelated: "HowRelated",
-	e_ImmediateViewing: "ImmediateViewing",
-	e_InlineMedia: "InlineMedia",
-	e_InstanceDescription: "InstanceDescription",
-	e_InstanceMetadataId: "InstanceMetadataId",
-	e_Keyword: "Keyword",
-	e_Language: "Language",
-	e_LastAvailability: "LastAvailability",
-	e_LastShowing: "LastShowing",
-	e_Live: "Live",
-	e_MagnificationUIAttributes: "MagnificationUIAttributes",
-	e_MaxNumberOfDownloads: "MaxNumberOfDownloads",
-	e_MediaLocator: "MediaLocator",
-	e_MediaTitle: "MediaTitle",
-	e_MediaUri: "MediaUri",
-	e_MemberOf: "MemberOf",
-	e_MinimumAge: "MinimumAge",
-	e_MixType: "MixType",
-	e_NumOfChannels: "NumOfChannels",
-	e_OnDemandProgram: "OnDemandProgram",
-	e_OnDemandService: "OnDemandService",
-	e_OrganizationName: "OrganizationName",
-	e_OtherIdentifier: "OtherIdentifier",
-	e_ParentalGuidance: "ParentalGuidance",
-	e_ParentalRating: "ParentalRating",
-	e_PartOfAggregatedGroup: "PartOfAggregatedGroup",
-	e_PartOfAggregateProgram: "PartOfAggregateProgram",
-	e_Personalisation: "Personalisation",
-	e_PersonName: "PersonName",
-	e_PictureFormat: "PictureFormat",
-	e_ProductionDate: "ProductionDate",
-	e_ProductionLocation: "ProductionLocation",
-	e_ProgramDescription: "ProgramDescription",
-	e_ProgramInformation: "ProgramInformation",
-	e_Program: "Program",
-	e_ProgramReviewTable: "ProgramReviewTable",
-	e_ProgramURL: "ProgramURL",
-	e_PromotionalInformation: "PromotionalInformation",
-	e_PromotionalMedia: "PromotionalMedia",
-	e_PromotionalText: "PromotionalText",
-	e_PublishedDuration: "PublishedDuration",
-	e_PublishedEndTime: "PublishedEndTime",
-	e_PublishedStartTime: "PublishedStartTime",
-	e_PurchaseInformationTable: "PurchaseInformationTable",
-	e_PurchaseList: "PurchaseList",
-	e_Purpose: "Purpose",
-	e_PushDownloadProgram: "PushDownloadProgram",
-	e_ReceiverMix: "ReceiverMix",
-	e_RelatedMaterial: "RelatedMaterial",
-	e_ReleaseDate: "ReleaseDate",
-	e_ReleaseInformation: "ReleaseInformation",
-	e_ReleaseLocation: "ReleaseLocation",
-	e_Repeat: "Repeat",
-	e_RequiredStandardVersion: "RequiredStandardVersion",
-	e_RequiredOptionalFeature: "RequiredOptionalFeature",
-	e_ResponseToUserActionAttributes: "ResponseToUserActionAttributes",
-	e_RightsInformationTable: "RightsInformationTable",
-	e_SampleFrequency: "SampleFrequency",
-	e_Scan: "Scan",
-	e_Schedule: "Schedule",
-	e_ScheduleEvent: "ScheduleEvent",
-	e_ScreenReaderAttributes: "ScreenReaderAttributes",
-	e_ScreenReaderLanguage: "ScreenReaderLanguage",
-	e_SegmentInformationTable: "SegmentInformationTable",
-	e_ServiceInformationTable: "ServiceInformationTable",
-	e_SegmentReference: "SegmentReference",
-	e_ShortTitle: "ShortTitle",
-	e_SigningAttributes: "SigningAttributes",
-	e_SignLanguage: "SignLanguage",
-	e_SocialMediaReference: "SocialMediaReference",
-	e_SourceMediaLocator: "SourceMediaLocator",
-	e_SpokenSubtitlesAttributes: "SpokenSubtitlesAttributes",
-	e_StartOfAvailability: "StartOfAvailability",
-	e_StillPictureFormat: "StillPictureFormat",
-	e_StreamID: "StreamID",
-	e_SubtitleAttributes: "SubtitleAttributes",
-	e_SubtitleLanguage: "SubtitleLanguage",
-	e_SuitableForTTS: "SuitableForTTS",
-	e_Synopsis: "Synopsis",
-	e_System: "System",
-	e_Title: "Title",
-	e_VerticalSize: "VerticalSize",
-	e_VideoAttributes: "VideoAttributes",
+	t_MemberOfType: string = "MemberOfType"
+	t_ProgramGroupTypeType: string = "ProgramGroupTypeType"
 
-	a_average: "average",
-	a_closed: "closed",
-	a_contentLanguage: "contentLanguage",
-	a_contentType: "contentType",
-	a_crid: "crid",
-	a_end: "end",
-	a_fragmentId: "fragmentId",
-	a_fragmentVersion: "fragmentVersion",
-	a_fragmentExpirationDate: "fragmentExpirationDate",
-	a_groupId: "groupId",
-	a_horizontalSize: "horizontalSize",
-	a_href: "href",
-	a_index: "index",
-	a_integrity: "integrity",
-	a_lang: mpeg7.a_lang,
-	a_length: "length",
-	a_maximum: "maximum",
-	a_metadataOriginIDRef: "metadataOriginIDRef",
-	a_minimum: "minimum",
-	a_numOfItems: "numOfItems",
-	a_ordered: "ordered",
-	a_primary: "primary",
-	a_programId: "programId",
-	a_purpose: "purpose",
-	a_role: "role",
-	a_serviceIDRef: "serviceIDRef",
-	a_serviceInstanceID: "serviceInstanceID",
-	a_start: "start",
-	a_supplemental: "supplemental",
-	a_translation: "translation",
-	a_type: "type",
-	a_uriType: "uriType",
-	a_variable: "variable",
-	a_value: "value",
-	a_verificationPolicy: "verificationPolicy",
-	a_verticalSize: "verticalSize",
-
-	v_lengthLong: "long",
-	v_otherCollection: "otherCollection",
-
-	t_MemberOfType: "MemberOfType",
-	t_ProgramGroupTypeType: "ProgramGroupTypeType",
-
-	cs_PromotionalStillImage: `${TVA_CSmetadata}:HowRelatedCS:2012:19`,
+	cs_PromotionalStillImage: string = `${TVA_CSmetadata}:HowRelatedCS:2012:19`
 };
+
+export const tva = new TVAterms()
 
 const tvaBaseMemberOfTypeAttributes: string[] = [tva.a_crid, tva.a_index],
 	tvaControlledTermTypeAttributes: string[] = [tva.a_href],

@@ -22,6 +22,9 @@ import morgan, { token } from "morgan"
 import fileupload from "express-fileupload"
 import favicon from "serve-favicon"
 import fetchS from "sync-fetch"
+import commandLineArgs from "command-line-args"
+import { Server } from "https"
+import type { AddressInfo } from "node:net"
 
 import { fetch_options, CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts"
 import { Default_SLEPR, __dirname } from "./data_locations.mts"
@@ -54,15 +57,20 @@ import writeOut, { createPrefix } from "./logger.mts"
 import { init_spam_blocker } from "./spam_disruptions.mjs"
 import { GERMAN_A177r6_VARIANT } from "./globals.mts"
 
-let csr = null;
+let csr: SLEPR | null= null;
 
 const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), { encoding: "utf-8" }).toString());
 
 const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
 
-
-function DVB_I_check(req, res, slcheck, plcheck, cgcheck, slrcheck, hasSL, hasPL, hasCG, hasSLR, motd, mode = MODE_UNSPECIFIED, linktype = MODE_UNSPECIFIED) {
+function DVB_I_check(
+		req: express.Request, res: express.Response, 
+		slcheck: ServiceListCheck | null, plcheck: PlaylistCheck | null, cgcheck: ContentGuideCheck | null, slrcheck: ServiceListRegistryCheck | null, 
+		hasSL: boolean, hasPL: boolean, hasCG: boolean, hasSLR: boolean, 
+		motd: string | undefined, 
+		mode: string = MODE_UNSPECIFIED, linktype: string = MODE_UNSPECIFIED) {
+			
 	if (!req.session.data) {
 		// setup defaults
 		req.session.data = {};
@@ -79,14 +87,15 @@ function DVB_I_check(req, res, slcheck, plcheck, cgcheck, slrcheck, hasSL, hasPL
 	}
 	
 	const FormArguments: FormModes = { cg: MODE_CG, sl: MODE_SL, pl: MODE_PL, slr: MODE_SLR, file: MODE_FILE, url: MODE_URL, hasSL: hasSL, hasPL: hasPL, hasCG: hasCG, hasSLR: hasSLR };
-	if (!req.body?.testtype) drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, motd, null, null);
+	if (!req.body?.testtype) 
+		drawForm(req, res, FormArguments, (cgcheck && cgcheck.supportedRequests) ? cgcheck.supportedRequests : null, motd, undefined, undefined);
 	else {
-		let VVxml = null;
-		req.parseErr = null;
+		let VVxml: string | null = null;
+		req.parseErr = undefined;
 
-		if (req.body.testtype == MODE_CG && req.body.requestType.length == 0) req.parseErr = "request type not specified";
-		else if (req.body.doclocation == MODE_URL && req.body.XMLurl.length == 0) req.parseErr = "URL not specified";
-		else if (req.body.doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) req.parseErr = "File not provided";
+		if (req.body.testtype == MODE_CG && req.body.requestType.length == 0) req.parseErr = ["request type not specified"]
+		else if (req.body.doclocation == MODE_URL && req.body.XMLurl.length == 0) req.parseErr = ["URL not specified"]
+		else if (req.body.doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) req.parseErr = ["File not provided"]
 
 		req.session.data.forGermany = req.body.forGermany == "on";
 		const log_prefix = createPrefix(req);
@@ -98,28 +107,28 @@ function DVB_I_check(req, res, slcheck, plcheck, cgcheck, slrcheck, hasSL, hasPL
 						try {
 							resp = fetchS(req.body.XMLurl, fetch_options);
 						} catch (error) {
-							req.parseErr = `(${error.code}) ${error.message}`;
+							req.parseErr = [`(${error.code}) ${error.message}`];
 						}
 						if (resp) {
 							if (resp.ok) VVxml = resp.text();
-							else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
+							else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`];
 						}
-					} else req.parseErr = `${req.body.XMLurl} is not an HTTP(S) URL`;
+					} else req.parseErr = [`${req.body.XMLurl} is not an HTTP(S) URL`];
 					req.session.data.url = req.body.XMLurl;
 					break;
 				case MODE_FILE:
 					try {
-						VVxml = req.files.XMLfile.data.toString();
+						VVxml = (req.files!.XMLfile as fileupload.UploadedFile).data.toString();
 					} catch (err) {
-						req.parseErr = `retrieval of FILE ${req.files.XMLfile.name} failed (${err})`;
+						req.parseErr = [`retrieval of FILE ${(req.files!.XMLfile as fileupload.UploadedFile).name} failed (${err})`];
 					}
-					req.session.data.url = null;
+					req.session.data.url = undefined;
 					break;
 				default:
-					req.parseErr = `method is not ${MODE_URL.quote()} or ${MODE_FILE.quote()}`;
+					req.parseErr = [`method is not ${MODE_URL.quote()} or ${MODE_FILE.quote()}`];
 			}
 		const errs = new ErrorList();
-		if (!req.parseErr)
+		if (!req.parseErr && VVxml)
 			switch (req.body.testtype) {
 				case MODE_CG:
 					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
@@ -154,26 +163,26 @@ function DVB_I_check(req, res, slcheck, plcheck, cgcheck, slrcheck, hasSL, hasPL
 /**
  * Validate a service list
  *
- * @param {Express request}  req           The Express request that triggered the validation
- * @param {Express response} res           The Express response to be written to the requester
+ * @param {express.Request}  req           The Express request that triggered the validation
+ * @param {express.Response} res           The Express response to be written to the requester
  * @param {ServiceListCheck} slcheck       Initialised Service List validator
- * @param {string}           motd          HTML text for the Message Of The Day
+ * @param {string | undefined} motd          HTML text for the Message Of The Day
  * @param {boolean}          jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateServiceList(req, res, slcheck, motd, jsonResponse) {
+function validateServiceList(req: express.Request, res: express.Response, slcheck: ServiceListCheck, motd: string | undefined, jsonResponse: boolean) {
 	const errs = new ErrorList();
 	let resp,
 		VVxml = null;
 	const log_prefix = createPrefix(req);
 	if (req.method == "GET") {
 		try {
-			resp = fetchS(req.query.url, fetch_options);
+			resp = fetchS(req.query.url as string, fetch_options);
 		} catch (error) {
-			req.parseErr = error.message;
+			req.parseErr = [error.message];
 		}
 		if (resp) {
 			if (resp.ok) VVxml = resp.text();
-			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
+			else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`];
 		}
 	} else if (req.method == "POST") {
 		VVxml = req.body;
@@ -201,26 +210,26 @@ function validateServiceList(req, res, slcheck, motd, jsonResponse) {
 /**
  * Validate a play list
  *
- * @param {Express request}  req           The Express request that triggered the validation
- * @param {Express response} res           The Express response to be written to the requester
+ * @param {express.Request}  req           The Express request that triggered the validation
+ * @param {express.Response} res           The Express response to be written to the requester
  * @param {PlaylistCheck}    plcheck       Initialised play List validator
- * @param {string}           motd          HTML text for the Message Of The Day
+ * @param {string | undefined} motd          HTML text for the Message Of The Day
  * @param {boolean}          jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
-function validatePlaylist(req, res, plcheck, motd, jsonResponse) {
+function validatePlaylist(req: express.Request, res: express.Response, plcheck: PlaylistCheck, motd: string | undefined, jsonResponse: boolean) {
 	const errs = new ErrorList();
 	let resp,
 		VVxml = null;
 	const log_prefix = createPrefix(req);
 	if (req.method == "GET") {
 		try {
-			resp = fetchS(req.query.url, fetch_options);
+			resp = fetchS(req.query.url as string, fetch_options);
 		} catch (error) {
 			req.parseErr = error.message;
 		}
 		if (resp) {
 			if (resp.ok) VVxml = resp.text();
-			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
+			else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`]
 		}
 	} else if (req.method == "POST") {
 		VVxml = req.body;
@@ -249,26 +258,26 @@ function validatePlaylist(req, res, plcheck, motd, jsonResponse) {
 /**
  * Validate a service list registry
  *
- * @param {Express request}          req           The Express request that triggered the validation
- * @param {Express response}         res           The Express response to be written to the requester
+ * @param {express.Request}          req           The Express request that triggered the validation
+ * @param {express.Response}         res           The Express response to be written to the requester
  * @param {ServiceListRegistryCheck} slrcheck       Initialised Service List validator
- * @param {string}                   motd           HTML text for the Message Of The Day
+ * @param {string | undefined}       motd           HTML text for the Message Of The Day
  * @param {boolean}                  jsonResponse   Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateServiceListRegistry(req, res, slrcheck, motd, jsonResponse) {
+function validateServiceListRegistry(req: express.Request, res: express.Response, slrcheck: ServiceListRegistryCheck, motd: string | undefined, jsonResponse: boolean) {
 	const errs = new ErrorList();
 	let resp,
 		VVxml = null;
 	const log_prefix = createPrefix(req);
 	if (req.method == "GET") {
 		try {
-			resp = fetchS(req.query.url, fetch_options);
+			resp = fetchS(req.query.url as string, fetch_options);
 		} catch (error) {
 			req.parseErr = error.message;
 		}
 		if (resp) {
 			if (resp.ok) VVxml = resp.text();
-			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
+			else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`];
 		}
 	} else if (req.method == "POST") {
 		VVxml = req.body;
@@ -295,35 +304,34 @@ function validateServiceListRegistry(req, res, slrcheck, motd, jsonResponse) {
 /**
  * Validate a content guide metadata
  *
- * @param {Express request}   req           The Express request that triggered the validation
- * @param {Express response}  res           The Express response to be written to the requester
+ * @param {express.Request}   req           The Express request that triggered the validation
+ * @param {express.Response}  res           The Express response to be written to the requester
  * @param {ContentGuideCheck} cgcheck       Initialised Content Guide Metadata validator
- * @param {string}            motd          HTML text for the Message Of The Day
+ * @param {string | undefined} motd          HTML text for the Message Of The Day
  * @param {boolean}           jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateContentGuide(req, res, cgcheck, motd, jsonResponse) {
+function validateContentGuide(req: express.Request, res: express.Response, cgcheck: ContentGuideCheck, motd: string | undefined, jsonResponse: boolean) {
 	const errs = new ErrorList();
 	let resp,
 		VVxml = null;
 	const log_prefix = createPrefix(req);
 	if (req.method == "GET") {
 		try {
-			resp = fetchS(req.query.url, fetch_options);
+			resp = fetchS(req.query.url as string, fetch_options);
 		} catch (error) {
 			console.log(error);
 			req.parseErr = error.message;
 		}
 		if (resp) {
-			console.log(resp.content);
 			if (resp.ok) VVxml = resp.text();
-			else req.parseErr = `error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`;
+			else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`]
 		}
 	} else if (req.method == "POST") {
 		VVxml = req.body;
 	} else {
 		res.status(405).end();
 	}
-	cgcheck.doValidateContentGuide(VVxml, req.query.type, errs, { log_prefix: log_prefix, report_schema_version: true });
+	cgcheck.doValidateContentGuide(VVxml, req.query.type as string, errs, { log_prefix: log_prefix, report_schema_version: true });
 	if (jsonResponse) {
 		res.setHeader("Content-Type", "application/json");
 		if (req.parseErr) res.write(JSON.stringify({ parseErr: req.parseErr }));
@@ -344,9 +352,9 @@ function validateContentGuide(req, res, cgcheck, motd, jsonResponse) {
 /**
  * Setup the validation and service list registry endpoints
  *
- * @param {Object} options   Command Line Arguments - see OptionDefinitions in all-in-one.js
+ * @param {commandLineArgs.CommandLineOptions} options   Command Line Arguments - see OptionDefinitions in all-in-one.js
  */
-export default function validator(options) {
+export default function validator(options: commandLineArgs.CommandLineOptions) {
 	if (options.nocsr && options.nosl && options.nopl && options.nocg && options.noslr) {
 		console.log(chalk.red("nothing to do... exiting"));
 		process.exit(1);
@@ -363,10 +371,10 @@ export default function validator(options) {
 		process.exit(1);
 	}
 
-	let motd = null;
+	let motd: string | undefined = undefined;
 	if (HasProperty(options, "motd")) {
 		console.log(chalk.yellow("reading Message Of The Day from " + chalk.green(options.motd)));
-		motd = readmyfile(options.motd, { encoding: "utf-8", flag: "r" });
+		motd = readmyfile(options.motd, { encoding: "utf-8", flag: "r" }) as string;
 	}
 
 	// initialize Express
@@ -379,30 +387,32 @@ export default function validator(options) {
 	app.use(fileupload());
 	app.use(favicon(join("icon", "ph-icon.ico")));
 
-	token("protocol", (req) => {
+	token("protocol", (req: express.Request) => {
 		return req.protocol;
 	});
-	token("counts", (req) => {
+	token("counts", (req: express.Request) => {
 		return req.diags ? `(${req.diags.countErrors},${req.diags.countWarnings},${req.diags.countInforms})` : "[-]";
 	});
-	token("agent", (req) => {
+	token("agent", (req: express.Request) => {
 		return `(${req.headers["user-agent"]})`;
 	});
-	token("vary", (req, res) => {
-		return res?.varyOn?.size > 0 ? `vary(${[...res.varyOn].join(",")})` : "-";
+	token("vary", (req: express.Request, res: express.Response) => {
+		return (res.varyOn && res.varyOn.size > 0) ? `vary(${[...res.varyOn!].join(",")})` : "-";
 	});
-	token("parseErr", (req) => {
+	token("parseErr", (req: express.Request) => {
 		return req?.parseErr ? `(${req.parseErr})` : "";
 	});
-	token("location", (req) => {
+	token("location", (req: express.Request) => {
 		return req?.body?.testtype
 			? `${req.body.testtype}::[${req.body.testtype == MODE_CG ? `(${req.body.requestType})` : ""}${
-					req.body.doclocation == MODE_FILE ? (req.files?.XMLfile ? req.files.XMLfile.name : "unnamed") : req.body.XMLurl
+					req.body.doclocation == MODE_FILE ? (req.files?.XMLfile ? (req.files.XMLfile as fileupload.UploadedFile).name : "unnamed") : req.body.XMLurl
 				}]`
 			: "[*]";
 	});
-	token("redirect", (req, res) => {
-		return [301,302].includes(res.statusCode) ? `redirect(${req.socket.remoteFamily}-${req._remoteAddress})` : "";
+
+	const getSource = (req: express.Request) => req.ip || req._remoteAddress || (req.socket && req.socket.remoteAddress) ||  undefined;
+	token("redirect", (req: express.Request, res: express.Response) => {
+		return [301,302].includes(res.statusCode) ? `redirect(${req.socket.remoteFamily}-${getSource(req)}` : "";
 	});
 
 	const LOGGING_TEMPLATE = ":remote-addr :protocol :method :url :status :res[content-length] :counts - :response-time ms :agent :parseErr :location :vary :redirect";
@@ -425,27 +435,31 @@ export default function validator(options) {
 		cgcheck = null,
 		slrcheck = null;
 
+	const DFLT_async = true, DFLT_verbose = true;
+
 	if (options.urls && options.CSRfile == Default_SLEPR.file) options.CSRfile = Default_SLEPR.url;
 
-	const knownLanguages = LoadLanguages({useURLs: options.urls});
-	const isoCountries = LoadCountries({useURLs: options.urls});
-	const knownGenres = LoadGenres({useURLs: options.urls});
+	const knownLanguages = LoadLanguages({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+	const isoCountries = LoadCountries({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+	const knownGenres = LoadGenres({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
 
 	if (!options.nosl || !options.nopl || !options.nocg || !options.noslr) {
-		const knownRatings = LoadRatings(options.urls);
-		const accessibilityPurposes = LoadAccessibilityPurpose(options.urls);
-		const audioPurposes = LoadAudioPurpose(options.urls);
-		const subtitleCarriages = LoadSubtitleCarriages(options.urls);
-		const subtitleCodings = LoadSubtitleCodings(options.urls);
-		const subtitlePurposes = LoadSubtitlePurposes(options.urls);
-		const videoFormats = LoadVideoCodecCS(options.urls);
-		const audioFormats = LoadAudioCodecCS(options.urls);
-		const audioPresentation = LoadAudioPresentationCS(options.urls);
-		const linkedApplicationTypes = LoadLinkedApplicationCS(options.urls);
+		const knownRatings = LoadRatings({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+		const accessibilityPurposes = LoadAccessibilityPurpose({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+		const audioPurposes = LoadAudioPurpose({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+		const subtitleCarriages = LoadSubtitleCarriages({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+		const subtitleCodings = LoadSubtitleCodings({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+		const subtitlePurposes = LoadSubtitlePurposes({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+		const videoFormats = LoadVideoCodecCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+		const audioFormats = LoadAudioCodecCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+		const audioPresentation = LoadAudioPresentationCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+		const linkedApplicationTypes = LoadLinkedApplicationCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
 
 		if (!options.nosl)
 			slcheck = new ServiceListCheck({
-				useURLs: options.useURLs,
+				useURLs: options.urls,
+				async: DFLT_async,
+				verbose: DFLT_verbose,
 
 				accessibilities: accessibilityPurposes,
 				audiofmts: audioFormats,
@@ -453,7 +467,7 @@ export default function validator(options) {
 				audiopurps: audioPurposes,
 				countries: isoCountries,
 				genres: knownGenres,
-				languagess: knownLanguages,
+				languages: knownLanguages,
 				stcarriage: subtitleCarriages,
 				stcodings: subtitleCodings,
 				stpurposes: subtitlePurposes,
@@ -463,12 +477,16 @@ export default function validator(options) {
 
 		if (!options.nopl)
 			plcheck = new PlaylistCheck( {
-				useURLs: options.useURLs,
+				useURLs: options.urls,
+				async: DFLT_async,
+				verbose: DFLT_verbose,
 			});
 
 		if (!options.nocg)
 			cgcheck = new ContentGuideCheck({
-				useURLs: options.useURLs,
+				useURLs: options.urls,
+				async: DFLT_async,
+				verbose: DFLT_verbose,
 
 				accessibilities: accessibilityPurposes,
 				audiofmts: audioFormats,
@@ -484,14 +502,17 @@ export default function validator(options) {
 				videofmts: videoFormats,
 			});
 
-		if (!options.noslr) slrcheck = new ServiceListRegistryCheck({
-			useURLs: options.useURLs,
-			
-			countries: isoCountries, 
-			genres: knownGenres, 
-			languages: knownLanguages, 
-			appfmts: linkedApplicationTypes,
-		});
+		if (!options.noslr) 
+			slrcheck = new ServiceListRegistryCheck({
+				useURLs: options.urls,
+				async: DFLT_async,
+				verbose: DFLT_verbose,
+
+				countries: isoCountries, 
+				genres: knownGenres, 
+				languages: knownLanguages, 
+				appfmts: linkedApplicationTypes,
+			});
 	}
 
 	const Express_Options = {
@@ -501,57 +522,61 @@ export default function validator(options) {
 
 	if (!options.nosl) {
 		app.all("/validate_sl", express.text(Express_Options), (req, res) => {
-			validateServiceList(req, res, slcheck, motd, false);
+			validateServiceList(req, res, slcheck!, motd, false);
 		});
 
 		app.all("/validate_sl_json", express.text(Express_Options), (req, res) => {
-			validateServiceList(req, res, slcheck, motd, true);
+			validateServiceList(req, res, slcheck!, motd, true);
 		});
 	}
 
 	if (!options.nopl) {
 		app.all("/validate_pl", express.text(Express_Options), (req, res) => {
-			validatePlaylist(req, res, plcheck, motd, false);
+			validatePlaylist(req, res, plcheck!, motd, false);
 		});
 
 		app.all("/validate_pl_json", express.text(Express_Options), (req, res) => {
-			validatePlaylist(req, res, plcheck, motd, true);
+			validatePlaylist(req, res, plcheck!, motd, true);
 		});
 	}
 
 	if (!options.nocg) {
 		app.all("/validate_cg", express.text(Express_Options), (req, res) => {
-			validateContentGuide(req, res, cgcheck, motd, false);
+			validateContentGuide(req, res, cgcheck!, motd, false);
 		});
 
 		app.all("/validate_cg_json", express.text(Express_Options), (req, res) => {
-			validateContentGuide(req, res, cgcheck, motd, true);
+			validateContentGuide(req, res, cgcheck!, motd, true);
 		});
 	}
 
 	if (!options.noslr) {
 		app.all("/validate_slr", express.text(Express_Options), (req, res) => {
-			validateServiceListRegistry(req, res, slrcheck, motd, false);
+			validateServiceListRegistry(req, res, slrcheck!, motd, false);
 		});
 
 		app.all("/validate_slr_json", express.text(Express_Options), (req, res) => {
-			validateServiceListRegistry(req, res, slrcheck, motd, true);
+			validateServiceListRegistry(req, res, slrcheck!, motd, true);
 		});
 	}
 
 	const SLEPR_query_route = "/query",
 		SLEPR_reload_route = "/reload";
 
-	let manualCORS = function (req, res, next) {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	type nextFn = (err?: any) => any  // cors module doesnot strictly type this
+
+	let manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
 		next();
 	};
 	if (options.CORSmode == CORSlibrary) {
 		app.use(cors());
 	} else if (options.CORSmode == CORSmanual) {
-		manualCORS = function (req, res, next) {
-			let opts = res.getHeader("X-Frame-Options");
+		manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
+			let opts : string[] | undefined = res.getHeader("X-Frame-Options") as string[] | undefined;
 			if (opts) {
-				if (!opts.includes("SAMEORIGIN")) opts.push("SAMEORIGIN");
+				if (!opts.includes("SAMEORIGIN")) 
+					opts.push("SAMEORIGIN");
 			} else opts = ["SAMEORIGIN"];
 			res.setHeader("X-Frame-Options", opts);
 			res.setHeader("Access-Control-Allow-Origin", "*");
@@ -576,12 +601,12 @@ export default function validator(options) {
 			app.options(SLEPR_query_route, manualCORS);
 		}
 		app.get(SLEPR_query_route, manualCORS, (req, res) => {
-			csr.processServiceListRequest(req, res);
+			csr!.processServiceListRequest(req, res);
 			res.end();
 		});
 
 		app.get(SLEPR_reload_route, (req, res) => {
-			csr.loadServiceListRegistry(options.CSRfile);
+			csr!.loadServiceListRegistry(options.CSRfile);
 			res.status(200).end();
 		});
 	}
@@ -590,7 +615,7 @@ export default function validator(options) {
 		init_spam_blocker(app);
 	}
 
-	const tabulate = function (res, group, stats) {
+	const tabulate = function (res: express.Response, group: string, stats: Record<string, string | number>) {
 		res.write(`<h1>${group}</h1>`);
 		if (Object.keys(stats).length === 0) res.write("<p>No statistics</p>");
 		else {
@@ -603,7 +628,7 @@ export default function validator(options) {
 
 	app.get("/stats", (req, res) => {
 		res.setHeader("Content-Type", "text/html");
-		res.write(PAGE_TOP("Validator Stats"));
+		res.write(PAGE_TOP("Validator Stats", req.secure));
 		tabulate(res, "System", {
 			arch: os.arch(),
 			endianness: os.endianness(),
@@ -629,7 +654,7 @@ export default function validator(options) {
 		res.status(200).end();
 	});
 
-	const tabularize = function( res, groupname, values ) {
+	const tabularize = function(res : express.Response, groupname: string, values: string[] ) {
 		res.write(`<h1>${groupname}</h1>`);
 		if (values.length == 0)
 			res.write("<p>No values</p>");
@@ -648,17 +673,17 @@ export default function validator(options) {
 			res.write("</table>");
 		}
 	}
-	app.get("/langs", (req, res) => {
+	app.get("/langs", (req: express.Request, res: express.Response) => {
 		res.setHeader("Content-Type", "text/html");
-		res.write(PAGE_TOP("Languages"));
+		res.write(PAGE_TOP("Languages", req.secure));
 
-		let langs = {empty: true}
-		if (slcheck) langs = slcheck.langs(true);
+		let langs: Record<string, string[]> = {empty: []} 
+		if (slcheck) langs = slcheck.langs(true) as Record<string, string[]>;
 
 		if (HasProperty(langs, "empty"))
 			res.write("<p>No statistics</p>");
 		else {
-			Object.getOwnPropertyNames(langs).forEach((key) => tabularize(res, key, langs[key]));
+			Object.getOwnPropertyNames(langs).forEach((key) => tabularize(res, key, langs[key] as string[]));
 		}
 		res.write(PAGE_BOTTOM);
 		res.status(200).end();
@@ -672,17 +697,17 @@ export default function validator(options) {
 	// start the HTTPS server
 	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
 	const https_options = {
-		key: readmyfile(keyFilename),
-		cert: readmyfile(certFilename),
+		key: readmyfile(keyFilename, {}) as Buffer,
+		cert: readmyfile(certFilename, {}) as Buffer,
 	};
-	let https_server = null;
+	let https_server : Server | null = null;
 
 	if (https_options.key && https_options.cert) {
 		if (options.sport == options.port) options.sport = options.port + 1;
 
 		https_server = createServer(https_options, app);
 		https_server.listen(options.sport, () => {
-			console.log(chalk.cyan(`HTTPS listening on port number ${https_server.address().port}`));
+			console.log(chalk.cyan(`HTTPS listening on port number ${(https_server!.address() as AddressInfo).port}`));
 
 			const redirect_app = express();
 			redirect_app.use(morgan(LOGGING_TEMPLATE));
@@ -695,13 +720,14 @@ export default function validator(options) {
 		});
 	}
 
-	const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+	const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 	delay(3000); // give the HTTPS server time to start before starting the HTTP server
 
 	if (!https_server?.listening) {
 	 // start the HTTP server
 		const http_server = app.listen(options.port, () => {
-			if (http_server.address()?.port) console.log(chalk.cyan(`HTTP listening on port number ${http_server.address().port}`));
+			if ((http_server.address() as AddressInfo).port) 
+				console.log(chalk.cyan(`HTTP listening on port number ${(http_server.address() as AddressInfo).port}`));
 			else console.log(chalk.red(`HTTP port ${options.port} already in use -- HTTP server not started`));
 		});
 	}

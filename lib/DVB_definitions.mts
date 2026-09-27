@@ -51,34 +51,21 @@ const _S2X_Modulation: string[] = ["8PSK-L", "16APSK", "16APSK-L", "32APSK", "32
 // other modulation values found in ETSI EN 302 307-2 V1.4.1 table 1 but not included in A177r6
 // 128APSK, 256APSK, 256APSK-L, BPSK, BPSK-S
 
-type satellite_definitions = {
-	MODULATION_S: string
-	S_FEC: string[]
-	S_RollOff: string[]
-	S_Modulation: string[]
+class satellite_definitions {
+	MODULATION_S: string = "DVB-S"
+	S_FEC: string[] =  _S_FEC
+	S_RollOff: string[] = _S_RollOff
+	S_Modulation: string[] = _S_Modulation
 
-	MODULATION_S2: string
-	S2_FEC: string[]
-	S2_RollOff: string[]
-	S2_Modulation: string[]
+	MODULATION_S2: string = "DVB-S2"
+	S2_FEC: string[] =  _S2_FEC
+	S2_RollOff: string[] = _S2_RollOff
+	S2_Modulation: string[] = _S2_Modulation
 
-	MODULATION_S2X: string
-	S2X_FEC: string[]
-	S2X_RollOff: string[]
-	S2X_Modulation: string[]
+	MODULATION_S2X: string = "DVB-S2X"
+	S2X_FEC: string[] =  _S2X_FEC
+	S2X_RollOff: string[] = _S2X_RollOff
+	S2X_Modulation: string[] = _S2X_Modulation
 }
 
-export const sats: satellite_definitions = {
-	MODULATION_S: "DVB-S",
-	MODULATION_S2: "DVB-S2",
-	MODULATION_S2X: "DVB-S2X",
-	S_FEC: _S_FEC,
-	S_RollOff: _S_RollOff,
-	S_Modulation: _S_Modulation,
-	S2_FEC: _S2_FEC,
-	S2_RollOff: _S2_RollOff,
-	S2_Modulation: _S2_Modulation,
-	S2X_FEC: _S2X_FEC,
-	S2X_RollOff: _S2X_RollOff,
-	S2X_Modulation: _S2X_Modulation,
-};
+export const sats = new satellite_definitions()

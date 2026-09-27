@@ -187,7 +187,8 @@ export function LoadAccessibilityPurpose(opts: LoadOptions): ClassificationSchem
 		opts.useURLs 
 			? { url: TVA_AccessibilityPurposeCS.url } 
 			: { file: TVA_AccessibilityPurposeCS.file }, 
-		opts);
+		opts
+	);
 	return cs;
 }
 

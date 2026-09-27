@@ -37,6 +37,7 @@
 	"scripts": {
 		"start": "node all-in-one.ts",
 		"lint": "eslint . ",
+		"lintTS": "tslint -c tslint.json -p tsconfig.json",
 		"lint:fix": "eslint . --fix ",
 		"test-expressions": "node testsuite/test-expressions.ts",
 		"test-documents": "node testsuite/test-documents.ts",

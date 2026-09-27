@@ -8,7 +8,7 @@
  * log stuff from the validator
  */
 
-import * as Express from "express"
+import express from "express"
 import chalk from "chalk"
 
 import { existsSync, writeFile } from "fs"
@@ -16,10 +16,10 @@ import { join, sep } from "path"
 import { MODE_URL, MODE_SL, MODE_SLR } from "./ui.mts"
 import ErrorList from "./error_list.mts"
 
-export function createPrefix(req: Express.Request) {
+export function createPrefix(req: express.Request) : string | undefined {
 	const logDir = join(".", "arch");
 
-	if (!existsSync(logDir)) return null;
+	if (!existsSync(logDir)) return undefined;
 
 	const getDate = (i : Temporal.Instant) => {
 		const fillZero = (t: number) : string => `${t < 10 ? "0" : ""}${t}`;
@@ -28,7 +28,7 @@ export function createPrefix(req: Express.Request) {
 	};
 
 	const fname = req.body.doclocation == MODE_URL ? req.body.XMLurl.substr(req.body.XMLurl.lastIndexOf("/") + 1) : req?.files?.XMLfile?.name;
-	if (!fname) return null;
+	if (!fname) return undefined;
 
 	const mode = req.body.testtype == MODE_SL ? "SL" : req.body.testtype == MODE_SLR ? "SLR" : req.body.requestType;
 
@@ -36,7 +36,7 @@ export function createPrefix(req: Express.Request) {
 }
 
 
-export default function writeOut(errs: ErrorList, filebase: string | undefined, markup: boolean, req?: Express.Request) {
+export default function writeOut(errs: ErrorList, filebase: string | undefined, markup: boolean, req?: express.Request) {
 	if (!filebase || errs.markupXML?.length == 0) return;
 
 	const outputLines = [];

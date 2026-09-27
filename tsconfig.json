@@ -24,6 +24,7 @@
     "target": "esnext",
 
 		"emitDeclarationOnly": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+		"strictPropertyInitialization": false,
   }
 }
