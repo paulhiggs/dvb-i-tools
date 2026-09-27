@@ -50,4 +50,4 @@ export const mpeg7: Record<string, string> = {
 	e_Name: "Name",
 };
 
-export const MPEG1_layer_2 = `${MPEG7_CS}:AudioCodingFormatCS:2001:3.2`;
+export const MPEG1_layer_2: string = `${MPEG7_CS}:AudioCodingFormatCS:2001:3.2`;

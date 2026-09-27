@@ -29,7 +29,7 @@ import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs"
 xmlRegisterFsInputProviders();
 
 import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./lib/data_locations.mts"
-import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mts"
+import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort, StatsType } from "./lib/globals.mts"
 import { readmyfile } from "./lib/utils.mts"
 
 import IANAlanguages from "./lib/IANA_languages.mts"
@@ -215,7 +215,7 @@ if (cluster.isPrimary) {
 					break;
 				case STATS:
 					// eslint-disable-next-line no-case-declarations
-					const kl = {};
+					const kl: StatsType = {};
 					knownLanguages.stats(kl);
 					console.log(`knownLanguages.length=${kl.numLanguages}`);
 					console.log(`numCPUs=${numCPUs}`);
@@ -242,7 +242,7 @@ if (cluster.isPrimary) {
 		return req?.parseErr ? `(${req.parseErr})` : "";
 	});
 
-	const getSource = (req: express.Request) => req.ip || req._remoteAddress || (req.socket && req.socket.remoteAddress) ||  undefined;
+	const getSource = (req: express.Request) => req.ip || /*req._remoteAddress ||*/ (req.socket && req.socket.remoteAddress) ||  undefined;
 	token("redirect", (req: express.Request, res: express.Response) => {
 		return [301,302].includes(res.statusCode) ? `redirect(${req.socket.remoteFamily}-${getSource(req)}` : "";
 	});
@@ -316,7 +316,9 @@ if (cluster.isPrimary) {
 						{useURLs: options.urls, async: true, verbose: false},
 					);
 					knownGenres.loadCS(
-						options.urls ? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] } : { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] },
+						options.urls 
+							? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] as string[] } 
+							: { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] },
 						{useURLs: options.urls, async: true, verbose: false},
 					);
 					csr.loadDataFiles(options.urls, knownLanguages, knownCountries, knownGenres);

@@ -410,7 +410,7 @@ export default function validator(options: commandLineArgs.CommandLineOptions) {
 			: "[*]";
 	});
 
-	const getSource = (req: express.Request) => req.ip || req._remoteAddress || (req.socket && req.socket.remoteAddress) ||  undefined;
+	const getSource = (req: express.Request) => req.ip || /*req._remoteAddress ||*/ (req.socket && req.socket.remoteAddress) ||  undefined;
 	token("redirect", (req: express.Request, res: express.Response) => {
 		return [301,302].includes(res.statusCode) ? `redirect(${req.socket.remoteFamily}-${getSource(req)}` : "";
 	});

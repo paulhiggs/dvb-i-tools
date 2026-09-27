@@ -19,7 +19,7 @@ import ErrorList from "./error_list.mts";
 import { keys } from "./common_errors.mts"
 import { isDataURI } from "./pattern_checks.mts"
 
-const parseInlineImageData = (inline_image: string) => inline_image.substring(inline_image.indexOf(","));
+const parseInlineImageData = (inline_image: string) : string => inline_image.substring(inline_image.indexOf(","));
 const fetchContent = (url: string, options: Record<string, unknown>) => {
 	let resp = null;
 	try {

@@ -15,10 +15,11 @@ import { parameterCheck } from "./utils.mts"
 import { hbbtv } from "./HbbTV_definitions.mts"
 import ErrorList from "./error_list.mts"
 
-export const EXTENSION_LOCATION_SERVICE_LIST_REGISTRY = 101,
-	EXTENSION_LOCATION_SERVICE_ELEMENT = 201,
-	EXTENSION_LOCATION_DASH_INSTANCE = 202,
-	EXTENSION_LOCATION_OTHER_DELIVERY = 203;
+export const EXTENSION_LOCATION_SERVICE_LIST_REGISTRY: number = 101,
+	EXTENSION_LOCATION_SERVICE_ELEMENT: number = 201,
+	EXTENSION_LOCATION_DASH_INSTANCE: number = 202,
+	EXTENSION_LOCATION_OTHER_DELIVERY: number = 203;
+
 
 export function CheckExtension(extn: XmlElement, extLoc: number, errs: ErrorList, errCode: string) {
 	if (!parameterCheck("CheckExtension", extn, null, errs, "CE000")) return;

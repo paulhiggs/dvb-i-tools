@@ -9,6 +9,7 @@
  */
 
 import express from "express"
+import fileupload from "express-fileupload"
 import chalk from "chalk"
 
 import { existsSync, writeFile } from "fs"
@@ -27,7 +28,7 @@ export function createPrefix(req: express.Request) : string | undefined {
 		return `${d.year}-${fillZero(d.month)}-${fillZero(d.day)} ${fillZero(d.hour)}.${fillZero(d.minute)}.${fillZero(d.second)}`;
 	};
 
-	const fname = req.body.doclocation == MODE_URL ? req.body.XMLurl.substr(req.body.XMLurl.lastIndexOf("/") + 1) : req?.files?.XMLfile?.name;
+	const fname = req.body.doclocation == MODE_URL ? req.body.XMLurl.substr(req.body.XMLurl.lastIndexOf("/") + 1) : (req?.files?.XMLfile as fileupload.UploadedFile).name;
 	if (!fname) return undefined;
 
 	const mode = req.body.testtype == MODE_SL ? "SL" : req.body.testtype == MODE_SLR ? "SLR" : req.body.requestType;

@@ -26,7 +26,7 @@ export const StandardStatus: Record<string, number> = {
 	CURRENT: 0x08,
 };
 
-export const fetch_options: Record<string, unknown> = {
+export const fetch_options: Record<string, Record<string, string>> = {
 	headers: {
 		'User-Agent': 'DVB-I validator',
 	},

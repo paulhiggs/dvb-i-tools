@@ -8,8 +8,8 @@
  * various identifiers and their meaningful names
  */
 
-export const UUID_type="urn:uuid:";
-export const DASH_IF_Content_Protection_List = "https://dashif.org/identifiers/content_protection/";
+export const UUID_type: string ="urn:uuid:";
+export const DASH_IF_Content_Protection_List: string = "https://dashif.org/identifiers/content_protection/";
 export const ContentProtectionIDs: {id: string; description: string}[] = [
 	{ id: "urn:mpeg:mp4protection:2011", description: "ISO/IEC 14496-12 with CENC" },
 	{ id: "urn:mpeg:dash:13818:1:CA_descriptor:2011", description: "CAS in ISO/IEC 13818-1" },
@@ -49,11 +49,11 @@ export const ContentProtectionIDs: {id: string; description: string}[] = [
  * @param {string} systemId  the DRM System ID to verify 
  * @returns true is @schemeId is a known DRM System ID, otherwise false
  */
-export const KnownDRMScheme = (systemId: string): boolean => 
+export const KnownDRMScheme = (systemId: string) : boolean => 
 	ContentProtectionIDs.find((el) => el.id == systemId || el.id.substring(el.id.lastIndexOf(":") + 1) == systemId) != undefined;
 
 
-export const CA_SYSTEM_ID_REGISTRY = "https://www.dvbservices.com/identifiers/ca_system_id";
+export const CA_SYSTEM_ID_REGISTRY: string = "https://www.dvbservices.com/identifiers/ca_system_id";
 const CASystemIDs: {id_from: number; id_to: number, description: string}[] = [
 	{ id_from: 0x0001, id_to: 0x0001, description: "IPDC SPP Open Security Framework Generic Roaming (IPDC SPP (TS 102 474) Annex A)" },
 	{ id_from: 0x0002, id_to: 0x0002, description: "18Crypt (IPDC SPP (TS 102 474) Annex B)" },
@@ -233,5 +233,5 @@ const CASystemIDs: {id_from: number; id_to: number, description: string}[] = [
  * @param {Number} systemId  the CA System ID to verify 
  * @returns true if @systemId is a known CA System ID, otherwise false
  */
-export const KnownCASystemID = (systemId: number): boolean => 
+export const KnownCASystemID = (systemId: number) : boolean => 
 	CASystemIDs.find((el) => systemId >= el.id_from && systemId <= el.id_to) != undefined;

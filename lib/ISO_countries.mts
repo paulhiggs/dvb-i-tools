@@ -12,7 +12,6 @@ import { readFile, readFileSync } from "fs";
 
 import chalk from "chalk"
 import fetchS from "sync-fetch"
-import FetchError from "sync-fetch"
 
 import { DefaultProperty } from "./utils.mts"
 import handleErrors from "./fetch_err_handler.mts"
@@ -116,8 +115,7 @@ export default class ISOcountries {
 			try {
 				resp = fetchS(countriesURL, fetch_options);
 			} catch (error) {
-				if (error instanceof FetchError)
-					console.log(chalk.red(error.message));
+				console.log(chalk.red(error));
 			}
 			if (resp) {
 				if (resp.ok) this.#countriesList = loadCountryData(resp.text());
@@ -130,8 +128,10 @@ export default class ISOcountries {
 	
 		DefaultProperty(options, "purge", true);
 
-		if (source.file) this.#loadCountriesFromFile(source.file, options.purge, options.async, options.verbose);
-		else if (source.url) this.#loadCountriesFromURL(source.url, options.purge, options.async, options.verbose);
+		if (source.file) 
+			this.#loadCountriesFromFile(source.file, options.purge, options.async, options.verbose);
+		else if (source.url) 
+			this.#loadCountriesFromURL(source.url, options.purge, options.async, options.verbose);
 	}
 
 	reset() {
@@ -149,7 +149,7 @@ export default class ISOcountries {
 	 * @param {boolean} caseSensitive   ignore case
 	 * @return {boolean} true if countryCode is known else false
 	 */
-	isISO3166code(countryCode: string, caseSensitive:boolean = true) : boolean {
+	isISO3166code(countryCode: string, caseSensitive: boolean = true) : boolean {
 		let found = false;
 		const countryCode_lc = countryCode.toLowerCase();
 
@@ -163,7 +163,7 @@ export default class ISOcountries {
 		return found;
 	}
 
-	has(countryCode: string) {
+	has(countryCode: string) : boolean {
 		return this.isISO3166code(countryCode);
 	}
 }

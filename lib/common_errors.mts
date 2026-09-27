@@ -15,7 +15,7 @@ import type { ReportedErrorType } from "./error_list.mts"
 
 import {} from "./string-extensions.ts"
 
-export const keys = {
+export const keys: Record<string, string> = {
 	k_InvalidHRef: "invalid href",
 	k_InvalidValue: "invalid value",
 	k_InvalidTag: "invalid tag",
