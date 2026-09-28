@@ -1,11 +1,12 @@
 {
-	"name": "dvb-i-tools.js",
+	"name": "dvb-i-tools.ts",
 	"version": "1.10.1",
 	"description": "DVB-I V&V Tools - up to A177r8",
 	"keywords": [
 		"DVB-I"
 	],
-	"main": "all-in-one.js",
+	"main": "all-in-one.ts",
+	"types": "./lib/extensions.d.ts",
 	"type": "module",
 	"private": true,
 	"author": "Paul Higgs <paul_higgs@hotmail.com>",
@@ -24,6 +25,7 @@
 		"libxml2-wasm": "^0.7.2",
 		"morgan": "^1.12.1",
 		"qs": "^6.16.0",
+		"rotating-file-stream": "^3.2.10",
 		"serve-favicon": "^2.5.1",
 		"sha.js": "^2.4.12",
 		"sync-fetch": "^0.7.1",
@@ -34,14 +36,15 @@
 		"npm": ">= 10.8.1"
 	},
 	"scripts": {
-		"start": "node all-in-one.js",
+		"start": "node all-in-one.ts",
 		"lint": "eslint . ",
+		"lintTS": "tslint -c tslint.json -p tsconfig.json",
 		"lint:fix": "eslint . --fix ",
-		"test-expressions": "node testsuite/test-expressions.js",
-		"test-documents": "node testsuite/test-documents.js",
-		"test-lookups": "node testsuite/test-lookups.js",
-		"test-languages": "node testsuite/test-languages.js",
-		"test": "node testsuite/test-runner.js"
+		"test-expressions": "node testsuite/test-expressions.ts",
+		"test-documents": "node testsuite/test-documents.ts",
+		"test-lookups": "node testsuite/test-lookups.ts",
+		"test-languages": "node testsuite/test-languages.ts",
+		"test": "node testsuite/test-runner.ts"
 	},
 	"repository": {
 		"type": "git",
@@ -49,10 +52,24 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
+		"@types/chalk": "^0.4.31",
+		"@types/command-line-args": "^5.2.3",
+		"@types/command-line-usage": "^5.0.4",
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.6",
+		"@types/express-fileupload": "^1.5.1",
+		"@types/express-session": "^1.19.0",
+		"@types/morgan": "^1.9.10",
+		"@types/node": "^22.20.2",
+		"@types/qs": "^6.15.1",
+		"@types/serve-favicon": "^2.5.7",
+		"@types/sha.js": "^2.4.4",
+		"@types/sync-fetch": "^0.4.4",
 		"chai": "^6.2.2",
 		"eslint": "^10.10.0",
 		"globals": "^17.12.0",
 		"prettier": "^3.9.6",
+		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.70.0"
 	}
 }
