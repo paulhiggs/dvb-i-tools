@@ -27,6 +27,12 @@ Note that these values are case sensitive, and a case sensitive matching is perf
 1. Clone this repository `git clone https://github.com/paulhiggs/dvb-i-tools.git`
 1. Install necessary libraries (express, libxmljs, morgan) `npm install`
 
+### Logging
+
+If a subdirectory named `./arch` exists, then any XML document for validation will be copied there. There will be the original document with the suffix "`.txt`" and a second document with the suffix "`.mkup.txt`" containing line based validation results as XML comments 
+
+If a subdirectory named `./logs` extists, then enhanced HTTP server logging willl be directed there (in addition to the NodeJS console) 
+
 ### Operation
 
 1. Edit the Service List Entry Point Registry XML document (`slepr-master.xml`) as needed
@@ -109,15 +115,15 @@ Occassionally, the language-subtag-registry file can be updated from https://www
   - `"default"` - default mode - according to A177 specification
 - `--help [-h]` server and client command help
 
-### Use
-
-`<server>/check` gives a basic/primitive UI. Select the valildation type (service list or Content Guide) and provide either a URL or local file. Press "Validate!" button. Await results!
-
 ### Logging
 
 If a subdirectory named `./arch` exists, then any XML document for validation will be copied there. There will be the original document with the suffix "`.txt`" and a second document with the suffix "`.mkup.txt`" containing line based validation results as XML comments 
 
 If a subdirectory named `./logs` extists, then enhanced HTTP server logging willl be directed there (in addition to the NodeJS console) 
+
+### Use
+
+`<server>/check` gives a basic/primitive UI. Select the valildation type (service list or Content Guide) and provide either a URL or local file. Press "Validate!" button. Await results!
 
 #### Service list validation endpoints
 
