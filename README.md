@@ -113,6 +113,12 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 
 `<server>/check` gives a basic/primitive UI. Select the valildation type (service list or Content Guide) and provide either a URL or local file. Press "Validate!" button. Await results!
 
+### Logging
+
+If a subdirectory named `./arch` exists, then any XML document for validation will be copied there. There will be the original document with the suffix "`.txt`" and a second document with the suffix "`.mkup.txt`" containing line based validation results as XML comments 
+
+If a subdirectory named `./logs` extists, then enhanced HTTP server logging willl be directed there (in addition to the NodeJS console) 
+
 #### Service list validation endpoints
 
 `<server>/validate_sl?url=<service_list_url>` gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the servicelist in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML
