@@ -5,7 +5,7 @@
 	"keywords": [
 		"DVB-I"
 	],
-	"main": "all-in-one.js",
+	"main": "all-in-one.ts",
 	"types": "./lib/extensions.d.ts",
 	"type": "module",
 	"private": true,
@@ -25,6 +25,7 @@
 		"libxml2-wasm": "^0.7.2",
 		"morgan": "^1.12.1",
 		"qs": "^6.16.0",
+		"rotating-file-stream": "^3.2.10",
 		"serve-favicon": "^2.5.1",
 		"sha.js": "^2.4.12",
 		"sync-fetch": "^0.7.1",

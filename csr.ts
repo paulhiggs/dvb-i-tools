@@ -12,7 +12,7 @@ import { createServer } from "https"
 import cluster from "cluster"
 import { cpus } from "os"
 import process from "process"
-import { readFileSync } from "fs"
+import { readFileSync, existsSync } from "fs"
 
 import chalk from "chalk"
 import express from "express"
@@ -22,14 +22,15 @@ import commandLineArgs from "command-line-args"
 import commandLineUsage from "command-line-usage"
 import cors from "cors"
 import { Server } from "https"
-import { AddressInfo } from "node:net"
-
+import type { AddressInfo } from "node:net"
+import { createStream } from "rotating-file-stream";
 
 import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs"
 xmlRegisterFsInputProviders();
 
 import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./lib/data_locations.mts"
-import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort, StatsType } from "./lib/globals.mts"
+import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mts"
+import type { StatsType } from "./lib/globals.mts"
 import { readmyfile } from "./lib/utils.mts"
 
 import IANAlanguages from "./lib/IANA_languages.mts"
@@ -274,7 +275,21 @@ if (cluster.isPrimary) {
 
 	const csr = new SLEPR(options.urls, options.SLRmode, knownLanguages, knownCountries, knownGenres);
 	csr.loadServiceListRegistry(options.CSRfile);
-	app.use(morgan(":pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr :vary :redirect"));
+
+	const LOG_FORMAT = ":pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr :vary :redirect"
+	app.use(morgan(LOG_FORMAT));
+	
+	const logDir = join(".", "logs");
+	if (existsSync(logDir)) {
+		const logStream = createStream('access.log', {
+			interval: "1d", // rotate daily
+			compress: "gzip", // compress rotated files
+			path: logDir,
+		})
+		app.use(morgan(LOG_FORMAT, {stream: logStream}));
+	}
+
+
 	app.use(favicon(join("icon", "ph-icon.ico")));
 	if (options.CORSmode == CORSlibrary) 
 		app.options(SLEPR_query_route, cors());

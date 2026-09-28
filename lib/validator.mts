@@ -12,7 +12,8 @@ import { join } from "path"
 import { createServer } from "https"
 import os from "node:os"
 import process from "process"
-import { readFileSync } from "fs"
+import { readFileSync, existsSync } from "fs"
+
 
 import chalk from "chalk"
 import cors from "cors"
@@ -25,6 +26,7 @@ import fetchS from "sync-fetch"
 import commandLineArgs from "command-line-args"
 import { Server } from "https"
 import type { AddressInfo } from "node:net"
+import { createStream } from "rotating-file-stream";
 
 import { fetch_options, CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts"
 import { Default_SLEPR, __dirname } from "./data_locations.mts"
@@ -352,7 +354,7 @@ function validateContentGuide(req: express.Request, res: express.Response, cgche
 /**
  * Setup the validation and service list registry endpoints
  *
- * @param {commandLineArgs.CommandLineOptions} options   Command Line Arguments - see OptionDefinitions in all-in-one.js
+ * @param {commandLineArgs.CommandLineOptions} options   Command Line Arguments - see OptionDefinitions in all-in-one.ts
  */
 export default function validator(options: commandLineArgs.CommandLineOptions) {
 	if (options.nocsr && options.nosl && options.nopl && options.nocg && options.noslr) {
@@ -417,6 +419,16 @@ export default function validator(options: commandLineArgs.CommandLineOptions) {
 
 	const LOGGING_TEMPLATE = ":remote-addr :protocol :method :url :status :res[content-length] :counts - :response-time ms :agent :parseErr :location :vary :redirect";
 	app.use(morgan(LOGGING_TEMPLATE));
+
+	const logDir = join(".", "logs");
+	if (existsSync(logDir)) {
+		const logStream = createStream('access.log', {
+		  interval: "1d", // rotate daily
+  		compress: "gzip", // compress rotated files
+			path: logDir,
+		})
+		app.use(morgan(LOGGING_TEMPLATE, {stream: logStream}));
+	}
 
 	app.use(express.urlencoded({ extended: true }));
 

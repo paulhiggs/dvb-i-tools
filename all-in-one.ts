@@ -72,7 +72,7 @@ const commandLineHelp = [
 	},
 	{
 		header: "Synopsis",
-		content: "$ node all-in-one <options>",
+		content: "$ node all-in-one.ts <options>",
 	},
 	{
 		header: "Options",
