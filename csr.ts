@@ -282,7 +282,7 @@ if (cluster.isPrimary) {
 	const logDir = join(".", "logs");
 	if (existsSync(logDir)) {
 		const logStream = createStream('access.log', {
-			interval: "1d", // rotate daily
+			interval: "1M", // rotate daily
 			compress: "gzip", // compress rotated files
 			path: logDir,
 		})
