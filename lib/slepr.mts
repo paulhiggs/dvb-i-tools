@@ -477,7 +477,7 @@ export default class SLEPR {
 
 		res.type("application/xml");
 		res.send(slepr.toString());
-
+		slepr.dispose()
 		return true;
 	}
 }

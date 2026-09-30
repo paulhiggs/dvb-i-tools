@@ -227,7 +227,8 @@ if (cluster.isPrimary) {
 					break;
 			}
 	});
-} else {
+} 
+else {
 	const app = express();
 	app.use(cors());
 	token("protocol", (req: express.Request) => {

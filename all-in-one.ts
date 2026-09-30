@@ -8,6 +8,7 @@
  * runner for all three DVB-I V&V tools
  */
 import process from "node:process"
+
 import chalk from "chalk"
 import commandLineArgs from "command-line-args"
 import commandLineUsage from "command-line-usage"
@@ -54,6 +55,7 @@ const optionDefinitions = [
 		description: `type of CORS handling ${CORSlibrary.quote()} (default), ${CORSmanual.quote()} or ${CORSnone.quote()}`,
 	},
 	{ name: "motd", alias: "m", type: String, defaultValue: MOTD.file, typeLabel: "{underline filename}", description: "local file name containing HTML for Message Of The Day" },
+	{ name: "workers", alias: "w", type: Number, defaultValue: 0, description: "The number of worker threads to spawn" },
 	{
 		name: "SLRmode",
 		type: String,

@@ -13,7 +13,9 @@ import { createServer } from "https"
 import os from "node:os"
 import process from "process"
 import { readFileSync, existsSync } from "fs"
-
+import cluster from "cluster"
+import { cpus } from "os"
+const numCPUs = cpus().length;
 
 import chalk from "chalk"
 import cors from "cors"
@@ -379,368 +381,395 @@ export default function validator(options: commandLineArgs.CommandLineOptions) {
 		motd = readmyfile(options.motd, { encoding: "utf-8", flag: "r" }) as string;
 	}
 
-	// initialize Express
-	const app = express();
-	app.use(cors());
+	if (options.workers != 0 && cluster.isPrimary) {
+		if (options.workers > numCPUs) options.workers = numCPUs;
+		else if (options.workers < 1) options.workers = 1;
+		console.log(chalk.green(`Number of CPUs is ${numCPUs}, ${options.workers} workers`));
+		console.log(chalk.green(`Primary ${process.pid} is running`));
 
-	app.use(express.static(__dirname));
+		// SCHED_RR is the default on all operating systems except Windows. Windows will change to 
+		// SCHED_RR once libuv is able to effectively distribute IOCP handles without incurring 
+		// a large performance hit.
+		cluster.schedulingPolicy = cluster.SCHED_RR
 
-	app.set("view engine", "ejs");
-	app.use(fileupload());
-	app.use(favicon(join("icon", "ph-icon.ico")));
+		// Fork workers.
+		for (let i = 0; i < options.workers; i++) 
+			cluster.fork();
 
-	token("protocol", (req: express.Request) => {
-		return req.protocol;
-	});
-	token("counts", (req: express.Request) => {
-		return req.diags ? `(${req.diags.countErrors},${req.diags.countWarnings},${req.diags.countInforms})` : "[-]";
-	});
-	token("agent", (req: express.Request) => {
-		return `(${req.headers["user-agent"]})`;
-	});
-	token("vary", (req: express.Request, res: express.Response) => {
-		return (res.varyOn && res.varyOn.size > 0) ? `vary(${[...res.varyOn!].join(",")})` : "-";
-	});
-	token("parseErr", (req: express.Request) => {
-		return req?.parseErr ? `(${req.parseErr})` : "";
-	});
-	token("location", (req: express.Request) => {
-		return req?.body?.testtype
-			? `${req.body.testtype}::[${req.body.testtype == MODE_CG ? `(${req.body.requestType})` : ""}${
-					req.body.doclocation == MODE_FILE ? (req.files?.XMLfile ? (req.files.XMLfile as fileupload.UploadedFile).name : "unnamed") : req.body.XMLurl
-				}]`
-			: "[*]";
-	});
-
-	const getSource = (req: express.Request) => req.ip || /*req._remoteAddress ||*/ (req.socket && req.socket.remoteAddress) ||  undefined;
-	token("redirect", (req: express.Request, res: express.Response) => {
-		return [301,302].includes(res.statusCode) ? `redirect(${req.socket.remoteFamily}-${getSource(req)}` : "";
-	});
-
-	const LOGGING_TEMPLATE = ":remote-addr :protocol :method :url :status :res[content-length] :counts - :response-time ms :agent :parseErr :location :vary :redirect";
-	app.use(morgan(LOGGING_TEMPLATE));
-
-	const logDir = join(".", "logs");
-	if (existsSync(logDir)) {
-		const logStream = createStream('access.log', {
-		  interval: "1M", // rotate daily
-  		compress: "gzip", // compress rotated files
-			path: logDir,
-		})
-		app.use(morgan(LOGGING_TEMPLATE, {stream: logStream}));
-	}
-
-	app.use(express.urlencoded({ extended: true }));
-
-	app.set("trust proxy", 1);
-	app.use(
-		session({
-			secret: "keyboard car",
-			resave: false,
-			saveUninitialized: true,
-			cookie: { maxAge: 60000 },
-		})
-	);
-
-	let slcheck = null,
-		plcheck = null,
-		cgcheck = null,
-		slrcheck = null;
-
-	const DFLT_async = true, DFLT_verbose = true;
-
-	if (options.urls && options.CSRfile == Default_SLEPR.file) options.CSRfile = Default_SLEPR.url;
-
-	const knownLanguages = LoadLanguages({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-	const isoCountries = LoadCountries({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-	const knownGenres = LoadGenres({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-
-	if (!options.nosl || !options.nopl || !options.nocg || !options.noslr) {
-		const knownRatings = LoadRatings({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-		const accessibilityPurposes = LoadAccessibilityPurpose({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-		const audioPurposes = LoadAudioPurpose({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-		const subtitleCarriages = LoadSubtitleCarriages({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-		const subtitleCodings = LoadSubtitleCodings({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-		const subtitlePurposes = LoadSubtitlePurposes({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-		const videoFormats = LoadVideoCodecCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-		const audioFormats = LoadAudioCodecCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-		const audioPresentation = LoadAudioPresentationCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-		const linkedApplicationTypes = LoadLinkedApplicationCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-
-		if (!options.nosl)
-			slcheck = new ServiceListCheck({
-				useURLs: options.urls,
-				async: DFLT_async,
-				verbose: DFLT_verbose,
-
-				accessibilities: accessibilityPurposes,
-				audiofmts: audioFormats,
-				audiopres: audioPresentation,
-				audiopurps: audioPurposes,
-				countries: isoCountries,
-				genres: knownGenres,
-				languages: knownLanguages,
-				stcarriage: subtitleCarriages,
-				stcodings: subtitleCodings,
-				stpurposes: subtitlePurposes,
-				videofmts: videoFormats,
-				appfmts: linkedApplicationTypes,
-			});
-
-		if (!options.nopl)
-			plcheck = new PlaylistCheck( {
-				useURLs: options.urls,
-				async: DFLT_async,
-				verbose: DFLT_verbose,
-			});
-
-		if (!options.nocg)
-			cgcheck = new ContentGuideCheck({
-				useURLs: options.urls,
-				async: DFLT_async,
-				verbose: DFLT_verbose,
-
-				accessibilities: accessibilityPurposes,
-				audiofmts: audioFormats,
-				audiopres: audioPresentation,
-				audiopurps: audioPurposes,
-				countries: isoCountries,
-				genres: knownGenres,
-				languages: knownLanguages,
-				ratings: knownRatings,
-				stcarriage: subtitleCarriages,
-				stcodings: subtitleCodings,
-				stpurposes: subtitlePurposes,
-				videofmts: videoFormats,
-			});
-
-		if (!options.noslr) 
-			slrcheck = new ServiceListRegistryCheck({
-				useURLs: options.urls,
-				async: DFLT_async,
-				verbose: DFLT_verbose,
-
-				countries: isoCountries, 
-				genres: knownGenres, 
-				languages: knownLanguages, 
-				appfmts: linkedApplicationTypes,
-			});
-	}
-
-	const Express_Options = {
-		type: "application/xml", 
-		limit: "10mb",
-	}
-
-	if (!options.nosl) {
-		app.all("/validate_sl", express.text(Express_Options), (req, res) => {
-			validateServiceList(req, res, slcheck!, motd, false);
-		});
-
-		app.all("/validate_sl_json", express.text(Express_Options), (req, res) => {
-			validateServiceList(req, res, slcheck!, motd, true);
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		cluster.on("exit", (worker, code, signal) => {
+			console.log(chalk.red(`worker ${worker.process.pid} died`));
+			console.log(chalk.red("Let's fork another worker!"));
+			cluster.fork();
 		});
 	}
+	else {
 
-	if (!options.nopl) {
-		app.all("/validate_pl", express.text(Express_Options), (req, res) => {
-			validatePlaylist(req, res, plcheck!, motd, false);
-		});
-
-		app.all("/validate_pl_json", express.text(Express_Options), (req, res) => {
-			validatePlaylist(req, res, plcheck!, motd, true);
-		});
-	}
-
-	if (!options.nocg) {
-		app.all("/validate_cg", express.text(Express_Options), (req, res) => {
-			validateContentGuide(req, res, cgcheck!, motd, false);
-		});
-
-		app.all("/validate_cg_json", express.text(Express_Options), (req, res) => {
-			validateContentGuide(req, res, cgcheck!, motd, true);
-		});
-	}
-
-	if (!options.noslr) {
-		app.all("/validate_slr", express.text(Express_Options), (req, res) => {
-			validateServiceListRegistry(req, res, slrcheck!, motd, false);
-		});
-
-		app.all("/validate_slr_json", express.text(Express_Options), (req, res) => {
-			validateServiceListRegistry(req, res, slrcheck!, motd, true);
-		});
-	}
-
-	const SLEPR_query_route = "/query",
-		SLEPR_reload_route = "/reload";
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	type nextFn = (err?: any) => any  // cors module doesnot strictly type this
-
-	let manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
-		next();
-	};
-	if (options.CORSmode == CORSlibrary) {
+		// initialize Express
+		const app = express();
 		app.use(cors());
-	} else if (options.CORSmode == CORSmanual) {
-		manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
-			let opts : string[] | undefined = res.getHeader("X-Frame-Options") as string[] | undefined;
-			if (opts) {
-				if (!opts.includes("SAMEORIGIN")) 
-					opts.push("SAMEORIGIN");
-			} else opts = ["SAMEORIGIN"];
-			res.setHeader("X-Frame-Options", opts);
-			res.setHeader("Access-Control-Allow-Origin", "*");
+
+		app.use(express.static(__dirname));
+
+		app.set("view engine", "ejs");
+		app.use(fileupload());
+		app.use(favicon(join("icon", "ph-icon.ico")));
+
+		token("protocol", (req: express.Request) => {
+			return req.protocol;
+		});
+		token("counts", (req: express.Request) => {
+			return req.diags ? `(${req.diags.countErrors},${req.diags.countWarnings},${req.diags.countInforms})` : "[-]";
+		});
+		token("agent", (req: express.Request) => {
+			return `(${req.headers["user-agent"]})`;
+		});
+		token("vary", (req: express.Request, res: express.Response) => {
+			return (res.varyOn && res.varyOn.size > 0) ? `vary(${[...res.varyOn!].join(",")})` : "-";
+		});
+		token("parseErr", (req: express.Request) => {
+			return req?.parseErr ? `(${req.parseErr})` : "";
+		});
+		token("location", (req: express.Request) => {
+			return req?.body?.testtype
+				? `${req.body.testtype}::[${req.body.testtype == MODE_CG ? `(${req.body.requestType})` : ""}${
+						req.body.doclocation == MODE_FILE ? (req.files?.XMLfile ? (req.files.XMLfile as fileupload.UploadedFile).name : "unnamed") : req.body.XMLurl
+					}]`
+				: "[*]";
+		});
+
+		const getSource = (req: express.Request) => req.ip || /*req._remoteAddress ||*/ (req.socket && req.socket.remoteAddress) ||  undefined;
+		token("redirect", (req: express.Request, res: express.Response) => {
+			return [301,302].includes(res.statusCode) ? `redirect(${req.socket.remoteFamily}-${getSource(req)}` : "";
+		});
+
+		const LOGGING_TEMPLATE = ":pid :remote-addr :protocol :method :url :status :res[content-length] :counts - :response-time ms :agent :parseErr :location :vary :redirect"
+		app.use(morgan(LOGGING_TEMPLATE));
+
+		const logDir = join(".", "logs");
+		if (existsSync(logDir)) {
+			const logStream = createStream('access.log', {
+				interval: "1M", // rotate daily
+				compress: "gzip", // compress rotated files
+				path: logDir,
+			})
+			app.use(morgan(LOGGING_TEMPLATE, {stream: logStream}));
+		}
+
+		app.use(express.urlencoded({ extended: true }));
+
+		app.set("trust proxy", 1);
+		app.use(
+			session({
+				secret: "keyboard car",
+				resave: false,
+				saveUninitialized: true,
+				cookie: { maxAge: 60000 },
+			})
+		);
+
+		let slcheck = null,
+			plcheck = null,
+			cgcheck = null,
+			slrcheck = null;
+
+		const DFLT_async = true, DFLT_verbose = true;
+
+		if (options.urls && options.CSRfile == Default_SLEPR.file) options.CSRfile = Default_SLEPR.url;
+
+		const knownLanguages = LoadLanguages({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+		const isoCountries = LoadCountries({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+		const knownGenres = LoadGenres({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+
+		if (!options.nosl || !options.nopl || !options.nocg || !options.noslr) {
+			const knownRatings = LoadRatings({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const accessibilityPurposes = LoadAccessibilityPurpose({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const audioPurposes = LoadAudioPurpose({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const subtitleCarriages = LoadSubtitleCarriages({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const subtitleCodings = LoadSubtitleCodings({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const subtitlePurposes = LoadSubtitlePurposes({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const videoFormats = LoadVideoCodecCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const audioFormats = LoadAudioCodecCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const audioPresentation = LoadAudioPresentationCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const linkedApplicationTypes = LoadLinkedApplicationCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+
+			if (!options.nosl)
+				slcheck = new ServiceListCheck({
+					useURLs: options.urls,
+					async: DFLT_async,
+					verbose: DFLT_verbose,
+
+					accessibilities: accessibilityPurposes,
+					audiofmts: audioFormats,
+					audiopres: audioPresentation,
+					audiopurps: audioPurposes,
+					countries: isoCountries,
+					genres: knownGenres,
+					languages: knownLanguages,
+					stcarriage: subtitleCarriages,
+					stcodings: subtitleCodings,
+					stpurposes: subtitlePurposes,
+					videofmts: videoFormats,
+					appfmts: linkedApplicationTypes,
+				});
+
+			if (!options.nopl)
+				plcheck = new PlaylistCheck( {
+					useURLs: options.urls,
+					async: DFLT_async,
+					verbose: DFLT_verbose,
+				});
+
+			if (!options.nocg)
+				cgcheck = new ContentGuideCheck({
+					useURLs: options.urls,
+					async: DFLT_async,
+					verbose: DFLT_verbose,
+
+					accessibilities: accessibilityPurposes,
+					audiofmts: audioFormats,
+					audiopres: audioPresentation,
+					audiopurps: audioPurposes,
+					countries: isoCountries,
+					genres: knownGenres,
+					languages: knownLanguages,
+					ratings: knownRatings,
+					stcarriage: subtitleCarriages,
+					stcodings: subtitleCodings,
+					stpurposes: subtitlePurposes,
+					videofmts: videoFormats,
+				});
+
+			if (!options.noslr) 
+				slrcheck = new ServiceListRegistryCheck({
+					useURLs: options.urls,
+					async: DFLT_async,
+					verbose: DFLT_verbose,
+
+					countries: isoCountries, 
+					genres: knownGenres, 
+					languages: knownLanguages, 
+					appfmts: linkedApplicationTypes,
+				});
+		}
+
+		const Express_Options = {
+			type: "application/xml", 
+			limit: "10mb",
+		}
+
+		if (!options.nosl) {
+			app.all("/validate_sl", express.text(Express_Options), (req, res) => {
+				validateServiceList(req, res, slcheck!, motd, false);
+			});
+
+			app.all("/validate_sl_json", express.text(Express_Options), (req, res) => {
+				validateServiceList(req, res, slcheck!, motd, true);
+			});
+		}
+
+		if (!options.nopl) {
+			app.all("/validate_pl", express.text(Express_Options), (req, res) => {
+				validatePlaylist(req, res, plcheck!, motd, false);
+			});
+
+			app.all("/validate_pl_json", express.text(Express_Options), (req, res) => {
+				validatePlaylist(req, res, plcheck!, motd, true);
+			});
+		}
+
+		if (!options.nocg) {
+			app.all("/validate_cg", express.text(Express_Options), (req, res) => {
+				validateContentGuide(req, res, cgcheck!, motd, false);
+			});
+
+			app.all("/validate_cg_json", express.text(Express_Options), (req, res) => {
+				validateContentGuide(req, res, cgcheck!, motd, true);
+			});
+		}
+
+		if (!options.noslr) {
+			app.all("/validate_slr", express.text(Express_Options), (req, res) => {
+				validateServiceListRegistry(req, res, slrcheck!, motd, false);
+			});
+
+			app.all("/validate_slr_json", express.text(Express_Options), (req, res) => {
+				validateServiceListRegistry(req, res, slrcheck!, motd, true);
+			});
+		}
+
+		const SLEPR_query_route = "/query",
+			SLEPR_reload_route = "/reload";
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		type nextFn = (err?: any) => any  // cors module doesnot strictly type this
+
+		let manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
 			next();
 		};
-	}
-
-	if (!options.nosl || !options.nopl || !options.nocg || !options.noslr) {
-		app.get("/check", express.text(Express_Options), (req, res) => {
-			DVB_I_check(req, res, slcheck, plcheck, cgcheck, slrcheck, !options.nosl, !options.nopl, !options.nocg, !options.noslr, motd);
-		});
-		app.post("/check", express.text(Express_Options), (req, res) => {
-			DVB_I_check(req, res, slcheck, plcheck, cgcheck, slrcheck, !options.nosl, !options.nopl, !options.nocg, !options.noslr, motd);
-		});
-	}
-
-	if (!options.nocsr) {
-		csr = new SLEPR(options.urls, options.SLRmode, knownLanguages, isoCountries, knownGenres);
-		csr.loadServiceListRegistry(options.CSRfile);
-
-		if (options.CORSmode == "manual") {
-			app.options(SLEPR_query_route, manualCORS);
+		if (options.CORSmode == CORSlibrary) {
+			app.use(cors());
+		} else if (options.CORSmode == CORSmanual) {
+			manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
+				let opts : string[] | undefined = res.getHeader("X-Frame-Options") as string[] | undefined;
+				if (opts) {
+					if (!opts.includes("SAMEORIGIN")) 
+						opts.push("SAMEORIGIN");
+				} else opts = ["SAMEORIGIN"];
+				res.setHeader("X-Frame-Options", opts);
+				res.setHeader("Access-Control-Allow-Origin", "*");
+				next();
+			};
 		}
-		app.get(SLEPR_query_route, manualCORS, (req, res) => {
-			csr!.processServiceListRequest(req, res);
-			res.end();
-		});
 
-		app.get(SLEPR_reload_route, (req, res) => {
-			csr!.loadServiceListRegistry(options.CSRfile);
+		if (!options.nosl || !options.nopl || !options.nocg || !options.noslr) {
+			app.all("/check", express.text(Express_Options), (req, res) => {
+				// we need to disable listening as the Windows cluster seems to 'prefer' some workers, expecialy  when the validator is being used to verify 
+				// a file it is serving itself (like an SLR respose from `SLEPR_query_route`)
+				const saved_port = req.socket.localPort  
+				req.socket.server!.close()
+				DVB_I_check(req, res, slcheck, plcheck, cgcheck, slrcheck, !options.nosl, !options.nopl, !options.nocg, !options.noslr, motd);
+				req.socket.server!.listen(saved_port)
+			});
+		}
+
+		if (!options.nocsr) {
+			csr = new SLEPR(options.urls, options.SLRmode, knownLanguages, isoCountries, knownGenres);
+			csr.loadServiceListRegistry(options.CSRfile);
+
+			if (options.CORSmode == "manual") {
+				app.options(SLEPR_query_route, manualCORS);
+			}
+			app.get(SLEPR_query_route, manualCORS, (req, res) => {
+				csr!.processServiceListRequest(req, res);
+				res.end();
+			});
+
+			app.get(SLEPR_reload_route, (req, res) => {
+				csr!.loadServiceListRegistry(options.CSRfile);
+				res.status(200).end();
+			});
+		}
+
+		if (options.spam_blocker) {
+			init_spam_blocker(app);
+		}
+
+		const tabulate = function (res: express.Response, group: string, stats: Record<string, string | number>) {
+			res.write(`<h1>${group}</h1>`);
+			if (Object.keys(stats).length === 0) res.write("<p>No statistics</p>");
+			else {
+				res.write("<table><tr><th>item</th><th>count</th></tr>");
+				Object.getOwnPropertyNames(stats).forEach((key) => res.write(`<tr><td>${key}</td><td>${stats[key]}</td></tr>`));
+				res.write("</table>");
+			}
+			res.write(LINE);
+		}
+
+		app.get("/stats", (req, res) => {
+			res.setHeader("Content-Type", "text/html");
+			res.write(PAGE_TOP("Validator Stats", req.secure));
+			tabulate(res, "System", {
+				arch: os.arch(),
+				endianness: os.endianness(),
+				host: os.hostname(),
+				os: os.type(),
+				numCPUs: os.cpus().length,
+				machine: os.machine(),
+				platform: os.platform(),
+				release: os.release(),
+				version: os.version(),
+				node: process.version,
+			});
+			tabulate(res, "Application", {
+				version: pkg?.version ? pkg.version : "unknown",
+			});
+			const InactiveFeatureStats = { active: "false" };
+			tabulate(res, "CSR", csr ? csr.stats() : InactiveFeatureStats);
+			tabulate(res, "SL", slcheck ? slcheck.stats()  : InactiveFeatureStats);
+			tabulate(res, "PL", plcheck ? plcheck.stats() : InactiveFeatureStats);
+			tabulate(res, "SLR", slrcheck ? slrcheck.stats() : InactiveFeatureStats);
+			tabulate(res, "CG", cgcheck ? cgcheck.stats() : InactiveFeatureStats);
+			res.write(PAGE_BOTTOM);
 			res.status(200).end();
 		});
-	}
 
-	if (options.spam_blocker) {
-		init_spam_blocker(app);
-	}
-
-	const tabulate = function (res: express.Response, group: string, stats: Record<string, string | number>) {
-		res.write(`<h1>${group}</h1>`);
-		if (Object.keys(stats).length === 0) res.write("<p>No statistics</p>");
-		else {
-			res.write("<table><tr><th>item</th><th>count</th></tr>");
-			Object.getOwnPropertyNames(stats).forEach((key) => res.write(`<tr><td>${key}</td><td>${stats[key]}</td></tr>`));
-			res.write("</table>");
-		}
-		res.write(LINE);
-	}
-
-	app.get("/stats", (req, res) => {
-		res.setHeader("Content-Type", "text/html");
-		res.write(PAGE_TOP("Validator Stats", req.secure));
-		tabulate(res, "System", {
-			arch: os.arch(),
-			endianness: os.endianness(),
-			host: os.hostname(),
-			os: os.type(),
-			numCPUs: os.cpus().length,
-			machine: os.machine(),
-			platform: os.platform(),
-			release: os.release(),
-			version: os.version(),
-			node: process.version,
-		});
-		tabulate(res, "Application", {
-			version: pkg?.version ? pkg.version : "unknown",
-		});
-		const InactiveFeatureStats = { active: "false" };
-		tabulate(res, "CSR", csr ? csr.stats() : InactiveFeatureStats);
-		tabulate(res, "SL", slcheck ? slcheck.stats()  : InactiveFeatureStats);
-		tabulate(res, "PL", plcheck ? plcheck.stats() : InactiveFeatureStats);
-		tabulate(res, "SLR", slrcheck ? slrcheck.stats() : InactiveFeatureStats);
-		tabulate(res, "CG", cgcheck ? cgcheck.stats() : InactiveFeatureStats);
-		res.write(PAGE_BOTTOM);
-		res.status(200).end();
-	});
-
-	const tabularize = function(res : express.Response, groupname: string, values: string[] ) {
-		res.write(`<h1>${groupname}</h1>`);
-		if (values.length == 0)
-			res.write("<p>No values</p>");
-		else {
-			res.write("<table>");
-			let maxLen = 0;
-			values.forEach((value) => {if (value.length > maxLen) maxLen = value.length});
-			let firstRow = true; 
-			for (let i=0; i<values.length; i++) {
-				if (i % (maxLen > 4 ? 10 : 20) == 0) {
-					res.write(`${firstRow ? "" : "</tr>"}<tr>`)
-					firstRow = false;
+		const tabularize = function(res : express.Response, groupname: string, values: string[] ) {
+			res.write(`<h1>${groupname}</h1>`);
+			if (values.length == 0)
+				res.write("<p>No values</p>");
+			else {
+				res.write("<table>");
+				let maxLen = 0;
+				values.forEach((value) => {if (value.length > maxLen) maxLen = value.length});
+				let firstRow = true; 
+				for (let i=0; i<values.length; i++) {
+					if (i % (maxLen > 4 ? 10 : 20) == 0) {
+						res.write(`${firstRow ? "" : "</tr>"}<tr>`)
+						firstRow = false;
+					}
+					res.write(`<td>${values[i]}</td>`);
 				}
-				res.write(`<td>${values[i]}</td>`);
+				res.write("</table>");
 			}
-			res.write("</table>");
 		}
-	}
-	app.get("/langs", (req: express.Request, res: express.Response) => {
-		res.setHeader("Content-Type", "text/html");
-		res.write(PAGE_TOP("Languages", req.secure));
+		app.get("/langs", (req: express.Request, res: express.Response) => {
+			res.setHeader("Content-Type", "text/html");
+			res.write(PAGE_TOP("Languages", req.secure));
 
-		let langs: Record<string, string[]> = {empty: []} 
-		if (slcheck) langs = slcheck.langs(true) as Record<string, string[]>;
+			let langs: Record<string, string[]> = {empty: []} 
+			if (slcheck) langs = slcheck.langs(true) as Record<string, string[]>;
 
-		if (HasProperty(langs, "empty"))
-			res.write("<p>No statistics</p>");
-		else {
-			Object.getOwnPropertyNames(langs).forEach((key) => tabularize(res, key, langs[key] as string[]));
-		}
-		res.write(PAGE_BOTTOM);
-		res.status(200).end();
-	});
+			if (HasProperty(langs, "empty"))
+				res.write("<p>No statistics</p>");
+			else {
+				Object.getOwnPropertyNames(langs).forEach((key) => tabularize(res, key, langs[key] as string[]));
+			}
+			res.write(PAGE_BOTTOM);
+			res.status(200).end();
+		});
 
-	app.get("{*splat}", (req, res) => {
-		res.status(404).end();
-	});
+		app.get("{*splat}", (req, res) => {
+			res.status(404).end();
+		});
 
 
-	// start the HTTPS server
-	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
-	const https_options = {
-		key: readmyfile(keyFilename, {}) as Buffer,
-		cert: readmyfile(certFilename, {}) as Buffer,
-	};
-	let https_server : Server | null = null;
+		// start the HTTPS server
+		// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
+		const https_options = {
+			key: readmyfile(keyFilename, {}) as Buffer,
+			cert: readmyfile(certFilename, {}) as Buffer,
+		};
+		let https_server : Server | null = null;
 
-	if (https_options.key && https_options.cert) {
-		if (options.sport == options.port) options.sport = options.port + 1;
+		if (https_options.key && https_options.cert) {
+			if (options.sport == options.port) options.sport = options.port + 1;
 
-		https_server = createServer(https_options, app);
-		https_server.listen(options.sport, () => {
-			console.log(chalk.cyan(`HTTPS listening on port number ${(https_server!.address() as AddressInfo).port}`));
+			https_server = createServer(https_options, app);
+			https_server.listen(options.sport, () => {
+				console.log(chalk.cyan(`HTTPS listening on port number ${(https_server!.address() as AddressInfo).port}`));
 
-			const redirect_app = express();
-			redirect_app.use(morgan(LOGGING_TEMPLATE));
-			redirect_app.use(function(req, res) {
-				res.redirect(`https://${req.hostname}:${options.sport}${req.originalUrl}`);
-			})
-			redirect_app.listen(options.port, () => {
-				console.log(chalk.cyan(`HTTP redirecting to HTTPS on port number ${options.port}`));
+				const redirect_app = express();
+				redirect_app.use(morgan(LOGGING_TEMPLATE));
+				redirect_app.use(function(req, res) {
+					res.redirect(`https://${req.hostname}:${options.sport}${req.originalUrl}`);
+				})
+				redirect_app.listen(options.port, () => {
+					console.log(chalk.cyan(`HTTP redirecting to HTTPS on port number ${options.port}`));
+				});
 			});
-		});
-	}
+		}
 
-	const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-	delay(3000); // give the HTTPS server time to start before starting the HTTP server
+		const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+		delay(3000); // give the HTTPS server time to start before starting the HTTP server
 
-	if (!https_server?.listening) {
-	 // start the HTTP server
-		const http_server = app.listen(options.port, () => {
-			if ((http_server.address() as AddressInfo).port) 
-				console.log(chalk.cyan(`HTTP listening on port number ${(http_server.address() as AddressInfo).port}`));
-			else console.log(chalk.red(`HTTP port ${options.port} already in use -- HTTP server not started`));
-		});
+		if (!https_server?.listening) {
+		// start the HTTP server
+			const http_server = app.listen(options.port, () => {
+				if ((http_server.address() as AddressInfo).port) 
+					console.log(chalk.cyan(`HTTP listening on port number ${(http_server.address() as AddressInfo).port}`));
+				else console.log(chalk.red(`HTTP port ${options.port} already in use -- HTTP server not started`));
+			});
+		}
 	}
 }
