@@ -194,7 +194,7 @@ export const attribute = (attr : string, elem : string= "") : string => attr.att
 /**
  * convert characters in the string to HTML entities
  */
-export const HTMLize = (str : string) => str.HTMLize();
+export const HTMLize = (str : string) : string => str.HTMLize();
 
 
 /**
@@ -220,12 +220,12 @@ export function datatypeIs(arg: unknown, requiredType: string | null = null): bo
  * @param {unknown} objectName the object to check for member attributes 
  * @returns true if the object is empty
  */
-export const isObjectEmpty = (objectName: unknown) => {
+export const isObjectEmpty = (objectName: unknown) : boolean => {
   return (
     objectName &&
     Object.keys(objectName).length === 0 &&
     objectName.constructor === Object
-  );
+  ) as boolean;
 };
 
 /**
@@ -234,7 +234,7 @@ export const isObjectEmpty = (objectName: unknown) => {
  * @param {string} str the string to check
  * @returns {boolean} true if the string contains hexadecimal characters, false otherwise
  */
-export function containsHex(str : string | null | undefined): boolean {
+export function containsHex(str : string | null | undefined) : boolean {
 	if (!str) return false;
 	str = str.toLowerCase();
 	for (let i = 0; i < str.length; i++)
@@ -257,7 +257,7 @@ export function HexOrDecValue(str: string) : number{
  * @param {string} prop  The name of the property to check for
  * @returns true if the property exists in the object and is not undefined
  **/
-export const HasProperty = (obj: unknown, prop: string) => {
+export const HasProperty = (obj: unknown, prop: string) : boolean => {
 	return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
@@ -268,7 +268,7 @@ export const HasProperty = (obj: unknown, prop: string) => {
  * @param {string} prop  The name of the property to set
  * @param {*} defaultValue  The default value to set if the property does not exist or is undefined
  **/
-export const DefaultProperty = (obj: Record<string, unknown>, prop: string, defaultValue: unknown) => {
+export const DefaultProperty = (obj: Record<string, unknown>, prop: string, defaultValue: unknown) : void => {
 	if (!HasProperty(obj, prop)) 
 		(obj as Record<string, unknown>)[prop] = defaultValue;
 }

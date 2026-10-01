@@ -8,7 +8,7 @@
  * check that multiple elements for expressing multilingual values match DVB-I requirments
  */
 
-import { XmlElement } from "libxml2-wasm"
+import { XmlElement as  impXmlElement } from "libxml2-wasm"
 import { tva } from "./TVA_definitions.mts"
 
 import { DuplicatedValue, parameterCheck } from "./utils.mts"
@@ -40,7 +40,7 @@ export function checkLanguage(lang: string, element: XmlElement, errs: ErrorList
  * @returns {string} the value of the xml:lang attribute for the element, or the teh closest ancestor
  */
 export function mlLanguage(node: XmlElement) : string {
-	if (!(node instanceof XmlElement)) return NO_DOCUMENT_LANGUAGE;
+	if (!(node instanceof impXmlElement)) return NO_DOCUMENT_LANGUAGE;
 	const langAttr = node.attrAnyNs(tva.a_lang);
 	if (langAttr) return langAttr.value;
 	return mlLanguage(node.parent as XmlElement);

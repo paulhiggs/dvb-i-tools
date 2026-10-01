@@ -8,8 +8,6 @@
  * useful routines to check MIME types that could be used in DVB-I documents
  */
 
-import { datatypeIs } from "./utils.mts";
-
 const JPEG_MIME: string = "image/jpeg",
 	PNG_MIME: string = "image/png",
 	WebP_MIME: string = "image/WebP"; 
@@ -24,9 +22,7 @@ export const allowedImageTypes: string[] = [JPEG_MIME, PNG_MIME, WebP_MIME];
  * @return {boolean} true if the MIME type is formatted according to IETF RFC 2045, otherwise false
  */
 const simple_mime_regex = new RegExp(`^(.+[/].*)$`);
-export const isMIME = (mime: string) : boolean => 
-	datatypeIs(mime, "string") ? simple_mime_regex.test(mime.trim()) : false;
-
+export const isMIME = (mime: string) : boolean => simple_mime_regex.test(mime.trim())
 /**
  * determines if the value is a valid JPEG MIME type
  *

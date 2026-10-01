@@ -13,7 +13,7 @@
  * @param {Response} response
  * @returns
  */
-export default function handleErrors(response: Response) {
+export default function handleErrors(response: Response) : Response {
 	if (response && !response.ok) throw Error(`fetch() returned (${response.status}) ${response.statusText.quote()}`);
 	return response;
 }

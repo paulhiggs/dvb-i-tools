@@ -21,7 +21,7 @@ export const EXTENSION_LOCATION_SERVICE_LIST_REGISTRY: number = 101,
 	EXTENSION_LOCATION_OTHER_DELIVERY: number = 203;
 
 
-export function CheckExtension(extn: XmlElement, extLoc: number, errs: ErrorList, errCode: string) {
+export function CheckExtension(extn: XmlElement, extLoc: number, errs: ErrorList, errCode: string) : void {
 	if (!parameterCheck("CheckExtension", extn, null, errs, "CE000")) return;
 
 	// extension type is checked in schema validation

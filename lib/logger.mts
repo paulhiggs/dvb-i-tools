@@ -22,7 +22,7 @@ export function createPrefix(req: express.Request) : string | undefined {
 
 	if (!existsSync(logDir)) return undefined;
 
-	const getDate = (i : Temporal.Instant) => {
+	const getDate = (i : Temporal.Instant) : string=> {
 		const fillZero = (t: number) : string => `${t < 10 ? "0" : ""}${t}`;
 		const d = Temporal.Instant.fromEpochMilliseconds(i.epochMilliseconds).toZonedDateTimeISO("UTC");
 		return `${d.year}-${fillZero(d.month)}-${fillZero(d.day)} ${fillZero(d.hour)}.${fillZero(d.minute)}.${fillZero(d.second)}`;
@@ -37,7 +37,7 @@ export function createPrefix(req: express.Request) : string | undefined {
 }
 
 
-export default function writeOut(errs: ErrorList, filebase: string | undefined, markup: boolean, req?: express.Request) {
+export default function writeOut(errs: ErrorList, filebase: string | undefined, markup: boolean, req?: express.Request) : void {
 	if (!filebase || errs.markupXML?.length == 0) return;
 
 	const outputLines = [];

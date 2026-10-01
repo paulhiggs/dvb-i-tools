@@ -9,8 +9,6 @@
  */
 
 
-import { datatypeIs } from "./utils.mts"
-
 /**
  * encapsulate the specified string in quotes
  *
@@ -35,12 +33,10 @@ const ESCAPES: Record<string, string>= {
   '=': '&#x3D;',
 	'-': '&#8209;',
 };
-const escapeChar = (chr: string) => ESCAPES[chr];
+const escapeChar = (chr: string) : string => ESCAPES[chr];
 const BAD_CHARS = /[&<>"'`=-]/g;
 String.prototype.HTMLize = function() : string {
-	return datatypeIs(this, "string") 
-	? (this as string).replace(BAD_CHARS, escapeChar) 
-	: this as string;
+	return this.replace(BAD_CHARS, escapeChar) 
 }
 
 /**
@@ -57,7 +53,6 @@ String.prototype.attribute = function	(elemName : string= "") : string {
 /**
  * express the name of an element in the form of <element>
  * 
- * @param {string} elem  the name of the element
  * @returns {string} the element expressed in the form of <element>
  */
 String.prototype.elementize = function() : string {

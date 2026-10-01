@@ -3583,7 +3583,7 @@ export default class ContentGuideCheck {
 	 * @param {string} requestType   the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
 	 * @returns {ErrorList} errs errors found in validaton
 	 */
-	validateContentGuide(CGtext: string, requestType: string) {
+	validateContentGuide(CGtext: string, requestType: string) : Promise<ErrorList> {
 		const errs = new ErrorList();
 		this.doValidateContentGuide(CGtext, requestType, errs, { report_schema_version: true });
 

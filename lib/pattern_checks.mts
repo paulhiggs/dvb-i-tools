@@ -8,7 +8,6 @@
  * useful regular expression based checks
  */
 
-import { datatypeIs } from "./utils.mts"
 import { allowedImageTypes } from "./MIME_checks.mts"
 
 const e_pct: string = "%", 
@@ -76,7 +75,7 @@ export const BCP47_Language_Tag: string = languageTag;
  * @returns {boolean} true if the argment is compliant to a tva:RatioType
  */
 const ratioRegex: RegExp = new RegExp(`^[${e_digit}]+:[${e_digit}]+$`);
-export const isRatioType = (ratio: string): boolean => (datatypeIs(ratio, "string") ? ratioRegex.test(ratio.trim()) : false);
+export const isRatioType = (ratio: string) : boolean => ratioRegex.test(ratio.trim())
 
 /**
  * checks if the argument complies to an XML representation of UTC time
@@ -85,10 +84,10 @@ export const isRatioType = (ratio: string): boolean => (datatypeIs(ratio, "strin
  * @returns {boolean}  true if the argment is formatted according to UTC ("Zulu") time
  */
 const UTCregex: RegExp = new RegExp(/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]{1,3})?Z?$/);
-export const isUTCDateTime = (time: string): boolean => (datatypeIs(time, "string") ? UTCregex.test(time.trim()) : false);
+export const isUTCDateTime = (time: string) : boolean => UTCregex.test(time.trim())
 
 
-export function isInlineImage(data: string): boolean {
+export function isInlineImage(data: string) : boolean {
 	let valid: boolean = false;
 	allowedImageTypes.forEach((image_MIME) => {
 		valid = valid || data.startsWith(`data:${image_MIME};base64,`);
@@ -106,7 +105,7 @@ export function isInlineImage(data: string): boolean {
  */
 const HTTPprotocolRegex: RegExp = new RegExp("^https?:$", "i");
 const HTTPprotocolPrefix: RegExp = new RegExp("^https?://", "i");
-export function isHTTPURL(url: string): boolean {
+export function isHTTPURL(url: string) : boolean {
 	url = decodeURIComponent(url);
 	if (!HTTPprotocolPrefix.test(url)) return false;
 	try {
@@ -128,7 +127,7 @@ export function isHTTPURL(url: string): boolean {
  */
 const HTTPSprotocolRegex: RegExp = new RegExp("^https:$", "i");
 const HTTPSprotocolPrefix: RegExp = new RegExp("^https://", "i");
-export function isHTTSPURL(url: string): boolean {
+export function isHTTSPURL(url: string) : boolean {
 	url = decodeURIComponent(url);
 	if (!HTTPSprotocolPrefix.test(url)) return false;
 	try {
@@ -148,7 +147,7 @@ export function isHTTSPURL(url: string): boolean {
  *
  * see RFC 3986 - https://tools.ietf.org/html/rfc3986
  */
-export function isHTTPPathURL(url: string): boolean {
+export function isHTTPPathURL(url: string) : boolean {
 	if (!HTTPprotocolPrefix.test(url)) return false;
 	try {
 		const sss = new URL(url);
@@ -165,7 +164,6 @@ export function isHTTPPathURL(url: string): boolean {
  */
 const URNregex: RegExp = new RegExp(`^${e_URN}$`, "i");
 export const isURL = (url: string) : boolean => {
-	if (!datatypeIs(url, "string")) return false;
 	if (url.includes(" ")) return false;
 	try {
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -176,7 +174,7 @@ export const isURL = (url: string) : boolean => {
 	catch (err) {}
 	return false;
 };
-export const isURN = (urn: string): boolean => (datatypeIs(urn, "string") ? URNregex.test(urn) : false);
+export const isURN = (urn: string): boolean => URNregex.test(urn)
 
 /**
  * checks of the specified argument matches URL according to RFC 3986 - https://tools.ietf.org/html/rfc3986
@@ -198,7 +196,7 @@ export const isURI = (uri: string): boolean => isURL(uri) || isURN(uri);
  * Thanks to https://gist.github.com/khanzadimahdi/bab8a3416bdb764b9eda5b38b35735b8
  */
 const dataRegexp: RegExp = new RegExp(/^data:((?:\w+\/(?:(?!;).)+)?)((?:;[\w=]*[^;])*),(.+)$/, "i");
-export const isDataURI = (uri: string): boolean => (datatypeIs(uri, "string") ? dataRegexp.test(uri) : false);
+export const isDataURI = (uri: string) : boolean => dataRegexp.test(uri)
 
 /**
  * checks if the argument complies to an XML representation of UTC time (i.e. ISO 8601-2:2019)
@@ -210,7 +208,7 @@ export const isDataURI = (uri: string): boolean => (datatypeIs(uri, "string") ? 
 const isoRegex: RegExp = new RegExp(
 	/^[-+]?P(?!$)(([-+]?\d+Y)|([-+]?\d+\.\d+Y$))?(([-+]?\d+M)|([-+]?\d+\.\d+M$))?(([-+]?\d+W)|([-+]?\d+\.\d+W$))?(([-+]?\d+D)|([-+]?\d+\.\d+D$))?(T(?=[\d+-])(([-+]?\d+H)|([-+]?\d+\.\d+H$))?(([-+]?\d+M)|([-+]?\d+\.\d+M$))?([-+]?\d+(\.\d+)?S)?)??$/
 );
-export const isISODuration = (duration: string): boolean => (datatypeIs(duration, "string") ? isoRegex.test(duration.trim()) : false);
+export const isISODuration = (duration: string) : boolean => isoRegex.test(duration.trim())
 
 /**
  * checks if the argument complies to a DVB locator according to clause 6.4.2 of ETSI TS 102 851
@@ -220,7 +218,7 @@ export const isISODuration = (duration: string): boolean => (datatypeIs(duration
  * @returns {boolean}  true if @locator is formatted as a DVB locator
  */
 const locatorRegex: RegExp = new RegExp(`^dvb://[${e_hex}]+.[${e_hex}]*.[${e_hex}]+;[${e_hex}]+$`);
-export const isDVBLocator = (locator: string): boolean => (datatypeIs(locator, "string") ? locatorRegex.test(locator.trim()) : false);
+export const isDVBLocator = (locator: string) : boolean => locatorRegex.test(locator.trim())
 
 /**
  *
@@ -228,7 +226,7 @@ export const isDVBLocator = (locator: string): boolean => (datatypeIs(locator, "
  * @returns {boolean} true if @postcode is a valid postcode, otherwise false
  */
 const postcodeRegex: RegExp = new RegExp(`^[${e_digit}${e_lowalpha}]+([- ][${e_digit}${e_lowalpha}]+)?$`, "i");
-export const isPostcode = (postcode: string): boolean => (datatypeIs(postcode, "string") ? postcodeRegex.test(postcode.trim()) : false);
+export const isPostcode = (postcode: string) : boolean => postcodeRegex.test(postcode.trim())
 
 /**
  *
@@ -238,8 +236,8 @@ export const isPostcode = (postcode: string): boolean => (datatypeIs(postcode, "
 const WildcardFirstRegex: RegExp = new RegExp(`^(\\*[${e_digit}${e_lowalpha}]*[\\- ]?[${e_digit}${e_lowalpha}]+)`, "i"),
 	WildcardMiddleRegex: RegExp = new RegExp(`^(([${e_digit}${e_lowalpha}]+\\*[\\- ]?[${e_digit}${e_lowalpha}]+)|([${e_digit}${e_lowalpha}]+[\\- ]?\\*[${e_digit}${e_lowalpha}]+))$`, "i"),
 	WildcardEndRegex: RegExp = new RegExp(`^([${e_digit}${e_lowalpha}]+[\\- ]?[${e_digit}${e_lowalpha}]*\\*)$`, "i");
-export const isWildcardPostcode = (postcode: string): boolean =>
-	datatypeIs(postcode, "string") ? WildcardEndRegex.test(postcode.trim()) || WildcardMiddleRegex.test(postcode.trim()) || WildcardFirstRegex.test(postcode.trim()) : false;
+export const isWildcardPostcode = (postcode: string) : boolean =>
+	WildcardEndRegex.test(postcode.trim()) || WildcardMiddleRegex.test(postcode.trim()) || WildcardFirstRegex.test(postcode.trim())
 
 /**
  * check if the argument is in the correct format for an DVB-I extension identifier
@@ -248,7 +246,7 @@ export const isWildcardPostcode = (postcode: string): boolean =>
  * @returns {boolean} true if the signalled extensionName is in the specification defined format, else false
  */
 const ExtensionRegex: RegExp = new RegExp(`^[${e_digit}${e_lowalpha}][${e_digit}${e_lowalpha}:\\-/\\.]*[${e_digit}${e_lowalpha}]$`, "i");
-export const validExtensionName = (ext: string): boolean => (datatypeIs(ext, "string") ? ExtensionRegex.test(ext.trim()) : false);
+export const validExtensionName = (ext: string)  : boolean => ExtensionRegex.test(ext.trim())
 
 /**
  * check if the argument is in the correct format for a TV-Anytime FrameRateType
@@ -259,7 +257,7 @@ export const validExtensionName = (ext: string): boolean => (datatypeIs(ext, "st
  */
 const FrameRateRegex1: RegExp = new RegExp(`^[${e_digit}]{1,3}(\\.[${e_digit}]{1,3})?$`);
 const FrameRateRegex2: RegExp = new RegExp(`^[${e_digit}]{1,3}\\/1\\.001$`);
-export const validFrameRate = (rate: string): boolean => (datatypeIs(rate, "string") ? FrameRateRegex1.test(rate.trim()) || FrameRateRegex2.test(rate.trim()) : false);
+export const validFrameRate = (rate: string) : boolean => FrameRateRegex1.test(rate.trim()) || FrameRateRegex2.test(rate.trim())
 
 /**
  * checks of the specified argument matches an domain name (RFC 1034)
@@ -268,7 +266,7 @@ export const validFrameRate = (rate: string): boolean => (datatypeIs(rate, "stri
  * @returns {boolean} true if the argument is a domain name
  */
 const DomainNameRegex: RegExp = new RegExp(/^[a-z\d]+([-.]{1}[a-z\d]+)*\.[a-z]{2,5}(:[\d]{1,5})?(\/.*)?$/, "i");
-export const isDomainName = (domain: string): boolean => (datatypeIs(domain, "string") ? DomainNameRegex.test(domain.trim()) : false);
+export const isDomainName = (domain: string) : boolean => DomainNameRegex.test(domain.trim())
 
 /**
  * checks of the specified argument matches an RTSP URL
@@ -278,7 +276,7 @@ export const isDomainName = (domain: string): boolean => (datatypeIs(domain, "st
  * @returns {boolean} true if the argument is an RTSP URL
  */
 const RTSPRegex: RegExp = new RegExp(/^rtsp:\/\/.*$/, "i");
-export const isRTSPURL = (url: string): boolean => (datatypeIs(url, "string") ? isURL(url) && RTSPRegex.test(url.trim()) : false);
+export const isRTSPURL = (url: string) : boolean => isURL(url) && RTSPRegex.test(url.trim())
 
 /**
  * check that a values conforms to the ServiceDaysList type
@@ -287,7 +285,7 @@ export const isRTSPURL = (url: string): boolean => (datatypeIs(url, "string") ? 
  * @returns {boolean} true if the value is properly formated
  */
 const DaysListRegex: RegExp = new RegExp(/^([1-7]\s+)*[1-7]$/); // list of values 1-7 separeted by spaces
-export const validServiceDaysList = (daysList: string): boolean => (datatypeIs(daysList, "string") ? DaysListRegex.test(daysList.trim()) : false);
+export const validServiceDaysList = (daysList: string) : boolean => DaysListRegex.test(daysList.trim())
 
 /**
  * check that a values conforms to the ZuluTimeType type
@@ -296,7 +294,7 @@ export const validServiceDaysList = (daysList: string): boolean => (datatypeIs(d
  * @returns {boolean} true if @time is properly formated
  */
 const ZuluRegex: RegExp = new RegExp(/^(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?)Z$/);
-export const validZuluTimeType = (time: string): boolean => (datatypeIs(time, "string") ? ZuluRegex.test(time.trim()) : false);
+export const validZuluTimeType = (time: string) : boolean => ZuluRegex.test(time.trim())
 
 /**
  * checks that the supplied argument conforms to the pattern for a TVA LanguageType
@@ -305,7 +303,7 @@ export const validZuluTimeType = (time: string): boolean => (datatypeIs(time, "s
  */
 const languageFormat = `^[${e_alpha}]{1,8}(-[${e_alpha}${e_digit}]{1,8})*$`;
 const languageRegex: RegExp = new RegExp(languageFormat,"i");
-export const  isTVAAudioLanguageType = (languageCode: string): boolean => datatypeIs(languageCode, "string") ? languageRegex.test(languageCode) : false;
+export const  isTVAAudioLanguageType = (languageCode: string) : boolean => languageRegex.test(languageCode)
 
 /**
  * checks if the supplied string only contains ASCII values
@@ -313,7 +311,7 @@ export const  isTVAAudioLanguageType = (languageCode: string): boolean => dataty
  * @returns {boolean} true of @ascii_str is a string any contains only ASCII characters, otherwise false
  */
 const ASCIIregexp: RegExp = new RegExp(`^[${ASCII_chars}]*$`);
-export const isASCII = (ascii_str: string): boolean => (datatypeIs(ascii_str, "string") ? ASCIIregexp.test(ascii_str) : false);
+export const isASCII = (ascii_str: string) : boolean => ASCIIregexp.test(ascii_str)
 
 /**
  * determine if the passed value conforms to am IETF RFC4151 TAG URI
@@ -321,7 +319,6 @@ export const isASCII = (ascii_str: string): boolean => (datatypeIs(ascii_str, "s
  * @param {string} identifier  The service identifier to be checked
  * @return {boolean} true if the service identifier is in RFC4151 TAG URI format
  */
-
 const year: string = "([0-9]{4})", month: string = "([0-9]{2})", day: string = "([0-9]{2})";
 const date: string = `${year}(-${month}(-${day})?)?`
 const DNScomp: string = `[${l_alphanum}](([${l_alphanum}]|-)*[${l_alphanum}])?`
@@ -342,7 +339,7 @@ const TagRegex: RegExp = new RegExp(
 	`^tag:${taggingEntity}:${specific}(#${fragment})?$`,
   "i"
 );
-export const isTAGURI = (identifier: string): boolean => (datatypeIs(identifier, "string") ? TagRegex.test(identifier.trim()) : false);
+export const isTAGURI = (identifier: string): boolean => TagRegex.test(identifier.trim())
 
 /**
  * check if the argument complies to a CRID format
@@ -351,7 +348,7 @@ export const isTAGURI = (identifier: string): boolean => (datatypeIs(identifier,
  * @returns	{boolean} true if the argument confirms to the CRID format, else false
  **/
 const CRIDRegex: RegExp = new RegExp("crid://(.*)/(.*)", "i");
-export const isCRIDURI = (value: string): boolean => (datatypeIs(value, "string") ? CRIDRegex.test(value.trim()) : false);
+export const isCRIDURI = (value: string) : boolean => CRIDRegex.test(value.trim()) 
 
 /**
  * check if the argument only contains printable ascii characters ("space" --> "tilda")
@@ -359,11 +356,11 @@ export const isCRIDURI = (value: string): boolean => (datatypeIs(value, "string"
  * @returns {boolean} true if the value only contains ASCII characters, else false
  */
 const ASCIIPrint: RegExp = new RegExp(/^[ -~]*$/);
-export const hasNonPrintableChars = (value: string): boolean => (datatypeIs(value, "string") ? !ASCIIPrint.test(value) : false);
+export const hasNonPrintableChars = (value: string) : boolean => !ASCIIPrint.test(value)
 
 //const UnicodePrint = new RegExp(/^[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}]+$/);
 //const UnicodePrint = new RegExp(/^\PC+$/);
-//export const hasNonPrintableUnicodeChars = (value: string): boolean => (datatypeIs(value, "string") ? !UnicodePrint.test(value) : false);
+//export const hasNonPrintableUnicodeChars = (value: string) : boolean => !UnicodePrint.test(value)
 
 /**
  * check if the argument contains a UUID value in the hyphenated format of IETF RFC 4122 (https://datatracker.ietf.org/doc/html/rfc4122#section-3)
@@ -371,4 +368,4 @@ export const hasNonPrintableChars = (value: string): boolean => (datatypeIs(valu
  * @returns {boolean} true if the value contains a formatted UUID, else false
  */
 const UUIDRegex: RegExp = new RegExp(`^[${e_hex}]{8}-[${e_hex}]{4}-[${e_hex}]{4}-[${e_hex}]{4}-[${e_hex}]{12}$`, "i");
-export const isUUIDformat = (value: string): boolean => (datatypeIs(value, "string") ? UUIDRegex.test(value) : false);
+export const isUUIDformat = (value: string) : boolean => UUIDRegex.test(value)

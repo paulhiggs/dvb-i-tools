@@ -142,10 +142,10 @@ export default class IANAlanguages {
 	 * load the languages into knownLanguages global array from the specified text
 	 * file is formatted according to www.iana.org/assignments/language-subtag-registry/language-subtag-registry
 	 *
-	 * @param {string} languagesData the text of the language data
+	 * @param {string} languageData the text of the language data
 	 */
 	/* private method */
-	#processLanguageData(languageData: string) {
+	#processLanguageData(languageData: string) : void {
 		/**
 		 * determines if provided language information relates to a sign language
 		 *
@@ -254,11 +254,11 @@ export default class IANAlanguages {
 			readFile(
 				languagesFile,
 				{ encoding: "utf-8" },
-				function (err: NodeJS.ErrnoException | null, data: string) {
+				(err: NodeJS.ErrnoException | null, data: string) => {
 					if (!err) {
 						this.#processLanguageData(data);
 					} else console.log(chalk.red(`error loading languages ${err}`));
-				}.bind(this)
+				}
 			);
 		} else {
 			const langs = readFileSync(languagesFile, { encoding: "utf-8" }).toString();

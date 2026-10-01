@@ -19,7 +19,7 @@ export const ERROR: string = "(E)",
 
 const MAX_FRAGMENT_LINES: number = 6; // the maximum number of lines in an element to display when that element has an error
 
-const nthIndexOf = (string	: string, pattern: string, n: number) => {
+const nthIndexOf = (string	: string, pattern: string, n: number) : number => {
 	let i = -1;
 	while (n-- && i++ < string.length) {
 		i = string.indexOf(pattern, i);

@@ -79,10 +79,10 @@ export default class ISOcountries {
 			readFile(
 				countriesFile,
 				{ encoding: "utf-8" },
-				function (err: NodeJS.ErrnoException | null, data: string) {
+				(err: NodeJS.ErrnoException | null, data: string) =>{
 					if (!err) this.#countriesList = loadCountryData(data);
 					else console.log(chalk.red(err.message));
-				}.bind(this)
+				}
 			);
 		else {
 			const langs = readFileSync(countriesFile, { encoding: "utf-8" }).toString();

@@ -406,7 +406,7 @@ export default class ServiceListRegistryCheck {
 	 *                      variants              flags from input
 	 *                                              GERMAN_A177r6_VARIANT  use the German schema variants for A177r6
 	 */
-	/*public*/ doValidateServiceListRegistry(SLRtext: string, errs: ErrorList, options: SLR_Validator_Options = {}) {
+	/*public*/ doValidateServiceListRegistry(SLRtext: string, errs: ErrorList, options: SLR_Validator_Options = {}) : void {
 		this.#numRequests++;
 
 		if (!SLRtext) {
@@ -502,7 +502,7 @@ export default class ServiceListRegistryCheck {
 	 * @param {string} SLRtext  The service list text to be validated
 	 * @returns {ErrorList} Errors found in validaton
 	 */
-	/*public*/ validateServiceListRegistry(SLRtext: string) {
+	/*public*/ validateServiceListRegistry(SLRtext: string) : Promise<ErrorList> {
 		const errs = new ErrorList();
 		this.doValidateServiceListRegistry(SLRtext, errs);
 

@@ -164,14 +164,14 @@ export const SLR_GetSchema = (namespace: string, variant: number = 0) : LoadedVe
 
 
 let SLRschemasLoaded = false;
-export function LoadSLRschemas(opts: LoadOptions) {
+export function LoadSLRschemas(opts: LoadOptions) : void {
 	if (SLRschemasLoaded) return;
 	SLRschemasLoaded = true;
 	// TODO: implement useURLs and async options to load from URL rather than local file
 	if (opts.verbose) console.log(chalk.yellow.underline("loading service list registry schemas..."));
 	SchemaVersions.forEach((version) => {
 		if (opts.verbose) process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
-		const buf = readmyfile(version.filename, {});
+		const buf = readmyfile(version.filename, {}) as Buffer;
 		if (buf) version.schema = XmlDocument.fromBuffer(buf, { url: version.filename });
 		if (opts.verbose) process.stdout.write(`${version.schema ? chalk.green("OK") : chalk.red.bold("FAIL")}\n`);
 	});

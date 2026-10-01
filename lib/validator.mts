@@ -73,7 +73,7 @@ function DVB_I_check(
 		slcheck: ServiceListCheck | null, plcheck: PlaylistCheck | null, cgcheck: ContentGuideCheck | null, slrcheck: ServiceListRegistryCheck | null, 
 		hasSL: boolean, hasPL: boolean, hasCG: boolean, hasSLR: boolean, 
 		motd: string | undefined, 
-		mode: string = MODE_UNSPECIFIED, linktype: string = MODE_UNSPECIFIED) {
+		mode: string = MODE_UNSPECIFIED, linktype: string = MODE_UNSPECIFIED) : void {
 			
 	if (!req.session.data) {
 		// setup defaults
@@ -173,7 +173,7 @@ function DVB_I_check(
  * @param {string | undefined} motd          HTML text for the Message Of The Day
  * @param {boolean}          jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateServiceList(req: express.Request, res: express.Response, slcheck: ServiceListCheck, motd: string | undefined, jsonResponse: boolean) {
+function validateServiceList(req: express.Request, res: express.Response, slcheck: ServiceListCheck, motd: string | undefined, jsonResponse: boolean) : void {
 	const errs = new ErrorList();
 	let resp,
 		VVxml = null;
@@ -220,7 +220,7 @@ function validateServiceList(req: express.Request, res: express.Response, slchec
  * @param {string | undefined} motd          HTML text for the Message Of The Day
  * @param {boolean}          jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
-function validatePlaylist(req: express.Request, res: express.Response, plcheck: PlaylistCheck, motd: string | undefined, jsonResponse: boolean) {
+function validatePlaylist(req: express.Request, res: express.Response, plcheck: PlaylistCheck, motd: string | undefined, jsonResponse: boolean) : void {
 	const errs = new ErrorList();
 	let resp,
 		VVxml = null;
@@ -268,7 +268,7 @@ function validatePlaylist(req: express.Request, res: express.Response, plcheck: 
  * @param {string | undefined}       motd           HTML text for the Message Of The Day
  * @param {boolean}                  jsonResponse   Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateServiceListRegistry(req: express.Request, res: express.Response, slrcheck: ServiceListRegistryCheck, motd: string | undefined, jsonResponse: boolean) {
+function validateServiceListRegistry(req: express.Request, res: express.Response, slrcheck: ServiceListRegistryCheck, motd: string | undefined, jsonResponse: boolean) : void {
 	const errs = new ErrorList();
 	let resp,
 		VVxml = null;
@@ -314,7 +314,7 @@ function validateServiceListRegistry(req: express.Request, res: express.Response
  * @param {string | undefined} motd          HTML text for the Message Of The Day
  * @param {boolean}           jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateContentGuide(req: express.Request, res: express.Response, cgcheck: ContentGuideCheck, motd: string | undefined, jsonResponse: boolean) {
+function validateContentGuide(req: express.Request, res: express.Response, cgcheck: ContentGuideCheck, motd: string | undefined, jsonResponse: boolean) : void {
 	const errs = new ErrorList();
 	let resp,
 		VVxml = null;
@@ -358,7 +358,7 @@ function validateContentGuide(req: express.Request, res: express.Response, cgche
  *
  * @param {commandLineArgs.CommandLineOptions} options   Command Line Arguments - see OptionDefinitions in all-in-one.ts
  */
-export default function validator(options: commandLineArgs.CommandLineOptions) {
+export default function validator(options: commandLineArgs.CommandLineOptions) : void {
 	if (options.nocsr && options.nosl && options.nopl && options.nocg && options.noslr) {
 		console.log(chalk.red("nothing to do... exiting"));
 		process.exit(1);
@@ -627,9 +627,11 @@ export default function validator(options: commandLineArgs.CommandLineOptions) {
 				// we need to disable listening as the Windows cluster seems to 'prefer' some workers, expecialy  when the validator is being used to verify 
 				// a file it is serving itself (like an SLR respose from `SLEPR_query_route`)
 				const saved_port = req.socket.localPort  
-				req.socket.server!.close()
+				if (cluster.isWorker && options.workers > 1)
+					req.socket.server!.close();
 				DVB_I_check(req, res, slcheck, plcheck, cgcheck, slrcheck, !options.nosl, !options.nopl, !options.nocg, !options.noslr, motd);
-				req.socket.server!.listen(saved_port)
+				if (req.socket.server!.listening == false)
+					req.socket.server!.listen(saved_port)
 			});
 		}
 

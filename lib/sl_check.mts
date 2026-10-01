@@ -2665,7 +2665,7 @@ export default class ServiceListCheck {
 	 * @param {string} SLtext  The service list text to be validated
 	 * @returns {ErrorList} Errors found in validaton
 	 */
-	/*public*/ validateServiceList(SLtext: string) {
+	/*public*/ validateServiceList(SLtext: string) : Promise<ErrorList> {
 		const errs = new ErrorList();
 		this.doValidateServiceList(SLtext, errs);
 
