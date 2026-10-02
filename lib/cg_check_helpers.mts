@@ -26,7 +26,7 @@ export default class CG_helpers {
 	 * @param {string} errCode      the error number used as a prefix for reporting errors
 	 * @param {boolean} isRequired  true if the specified attribute is required to be specified for the element
 	 */
-	static AllowedValue(elem: XmlElement, attrName: string, allowed: string[], errs: ErrorList, errCode: string, isRequired: boolean = true): void {
+	static AllowedValue(elem: XmlElement, attrName: string, allowed: string[], errs: ErrorList, errCode: string, isRequired: boolean = true) : void {
 		if (!parameterCheck("AllowedValue", elem, null, errs, "AV000")) return;
 
 		const attr_value = elem.attrAnyNsValueOr(attrName);
@@ -55,7 +55,7 @@ export default class CG_helpers {
 	 * @param {string}     errCode    the error number used as a prefix for reporting errors
 	 * @param {boolean}    isRequired true if the specified attribute is required to be specified for the element
 	 */
-	static BooleanValue = (elem: XmlElement, attrName: string, errs: ErrorList, errCode: string, isRequired: boolean = true): void => 
+	static BooleanValue = (elem: XmlElement, attrName: string, errs: ErrorList, errCode: string, isRequired: boolean = true) : void => 
 		this.AllowedValue(elem, attrName, ["true", "false"], errs, errCode, isRequired);
 
 
@@ -106,7 +106,7 @@ export default class CG_helpers {
 	 * @param {number} actual the number of characters found in the synopsis
 	 * @returns {string} a reportable error message
 	 */
-	static synopsisLengthError = (label: string, length: number, actual: number) => 
+	static synopsisLengthError = (label: string, length: number, actual: number) : string => 
 		`length of ${tva.a_length.attribute(tva.e_Synopsis)}=${label.quote()} exceeds ${length} characters, measured(${actual})`;
 
 

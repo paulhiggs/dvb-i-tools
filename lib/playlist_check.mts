@@ -32,7 +32,7 @@ export default class PlaylistCheck {
 		this.#numRequests = 0;
 	}
 
-	stats() {
+	stats() : Record<string, number> {
 		return {numRequests: this.#numRequests};
 	}
 
@@ -56,7 +56,7 @@ export default class PlaylistCheck {
 	 *                      log_prefix            the first part of the logging location (or null if no logging)
 	 *                      report_schema_version report the state of the schema in the error/warning list
 	 */
-	/*public*/ doValidatePlaylist(PLtext: string, errs: ErrorList, options: PL_Validator_Options = {}) {
+	/*public*/ doValidatePlaylist(PLtext: string, errs: ErrorList, options: PL_Validator_Options = {}) : void {
 		this.#numRequests++;
 		if (!PLtext) {
 			errs.addError({

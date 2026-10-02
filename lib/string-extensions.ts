@@ -12,7 +12,6 @@
 /**
  * encapsulate the specified string in quotes
  *
- * @param {string} str  the string to be encapsulated in quotes
  * @returns {string} the string encapsulated in quotes
  */
 String.prototype.quote = function() : string {

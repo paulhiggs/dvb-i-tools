@@ -135,6 +135,7 @@ export type SL_Validator_Options = {
 	log_prefix? : string
 	report_schema_version?: boolean
 	variants?: number
+	traverse?: boolean
 }
 
 export default class ServiceListCheck {
@@ -2168,6 +2169,7 @@ export default class ServiceListCheck {
 	 *                      report_schema_version report the state of the schema in the error/warning list
 	 *                      variants              flags from input
 	 *                                              GERMAN_A177r6_VARIANT  use the German schema variants for A177r6
+	 *                      traverse              validate referenced DVB-I documents
 	 */
 	/*public*/ doValidateServiceList(SLtext: string, errs: ErrorList, options: SL_Validator_Options = {}) {
 		this.#numRequests++;
@@ -2183,6 +2185,7 @@ export default class ServiceListCheck {
 		DefaultProperty(options, "log_prefix", null);
 		DefaultProperty(options, "report_schema_version", true);
 		DefaultProperty(options, "variants", 0);
+		DefaultProperty(options, "traverse", false)
 
 		const SL = SchemaLoad(SLtext, errs, "SL001");
 		if (!SL) return;

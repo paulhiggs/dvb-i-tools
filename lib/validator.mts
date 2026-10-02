@@ -83,6 +83,7 @@ function DVB_I_check(
 		req.session.data.entry = linktype == MODE_UNSPECIFIED ? MODE_URL : linktype;
 		if (cgcheck) req.session.data.cgmode = cgcheck.supportedRequests[0].value;
 		req.session.data.forGermany = false;
+		req.session.data.traverse = false;
 	}
 	if (req.session.data.lastUrl != req.url) {
 		req.session.data.mode = mode == MODE_UNSPECIFIED ? (hasSL ? MODE_SL : MODE_CG) : mode;
@@ -102,6 +103,7 @@ function DVB_I_check(
 		else if (req.body.doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) req.parseErr = ["File not provided"]
 
 		req.session.data.forGermany = req.body.forGermany == "on";
+		req.session.data.traverse = req.body.traverse == "on"
 		const log_prefix = createPrefix(req);
 		if (!req.parseErr)
 			switch (req.body.doclocation) {
@@ -138,13 +140,14 @@ function DVB_I_check(
 					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
 					break;
 				case MODE_SL:
-					if (slcheck) slcheck.doValidateServiceList(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, variants: req.session.data.forGermany ? GERMAN_A177r6_VARIANT : 0});
+					if (slcheck) slcheck.doValidateServiceList(VVxml, errs, 
+						{ log_prefix: log_prefix, report_schema_version: true, variants: req.session.data.forGermany ? GERMAN_A177r6_VARIANT : 0, traverse: req.session.data.traverse});
 					break;
 				case MODE_PL:
 					if (plcheck) plcheck.doValidatePlaylist(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true });
 					break;
 				case MODE_SLR:
-					if (slrcheck) slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true });
+					if (slrcheck) slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, traverse: req.session.data.traverse });
 					break;
 			}
 
