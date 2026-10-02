@@ -346,7 +346,7 @@ export default class ServiceListRegistryCheck {
 			if (URI) {
 				if (!isHTTPURL(URI.content)) 
 					errs.addError(InvalidURL(URI.content, URI, dvbisld.e_URI.elementize(), `${errCode}-36`));
-				ValidateAnySignaturePolicy(URI, documentInfo, errs, `${errCode}-36`);
+				ValidateAnySignaturePolicy(URI, documentInfo, errs, `${errCode}-37`);
 			}
 		});
 
