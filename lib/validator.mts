@@ -70,7 +70,7 @@ const keyFilename = join(".", "selfsigned.key"),
 
 function DVB_I_check(
 		req: express.Request, res: express.Response, 
-		slcheck: ServiceListCheck | null, plcheck: PlaylistCheck | null, cgcheck: ContentGuideCheck | null, slrcheck: ServiceListRegistryCheck | null, 
+		slcheck: ServiceListCheck | undefined, plcheck: PlaylistCheck | undefined, cgcheck: ContentGuideCheck | undefined, slrcheck: ServiceListRegistryCheck | undefined, 
 		hasSL: boolean, hasPL: boolean, hasCG: boolean, hasSLR: boolean, 
 		motd: string | undefined, 
 		mode: string = MODE_UNSPECIFIED, linktype: string = MODE_UNSPECIFIED) : void {
@@ -105,12 +105,14 @@ function DVB_I_check(
 		req.session.data.forGermany = req.body.forGermany == "on";
 		req.session.data.traverse = req.body.traverse == "on"
 		const log_prefix = createPrefix(req);
+		const errs = new ErrorList();
 		if (!req.parseErr)
 			switch (req.body.doclocation) {
 				case MODE_URL:
 					if (isHTTPURL(req.body.XMLurl)) {
 						let resp = null;
 						try {
+							errs.setLocation(req.body.XMLurl)
 							resp = fetchS(req.body.XMLurl, fetch_options);
 						} catch (error) {
 							req.parseErr = [`${error}`];
@@ -124,6 +126,7 @@ function DVB_I_check(
 					break;
 				case MODE_FILE:
 					try {
+						errs.setLocation((req.files!.XMLfile as fileupload.UploadedFile).name)
 						VVxml = (req.files!.XMLfile as fileupload.UploadedFile).data.toString();
 					} catch (err) {
 						req.parseErr = [`retrieval of FILE ${(req.files!.XMLfile as fileupload.UploadedFile).name} failed (${err})`];
@@ -133,21 +136,30 @@ function DVB_I_check(
 				default:
 					req.parseErr = [`method is not ${MODE_URL.quote()} or ${MODE_FILE.quote()}`];
 			}
-		const errs = new ErrorList();
+
 		if (!req.parseErr && VVxml)
 			switch (req.body.testtype) {
 				case MODE_CG:
-					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
+					errs.setType(`Content Guide-${req.body.requestType}`)
+					if (cgcheck) 
+						cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
 					break;
 				case MODE_SL:
-					if (slcheck) slcheck.doValidateServiceList(VVxml, errs, 
-						{ log_prefix: log_prefix, report_schema_version: true, variants: req.session.data.forGermany ? GERMAN_A177r6_VARIANT : 0, traverse: req.session.data.traverse});
+					errs.setType("Service List")
+					if (slcheck) 
+						slcheck.doValidateServiceList(VVxml, errs, 
+							{ log_prefix: log_prefix, report_schema_version: true, variants: req.session.data.forGermany ? GERMAN_A177r6_VARIANT : 0, traverse: req.session.data.traverse}
+						);
 					break;
 				case MODE_PL:
-					if (plcheck) plcheck.doValidatePlaylist(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true });
+					errs.setType("Playlist")
+					if (plcheck) 
+						plcheck.doValidatePlaylist(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true });
 					break;
 				case MODE_SLR:
-					if (slrcheck) slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, traverse: req.session.data.traverse });
+					errs.setType("Service List Registry")
+					if (slrcheck) 
+						slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, traverse: req.session.data.traverse });
 					break;
 			}
 
@@ -471,10 +483,10 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 			})
 		);
 
-		let slcheck = null,
-			plcheck = null,
-			cgcheck = null,
-			slrcheck = null;
+		let slcheck = undefined,
+			plcheck = undefined,
+			cgcheck = undefined,
+			slrcheck = undefined;
 
 		const DFLT_async = true, DFLT_verbose = true;
 
@@ -496,33 +508,6 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 			const audioPresentation = LoadAudioPresentationCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
 			const linkedApplicationTypes = LoadLinkedApplicationCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
 
-			if (!options.nosl)
-				slcheck = new ServiceListCheck({
-					useURLs: options.urls,
-					async: DFLT_async,
-					verbose: DFLT_verbose,
-
-					accessibilities: accessibilityPurposes,
-					audiofmts: audioFormats,
-					audiopres: audioPresentation,
-					audiopurps: audioPurposes,
-					countries: isoCountries,
-					genres: knownGenres,
-					languages: knownLanguages,
-					stcarriage: subtitleCarriages,
-					stcodings: subtitleCodings,
-					stpurposes: subtitlePurposes,
-					videofmts: videoFormats,
-					appfmts: linkedApplicationTypes,
-				});
-
-			if (!options.nopl)
-				plcheck = new PlaylistCheck( {
-					useURLs: options.urls,
-					async: DFLT_async,
-					verbose: DFLT_verbose,
-				});
-
 			if (!options.nocg)
 				cgcheck = new ContentGuideCheck({
 					useURLs: options.urls,
@@ -543,6 +528,33 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 					videofmts: videoFormats,
 				});
 
+			if (!options.nosl)
+				slcheck = new ServiceListCheck({
+					useURLs: options.urls,
+					async: DFLT_async,
+					verbose: DFLT_verbose,
+
+					accessibilities: accessibilityPurposes,
+					audiofmts: audioFormats,
+					audiopres: audioPresentation,
+					audiopurps: audioPurposes,
+					countries: isoCountries,
+					genres: knownGenres,
+					languages: knownLanguages,
+					stcarriage: subtitleCarriages,
+					stcodings: subtitleCodings,
+					stpurposes: subtitlePurposes,
+					videofmts: videoFormats,
+					appfmts: linkedApplicationTypes,
+				}, cgcheck);
+
+			if (!options.nopl)
+				plcheck = new PlaylistCheck( {
+					useURLs: options.urls,
+					async: DFLT_async,
+					verbose: DFLT_verbose,
+				});
+
 			if (!options.noslr) 
 				slrcheck = new ServiceListRegistryCheck({
 					useURLs: options.urls,
@@ -553,7 +565,7 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 					genres: knownGenres, 
 					languages: knownLanguages, 
 					appfmts: linkedApplicationTypes,
-				});
+				}, slcheck);
 		}
 
 		const Express_Options = {

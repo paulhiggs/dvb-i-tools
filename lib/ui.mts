@@ -185,6 +185,15 @@ function tabulateResults(source: string, res: express.Response, error: string[] 
 	}
 }
 
+function reportNestedErrors(res: express.Response, errs: ErrorList | undefined) {
+	if (!errs || errs.nestedErrors.length == 0) return
+	
+	errs.nestedErrors.forEach((nest) => {
+		res.write(`${BREAK}<p>${nest.type || "unknown"} @ ${nest.source || "unknown"} --> ${nest.compactSummary()}</p>`)
+		reportNestedErrors(res, nest)
+	});
+}
+
 export type FormModes = {
 	cg: string 
 	sl: string
@@ -268,10 +277,11 @@ export function drawForm(
 			source = req.body?.XMLurl ? req.body?.XMLurl : "";
 			break;
 		case MODE_FILE:
-			source = (req.files?.XMLfile as UploadedFile).name ? (req.files?.XMLfile as UploadedFile).name : "";
+			source = (req.files?.XMLfile as UploadedFile)?.name ? (req.files?.XMLfile as UploadedFile).name : "";
 			break;
 	}
 	tabulateResults(source, res, error, errs);
+	reportNestedErrors(res, errs)
 	res.write(PAGE_BOTTOM);
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -284,6 +294,7 @@ export function drawResults(req: express.Request, res: express.Response, motd?: 
 	res.setHeader("Content-Type", "text/html");
 	res.write(PAGE_TOP("DVB-I Validator", req.secure, "DVB-I Validator", motd));
 	tabulateResults(req.query.url ? req.query.url as string: "uploaded list", res, error, errs);
+	reportNestedErrors(res, errs)
 	res.write(PAGE_BOTTOM);
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	return new Promise((resolve, reject) => {

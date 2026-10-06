@@ -34,8 +34,7 @@ import type { SL_Validator_Options, ValidatorOptions } from "./sl_check.mts"
 import ClassificationScheme from "./classification_scheme.mts"
 import ISOcountries from "./ISO_countries.mts"
 import ServiceListCheck from "./sl_check.mts"
-import { fetch_options } from "./globals.mts"
-import fetchS from "sync-fetch"
+
 
 export function CheckDelivery(Delivery: XmlElement, SchemaVersion: number, ApplicationTypeCS: ClassificationScheme, errs: ErrorList, errCode: string) {
 	Delivery.forEachNamedChildElement(dvbisld.e_DVBTDelivery, (DVBTDelivery) => {
@@ -123,7 +122,7 @@ export default class ServiceListRegistryCheck {
 	#allowedApplicationTypes: ClassificationScheme
 	#service_list_validator?: ServiceListCheck
 
-	constructor(opts: ValidatorOptions, sl_checker?: ServiceListCheck ) {
+	constructor(opts: ValidatorOptions, sl_checker?: ServiceListCheck) {
 
 		DefaultProperty(opts, "useURLs", false);
 		DefaultProperty(opts, "async", true);
@@ -357,22 +356,10 @@ export default class ServiceListRegistryCheck {
 				ValidateAnySignaturePolicy(URI, documentInfo, errs, `${errCode}-37`);
 
 				if (options.traverse && this.#service_list_validator) {
-					const sl_errs : ErrorList = new ErrorList();
 
-					let resp
-					try {
-					 resp = fetchS(URI.content, fetch_options);
-					}
-					catch (error) {
-						errs.addError({
-							code: `${errCode}-38`,
-							message: `canot traverse into ${URI.content}, error=${error}`,
-							fragment: URI,
-							key: keys.k_Traversal,
-						})
-					}
-					if (resp && resp.ok)
-					this.#service_list_validator.doValidateServiceList(resp.text(), sl_errs, options)
+					const sl_errs : ErrorList = new ErrorList(URI.content, "Nested Service List")
+					this.#service_list_validator.validateServiceList(URI, URI.content, sl_errs, options)
+					errs.nestedErrors.push(sl_errs)
 				}
 			}
 		});
@@ -530,7 +517,8 @@ export default class ServiceListRegistryCheck {
 	 * @param {string} SLRtext  The service list text to be validated
 	 * @returns {ErrorList} Errors found in validaton
 	 */
-	/*public*/ validateServiceListRegistry(SLRtext: string) : Promise<ErrorList> {
+	/*public*/ 
+	/* validateServiceListRegistry(SLRtext: string) : Promise<ErrorList> {
 		const errs = new ErrorList();
 		this.doValidateServiceListRegistry(SLRtext, errs);
 
@@ -539,4 +527,5 @@ export default class ServiceListRegistryCheck {
 			resolve(errs);
 		});
 	}
+	*/
 }

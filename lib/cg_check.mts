@@ -53,16 +53,19 @@ import {
 import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts"
 import { mlLanguage, NO_DOCUMENT_LANGUAGE } from "./multilingual_element.mts"
 
+import { fetch_options } from "./globals.mts"
+import fetchS from "sync-fetch"
+
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";
 const CATEGORY_GROUP_NAME = '"category group"';
 
-const CG_REQUEST_SCHEDULE_TIME = "Time";
-const CG_REQUEST_SCHEDULE_NOWNEXT = "NowNext";
+export const CG_REQUEST_SCHEDULE_TIME = "Time";
+export const CG_REQUEST_SCHEDULE_NOWNEXT = "NowNext";
 const CG_REQUEST_SCHEDULE_WINDOW = "Window";
 const CG_REQUEST_PROGRAM = "ProgInfo";
 const CG_REQUEST_MORE_EPISODES = "MoreEpisodes";
-const CG_REQUEST_BS_CATEGORIES = "bsCategories";
+export const CG_REQUEST_BS_CATEGORIES = "bsCategories";
 const CG_REQUEST_BS_LISTS = "bsLists";
 const CG_REQUEST_BS_CONTENTS = "bsContents";
 
@@ -154,6 +157,9 @@ function LoadCGschemas(opts: LoadOptions) : void {
 export type CG_Validator_Options = {
 	log_prefix? : string
 	report_schema_version?: boolean
+	traverse?: boolean
+	progInfo_ep?: string
+	grpInfo_ep?: string
 }
 
 import type {ValidatorOptions} from "./sl_check.mts"
@@ -1502,9 +1508,17 @@ export default class ContentGuideCheck {
 	 * @param {string}     requestType         the type of content guide request being checked
 	 * @param {string[]}   indexes             array of @index values from other elements in the same table - for duplicate detection
 	 * @param {ErrorList}  errs                errors found in validaton
+	 * @param {string}     piEpUrl             (optional) Program Information endpoint to check program listed in the <ProgramInformationTable> 
 	 * @returns {string | null} 	CRID of the current program, if this is it
 	 */
-	/* private */ #ValidateProgramInformation(ProgramInformation: XmlElement, programCRIDs: string[], groupCRIDs: string[] | null, requestType: string, indexes: string[], errs: ErrorList) : string | null {
+	/* private */ #ValidateProgramInformation(
+			ProgramInformation: XmlElement, 
+			programCRIDs: string[], 
+			groupCRIDs: string[] | null, 
+			requestType: string, 
+			indexes: string[], 
+			errs: ErrorList,
+			piEpUrl: string | undefined) : string | null {
 		if (!parameterCheck("ValidateProgramInformation", ProgramInformation, tva.e_ProgramInformation, errs, "PI000")) return null;
 
 		checkTopElementsAndCardinality(
@@ -1546,6 +1560,14 @@ export default class ContentGuideCheck {
 					line: ProgramInformation.line,
 				});
 			else programCRIDs.push(programCRID);
+
+			if (piEpUrl) {
+				const piURL = `${piEpUrl}?pid=${programCRID}`
+				const piErrs = new ErrorList(piURL, "Program Information")
+	/*dbg*/console.log(`traverse:: DPI of ${piURL}`)
+				this.validateContentGuide(ProgramInformation, piURL, CG_REQUEST_PROGRAM, piErrs, {} )
+				errs.nestedErrors.push(piErrs)
+			}
 		}
 
 		// <ProgramInformation><BasicDescription>
@@ -1651,10 +1673,17 @@ export default class ContentGuideCheck {
 	 * @param {string[]}   groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
 	 * @param {string}     requestType         the type of content guide request being checked
 	 * @param {ErrorList}  errs                errors found in validaton
+	 * @param {string}     piEpUrl             (optional) Program Information endpoint to check program listed in the <ProgramInformationTable> 
 	 * @param {number}     o.childCount        the number of child elements to be present (to match GroupInformation@numOfItems)
 	 * @returns {string | null} the CRID of the currently airing program (that which is a member of the "now" structural crid)
 	 */
-	/* private */ #CheckProgramInformation(ProgramDescription: XmlElement, programCRIDs: string[], groupCRIDs: string[] | null, requestType: string, errs: ErrorList, o: {childCount: number} | null = null) : string | null {
+	/* private */ #CheckProgramInformation(
+			ProgramDescription: XmlElement, 
+			programCRIDs: string[], 
+			groupCRIDs: string[] | null, 
+			requestType: string, errs: ErrorList, 
+			piEpUrl: string | undefined,
+			o: {childCount: number} | null = null) : string | null {
 		if (!parameterCheck("CheckProgramInformation", ProgramDescription, tva.e_ProgramDescription, errs, "CPI000")) return null;
 
 		const ProgramInformationTable = ProgramDescription.getAnyNs(tva.e_ProgramInformationTable);
@@ -1672,7 +1701,7 @@ export default class ContentGuideCheck {
 			currentProgramCRID = null;
 		const indexes: string[] = [];
 		ProgramInformationTable.forEachNamedChildElement(tva.e_ProgramInformation, (ProgramInformation) => {
-			const t = this.#ValidateProgramInformation(ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs);
+			const t = this.#ValidateProgramInformation(ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs, piEpUrl);
 			if (t) currentProgramCRID = t;
 			cnt++;
 		});
@@ -3415,8 +3444,11 @@ export default class ContentGuideCheck {
 	 * @param {string}    requestType     the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
 	 * @param {ErrorList} errs            errors found in validaton
 	 * @param {CG_Validator_Options}    options
-	 *                   options.log_prefix            the first part of the logging location (or null if no logging)
-	 *                   options.report_schema_version report the state of the schema in the error/warning list
+	 *                      log_prefix            the first part of the logging location (or null if no logging)
+	 *                      report_schema_version report the state of the schema in the error/warning list
+	 *                      traverse              validate referenced DVB-I documents
+	 *                      progInfo_ep           URL to the detailed program information endpoint
+	 *                      grpInfo_ep            URL to the group information endpoint
 	 */
 	doValidateContentGuide(CGtext: string, requestType: string, errs: ErrorList, options: CG_Validator_Options = {}) : void {
 		this.#numRequests++;
@@ -3479,7 +3511,7 @@ export default class ContentGuideCheck {
 					errs,
 					"CG011"
 				);
-				this.#CheckProgramInformation(ProgramDescription, programCRIDs, null, requestType, errs);
+				this.#CheckProgramInformation(ProgramDescription, programCRIDs, null, requestType, errs, options.traverse ? options.grpInfo_ep : undefined, undefined);
 				this.#CheckProgramLocation(ProgramDescription, programCRIDs, null, requestType, errs);
 				break;
 			case CG_REQUEST_SCHEDULE_NOWNEXT:
@@ -3495,7 +3527,7 @@ export default class ContentGuideCheck {
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
 				if (ProgramDescription.hasChild(tva.e_GroupInformationTable)) this.#CheckGroupInformationNowNext(ProgramDescription, groupIds, requestType, errs);
 				// eslint-disable-next-line no-case-declarations
-				const currentProgramCRIDnn = this.#CheckProgramInformation(ProgramDescription, programCRIDs, groupIds, requestType, errs);
+				const currentProgramCRIDnn = this.#CheckProgramInformation(ProgramDescription, programCRIDs, groupIds, requestType, errs, options.traverse ? options.grpInfo_ep : undefined, undefined);
 				this.#CheckProgramLocation(ProgramDescription, programCRIDs, currentProgramCRIDnn, requestType, errs);
 				break;
 			case CG_REQUEST_SCHEDULE_WINDOW:
@@ -3510,7 +3542,7 @@ export default class ContentGuideCheck {
 				// <GroupInformation> may become optional for now/next, the program sequence should be determined by ScheduleEvent.PublishedStartTime
 				if (ProgramDescription.hasChild(tva.e_GroupInformationTable)) this.#CheckGroupInformationNowNext(ProgramDescription, groupIds, requestType, errs);
 				// eslint-disable-next-line no-case-declarations
-				const currentProgramCRIDsw = this.#CheckProgramInformation(ProgramDescription, programCRIDs, groupIds, requestType, errs);
+				const currentProgramCRIDsw = this.#CheckProgramInformation(ProgramDescription, programCRIDs, groupIds, requestType, errs, options.traverse ? options.grpInfo_ep : undefined, undefined);
 				this.#CheckProgramLocation(ProgramDescription, programCRIDs, currentProgramCRIDsw, requestType, errs);
 				break;
 			case CG_REQUEST_PROGRAM:
@@ -3523,7 +3555,7 @@ export default class ContentGuideCheck {
 					errs,
 					"CG041"
 				);
-				this.#CheckProgramInformation(ProgramDescription, programCRIDs, null, requestType, errs);
+				this.#CheckProgramInformation(ProgramDescription, programCRIDs, null, requestType, errs, undefined, undefined);
 				this.#CheckProgramLocation(ProgramDescription, programCRIDs, null, requestType, errs);
 				break;
 			case CG_REQUEST_MORE_EPISODES:
@@ -3537,7 +3569,7 @@ export default class ContentGuideCheck {
 					"CG051"
 				);
 				this.#CheckGroupInformation(ProgramDescription, requestType, groupIds, errs, o);
-				this.#CheckProgramInformation(ProgramDescription, programCRIDs, groupIds, requestType, errs, o);
+				this.#CheckProgramInformation(ProgramDescription, programCRIDs, groupIds, requestType, errs, options.traverse ? options.grpInfo_ep : undefined, o);
 				this.#CheckProgramLocation(ProgramDescription, programCRIDs, null, requestType, errs, o);
 				break;
 			case CG_REQUEST_BS_CATEGORIES:
@@ -3568,7 +3600,7 @@ export default class ContentGuideCheck {
 						description: `the required child elements of ${tva.e_ProgramDescription.elementize()} for Box Set Contents need to be provied`,
 					});
 				this.#CheckGroupInformation(ProgramDescription, requestType, groupIds, errs, o);
-				this.#CheckProgramInformation(ProgramDescription, programCRIDs, groupIds, requestType, errs, o);
+				this.#CheckProgramInformation(ProgramDescription, programCRIDs, groupIds, requestType, errs, options.traverse ? options.grpInfo_ep : undefined, o);
 				this.#CheckProgramLocation(ProgramDescription, programCRIDs, null, requestType, errs, o);
 				break;
 		}
@@ -3579,17 +3611,31 @@ export default class ContentGuideCheck {
 	/**
 	 * validate the content guide and record any errors
 	 *
-	 * @param {string} CGtext        the content guide textt to be validated
+	 * @param {XmlElement} Url       the element containing the url to the content guide text to be validated
+	 * @param {string} requestUrl    the URL to the content guide text to be validated
 	 * @param {string} requestType   the type of CG request/response (specified in the form/query as not possible to deduce from metadata)
-	 * @returns {ErrorList} errs errors found in validaton
+	 * @param {ErrorList} errs       errors found in validaton
+	 * @param {CG_Validator_Options}    options
+	 *                      traverse              validate referenced DVB-I documents
+	 *                      progInfo_ep           URL to the detailed program information endpoint
+	 *                      grpInfo_ep            URL to the group information endpoint
 	 */
-	validateContentGuide(CGtext: string, requestType: string) : Promise<ErrorList> {
-		const errs = new ErrorList();
-		this.doValidateContentGuide(CGtext, requestType, errs, { report_schema_version: true });
-
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		return new Promise((resolve, reject) => {
-			resolve(errs);
-		});
+	/* public */
+	validateContentGuide(Url: XmlElement, requestUrl: string,  requestType: string, errs: ErrorList, options: CG_Validator_Options) : void {
+		let resp
+		try {
+			resp = fetchS(requestUrl, fetch_options);
+		}
+		catch (error) {
+			errs.addError({
+				code: `VSL001`,
+				message: `cannot traverse into ${Url.content}, error=${error}`,
+				fragment: Url,
+				key: keys.k_Traversal,
+			})
+		}
+		if (resp && resp.ok) 
+			this.doValidateContentGuide(resp.text(), requestType, errs, options);
 	}
+
 }

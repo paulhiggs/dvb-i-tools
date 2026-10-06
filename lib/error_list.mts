@@ -83,7 +83,12 @@ export default class ErrorList {
 
 	markupXML?: { value: string; ix: number; validationErrors?: string[] }[];
 
-	constructor() {
+	nestedErrors: ErrorList[]
+
+	source?: string
+	type?: string
+
+	constructor(location?: string, type?: string) {
 		this.countsFatal = [];
 		this.countsErr = [];
 		this.countsWarn = [];
@@ -95,7 +100,20 @@ export default class ErrorList {
 		this.informationals = [];
 		this.markupXML = [];
 		this.errorDescriptions = [];
+
+		this.nestedErrors = []
+		this.source = location
+		this.type = type
 	}
+
+	setLocation(sourceLoc: string) {
+		this.source = sourceLoc
+	}
+
+	setType(sourceType: string) {
+		this.type = sourceType
+	}
+
 
 	/**
 	 * loads the text that can be marked up with any validation errors/warnings etc

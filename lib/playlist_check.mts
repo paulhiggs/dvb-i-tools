@@ -128,7 +128,8 @@ export default class PlaylistCheck {
 	 * @param {string} PLtext  The playlist text to be validated
 	 * @returns {ErrorList} Errors found in validaton
 	 */
-	/*public*/ validatePlaylist(PLtext: string) : Promise<ErrorList> {
+	/*public*/ 
+	/* validatePlaylist(PLtext: string) : Promise<ErrorList> {
 		const errs = new ErrorList();
 		this.doValidatePlaylist(PLtext, errs);
 
@@ -137,5 +138,5 @@ export default class PlaylistCheck {
 			resolve(errs);
 		});
 	}
-
+	*/
 }
