@@ -1571,6 +1571,7 @@ export default class ContentGuideCheck {
 				const piErrs = new ErrorList(piURL, CG_REQUEST_PROGRAM, "Program Information")
 	/*dbg*/console.log(`traverse:: DPI of ${piURL}`)
 				this.validateContentGuide(ProgramInformation, piURL, CG_REQUEST_PROGRAM, piErrs, {} )
+				delete piErrs.markupXML
 				errs.nestedErrors.push(piErrs)
 			}
 		}
@@ -1797,6 +1798,7 @@ export default class ContentGuideCheck {
 						const bslErrs = new ErrorList(bslURL, CG_REQUEST_BS_LISTS, "Box Set List")
 	/*dbg*/console.log(`traverse:: Box Set List of ${bslURL}`)
 						this.validateContentGuide(GroupInformation, bslURL, CG_REQUEST_BS_LISTS, bslErrs, options )
+						delete bslErrs.markupXML
 						errs.nestedErrors.push(bslErrs)
 					}
 				}
@@ -1839,6 +1841,7 @@ export default class ContentGuideCheck {
 						const bscErrs = new ErrorList(bscURL, CG_REQUEST_BS_CONTENTS, "Box Set Contents")
 	/*dbg*/console.log(`traverse:: Box Set Contents of ${bscURL}`)
 						this.validateContentGuide(GroupInformation, bscURL, CG_REQUEST_BS_CONTENTS, bscErrs, options)
+						delete bscErrs.markupXML
 						errs.nestedErrors.push(bscErrs)
 					}
 				}

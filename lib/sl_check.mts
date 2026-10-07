@@ -1949,7 +1949,7 @@ export default class ServiceListCheck {
 				if (siEpURL && serviceID) {
 					const NowNextURL = `${siEpURL}?sid=${serviceID}&now_next=true`
 					const cg_errors = new ErrorList(NowNextURL, CG_REQUEST_SCHEDULE_NOWNEXT, "Now/Next")
-	/*dbg*/console.log(`traverse:: ${NowNextURL} Now/Next lookup for serviceID ${serviceID}`)
+	/*dbg*/console.log(` ${NowNextURL} Now/Next lookup for serviceID ${serviceID}`)
 					this.#content_guide_validator.validateContentGuide(
 						myContentGuide.getAnyNs(dvbi.e_ScheduleInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
 						NowNextURL, 
@@ -1961,6 +1961,7 @@ export default class ServiceListCheck {
 							progInfo_ep: dpiEpURL,
 							grpInfo_ep: giEpURL,
 						})
+					delete cg_errors.markupXML;
 					errs.nestedErrors.push(cg_errors)
 				}
 
@@ -1994,6 +1995,7 @@ export default class ServiceListCheck {
 									progInfo_ep: dpiEpURL,
 									grpInfo_ep: giEpURL,
 								})
+							delete cg_errors.markupXML
 							errs.nestedErrors.push(cg_errors)
 						}
 					}
@@ -2017,6 +2019,7 @@ export default class ServiceListCheck {
 								progInfo_ep: dpiEpURL,
 								grpInfo_ep: giEpURL,
 							})
+						delete cg_errors.markupXML
 						errs.nestedErrors.push(cg_errors)
 					}
 
@@ -2035,6 +2038,7 @@ export default class ServiceListCheck {
 							progInfo_ep: dpiEpURL,
 							grpInfo_ep: giEpURL,
 						})
+					delete cg_errors.markupXML
 					errs.nestedErrors.push(cg_errors)
 				}
 			}
