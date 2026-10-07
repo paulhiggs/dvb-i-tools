@@ -189,7 +189,7 @@ export function checkTopElementsAndCardinality(parentElement: XmlElement, childE
  * @param {string}      errCode      the error code to report with each error
  */
 export function SchemaCheck(XML: XmlDocument, XSD: XmlDocument, XSDfilename: string, errs: ErrorList, errCode: string) {
-	let validator = null;
+	let validator = undefined;
 	try {
 		validator = XsdValidator.fromDoc(XSD);
 	} catch (err) {
@@ -213,6 +213,7 @@ export function SchemaCheck(XML: XmlDocument, XSD: XmlDocument, XSDfilename: str
 			});
 		}
 	}
+	validator?.dispose()
 }
 
 /**

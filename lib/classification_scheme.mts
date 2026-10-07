@@ -85,6 +85,7 @@ function loadClassificationScheme(xmlCS : XmlDocument): CSData {
 		addCSTerm(rc.vals, rc.uri, term);
 		term = term.next as XmlElement;
 	}
+	xmlCS.dispose()
 	return rc;
 }
 
