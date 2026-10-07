@@ -357,7 +357,7 @@ export default class ServiceListRegistryCheck {
 
 				if (options.traverse && this.#service_list_validator) {
 
-					const sl_errs : ErrorList = new ErrorList(URI.content, "Nested Service List")
+					const sl_errs : ErrorList = new ErrorList(URI.content, "SL", "Nested Service List")
 					this.#service_list_validator.validateServiceList(URI, URI.content, sl_errs, options)
 					errs.nestedErrors.push(sl_errs)
 				}

@@ -1943,10 +1943,12 @@ export default class ServiceListCheck {
 				const useRef = uID && uID.parent ? (uID.parent as XmlElement).getAnyNs(dvbi.e_ContentGuideServiceRef)?.content: null
 				const serviceID = useRef || (uID ? uID.content : null)
 
+				const CHECK_SCHEDULE = false
 				// check now/next via ScheduleInfoEndpoint
+	/*dbg*/if (CHECK_SCHEDULE) {
 				if (siEpURL && serviceID) {
 					const NowNextURL = `${siEpURL}?sid=${serviceID}&now_next=true`
-					const cg_errors = new ErrorList(NowNextURL, "Nested Now/Next")
+					const cg_errors = new ErrorList(NowNextURL, CG_REQUEST_SCHEDULE_NOWNEXT, "Now/Next")
 	/*dbg*/console.log(`traverse:: ${NowNextURL} Now/Next lookup for serviceID ${serviceID}`)
 					this.#content_guide_validator.validateContentGuide(
 						myContentGuide.getAnyNs(dvbi.e_ScheduleInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
@@ -1968,7 +1970,8 @@ export default class ServiceListCheck {
 					const start_of_today = Temporal.ZonedDateTime.from({day: today.day, month: today.month, year: today.year, timeZone: "UTC"})
 
 					// look back 28 days
-					for (let test_day=-28; test_day<=28; test_day++) {
+					const NEEDED_DAYS = 1
+					for (let test_day=-NEEDED_DAYS; test_day<=NEEDED_DAYS; test_day++) {
 						const start_of_day = start_of_today.add({days: test_day})
 						for (let start_hour=0; start_hour<24; start_hour+=6) {
 							
@@ -1978,7 +1981,7 @@ export default class ServiceListCheck {
 							const end_sec = end.epochMilliseconds / 1000
 
 							const TimestampInterval = `${siEpURL}?sid=${serviceID}&start=${start_sec}&end=${end_sec}`
-							const cg_errors = new ErrorList(TimestampInterval, `Timestamp filtered schedule: ${start}-${end}`)
+							const cg_errors = new ErrorList(TimestampInterval, CG_REQUEST_SCHEDULE_TIME, `Timestamp filtered schedule: ${start}-${end}`)
 	/*dbg*/console.log(`traverse:: ${TimestampInterval} Timestamp ${start}-${end} lookup for serviceID ${serviceID}`)
 							this.#content_guide_validator.validateContentGuide(
 								myContentGuide.getAnyNs(dvbi.e_ScheduleInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
@@ -1995,13 +1998,14 @@ export default class ServiceListCheck {
 						}
 					}
 				}
-
+	/*dbg*/}
 				// valudate boxset categories via GroupInfoEndpoint, either global or with service id specified
 				if (giEpURL) {
 					if (serviceID) {
 	/*dbg*/console.log(`traverse:: ${giEpURL} Boxset categories lookup for serviceID ${serviceID}`)
-						const BSCategoriesSvcURL = `${giEpURL}categories?sid=${serviceID}&page_size=all`
-						const cg_errors = new ErrorList(BSCategoriesSvcURL, "Nested Boxset Categories for ${serviceID}")
+//						const BSCategoriesSvcURL = `${giEpURL}categories?sid=${serviceID}&page_size=all`
+						const BSCategoriesSvcURL = `${giEpURL}categories?sid=${serviceID}`
+						const cg_errors = new ErrorList(BSCategoriesSvcURL, CG_REQUEST_BS_CATEGORIES, `Boxset Categories for ${serviceID}`)
 						this.#content_guide_validator.validateContentGuide(
 							myContentGuide.getAnyNs(dvbi.e_GroupInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
 							BSCategoriesSvcURL, 
@@ -2017,8 +2021,9 @@ export default class ServiceListCheck {
 					}
 
 	/*dbg*/console.log(`traverse:: ${giEpURL} Boxset categories lookup endpoint`)
-					const BSCategoriesAllURL = `${giEpURL}categories&page_size=all`
-					const cg_errors = new ErrorList(BSCategoriesAllURL, "Nested Boxset Categories for all services")
+//					const BSCategoriesAllURL = `${giEpURL}categories&page_size=all`
+					const BSCategoriesAllURL = `${giEpURL}categories`
+					const cg_errors = new ErrorList(BSCategoriesAllURL, CG_REQUEST_BS_CATEGORIES, "Boxset Categories for all services")
 					this.#content_guide_validator.validateContentGuide(
 						myContentGuide.getAnyNs(dvbi.e_GroupInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
 						BSCategoriesAllURL, 
@@ -2798,7 +2803,7 @@ export default class ServiceListCheck {
 	/**
 	 * validate the service list and record any errors
 	 *
-	 * @param {XmlElement} Url  The service list text to be validated
+	 * @param {XmlElement} Location  The service list text to be validated
 	 * @param {string} requestUrl
 	 * @param {ErrorList} errs  Errors found in validaton
 	 * @param {SL_Validator_Options}    options
@@ -2809,7 +2814,7 @@ export default class ServiceListCheck {
 	 *                      traverse              validate referenced DVB-I documents
 	 */
 	/*public*/ 
-	validateServiceList(Url: XmlElement, requestUrl: string, errs: ErrorList, options: SL_Validator_Options) : void {
+	validateServiceList(Location: XmlElement, requestUrl: string, errs: ErrorList, options: SL_Validator_Options) : void {
 
 		let resp
 		try {
@@ -2818,13 +2823,21 @@ export default class ServiceListCheck {
 		catch (error) {
 			errs.addError({
 				code: `VSL001`,
-				message: `cannot traverse into ${Url.content}, error=${error}`,
-				fragment: Url,
+				message: `cannot traverse into ${Location.content}, error=${error}`,
+				fragment: Location,
 				key: keys.k_Traversal,
 			})
 		}
-		if (resp && resp.ok) 
-			this.doValidateServiceList(resp.text(), errs, options);
+		if (resp) {
+			if (resp.ok) 
+				this.doValidateServiceList(resp.text(), errs, options);
+			else errs.addError({
+				code: `VSL002`,
+				message: `error with "${Location.content}" - ${resp.status} ${resp.statusText}`,
+				fragment: Location,
+				key: keys.k_Traversal,
+			})
+		}
 	}
 
 }

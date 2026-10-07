@@ -683,7 +683,7 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 			res.write(LINE);
 		}
 
-		app.get("/stats", (req, res) => {
+		app.get("/stats", (req : express.Request, res: express.Response) => {
 			res.setHeader("Content-Type", "text/html");
 			res.write(PAGE_TOP("Validator Stats", req.secure));
 			tabulate(res, "System", {

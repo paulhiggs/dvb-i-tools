@@ -87,8 +87,9 @@ export default class ErrorList {
 
 	source?: string
 	type?: string
+	description?: string
 
-	constructor(location?: string, type?: string) {
+	constructor(location?: string, type?: string, description?: string) {
 		this.countsFatal = [];
 		this.countsErr = [];
 		this.countsWarn = [];
@@ -104,6 +105,7 @@ export default class ErrorList {
 		this.nestedErrors = []
 		this.source = location
 		this.type = type
+		this.description = description
 	}
 
 	setLocation(sourceLoc: string) {
@@ -350,16 +352,26 @@ export default class ErrorList {
 			const s: { code: string; count: number }[] = [];
 			counts.forEach((e: ErrorType) => {
 				const i = s.find((f) => f.code == e.code);
-				if (i) i.count++;
+				if (i != undefined) 
+					i.count++;
 				else s.push({ code: e.code, count: 1 });
 			})
-			return s.map((e) => `"${e.code}"${e.count>1 ? `=${e.count}` : ``}`).join(", ");
+			return s.map((e) => `"${e.code}"${e.count>1 ? `=${e.count}` : ""}`).join(", ");
 		};
-		return `F(${summary(this.fatals)}) E(${summary(this.errors)}) W(${summary(this.warnings)}) I(${summary(this.informationals)})`;
+		return `F(${summary(this.fatals)}) E(${summary(this.errors)}) W(${summary(this.warnings)}) I(${summary(this.informationals)}) D:${this.debugs.length}`;
 	}
 
 	countsSummary() {
 		return `F:${this.fatals.length} E:${this.errors.length} W:${this.warnings.length} I:${this.informationals.length} D:${this.debugs.length} `;
+	}
+
+	severity() : number {
+		if (this.fatals.length > 0) return 5
+		else if (this.errors.length > 0) return 4
+		else if (this.warnings.length > 0) return 3
+		else if (this.informationals.length > 0) return 2
+		else if (this.debugs.length > 0) return 1
+		return 0
 	}
 	
 	/**

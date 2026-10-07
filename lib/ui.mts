@@ -12,6 +12,7 @@
 import express from "express"
 import { readFileSync } from "fs"
 import { join } from "path"
+import type { UploadedFile } from "express-fileupload"
 
 import { __dirname } from "./data_locations.mts"
 
@@ -20,9 +21,10 @@ import ErrorList from "./error_list.mts";
 import type { ErrorType } from "./error_list.mts"
 
 import type { CGRequestType } from "./cg_check.mts"
+import { CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM, CG_REQUEST_MORE_EPISODES, CG_REQUEST_BS_CATEGORIES, CG_REQUEST_BS_LISTS, CG_REQUEST_BS_CONTENTS } from "./cg_check.mts"
 
 import { HasProperty } from "./utils.mts"
-import type { UploadedFile } from "express-fileupload"
+
 
 export const MODE_UNSPECIFIED = "none",
 	MODE_SL = "sl",
@@ -45,9 +47,10 @@ export function PAGE_TOP(pageTitle: string, secure: boolean, label?:string, motd
 		"<style>table {border-collapse: collapse;border: 1px solid black;} tr {vertical-align: top} th, td {text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #f2f2f2;}</style>";
 	const XML_STYLE = "<style>.xmlfont {font-family: Arial, Helvetica, sans-serif; font-size:90%;}</style>";
 	const MARKUP_TABLE_STYLE = "<style></style>";
+	const URL_FORMAT_STYLE = "<style>.url {font-family: Arial, Helvetica, sans-serif; font-size:80%;}</style>"
 	// dont allow Chrome to translate the page - seems to 'detect' German
 	const METAS = '<meta name="google" content="notranslate"/><meta charset="utf-8">';
-	const HEAD = `<head>${METAS}${TABLE_STYLE}${XML_STYLE}${MARKUP_TABLE_STYLE}<title>${pageTitle}</title></head>`;
+	const HEAD = `<head>${METAS}${TABLE_STYLE}${XML_STYLE}${MARKUP_TABLE_STYLE}${URL_FORMAT_STYLE}<title>${pageTitle}</title></head>`;
 	const PG = `<html lang="en" xml:lang="en">\n${HEAD}<body>`;
 	const PH = label ? `<h1>${label}</h1><p>${pkg.name} v${pkg.version}/${secure ? "https" : "http"} by ${pkg.author.HTMLize()}</p>` : "";
 	const MOTD = motd ? `<div>${motd}</div>` : "";
@@ -185,13 +188,61 @@ function tabulateResults(source: string, res: express.Response, error: string[] 
 	}
 }
 
-function reportNestedErrors(res: express.Response, errs: ErrorList | undefined) {
+
+const severity_highlight: Record<string, string>[] = [
+	/* 0 */ {background:"background-color: palegreen;", text:"color:black;"},
+	/* 1 */ {background:"background-color: skyblue;", text:"color:black;"},
+	/* 2 */ {background:"background-color: yellow;", text:"color:black;"},
+	/* 3 */ {background:"background-color: orange;", text:"color:black;"},
+	/* 4 */ {background:"background-color: red;", text:"color:white;"},
+	/* 5 */ {background:"background-color: darkred;", text:"color:yellow;"},
+]
+
+function nested_error_row(req: express.Request, res: express.Response, errs: ErrorList | undefined, depth: number) {
+	if (!errs || errs.nestedErrors.length == 0) return
+	errs.nestedErrors.forEach((nest) => {
+		const palette =  severity_highlight[nest.severity()]
+		let validator=undefined, refer = "<b><i>unknown</i></b>"
+		if (nest.source && nest.description) {
+			switch (nest.type) {
+				case "SL":
+					validator=`${req.protocol}://${req.host}/validate_sl?url=${nest.source}`
+					break
+				case CG_REQUEST_SCHEDULE_TIME:
+				case CG_REQUEST_SCHEDULE_NOWNEXT:
+				case CG_REQUEST_SCHEDULE_WINDOW:
+				case CG_REQUEST_PROGRAM:
+				case CG_REQUEST_MORE_EPISODES:
+				case CG_REQUEST_BS_CATEGORIES:
+				case CG_REQUEST_BS_LISTS:
+				case CG_REQUEST_BS_CONTENTS:
+					validator=`${req.protocol}://${req.host}/validate_cg?url=${encodeURIComponent(nest.source)}&type=${nest.type}`
+					break
+			}
+			
+			refer = `<a target="_blank" href="${validator ?? nest.source}">${nest.description}</a>` 
+		}
+		res.write(
+			`<tr><td>${depth}</td><td>`+
+			refer+
+			(nest.source ? `${BREAK}<span class="url">${nest.source}</span>`: "")+
+			"</td>"+
+			`<td style="${palette.background} ${palette.text}">${nest.compactSummary()}`)
+		nest.debugs.forEach((msg) => res.write(`${BREAK}${msg.code} ${msg.message}`))
+		res.write("</td></tr>")
+		nested_error_row(req, res, nest, depth+1)
+	});
+}
+
+function reportNestedErrors(req: express.Request, res: express.Response, errs: ErrorList | undefined) {
 	if (!errs || errs.nestedErrors.length == 0) return
 	
-	errs.nestedErrors.forEach((nest) => {
-		res.write(`${BREAK}<p>${nest.type || "unknown"} @ ${nest.source || "unknown"} --> ${nest.compactSummary()}</p>`)
-		reportNestedErrors(res, nest)
-	});
+	res.write(`${BREAK}<p><b>Traversed Errors</b></p>`)
+	res.write(`<table><tr><th></th><th>location</th><th>result</th></tr>`)
+
+	nested_error_row(req, res, errs, 1)
+	res.write("</table>")
+
 }
 
 export type FormModes = {
@@ -259,7 +310,7 @@ export function drawForm(
 		}"></p></div>
 		<div id="entryFile" ${req.session.data?.entry == modes.file ? "" : "hidden"}><p><i>FILE:</i><input type="file" name="XMLfile" value=""></p></div>
 		<div id="variants">Variants: <input id="cbGermany" type="checkbox" name="forGermany" ${req.session.data?.forGermany == true ? "checked" : ""} onclick="redrawForm()">Germany</input></div>
-		<div id="traverser">Options: <input id="cbTraverse" type="checkbox" name="traverse" ${req.session.data?.traverse == true ? "checked" : ""} onclick="redrawForm()">Traverse</input></div>
+		<div id="traverser">Options: <input id="cbTraverse" type="checkbox" name="traverse" ${req.session.data?.traverse == true ? "checked" : ""} onclick="redrawForm()">Traverse <span style="color:red">(caution: time consuming)</span></input></div>
 		<div id="entryCGtype" ${req.session.data?.mode == modes.cg ? "" : "hidden"}><p>Query type:</p>`);
 	if (supportedRequests)
 		supportedRequests.forEach((choice) => {
@@ -281,7 +332,7 @@ export function drawForm(
 			break;
 	}
 	tabulateResults(source, res, error, errs);
-	reportNestedErrors(res, errs)
+	reportNestedErrors(req, res, errs)
 	res.write(PAGE_BOTTOM);
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -294,7 +345,7 @@ export function drawResults(req: express.Request, res: express.Response, motd?: 
 	res.setHeader("Content-Type", "text/html");
 	res.write(PAGE_TOP("DVB-I Validator", req.secure, "DVB-I Validator", motd));
 	tabulateResults(req.query.url ? req.query.url as string: "uploaded list", res, error, errs);
-	reportNestedErrors(res, errs)
+	reportNestedErrors(req, res, errs)
 	res.write(PAGE_BOTTOM);
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	return new Promise((resolve, reject) => {
