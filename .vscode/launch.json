@@ -22,6 +22,7 @@
 	//			"--urls",
 	//			"--SLRmode", "italy",
 	//			"--CORSmode", "manual",
+	//			"--allow_traversal"
 			]
 		}
 	]

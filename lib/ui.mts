@@ -256,6 +256,7 @@ export type FormModes = {
 	hasPL: boolean
 	hasCG: boolean
 	hasSLR: boolean
+	allowTraversal: boolean
 }
 
 export function drawForm(
@@ -310,7 +311,11 @@ export function drawForm(
 		}"></p></div>
 		<div id="entryFile" ${req.session.data?.entry == modes.file ? "" : "hidden"}><p><i>FILE:</i><input type="file" name="XMLfile" value=""></p></div>
 		<div id="variants">Variants: <input id="cbGermany" type="checkbox" name="forGermany" ${req.session.data?.forGermany == true ? "checked" : ""} onclick="redrawForm()">Germany</input></div>
-		<div id="traverser">Options: <input id="cbTraverse" type="checkbox" name="traverse" ${req.session.data?.traverse == true ? "checked" : ""} onclick="redrawForm()">Traverse <span style="color:red">(caution: time consuming)</span></input></div>
+		${
+			modes.allowTraversal
+			? `<div id="traverser">Options: <input id="cbTraverse" type="checkbox" name="traverse" ${req.session.data?.traverse == true ? "checked" : ""} onclick="redrawForm()">Traverse <span style="color:red">(caution: time consuming)</span></input></div>`
+			: ""
+		}
 		<div id="entryCGtype" ${req.session.data?.mode == modes.cg ? "" : "hidden"}><p>Query type:</p>`);
 	if (supportedRequests)
 		supportedRequests.forEach((choice) => {

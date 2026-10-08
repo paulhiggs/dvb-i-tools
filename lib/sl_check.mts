@@ -109,8 +109,6 @@ export class FoundDocumentItems {
 
 		this.definesPolicies = document_defines_policies
 	}
-
-	
 }
 
 import ISOCountries from "./ISO_countries.mts"
@@ -1943,9 +1941,7 @@ export default class ServiceListCheck {
 				const useRef = uID && uID.parent ? (uID.parent as XmlElement).getAnyNs(dvbi.e_ContentGuideServiceRef)?.content: null
 				const serviceID = useRef || (uID ? uID.content : null)
 
-				const CHECK_SCHEDULE = false
 				// check now/next via ScheduleInfoEndpoint
-	/*dbg*/if (CHECK_SCHEDULE) {
 				if (siEpURL && serviceID) {
 					const NowNextURL = `${siEpURL}?sid=${serviceID}&now_next=true`
 					const cg_errors = new ErrorList(NowNextURL, CG_REQUEST_SCHEDULE_NOWNEXT, "Now/Next")
@@ -2000,7 +1996,6 @@ export default class ServiceListCheck {
 						}
 					}
 				}
-	/*dbg*/}
 				// valudate boxset categories via GroupInfoEndpoint, either global or with service id specified
 				if (giEpURL) {
 					if (serviceID) {
