@@ -32,6 +32,9 @@ import { ValidateSignaturePolicies } from "./signature_policies.mts"
 import { FoundDocumentItems} from "./sl_check.mts"
 import type { SL_Validator_Options, ValidatorOptions } from "./sl_check.mts"
 import ClassificationScheme from "./classification_scheme.mts"
+import ISOcountries from "./ISO_countries.mts"
+import ServiceListCheck from "./sl_check.mts"
+
 
 export function CheckDelivery(Delivery: XmlElement, SchemaVersion: number, ApplicationTypeCS: ClassificationScheme, errs: ErrorList, errCode: string) {
 	Delivery.forEachNamedChildElement(dvbisld.e_DVBTDelivery, (DVBTDelivery) => {
@@ -113,16 +116,18 @@ export function CheckDelivery(Delivery: XmlElement, SchemaVersion: number, Appli
  type SLR_Validator_Options = SL_Validator_Options
 
 export default class ServiceListRegistryCheck {
-	#numRequests;
-	#knownCountries;
-	#allowedGenres;
-	#allowedApplicationTypes;
+	#numRequests: number
+	#knownCountries: ISOcountries
+	#allowedGenres: ClassificationScheme
+	#allowedApplicationTypes: ClassificationScheme
+	#service_list_validator?: ServiceListCheck
 
-	constructor(opts : ValidatorOptions) {
+	constructor(opts: ValidatorOptions, sl_checker?: ServiceListCheck) {
 
 		DefaultProperty(opts, "useURLs", false);
 		DefaultProperty(opts, "async", true);
 		DefaultProperty(opts, "verbose", true);
+		DefaultProperty(opts, "traverse", false)
 
 		LoadSLschemas(opts);
 		LoadSLRschemas(opts);
@@ -134,6 +139,8 @@ export default class ServiceListRegistryCheck {
 		if (opts.verbose) console.log(chalk.yellow.underline("loading classification schemes..."));
 		this.#allowedGenres = opts?.genres || LoadGenres(opts);
 		this.#allowedApplicationTypes = opts?.appfmts || LoadLinkedApplicationCS(opts);
+
+		this.#service_list_validator = sl_checker ?? undefined
 	}
 
 	stats() {
@@ -243,7 +250,7 @@ export default class ServiceListRegistryCheck {
 		);
 	}
 
-	/* private */ #CheckServiceListOffering(Offering: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
+	/* private */ #CheckServiceListOffering(Offering: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string, options: SLR_Validator_Options) {
 		const offeringNamespace = Offering.documentNamespace();
 		// ServiceListOfferingType @regulatorListFlag checked by schema
 
@@ -347,6 +354,12 @@ export default class ServiceListRegistryCheck {
 				if (!isHTTPURL(URI.content)) 
 					errs.addError(InvalidURL(URI.content, URI, dvbisld.e_URI.elementize(), `${errCode}-36`));
 				ValidateAnySignaturePolicy(URI, documentInfo, errs, `${errCode}-37`);
+
+				if (options.traverse && this.#service_list_validator) {
+					const sl_errs : ErrorList = new ErrorList(URI.content, "SL", "Nested Service List")
+					this.#service_list_validator.validateServiceList(URI, URI.content, sl_errs, options)
+					errs.nestedErrors.push(sl_errs)
+				}
 			}
 		});
 
@@ -405,6 +418,7 @@ export default class ServiceListRegistryCheck {
 	 *                      report_schema_version report the state of the schema in the error/warning list
 	 *                      variants              flags from input
 	 *                                              GERMAN_A177r6_VARIANT  use the German schema variants for A177r6
+	 *                      traverse              validate referenced DVB-I documents
 	 */
 	/*public*/ doValidateServiceListRegistry(SLRtext: string, errs: ErrorList, options: SLR_Validator_Options = {}) : void {
 		this.#numRequests++;
@@ -484,7 +498,7 @@ export default class ServiceListRegistryCheck {
 			if (Provider) this.#CheckOrganisationType(Provider, errs, "SR081");
 
 			ProviderOffering.forEachNamedChildElement(dvbisld.e_ServiceListOffering, (ServiceListOffering) => {
-				this.#CheckServiceListOffering(ServiceListOffering, documentInfo ,errs, "SR082");
+				this.#CheckServiceListOffering(ServiceListOffering, documentInfo ,errs, "SR082", options);
 			});
 		});
 
@@ -502,7 +516,8 @@ export default class ServiceListRegistryCheck {
 	 * @param {string} SLRtext  The service list text to be validated
 	 * @returns {ErrorList} Errors found in validaton
 	 */
-	/*public*/ validateServiceListRegistry(SLRtext: string) : Promise<ErrorList> {
+	/*public*/ 
+	/* validateServiceListRegistry(SLRtext: string) : Promise<ErrorList> {
 		const errs = new ErrorList();
 		this.doValidateServiceListRegistry(SLRtext, errs);
 
@@ -511,4 +526,5 @@ export default class ServiceListRegistryCheck {
 			resolve(errs);
 		});
 	}
+	*/
 }

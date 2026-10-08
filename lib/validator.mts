@@ -70,8 +70,9 @@ const keyFilename = join(".", "selfsigned.key"),
 
 function DVB_I_check(
 		req: express.Request, res: express.Response, 
-		slcheck: ServiceListCheck | null, plcheck: PlaylistCheck | null, cgcheck: ContentGuideCheck | null, slrcheck: ServiceListRegistryCheck | null, 
+		slcheck: ServiceListCheck | undefined, plcheck: PlaylistCheck | undefined, cgcheck: ContentGuideCheck | undefined, slrcheck: ServiceListRegistryCheck | undefined, 
 		hasSL: boolean, hasPL: boolean, hasCG: boolean, hasSLR: boolean, 
+		allow_traversal: boolean,
 		motd: string | undefined, 
 		mode: string = MODE_UNSPECIFIED, linktype: string = MODE_UNSPECIFIED) : void {
 			
@@ -83,6 +84,7 @@ function DVB_I_check(
 		req.session.data.entry = linktype == MODE_UNSPECIFIED ? MODE_URL : linktype;
 		if (cgcheck) req.session.data.cgmode = cgcheck.supportedRequests[0].value;
 		req.session.data.forGermany = false;
+		req.session.data.traverse = false;
 	}
 	if (req.session.data.lastUrl != req.url) {
 		req.session.data.mode = mode == MODE_UNSPECIFIED ? (hasSL ? MODE_SL : MODE_CG) : mode;
@@ -90,7 +92,7 @@ function DVB_I_check(
 		req.session.data.lastUrl = req.url;
 	}
 	
-	const FormArguments: FormModes = { cg: MODE_CG, sl: MODE_SL, pl: MODE_PL, slr: MODE_SLR, file: MODE_FILE, url: MODE_URL, hasSL: hasSL, hasPL: hasPL, hasCG: hasCG, hasSLR: hasSLR };
+	const FormArguments: FormModes = { cg: MODE_CG, sl: MODE_SL, pl: MODE_PL, slr: MODE_SLR, file: MODE_FILE, url: MODE_URL, hasSL: hasSL, hasPL: hasPL, hasCG: hasCG, hasSLR: hasSLR, allowTraversal: allow_traversal };
 	if (!req.body?.testtype) 
 		drawForm(req, res, FormArguments, (cgcheck && cgcheck.supportedRequests) ? cgcheck.supportedRequests : null, motd, undefined, undefined);
 	else {
@@ -102,13 +104,16 @@ function DVB_I_check(
 		else if (req.body.doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) req.parseErr = ["File not provided"]
 
 		req.session.data.forGermany = req.body.forGermany == "on";
+		req.session.data.traverse = req.body.traverse == "on"
 		const log_prefix = createPrefix(req);
+		const errs = new ErrorList();
 		if (!req.parseErr)
 			switch (req.body.doclocation) {
 				case MODE_URL:
 					if (isHTTPURL(req.body.XMLurl)) {
 						let resp = null;
 						try {
+							errs.setLocation(req.body.XMLurl)
 							resp = fetchS(req.body.XMLurl, fetch_options);
 						} catch (error) {
 							req.parseErr = [`${error}`];
@@ -122,6 +127,7 @@ function DVB_I_check(
 					break;
 				case MODE_FILE:
 					try {
+						errs.setLocation((req.files!.XMLfile as fileupload.UploadedFile).name)
 						VVxml = (req.files!.XMLfile as fileupload.UploadedFile).data.toString();
 					} catch (err) {
 						req.parseErr = [`retrieval of FILE ${(req.files!.XMLfile as fileupload.UploadedFile).name} failed (${err})`];
@@ -131,20 +137,30 @@ function DVB_I_check(
 				default:
 					req.parseErr = [`method is not ${MODE_URL.quote()} or ${MODE_FILE.quote()}`];
 			}
-		const errs = new ErrorList();
+
 		if (!req.parseErr && VVxml)
 			switch (req.body.testtype) {
 				case MODE_CG:
-					if (cgcheck) cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
+					errs.setType(`Content Guide-${req.body.requestType}`)
+					if (cgcheck) 
+						cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
 					break;
 				case MODE_SL:
-					if (slcheck) slcheck.doValidateServiceList(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, variants: req.session.data.forGermany ? GERMAN_A177r6_VARIANT : 0});
+					errs.setType("Service List")
+					if (slcheck) 
+						slcheck.doValidateServiceList(VVxml, errs, 
+							{ log_prefix: log_prefix, report_schema_version: true, variants: req.session.data.forGermany ? GERMAN_A177r6_VARIANT : 0, traverse: req.session.data.traverse}
+						);
 					break;
 				case MODE_PL:
-					if (plcheck) plcheck.doValidatePlaylist(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true });
+					errs.setType("Playlist")
+					if (plcheck) 
+						plcheck.doValidatePlaylist(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true });
 					break;
 				case MODE_SLR:
-					if (slrcheck) slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true });
+					errs.setType("Service List Registry")
+					if (slrcheck) 
+						slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, traverse: req.session.data.traverse });
 					break;
 			}
 
@@ -358,33 +374,33 @@ function validateContentGuide(req: express.Request, res: express.Response, cgche
  *
  * @param {commandLineArgs.CommandLineOptions} options   Command Line Arguments - see OptionDefinitions in all-in-one.ts
  */
-export default function validator(options: commandLineArgs.CommandLineOptions) : void {
-	if (options.nocsr && options.nosl && options.nopl && options.nocg && options.noslr) {
+export default function validator(app_options: commandLineArgs.CommandLineOptions) : void {
+	if (app_options.nocsr && app_options.nosl && app_options.nopl && app_options.nocg && app_options.noslr) {
 		console.log(chalk.red("nothing to do... exiting"));
 		process.exit(1);
 	}
 
-	if (!options.nocsr && !HasProperty(options, "CSRfile")) {
+	if (!app_options.nocsr && !HasProperty(app_options, "CSRfile")) {
 		console.log(chalk.red("SLEPR file not specified... exiting"));
 		process.exit(1);
 	}
 
-	if (!HasProperty(options, "CORSmode")) options.CORSmode = CORSlibrary;
-	else if (!CORSoptions.includes(options.CORSmode)) {
+	if (!HasProperty(app_options, "CORSmode")) app_options.CORSmode = CORSlibrary;
+	else if (!CORSoptions.includes(app_options.CORSmode)) {
 		console.log(chalk.red(`CORSmode must be ${CORSnone.quote()}, ${CORSlibrary.quote()} to use the Express cors() handler, or ${CORSmanual.quote()} to have headers inserted manually`));
 		process.exit(1);
 	}
 
 	let motd: string | undefined = undefined;
-	if (HasProperty(options, "motd")) {
-		console.log(chalk.yellow("reading Message Of The Day from " + chalk.green(options.motd)));
-		motd = readmyfile(options.motd, { encoding: "utf-8", flag: "r" }) as string;
+	if (HasProperty(app_options, "motd")) {
+		console.log(chalk.yellow("reading Message Of The Day from " + chalk.green(app_options.motd)));
+		motd = readmyfile(app_options.motd, { encoding: "utf-8", flag: "r" }) as string;
 	}
 
-	if (options.workers != 0 && cluster.isPrimary) {
-		if (options.workers > numCPUs) options.workers = numCPUs;
-		else if (options.workers < 1) options.workers = 1;
-		console.log(chalk.green(`Number of CPUs is ${numCPUs}, ${options.workers} workers`));
+	if (app_options.workers != 0 && cluster.isPrimary) {
+		if (app_options.workers > numCPUs) app_options.workers = numCPUs;
+		else if (app_options.workers < 1) app_options.workers = 1;
+		console.log(chalk.green(`Number of CPUs is ${numCPUs}, ${app_options.workers} workers`));
 		console.log(chalk.green(`Primary ${process.pid} is running`));
 
 		// SCHED_RR is the default on all operating systems except Windows. Windows will change to 
@@ -393,7 +409,7 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 		cluster.schedulingPolicy = cluster.SCHED_RR
 
 		// Fork workers.
-		for (let i = 0; i < options.workers; i++) 
+		for (let i = 0; i < app_options.workers; i++) 
 			cluster.fork();
 
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -468,61 +484,34 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 			})
 		);
 
-		let slcheck = null,
-			plcheck = null,
-			cgcheck = null,
-			slrcheck = null;
+		let slcheck = undefined,
+			plcheck = undefined,
+			cgcheck = undefined,
+			slrcheck = undefined;
 
 		const DFLT_async = true, DFLT_verbose = true;
 
-		if (options.urls && options.CSRfile == Default_SLEPR.file) options.CSRfile = Default_SLEPR.url;
+		if (app_options.urls && app_options.CSRfile == Default_SLEPR.file) app_options.CSRfile = Default_SLEPR.url;
 
-		const knownLanguages = LoadLanguages({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-		const isoCountries = LoadCountries({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-		const knownGenres = LoadGenres({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+		const knownLanguages = LoadLanguages({useURLs: app_options.urls, async: DFLT_async, verbose: DFLT_verbose});
+		const isoCountries = LoadCountries({useURLs: app_options.urls, async: DFLT_async, verbose: DFLT_verbose});
+		const knownGenres = LoadGenres({useURLs: app_options.urls, async: DFLT_async, verbose: DFLT_verbose});
 
-		if (!options.nosl || !options.nopl || !options.nocg || !options.noslr) {
-			const knownRatings = LoadRatings({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-			const accessibilityPurposes = LoadAccessibilityPurpose({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-			const audioPurposes = LoadAudioPurpose({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-			const subtitleCarriages = LoadSubtitleCarriages({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-			const subtitleCodings = LoadSubtitleCodings({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-			const subtitlePurposes = LoadSubtitlePurposes({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-			const videoFormats = LoadVideoCodecCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-			const audioFormats = LoadAudioCodecCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-			const audioPresentation = LoadAudioPresentationCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
-			const linkedApplicationTypes = LoadLinkedApplicationCS({useURLs: options.urls, async: DFLT_async, verbose: DFLT_verbose});
+		if (!app_options.nosl || !app_options.nopl || !app_options.nocg || !app_options.noslr) {
+			const knownRatings = LoadRatings({useURLs: app_options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const accessibilityPurposes = LoadAccessibilityPurpose({useURLs: app_options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const audioPurposes = LoadAudioPurpose({useURLs: app_options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const subtitleCarriages = LoadSubtitleCarriages({useURLs: app_options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const subtitleCodings = LoadSubtitleCodings({useURLs: app_options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const subtitlePurposes = LoadSubtitlePurposes({useURLs: app_options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const videoFormats = LoadVideoCodecCS({useURLs: app_options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const audioFormats = LoadAudioCodecCS({useURLs: app_options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const audioPresentation = LoadAudioPresentationCS({useURLs: app_options.urls, async: DFLT_async, verbose: DFLT_verbose});
+			const linkedApplicationTypes = LoadLinkedApplicationCS({useURLs: app_options.urls, async: DFLT_async, verbose: DFLT_verbose});
 
-			if (!options.nosl)
-				slcheck = new ServiceListCheck({
-					useURLs: options.urls,
-					async: DFLT_async,
-					verbose: DFLT_verbose,
-
-					accessibilities: accessibilityPurposes,
-					audiofmts: audioFormats,
-					audiopres: audioPresentation,
-					audiopurps: audioPurposes,
-					countries: isoCountries,
-					genres: knownGenres,
-					languages: knownLanguages,
-					stcarriage: subtitleCarriages,
-					stcodings: subtitleCodings,
-					stpurposes: subtitlePurposes,
-					videofmts: videoFormats,
-					appfmts: linkedApplicationTypes,
-				});
-
-			if (!options.nopl)
-				plcheck = new PlaylistCheck( {
-					useURLs: options.urls,
-					async: DFLT_async,
-					verbose: DFLT_verbose,
-				});
-
-			if (!options.nocg)
+			if (!app_options.nocg)
 				cgcheck = new ContentGuideCheck({
-					useURLs: options.urls,
+					useURLs: app_options.urls,
 					async: DFLT_async,
 					verbose: DFLT_verbose,
 
@@ -540,9 +529,36 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 					videofmts: videoFormats,
 				});
 
-			if (!options.noslr) 
+			if (!app_options.nosl)
+				slcheck = new ServiceListCheck({
+					useURLs: app_options.urls,
+					async: DFLT_async,
+					verbose: DFLT_verbose,
+
+					accessibilities: accessibilityPurposes,
+					audiofmts: audioFormats,
+					audiopres: audioPresentation,
+					audiopurps: audioPurposes,
+					countries: isoCountries,
+					genres: knownGenres,
+					languages: knownLanguages,
+					stcarriage: subtitleCarriages,
+					stcodings: subtitleCodings,
+					stpurposes: subtitlePurposes,
+					videofmts: videoFormats,
+					appfmts: linkedApplicationTypes,
+				}, cgcheck);
+
+			if (!app_options.nopl)
+				plcheck = new PlaylistCheck( {
+					useURLs: app_options.urls,
+					async: DFLT_async,
+					verbose: DFLT_verbose,
+				});
+
+			if (!app_options.noslr) 
 				slrcheck = new ServiceListRegistryCheck({
-					useURLs: options.urls,
+					useURLs: app_options.urls,
 					async: DFLT_async,
 					verbose: DFLT_verbose,
 
@@ -550,7 +566,7 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 					genres: knownGenres, 
 					languages: knownLanguages, 
 					appfmts: linkedApplicationTypes,
-				});
+				}, slcheck);
 		}
 
 		const Express_Options = {
@@ -558,7 +574,7 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 			limit: "10mb",
 		}
 
-		if (!options.nosl) {
+		if (!app_options.nosl) {
 			app.all("/validate_sl", express.text(Express_Options), (req, res) => {
 				validateServiceList(req, res, slcheck!, motd, false);
 			});
@@ -568,7 +584,7 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 			});
 		}
 
-		if (!options.nopl) {
+		if (!app_options.nopl) {
 			app.all("/validate_pl", express.text(Express_Options), (req, res) => {
 				validatePlaylist(req, res, plcheck!, motd, false);
 			});
@@ -578,7 +594,7 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 			});
 		}
 
-		if (!options.nocg) {
+		if (!app_options.nocg) {
 			app.all("/validate_cg", express.text(Express_Options), (req, res) => {
 				validateContentGuide(req, res, cgcheck!, motd, false);
 			});
@@ -588,7 +604,7 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 			});
 		}
 
-		if (!options.noslr) {
+		if (!app_options.noslr) {
 			app.all("/validate_slr", express.text(Express_Options), (req, res) => {
 				validateServiceListRegistry(req, res, slrcheck!, motd, false);
 			});
@@ -607,9 +623,9 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 		let manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
 			next();
 		};
-		if (options.CORSmode == CORSlibrary) {
+		if (app_options.CORSmode == CORSlibrary) {
 			app.use(cors());
-		} else if (options.CORSmode == CORSmanual) {
+		} else if (app_options.CORSmode == CORSmanual) {
 			manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
 				let opts : string[] | undefined = res.getHeader("X-Frame-Options") as string[] | undefined;
 				if (opts) {
@@ -622,24 +638,24 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 			};
 		}
 
-		if (!options.nosl || !options.nopl || !options.nocg || !options.noslr) {
+		if (!app_options.nosl || !app_options.nopl || !app_options.nocg || !app_options.noslr) {
 			app.all("/check", express.text(Express_Options), (req, res) => {
 				// we need to disable listening as the Windows cluster seems to 'prefer' some workers, expecialy  when the validator is being used to verify 
 				// a file it is serving itself (like an SLR respose from `SLEPR_query_route`)
 				const saved_port = req.socket.localPort  
-				if (cluster.isWorker && options.workers > 1)
+				if (cluster.isWorker && app_options.workers > 1)
 					req.socket.server!.close();
-				DVB_I_check(req, res, slcheck, plcheck, cgcheck, slrcheck, !options.nosl, !options.nopl, !options.nocg, !options.noslr, motd);
+				DVB_I_check(req, res, slcheck, plcheck, cgcheck, slrcheck, !app_options.nosl, !app_options.nopl, !app_options.nocg, !app_options.noslr, app_options.allow_traversal, motd);
 				if (req.socket.server!.listening == false)
 					req.socket.server!.listen(saved_port)
 			});
 		}
 
-		if (!options.nocsr) {
-			csr = new SLEPR(options.urls, options.SLRmode, knownLanguages, isoCountries, knownGenres);
-			csr.loadServiceListRegistry(options.CSRfile);
+		if (!app_options.nocsr) {
+			csr = new SLEPR(app_options.urls, app_options.SLRmode, knownLanguages, isoCountries, knownGenres);
+			csr.loadServiceListRegistry(app_options.CSRfile);
 
-			if (options.CORSmode == "manual") {
+			if (app_options.CORSmode == "manual") {
 				app.options(SLEPR_query_route, manualCORS);
 			}
 			app.get(SLEPR_query_route, manualCORS, (req, res) => {
@@ -648,12 +664,12 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 			});
 
 			app.get(SLEPR_reload_route, (req, res) => {
-				csr!.loadServiceListRegistry(options.CSRfile);
+				csr!.loadServiceListRegistry(app_options.CSRfile);
 				res.status(200).end();
 			});
 		}
 
-		if (options.spam_blocker) {
+		if (app_options.spam_blocker) {
 			init_spam_blocker(app);
 		}
 
@@ -668,7 +684,7 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 			res.write(LINE);
 		}
 
-		app.get("/stats", (req, res) => {
+		app.get("/stats", (req : express.Request, res: express.Response) => {
 			res.setHeader("Content-Type", "text/html");
 			res.write(PAGE_TOP("Validator Stats", req.secure));
 			tabulate(res, "System", {
@@ -745,19 +761,19 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 		let https_server : Server | null = null;
 
 		if (https_options.key && https_options.cert) {
-			if (options.sport == options.port) options.sport = options.port + 1;
+			if (app_options.sport == app_options.port) app_options.sport = app_options.port + 1;
 
 			https_server = createServer(https_options, app);
-			https_server.listen(options.sport, () => {
+			https_server.listen(app_options.sport, () => {
 				console.log(chalk.cyan(`HTTPS listening on port number ${(https_server!.address() as AddressInfo).port}`));
 
 				const redirect_app = express();
 				redirect_app.use(morgan(LOGGING_TEMPLATE));
 				redirect_app.use(function(req, res) {
-					res.redirect(`https://${req.hostname}:${options.sport}${req.originalUrl}`);
+					res.redirect(`https://${req.hostname}:${app_options.sport}${req.originalUrl}`);
 				})
-				redirect_app.listen(options.port, () => {
-					console.log(chalk.cyan(`HTTP redirecting to HTTPS on port number ${options.port}`));
+				redirect_app.listen(app_options.port, () => {
+					console.log(chalk.cyan(`HTTP redirecting to HTTPS on port number ${app_options.port}`));
 				});
 			});
 		}
@@ -767,10 +783,10 @@ export default function validator(options: commandLineArgs.CommandLineOptions) :
 
 		if (!https_server?.listening) {
 		// start the HTTP server
-			const http_server = app.listen(options.port, () => {
+			const http_server = app.listen(app_options.port, () => {
 				if ((http_server.address() as AddressInfo).port) 
 					console.log(chalk.cyan(`HTTP listening on port number ${(http_server.address() as AddressInfo).port}`));
-				else console.log(chalk.red(`HTTP port ${options.port} already in use -- HTTP server not started`));
+				else console.log(chalk.red(`HTTP port ${app_options.port} already in use -- HTTP server not started`));
 			});
 		}
 	}

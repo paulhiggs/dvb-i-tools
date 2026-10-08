@@ -67,6 +67,10 @@ import { ValidateAnySignaturePolicy } from "./related_material_checks.mts"
 import { ValidateAnyContentDigests } from "./digest_validation.mts"
 import { ValidateSignaturePolicies } from "./signature_policies.mts"
 
+import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES } from "./cg_check.mts"
+import { fetch_options } from "./globals.mts"
+import fetchS from "sync-fetch"
+
 
 const LCN_TABLE_NO_TARGETREGION: string = "unspecifiedRegion",
 	LCN_TABLE_NO_SUBSCRIPTION: string = "unspecifiedPackage";
@@ -105,8 +109,6 @@ export class FoundDocumentItems {
 
 		this.definesPolicies = document_defines_policies
 	}
-
-	
 }
 
 import ISOCountries from "./ISO_countries.mts"
@@ -135,30 +137,33 @@ export type SL_Validator_Options = {
 	log_prefix? : string
 	report_schema_version?: boolean
 	variants?: number
+	traverse?: boolean
 }
 
 export default class ServiceListCheck {
 	#numRequests: number
-	#knownLanguages;
-	#allowedGenres;
-	#allowedVideoSchemes;
-	#allowedAudioSchemes;
-	#knownCountries;
-	#audioPresentations;
-	#accessibilityPurposes;
-	#audioPurposes;
-	#subtitleCarriages;
-	#subtitleCodings;
-	#subtitlePurposes;
-	#allowedPictureFormats;
-	#allowedColorimetry;
-	#allowedServiceTypes;
-	#allowedAudioConformancePoints;
-	#allowedVideoConformancePoints;
-	#allowedApplicationTypes;
-	#RecordingInfoCSvalues;
+	#knownLanguages: IANAlanguages
+	#allowedGenres: ClassificationScheme
+	#allowedVideoSchemes: ClassificationScheme
+	#allowedAudioSchemes: ClassificationScheme
+	#knownCountries: ISOCountries
+	#audioPresentations: ClassificationScheme
+	#accessibilityPurposes: ClassificationScheme
+	#audioPurposes: ClassificationScheme
+	#subtitleCarriages: ClassificationScheme
+	#subtitleCodings: ClassificationScheme
+	#subtitlePurposes: ClassificationScheme
+	#allowedPictureFormats: ClassificationScheme
+	#allowedColorimetry: ClassificationScheme
+	#allowedServiceTypes: ClassificationScheme
+	#allowedAudioConformancePoints: ClassificationScheme
+	#allowedVideoConformancePoints: ClassificationScheme
+	#allowedApplicationTypes: ClassificationScheme
+	#RecordingInfoCSvalues: ClassificationScheme
 
-	constructor(opts: ValidatorOptions) {
+	#content_guide_validator?: ContentGuideCheck
+
+	constructor(opts: ValidatorOptions, cg_checker?: ContentGuideCheck) {
 
 		DefaultProperty(opts, "useURLs", false);
 		DefaultProperty(opts, "async", true);
@@ -192,6 +197,8 @@ export default class ServiceListCheck {
 		this.#RecordingInfoCSvalues = LoadRecordingInfoCS(opts);
 
 		LoadKnownCustomKeysRegistry(opts)
+
+		this.#content_guide_validator = cg_checker
 	}
 
 	stats() {
@@ -638,37 +645,37 @@ export default class ServiceListCheck {
 	 * @param {ErrorList}  errs          Errors found in validaton
 	 * @param {string}     errCode       Error code prefix to be used in reports
 	 */
-	/*private*/ #validateAContentGuideSource(source: XmlElement, loc: string, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
+	/*private*/ #validateAContentGuideSource(source: XmlElement, loc: string, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) : void {
 		if (!parameterCheck("validateAContentGuideSource", source, dvbi.e_ContentGuideSource, errs, `${errCode}-a`)) return;
 
-		const CheckEndpoint = (elementName: string, suffix: number, MustEndWithSlash: boolean = false) => {
+		const CheckEndpoint = (elementName: string, suffix: number, MustEndWithSlash: boolean = false) : void => {
 			const ep = source.getAnyNs(elementName);
-			if (ep) {
-				const epURL = ep.getAnyNs(dvbi.e_URI);
-				if (epURL) {
-					if (!MustEndWithSlash && !isHTTPURL(epURL.content)) 
-						errs.addError(InvalidURL(epURL.content, ep, elementName.elementize(), `${errCode}-${suffix}a`));
+			if (!ep) 
+				return
+			const epURL = ep.getAnyNs(dvbi.e_URI);
+			if (epURL) {
+				if (!MustEndWithSlash && !isHTTPURL(epURL.content)) 
+					errs.addError(InvalidURL(epURL.content, ep, elementName.elementize(), `${errCode}-${suffix}a`));
 
-					if (MustEndWithSlash && !isHTTPPathURL(epURL.content))
-						errs.addError({
-							type: WARNING,
-							code: `${errCode}-${suffix}b`,
-							message: `${epURL.content.quote()} should end with a slash '/' for ${elementName.elementize()}`,
-							fragment: ep,
-							key: "not URL path",
-						});
-					ValidateAnySignaturePolicy(epURL, documentInfo, errs, `${errCode}-${suffix}c`);
-				}
-				const ep_contentType = ep.attrAnyNsValueOr(dvbi.a_contentType);
-				if (ep_contentType && ep_contentType != XMLdocumentType)
+				if (MustEndWithSlash && !isHTTPPathURL(epURL.content))
 					errs.addError({
 						type: WARNING,
-						code: `${errCode}-${suffix}d`,
-						message: `${dvbi.a_contentType.attribute(elementName).elementize()} should contain ${XMLdocumentType}`,
+						code: `${errCode}-${suffix}b`,
+						message: `${epURL.content.quote()} should end with a slash '/' for ${elementName.elementize()}`,
 						fragment: ep,
-						key: `invalid @${dvbi.a_contentType}`,
+						key: "not URL path",
 					});
+				ValidateAnySignaturePolicy(epURL, documentInfo, errs, `${errCode}-${suffix}c`);
 			}
+			const ep_contentType = ep.attrAnyNsValueOr(dvbi.a_contentType);
+			if (ep_contentType && ep_contentType != XMLdocumentType)
+				errs.addError({
+					type: WARNING,
+					code: `${errCode}-${suffix}d`,
+					message: `${dvbi.a_contentType.attribute(elementName).elementize()} should contain ${XMLdocumentType}`,
+					fragment: ep,
+					key: `invalid @${dvbi.a_contentType}`,
+				});
 		};
 		loc = loc ? loc :(source.parent ? source.parent.name.elementize() : "unknown");
 
@@ -1717,6 +1724,24 @@ export default class ServiceListCheck {
 		if (IdentifierBasedDeliveryParameters) SL_helpers.checkIdDelivery(IdentifierBasedDeliveryParameters, errs, "SI239");
 	}
 
+	#getContentGuideById(ServiceList: XmlElement | null, CGid : string | undefined) : XmlElement | null {
+		if (ServiceList == null || CGid == null) return null
+		const CGsources = ServiceList.getAnyNs(dvbi.e_ContentGuideSourceList)
+		let ret = null
+		if (CGsources) {
+			CGsources.forEachNamedChildElement(dvbi.e_ContentGuideSource, (cgs) => {
+				if (cgs.attrAnyNsValueOr(dvbi.a_CGSID) == CGid)
+					ret = cgs
+			})
+		}
+		return ret
+	} 
+	
+	#getDefaultContentGuide(ServiceList: XmlElement) : XmlElement | null {
+		return ServiceList == null ? null : ServiceList.getAnyNs(dvbi.e_ContentGuideSource)
+	}
+
+
 	/**
 	 * validate a Service or TestService element
 	 *
@@ -1729,9 +1754,11 @@ export default class ServiceListCheck {
 	 *                     declaredSubscriptionPackages  subscription packages that are declared in the service list
 	 *                     declaredAudioLanguages        language values declared in the <LanguageList> of the service list
 	 *                     ContentGuideSourceIDs         identifiers of content guide sources found in the service list
+	 * @param {SL_Validator_Options} options
+	 *                     traverse                      drill into resources referenced in the service
 	 * @param {ErrorList}  errs                          errors found in validaton
 	 */
-	/*private*/ #validateService(service: XmlElement, thisServiceId: string, documentInfo: FoundDocumentItems, errs: ErrorList) {
+	/*private*/ #validateService(service: XmlElement, thisServiceId: string, documentInfo: FoundDocumentItems, errs: ErrorList, options: SL_Validator_Options) {
 		if (!parameterCheck("validateService", service, [dvbi.e_Service, dvbi.e_TestService], errs, "SL100")) return;
 		checkAttributes(service, [], [dvbi.a_dynamic, dvbi.a_version, dvbi.a_replayAvailable, tva.a_lang], dvbiEA.ServiceType, errs, "SL104");
 		checkTopElementsAndCardinality(
@@ -1902,6 +1929,115 @@ export default class ServiceListCheck {
 				fragment: sCGref,
 				key: "unspecified content guide source",
 			});
+
+		if (this.#content_guide_validator != undefined && options.traverse) {
+			const myContentGuide = sCG ?? this.#getContentGuideById(service.parent as XmlElement, sCGref?.content) ?? this.#getDefaultContentGuide(service.parent as XmlElement)
+			if (myContentGuide != null) {
+				// this is the content guide source for the service
+				const siEpURL = myContentGuide.getAnyNs(dvbi.e_ScheduleInfoEndpoint)?.getAnyNs(dvbi.e_URI)?.content
+				const giEpURL = myContentGuide.getAnyNs(dvbi.e_GroupInfoEndpoint)?.getAnyNs(dvbi.e_URI)?.content
+				const dpiEpURL = myContentGuide.getAnyNs(dvbi.e_ProgramInfoEndpoint)?.getAnyNs(dvbi.e_URI)?.content
+
+				const useRef = uID && uID.parent ? (uID.parent as XmlElement).getAnyNs(dvbi.e_ContentGuideServiceRef)?.content: null
+				const serviceID = useRef || (uID ? uID.content : null)
+
+				// check now/next via ScheduleInfoEndpoint
+				if (siEpURL && serviceID) {
+					const NowNextURL = `${siEpURL}?sid=${serviceID}&now_next=true`
+					const cg_errors = new ErrorList(NowNextURL, CG_REQUEST_SCHEDULE_NOWNEXT, "Now/Next")
+	/*dbg*/console.log(` ${NowNextURL} Now/Next lookup for serviceID ${serviceID}`)
+					this.#content_guide_validator.validateContentGuide(
+						myContentGuide.getAnyNs(dvbi.e_ScheduleInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
+						NowNextURL, 
+						CG_REQUEST_SCHEDULE_NOWNEXT, 
+						cg_errors, 
+						{
+							report_schema_version: options.report_schema_version, 
+							traverse: options.traverse, 
+							progInfo_ep: dpiEpURL,
+							grpInfo_ep: giEpURL,
+						})
+					delete cg_errors.markupXML;
+					errs.nestedErrors.push(cg_errors)
+				}
+
+				// check timestamp filtered schedule via ScheduleInfoEndpoint
+				if (siEpURL) {
+					const today = Temporal.Now.plainDateISO()
+					const start_of_today = Temporal.ZonedDateTime.from({day: today.day, month: today.month, year: today.year, timeZone: "UTC"})
+
+					// look back 28 days
+					const NEEDED_DAYS = 1
+					for (let test_day=-NEEDED_DAYS; test_day<=NEEDED_DAYS; test_day++) {
+						const start_of_day = start_of_today.add({days: test_day})
+						for (let start_hour=0; start_hour<24; start_hour+=6) {
+							
+							const start=start_of_day.add({hours: start_hour})
+							const end=start_of_day.add({hours: start_hour+6})
+							const start_sec = start.epochMilliseconds / 1000
+							const end_sec = end.epochMilliseconds / 1000
+
+							const TimestampInterval = `${siEpURL}?sid=${serviceID}&start=${start_sec}&end=${end_sec}`
+							const cg_errors = new ErrorList(TimestampInterval, CG_REQUEST_SCHEDULE_TIME, `Timestamp filtered schedule: ${start}-${end}`)
+	/*dbg*/console.log(`traverse:: ${TimestampInterval} Timestamp ${start}-${end} lookup for serviceID ${serviceID}`)
+							this.#content_guide_validator.validateContentGuide(
+								myContentGuide.getAnyNs(dvbi.e_ScheduleInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
+								TimestampInterval, 
+								CG_REQUEST_SCHEDULE_TIME, 
+								cg_errors, 
+								{
+									report_schema_version: options.report_schema_version, 
+									traverse: options.traverse, 
+									progInfo_ep: dpiEpURL,
+									grpInfo_ep: giEpURL,
+								})
+							delete cg_errors.markupXML
+							errs.nestedErrors.push(cg_errors)
+						}
+					}
+				}
+				// valudate boxset categories via GroupInfoEndpoint, either global or with service id specified
+				if (giEpURL) {
+					if (serviceID) {
+	/*dbg*/console.log(`traverse:: ${giEpURL} Boxset categories lookup for serviceID ${serviceID}`)
+//						const BSCategoriesSvcURL = `${giEpURL}categories?sid=${serviceID}&page_size=all`
+						const BSCategoriesSvcURL = `${giEpURL}categories?sid=${serviceID}`
+						const cg_errors = new ErrorList(BSCategoriesSvcURL, CG_REQUEST_BS_CATEGORIES, `Boxset Categories for ${serviceID}`)
+						this.#content_guide_validator.validateContentGuide(
+							myContentGuide.getAnyNs(dvbi.e_GroupInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
+							BSCategoriesSvcURL, 
+							CG_REQUEST_BS_CATEGORIES, 
+							cg_errors, 
+							{
+								report_schema_version: options.report_schema_version, 
+								traverse: options.traverse, 
+								progInfo_ep: dpiEpURL,
+								grpInfo_ep: giEpURL,
+							})
+						delete cg_errors.markupXML
+						errs.nestedErrors.push(cg_errors)
+					}
+
+	/*dbg*/console.log(`traverse:: ${giEpURL} Boxset categories lookup endpoint`)
+//					const BSCategoriesAllURL = `${giEpURL}categories&page_size=all`
+					const BSCategoriesAllURL = `${giEpURL}categories`
+					const cg_errors = new ErrorList(BSCategoriesAllURL, CG_REQUEST_BS_CATEGORIES, "Boxset Categories for all services")
+					this.#content_guide_validator.validateContentGuide(
+						myContentGuide.getAnyNs(dvbi.e_GroupInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
+						BSCategoriesAllURL, 
+						CG_REQUEST_BS_CATEGORIES, 
+						cg_errors, 
+						{
+							report_schema_version: options.report_schema_version, 
+							traverse: options.traverse, 
+							progInfo_ep: dpiEpURL,
+							grpInfo_ep: giEpURL,
+						})
+					delete cg_errors.markupXML
+					errs.nestedErrors.push(cg_errors)
+				}
+			}
+		}
 
 		// check <AdditionalServiceParameters>
 		service.forEachNamedChildElement(dvbi.e_AdditionalServiceParameters, (AdditionalParams) =>
@@ -2168,6 +2304,7 @@ export default class ServiceListCheck {
 	 *                      report_schema_version report the state of the schema in the error/warning list
 	 *                      variants              flags from input
 	 *                                              GERMAN_A177r6_VARIANT  use the German schema variants for A177r6
+	 *                      traverse              validate referenced DVB-I documents
 	 */
 	/*public*/ doValidateServiceList(SLtext: string, errs: ErrorList, options: SL_Validator_Options = {}) {
 		this.#numRequests++;
@@ -2183,6 +2320,7 @@ export default class ServiceListCheck {
 		DefaultProperty(options, "log_prefix", null);
 		DefaultProperty(options, "report_schema_version", true);
 		DefaultProperty(options, "variants", 0);
+		DefaultProperty(options, "traverse", false)
 
 		const SL = SchemaLoad(SLtext, errs, "SL001");
 		if (!SL) return;
@@ -2394,7 +2532,8 @@ export default class ServiceListCheck {
 				service,
 				`service-${s}`, // use a default value in case <UniqueIdentifier> is not specified
 				documentInfo,
-				errs
+				errs,
+				options
 			);
 		});
 
@@ -2410,7 +2549,8 @@ export default class ServiceListCheck {
 					testService,
 					`testservice-${ts}`, // use a default value in case <UniqueIdentifier> is not specified
 					documentInfo,
-					errs
+					errs,
+					options
 				);
 			});
 		}
@@ -2662,16 +2802,41 @@ export default class ServiceListCheck {
 	/**
 	 * validate the service list and record any errors
 	 *
-	 * @param {string} SLtext  The service list text to be validated
-	 * @returns {ErrorList} Errors found in validaton
+	 * @param {XmlElement} Location  The service list text to be validated
+	 * @param {string} requestUrl
+	 * @param {ErrorList} errs  Errors found in validaton
+	 * @param {SL_Validator_Options}    options
+	 *                      log_prefix            the first part of the logging location (or null if no logging)
+	 *                      report_schema_version report the state of the schema in the error/warning list
+	 *                      variants              flags from input
+	 *                                              GERMAN_A177r6_VARIANT  use the German schema variants for A177r6
+	 *                      traverse              validate referenced DVB-I documents
 	 */
-	/*public*/ validateServiceList(SLtext: string) : Promise<ErrorList> {
-		const errs = new ErrorList();
-		this.doValidateServiceList(SLtext, errs);
+	/*public*/ 
+	validateServiceList(Location: XmlElement, requestUrl: string, errs: ErrorList, options: SL_Validator_Options) : void {
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		return new Promise((resolve, reject) => {
-			resolve(errs);
-		});
+		let resp
+		try {
+			resp = fetchS(requestUrl, fetch_options);
+		}
+		catch (error) {
+			errs.addError({
+				code: `VSL001`,
+				message: `cannot traverse into ${Location.content}, error=${error}`,
+				fragment: Location,
+				key: keys.k_Traversal,
+			})
+		}
+		if (resp) {
+			if (resp.ok) 
+				this.doValidateServiceList(resp.text(), errs, options);
+			else errs.addError({
+				code: `VSL002`,
+				message: `error with "${Location.content}" - ${resp.status} ${resp.statusText}`,
+				fragment: Location,
+				key: keys.k_Traversal,
+			})
+		}
 	}
+
 }

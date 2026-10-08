@@ -43,6 +43,7 @@ export const keys: Record<string, string> = {
 	k_SignaturePolicies: "signature policies",
 	k_InvalidDigest: "incorrect digest",
 	k_Icecast: "icecast",
+	k_Traversal: "Traversal issue",
 };
 
 /**

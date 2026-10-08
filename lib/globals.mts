@@ -30,7 +30,7 @@ export const fetch_options: Record<string, unknown> = {
 	headers: {
 		'User-Agent': 'DVB-I validator',
 	},
-	timeout: 3000,
+	timeout: 3000
 }
 
 export const GERMAN_A177r6_VARIANT: number = 0b0000000000000001;

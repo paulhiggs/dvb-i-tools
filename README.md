@@ -113,6 +113,7 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 - `--CSRfile [-f] <filename>` file to use for SLR responses (default: `./registries/slepr-main.xml`)
 - `--SLRmode <mode>` select the type of processing for the SLR response
   - `"default"` - default mode - according to A177 specification
+- `--allow_traversal [-t]` flag to allow document-to-document traversal <span style="color:red">(experimental, takes much time)</span>	
 - `--help [-h]` server and client command help
 
 ### Logging

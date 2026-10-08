@@ -64,6 +64,7 @@ const optionDefinitions = [
 		description: `The type of processing for the SLR response [${SLR_Processing_Modes.join(",")}]`,
 	},
 	{ name: "spam_blocker", alias: "b", type: Boolean, defaultValue: false, description: "enable frustrator for network scanners"},
+	{ name: "allow_traversal", alias: "t", type: Boolean, defaultValue: false, description: "allow use of metadata traversal"},
 	{ name: "help", alias: "h", type: Boolean, defaultValue: false, description: "This help" },
 ];
 
@@ -102,21 +103,21 @@ const commandLineHelp = [
 	},
 ];
 
-const options = commandLineArgs(optionDefinitions);
+const application_options = commandLineArgs(optionDefinitions);
 
-if (options.help) {
+if (application_options.help) {
 	console.log(commandLineUsage(commandLineHelp));
 	process.exit(0);
 }
 
-if (!CORSoptions.includes(options.CORSmode)) {
+if (!CORSoptions.includes(application_options.CORSmode)) {
 	console.log(chalk.red(`CORSmode must be ${CORSnone.quote()}, ${CORSlibrary.quote()} to use the Express cors() handler, or "${CORSmanual}" to have headers inserted manually`));
 	process.exit(1);
 }
 
-if (!SLR_Processing_Modes.includes(options.SLRmode)) {
+if (!SLR_Processing_Modes.includes(application_options.SLRmode)) {
 	console.log(chalk.red(`SLRmode must be one of [${SLR_Processing_Modes.join(", ")}]`));
 	process.exit(1);
 }
 
-validator(options);
+validator(application_options);
