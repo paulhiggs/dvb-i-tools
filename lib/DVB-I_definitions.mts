@@ -571,4 +571,5 @@ export const dvbiEC: Record<string, string[]> = {
 		dvbi.e_IdentifierBasedDeliveryParameters,
 	],
 	ContentProtectionType: [dvbi.e_CASystemId, dvbi.e_DRMSystemId],
+	VideoAttribites: tvaEC.VideoAttributes.concat([dvbi.e_Colorimetry])
 };

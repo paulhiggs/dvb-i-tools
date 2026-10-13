@@ -1259,8 +1259,17 @@ export default class ServiceListCheck {
 			});
 
 			// Check ContentAttributes/VideoAttributes - other subelements are checked with schema based validation
-			ContentAttributes.forEachNamedChildElement(tva.e_VideoAttributes, (conf) => {
-				conf.forEachChildElement((child) => {
+			ContentAttributes.forEachNamedChildElement(tva.e_VideoAttributes, (video_attrs) => {
+				checkTopElementsAndCardinality(video_attrs, 
+					[
+						{ name: tva.e_Coding, minOccurs: 0, maxOccurs: 1 },
+						{ name: tva.e_HorizontalSize, minOccurs: 0, maxOccurs: 1 },
+						{ name: tva.e_VerticalSize, minOccurs: 0, maxOccurs: 1 },
+						{ name: tva.e_AspectRatio, minOccurs: 0, maxOccurs: 1 },
+						{ name: dvbi.e_Colorimetry, minOccurs: 0, maxOccurs: 1 },
+					], 
+					dvbiEC.VideoAttributes, false, errs, "SI071")
+				video_attrs.forEachChildElement((child) => {
 					const child_href = child.attrAnyNsValueOr(dvbi.a_href);
 					switch (child.name) {
 						case tva.e_Coding:
@@ -1290,6 +1299,9 @@ export default class ServiceListCheck {
 									key: dvbi.e_Colorimetry,
 								});
 							break;
+						case tva.e_AspectRatio:
+							// value space checked by schema
+							break
 					}
 				});
 			});

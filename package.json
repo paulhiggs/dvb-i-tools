@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools.ts",
-	"version": "1.11.1",
+	"version": "1.11.2",
 	"description": "DVB-I V&V Tools - up to A177r8",
 	"keywords": [
 		"DVB-I"
@@ -19,7 +19,7 @@
 		"command-line-args": "^6.0.2",
 		"command-line-usage": "^7.0.4",
 		"cors": "^2.8.6",
-		"express": "^5.2.1",
+		"express": "^5.3.0",
 		"express-fileupload": "^1.5.2",
 		"express-session": "^1.19.0",
 		"libxml2-wasm": "^0.7.2",
@@ -58,15 +58,15 @@
 		"@types/express-fileupload": "^1.5.1",
 		"@types/express-session": "^1.19.0",
 		"@types/morgan": "^1.9.10",
-		"@types/node": "^26.6.3",
+		"@types/node": "^26.6.5",
 		"@types/serve-favicon": "^2.5.7",
 		"@types/sha.js": "^2.4.4",
 		"@types/sync-fetch": "^0.4.4",
-		"chai": "^6.2.2",
-		"eslint": "^10.11.0",
-		"globals": "^17.12.0",
-		"prettier": "^3.9.9",
-		"typescript": "^6.0.2",
+		"chai": "^6.3.0",
+		"eslint": "^10.12.0",
+		"globals": "^17.13.0",
+		"prettier": "^3.9.10",
+		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.70.1"
 	}
 }
