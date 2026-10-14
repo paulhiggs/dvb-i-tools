@@ -14,13 +14,14 @@
  * (DVB-S2x) ETSI EN 303 307-2 - https://www.etsi.org/deliver/etsi_en/302300_302399/30230702/
  */
 
-export const dvb: Record<string, string> = {
-	a_termID: "termID",
-	a_uri: "uri",
+class dvb_definitions {
+	a_termID: string = "termID"
+	a_uri: string = "uri"
 
-	e_ClassificationScheme: "ClassificationScheme",
-	e_Term: "Term",
+	e_ClassificationScheme: string = "ClassificationScheme"
+	e_Term: string = "Term"
 };
+export const dvb = new dvb_definitions()
 
 // ETSI EN 300 421 clause 4.5
 const _S_RollOff: string[] = ["0.35"];  

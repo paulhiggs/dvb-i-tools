@@ -1179,6 +1179,14 @@ export default class ServiceListCheck {
 		if (ContentAttributes) {
 			// Check ContentAttributes/AudioAttributes - other subelements are checked with schema based validation
 			ContentAttributes.forEachNamedChildElement(tva.e_AudioAttributes, (audio_attrs) => {
+				checkTopElementsAndCardinality(audio_attrs, 
+					[
+						{name: tva.e_Coding, minOccurs:0},
+						{name: tva.e_MixType, minOccurs:0},
+						{name: tva.e_AudioLanguage, minOccurs:0},
+					],
+					dvbiEC.AudioAttributes,
+					false, errs, "SI051");
 				audio_attrs.forEachChildElement((child) => {
 					const child_href = child.attrAnyNsValueOr(dvbi.a_href);
 					switch (child.name) {

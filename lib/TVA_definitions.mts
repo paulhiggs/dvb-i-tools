@@ -12,7 +12,7 @@ import { mpeg7 } from "./MPEG7_definitions.mts"
 
 export const TVA_CSmetadata: string = "urn:tva:metadata:cs";
 
-class TVAterms {
+class tva_definitions {
 	SYNOPSIS_BRIEF_LABEL: string = "brief"
 	SYNOPSIS_BRIEF_LENGTH: number = 30
 	SYNOPSIS_SHORT_LABEL: string = "short"
@@ -239,7 +239,7 @@ class TVAterms {
 	cs_PromotionalStillImage: string = `${TVA_CSmetadata}:HowRelatedCS:2012:19`
 };
 
-export const tva = new TVAterms()
+export const tva = new tva_definitions()
 
 const tvaBaseMemberOfTypeAttributes: string[] = [tva.a_crid, tva.a_index],
 	tvaControlledTermTypeAttributes: string[] = [tva.a_href],
@@ -247,44 +247,46 @@ const tvaBaseMemberOfTypeAttributes: string[] = [tva.a_crid, tva.a_index],
 	tvaExtendedURITypeAttributes: string[] = [tva.a_contentType, tva.a_uriType, tva.a_integrity, tva.a_verificationPolicy],
 	mpeg7UniqueIDTypeAttributes: string[] = [mpeg7.a_type, mpeg7.a_organization, mpeg7.a_authority, mpeg7.a_encoding];
 
-export const tvaEA: Record<string, string[]> = {
+class tvaEA_definitions {
 	// EA = Element-Attributes - the attributes that are defiend for each element
-	AudioLanguage: [tva.a_purpose, mpeg7.a_type, mpeg7.a_supplemental],
-	AuxiliaryURI: tvaExtendedURITypeAttributes,
-	Coding: tvaControlledTermTypeAttributes,
-	CreditsItem: [tva.a_role, tva.a_index],
-	EpisodeOf: tvaBaseMemberOfTypeAttributes,
-	ExplanatoryText: [tva.a_length, tva.a_lang],
-	Genre: [tva.a_type, tva.a_metadataOriginIDRef].concat(tvaControlledTermTypeAttributes),
-	GroupInformation: [tva.a_groupId, tva.a_lang, tva.a_ordered, tva.a_numOfItems, tva.a_metadataOriginIDRef, tva.a_serviceIDRef].concat(tvafragmentIdentificationAttributes),
-	GroupType: [tva.a_type, tva.a_value],
-	HowRelated: tvaControlledTermTypeAttributes,
-	Keyword: [tva.a_lang, tva.a_type, tva.a_metadataOriginIDRef],
-	MediaLocator: [],
-	MediaUri: tvaExtendedURITypeAttributes,
-	MemberOf: tvaBaseMemberOfTypeAttributes,
-	MinimumAge: [],
-	MixType: tvaControlledTermTypeAttributes,
-	OnDemandProgram: [tva.a_serviceIDRef, tva.a_lang, tva.a_metadataOriginIDRef].concat(tvafragmentIdentificationAttributes),
-	OtherIdentifier: mpeg7UniqueIDTypeAttributes,
-	ParentalRating: [tva.a_href],
-	Program: [tva.a_crid],
-	ProgramInformation: [tva.a_programId, tva.a_lang, tva.a_metadataOriginIDRef].concat(tvafragmentIdentificationAttributes),
-	ProgramInformationTable: [tva.a_lang, tva.a_programId, tva.a_metadataOriginIDRef].concat(tvafragmentIdentificationAttributes),
-	ProgramLocationTable: [tva.a_lang, tva.a_metadataOriginIDRef],
-	Schedule: [tva.a_serviceIDRef, tva.a_start, tva.a_end, tva.a_lang, tva.a_metadataOriginIDRef].concat(tvafragmentIdentificationAttributes),
-	ScheduleEvent: [tva.a_lang, tva.a_metadataOriginIDRef],
-	StillPictureFormat: [tva.a_horizontalSize, tva.a_verticalSize, tva.a_href],
-	Synopsis: [tva.a_length, tva.a_lang],
-	Title: [tva.a_type, tva.a_lang],
+	AudioAttributes: string[] = []
+	AudioLanguage: string[] = [tva.a_purpose, mpeg7.a_type, mpeg7.a_supplemental]
+	AuxiliaryURI: string[] = tvaExtendedURITypeAttributes
+	Coding: string[] = tvaControlledTermTypeAttributes
+	CreditsItem: string[] = [tva.a_role, tva.a_index]
+	EpisodeOf: string[] = tvaBaseMemberOfTypeAttributes
+	ExplanatoryText: string[] = [tva.a_length, tva.a_lang]
+	Genre: string[] = [tva.a_type, tva.a_metadataOriginIDRef].concat(tvaControlledTermTypeAttributes)
+	GroupInformation: string[] = [tva.a_groupId, tva.a_lang, tva.a_ordered, tva.a_numOfItems, tva.a_metadataOriginIDRef, tva.a_serviceIDRef].concat(tvafragmentIdentificationAttributes)
+	GroupType: string[] = [tva.a_type, tva.a_value]
+	HowRelated: string[] = tvaControlledTermTypeAttributes
+	Keyword: string[] = [tva.a_lang, tva.a_type, tva.a_metadataOriginIDRef]
+	MediaLocator: string[] = []
+	MediaUri: string[] = tvaExtendedURITypeAttributes
+	MemberOf: string[] = tvaBaseMemberOfTypeAttributes
+	MinimumAge: string[] = []
+	MixType: string[] = tvaControlledTermTypeAttributes
+	OnDemandProgram: string[] = [tva.a_serviceIDRef, tva.a_lang, tva.a_metadataOriginIDRef].concat(tvafragmentIdentificationAttributes)
+	OtherIdentifier: string[] = mpeg7UniqueIDTypeAttributes
+	ParentalRating: string[] = [tva.a_href]
+	Program: string[] = [tva.a_crid]
+	ProgramInformation: string[] = [tva.a_programId, tva.a_lang, tva.a_metadataOriginIDRef].concat(tvafragmentIdentificationAttributes)
+	ProgramInformationTable: string[] = [tva.a_lang, tva.a_programId, tva.a_metadataOriginIDRef].concat(tvafragmentIdentificationAttributes)
+	ProgramLocationTable: string[] = [tva.a_lang, tva.a_metadataOriginIDRef]
+	Schedule: string[] = [tva.a_serviceIDRef, tva.a_start, tva.a_end, tva.a_lang, tva.a_metadataOriginIDRef].concat(tvafragmentIdentificationAttributes)
+	ScheduleEvent: string[] = [tva.a_lang, tva.a_metadataOriginIDRef]
+	StillPictureFormat: string[] = [tva.a_horizontalSize, tva.a_verticalSize, tva.a_href]
+	Synopsis: string[] = [tva.a_length, tva.a_lang]
+	Title: string[] = [tva.a_type, tva.a_lang]
 };
+export const tvaEA = new tvaEA_definitions()
 
 const ProgramLocationType: string[] = [tva.e_Program, tva.e_ProgramURL, tva.e_AuxiliaryURL, tva.e_InstanceMetadataId, tva.e_InstanceDescription];
 export const BaseAccessibilityAttributesType: string[] = [tva.e_AppInformation, tva.e_Personalisation];
 
-export const tvaEC : Record<string, string[]>= {
+class tvaEC_definitions {
 	// EC = Element-Children - the child elements or each element
-	AccessibilityAttributes: [
+	AccessibilityAttributes: string[] = [
 		tva.e_SubtitleAttributes,
 		tva.e_AudioDescriptionAttributes,
 		tva.e_SigningAttributes,
@@ -294,10 +296,10 @@ export const tvaEC : Record<string, string[]>= {
 		tva.e_HighContrastUIAttributes,
 		tva.e_ScreenReaderAttributes,
 		tva.e_ResponseToUserActionAttributes,
-	],
-	AudioAttributes: [tva.e_Coding, tva.e_NumOfChannels, tva.e_MixType, tva.e_AudioLanguage, tva.e_SampleFrequency, tva.e_BitsPerSample, tva.e_BitRate],
-	AudioDescriptionAttributes: [tva.e_AudioAttributes, tva.e_ReceiverMix].concat(BaseAccessibilityAttributesType),
-	AVAttributes: [
+	]
+	AudioAttributes: string[] = [tva.e_Coding, tva.e_NumOfChannels, tva.e_MixType, tva.e_AudioLanguage, tva.e_SampleFrequency, tva.e_BitsPerSample, tva.e_BitRate]
+	AudioDescriptionAttributes: string[] = [tva.e_AudioAttributes, tva.e_ReceiverMix].concat(BaseAccessibilityAttributesType)
+	AVAttributes: string[] = [
 		tva.e_FileFormat,
 		tva.e_FileSize,
 		tva.e_System,
@@ -306,16 +308,16 @@ export const tvaEC : Record<string, string[]>= {
 		tva.e_VideoAttributes,
 		tva.e_CaptioningAttributes,
 		tva.e_AccessibilityAttributes,
-	],
-	CaptioningAttributes: [tva.e_Coding, tva.e_BitRate],
-	CreditsItem: [
+	]
+	CaptioningAttributes: string[] = [tva.e_Coding, tva.e_BitRate]
+	CreditsItem: string[] = [
 		tva.e_PersonName, "PersonNameIDRef", 
 		tva.e_OrganizationName, "OrganizationNameIDRef", 
 		tva.e_Character, 
 		"PresentationRole", 
 		tva.e_RelatedMaterial,
-	],
-	BasicDescription: [
+	]
+	BasicDescription: string[] = [
 		tva.e_Title,
 		tva.e_MediaTitle,
 		tva.e_ShortTitle,
@@ -337,12 +339,11 @@ export const tvaEC : Record<string, string[]>= {
 		tva.e_ReleaseInformation,
 		tva.e_Duration,
 		tva.e_PurchaseList,
-	],
-	BroadcastEvent: [],
-	DialogEnhancementAttributes: [tva.e_AudioAttributes].concat(BaseAccessibilityAttributesType),
-	Format: [tva.e_AVAttributes, tva.e_StillPictureFormat],
-	GroupInformation: [tva.e_GroupType, tva.e_BasicDescription, tva.e_MemberOf, tva.e_OtherIdentifier, tva.e_PartOfAggregatedGroup, tva.e_AggregationOf],
-	InstanceDescription: [
+	]
+	DialogEnhancementAttributes: string[] = [tva.e_AudioAttributes].concat(BaseAccessibilityAttributesType)
+	Format: string[] = [tva.e_AVAttributes, tva.e_StillPictureFormat]
+	GroupInformation: string[] = [tva.e_GroupType, tva.e_BasicDescription, tva.e_MemberOf, tva.e_OtherIdentifier, tva.e_PartOfAggregatedGroup, tva.e_AggregationOf]
+	InstanceDescription: string[] = [
 		tva.e_Title,
 		tva.e_Synopsis,
 		tva.e_Genre,
@@ -354,9 +355,9 @@ export const tvaEC : Record<string, string[]>= {
 		tva.e_MemberOf,
 		tva.e_OtherIdentifier,
 		tva.e_RelatedMaterial,
-	],
-	MediaLocator: [tva.e_MediaUri, tva.e_AuxiliaryURI, tva.e_InlineMedia, tva.e_StreamID],
-	OnDemandProgram: [
+	]
+	MediaLocator: string[] = [tva.e_MediaUri, tva.e_AuxiliaryURI, tva.e_InlineMedia, tva.e_StreamID]
+	OnDemandProgram: string[] = [
 		tva.e_PublishedDuration,
 		tva.e_StartOfAvailability,
 		tva.e_EndOfAvailability,
@@ -373,8 +374,8 @@ export const tvaEC : Record<string, string[]>= {
 		tva.e_MaxNumberOfDownloads,
 		tva.e_ExpiryTimeAfterDownload,
 		tva.e_ExpiryTimeAfterDownloadFirstStart,
-	].concat(ProgramLocationType),
-	ProgramDescription: [
+	].concat(ProgramLocationType)
+	ProgramDescription: string[] = [
 		tva.e_ProgramInformationTable,
 		tva.e_GroupInformationTable,
 		tva.e_ProgramInformationTable,
@@ -384,8 +385,8 @@ export const tvaEC : Record<string, string[]>= {
 		tva.e_SegmentInformationTable,
 		tva.e_PurchaseInformationTable,
 		tva.e_RightsInformationTable,
-	],
-	ProgramInformation: [
+	]
+	ProgramInformation: string[] = [
 		tva.e_BasicDescription,
 		tva.e_OtherIdentifier,
 		tva.e_AVAttributes,
@@ -394,9 +395,9 @@ export const tvaEC : Record<string, string[]>= {
 		tva.e_EpisodeOf,
 		tva.e_PartOfAggregateProgram,
 		tva.e_AggregationOf,
-	],
-	ProgramLocationTable: [tva.e_Schedule, tva.e_BroadcastEvent, tva.e_OnDemandProgram, tva.e_OnDemandService, tva.e_PushDownloadProgram],
-	RelatedMaterial: [
+	]
+	ProgramLocationTable: string[] = [tva.e_Schedule, tva.e_BroadcastEvent, tva.e_OnDemandProgram, tva.e_OnDemandService, tva.e_PushDownloadProgram]
+	RelatedMaterial: string[] = [
 		tva.e_HowRelated,
 		tva.e_Format,
 		tva.e_MediaLocator,
@@ -406,9 +407,9 @@ export const tvaEC : Record<string, string[]>= {
 		tva.e_SocialMediaReference,
 		tva.e_SourceMediaLocator,
 		tva.e_AccessibilityAttributes,
-	],
-	Schedule: [tva.e_ScheduleEvent],
-	ScheduleEvent: [
+	]
+	Schedule: string[] = [tva.e_ScheduleEvent]
+	ScheduleEvent: string[] = [
 		tva.e_PublishedStartTime,
 		tva.e_PublishedEndTime,
 		tva.e_PublishedDuration,
@@ -420,11 +421,12 @@ export const tvaEC : Record<string, string[]>= {
 		tva.e_FirstShowing,
 		tva.e_LastShowing,
 		tva.e_Free,
-	].concat(ProgramLocationType),
-	ScreenReaderAttributes: [tva.e_Purpose, tva.e_ScreenReaderLanguage].concat(BaseAccessibilityAttributesType),
-	SigningAttributes: [tva.e_Coding, tva.e_SignLanguage, tva.e_Closed].concat(BaseAccessibilityAttributesType),
-	SpokenSubtitlesAttributes: [tva.e_AudioAttributes].concat(BaseAccessibilityAttributesType),
-	SubtitleAttributes: [tva.e_Carriage, tva.e_Coding, tva.e_SubtitleLanguage, tva.e_Purpose, tva.e_SuitableForTTS].concat(BaseAccessibilityAttributesType),
-	VideoAttributes: [tva.e_Coding, tva.e_Scan, tva.e_HorizontalSize, tva.e_VerticalSize, tva.e_AspectRatio, tva.e_Color, tva.e_FrameRate, tva.e_BitRate, tva.e_BitsPerSample],
+	].concat(ProgramLocationType)
+	BroadcastEvent =  this.ScheduleEvent
+	ScreenReaderAttributes: string[] = [tva.e_Purpose, tva.e_ScreenReaderLanguage].concat(BaseAccessibilityAttributesType)
+	SigningAttributes: string[] = [tva.e_Coding, tva.e_SignLanguage, tva.e_Closed].concat(BaseAccessibilityAttributesType)
+	SpokenSubtitlesAttributes: string[] = [tva.e_AudioAttributes].concat(BaseAccessibilityAttributesType)
+	SubtitleAttributes: string[] = [tva.e_Carriage, tva.e_Coding, tva.e_SubtitleLanguage, tva.e_Purpose, tva.e_SuitableForTTS].concat(BaseAccessibilityAttributesType)
+	VideoAttributes: string[] = [tva.e_Coding, tva.e_Scan, tva.e_HorizontalSize, tva.e_VerticalSize, tva.e_AspectRatio, tva.e_Color, tva.e_FrameRate, tva.e_BitRate, tva.e_BitsPerSample]
 };
-tvaEC.BroadcastEvent = tvaEC.ScheduleEvent;
+export const tvaEC = new tvaEC_definitions()

@@ -14,70 +14,73 @@ import { HBBTV_APP_TYPE } from "./HbbTV_definitions.mts";
 import { HbbTV_Standard_versions, HbbTV_Features } from './HbbTV_definitions.mts'
 import { CTA5000_Standard_versions} from './CTA_definitions.mts'
 
-export const slVersions: Record<string, number> = {
-	r0: 0,					// A177
-	r1: 1,					// A177r1
-	r2: 2,					// A177r2
-	r3: 3,					// A177r3
-	r4: 4,					// A177r4 - ETSI TS 103 770 v1.0.1 (2022-12)
-	r5: 5,					// A177r5
-	r6: 6,					// A177r6 - ETSI TS 103 770 v1.2.1 (2024-06)
-	r7: 7,					// A177r7
-	r8: 8,					// A177r8 - draft ETSI TS 103 770 v1.3.1 (2026-mm)
-	unknown: -1,
+class _slVersions {
+	r0: number = 0					// A177
+	r1: number = 1					// A177r1
+	r2: number = 2					// A177r2
+	r3: number = 3					// A177r3
+	r4: number = 4					// A177r4 - ETSI TS 103 770 v1.0.1 (2022-12)
+	r5: number = 5					// A177r5
+	r6: number = 6					// A177r6 - ETSI TS 103 770 v1.2.1 (2024-06)
+	r7: number = 7					// A177r7
+	r8: number = 8					// A177r8 - draft ETSI TS 103 770 v1.3.1 (2026-mm)
+	unknown: number = -1
 };
+export const slVersions = new _slVersions()
 
-export const cgVersions: Record<string, number> = {
-	r0: 0,
-	r1: 1,
-	r2: 2,				// ETSI TS 102 822-3-1 v1.13.1
-	r3: 3,				// ETSI TS 102 822-3-1 v1.14.1
-	unknown: -1,
+class _cgVersions {
+	r0: number = 0
+	r1: number = 1
+	r2: number = 2				// ETSI TS 102 822-3-1 v1.13.1
+	r3: number = 3				// ETSI TS 102 822-3-1 v1.14.1
+	unknown: number = -1
 };
+export const cgVersions = new _cgVersions()
 
-const DVB_metadata:string = "urn:dvb:metadata";
-const DVB_CSmetadata:string = `${DVB_metadata}:cs`,
-	FVC_CSmetadata:string = "urn:fvc:metadata:cs";
+const DVB_metadata: string = "urn:dvb:metadata";
+const DVB_CSmetadata: string = `${DVB_metadata}:cs`,
+	FVC_CSmetadata: string = "urn:fvc:metadata:cs";
 
-const PaginationPrefix:string = `${FVC_CSmetadata}:HowRelatedCS:2015-12:pagination`,
-	NowNextCRIDPrefix:string = "crid://dvb.org/metadata/schedules/now-next";
+const PaginationPrefix: string = `${FVC_CSmetadata}:HowRelatedCS:2015-12:pagination`,
+	NowNextCRIDPrefix: string = "crid://dvb.org/metadata/schedules/now-next";
 
-const DVB_SOURCE_PREFIX:string = `${DVB_metadata}:source`;
-const LINKED_APLICATION_CS:string = `${DVB_CSmetadata}:LinkedApplicationCS:2019`;
+const DVB_SOURCE_PREFIX: string = `${DVB_metadata}:source`;
+const LINKED_APLICATION_CS: string = `${DVB_CSmetadata}:LinkedApplicationCS:2019`;
 
-const DVB_HowRelatedCS:string = `${DVB_CSmetadata}:HowRelatedCS`,
-	DVB_RELATED_CS_v1:string = `${DVB_HowRelatedCS}:2019`,
-	DVB_RELATED_CS_v2:string = `${DVB_HowRelatedCS}:2020`,
-	DVB_RELATED_CS_v3:string = `${DVB_HowRelatedCS}:2021`;
+const DVB_HowRelatedCS: string = `${DVB_CSmetadata}:HowRelatedCS`,
+	DVB_RELATED_CS_v1: string = `${DVB_HowRelatedCS}:2019`,
+	DVB_RELATED_CS_v2: string = `${DVB_HowRelatedCS}:2020`,
+	DVB_RELATED_CS_v3: string = `${DVB_HowRelatedCS}:2021`;
 
-export const CONTENT_FINISHED_TERM:string = "1000.2",
-	OUTSIDE_AVAILABILITY_TERM:string = "1000.1";
+export const CONTENT_FINISHED_TERM: string = "1000.2",
+	OUTSIDE_AVAILABILITY_TERM: string = "1000.1";
 
-const FVC_HowRelatedCS:string = `${FVC_CSmetadata}:HowRelatedCS:2018`;
+const FVC_HowRelatedCS: string = `${FVC_CSmetadata}:HowRelatedCS:2018`;
 
-const CaptionCodingFormatCS:string = `${TVA_CSmetadata}:CaptionCodingFormatCS:2015`,
-	AudioPurposeCS:string = `${TVA_CSmetadata}:AudioPurposeCS:2007`,
-	MediaAvailabilityCS:string = `${FVC_CSmetadata}:MediaAvailabilityCS:2014-07`,
-	ForwardEPGAvailabilityCS:string = `${FVC_CSmetadata}:FEPGAvailabilityCS:2014-10`,
-	RestartAvailabilityCS:string = `${FVC_CSmetadata}:RestartAvailabilityCS:2018`;
+const CaptionCodingFormatCS: string = `${TVA_CSmetadata}:CaptionCodingFormatCS:2015`,
+	AudioPurposeCS: string = `${TVA_CSmetadata}:AudioPurposeCS:2007`,
+	MediaAvailabilityCS: string = `${FVC_CSmetadata}:MediaAvailabilityCS:2014-07`,
+	ForwardEPGAvailabilityCS: string = `${FVC_CSmetadata}:FEPGAvailabilityCS:2014-10`,
+	RestartAvailabilityCS: string = `${FVC_CSmetadata}:RestartAvailabilityCS:2018`;
 
-export const XMLdocumentType:string = "application/xml";
+export const XMLdocumentType: string = "application/xml";
 
-const CMCDterm:string = `${DVB_metadata}:cmcd`;
-const CMCDdelivery:string = `${CMCDterm}:delivery`;
-export const CMCD_MODE_REQUEST:string = `${CMCDdelivery}:request`;
-export const CMCD_MODE_EVENT:string = `${CMCDdelivery}:event`;
+const CMCDterm: string = `${DVB_metadata}:cmcd`;
+const CMCDdelivery: string = `${CMCDterm}:delivery`;
+export const CMCD_MODE_REQUEST: string = `${CMCDdelivery}:request`;
+export const CMCD_MODE_EVENT: string = `${CMCDdelivery}:event`;
 
-export const CMCD_METHOD_HTTP_HEADER:string = `${CMCDdelivery}:customHTTPHeader`,
-	CMCD_METHOD_QUERY_ARGUMENT:string = `${CMCDdelivery}:queryArguments`,
-	CMCD_METHOD_BODY:string = `${CMCDdelivery}:body`;
+export const CMCD_METHOD_HTTP_HEADER: string = `${CMCDdelivery}:customHTTPHeader`,
+	CMCD_METHOD_QUERY_ARGUMENT: string = `${CMCDdelivery}:queryArguments`,
+	CMCD_METHOD_BODY: string = `${CMCDdelivery}:body`;
 
-const dvbi_types: Record<string, string> = {
-	a_verificationPolicy : tva.a_verificationPolicy,
+class _dvbi_types {
+	a_verificationPolicy: string = tva.a_verificationPolicy
 }
+export const dvbi_types = new _dvbi_types()
 
 
-class DVBIdefinitions {
+class _dvbi {
 	A177_Namespace: string = `${DVB_metadata}:servicediscovery:2019`
 	A177r1_Namespace: string = `${DVB_metadata}:servicediscovery:2020`
 	A177r2_Namespace: string = `${DVB_metadata}:servicediscovery:2021`
@@ -201,7 +204,7 @@ class DVBIdefinitions {
 
 	// A177r7
 	APP_IN_SERIES: string = `${LINKED_APLICATION_CS}:1.3`
-	APP_LIST_INSTALLATION :string = `${LINKED_APLICATION_CS}:4.1`
+	APP_LIST_INSTALLATION : string = `${LINKED_APLICATION_CS}:4.1`
 	APP_WITHDRAW_AGREEMENT: string = `${LINKED_APLICATION_CS}:4.2`
 	APP_RENEW_AGREEMENT: string = `${LINKED_APLICATION_CS}:4.3`
 
@@ -453,51 +456,52 @@ class DVBIdefinitions {
 };
 
 
-export const dvbi = new DVBIdefinitions()
+export const dvbi = new _dvbi()
 
-export const dvbisld: Record<string, string> = {
-	A177_Namespace: `${DVB_metadata}:servicelistdiscovery:2019`,
-	A177r1_Namespace: `${DVB_metadata}:servicelistdiscovery:2020`,
-	A177r2_Namespace: `${DVB_metadata}:servicelistdiscovery:2021`,
-	A177r3_Namespace: `${DVB_metadata}:servicelistdiscovery:2022`,
-	A177r4_Namespace: `${DVB_metadata}:servicelistdiscovery:2022b`,
-	A177r5_Namespace: `${DVB_metadata}:servicelistdiscovery:2023`,
-	A177r6_Namespace: `${DVB_metadata}:servicelistdiscovery:2024`,
-	A177r7_Namespace: `${DVB_metadata}:servicelistdiscovery:2025`,
-	A177r8_Namespace: `${DVB_metadata}:servicelistdiscovery:2026`,
+class _dvbisld {
+	A177_Namespace: string = `${DVB_metadata}:servicelistdiscovery:2019`
+	A177r1_Namespace: string = `${DVB_metadata}:servicelistdiscovery:2020`
+	A177r2_Namespace: string = `${DVB_metadata}:servicelistdiscovery:2021`
+	A177r3_Namespace: string = `${DVB_metadata}:servicelistdiscovery:2022`
+	A177r4_Namespace: string = `${DVB_metadata}:servicelistdiscovery:2022b`
+	A177r5_Namespace: string = `${DVB_metadata}:servicelistdiscovery:2023`
+	A177r6_Namespace: string = `${DVB_metadata}:servicelistdiscovery:2024`
+	A177r7_Namespace: string = `${DVB_metadata}:servicelistdiscovery:2025`
+	A177r8_Namespace: string = `${DVB_metadata}:servicelistdiscovery:2026`
 
-	a_contentType: dvbi.a_contentType,
-	a_originalNetworkID: "originalNetworkID",
-	a_regulatorFlag: "regulatorFlag",
-	a_regulatorListFlag: "regulatorListFlag",
-	a_standardVersion: "standardVersion",
-	a_verificationPolicy: dvbi_types.a_verificationPolicy,
-	a_xmlAitApplicationType: "xmlAitApplicationType",
+	a_contentType: string = dvbi.a_contentType
+	a_originalNetworkID: string = "originalNetworkID"
+	a_regulatorFlag: string = "regulatorFlag"
+	a_regulatorListFlag: string = "regulatorListFlag"
+	a_standardVersion: string = "standardVersion"
+	a_verificationPolicy: string = dvbi_types.a_verificationPolicy
+	a_xmlAitApplicationType: string = "xmlAitApplicationType"
 
-	e_ApplicationDelivery: "ApplicationDelivery",
-	e_ApplicationType: "ApplicationType",
-	e_Delivery: dvbi.e_Delivery,
-	e_DASHDelivery: "DASHDelivery",
-	e_DVBCDelivery: "DVBCDelivery",
-	e_DVBSDelivery: "DVBSDelivery",
-	e_DVBTDelivery: "DVBTDelivery",
-	e_Language: dvbi.e_Language,
-	e_MulticastTSDelivery: "MulticastTSDelivery",
-	e_Provider: "Provider",
-	e_ProviderOffering: "ProviderOffering",
-	e_RelatedMaterial: dvbi.e_RelatedMaterial,
-	e_RTSPDelivery: "RTSPDelivery",
-	e_ServiceListEntryPoints: "ServiceListEntryPoints",
-	e_ServiceListId: "ServiceListId",
-	e_ServiceListName: "ServiceListName",
-	e_ServiceListOffering: "ServiceListOffering",
-	e_ServiceListRegistryEntity: "ServiceListRegistryEntity",
-	e_ServiceListURI: "ServiceListURI",
-	e_TargetCountry: dvbi.e_TargetCountry,
-	e_URI: dvbi.e_URI,
+	e_ApplicationDelivery: string = "ApplicationDelivery"
+	e_ApplicationType: string = "ApplicationType"
+	e_Delivery: string = dvbi.e_Delivery
+	e_DASHDelivery: string = "DASHDelivery"
+	e_DVBCDelivery: string = "DVBCDelivery"
+	e_DVBSDelivery: string = "DVBSDelivery"
+	e_DVBTDelivery: string = "DVBTDelivery"
+	e_Language: string = dvbi.e_Language
+	e_MulticastTSDelivery: string = "MulticastTSDelivery"
+	e_Provider: string = "Provider"
+	e_ProviderOffering: string = "ProviderOffering"
+	e_RelatedMaterial: string = dvbi.e_RelatedMaterial
+	e_RTSPDelivery: string = "RTSPDelivery"
+	e_ServiceListEntryPoints: string = "ServiceListEntryPoints"
+	e_ServiceListId: string = "ServiceListId"
+	e_ServiceListName: string = "ServiceListName"
+	e_ServiceListOffering: string = "ServiceListOffering"
+	e_ServiceListRegistryEntity: string = "ServiceListRegistryEntity"
+	e_ServiceListURI: string = "ServiceListURI"
+	e_TargetCountry: string = dvbi.e_TargetCountry
+	e_URI: string = dvbi.e_URI
 
-	q_inlineImages: "inlineImages",
+	q_inlineImages: string = "inlineImages"
 };
+export const dvbisld = new _dvbisld()
 
 export const validApplicationTypes: string[] = [
 	dvbi.XML_AIT_CONTENT_TYPE, 
@@ -516,23 +520,24 @@ export const DvbIApplicationTypes: string[] = [
 	HBBTV_APP_TYPE,
 ];
 
-export const dvbiEA: Record<string, string[]> = {
-	// EA = Element-Attributes - the attributes that are defiend for each element
-	MediaLocator: [dvbi.a_contentLanguage].concat(tvaEA.MediaLocator),
-	NVOD: [dvbi.a_mode, dvbi.a_reference, dvbi.a_offset],
-	ServiceList: [dvbi.a_version, tva.a_lang, dvbi.a_responseStatus, dvbi.a_id],
-	ServiceListEntryPoints: [dvbi.a_version, tva.a_lang],
-	CMCD: [dvbi.a_reportingMode, dvbi.a_transmissionMode, dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability],
-	CMCDv2: [dvbi.a_reportingMode, dvbi.a_eventURL, dvbi.a_transmissionMode, dvbi.a_batchSize, dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability, dvbi.a_obfuscateURL],
-	ServiceType: [dvbi.a_dynamic, dvbi.a_version, dvbi.a_replayAvailable, dvbi.a_lang],
-	ServiceInstanceType: [dvbi.a_priority, dvbi.a_id, tva.a_lang],
-};
+class _dvbiEA {
+	MediaLocator: string[] = [dvbi.a_contentLanguage].concat(tvaEA.MediaLocator)
+	NVOD: string[] =  [dvbi.a_mode, dvbi.a_reference, dvbi.a_offset]
+	ServiceList: string[] =  [dvbi.a_version, tva.a_lang, dvbi.a_responseStatus, dvbi.a_id]
+	ServiceListEntryPoints: string[] = [dvbi.a_version, tva.a_lang]
+	CMCD: string[] = [dvbi.a_reportingMode, dvbi.a_transmissionMode, dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability]
+	CMCDv2: string[] = [dvbi.a_reportingMode, dvbi.a_eventURL, dvbi.a_transmissionMode, dvbi.a_batchSize, dvbi.a_contentId, dvbi.a_enabledKeys, dvbi.a_probability, dvbi.a_obfuscateURL]
+	ServiceType: string[] = [dvbi.a_dynamic, dvbi.a_version, dvbi.a_replayAvailable, dvbi.a_lang]
+	ServiceInstanceType: string[] = [dvbi.a_priority, dvbi.a_id, tva.a_lang]
+	AudioAttributes: string[] = tvaEA.AudioAttributes
+}
+export const dvbiEA = new _dvbiEA()
 
-export const dvbiEC: Record<string, string[]> = {
+class _dvbiEC {
 	// EC = Element-Children - the child elements or each element
-	RelatedMaterial: tvaEC.RelatedMaterial,
-	OrganizationType: [mpeg7.e_Name, mpeg7.e_Kind, mpeg7.e_ContactName, mpeg7.e_Jurisdiction, mpeg7.e_Address, mpeg7.e_ElectronicAddress],
-	ServiceType: [
+	RelatedMaterial: string[] = tvaEC.RelatedMaterial
+	OrganizationType: string[] = [mpeg7.e_Name, mpeg7.e_Kind, mpeg7.e_ContactName, mpeg7.e_Jurisdiction, mpeg7.e_Address, mpeg7.e_ElectronicAddress]
+	ServiceType: string[] = [
 		dvbi.e_UniqueIdentifier,
 		dvbi.e_ServiceInstance,
 		dvbi.e_TargetRegion,
@@ -550,8 +555,8 @@ export const dvbiEC: Record<string, string[]> = {
 		dvbi.e_NVOD,
 		dvbi.e_ProminenceList,
 		dvbi.e_ParentalRating,
-	],
-	ServiceInstanceType: [
+	]
+	ServiceInstanceType: string[] = [
 		dvbi.e_DisplayName,
 		dvbi.e_RelatedMaterial,
 		dvbi.e_ContentProtection,
@@ -569,7 +574,10 @@ export const dvbiEC: Record<string, string[]> = {
 		dvbi.e_MulticastTSDeliveryParameters,
 		dvbi.e_OtherDeliveryParameters,
 		dvbi.e_IdentifierBasedDeliveryParameters,
-	],
-	ContentProtectionType: [dvbi.e_CASystemId, dvbi.e_DRMSystemId],
-	VideoAttribites: tvaEC.VideoAttributes.concat([dvbi.e_Colorimetry])
+	]
+	ContentProtectionType: string[] = [dvbi.e_CASystemId, dvbi.e_DRMSystemId]
+	VideoAttributes: string[] = tvaEC.VideoAttributes.concat([dvbi.e_Colorimetry])
+	AudioAttributes: string[] = tvaEC.AudioAttributes
 };
+
+export const dvbiEC = new _dvbiEC()
