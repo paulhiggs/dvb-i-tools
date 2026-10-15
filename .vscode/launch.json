@@ -11,16 +11,18 @@
 			"skipFiles": [
 				"<node_internals>/**"
 			],
-			"program": "${workspaceFolder}\\all-in-one.js",
+			"program": "${workspaceFolder}\\all-in-one.ts",
 			"args" : [
 				// split these up for correct process.qrv processing in command-line-args
 				// see: https://github.com/75lb/command-line-args/issues/141
 				"--CSRfile", ".\\registries\\slepr-vers-main.xml",
 				"--port", "3030",
+	//			"-w", "4",
 	//			"-spam_blocker",
 	//			"--urls",
 	//			"--SLRmode", "italy",
 	//			"--CORSmode", "manual",
+	//			"--allow_traversal"
 			]
 		}
 	]

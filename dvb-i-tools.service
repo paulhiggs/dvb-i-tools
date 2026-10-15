@@ -25,7 +25,7 @@ Restart=on-failure
 WorkingDirectory=/home/paul/dvb-i-tools/
 # SESSION_SECRET is required - put it in this file (chmod 600) as SESSION_SECRET=<random value>
 EnvironmentFile=/etc/dvb-i-tools.env
-ExecStart=/usr/bin/node /home/paul/dvb-i-tools/all-in-one.js --port 3030
+ExecStart=/usr/bin/node /home/paul/dvb-i-tools/all-in-one.ts --port 3030
 
 [Install]
 WantedBy=multi-user.target

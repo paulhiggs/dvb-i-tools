@@ -1,7 +1,8 @@
 {
-    "env": {
+    "envs": {
         "browser": false,
-        "es2021": true
+        "es2021": false,
+				"node": true
     },
     "extends": "eslint:recommended",
     "overrides": [
