@@ -2376,8 +2376,9 @@ export default class ServiceListCheck {
 		if (!this.#doSchemaVerification(SL as XmlDocument, errs, "SL005", options.report_schema_version, options.variants)) {
 			errs.addError({
 				code: "SL010",
-				message: `Unsupported namespace ${ns.quote()}`,
+				message: `Unsupported namespace ${ns.quote()}.`,
 				key: keys.k_XSDValidation,
+				line: SL.root.line,
 			});
 			return;
 		}
@@ -2408,6 +2409,7 @@ export default class ServiceListCheck {
 				key: keys.k_InvalidTag,
 				clause: "A177 clause 5.2.2",
 				description: "Service identifiers should use a registered URI scheme, such as the 'tag' URI scheme defined in IETF RFC 4151",
+				line: ServiceList.line,
 			});
 
 
