@@ -9,15 +9,6 @@
  * with the formerly used libxmljs2 (https://github.com/marudor/libxmljs2)
  */
 
-//import "libxml2-wasm";
-
-//declare module "libxml2-wasm" {
-/* 
-    interface XmlElement {
-        documentNamespace(): string;
-    }
-*/
-//} 
 export {}
 
 import { 

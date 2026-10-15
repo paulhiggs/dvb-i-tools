@@ -8,7 +8,6 @@
  * Drive the HTML user interface
  */
 
-//import * as Express from "express"
 import express from "express"
 import { readFileSync } from "fs"
 import { join } from "path"
@@ -24,7 +23,7 @@ import type { CGRequestType } from "./cg_check.mts"
 import { CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM, CG_REQUEST_MORE_EPISODES, CG_REQUEST_BS_CATEGORIES, CG_REQUEST_BS_LISTS, CG_REQUEST_BS_CONTENTS } from "./cg_check.mts"
 
 import { HasProperty } from "./utils.mts"
-
+import { read_string_options } from "./globals.mts"
 
 export const MODE_UNSPECIFIED = "none",
 	MODE_SL = "sl",
@@ -37,7 +36,7 @@ export const MODE_UNSPECIFIED = "none",
 const MESSAGES_IN_ORDER = true; // when true outputs the errors, warnings and informations in the 'document order'. false==ouotput in order found
 const SHOW_LINE_NUMBER = false; // include the line number in the XML document where the error was found
 
-const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), { encoding: "utf-8" }).toString());
+const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), read_string_options).toString());
 
 export const BREAK = "<br/>",
 	LINE = "<hr/>";

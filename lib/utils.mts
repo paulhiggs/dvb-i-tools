@@ -10,6 +10,7 @@
 
 
 import { statSync, readFileSync } from "fs"
+import type { ReadFileSyncOptions } from "fs"
 import chalk from "chalk"
 import { XmlElement } from "libxml2-wasm"
 
@@ -81,10 +82,10 @@ export function isEmpty(object: Record<string, unknown>) : boolean {
  * Synchronously reads a file (if it exists)
  *
  * @param {string} filename  The name of the file to read
- * @param {Record<string,unknown>} options  Options to pass to readFileSync
+ * @param {ReadFileSyncOptions} options  Options to pass to readFileSync
  * @returns {Buffer} the buffer containing the data from the file, or null if there is a problem reading
  */
-export function readmyfile(filename: string, options: Record<string, unknown>) : string | Buffer | null {
+export function readmyfile(filename: string, options: ReadFileSyncOptions) : string | Buffer | null {
 	try {
 		const stats = statSync(filename);
 		if (stats.isFile()) 

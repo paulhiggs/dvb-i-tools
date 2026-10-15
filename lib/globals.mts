@@ -8,6 +8,8 @@
  * Useful globally applicable definitions
  */
 
+import type { ReadFileSyncOptionsWithStringEncoding } from "fs"
+
 export const HTTPPort: Record<string, number> = {
 	csr: 3000,
 	all_in_one: 3030,
@@ -20,14 +22,14 @@ export const CORSmanual: string = "manual",
 export const CORSoptions: string[]= [CORSmanual, CORSlibrary, CORSnone];
 
 class _StandardStatus {
-	DRAFT: 0x01
-	OLD: 0x02
-	ETSI: 0x04
-	CURRENT: 0x08
+	DRAFT: number = 0x01
+	OLD: number = 0x02
+	ETSI: number = 0x04
+	CURRENT: number = 0x08
 };
 export const StandardStatus = new _StandardStatus()
 
-export const fetch_options: Record<string, unknown> = {
+export const fetch_options: Record<string, unknown> /* SyncRequestInit */ = {
 	headers: {
 		'User-Agent': 'DVB-I validator',
 	},
@@ -44,3 +46,5 @@ export type LoadOptions = {
 }
 
 export type StatsType = Record<string, string | number>
+
+export const read_string_options: ReadFileSyncOptionsWithStringEncoding = { encoding: "utf-8" }

@@ -17,7 +17,7 @@ import fetchS from "sync-fetch"
 import { XmlDocument } from "libxml2-wasm"
 import {} from "../libxml2-wasm-extensions.mts"
 
-import { fetch_options } from "./globals.mts"
+import { fetch_options, read_string_options } from "./globals.mts"
 import type { LoadOptions } from "./globals.mts"
 import { dvb } from "./DVB_definitions.mts"
 import handleErrors from "./fetch_err_handler.mts"
@@ -184,7 +184,7 @@ export default class ClassificationScheme {
 		if (verbose) console.log(chalk.yellow(`reading CS from ${classificationScheme}`));
 
 		if (async)
-			readFile(classificationScheme, { encoding: "utf-8" }, (err: NodeJS.ErrnoException | null, data: string) => {
+			readFile(classificationScheme, read_string_options, (err: NodeJS.ErrnoException | null, data: string) => {
 				if (!err) {
 					const res = loadClassificationScheme(XmlDocument.fromString(data.replace(/(\r\n|\n|\r|\t)/gm, "")));
 					res.vals.forEach((e) => this.add(e));
@@ -192,7 +192,7 @@ export default class ClassificationScheme {
 				} else console.log(chalk.red(err));
 			});
 		else {
-			const buff = readFileSync(classificationScheme, { encoding: "utf-8" });
+			const buff = readFileSync(classificationScheme,read_string_options);
 			const data = buff.toString();
 			const res = loadClassificationScheme(XmlDocument.fromString(data.replace(/(\r\n|\n|\r|\t)/gm, "")));
 			res.vals.forEach((e) => this.add(e));

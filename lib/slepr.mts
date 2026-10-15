@@ -17,7 +17,7 @@ import { datatypeIs, HasProperty } from "./utils.mts"
 import { tva } from "./TVA_definitions.mts"
 import { dvbi, dvbisld } from "./DVB-I_definitions.mts"
 
-import { fetch_options } from "./globals.mts"
+import { fetch_options, read_string_options } from "./globals.mts"
 import handleErrors from "./fetch_err_handler.mts"
 import { isHTTPURL, isTVAAudioLanguageType } from "./pattern_checks.mts"
 import { LoadLanguages, LoadCountries, LoadGenres } from "./classification_scheme_loaders.mts"
@@ -134,7 +134,7 @@ export default class SLEPR {
 					masterSLEPR = EMPTY_SLEPR(this.#readError);
 				});
 		} else
-			readFile(filename, { encoding: "utf-8" }, (err: NodeJS.ErrnoException | null, data: string) => {
+			readFile(filename, read_string_options, (err: NodeJS.ErrnoException | null, data: string) => {
 				if (!err) masterSLEPR = data;
 				else {
 					this.#readError = `readfile error: errno=${err.errno}, code=${err.code}`

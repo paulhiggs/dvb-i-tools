@@ -30,7 +30,7 @@ import { Server } from "https"
 import type { AddressInfo } from "node:net"
 import { createStream } from "rotating-file-stream";
 
-import { fetch_options, CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts"
+import { fetch_options, read_string_options, CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts"
 import { Default_SLEPR, __dirname } from "./data_locations.mts"
 import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults, LINE, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "./ui.mts"
 import type {FormModes} from './ui.mts'
@@ -63,7 +63,7 @@ import { GERMAN_A177r6_VARIANT } from "./globals.mts"
 
 let csr: SLEPR | null= null;
 
-const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), { encoding: "utf-8" }).toString());
+const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), read_string_options).toString());
 
 const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
@@ -394,7 +394,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 	let motd: string | undefined = undefined;
 	if (HasProperty(app_options, "motd")) {
 		console.log(chalk.yellow("reading Message Of The Day from " + chalk.green(app_options.motd)));
-		motd = readmyfile(app_options.motd, { encoding: "utf-8", flag: "r" }) as string;
+		motd = readmyfile(app_options.motd, read_string_options) as string;
 	}
 
 	if (app_options.workers != 0 && cluster.isPrimary) {

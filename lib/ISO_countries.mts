@@ -16,7 +16,7 @@ import fetchS from "sync-fetch"
 import { DefaultProperty } from "./utils.mts"
 import handleErrors from "./fetch_err_handler.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
-import { fetch_options } from "./globals.mts"
+import { fetch_options, read_string_options } from "./globals.mts"
 import type { FileLocations } from "./classification_scheme.mts"
 import type { LoadOptions } from "./globals.mts"
 
@@ -78,14 +78,14 @@ export default class ISOcountries {
 		if (async)
 			readFile(
 				countriesFile,
-				{ encoding: "utf-8" },
+				read_string_options,
 				(err: NodeJS.ErrnoException | null, data: string) =>{
 					if (!err) this.#countriesList = loadCountryData(data);
 					else console.log(chalk.red(err.message));
 				}
 			);
 		else {
-			const langs = readFileSync(countriesFile, { encoding: "utf-8" }).toString();
+			const langs = readFileSync(countriesFile, read_string_options).toString();
 			this.#countriesList = loadCountryData(langs);
 		}
 	}

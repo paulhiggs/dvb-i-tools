@@ -24,9 +24,10 @@
 
 import express from "express"
 import { readFileSync } from "fs"
-
-import {spam_blocker_config} from "./data_locations.mts"
 import { Socket } from "net"
+
+import { read_string_options } from "./globals.mts"
+import { spam_blocker_config } from "./data_locations.mts"
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function random_redirect(app: express.Application, endpoint: string, protocol: string, targets: string[]) {
@@ -49,7 +50,7 @@ function random_redirect(app: express.Application, endpoint: string, protocol: s
 
 export function init_spam_blocker(app: express.Application) : void {
 	try {
-		const config = JSON.parse(readFileSync(spam_blocker_config,  { encoding: "utf-8" }).toString())
+		const config = JSON.parse(readFileSync(spam_blocker_config, read_string_options).toString())
 		config?.endpoints.forEach((endpoint: string) => {
 			random_redirect(app, endpoint, config.protocol, config.redirections);
 		})

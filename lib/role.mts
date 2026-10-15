@@ -14,7 +14,7 @@ import fetchS from "sync-fetch"
 
 import handleErrors from "./fetch_err_handler.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
-import { fetch_options } from "./globals.mts"
+import { fetch_options, read_string_options } from "./globals.mts"
 
 import ClassificationScheme from "./classification_scheme.mts"
 import type {FileLocations } from "./classification_scheme.mts"
@@ -82,7 +82,7 @@ export default class Role extends ClassificationScheme {
 		if (verbose) console.log(chalk.yellow(`reading Roles from ${rolesFile}`));
 
 		if (async)
-			readFile(rolesFile, { encoding: "utf-8" }, (err: NodeJS.ErrnoException | null, data: string) => {
+			readFile(rolesFile, read_string_options, (err: NodeJS.ErrnoException | null, data: string) => {
 				if (!err)
 					data.split("\n").forEach((role) => {
 						this.#addRole(role);
@@ -90,7 +90,7 @@ export default class Role extends ClassificationScheme {
 				else console.log(chalk.red(err));
 			});
 		else {
-			const buff = readFileSync(rolesFile, { encoding: "utf-8" });
+			const buff = readFileSync(rolesFile, read_string_options);
 			const data = buff.toString();
 			data.split("\n").forEach((role) => {
 				this.#addRole(role);

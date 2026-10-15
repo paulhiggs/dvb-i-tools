@@ -13,7 +13,7 @@ import { readFile, readFileSync } from "fs"
 import chalk from "chalk"
 import fetchS from "sync-fetch"
 
-import { fetch_options } from "./globals.mts"
+import { fetch_options, read_string_options } from "./globals.mts"
 
 import { datatypeIs, DefaultProperty } from "./utils.mts"
 
@@ -253,7 +253,7 @@ export default class IANAlanguages {
 		if (async) {
 			readFile(
 				languagesFile,
-				{ encoding: "utf-8" },
+				read_string_options,
 				(err: NodeJS.ErrnoException | null, data: string) => {
 					if (!err) {
 						this.#processLanguageData(data);
@@ -261,7 +261,7 @@ export default class IANAlanguages {
 				}
 			);
 		} else {
-			const langs = readFileSync(languagesFile, { encoding: "utf-8" }).toString();
+			const langs = readFileSync(languagesFile, read_string_options).toString();
 			this.#processLanguageData(langs);
 		}
 	}

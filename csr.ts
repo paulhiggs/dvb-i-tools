@@ -29,7 +29,7 @@ import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs"
 xmlRegisterFsInputProviders();
 
 import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./lib/data_locations.mts"
-import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort } from "./lib/globals.mts"
+import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort, read_string_options } from "./lib/globals.mts"
 import type { StatsType } from "./lib/globals.mts"
 import { readmyfile } from "./lib/utils.mts"
 
@@ -42,7 +42,7 @@ const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
 
 const numCPUs = cpus().length;
-const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), { encoding: "utf-8" }).toString());
+const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), read_string_options).toString());
 
 // SLEPR == Service List Entry Point Registry
 import SLEPR from "./lib/slepr.mts";
