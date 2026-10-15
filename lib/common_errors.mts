@@ -55,7 +55,7 @@ export const keys = new _keys()
  */
 export const NoChildElement = (missingElement: string, parentElement: XmlElement, schemaLocation: string | null, errCode: string)  : ReportedErrorType => ({
 	code: errCode,
-	message: `${missingElement} element not specified for ${parentElement.name.elementize()}${schemaLocation ? " in " + schemaLocation : ""}`,
+	message: `${missingElement} element not specified for ${parentElement.name.elementize()}${schemaLocation ? ` in ${schemaLocation}` : ""}`,
 	line: parentElement.line,
 });
 
