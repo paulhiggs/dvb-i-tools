@@ -53,10 +53,11 @@ export const keys = new _keys()
  * @param {string}      schemaLocation  The location in the schema of the element
  * @param {string}      errCode         The error number to show in the log
  */
-export const NoChildElement = (missingElement: string, parentElement: XmlElement, schemaLocation: string | null, errCode: string)  : ReportedErrorType => ({
+export const NoChildElement = (missingElement: string, parentElement: XmlElement, schemaLocation: string | undefined, errCode: string) : ReportedErrorType => ({
 	code: errCode,
 	message: `${missingElement} element not specified for ${parentElement.name.elementize()}${schemaLocation ? ` in ${schemaLocation}` : ""}`,
 	line: parentElement.line,
+	key: keys.k_MissingElement,
 });
 
 /**
@@ -66,15 +67,16 @@ export const NoChildElement = (missingElement: string, parentElement: XmlElement
  * @param {XmlElement} element   The element containing the @href attribute
  * @param {string}     loc       The location of the element
  * @param {string}     errCode   The error number to show in the log
+ * @returns {ReportedErrorType} an error object to be passed to the logging function
  */
-export const cg_InvalidHrefValue = (value: string, element: XmlElement, loc: string, errCode: string)  : ReportedErrorType => ({
+export const cg_InvalidHrefValue = (value: string, element: XmlElement, loc: string, errCode: string) : ReportedErrorType => ({
 	code: errCode,
 	message: `invalid ${tva.a_href.attribute()}=${value.quote()} specified for ${element.name.elementize()} in ${loc}`,
 	line: element.line,
 	key: keys.k_InvalidHRef,
 });
 
-export const sl_InvalidHrefValue = (value: string, element: XmlElement, src: string, loc: string, errCode: string)  : ReportedErrorType=> ({
+export const sl_InvalidHrefValue = (value: string, element: XmlElement, src: string, loc: string, errCode: string) : ReportedErrorType => ({
 	code: errCode,
 	fragment: element,
 	message: `invalid ${dvbi.a_href.attribute()}=${value.quote()} specified for ${src} in ${loc}`,
@@ -94,9 +96,9 @@ export const InvalidURL = (value: string, element: XmlElement, src: string, errC
  * @param {XmlElement} what  the element that is deprecated
  * @param {string} since     the specification revision when the element was deprecated
  * @param {string} errCode   the error code for the error
- * @returns {any} an error object to be passed to the logging function
+ * @returns {ReportedErrorType} an error object to be passed to the logging function
  */
-export const DeprecatedElement = (what: XmlElement, since: string, errCode: string) => ({
+export const DeprecatedElement = (what: XmlElement, since: string, errCode: string) : ReportedErrorType => ({
 	type: WARNING,
 	code: errCode,
 	fragment: what,
@@ -110,7 +112,7 @@ export const DeprecatedElement = (what: XmlElement, since: string, errCode: stri
  * @param {XmlAttribute} what  the attribute that is deprecated
  * @param {string} since       the specification revision when the attribute was deprecated
  * @param {string} errCode     the error code for the error
- * @returns {any} an error object to be passed to the logging function
+ * @returns {ReportedErrorType} an error object to be passed to the logging function
  */
 export const DeprecatedAttribute = (what: XmlAttribute, since: string, errCode: string) : ReportedErrorType => ({
 	type: WARNING,
@@ -126,6 +128,7 @@ export const DeprecatedAttribute = (what: XmlAttribute, since: string, errCode: 
  * @param {string} value    The invalid country code
  * @param {string} src      The transmission mechanism
  * @param {string} loc      The location of the element
+ * @returns {string} error message for a invalid country code
  */
-export const InvalidCountryCode = (value: string, src: string | null, loc: string): string => 
+export const InvalidCountryCode = (value: string, src: string | null, loc: string) : string => 
 	`invalid country code ${value.quote()} ${src ? `for ${src} parameters ` : ""}in ${loc}`;

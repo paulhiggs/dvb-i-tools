@@ -356,7 +356,7 @@ export default class IANAlanguages {
 	isKnownSignLanguage(value: string) : number {
 		const lcValue = value.toLowerCase();
 		let res = this.checkSignLanguage(lcValue);
-		if (res == this.languageUnknown) res = this.checkSignLanguage("sgn-" + lcValue);
+		if (res == this.languageUnknown) res = this.checkSignLanguage(`sgn-${lcValue}`);
 		return res;
 	}
 }

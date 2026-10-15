@@ -464,7 +464,7 @@ export default class ContentGuideCheck {
 					code: `${errCode}-13`,
 					key: "excess keywords",
 					message: `More than ${maxKeywords} ${tva.e_Keyword.elementize()} element${maxKeywords > 1 ? "s" : ""} specified${
-						i == DEFAULT_LANGUAGE ? "" : " for language " + i.quote()
+						i == DEFAULT_LANGUAGE ? "" : ` for language ${i.quote()}`
 					}`,
 					multiElementError: counts[i],
 				});
@@ -473,7 +473,7 @@ export default class ContentGuideCheck {
 					code: `${errCode}-14`,
 					key: "insufficient keywords",
 					message: `Less than ${minKeywords} ${tva.e_Keyword.elementize()} element${minKeywords > 1 ? "s" : ""} specified${
-						i == DEFAULT_LANGUAGE ? "" : " for language " + i.quote()
+						i == DEFAULT_LANGUAGE ? "" : ` for language ${i.quote()}`
 					}`,
 					multiElementError: counts[i],
 				});
@@ -1076,7 +1076,7 @@ export default class ContentGuideCheck {
 
 		BasicDescription.forEachNamedChildElement(tva.e_RelatedMaterial, (RelatedMaterial) => {
 			const HowRelated = RelatedMaterial.getAnyNs(tva.e_HowRelated);
-			if (!HowRelated) errs.addError(NoChildElement(tva.e_HowRelated.elementize(), RelatedMaterial, null, "MB009"));
+			if (!HowRelated) errs.addError(NoChildElement(tva.e_HowRelated.elementize(), RelatedMaterial, undefined, "MB009"));
 			else {
 				checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "MB010");
 				const hrHref = HowRelated.attrAnyNsValueOr(tva.a_href);
@@ -1139,7 +1139,7 @@ export default class ContentGuideCheck {
 
 		BasicDescription.forEachNamedChildElement(tva.e_RelatedMaterial, (RelatedMaterial) => {
 			const HowRelated = RelatedMaterial.getAnyNs(tva.e_HowRelated);
-			if (!HowRelated) errs.addError(NoChildElement(tva.e_HowRelated.elementize(), RelatedMaterial, null, "MC009"));
+			if (!HowRelated) errs.addError(NoChildElement(tva.e_HowRelated.elementize(), RelatedMaterial, undefined, "MC009"));
 			else {
 				checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "MC010");
 				const hrHref = HowRelated.attrAnyNsValueOr(tva.a_href);
@@ -1319,7 +1319,7 @@ export default class ContentGuideCheck {
 		const isParentGroup = categoryGroup ? parentElement.line == categoryGroup.line : null;
 		const BasicDescription = parentElement.getAnyNs(tva.e_BasicDescription);
 		if (!BasicDescription) {
-			errs.addError(NoChildElement(tva.e_BasicDescription.elementize(), parentElement, null, "BD001"));
+			errs.addError(NoChildElement(tva.e_BasicDescription.elementize(), parentElement, undefined, "BD001"));
 			return;
 		}
 

@@ -454,8 +454,6 @@ class _dvbi {
 		HbbTV_Features.forEach((f) => this.ApplicationOptions.push(f)) 
 	}
 };
-
-
 export const dvbi = new _dvbi()
 
 class _dvbisld {

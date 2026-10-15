@@ -52,7 +52,7 @@ const _S2X_Modulation: string[] = ["8PSK-L", "16APSK", "16APSK-L", "32APSK", "32
 // other modulation values found in ETSI EN 302 307-2 V1.4.1 table 1 but not included in A177r6
 // 128APSK, 256APSK, 256APSK-L, BPSK, BPSK-S
 
-class satellite_definitions {
+class _sats {
 	MODULATION_S: string = "DVB-S"
 	S_FEC: string[] =  _S_FEC
 	S_RollOff: string[] = _S_RollOff
@@ -69,4 +69,4 @@ class satellite_definitions {
 	S2X_Modulation: string[] = _S2X_Modulation
 }
 
-export const sats = new satellite_definitions()
+export const sats = new _sats()

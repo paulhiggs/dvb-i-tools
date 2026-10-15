@@ -12,7 +12,7 @@ const MPEG7_CS: string = "urn:mpeg:mpeg7:cs";
 const FILE_FORMAT_CS: string = `${MPEG7_CS}:FileFormatCS:2001`;
 const AUDIO_PRESENTATION_CS: string = `${MPEG7_CS}:AudioPresentationCS:2001`;
 
-class mpeg7_definitions {
+class _mpeg7 {
 	// A177 6.11.1 - Audio Mix Type
 	AUDIO_MIX_MONO: string = `${AUDIO_PRESENTATION_CS}:2`
 	AUDIO_MIX_STEREO: string = `${AUDIO_PRESENTATION_CS}:3`
@@ -49,5 +49,5 @@ class mpeg7_definitions {
 	e_Kind: string = "Kind"
 	e_Name: string = "Name"
 };
-export const mpeg7 = new mpeg7_definitions()
+export const mpeg7 = new _mpeg7()
 export const MPEG1_layer_2: string = `${MPEG7_CS}:AudioCodingFormatCS:2001:3.2`;
