@@ -84,6 +84,7 @@ Validates the syntax and semantic value space of DVB-I service list registry, se
 
 1. Clone this repository `git clone https://github.com/paulhiggs/dvb-i-tools.git`
 1. Install necessary libraries (express, libxmljs, morgan) `npm install`
+1. set a strong, random session secret (required, the server will not start without it) - `export SESSION_SECRET=$(openssl rand -hex 32)`
 1. run it - `node all-in-one.ts [--urls] [--port 3030] [--sport 3031]`
 
 If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
@@ -93,7 +94,10 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 #### Docker
 
 1. Clone this repository `git clone  https://github.com/paulhiggs/dvb-i-tools.git`
+1. set a strong, random session secret (required) in your shell or in a `.env` file next to `docker-compose.yml` - `export SESSION_SECRET=$(openssl rand -hex 32)`
 1. run it - `docker compose up`
+
+`docker compose` passes `SESSION_SECRET` through to the container and refuses to start if it is not set. If running the image directly, use `docker run -e SESSION_SECRET=... `.
 
 ### Command Line Arguments
 

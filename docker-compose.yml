@@ -6,5 +6,6 @@ services:
     #image: ghcr.io/ccma-enginyeria/dvb-i-tools/dvb-i-tools:latest
     environment:
       - no_proxy=localhost,127.0.0.1
+      - SESSION_SECRET=${SESSION_SECRET:?SESSION_SECRET must be set}
     ports:
       - "3030:3030"
