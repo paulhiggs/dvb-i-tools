@@ -13,8 +13,6 @@ import { dvbi } from "./DVB-I_definitions.mts"
 import { WARNING } from "./error_list.mts"
 import type { ReportedErrorType } from "./error_list.mts"
 
-import {} from "./string-extensions.ts"
-
 class _keys {
 	k_InvalidHRef: string = "invalid href"
 	k_InvalidValue: string = "invalid value"

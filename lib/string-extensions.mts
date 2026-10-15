@@ -1,5 +1,5 @@
 /**
- * string-extensions
+ * string-extensions.ts
  *
  *  DVB-I-tools
  *  Copyright (c) 2026, Paul Higgs

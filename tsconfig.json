@@ -4,7 +4,7 @@
   "compilerOptions": {
     "types": [
       "node",
-			"./lib/extensions.d.ts",
+			"./lib/string-extensions.d.ts",
     ],
     "rootDir": "./",
     "declaration": true,

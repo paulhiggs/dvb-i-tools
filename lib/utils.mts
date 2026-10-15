@@ -17,7 +17,6 @@ import { XmlElement } from "libxml2-wasm"
 import { APPLICATION } from "./error_list.mts"
 import ErrorList from  "./error_list.mts"
 
-import {} from "./string-extensions.ts"
 
 /* local */
 const findInSet = (values : string | string[], value : string, caseSensitive : boolean) : boolean => {
