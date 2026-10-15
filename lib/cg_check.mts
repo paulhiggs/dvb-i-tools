@@ -182,6 +182,7 @@ export type CG_Validator_Options = {
 	traverse?: boolean
 	progInfo_ep?: string
 	grpInfo_ep?: string
+	mEpisodes_ep?: string
 }
 
 import type {ValidatorOptions} from "./sl_check.mts"
@@ -1595,6 +1596,16 @@ export default class ContentGuideCheck {
 				this.validateContentGuide(ProgramInformation, piURL, CG_REQUEST_PROGRAM, piErrs, {} )
 				delete piErrs.markupXML
 				errs.nestedErrors.push(piErrs)
+			}
+
+			// traverse more episodes if provided
+			if (options?.traverse && options?.mEpisodes_ep) {
+				const mepURL = `${options?.mEpisodes_ep}?pid=${programCRID}`
+				const mepErrs = new ErrorList(mepURL, CG_REQUEST_MORE_EPISODES, `More Episodes for ${programCRID}`)
+	/*dbg*/console.log(`traverse:: More Episodes of ${mepURL}`)
+				this.validateContentGuide(ProgramInformation, mepURL, CG_REQUEST_MORE_EPISODES, mepErrs, options )
+				delete mepErrs.markupXML
+				errs.nestedErrors.push(mepErrs)
 			}
 		}
 
@@ -3695,7 +3706,7 @@ export default class ContentGuideCheck {
 					errs,
 					"CG041"
 				);
-				this.#CheckProgramInformation(ProgramDescription, programCRIDs, null, requestType, errs, undefined, undefined);
+				this.#CheckProgramInformation(ProgramDescription, programCRIDs, null, requestType, errs, options, undefined);
 				this.#CheckProgramLocation(ProgramDescription, programCRIDs, null, requestType, errs);
 				break;
 			case CG_REQUEST_MORE_EPISODES:
