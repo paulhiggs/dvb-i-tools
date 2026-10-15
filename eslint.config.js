@@ -1,5 +1,5 @@
 import js from "@eslint/js";
-// import globals from "globals";
+import globals from "globals";
 import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
 
@@ -9,7 +9,7 @@ export default defineConfig([
 		extends: [js.configs.recommended, tseslint.configs.recommended], 
 //		plugins: { js }, 
 //		extends: ["js/recommended"], 
-//		languageOptions: { globals: globals.browser } ,
+		languageOptions: { globals: globals.browser } ,
 //		rules: {
 //			"prefer-const": "warn",
 //			"no-constant-binary-expression": "error",
