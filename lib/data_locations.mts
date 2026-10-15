@@ -58,7 +58,7 @@ type DataLocation = { file: string, url?: string };
 // SLEPR == Service List Entry Point Registry
 const SLEPR_Dir: string = join(__dirname, SLEPR_subDir),
 	SLEPR_File: string = "slepr-main.xml";
-export const Default_SLEPR = { file: join(SLEPR_Dir, SLEPR_File), url: `${REPO_RAW}${SLEPR_subDir}/${SLEPR_File}` };
+export const Default_SLEPR: DataLocation= { file: join(SLEPR_Dir, SLEPR_File), url: `${REPO_RAW}${SLEPR_subDir}/${SLEPR_File}` };
 
 const idTVA_ContentCS: string = "ContentCS.xml";
 export const TVA_ContentCS: DataLocation = { file: join(pathTVA, idTVA_ContentCS), url: `${REPO_RAW}${subdirTVA}/${idTVA_ContentCS}` };
@@ -97,24 +97,27 @@ const idDVB_LinkApplicationTypeCS: string = "DVBLinkedApplicationCS-2019.xml";
 export const DVBI_LinkedApplicationCS: DataLocation = { file: join(pathDVBI, idDVB_LinkApplicationTypeCS), url: `${DVB_METADATA}${url2019CS}/${idDVB_LinkApplicationTypeCS}` };
 
 const idDVB_AudioCodecCS: string = "AudioCodecCS.xml";
-export const DVB_AudioCodecCS: Record<string, DataLocation> = {
-	y2007: { file: join(path2007CS, idDVB_AudioCodecCS), url: `${DVB_METADATA}${url2007CS}/${idDVB_AudioCodecCS}` },
-	y2020: { file: join(path2020CS, idDVB_AudioCodecCS), url: `${DVB_METADATA}${url2020CS}/${idDVB_AudioCodecCS}` },
-	y2024: { file: join(path2024CS, idDVB_AudioCodecCS), url: `${DVB_METADATA}${url2024CS}/${idDVB_AudioCodecCS}` },
+class _DVB_AudioCodecCS {
+	y2007: DataLocation = { file: join(path2007CS, idDVB_AudioCodecCS), url: `${DVB_METADATA}${url2007CS}/${idDVB_AudioCodecCS}` }
+	y2020: DataLocation = { file: join(path2020CS, idDVB_AudioCodecCS), url: `${DVB_METADATA}${url2020CS}/${idDVB_AudioCodecCS}` }
+	y2024: DataLocation = { file: join(path2024CS, idDVB_AudioCodecCS), url: `${DVB_METADATA}${url2024CS}/${idDVB_AudioCodecCS}` }
 };
+export const DVB_AudioCodecCS = new _DVB_AudioCodecCS()
 
 const idDVB_VideoCodecCS: string = "VideoCodecCS.xml";
-export const DVB_VideoCodecCS: Record<string, DataLocation> = {
-	y2007: { file: join(path2007CS, idDVB_VideoCodecCS), url: `${DVB_METADATA}${url2007CS}/${idDVB_VideoCodecCS}` },
-	y2020: { file: join(path2020CS, idDVB_VideoCodecCS), url: `${DVB_METADATA}${url2020CS}/${idDVB_VideoCodecCS}` },
-	y2021: { file: join(path2021CS, idDVB_VideoCodecCS), url: `${DVB_METADATA}${url2021CS}/${idDVB_VideoCodecCS}` },
-	y2022: { file: join(path2022CS, idDVB_VideoCodecCS), url: `${DVB_METADATA}${url2022CS}/${idDVB_VideoCodecCS}` },
+class _DVB_VideoCodecCS {
+	y2007: DataLocation = { file: join(path2007CS, idDVB_VideoCodecCS), url: `${DVB_METADATA}${url2007CS}/${idDVB_VideoCodecCS}` }
+	y2020: DataLocation = { file: join(path2020CS, idDVB_VideoCodecCS), url: `${DVB_METADATA}${url2020CS}/${idDVB_VideoCodecCS}` }
+	y2021: DataLocation = { file: join(path2021CS, idDVB_VideoCodecCS), url: `${DVB_METADATA}${url2021CS}/${idDVB_VideoCodecCS}` }
+	y2022: DataLocation = { file: join(path2022CS, idDVB_VideoCodecCS), url: `${DVB_METADATA}${url2022CS}/${idDVB_VideoCodecCS}` }
 };
+export const DVB_VideoCodecCS = new _DVB_VideoCodecCS()
 
 const idDVB_ColorimetryCS: string = "ColorimetryCS.xml";
-export const DVB_ColorimetryCS: Record<string, DataLocation> = {
-	y2020: { file: join(path2020CS, idDVB_ColorimetryCS), url: `${DVB_METADATA}${url2020CS}/${idDVB_ColorimetryCS}` },
+class _DVB_ColorimetryCS {
+	y2020: DataLocation = { file: join(path2020CS, idDVB_ColorimetryCS), url: `${DVB_METADATA}${url2020CS}/${idDVB_ColorimetryCS}` }
 };
+export const DVB_ColorimetryCS = new _DVB_ColorimetryCS()
 
 const idMPEG7_AudioCodingFormatCS: string = "AudioCodingFormatCS.xml";
 export const MPEG7_AudioCodingFormatCS: DataLocation = { file: join(pathMPEG7, idMPEG7_AudioCodingFormatCS), url: `${REPO_RAW}${subdirMPEG7}/${idMPEG7_AudioCodingFormatCS}` };
@@ -126,19 +129,21 @@ const idMPEG7_AudioPresentationCS: string = "AudioPresentationCS.xml";
 export const MPEG7_AudioPresentationCS: DataLocation = { file: join(pathMPEG7, idMPEG7_AudioPresentationCS), url: `${REPO_RAW}${subdirMPEG7}/${idMPEG7_AudioPresentationCS}` };
 
 const idDVB_AudioConformanceCS: string = "AudioConformancePointsCS.xml";
-export const DVB_AudioConformanceCS: Record<string, DataLocation> = {
-	y2017: { file: join(path2017CS, idDVB_AudioConformanceCS), url: `${DVB_METADATA}${url2017CS}/${idDVB_AudioConformanceCS}` },
-	y2024: { file: join(path2024CS, idDVB_AudioConformanceCS), url: `${DVB_METADATA}${url2024CS}/${idDVB_AudioConformanceCS}` },
+class _DVB_AudioConformanceCS {
+	y2017: DataLocation = { file: join(path2017CS, idDVB_AudioConformanceCS), url: `${DVB_METADATA}${url2017CS}/${idDVB_AudioConformanceCS}` }
+	y2024: DataLocation = { file: join(path2024CS, idDVB_AudioConformanceCS), url: `${DVB_METADATA}${url2024CS}/${idDVB_AudioConformanceCS}` }
 };
+export const DVB_AudioConformanceCS = new _DVB_AudioConformanceCS()
 
 const idDVB_VideoConformanceCS: string = "VideoConformancePointsCS.xml";
-export const DVB_VideoConformanceCS: Record<string, DataLocation> = {
-	y2017: { file: join(path2017CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2017CS}/${idDVB_VideoConformanceCS}` },
-	y2021: { file: join(path2021CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2021CS}/${idDVB_VideoConformanceCS}` },
-	y2022: { file: join(path2022CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2022CS}/${idDVB_VideoConformanceCS}` },
-	y2024: { file: join(path2024CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2024CS}/${idDVB_VideoConformanceCS}`	},
-	y2026: { file: join(path2026CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2026CS}/${idDVB_VideoConformanceCS}` },
+class _DVB_VideoConformanceCS {
+	y2017: DataLocation = { file: join(path2017CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2017CS}/${idDVB_VideoConformanceCS}` }
+	y2021: DataLocation = { file: join(path2021CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2021CS}/${idDVB_VideoConformanceCS}` }
+	y2022: DataLocation = { file: join(path2022CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2022CS}/${idDVB_VideoConformanceCS}` }
+	y2024: DataLocation = { file: join(path2024CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2024CS}/${idDVB_VideoConformanceCS}` }
+	y2026: DataLocation = { file: join(path2026CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2026CS}/${idDVB_VideoConformanceCS}` }
 };
+export const DVB_VideoConformanceCS = new _DVB_VideoConformanceCS()
 
 const idISO3166: string = "iso3166-countries.json";
 export const ISO3166: DataLocation = { file: join(pathISO, idISO3166), url: `${REPO_RAW}${subdirISO}/${idISO3166}` };
@@ -158,15 +163,16 @@ export const DVB_ParentalGuidanceCS: DataLocation = { file: join(path2007CS, idD
 const TVAnamespace: string = "urn:tva:metadata";
 const TVAfileprefix: string = "tva_metadata_3-1";
 
-type TVAschemaVersions = "v2019" | "v2023" | "v2024" | "v2026";
+//type TVAschemaVersions = "v2019" | "v2023" | "v2024" | "v2026";
 type TVASchemaVersonInfo = { namespace: string, file: string };
-type TVAschemaInfo = { [version in TVAschemaVersions]: TVASchemaVersonInfo }; 
-export const TVAschema: TVAschemaInfo = {
-	v2019: { namespace: `${TVAnamespace}:2019`, file: `./${schemasPath}/${TVAfileprefix}_2019.xsd` },
-	v2023: { namespace: `${TVAnamespace}:2023`, file: `./${schemasPath}/${TVAfileprefix}_2023.xsd` },
-	v2024: { namespace: `${TVAnamespace}:2024`, file: `./${schemasPath}/${TVAfileprefix}_2024.xsd` },
-	v2026: { namespace: `${TVAnamespace}:2026`, file: `./${schemasPath}/${TVAfileprefix}_v1141.xsd` },
+//type TVAschemaInfo = { [version in TVAschemaVersions]: TVASchemaVersonInfo }; 
+class _TVAschema {
+	v2019: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2019`, file: `./${schemasPath}/${TVAfileprefix}_2019.xsd` }
+	v2023: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2023`, file: `./${schemasPath}/${TVAfileprefix}_2023.xsd` }
+	v2024: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2024`, file: `./${schemasPath}/${TVAfileprefix}_2024.xsd` }
+	v2026: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2026`, file: `./${schemasPath}/${TVAfileprefix}_v1141.xsd` }
 };
+export const TVAschema = new _TVAschema()
 
 export const DVBI_ServiceListSchema: { [key: string]: { file: string } } = {
 	r0: { file:  `./${schemasPath}/dvbi_v1.0.xsd` },

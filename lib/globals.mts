@@ -19,18 +19,19 @@ export const CORSmanual: string = "manual",
 
 export const CORSoptions: string[]= [CORSmanual, CORSlibrary, CORSnone];
 
-export const StandardStatus: Record<string, number> = {
-	DRAFT: 0x01,
-	OLD: 0x02,
-	ETSI: 0x04,
-	CURRENT: 0x08,
+class _StandardStatus {
+	DRAFT: 0x01
+	OLD: 0x02
+	ETSI: 0x04
+	CURRENT: 0x08
 };
+export const StandardStatus = new _StandardStatus()
 
 export const fetch_options: Record<string, unknown> = {
 	headers: {
 		'User-Agent': 'DVB-I validator',
 	},
-	timeout: 3000
+	timeout: 3000,
 }
 
 export const GERMAN_A177r6_VARIANT: number = 0b0000000000000001;

@@ -15,36 +15,37 @@ import type { ReportedErrorType } from "./error_list.mts"
 
 import {} from "./string-extensions.ts"
 
-export const keys: Record<string, string> = {
-	k_InvalidHRef: "invalid href",
-	k_InvalidValue: "invalid value",
-	k_InvalidTag: "invalid tag",
-	k_LengthError: "length error",
-	k_DuplicatedSynopsisLength: "duplicated synopsis length",
-	k_DuplicateValue: "duplicated value",
-	k_MissingSynopsisLength: "missing synopsis length",
-	k_InvalidKeywordType: "invalid keyword type",
-	k_ParentalGuidance: "parental guidance",
-	k_InvalidElement: "invalid element",
-	k_MissingElement: "missing element",
-	k_InvalidURL: "invalid URL",
-	k_UnspecifiedLanguage: "unspecified language",
-	k_InvalidLanguage: "invalid language",
-	k_InvalidRegion: "invalid region",
-	k_InvalidCountryCode: "invalid country code",
-	k_XSDValidation: "XSD validation",
-	k_InvalidIdentifier: "invalid identifier",
-	k_Accessibility: "accessibility attributes",
-	k_CMCD: "CMCD",
-	k_Extensibility: "extensibility",
-	k_MalformedXML: "malformed XML",
-	k_DeprecatedElement: "deprecated",
-	k_DeprecatedAttribute: "deprecated",
-	k_SignaturePolicies: "signature policies",
-	k_InvalidDigest: "incorrect digest",
-	k_Icecast: "icecast",
-	k_Traversal: "Traversal issue",
+class _keys {
+	k_InvalidHRef: "invalid href"
+	k_InvalidValue: "invalid value"
+	k_InvalidTag: "invalid tag"
+	k_LengthError: "length error"
+	k_DuplicatedSynopsisLength: "duplicated synopsis length"
+	k_DuplicateValue: "duplicated value"
+	k_MissingSynopsisLength: "missing synopsis length"
+	k_InvalidKeywordType: "invalid keyword type"
+	k_ParentalGuidance: "parental guidance"
+	k_InvalidElement: "invalid element"
+	k_MissingElement: "missing element"
+	k_InvalidURL: "invalid URL"
+	k_UnspecifiedLanguage: "unspecified language"
+	k_InvalidLanguage: "invalid language"
+	k_InvalidRegion: "invalid region"
+	k_InvalidCountryCode: "invalid country code"
+	k_XSDValidation: "XSD validation"
+	k_InvalidIdentifier: "invalid identifier"
+	k_Accessibility: "accessibility attributes"
+	k_CMCD: "CMCD"
+	k_Extensibility: "extensibility"
+	k_MalformedXML: "malformed XML"
+	k_DeprecatedElement: "deprecated"
+	k_DeprecatedAttribute: "deprecated"
+	k_SignaturePolicies: "signature policies"
+	k_InvalidDigest: "incorrect digest"
+	k_Icecast: "icecast"
+	k_Traversal: "Traversal issue"
 };
+export const keys = new _keys()
 
 /**
  * Add an error message when the a required element is not present

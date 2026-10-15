@@ -55,58 +55,59 @@ import ErrorList from "./error_list.mts"
 
 const supported_CMCD_versions: number[] = [1, 2];
 
-const CMCD_keys: Record<string, string> = {
-	aggregate_encoded_bitrate: "ab",
-	buffer_length: "bl",
-	backgrounded: "bg",
-	encoded_bitrate: "br",
-	buffer_starvation: "bs",
-	buffer_starvation_absolute: "bsa",
-	buffer_starvation_duration: "bsd",
-	buffer_starvation_duration_absolute: "bsda",
-	custom_event_name: "cen",
-	content_id: "cid",
-	CMSD_dynamic_header: "cmsdd",
-	CMSD_static_header: "cmsds",
-	content_signature: "cs",
-	object_duration: "d",
-	dropped_frames_absolute: "dfa",
-	deadline: "dl",
-	event: "e",
-	player_error_code: "ec",
-	hostname: "h",
-	lowest_aggregated_encoded_bitrate: "lab",
-	lowest_encoded_bitrate: "lb",
-	live_stream_latency: "ltc",
-	media_start_delay: "msd",
-	measured_throughput: "mtp",
-	next_object_request: "nor",
-	non_rendered: "nr",
-	next_range_request: "nrr", // removed from CMCDv2
-	object_type: "ot",
-	playhead_bitrate: "pb",
-	playback_rate: "pr",
-	playhead_time: "pt",
-	response_code: "rc",
-	requested_maximum_throughput: "rtp",
-	streaming_format: "sf",
-	session_id: "sid",
-	SMRT_data_header: "smrt",
-	sequence_number: "sn",
-	stream_type: "st",
-	state: "sta",
-	startup: "su",
-	top_aggregated_encoded_bitrate: "tab",
-	top_encoded_bitrate: "tb",
-	target_buffer_length: "tbl",
-	top_playable_bitrate: "tpb",
-	timestamp: "ts",
-	time_to_first_byte: "ttfb",
-	time_to_first_body_byte: "ttfbb",
-	time_to_last_byte: "ttlb",
-	request_url: "url",
-	CMCD_version: "v",
+class _CMCD_keys {
+	aggregate_encoded_bitrate: string = "ab"
+	buffer_length: string = "bl"
+	backgrounded: string = "bg"
+	encoded_bitrate: string = "br"
+	buffer_starvation: string = "bs"
+	buffer_starvation_absolute: string = "bsa"
+	buffer_starvation_duration: string = "bsd"
+	buffer_starvation_duration_absolute: string = "bsda"
+	custom_event_name: string = "cen"
+	content_id: string = "cid"
+	CMSD_dynamic_header: string = "cmsdd"
+	CMSD_static_header: string = "cmsds"
+	content_signature: string = "cs"
+	object_duration: string = "d"
+	dropped_frames_absolute: string = "dfa"
+	deadline: string = "dl"
+	event: string = "e"
+	player_error_code: string = "ec"
+	hostname: string = "h"
+	lowest_aggregated_encoded_bitrate: string = "lab"
+	lowest_encoded_bitrate: string = "lb"
+	live_stream_latency: string = "ltc"
+	media_start_delay: string = "msd"
+	measured_throughput: string = "mtp"
+	next_object_request: string = "nor"
+	non_rendered: string = "nr"
+	next_range_request: string = "nrr" // removed from CMCDv2
+	object_type: string = "ot"
+	playhead_bitrate: string = "pb"
+	playback_rate: string = "pr"
+	playhead_time: string = "pt"
+	response_code: string = "rc"
+	requested_maximum_throughput: string = "rtp"
+	streaming_format: string = "sf"
+	session_id: string = "sid"
+	SMRT_data_header: string = "smrt"
+	sequence_number: string = "sn"
+	stream_type: string = "st"
+	state: string = "sta"
+	startup: string = "su"
+	top_aggregated_encoded_bitrate: string = "tab"
+	top_encoded_bitrate: string = "tb"
+	target_buffer_length: string = "tbl"
+	top_playable_bitrate: string = "tpb"
+	timestamp: string = "ts"
+	time_to_first_byte: string = "ttfb"
+	time_to_first_body_byte: string = "ttfbb"
+	time_to_last_byte: string = "ttlb"
+	request_url: string = "url"
+	CMCD_version: string = "v"
 };
+const CMCD_keys = new _CMCD_keys()
 
 const CMCD_EVENT_TYPES: string[] = ["abs","abe","ae","as","b","bc","c","ce","e","h","m","pc","pe","pr","ps","rr","sk","t","um"];
 const CMCD_OBJECT_TYPES: string[] = ["m", "a", "v", "av", "i", "c", "tt", "k", "o"];
@@ -217,7 +218,8 @@ function checkCMCDkeys(Report: XmlElement, version: number, errs: ErrorList, err
 						fragment: Report,
 						key: error_key,
 					});
-			} else if (isCustomKey(key)) {
+			} 
+			else if (isCustomKey(key)) {
 				const knownCustomKey = isKnownCMCDCustomKey(key);
 				if (knownCustomKey) 
 					errs.addError({
@@ -236,7 +238,7 @@ function checkCMCDkeys(Report: XmlElement, version: number, errs: ErrorList, err
 					fragment: Report,
 					key: error_key,
 				});
-				}
+			}
 			else
 				errs.addError({
 					code: `${errCode}-04`,

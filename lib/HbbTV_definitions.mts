@@ -10,9 +10,10 @@
 
 export const HBBTV_APP_TYPE: string = "application/vnd.hbbtv.xhtml+xml";
 
-export const hbbtv: Record<string, string> = {
-	serviceIdentifierTriplet_extension : "urn:hbbtv:dvbi:service:serviceIdentifierTriplet",
+class _hbbtv {
+	serviceIdentifierTriplet_extension: string = "urn:hbbtv:dvbi:service:serviceIdentifierTriplet"
 };
+export const hbbtv = new _hbbtv()
 
 const HbbTVStandardPrefix: string = "urn:hbbtv:appinformation:standardversion:hbbtv";
 const HbbTVFeaturePrefix: string = "urn:hbbtv:appinformation:optionalfeature:hbbtv";
