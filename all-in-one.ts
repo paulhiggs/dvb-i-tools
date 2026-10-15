@@ -21,6 +21,8 @@ import { Default_SLEPR, MOTD } from "./lib/data_locations.mts"
 import validator from "./lib/validator.mts"
 import { DEFAULT_PROCESSING, SLR_Processing_Modes } from "./lib/slepr.mts";
 
+import {} from "./lib/string-extensions.mts"
+
 // parse command line options
 const optionDefinitions = [
 	{ name: "urls", alias: "u", type: Boolean, defaultValue: false, description: "Load data files from network locations." },

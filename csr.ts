@@ -38,6 +38,8 @@ import ISOcountries from "./lib/ISO_countries.mts"
 import ClassificationScheme from "./lib/classification_scheme.mts"
 import { __dirname } from "./lib/data_locations.mts"
 
+import {} from "./lib/string-extensions.mts"
+
 const keyFilename = join(".", "selfsigned.key"),
 	certFilename = join(".", "selfsigned.crt");
 
