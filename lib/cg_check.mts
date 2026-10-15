@@ -139,6 +139,28 @@ const valUnsignedInt = (str: string) : number => {
 	return s && s[0] === str ? parseInt(str, 10) : 0;
 };
 
+/**
+ * Extract the HowRelated@href value from a RelatedMaterial element
+ * @param {XmlElement} RelatedMaterial 
+ * @returns {string | null} the value of the HowRelated@href attribute or null is not present
+ */
+const getHowRelated = (RelatedMaterial: XmlElement) : string | null => {
+	const HR = RelatedMaterial.name == tva.e_RelatedMaterial ? RelatedMaterial.getAnyNs(tva.e_HowRelated) : null
+	return HR ? HR?.attrAnyNsValueOr(tva.a_href) : null
+}
+
+/**
+ * Extract the value from a <MediaLocator><MediaUri> element in a RelatedMaterial element
+ * @param {XmlElement} RelatedMaterial 
+ * @returns {string | null} the value of <MediaUri> or null is not present
+ */
+const getMediaUri = (RelatedMaterial: XmlElement) : string | null => {
+	const MediaLocator = RelatedMaterial.name == tva.e_RelatedMaterial ? RelatedMaterial.getAnyNs(tva.e_MediaLocator) : null
+	const Uri = MediaLocator?.getAnyNs(tva.e_MediaUri)
+	return Uri ? Uri.content.trim() : null
+}
+
+
 import type { LoadOptions } from "./globals.mts"
 let CGschemasLoaded = false;
 function LoadCGschemas(opts: LoadOptions) : void {
@@ -1781,6 +1803,21 @@ export default class ContentGuideCheck {
 							clause: "A177 table 63",
 							description: "This shall always be set to true.",
 						});
+					//look for any "next pagination links" and traverse into them
+					const BasicDescription = GroupInformation.getAnyNs(tva.e_BasicDescription)
+					if (options?.traverse && options?.grpInfo_ep && BasicDescription)
+						BasicDescription.forEachNamedChildElement(tva.e_RelatedMaterial, (rm) => {
+							if (getHowRelated(rm) == dvbi.PAGINATION_NEXT_URI) {
+								const paginationURL = getMediaUri(rm)
+								if (paginationURL) {
+									const paginationErrs = new ErrorList(paginationURL, CG_REQUEST_BS_CATEGORIES, "Box Set Categories (pagination)")
+	/*dbg*/console.log(`traverse:: Next pagination for Box Set Categories of ${paginationURL}`)
+									this.validateContentGuide(rm, paginationURL, CG_REQUEST_BS_CATEGORIES, paginationErrs, options)
+									delete paginationErrs.markupXML
+									errs.nestedErrors.push(paginationErrs)
+								}
+							}
+						})
 				} else {
 					checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang], tvaEA.GroupInformation, errs, "GIB014");
 					checkTopElementsAndCardinality(
@@ -1793,7 +1830,7 @@ export default class ContentGuideCheck {
 					);
 					//traverse:: validate the Box Set List
 					const list_groupId = GroupInformation.attrAnyNsValueOr(tva.a_groupId)
-					if (list_groupId && options?.grpInfo_ep) {
+					if (list_groupId && options?.traverse && options?.grpInfo_ep) {
 						const bslURL = `${options.grpInfo_ep}?groupId=${list_groupId}`
 						const bslErrs = new ErrorList(bslURL, CG_REQUEST_BS_LISTS, "Box Set List")
 	/*dbg*/console.log(`traverse:: Box Set List of ${bslURL}`)
@@ -1824,6 +1861,21 @@ export default class ContentGuideCheck {
 							clause: "A177 table 63",
 							description: "This shall always be set to true.",
 						});
+					//look for any "next pagination links" and traverse into them
+					const BasicDescription = GroupInformation.getAnyNs(tva.e_BasicDescription)
+					if (options?.traverse && options?.traverse && options?.grpInfo_ep && BasicDescription)
+						BasicDescription.forEachNamedChildElement(tva.e_RelatedMaterial, (rm) => {
+							if (getHowRelated(rm) == dvbi.PAGINATION_NEXT_URI) {
+								const paginationURL = getMediaUri(rm)
+								if (paginationURL) {
+									const paginationErrs = new ErrorList(paginationURL, CG_REQUEST_BS_LISTS, "Box Set Lists (pagination)")
+	/*dbg*/console.log(`traverse:: Next pagination for Box Set Lists of ${paginationURL}`)
+									this.validateContentGuide(rm, paginationURL, CG_REQUEST_BS_LISTS, paginationErrs, options)
+									delete paginationErrs.markupXML
+									errs.nestedErrors.push(paginationErrs)
+								}
+							}
+						})	
 				} else {
 					checkAttributes(GroupInformation, [tva.a_groupId], [tva.a_lang, tva.a_serviceIDRef], tvaEA.GroupInformation, errs, "GIB024");
 					checkTopElementsAndCardinality(
@@ -1836,7 +1888,7 @@ export default class ContentGuideCheck {
 					);
 					//traverse:: validate the Box Set Contents 
 					const list_groupId = GroupInformation.attrAnyNsValueOr(tva.a_groupId)
-					if (list_groupId && options?.grpInfo_ep) {
+					if (list_groupId && options?.traverse && options?.grpInfo_ep) {
 						const bscURL = `${options.grpInfo_ep}contents?groupId=${list_groupId}`
 						const bscErrs = new ErrorList(bscURL, CG_REQUEST_BS_CONTENTS, "Box Set Contents")
 	/*dbg*/console.log(`traverse:: Box Set Contents of ${bscURL}`)
@@ -1856,6 +1908,23 @@ export default class ContentGuideCheck {
 					errs,
 					"GIB032"
 				);
+				if (isParentGroup) {
+					//look for any "next pagination links" and traverse into them
+					const BasicDescription = GroupInformation.getAnyNs(tva.e_BasicDescription)
+					if (options?.traverse && options?.grpInfo_ep && BasicDescription)
+						BasicDescription.forEachNamedChildElement(tva.e_RelatedMaterial, (rm) => {
+							if (getHowRelated(rm) == dvbi.PAGINATION_NEXT_URI) {
+								const paginationURL = getMediaUri(rm)
+								if (paginationURL) {
+									const paginationErrs = new ErrorList(paginationURL, CG_REQUEST_BS_CONTENTS, "Box Set Contents (pagination)")
+	/*dbg*/console.log(`traverse:: Next pagination for Box Set Contents of ${paginationURL}`)
+									this.validateContentGuide(rm, paginationURL, CG_REQUEST_BS_CONTENTS, paginationErrs, options)
+									delete paginationErrs.markupXML
+									errs.nestedErrors.push(paginationErrs)
+								}
+							}
+						})	
+				}
 				break;
 		}
 
@@ -2125,7 +2194,7 @@ export default class ContentGuideCheck {
 			GroupInformationTable.forEachNamedChildElement(tva.e_GroupInformation, (GroupInformation) => {
 				// this GroupInformation element is the "category group" if it does not contain a <MemberOf> element
 				if (GroupInformation.countChildElements(tva.e_MemberOf) == 0) {
-					// this GroupInformation element is not a member of another GroupInformation so it must be the "category group"
+					// this GroupInformation element is not a member of another GroupInformation so it must be the "category group" (also referred to as the "Parent Group" in A177)
 					if (categoryGroup)
 						errs.addError({
 							code: "GI111",
