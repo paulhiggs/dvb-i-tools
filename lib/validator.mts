@@ -484,10 +484,10 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			})
 		);
 
-		let slcheck = undefined,
-			plcheck = undefined,
-			cgcheck = undefined,
-			slrcheck = undefined;
+		let slcheck: ServiceListCheck | undefined = undefined,
+			plcheck: PlaylistCheck | undefined = undefined,
+			cgcheck: ContentGuideCheck | undefined = undefined,
+			slrcheck: ServiceListRegistryCheck | undefined = undefined;
 
 		const DFLT_async = true, DFLT_verbose = true;
 
@@ -614,8 +614,8 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			});
 		}
 
-		const SLEPR_query_route = "/query",
-			SLEPR_reload_route = "/reload";
+		const SLEPR_query_route: string = "/query",
+			SLEPR_reload_route: string = "/reload";
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		type nextFn = (err?: any) => any  // cors module doesnot strictly type this

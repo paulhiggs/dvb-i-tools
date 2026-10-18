@@ -192,7 +192,7 @@ export default class ServiceListRegistryCheck {
 	 *
 	 * @param {XmlElement} RelatedMaterial  the element whose children should be checked
 	 * @param  {FoundDocumentItems} documentInfo
-	 *                  signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
+	 *                  signaturePolicies    Signature Verification policies defined in this service list
 	 * @param {ErrorList}  errs              errors found in validaton
 	 * @param {string}     errCode           error code prefix to be used in reports
 	 */
@@ -490,7 +490,7 @@ export default class ServiceListRegistryCheck {
 
 		//<ServiceListEntryPoints><SignaturePolicies>
 		const documentInfo = new FoundDocumentItems(true);  // collectiom of things we learn when parsing the service list
-		documentInfo.signaturePolicyIDs = ValidateSignaturePolicies(ServiceListRegistry, errs, "SR060");
+		documentInfo.signaturePolicies = ValidateSignaturePolicies(ServiceListRegistry, errs, "SR060");
 
 		//<ServiceListEntryPoints><ProviderOffering>
 		ServiceListRegistry.forEachNamedChildElement(dvbisld.e_ProviderOffering, (ProviderOffering) => {

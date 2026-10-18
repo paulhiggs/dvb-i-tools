@@ -88,9 +88,20 @@ type FoundRegion = {
 	line: number,
 }
 
+type CAFingerprint = {
+	algorithm: string
+	fingerprint: string
+}
+export type SignaturePolicy = {
+	policyId: string
+	CAfingerprint: CAFingerprint[]
+	CN: string[]
+}
+
+
 export class FoundDocumentItems {
 	knownRegionIDs: FoundRegion[]
-	signaturePolicyIDs: Set<string>
+	signaturePolicies: SignaturePolicy[]
 	declaredAudioLanguages: { language: string, used: boolean, fragment: XmlElement }[]
 	declaredSubscriptionPackages: Set<string>
 	knownServices: Set<string>
@@ -100,7 +111,7 @@ export class FoundDocumentItems {
 
 	constructor(document_defines_policies: boolean) {
 		this.knownRegionIDs = []
-		this.signaturePolicyIDs = new Set()
+		this.signaturePolicies = []
 		this.declaredAudioLanguages = []
 		this.declaredSubscriptionPackages = new Set()
 		this.knownServices = new Set()
@@ -378,7 +389,7 @@ export default class ServiceListCheck {
 	 * @param {string}     Location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 * @param {string}     AppType       The type of application being checked, from HowRelated@href
 	 * @param  {FoundDocumentItems} documentInfo
-	 *              signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
+	 *              signaturePolicies    Signature Verification policies defined in this service list
 	 * @param {ErrorList}  errs          The class where errors and warnings relating to the service list processing are stored
 	 */
 	/*private*/ #checkSignalledApplication(MediaLocator: XmlElement, Location: string, AppType: string, documentInfo: FoundDocumentItems, errs: ErrorList) {
@@ -464,7 +475,7 @@ export default class ServiceListCheck {
 	 * @param {string}     Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 * @param {string}     LocationType      The type of element containing the <RelatedMaterial> element. Different validation rules apply to different location types
 	 * @param  {FoundDocumentItems} documentInfo
-	 *                  signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
+	 *                  signaturePolicies    Signature Verification policies defined in this service list
 	 * @param {ErrorList}  errs              The class where errors and warnings relating to the service list processing are stored
 	 * @param {string}     errCode           The prefix to use for any errors found
 	 * @returns {string} an href value if valid, else ""
@@ -641,7 +652,7 @@ export default class ServiceListCheck {
 	 * @param {XmlElement} source        The <ContentGuideSource> element to be checked
 	 * @param {string} loc           The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
 	 * @param  {FoundDocumentItems} documentInfo
-	 *                signaturePolicyIDs Set() of Signature Verification policy identifiers defined in this service list
+	 *                signaturePolicies    Signature Verification policies defined in this service list
 	 * @param {ErrorList}  errs          Errors found in validaton
 	 * @param {string}     errCode       Error code prefix to be used in reports
 	 */
@@ -1770,7 +1781,7 @@ export default class ServiceListCheck {
 	 * @param {FoundDocumentItems} documentInfo
 	 *                     knownServices                 Set() of service identifiers found and checked thus far
 	 *                     knownRegionIDs                regions identifiers from the RegionList
-	 *                     signaturePolicyIDs            Set() of Signature Verification policy identifiers defined in this service list
+	 *                     signaturePolicies             Signature Verification policies defined in this service list
 	 *                     declaredSubscriptionPackages  subscription packages that are declared in the service list
 	 *                     declaredAudioLanguages        language values declared in the <LanguageList> of the service list
 	 *                     ContentGuideSourceIDs         identifiers of content guide sources found in the service list
@@ -2438,7 +2449,7 @@ export default class ServiceListCheck {
 		});
 
 		//chck <ServiceList><SignaturePolicies>
-		documentInfo.signaturePolicyIDs = ValidateSignaturePolicies(ServiceList, errs, "SL060");
+		documentInfo.signaturePolicies = ValidateSignaturePolicies(ServiceList, errs, "SL060");
 
 		//check <ServiceList><LanguageList>
 		const LanguageList = ServiceList.getAnyNs(dvbi.e_LanguageList);

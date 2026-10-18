@@ -8,6 +8,8 @@
  * Checks performed in <RelatedMaterial> elements based on their use in DVB-I
  */
 
+import tls from "node:tls"
+
 import { mpeg7 } from "./MPEG7_definitions.mts"
 import { tva, tvaEA, tvaEC } from "./TVA_definitions.mts"
 import { dvbi, dvbiEA } from "./DVB-I_definitions.mts"
@@ -24,18 +26,34 @@ import { CG_SchemaVersion} from "./cg_check.mts"
 import { cgVersions } from "./DVB-I_definitions.mts"
 import { ValidateAnyContentDigests } from "./digest_validation.mts"
 
-import type { FoundDocumentItems } from "./sl_check.mts"
+import type { FoundDocumentItems, SignaturePolicy } from "./sl_check.mts"
+import { X509Certificate } from "node:crypto"
+
+
+const isMatch = (fingerprint: string, policy: SignaturePolicy, algorithm: string) : boolean => {
+	let match = false
+	policy.CAfingerprint.forEach((f) => {
+		if (f.algorithm == algorithm && f.fingerprint == fingerprint)
+			match = true
+	})
+	return match
+} 
+
+const CertificateMatch = (issuer: X509Certificate, policy: SignaturePolicy) : boolean => 
+	isMatch(issuer.fingerprint, policy, "sha1") || isMatch(issuer.fingerprint256, policy, "sha256") || isMatch(issuer.fingerprint512, policy, "sha512")
+
+
 
 /**
 	* verifies that any specified signature policy is already defined in the service list
 	*  
 	* @param {Xmlelement} element              The XML element possibly containing the @verificationPolicy attribute
 	* @param {FoundDocumentItems} documentInfo
-	*                     signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
+	*                     signaturePolicies    Signature Verification policies defined in this service list
 	* @param {ErrorList}  errs                 The class where errors and warnings relating to the serivce list processing are stored
 	* @param {string}     errCode              error code prefix for reporting
 	*/
- export function ValidateAnySignaturePolicy(element: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
+export function ValidateAnySignaturePolicy(element: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
 	if (!element) {
 		errs.addError({ type: APPLICATION, code: "VSP000", message: "ValidateAnySignaturePolicy() called with element==null" });
 		return;
@@ -55,7 +73,8 @@ import type { FoundDocumentItems } from "./sl_check.mts"
 		return;
 	}
  
-	if (!documentInfo.signaturePolicyIDs.has(policy))
+	const found_policy = documentInfo.signaturePolicies.find((p) => p.policyId == policy)
+	if (!found_policy)
 		errs.addError({
 			type: WARNING,
 			code: `${errCode}-2`,
@@ -72,6 +91,32 @@ import type { FoundDocumentItems } from "./sl_check.mts"
 			fragment: element,
 			key: keys.k_SignaturePolicies,
 		});
+	else if (found_policy) {
+		const link_url = new URL(element.content.trim())
+		const sock = tls.connect({host:link_url.host, port:parseInt(link_url.port)})
+		if (sock) {
+			const cert = sock.getPeerX509Certificate()
+			let matches = 0
+			if (cert) {
+				let issuer = cert.issuerCertificate
+				while (issuer) {
+					if (CertificateMatch(issuer, found_policy))
+						matches++
+					issuer = issuer.issuerCertificate
+				}
+			}
+			if (matches != found_policy.CAfingerprint.length) 	// each fingerprint in the policy must be present in the Certificate chain
+				errs.addError({
+					code: `${errCode}-4`,
+					message: `No matching fingerprints for ${found_policy.policyId}`,
+					fragment: element,
+					key: keys.k_SignaturePolicies,
+					clause: "A177 table 77d",
+					description: "The fingerprint of the Certificate Authority whose certificate must be present in the certificate chain."
+				})
+		}
+		//TODO check that the host in link_url is in the list of CNs
+	}
  }
  
  
@@ -89,7 +134,7 @@ function contentMatches(dataURI: string, contentType: string) : boolean {
  * @param {string}     location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
  * @param {string[]}      allowedHowRelated The set of permitted values
  * @param  {FoundDocumentItems} documentInfo
- *                  signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
+ *                  signaturePolicies    Signature Verification policies defined in this service list
  * @param {ErrorList}  errs              The class where errors and warnings relating to the serivce list processing are stored
  * @param {string}     errCode           Error code prefix for reporting
  */
@@ -229,7 +274,7 @@ function validateImageRelatedMaterial(RelatedMaterial: XmlElement, location: str
  * @param {XmlElement} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
  * @param {string}     location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
  * @param {FoundDocumentItems} documentInfo
- *                  signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
+ *                  ssignaturePolicies    Signature Verification policies defined in this service list
  * @param {ErrorList}  errs              The class where errors and warnings relating to the serivce list processing are stored
  * @param {string}     errCode           Error code prefix for reporting
  */
@@ -243,7 +288,7 @@ export function ValidatePromotionalStillImage(RelatedMaterial: XmlElement, locat
  * @param {XmlElement} Element            The <RelatedMaterial> element
  * @param {string}     location           The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
  * @param  {FoundDocumentItems} documentInfo
- *                  signaturePolicyIDs    Set() of Signature Verification policy identifiers defined in this service list
+ *                  signaturePolicies    Signature Verification policies defined in this service list
  * @param {ErrorList}  errs               The class where errors and warnings relating to the service list processing are stored
  * @param {string}     errCode            Error code prefix for reporting
  */
