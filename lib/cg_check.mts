@@ -152,7 +152,7 @@ const getHowRelated = (RelatedMaterial: XmlElement) : string | null => {
 /**
  * Extract the value from a <MediaLocator><MediaUri> element in a RelatedMaterial element
  * @param {XmlElement} RelatedMaterial 
- * @returns {string | null} the value of <MediaUri> or null is not present
+ * @returns {string | null} the value of <MediaUri> or null i   not present
  */
 const getMediaUri = (RelatedMaterial: XmlElement) : string | null => {
 	const MediaLocator = RelatedMaterial.name == tva.e_RelatedMaterial ? RelatedMaterial.getAnyNs(tva.e_MediaLocator) : null
@@ -185,7 +185,7 @@ export type CG_Validator_Options = {
 	mEpisodes_ep?: string
 }
 
-import type {ValidatorOptions} from "./sl_check.mts"
+import type { ValidatorOptions } from "./sl_check.mts"
 import { FoundDocumentItems} from "./sl_check.mts"
 import ClassificationScheme from "./classification_scheme.mts";
 
@@ -236,7 +236,7 @@ export default class ContentGuideCheck {
 		this.#allowedRatings = opts?.ratings || LoadRatings(opts);
 	}
 
-	stats() {
+	stats() : Record<string, string | number> {
 		const res: Record<string, number> = {};
 		res.numRequests = this.#numRequests;
 		res.numKnownCountries = this.#knownCountries?.count();
@@ -355,7 +355,8 @@ export default class ContentGuideCheck {
 							hasLong = true;
 							break;
 					}
-				} else
+				} 
+				else
 					errs.addError({
 						code: `${errCode}-14`,
 						message: `${tva.a_length.attribute()}=${synopsisLength.quote()} is not permitted for this request type`,

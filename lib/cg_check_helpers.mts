@@ -66,7 +66,7 @@ export default class CG_helpers {
 	 * @param {string}     attrName   the name of the attribute carrying the boolean value
 	 * @param {ErrorList}  errs       errors found in validaton
 	 * @param {string}     errCode    the error number used as a prefix for reporting errors
-	 * @param {boolean}    isRequired true if the specified attribute is required to be specified for the element
+	 * @param {boolean}    isRequired? true if the specified attribute is required to be specified for the element
 	 */
 	static TrueValue = (elem: XmlElement, attrName: string, errs: ErrorList, errCode: string, isRequired: boolean = true) : void => 
 		this.AllowedValue(elem, attrName, ["true"], errs, errCode, isRequired);
@@ -79,7 +79,7 @@ export default class CG_helpers {
 	 * @param {string}     attrName   the name of the attribute carrying the boolean value
 	 * @param {ErrorList}  errs       errors found in validaton
 	 * @param {string}     errCode    the error number used as a prefix for reporting errors
-	 * @param {boolean}    isRequired true if the specified attribute is required to be specified for the element
+	 * @param {boolean}    isRequire? true if the specified attribute is required to be specified for the element
 	 */
 	static FalseValue = (elem: XmlElement, attrName: string, errs: ErrorList, errCode: string, isRequired: boolean = true) : void => 
 		this.AllowedValue(elem, attrName, ["false"], errs, errCode, isRequired);

@@ -66,7 +66,7 @@ const checkPurpose = (elem: XmlElement, mainTerm: string, cs: ClassificationSche
 	});
 };
 
-const checkAppInformation = (elem: XmlElement, errs: ErrorList, errCode: string, errNum: number) => {
+const checkAppInformation = (elem: XmlElement, errs: ErrorList, errCode: string, errNum: number) : boolean => {
 	const appInfo = elem.getAnyNs(tva.e_AppInformation);
 	if (appInfo == null) return false; // AppInformation element is not present
 	appInfo?.forEachNamedChildElement([tva.e_RequiredStandardVersion, tva.e_RequiredOptionalFeature], (child: XmlElement) => {
@@ -274,7 +274,6 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes: Xm
 		{ name: tva.e_AppInformation, minOccurs: 0 },
 		{ name: tva.e_Personalisation, minOccurs: 0 },
 	];
-//	const allowedAppChildren: ElementCardinalityType[] = [{ name: tva.e_Purpose, maxOccurs: Infinity }].concat(appInformationElements);
 	const allowedAppChildren: ElementCardinalityType[] = appInformationElements.concat({ name: tva.e_Purpose, maxOccurs: Infinity });
 	const allAppChildren: string[] = [tva.e_Purpose].concat(BaseAccessibilityAttributesType);
 
