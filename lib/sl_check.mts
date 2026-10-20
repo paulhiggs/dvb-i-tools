@@ -97,6 +97,11 @@ export class FoundDocumentItems {
 	ContentGuideSourceIDs: Set<string>
 	thisServiceListId: string | null
 	definesPolicies: boolean
+	directSatScan: {
+		provisioned: number
+		unprovisioned: number
+		instances: XmlElement[]
+	}
 
 	constructor(document_defines_policies: boolean) {
 		this.knownRegionIDs = []
@@ -106,6 +111,7 @@ export class FoundDocumentItems {
 		this.knownServices = new Set()
 		this.ContentGuideSourceIDs = new Set()
 		this.thisServiceListId = null
+		this.directSatScan = {provisioned: 0, unprovisioned: 0, instances: []}
 
 		this.definesPolicies = document_defines_policies
 	}
@@ -1718,6 +1724,12 @@ export default class ServiceListCheck {
 						break;
 				}
 			}
+
+			documentInfo.directSatScan.instances.push(DVBSDeliveryParameters)
+			if (DVBSDeliveryParameters.hasChild(dvbi.e_DVBTriplet) && DVBSDeliveryParameters.hasChild(dvbi.e_OrbitalPosition) && 
+		      DVBSDeliveryParameters.hasChild(dvbi.e_Frequency) && DVBSDeliveryParameters.hasChild(dvbi.e_Polarization) && DVBSDeliveryParameters.hasChild(dvbi.e_SymbolRate))
+				documentInfo.directSatScan.provisioned++
+			else documentInfo.directSatScan.unprovisioned++
 		}
 
 		// <ServiceInstance><SATIPDeliveryParameters>
@@ -2817,6 +2829,17 @@ export default class ServiceListCheck {
 					description: `only lanugages used in ${tva.e_AudioAttributes.elementize()}${tva.e_AudioLanguage.elementize()} should be announced in ${dvbi.e_LanguageList.elementize()}`,
 				});
 		});
+
+		
+		// report if onlu some of the DVBSDeliveryParameters have direct tuning
+		if (documentInfo.directSatScan.provisioned != 0 && documentInfo.directSatScan.unprovisioned != 0)
+			errs.addError({
+				code: "SL283",
+				type: WARNING,
+				message: "direct satelite tuning not provided for some service instances",
+				key: "inconsistant sat direct",
+				multiElementError: documentInfo.directSatScan.instances
+			})
 
 		SL.dispose();
 	}
