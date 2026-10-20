@@ -93,10 +93,11 @@ export function ValidateAnySignaturePolicy(element: XmlElement, documentInfo: Fo
 		});
 	else if (found_policy) {
 		const link_url = new URL(element.content.trim())
-		const sock = tls.connect({host:link_url.host, port:parseInt(link_url.port)})
+		const numeric_port = parseInt(link_url.port) || 443
+		const sock = tls.connect({host: link_url.host, port: numeric_port})
 		if (sock) {
-			const cert = sock.getPeerX509Certificate()
 			let matches = 0
+			const cert = sock.getPeerX509Certificate()
 			if (cert) {
 				let issuer = cert.issuerCertificate
 				while (issuer) {
@@ -105,10 +106,17 @@ export function ValidateAnySignaturePolicy(element: XmlElement, documentInfo: Fo
 					issuer = issuer.issuerCertificate
 				}
 			}
-			if (matches != found_policy.CAfingerprint.length) 	// each fingerprint in the policy must be present in the Certificate chain
+			else 
 				errs.addError({
 					code: `${errCode}-4`,
-					message: `No matching fingerprints for ${found_policy.policyId}`,
+					message: `Cannot get Peer X.509 Certificte for ${link_url.host}:${numeric_port}`,
+					fragment: element,
+					key: keys.k_SignaturePolicies,
+				})
+			if (matches != found_policy.CAfingerprint.length) 	// each fingerprint in the policy must be present in the Certificate chain
+				errs.addError({
+					code: `${errCode}-5`,
+					message: `Not all fingerprints found for ${found_policy.policyId}`,
 					fragment: element,
 					key: keys.k_SignaturePolicies,
 					clause: "A177 table 77d",

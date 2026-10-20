@@ -13,7 +13,7 @@
 			],
 			"program": "${workspaceFolder}\\all-in-one.ts",
 			"args" : [
-				// split these up for correct process.qrv processing in command-line-args
+				// split these up for correct process.argv processing in command-line-args
 				// see: https://github.com/75lb/command-line-args/issues/141
 				"--CSRfile", ".\\registries\\slepr-vers-main.xml",
 				"--port", "3030",
