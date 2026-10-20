@@ -93,7 +93,11 @@ export function ValidateAnySignaturePolicy(element: XmlElement, documentInfo: Fo
 		});
 	else if (found_policy) {
 		const link_url = new URL(element.content.trim())
-		const sock = tls.connect({host:link_url.host, port:parseInt(link_url.port)})
+		const sock = tls.connect({
+				host: link_url.host, 
+				port: parseInt(link_url.port) || 443,
+				rejectUnauthorized: false,
+			})
 		if (sock) {
 			const cert = sock.getPeerX509Certificate()
 			let matches = 0
@@ -116,6 +120,8 @@ export function ValidateAnySignaturePolicy(element: XmlElement, documentInfo: Fo
 				})
 		}
 		//TODO check that the host in link_url is in the list of CNs
+
+		sock.end()
 	}
  }
  
