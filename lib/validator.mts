@@ -765,16 +765,20 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 
 			https_server = createServer(https_options, app);
 			https_server.listen(app_options.sport, () => {
-				console.log(chalk.cyan(`HTTPS listening on port number ${(https_server!.address() as AddressInfo).port}`));
+				if ((https_server?.address() as AddressInfo)?.port) {
+					console.log(chalk.cyan(`HTTPS listening on port number ${(https_server!.address() as AddressInfo).port}`));
 
-				const redirect_app = express();
-				redirect_app.use(morgan(LOGGING_TEMPLATE));
-				redirect_app.use(function(req, res) {
-					res.redirect(`https://${req.hostname}:${app_options.sport}${req.originalUrl}`);
-				})
-				redirect_app.listen(app_options.port, () => {
-					console.log(chalk.cyan(`HTTP redirecting to HTTPS on port number ${app_options.port}`));
-				});
+					const redirect_app = express();
+					redirect_app.use(morgan(LOGGING_TEMPLATE));
+					redirect_app.use(function(req, res) {
+						res.redirect(`https://${req.hostname}:${app_options.sport}${req.originalUrl}`);
+					})
+					redirect_app.listen(app_options.port, () => {
+						console.log(chalk.cyan(`HTTP redirecting to HTTPS on port number ${app_options.port}`));
+					});
+				}
+				else console.log(chalk.red(`HTTPS port ${app_options.sport} already in use -- HTTPS server not started`));
+
 			});
 		}
 
