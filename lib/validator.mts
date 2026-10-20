@@ -784,7 +784,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		if (!https_server?.listening) {
 		// start the HTTP server
 			const http_server = app.listen(app_options.port, () => {
-				if ((http_server.address() as AddressInfo).port) 
+				if ((http_server.address() as AddressInfo)?.port) 
 					console.log(chalk.cyan(`HTTP listening on port number ${(http_server.address() as AddressInfo).port}`));
 				else console.log(chalk.red(`HTTP port ${app_options.port} already in use -- HTTP server not started`));
 			});
