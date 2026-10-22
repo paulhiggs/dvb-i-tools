@@ -213,11 +213,11 @@ function validateServiceList(req: express.Request, res: express.Response, slchec
 	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: 0 }
 	switch (req.method) {
 		case "GET":
-			if (req.query?.testtype && (req.query.testtype as string).toLowerCase() == "de")
+			if (req.query?.variants && (req.query.variants as string).toLowerCase() == "de")
 				_options.variants = GERMAN_A177r6_VARIANT
 			break
 		case "POST":
-			if (req.header("X-testtype")?.toLowerCase() == "de")
+			if (req.header("X-variants")?.toLowerCase() == "de")
 				_options.variants = GERMAN_A177r6_VARIANT
 			break
 	}

@@ -124,13 +124,16 @@ If a subdirectory named `./logs` extists, then enhanced HTTP server logging will
 
 ### Use
 
-`<server>/check` gives a basic/primitive UI. Select the valildation type (service list or Content Guide) and provide either a URL or local file. Press "Validate!" button. Await results!
+`<server>/check` gives a basic/primitive UI. Select the valildation type (Service List or Content Guide) and provide either a URL or local file. Press "Validate!" button. Await results!
 
 #### Service list validation endpoints
 
-`<server>/validate_sl?url=<service_list_url>` gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the servicelist in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML
+`<server>/validate_sl?url=<service_list_url>&variants=DE` gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the servicelist in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML.
+The optional `variants=` query parameter can be used with a GET to specify region specific validation, or via the `X-variants` HTTP header for post.
 
-`<server>/validate_sl_json?url=<service_list_url>;` validates the list in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. Example response:
+`<server>/validate_sl_json?url=<service_list_url>&variants=DE` validates the list in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter.
+The optional `variants=` query parameter can be used with a GET to specify region specific validation, or via the `X-variants` HTTP header for post.
+Example response:
 
 ```json
 {
@@ -140,7 +143,9 @@ If a subdirectory named `./logs` extists, then enhanced HTTP server logging will
 }
 ```
 
-`<server>/validate_sl_json?url=<service_list_url>&results=all` valdiates the list "url"-parameter and gives the complete validation results as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. Example response:
+`<server>/validate_sl_json?url=<service_list_url>&results=all` valdiates the list "url"-parameter and gives the complete validation results as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. 
+The optional `variants=` query parameter can be used with a GET to specify region specific validation, or via the `X-variants` HTTP header for post.
+Example response:
 
 ```json
 {
