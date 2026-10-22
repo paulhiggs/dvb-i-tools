@@ -1647,7 +1647,7 @@ export default class ServiceListCheck {
 			}
 			if (SL_SchemaVersion(documentNamespace) >= slVersions.r7) {
 				// prior to A177r7 only a single value for <DVBCDeliveryParameters><NetworkID> was specified
-				const knownIDs = new Set<string>();
+				const knownIDs = new Set<number>();
 				DVBCDeliveryParameters.forEachNamedChildElement(dvbi.e_NetworkID, (NetworkID) => {
 					const nid = HexOrDecValue(NetworkID.content);
 					if (!Number.isNaN(nid) && DuplicatedValue(knownIDs, nid))
