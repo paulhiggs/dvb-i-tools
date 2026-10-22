@@ -314,7 +314,7 @@ export default class IANAlanguages {
 	 * determines if a language is known
 	 *
 	 * @param {string} value The value to check for existance
-	 * @return {integer} indicating the "known" state of the language
+	 * @return {LanguageLookupResponse} indicating the "known" state of the language
 	 */
 	isKnown(value: string) : LanguageLookupResponse {
 		if (value === null || value === undefined) return { resp: this.languageNotSpecified };
@@ -346,10 +346,10 @@ export default class IANAlanguages {
 	/**
 	 * determines if a signing language is known
 	 *
-	 * @param {string} value The value to check for existance in the list of known signing languages
-	 * @return {integer} indicating the "known" state of the language
+	 * @param {string} language The value to check for existance in the list of known signing languages
+	 * @return {number} indicating the "known" state of the language
 	 */
-	checkSignLanguage(language: string) : number{
+	checkSignLanguage(language: string) : number {
 		return this.#signLanguagesList.has(language.toLowerCase()) ? this.languageKnown : this.languageUnknown;
 	}
 
@@ -363,9 +363,9 @@ export default class IANAlanguages {
 
 // return true is @lang is formatted according to BCP47 Language-Tag
 const BCP47langaugetag_exp = new RegExp(`^${BCP47_Language_Tag}$`);
-const isValidLangFormat = (lang: string): boolean => BCP47langaugetag_exp.test(lang);
+const isValidLangFormat = (lang: string) : boolean => BCP47langaugetag_exp.test(lang);
 
-export function ValidateLanguage(lang: string, errs: ErrorList, errCode: string, errLoc: number) {
+export function ValidateLanguage(lang: string, errs: ErrorList, errCode: string, errLoc: number) : boolean {
 	// language format check
 	const valid = isValidLangFormat(lang);
 	if (!valid)
