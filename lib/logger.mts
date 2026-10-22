@@ -28,25 +28,29 @@ export function createPrefix(req: express.Request) : string | undefined {
 		return `${d.year}-${fillZero(d.month)}-${fillZero(d.day)} ${fillZero(d.hour)}.${fillZero(d.minute)}.${fillZero(d.second)}`;
 	};
 
-	let fname: string | undefined = undefined
+	let fname: string | undefined = undefined,
+		mode: string | undefined = undefined
 	switch (req.method) {
 		case "GET":
 			if (req.query?.url) {
 				const _url = req.query.url as string
 				fname = _url.substring(_url.lastIndexOf("/") + 1)
 			}
+			mode = req.query?.testtype as string | undefined
 			break
 		case "POST":
 			fname = req.body.doclocation == MODE_URL 
 				? req.body.XMLurl.substring(req.body.XMLurl.lastIndexOf("/") + 1) 
 				: (req?.files?.XMLfile as fileupload.UploadedFile).name
+			mode = req.body.testtype == MODE_SL 
+				? "SL" 
+				: req.body.testtype == MODE_SLR 
+					? "SLR" 
+					: req.body.requestType
 			break
 	}
-	if (!fname) return undefined;
-
-	const mode = req.body.testtype == MODE_SL ? "SL" : req.body.testtype == MODE_SLR ? "SLR" : req.body.requestType;
-
-	return `${logDir}${sep}${getDate(Temporal.Now.instant())} (${mode}) ${fname.replace(/[/\\?%*:|"<>]/g, "-")}`;
+	if (!fname || !mode) return undefined
+	return `${logDir}${sep}${getDate(Temporal.Now.instant())} (${mode}) ${fname.replace(/[/\\?%*:|"<>]/g, "-")}`
 }
 
 
