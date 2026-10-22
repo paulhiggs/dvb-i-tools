@@ -18,7 +18,7 @@ import { slVersions, dvbi, dvbisld, dvbiEC, dvbiEA, XMLdocumentType} from "./DVB
 
 import ErrorList, { WARNING, APPLICATION } from "./error_list.mts"
 import type { ReportedErrorType } from "./error_list.mts"
-import { isIni, unEntity, DuplicatedValue, parameterCheck, HexOrDecValue, DefaultProperty, HasProperty } from "./utils.mts"
+import { unEntity, DuplicatedValue, parameterCheck, HexOrDecValue, DefaultProperty, HasProperty } from "./utils.mts"
 import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isRTSPURL, isTAGURI, isUUIDformat } from "./pattern_checks.mts"
 import { checkValidLogos } from "./related_material_checks.mts"
 import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys, InvalidCountryCode } from "./common_errors.mts"
@@ -105,11 +105,11 @@ export class FoundDocumentItems {
 
 	constructor(document_defines_policies: boolean) {
 		this.knownRegionIDs = []
-		this.signaturePolicyIDs = new Set()
+		this.signaturePolicyIDs = new Set<string>()
 		this.declaredAudioLanguages = []
-		this.declaredSubscriptionPackages = new Set()
-		this.knownServices = new Set()
-		this.ContentGuideSourceIDs = new Set()
+		this.declaredSubscriptionPackages = new Set<string>()
+		this.knownServices = new Set<string>()
+		this.ContentGuideSourceIDs = new Set<string>()
 		this.thisServiceListId = null
 		this.directSatScan = {provisioned: 0, unprovisioned: 0, instances: []}
 
@@ -383,8 +383,8 @@ export default class ServiceListCheck {
 	 * @param {XmlElement} MediaLocator  The <MediaLocator> subelement (a libxmls object tree) of the <RelatedMaterial> element
 	 * @param {string}     Location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 * @param {string}     AppType       The type of application being checked, from HowRelated@href
-	 * @param  {FoundDocumentItems} documentInfo
-	 *              signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
+	 * @param {FoundDocumentItems} documentInfo
+	 *              signaturePolicyIDs   Signature Verification policy identifiers defined in this service list
 	 * @param {ErrorList}  errs          The class where errors and warnings relating to the service list processing are stored
 	 */
 	/*private*/ #checkSignalledApplication(MediaLocator: XmlElement, Location: string, AppType: string, documentInfo: FoundDocumentItems, errs: ErrorList) {
@@ -469,8 +469,8 @@ export default class ServiceListCheck {
 	 * @param {XmlElement} RelatedMaterial   The <RelatedMaterial> element (a libxmls object tree) to be checked
 	 * @param {string}     Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 * @param {string}     LocationType      The type of element containing the <RelatedMaterial> element. Different validation rules apply to different location types
-	 * @param  {FoundDocumentItems} documentInfo
-	 *                  signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
+	 * @param {FoundDocumentItems} documentInfo
+	 *                  signaturePolicyIDs   Signature Verification policy identifiers defined in this service list
 	 * @param {ErrorList}  errs              The class where errors and warnings relating to the service list processing are stored
 	 * @param {string}     errCode           The prefix to use for any errors found
 	 * @returns {string} an href value if valid, else ""
@@ -647,7 +647,7 @@ export default class ServiceListCheck {
 	 * @param {XmlElement} source        The <ContentGuideSource> element to be checked
 	 * @param {string} loc           The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
 	 * @param  {FoundDocumentItems} documentInfo
-	 *                signaturePolicyIDs Set() of Signature Verification policy identifiers defined in this service list
+	 *                signaturePolicyIDs Signature Verification policy identifiers defined in this service list
 	 * @param {ErrorList}  errs          Errors found in validaton
 	 * @param {string}     errCode       Error code prefix to be used in reports
 	 */
@@ -1322,7 +1322,7 @@ export default class ServiceListCheck {
 
 			// Check @href of ContentAttributes/VideoConformancePoints
 			let codec_count = 0;
-			const conf_points = new Set();
+			const conf_points = new Set<string>();
 			ContentAttributes.forEachNamedChildElement(dvbi.e_VideoConformancePoint, (conf) => {
 				const conformanceVal = conf.attrAnyNsValueOr(dvbi.a_href);
 				if (conformanceVal) {
@@ -1437,7 +1437,7 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><SubscriptionPackage>
-		const packages_found = new Set();
+		const packages_found = new Set<string>();
 		ServiceInstance.forEachNamedChildElement(dvbi.e_SubscriptionPackage, (SubscriptionPackage) => {
 			const pkg_lang = mlLanguage(SubscriptionPackage);
 			const pkg = SL_helpers.localizedSubscriptionPackage(SubscriptionPackage, pkg_lang);
@@ -1562,7 +1562,7 @@ export default class ServiceListCheck {
 		}
 
 		// <ServiceInstance><AltServiceName>
-		const alternateNames = new Set();
+		const alternateNames = new Set<string>();
 		ServiceInstance.forEachNamedChildElement(dvbi.e_AltServiceName, (altSN) => {
 			if (DuplicatedValue(alternateNames, altSN.content))
 				errs.addError({
@@ -1647,7 +1647,7 @@ export default class ServiceListCheck {
 			}
 			if (SL_SchemaVersion(documentNamespace) >= slVersions.r7) {
 				// prior to A177r7 only a single value for <DVBCDeliveryParameters><NetworkID> was specified
-				const knownIDs = new Set();
+				const knownIDs = new Set<string>();
 				DVBCDeliveryParameters.forEachNamedChildElement(dvbi.e_NetworkID, (NetworkID) => {
 					const nid = HexOrDecValue(NetworkID.content);
 					if (!Number.isNaN(nid) && DuplicatedValue(knownIDs, nid))
@@ -1698,7 +1698,7 @@ export default class ServiceListCheck {
 						// eslint-disable-next-line no-case-declarations
 						const ChannelBonding = DVBSDeliveryParameters.getAnyNs(dvbi.e_ChannelBonding);
 						if (ChannelBonding) {
-							const freqs = new Set();
+							const freqs = new Set<string>();
 							let primarySpecified = false;
 							ChannelBonding.forEachNamedChildElement(dvbi.e_Frequency, (Frequency) => {
 								if (DuplicatedValue(freqs, Frequency.content))
@@ -1709,7 +1709,7 @@ export default class ServiceListCheck {
 										fragment: Frequency,
 									});
 								const Frequency_primary = Frequency.attrAnyNsValueOr(dvbi.a_primary);
-								if (Frequency_primary && isIni(["true"], Frequency_primary)) {
+								if (Frequency_primary && Frequency_primary.toLowerCase() == "true") {
 									if (primarySpecified)
 										errs.addError({
 											code: "SI206",
@@ -1780,9 +1780,9 @@ export default class ServiceListCheck {
 	 * @param {XmlElement} service                       the service or testservice element to check
 	 * @param {string}     thisServiceId                 the identifier of the service
 	 * @param {FoundDocumentItems} documentInfo
-	 *                     knownServices                 Set() of service identifiers found and checked thus far
+	 *                     knownServices                 Service identifiers found and checked thus far
 	 *                     knownRegionIDs                regions identifiers from the RegionList
-	 *                     signaturePolicyIDs            Set() of Signature Verification policy identifiers defined in this service list
+	 *                     signaturePolicyIDs            Signature Verification policy identifiers defined in this service list
 	 *                     declaredSubscriptionPackages  subscription packages that are declared in the service list
 	 *                     declaredAudioLanguages        language values declared in the <LanguageList> of the service list
 	 *                     ContentGuideSourceIDs         identifiers of content guide sources found in the service list
@@ -1847,7 +1847,7 @@ export default class ServiceListCheck {
 		);
 
 		//check <TargetRegion>
-		const rBuf = new Set();
+		const rBuf = new Set<string>();
 		service.forEachNamedChildElement(dvbi.e_TargetRegion, (TargetRegion) => {
 			const found = documentInfo.knownRegionIDs.find((r) => r.region == TargetRegion.content);
 			if (found == undefined) 
@@ -2255,7 +2255,7 @@ export default class ServiceListCheck {
 		// check <ParentalRating>
 		const ParentalRating = service.getAnyNs(dvbi.e_ParentalRating);
 		if (ParentalRating) {
-			const foundCountries = new Set();
+			const foundCountries = new Set<string>();
 			let noCountrySpecified = false;
 			ParentalRating.forEachNamedChildElement(dvbi.e_MinimumAge, (MinimumAge) => {
 				const MinimumAge_countryCodes = MinimumAge.attrAnyNsValueOr(dvbi.a_countryCodes);
@@ -2484,7 +2484,7 @@ export default class ServiceListCheck {
 		}
 
 		//check <ServiceList><TargetRegion>
-		const	rBuf = new Set();
+		const	rBuf = new Set<string>();
 		ServiceList.forEachNamedChildElement(dvbi.e_TargetRegion, (TargetRegion) => {
 			const found = documentInfo.knownRegionIDs.find((r) => r.region == TargetRegion.content);
 			if (found == undefined) 
@@ -2725,7 +2725,7 @@ export default class ServiceListCheck {
 				});
 
 				// <LCNTable><LCN>
-				const LCNNumbers = new Set();
+				const LCNNumbers = new Set<string>();
 				LCNTable.forEachNamedChildElement(dvbi.e_LCN, (LCN) => {
 					// LCN@channelNumber
 					const LCN_channelNumber = LCN.attrAnyNsValueOr(dvbi.a_channelNumber)

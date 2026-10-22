@@ -71,15 +71,6 @@ export default class IANAlanguages {
 	/**
 	 * Remove all values and reinitialise
 	 *
-	 * @deprecated Use clear() instead - it is better aligned with Set() and Map() methods
-	 */
-	empty() {
-		this.clear();
-	}
-
-	/**
-	 * Remove all values and reinitialise
-	 *
 	 */
 	clear() {
 		this.#languagesList = new Set<string>();

@@ -192,7 +192,7 @@ export default class ServiceListRegistryCheck {
 	 *
 	 * @param {XmlElement} RelatedMaterial  the element whose children should be checked
 	 * @param  {FoundDocumentItems} documentInfo
-	 *                  signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
+	 *                  signaturePolicyIDs   Signature Verification policy identifiers defined in this service list
 	 * @param {ErrorList}  errs              errors found in validaton
 	 * @param {string}     errCode           error code prefix to be used in reports
 	 */

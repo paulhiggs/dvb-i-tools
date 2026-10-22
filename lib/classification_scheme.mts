@@ -95,7 +95,7 @@ export default class ClassificationScheme {
 
 	constructor() {
 		this.#values = new AvlTree<CSnode>((a: CSnode, b: CSnode) => a.term ? a.term.localeCompare(b.term) : 1, {key: 'term'});
-		this.#schemes = new Set();
+		this.#schemes = new Set<string>();
 		loadClassificationScheme.bind(this);
 	}
 
@@ -103,14 +103,6 @@ export default class ClassificationScheme {
 		return this.#values.count();
 	}
 
-	/**
-	 * Remove all values from the classification scheme
-	 *
-	 * @deprecated Use clear() instead - it is better aligned with Set() and Map() methods
-	 */
-	empty() {
-		this.clear();
-	}
 
 	/**
 	 * Remove all values from the classification scheme

@@ -25,7 +25,7 @@ import { TVAschema } from "./data_locations.mts"
 
 import ErrorList, { WARNING, APPLICATION } from "./error_list.mts"
 import type { ReportedErrorType } from "./error_list.mts"
-import { isIni, unEntity, DuplicatedValue, parameterCheck } from "./utils.mts"
+import { unEntity, DuplicatedValue, parameterCheck } from "./utils.mts"
 import { isHTTPURL, isDVBLocator, isUTCDateTime, isCRIDURI, isTAGURI } from "./pattern_checks.mts"
 import { ValidatePromotionalStillImage, ValidateAnySignaturePolicy } from "./related_material_checks.mts"
 import { ValidateAnyContentDigests } from "./digest_validation.mts"
@@ -52,6 +52,7 @@ import {
 } from "./classification_scheme_loaders.mts"
 import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts"
 import { mlLanguage, NO_DOCUMENT_LANGUAGE } from "./multilingual_element.mts"
+import { CaseInsensitiveSet } from "./StringSet.ts"
 
 import { fetch_options } from "./globals.mts"
 import fetchS from "sync-fetch"
@@ -1276,8 +1277,8 @@ export default class ContentGuideCheck {
 	/* private */ #ValidateReleaseInformation(BasicDescription: XmlElement, errs: ErrorList, errCode: string) : void {
 		if (!parameterCheck("ValidateReleaseInformation", BasicDescription, tva.e_BasicDescription, errs, "VRI000")) return;
 
-		const defaultLocation = "##default##";
-		const locations = new Set();
+		const defaultLocation: string  = "##default##";
+		const locations = new Set<string>();
 		BasicDescription.forEachNamedChildElement(tva.e_ReleaseInformation, (release) => {
 			if (!release.hasChild(tva.e_ReleaseDate) && !release.hasChild(tva.e_ReleaseLocation)) {
 				errs.addError({
@@ -1289,7 +1290,7 @@ export default class ContentGuideCheck {
 				});
 			} else {
 				const location = release.getAnyNs(tva.e_ReleaseLocation);
-				const ReleaseLocation = location ? location.content : defaultLocation;
+				const ReleaseLocation = location?.content || defaultLocation
 				if (DuplicatedValue(locations, ReleaseLocation))
 					errs.addError({
 						code: `${errCode}-21`,
@@ -1527,10 +1528,10 @@ export default class ContentGuideCheck {
 	 * validate the <ProgramInformation> element against the profile for the given request/response type
 	 *
 	 * @param {XmlElement} ProgramInformation  the element whose children should be checked
-	 * @param {string[]}   programCRIDs        array to record CRIDs for later use
-	 * @param {string[]}   groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
+	 * @param {CaseInsensitiveSet}   programCRIDs        array to record CRIDs for later use
+	 * @param {CaseInsensitiveSet}   groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
 	 * @param {string}     requestType         the type of content guide request being checked
-	 * @param {string[]}   indexes             array of @index values from other elements in the same table - for duplicate detection
+	 * @param {CaseInsensitiveSet}   indexes             array of @index values from other elements in the same table - for duplicate detection
 	 * @param {ErrorList}  errs                errors found in validaton
  	 * @param {CG_Validator_Options}    options
 	 *                      log_prefix            the first part of the logging location (or null if no logging)
@@ -1542,10 +1543,10 @@ export default class ContentGuideCheck {
 	 */
 	/* private */ #ValidateProgramInformation(
 			ProgramInformation: XmlElement, 
-			programCRIDs: string[], 
-			groupCRIDs: string[] | null, 
+			programCRIDs: CaseInsensitiveSet, 
+			groupCRIDs: CaseInsensitiveSet | null, 
 			requestType: string, 
-			indexes: string[], 
+			indexes: CaseInsensitiveSet, 
 			errs: ErrorList,
 			options: CG_Validator_Options | undefined) : string | null {
 		if (!parameterCheck("ValidateProgramInformation", ProgramInformation, tva.e_ProgramInformation, errs, "PI000")) return null;
@@ -1582,13 +1583,12 @@ export default class ContentGuideCheck {
 					message: `${tva.a_programId.attribute(ProgramInformation.name)} is not a valid CRID (${programCRID})`,
 					line: ProgramInformation.line,
 				});
-			if (isIni(programCRIDs, programCRID))
+			if (programCRIDs.DuplicateValue( programCRID))
 				errs.addError({
 					code: "PI012",
 					message: `${tva.a_programId.attribute(ProgramInformation.name)}=${programCRID.quote()} is already used`,
 					line: ProgramInformation.line,
 				});
-			else programCRIDs.push(programCRID);
 
 			if (options?.traverse && options?.progInfo_ep) {
 				const piURL = `${options?.progInfo_ep}?pid=${programCRID}`
@@ -1632,7 +1632,7 @@ export default class ContentGuideCheck {
 					// <ProgramInformation><EpisodeOf>@crid
 					foundCRID = child.attrAnyNsValueOr(tva.a_crid);
 					if (foundCRID) {
-						if (groupCRIDs && !isIni(groupCRIDs, foundCRID))
+						if (groupCRIDs && !groupCRIDs.has(foundCRID))
 							errs.addError({
 								code: "PI032",
 								message: `${tva.a_crid.attribute(
@@ -1669,7 +1669,7 @@ export default class ContentGuideCheck {
 					// <ProgramInformation><MemberOf>@crid
 					foundCRID = child_crid;
 					if (foundCRID) {
-						if (groupCRIDs && !isIni(groupCRIDs, foundCRID))
+						if (groupCRIDs && !groupCRIDs.has(foundCRID))
 							errs.addError({
 								code: "PI044",
 								message: `${tva.a_crid.attribute(
@@ -1690,13 +1690,12 @@ export default class ContentGuideCheck {
 					if (MO_index) {
 						const index = valUnsignedInt(MO_index);
 						const indexInCRID = `${foundCRID ? foundCRID : "noCRID"}(${index})`;
-						if (isIni(indexes, indexInCRID))
+						if (indexes.DuplicateValue(indexInCRID))
 							errs.addError({
 								code: "PI046",
 								message: `${tva.a_index.attribute(tva.e_MemberOf)}=${index} is in use by another ${ProgramInformation.name} element`,
 								fragment: child,
 							});
-						else indexes.push(indexInCRID);
 					}
 					break;
 			}
@@ -1709,7 +1708,7 @@ export default class ContentGuideCheck {
 	 * find and validate any <ProgramInformation> elements in the <ProgramInformationTable>
 	 *
 	 * @param {XmlElement} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {string[]}   programCRIDs        array to record CRIDs for later use
+	 * @param {CaseInsensitiveSet}   programCRIDs        array to record CRIDs for later use
 	 * @param {string[]}   groupCRIDs          array of CRIDs found in the GroupInformationTable (null if not used)
 	 * @param {string}     requestType         the type of content guide request being checked
 	 * @param {ErrorList}  errs                errors found in validaton
@@ -1724,8 +1723,8 @@ export default class ContentGuideCheck {
 	 */
 	/* private */ #CheckProgramInformation(
 			ProgramDescription: XmlElement, 
-			programCRIDs: string[], 
-			groupCRIDs: string[] | null, 
+			programCRIDs: CaseInsensitiveSet, 
+			groupCRIDs: CaseInsensitiveSet | null, 
 			requestType: string, 
 			errs: ErrorList, 
 			options: CG_Validator_Options | undefined,
@@ -1746,7 +1745,7 @@ export default class ContentGuideCheck {
 
 		let cnt = 0,
 			currentProgramCRID = null;
-		const indexes: string[] = [];
+		const indexes: CaseInsensitiveSet = new CaseInsensitiveSet()
 		ProgramInformationTable.forEachNamedChildElement(tva.e_ProgramInformation, (ProgramInformation) => {
 			const t = this.#ValidateProgramInformation(ProgramInformation, programCRIDs, groupCRIDs, requestType, indexes, errs, options);
 			if (t) currentProgramCRID = t;
@@ -1773,7 +1772,7 @@ export default class ContentGuideCheck {
 	 * @param {string}      requestType        the type of content guide request being checked
 	 * @param {XmlElement | null}  categoryGroup      the GroupInformationElement that others must refer to through <MemberOf>
 	 * @param {Set<number> | null} indexes            an accumulation of the @index values found
-	 * @param {string[] | null}    groupsFound        groupId values found (null if not needed)
+	 * @param {CaseInsensitiveSet | null}    groupsFound        groupId values found (null if not needed)
 	 * @param {ErrorList}   errs               errors found in validaton
  	 * @param {CG_Validator_Options}    options
 	 *                      log_prefix            the first part of the logging location (or null if no logging)
@@ -1787,7 +1786,7 @@ export default class ContentGuideCheck {
 			requestType: string, 
 			categoryGroup: XmlElement | null, 
 			indexes: Set<number> | null, 
-			groupsFound: string[] | null, 
+			groupsFound: CaseInsensitiveSet | null, 
 			errs: ErrorList,
 			options: CG_Validator_Options | undefined) : void {
 		if (!parameterCheck("ValidateGroupInformationBoxSets", GroupInformation, tva.e_GroupInformation, errs, "GIB000")) return;
@@ -1941,7 +1940,8 @@ export default class ContentGuideCheck {
 		}
 
 		const groupId = GroupInformation.attrAnyNsValueOr(tva.a_groupId);
-		if (groupId && isCRIDURI(groupId) && groupsFound) groupsFound.push(groupId);
+		if (groupId && isCRIDURI(groupId) && groupsFound) 
+			groupsFound.add(groupId);
 
 		const categoryCRID = categoryGroup ? categoryGroup.attrAnyNsValueOr(tva.a_groupId, "")! : "";
 
@@ -2040,10 +2040,10 @@ export default class ContentGuideCheck {
 	 * @param {XmlElement} GroupInformation    the element whose children should be checked
 	 * @param {string}     requestType         the type of content guide request being checked
 	 * @param {XmlElement | null} categoryGroup       the GroupInformationElement that others must refer to through <MemberOf>
-	 * @param {string[] | null}   groupsFound         groupId values found (null if not needed)
+	 * @param {CaseInsensitiveSet | null}   groupsFound         groupId values found (null if not needed)
 	 * @param {ErrorList}  errs                errors found in validaton
 	 */
-	/* private */ #ValidateGroupInformationMoreEpisodes(GroupInformation: XmlElement, requestType: string, categoryGroup: XmlElement | null, groupsFound: string[] | null, errs: ErrorList) : void {
+	/* private */ #ValidateGroupInformationMoreEpisodes(GroupInformation: XmlElement, requestType: string, categoryGroup: XmlElement | null, groupsFound: CaseInsensitiveSet | null, errs: ErrorList) : void {
 		if (!parameterCheck("ValidateGroupInformationMoreEpisodes", GroupInformation, tva.e_GroupInformation, errs, "GIM000")) return;
 
 		if (categoryGroup)
@@ -2063,7 +2063,7 @@ export default class ContentGuideCheck {
 					message: `${tva.a_groupId.attribute(GroupInformation.name)} value ${GroupInformation_groupId.quote()} is not a valid CRID`,
 					line: GroupInformation.line,
 				});
-			else if (groupsFound) groupsFound.push(GroupInformation_groupId);
+			else if (groupsFound) groupsFound.add(GroupInformation_groupId);
 		}
 
 		CG_helpers.TrueValue(GroupInformation, tva.a_ordered, errs, "GIM004", false);
@@ -2104,7 +2104,7 @@ export default class ContentGuideCheck {
 	 * @param {string}      requestType        the type of content guide request being checked
 	 * @param {XmlElement | null}  categoryGroup      the GroupInformationElement that others must refer to through <MemberOf>
 	 * @param {Set<number> | null} indexes            an accumulation of the @index values found
-	 * @param {string[] | null}    groupsFound        groupId values found (null if not needed)
+	 * @param {CaseInsensitiveSet | null}    groupsFound        groupId values found (null if not needed)
 	 * @param {ErrorList}   errs               errors found in validaton
  	 * @param {CG_Validator_Options}    options
 	 *                      log_prefix            the first part of the logging location (or null if no logging)
@@ -2118,7 +2118,7 @@ export default class ContentGuideCheck {
 			requestType: string, 
 			categoryGroup: XmlElement | null, 
 			indexes: Set<number> | null, 
-			groupsFound: string[] | null, 
+			groupsFound: CaseInsensitiveSet | null, 
 			errs: ErrorList,
 			options: CG_Validator_Options | undefined) : void {
 		if (!parameterCheck("ValidateGroupInformation", GroupInformation, tva.e_GroupInformation, errs, "GI000")) return;
@@ -2169,7 +2169,7 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {XmlElement} ProgramDescription  the element containing the <ProgramInformationTable>
 	 * @param {string}     requestType         the type of content guide request being checked
-	 * @param {string[]}   groupIds            buffer to recieve the group ids parsed (null if not needed)
+	 * @param {CaseInsensitiveSet}   groupIds            buffer to recieve the group ids parsed (null if not needed)
 	 * @param {ErrorList}  errs                errors found in validaton
  	 * @param {CG_Validator_Options}    options
 	 *                      log_prefix            the first part of the logging location (or null if no logging)
@@ -2182,7 +2182,7 @@ export default class ContentGuideCheck {
 	/* private */ #CheckGroupInformation(
 			ProgramDescription: XmlElement, 
 			requestType: string, 
-			groupIds: string[] | null, 
+			groupIds: CaseInsensitiveSet | null, 
 			errs: ErrorList, 
 			options: CG_Validator_Options | undefined, 
 			o: {childCount: number}|null = null) : void {
@@ -2256,12 +2256,12 @@ export default class ContentGuideCheck {
 	 *
 	 * @param {XmlElement} ProgramDescription  the element containing the <ProgramInformationTable>
 	 * @param {string}     requestType         the type of content guide request being checked
-	 * @param {string[]}   groupIds            buffer to recieve the group ids parsed (null if not needed)
+	 * @param {CaseInsensitiveSet}   groupIds            buffer to recieve the group ids parsed (null if not needed)
 	 * @param {ErrorList}  errs                errors found in validaton
 	 * @param {integer}    _o.childCount       the value from the @numItems attribute of the "category group" (not used)
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	/* private */ #CheckGroupInformationBoxsetContents(ProgramDescription: XmlElement, requestType: string, groupIds: string[] | null, errs: ErrorList, _o: {childCount: number}|null) : void {
+	/* private */ #CheckGroupInformationBoxsetContents(ProgramDescription: XmlElement, requestType: string, groupIds: CaseInsensitiveSet | null, errs: ErrorList, _o: {childCount: number}|null) : void {
 		if (!parameterCheck("CheckGroupInformationBoxsetContents", ProgramDescription, tva.e_ProgramDescription, errs, "GIC000")) return;
 
 		if (requestType != CG_REQUEST_BS_CONTENTS) {
@@ -2307,7 +2307,7 @@ export default class ContentGuideCheck {
 					"GIC113"
 				);
 			if (groupIds && GroupInformation.attrAnyNs(tva.a_groupId)) 
-				groupIds.push(GroupInformation.attrAnyNs(tva.a_groupId)!.value);
+				groupIds.add(GroupInformation.attrAnyNs(tva.a_groupId)!.value);
 		});
 		if (!contentsGroup)
 			errs.addError({
@@ -2354,10 +2354,10 @@ export default class ContentGuideCheck {
 	 * @param {number}     numEarlier          maximum number of <GroupInformation> elements that are earlier
 	 * @param {number}     numNow              maximum number of <GroupInformation> elements that are now
 	 * @param {number}     numLater            maximum number of <GroupInformation> elements that are later
-	 * @param {string[]}   groupCRIDsFound     list of structural crids already found in this response
+	 * @param {CaseInsensitiveSet}   groupCRIDsFound     list of structural crids already found in this response
 	 * @param {ErrorList}  errs                errors found in validaton
 	 */
-	/* private */ #ValidateGroupInformationNowNext(GroupInformation: XmlElement, requestType: string, numEarlier: number, numNow: number, numLater: number, groupCRIDsFound: string[], errs: ErrorList) : void {
+	/* private */ #ValidateGroupInformationNowNext(GroupInformation: XmlElement, requestType: string, numEarlier: number, numNow: number, numLater: number, groupCRIDsFound: CaseInsensitiveSet, errs: ErrorList) : void {
 		if (!parameterCheck("ValidateGroupInformationNowNext", GroupInformation, tva.e_GroupInformation, errs, "VNN000")) return;
 
 		function validValues(errs: ErrorList, numOfItems: number, numAllowed: number, grp: string, element: XmlElement) {
@@ -2397,13 +2397,12 @@ export default class ContentGuideCheck {
 						validValues(errs, numOfItems, numLater, GroupInformation_groupId, GroupInformation);
 						break;
 				}
-				if (isIni(groupCRIDsFound, GroupInformation_groupId))
+				if (groupCRIDsFound.DuplicateValue(GroupInformation_groupId))
 					errs.addError({
 						code: "VNN001",
 						message: `only a single ${GroupInformation_groupId.quote()} structural CRID is premitted in this request`,
 						line: GroupInformation.line,
 					});
-				else groupCRIDsFound.push(GroupInformation_groupId);
 			} else
 				errs.addError({
 					code: "VNN002",
@@ -2417,11 +2416,11 @@ export default class ContentGuideCheck {
 	 * find and validate any <GroupInformation> elements used for now/next in the <GroupInformationTable>
 	 *
 	 * @param {XmlElement} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {string[]}   groupIds            array of GroupInformation@CRID values found
+	 * @param {CaseInsensitiveSet}   groupIds            array of GroupInformation@CRID values found
 	 * @param {string}     requestType         the type of content guide request being checked
 	 * @param {ErrorList}  errs                errors found in validaton
 	 */
-	/* private */ #CheckGroupInformationNowNext(ProgramDescription: XmlElement, groupIds: string[], requestType: string, errs: ErrorList) : void {
+	/* private */ #CheckGroupInformationNowNext(ProgramDescription: XmlElement, groupIds: CaseInsensitiveSet, requestType: string, errs: ErrorList) : void {
 		if (!parameterCheck("CheckGroupInformationNowNext", ProgramDescription, tva.e_ProgramDescription, errs, "NN000")) return;
 
 		const GroupInformationTable = ProgramDescription.getAnyNs(tva.e_GroupInformationTable);
@@ -2959,12 +2958,12 @@ export default class ContentGuideCheck {
 	 * validate an <OnDemandProgram> elements in the <ProgramLocationTable>
 	 *
 	 * @param {XmlElement} OnDemandProgram    the node containing the <OnDemandProgram> being checked
-	 * @param {string[]}   programCRIDs       array of program crids defined in <ProgramInformationTable>
-	 * @param {sring[]}    plCRIDs            array of program crids defined in <ProgramLocationTable>
+	 * @param {CaseInsensitiveSet}   programCRIDs       array of program crids defined in <ProgramInformationTable>
+	 * @param {CaseInsensitiveSet}    plCRIDs            array of program crids defined in <ProgramLocationTable>
 	 * @param {string}     requestType        the type of content guide request being checked
 	 * @param {ErrorList}  errs               errors found in validaton
 	 */
-	/* private */ #ValidateOnDemandProgram(OnDemandProgram: XmlElement, programCRIDs: string[], plCRIDs: string[], requestType: string, errs: ErrorList) : void {
+	/* private */ #ValidateOnDemandProgram(OnDemandProgram: XmlElement, programCRIDs: CaseInsensitiveSet, plCRIDs: CaseInsensitiveSet, requestType: string, errs: ErrorList) : void {
 		if (!parameterCheck("ValidateOnDemandProgram", OnDemandProgram, tva.e_OnDemandProgram, errs, "OD000")) return;
 
 		let validRequest = true;
@@ -3054,7 +3053,7 @@ export default class ContentGuideCheck {
 						line: Program.line,
 					});
 				else {
-					if (!isIni(programCRIDs, programCRID))
+					if (!programCRIDs.has(programCRID))
 						errs.addError({
 							code: "OD011",
 							message: `${tva.a_crid.attribute(
@@ -3063,7 +3062,7 @@ export default class ContentGuideCheck {
 							line: Program.line,
 						});
 				}
-				plCRIDs.push(programCRID);
+				plCRIDs.add(programCRID);
 			}
 		}
 
@@ -3140,13 +3139,13 @@ export default class ContentGuideCheck {
 	 * validate any <ScheduleEvent> or <BroadcastEvent> elements
 	 *
 	 * @param {XmlElement} Event               the <BroadcastEvent> or <ScheduleEvent> element to be checked
-	 * @param {string[]}   programCRIDs        array of program crids defined in <ProgramInformationTable>
-	 * @param {string[]}   plCRIDs             array of program crids defined in <ProgramLocationTable>
+	 * @param {CaseInsensitiveSet}   programCRIDs        array of program crids defined in <ProgramInformationTable>
+	 * @param {CaseInsensitiveSet}   plCRIDs             array of program crids defined in <ProgramLocationTable>
 	 * @param {string}     currentProgramCRID  CRID of the currently airing program
 	 * @param {XmlElement | null} Schedule            the parent node of a <ScheduleEvent>
 	 * @param {ErrorList}  errs                errors found in validaton
 	 */
-	/* private */ #ValidateEvent(Event: XmlElement, programCRIDs: string[], plCRIDs: string[], currentProgramCRID: string | null, Schedule: XmlElement | null, errs: ErrorList) : void {
+	/* private */ #ValidateEvent(Event: XmlElement, programCRIDs: CaseInsensitiveSet, plCRIDs: CaseInsensitiveSet, currentProgramCRID: string | null, Schedule: XmlElement | null, errs: ErrorList) : void {
 		if (!parameterCheck("ValidateEvent", Event, [tva.e_BroadcastEvent, tva.e_ScheduleEvent], errs, "VE000")) return;
 
 		const prefix = Event.name == tva.e_BroadcastEvent ? "BE" : "SE";
@@ -3261,13 +3260,13 @@ export default class ContentGuideCheck {
 						fragment: Program,
 					});
 				}
-				if (!isIni(programCRIDs, ProgramCRID))
+				if (!programCRIDs.has(ProgramCRID))
 					errs.addError({
 						code: `${prefix}012`,
 						message: `${tva.a_crid.attribute(tva.e_Program)}=${ProgramCRID.quote()} does not refer to a program in the ${tva.e_ProgramInformationTable.elementize()}`,
 						fragment: Program,
 					});
-				plCRIDs.push(ProgramCRID);
+				plCRIDs.add(ProgramCRID);
 				isCurrentProgram = ProgramCRID == currentProgramCRID;
 			}
 		}
@@ -3283,7 +3282,7 @@ export default class ContentGuideCheck {
 				});
 
 		// <InstanceDescription>
-		const serviceIDs = new Set();
+		const serviceIDs = new Set<string>();
 		Event.forEachNamedChildElement(tva.e_InstanceDescription, (thisInstanceDescription) => {
 			this.#ValidateInstanceDescription(Event.name, thisInstanceDescription, isCurrentProgram, errs);
 			const instanceServiceID = thisInstanceDescription.attrAnyNsValueOr(tva.a_serviceInstanceID, "dflt")!
@@ -3389,13 +3388,13 @@ export default class ContentGuideCheck {
 	 * validate a <BroadcastEvent> elements in the <ProgramLocationTable>
 	 *
 	 * @param {XmlElement} BroadcastEvent       the node containing the <BroadcastEvent> being checked
-	 * @param {string[]}   programCRIDs         array of program crids defined in <ProgramInformationTable>
-	 * @param {string[]}   plCRIDs              array of program crids defined in <ProgramLocationTable>
+	 * @param {CaseInsensitiveSet}   programCRIDs         array of program crids defined in <ProgramInformationTable>
+	 * @param {CaseInsensitiveSet}   plCRIDs              array of program crids defined in <ProgramLocationTable>
 	 * @param {string}     currentProgramCRID   CRID of the currently airing program
 	 * @param {string}     requestType          the type of content guide request being checked
 	 * @param {ErrorList}  errs                 errors found in validaton
 	 */
-	/* private */ #ValidateBroadcastEvent(BroadcastEvent: XmlElement, programCRIDs: string[], plCRIDs: string[], currentProgramCRID: string | null, requestType: string, errs: ErrorList) : void {
+	/* private */ #ValidateBroadcastEvent(BroadcastEvent: XmlElement, programCRIDs: CaseInsensitiveSet, plCRIDs: CaseInsensitiveSet, currentProgramCRID: string | null, requestType: string, errs: ErrorList) : void {
 		if (!parameterCheck("ValidateBroadcastEvent", BroadcastEvent, tva.e_BroadcastEvent, errs, "BE000")) return;
 		this.#checkTAGUri(BroadcastEvent, errs, "BE999");
 		this.#ValidateEvent(BroadcastEvent, programCRIDs, plCRIDs, currentProgramCRID, null, errs);
@@ -3405,12 +3404,12 @@ export default class ContentGuideCheck {
 	 * validate any <ScheduleEvent> elements in the <ProgramLocationTable.Schedule>
 	 *
 	 * @param {XmlElement} Schedule            the <Schedule> node containing the <ScheduleEvent> element to be checked
-	 * @param {string[]}   programCRIDs        array of program crids defined in <ProgramInformationTable>
-	 * @param {string[]}   plCRIDs             array of program crids defined in <ProgramLocationTable>
+	 * @param {CaseInsensitiveSet}   programCRIDs        array of program crids defined in <ProgramInformationTable>
+	 * @param {CaseInsensitiveSet}   plCRIDs             array of program crids defined in <ProgramLocationTable>
 	 * @param {string}     currentProgramCRID  CRID of the currently airing program
 	 * @param {ErrorList}  errs                errors found in validaton
 	 */
-	/* private */ #ValidateScheduleEvents(Schedule: XmlElement, programCRIDs: string[], plCRIDs: string[], currentProgramCRID: string | null, errs: ErrorList) : void {
+	/* private */ #ValidateScheduleEvents(Schedule: XmlElement, programCRIDs: CaseInsensitiveSet, plCRIDs: CaseInsensitiveSet, currentProgramCRID: string | null, errs: ErrorList) : void {
 		if (!parameterCheck("ValidateScheduleEvents", Schedule, tva.e_Schedule, errs, "SE000")) return;
 
 		Schedule.forEachNamedChildElement(tva.e_ScheduleEvent, (ScheduleEvent) =>
@@ -3422,14 +3421,14 @@ export default class ContentGuideCheck {
 	 * validate a <Schedule> elements in the <ProgramLocationTable>
 	 *
 	 * @param {XmlElement} Schedule             the node containing the <Schedule> being checked
-	 * @param {string[]}   programCRIDs         array of program crids defined in <ProgramInformationTable>
-	 * @param {string[]}   plCRIDs              array of program crids defined in <ProgramLocationTable>
+	 * @param {CaseInsensitiveSet}   programCRIDs         array of program crids defined in <ProgramInformationTable>
+	 * @param {CaseInsensitiveSet}   plCRIDs              array of program crids defined in <ProgramLocationTable>
 	 * @param {string}     currentProgramCRID   CRID of the currently airing program
 	 * @param {string}     requestType          the type of content guide request being checked
 	 * @param {ErrorList}  errs                 errors found in validaton
 	 * @returns {string | null}	the serviceIdRef for this <Schedule> element
 	 */
-	/* private */ #ValidateSchedule(Schedule: XmlElement, programCRIDS: string[], plCRIDs: string[], currentProgramCRID: string | null, requestType: string, errs: ErrorList) : string | null {
+	/* private */ #ValidateSchedule(Schedule: XmlElement, programCRIDS: CaseInsensitiveSet, plCRIDs: CaseInsensitiveSet, currentProgramCRID: string | null, requestType: string, errs: ErrorList) : string | null {
 		if (!parameterCheck("ValidateSchedule", Schedule, tva.e_Schedule, errs, "VS000")) return null;
 
 		checkTopElementsAndCardinality(Schedule, [{ name: tva.e_ScheduleEvent, minOccurs: 0, maxOccurs: Infinity }], tvaEC.Schedule, false, errs, "VS001");
@@ -3471,13 +3470,13 @@ export default class ContentGuideCheck {
 	 * find and validate any <ProgramLocation> elements in the <ProgramLocationTable>
 	 *
 	 * @param {XmlElement} ProgramDescription  the element containing the <ProgramInformationTable>
-	 * @param {string[]}   programCRIDs        array to record CRIDs for later use
+	 * @param {CaseInsensitiveSet}   programCRIDs        array to record CRIDs for later use
 	 * @param {string}     currentProgramCRID  CRID of the currently airing program
 	 * @param {string}     requestType         the type of content guide request being checked
 	 * @param {ErrorList}  errs                errors found in validaton
 	 * @param {number}    o.childCount        the number of child elements to be present (to match GroupInformation@numOfItems)
 	*/
-	/* private */ #CheckProgramLocation(ProgramDescription: XmlElement, programCRIDs: string[], currentProgramCRID: string | null, requestType: string, errs: ErrorList, o : {childCount:number}|null = null) : void {
+	/* private */ #CheckProgramLocation(ProgramDescription: XmlElement, programCRIDs: CaseInsensitiveSet, currentProgramCRID: string | null, requestType: string, errs: ErrorList, o : {childCount:number}|null = null) : void {
 		if (!parameterCheck("CheckProgramLocation", ProgramDescription, tva.e_ProgramDescription, errs, "PLT000")) return;
 
 		const ProgramLocationTable = ProgramDescription.getAnyNs(tva.e_ProgramLocationTable);
@@ -3534,7 +3533,7 @@ export default class ContentGuideCheck {
 			cntSE = 0,
 			cntBE = 0;
 		const foundServiceIds = new Set<string>(),
-			plCRIDs: string[] = [];
+			plCRIDs: CaseInsensitiveSet = new CaseInsensitiveSet();
 
 		ProgramLocationTable?.forEachChildElement((child) => {
 			switch (child.name) {
@@ -3581,7 +3580,7 @@ export default class ContentGuideCheck {
 
 		if ((requestType == CG_REQUEST_PROGRAM && cntODP != 0) || requestType != CG_REQUEST_PROGRAM)
 			programCRIDs.forEach((programCRID) => {
-				if (!isIni(plCRIDs, programCRID))
+				if (!plCRIDs.has(programCRID))
 					errs.addError({
 						code: "PLT022",
 						message: `CRID ${programCRID.quote()} specified in ${tva.e_ProgramInformationTable.elementize()} is not specified in ${tva.e_ProgramLocationTable.elementize()}`,
@@ -3648,8 +3647,8 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		const programCRIDs: string[] = [],
-			groupIds: string[] = [],
+		const programCRIDs: CaseInsensitiveSet = new CaseInsensitiveSet(),
+			groupIds: CaseInsensitiveSet = new CaseInsensitiveSet(),
 			o = { childCount: 0 };
 
 		switch (requestType) {

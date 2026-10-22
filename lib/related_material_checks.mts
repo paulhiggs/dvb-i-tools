@@ -31,7 +31,7 @@ import type { FoundDocumentItems } from "./sl_check.mts"
 	*  
 	* @param {Xmlelement} element              The XML element possibly containing the @verificationPolicy attribute
 	* @param {FoundDocumentItems} documentInfo
-	*                     signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
+	*                     signaturePolicyIDs   Signature Verification policy identifiers defined in this service list
 	* @param {ErrorList}  errs                 The class where errors and warnings relating to the serivce list processing are stored
 	* @param {string}     errCode              error code prefix for reporting
 	*/
@@ -88,8 +88,8 @@ function contentMatches(dataURI: string, contentType: string) : boolean {
  * @param {XmlElement} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
  * @param {string}     location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
  * @param {string[]}      allowedHowRelated The set of permitted values
- * @param  {FoundDocumentItems} documentInfo
- *                  signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
+ * @param {FoundDocumentItems} documentInfo
+ *                  signaturePolicyIDs   Signature Verification policy identifiers defined in this service list
  * @param {ErrorList}  errs              The class where errors and warnings relating to the serivce list processing are stored
  * @param {string}     errCode           Error code prefix for reporting
  */
@@ -229,7 +229,7 @@ function validateImageRelatedMaterial(RelatedMaterial: XmlElement, location: str
  * @param {XmlElement} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
  * @param {string}     location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
  * @param {FoundDocumentItems} documentInfo
- *                  signaturePolicyIDs   Set() of Signature Verification policy identifiers defined in this service list
+ *                  signaturePolicyIDs   Signature Verification policy identifiers defined in this service list
  * @param {ErrorList}  errs              The class where errors and warnings relating to the serivce list processing are stored
  * @param {string}     errCode           Error code prefix for reporting
  */
@@ -242,8 +242,8 @@ export function ValidatePromotionalStillImage(RelatedMaterial: XmlElement, locat
  *
  * @param {XmlElement} Element            The <RelatedMaterial> element
  * @param {string}     location           The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
- * @param  {FoundDocumentItems} documentInfo
- *                  signaturePolicyIDs    Set() of Signature Verification policy identifiers defined in this service list
+ * @param {FoundDocumentItems} documentInfo
+ *                  signaturePolicyIDs    Signature Verification policy identifiers defined in this service list
  * @param {ErrorList}  errs               The class where errors and warnings relating to the service list processing are stored
  * @param {string}     errCode            Error code prefix for reporting
  */

@@ -62,6 +62,9 @@ import writeOut, { createPrefix } from "./logger.mts"
 import { init_spam_blocker } from "./spam_disruptions.mts"
 import { GERMAN_A177r6_VARIANT } from "./globals.mts"
 
+// initialise string formatting extensions
+import {} from "./string-extensions.mts"
+
 let csr: SLEPR | null= null;
 
 const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), read_string_options).toString());
@@ -316,7 +319,18 @@ function validateServiceListRegistry(req: express.Request, res: express.Response
 	} else {
 		res.status(405).end();
 	}
-	slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true });
+	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: 0 }
+	switch (req.method) {
+		case "GET":
+			if (req.query?.variants && (req.query.variants as string).toLowerCase() == "de")
+				_options.variants = GERMAN_A177r6_VARIANT
+			break
+		case "POST":
+			if (req.header("X-variants")?.toLowerCase() == "de")
+				_options.variants = GERMAN_A177r6_VARIANT
+			break
+	}
+	slrcheck.doValidateServiceListRegistry(VVxml, errs, _options);
 	if (jsonResponse) {
 		res.setHeader("Content-Type", "application/json");
 		if (req.parseErr) res.write(JSON.stringify({ parseErr: req.parseErr }));
@@ -346,7 +360,7 @@ function validateContentGuide(req: express.Request, res: express.Response, cgche
 	const errs = new ErrorList();
 	let resp,
 		VVxml = null;
-	const log_prefix = createPrefix(req, MODE_CG);
+	const log_prefix = createPrefix(req);
 	if (req.method == "GET") {
 		try {
 			resp = fetchS(req.query.url as string, fetch_options);
@@ -587,41 +601,41 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		}
 
 		if (!app_options.nosl) {
-			app.all("/validate_sl", express.text(Express_Options), (req, res) => {
+			app.all("/validate_sl", express.text(Express_Options), (req: express.Request, res: express.Response) => {
 				validateServiceList(req, res, slcheck!, motd, false);
 			});
 
-			app.all("/validate_sl_json", express.text(Express_Options), (req, res) => {
+			app.all("/validate_sl_json", express.text(Express_Options), (req: express.Request, res: express.Response) => {
 				validateServiceList(req, res, slcheck!, motd, true);
 			});
 		}
 
 		if (!app_options.nopl) {
-			app.all("/validate_pl", express.text(Express_Options), (req, res) => {
+			app.all("/validate_pl", express.text(Express_Options), (req: express.Request, res: express.Response) => {
 				validatePlaylist(req, res, plcheck!, motd, false);
 			});
 
-			app.all("/validate_pl_json", express.text(Express_Options), (req, res) => {
+			app.all("/validate_pl_json", express.text(Express_Options), (req: express.Request, res: express.Response) => {
 				validatePlaylist(req, res, plcheck!, motd, true);
 			});
 		}
 
 		if (!app_options.nocg) {
-			app.all("/validate_cg", express.text(Express_Options), (req, res) => {
+			app.all("/validate_cg", express.text(Express_Options), (req: express.Request, res: express.Response) => {
 				validateContentGuide(req, res, cgcheck!, motd, false);
 			});
 
-			app.all("/validate_cg_json", express.text(Express_Options), (req, res) => {
+			app.all("/validate_cg_json", express.text(Express_Options), (req: express.Request, res: express.Response) => {
 				validateContentGuide(req, res, cgcheck!, motd, true);
 			});
 		}
 
 		if (!app_options.noslr) {
-			app.all("/validate_slr", express.text(Express_Options), (req, res) => {
+			app.all("/validate_slr", express.text(Express_Options), (req: express.Request, res: express.Response) => {
 				validateServiceListRegistry(req, res, slrcheck!, motd, false);
 			});
 
-			app.all("/validate_slr_json", express.text(Express_Options), (req, res) => {
+			app.all("/validate_slr_json", express.text(Express_Options), (req: express.Request, res: express.Response) => {
 				validateServiceListRegistry(req, res, slrcheck!, motd, true);
 			});
 		}
@@ -651,7 +665,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		}
 
 		if (!app_options.nosl || !app_options.nopl || !app_options.nocg || !app_options.noslr) {
-			app.all("/check", express.text(Express_Options), (req, res) => {
+			app.all("/check", express.text(Express_Options), (req: express.Request, res: express.Response) => {
 				// we need to disable listening as the Windows cluster seems to 'prefer' some workers, expecialy  when the validator is being used to verify 
 				// a file it is serving itself (like an SLR respose from `SLEPR_query_route`)
 				const saved_port = req.socket.localPort  
@@ -670,12 +684,12 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			if (app_options.CORSmode == "manual") {
 				app.options(SLEPR_query_route, manualCORS);
 			}
-			app.get(SLEPR_query_route, manualCORS, (req, res) => {
+			app.get(SLEPR_query_route, manualCORS, (req: express.Request, res: express.Response) => {
 				csr!.processServiceListRequest(req, res);
 				res.end();
 			});
 
-			app.get(SLEPR_reload_route, (req, res) => {
+			app.get(SLEPR_reload_route, (req: express.Request, res: express.Response) => {
 				csr!.loadServiceListRegistry(app_options.CSRfile);
 				res.status(200).end();
 			});

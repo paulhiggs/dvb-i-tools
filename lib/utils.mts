@@ -17,45 +17,8 @@ import { XmlElement } from "libxml2-wasm"
 import { APPLICATION } from "./error_list.mts"
 import ErrorList from  "./error_list.mts"
 
+// initialise string formatting extensions
 import {} from "./string-extensions.mts"
-
-/* local */
-const findInSet = (values : string | string[], value : string, caseSensitive : boolean) : boolean => {
-	if (!values || !value || !datatypeIs(value, "string")) return false;
-	const vlc = value.toLowerCase();
-	switch (datatypeIs(values)) {
-		case "array":
-			return caseSensitive 
-				? values.includes(value) 
-				: (values as string[]).find((element) => element.toLowerCase() == vlc) != undefined;
-		case "string":
-			return caseSensitive 
-			? values == value 
-			: (values as string).toLowerCase() == vlc;
-	}
-	return false;
-};
-
-
-/**
- * determines if a value is in a set of values
- *
- * @param {string | string[]} values         The set of values to check existance in
- * @param {string}          value          The value to check for existance
- * @param {boolean}         caseSensitive  Control case sensitive/insensitive matching (default: true)
- * @return {boolean}  true if value is in the set of values
- */
-export const isIn = (values: string | string[], value: string, caseSensitive: boolean = true) : boolean => 
-	findInSet(values, value, caseSensitive);
-
-/**
- * determines if a value is in a set of values using a case insensitive comparison
- *
- * @param {string | string[]} values     The set of values to check existance in
- * @param {string}          value      The value to check for existance
- * @return {boolean} true if value is in the set of values
- */
-export const isIni = (values: string | string[], value: string) : boolean => findInSet(values, value, false);
 
 /**
  * replace ENTITY strings with a generic characterSet

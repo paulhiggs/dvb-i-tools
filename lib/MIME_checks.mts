@@ -73,7 +73,7 @@ export function validImageSet(MIMEs: string[]) : boolean {
 
 	let hasRequired = false,
 		hasOther = false;
-	const uniqueMIMEs = [...new Set(MIMEs)];
+	const uniqueMIMEs = [...new Set<string>(MIMEs)];
 
 	uniqueMIMEs.forEach((MIME) => {
 		if (REQUIRED_MIMES.includes(MIME)) hasRequired = true;

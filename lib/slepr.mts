@@ -224,7 +224,7 @@ export default class SLEPR {
 			return true;
 		}
 
-		res.varyOn = new Set();
+		res.varyOn = new Set<string>();
 		const UASinfo = parse_UAS_loose(req.get("user-agent")); // we only care about the A177 version
 		const requestedVersion = (UASinfo.ok && UASinfo.version! >= 6) ? UASinfo.version! : -1;
 		const queryParams: Record<string, string> = {};
