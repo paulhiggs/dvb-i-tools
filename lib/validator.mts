@@ -53,6 +53,7 @@ import {
 	LoadLinkedApplicationCS,
 } from "./classification_scheme_loaders.mts"
 import ServiceListCheck from "./sl_check.mts"
+import type { SL_Validator_Options } from "./sl_check.mts"
 import PlaylistCheck from "./playlist_check.mts"
 import ContentGuideCheck from "./cg_check.mts"
 import ServiceListRegistryCheck from "./slr_check.mts"
@@ -209,7 +210,18 @@ function validateServiceList(req: express.Request, res: express.Response, slchec
 	} else {
 		res.status(405).end();
 	}
-	slcheck.doValidateServiceList(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true });
+	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: 0 }
+	switch (req.method) {
+		case "GET":
+			if (req.query?.testtype && (req.query.testtype as string).toLowerCase() == "de")
+				_options.variants = GERMAN_A177r6_VARIANT
+			break
+		case "POST":
+			if (req.header("X-testtype")?.toLowerCase() == "de")
+				_options.variants = GERMAN_A177r6_VARIANT
+			break
+	}
+	slcheck.doValidateServiceList(VVxml, errs, _options);
 	if (jsonResponse) {
 		res.setHeader("Content-Type", "application/json");
 		if (req.parseErr) res.write(JSON.stringify({ parseErr: req.parseErr }));
