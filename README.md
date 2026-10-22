@@ -218,5 +218,11 @@ accepted valies for `<type>`
 - `bsLists` - Content guide fragment contains a Box Set Lists response according to DVB A177 clause 6.8.3.3
 - `bsContents` - Content guide fragment contains a Box Set Contents response according to DVB A177 clause 6.8.3.3
 
+#### Service list registry validation endpoints
+*todo writeup needed*
+
+#### Playlist validation endpoints
+*todo writeup needed*
+
 *Copyright (c) 2021-2026, Paul Higgs*<br/>
 *All rights reserved*

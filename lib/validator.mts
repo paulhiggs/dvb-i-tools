@@ -106,7 +106,7 @@ function DVB_I_check(
 
 		req.session.data.forGermany = req.body.forGermany == "on";
 		req.session.data.traverse = req.body.traverse == "on"
-		const log_prefix = createPrefix(req);
+		const log_prefix = createPrefix(req, req.body.testtype);
 		const errs = new ErrorList();
 		if (!req.parseErr)
 			switch (req.body.doclocation) {
@@ -194,7 +194,7 @@ function validateServiceList(req: express.Request, res: express.Response, slchec
 	const errs = new ErrorList();
 	let resp,
 		VVxml = null;
-	const log_prefix = createPrefix(req);
+	const log_prefix = createPrefix(req, MODE_SL);
 	if (req.method == "GET") {
 		try {
 			resp = fetchS(req.query.url as string, fetch_options);
@@ -252,7 +252,7 @@ function validatePlaylist(req: express.Request, res: express.Response, plcheck: 
 	const errs = new ErrorList();
 	let resp,
 		VVxml = null;
-	const log_prefix = createPrefix(req);
+	const log_prefix = createPrefix(req, MODE_PL);
 	if (req.method == "GET") {
 		try {
 			resp = fetchS(req.query.url as string, fetch_options);
@@ -300,7 +300,7 @@ function validateServiceListRegistry(req: express.Request, res: express.Response
 	const errs = new ErrorList();
 	let resp,
 		VVxml = null;
-	const log_prefix = createPrefix(req);
+	const log_prefix = createPrefix(req, MODE_SLR);
 	if (req.method == "GET") {
 		try {
 			resp = fetchS(req.query.url as string, fetch_options);
@@ -346,7 +346,7 @@ function validateContentGuide(req: express.Request, res: express.Response, cgche
 	const errs = new ErrorList();
 	let resp,
 		VVxml = null;
-	const log_prefix = createPrefix(req);
+	const log_prefix = createPrefix(req, MODE_CG);
 	if (req.method == "GET") {
 		try {
 			resp = fetchS(req.query.url as string, fetch_options);

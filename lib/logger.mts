@@ -14,13 +14,14 @@ import chalk from "chalk"
 
 import { existsSync, writeFile } from "fs"
 import { join, sep } from "path"
-import { MODE_URL, MODE_SL, MODE_SLR } from "./ui.mts"
+import { MODE_URL, MODE_CG, MODE_SL, MODE_SLR, MODE_PL } from "./ui.mts"
 import ErrorList from "./error_list.mts"
 
-export function createPrefix(req: express.Request) : string | undefined {
+export function createPrefix(req: express.Request, testtype?: string) : string | undefined {
 	const logDir = join(".", "arch");
 
 	if (!existsSync(logDir)) return undefined;
+	if (testtype && [MODE_CG, MODE_SL, MODE_SLR, MODE_PL].includes(testtype)) return undefined
 
 	const getDate = (i : Temporal.Instant) : string=> {
 		const fillZero = (t: number) : string => `${t < 10 ? "0" : ""}${t}`;
@@ -36,17 +37,13 @@ export function createPrefix(req: express.Request) : string | undefined {
 				const _url = req.query.url as string
 				fname = _url.substring(_url.lastIndexOf("/") + 1)
 			}
-			mode = req.query?.testtype as string | undefined
+			mode = testtype || req.query?.testtype as string | undefined
 			break
 		case "POST":
 			fname = req.body.doclocation == MODE_URL 
 				? req.body.XMLurl.substring(req.body.XMLurl.lastIndexOf("/") + 1) 
 				: (req?.files?.XMLfile as fileupload.UploadedFile).name
-			mode = req.body.testtype == MODE_SL 
-				? "SL" 
-				: req.body.testtype == MODE_SLR 
-					? "SLR" 
-					: req.body.requestType
+			mode = testtype || req.body.requestType
 			break
 	}
 	if (!fname || !mode) return undefined
