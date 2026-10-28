@@ -33,7 +33,7 @@ const SL_SchemaVersions: LoadedVersionInfo[] = [
 		filename: DVBI_ServiceListSchema.r8.file,
 		schema: undefined,
 		status: StandardStatus.CURRENT,
-		specVersion: "A177r8",
+		specVersion: "A177r8 2nd edition",
 		URN: `${versionURNprefix}:${slVersions.r8}`,
 		flags: 0,
 	},

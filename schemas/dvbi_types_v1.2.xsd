@@ -117,16 +117,9 @@
 		<complexContent>
 			<extension base="dvbi-types:AbstractDeliveryType">
 				<sequence>
-					<element name="OrbitalPosition" maxOccurs="unbounded">
-						<complexType>
-							<simpleContent>
-								<extension base="dvbi-types:LongitudeType">
-									<attribute name="directTuningAvailable" type="boolean" default="false"/>
-								</extension>
-							</simpleContent>
-						</complexType>
-					</element>
+					<element name="OrbitalPosition" type="dvbi-types:LongitudeType" maxOccurs="unbounded"/>
 				</sequence>
+				<attribute name="directTuningAvailable" type="boolean" default="false"/>
 				<attribute name="originalNetworkID" type="dvbi-types:NetworkIdType" use="optional">
 					<annotation>
 						<documentation>The use of this attribute is deprecated.</documentation>

@@ -464,6 +464,7 @@ export const dvbisld = new class {
 	A177r8_Namespace: string = `${DVB_metadata}:servicelistdiscovery:2026`
 
 	a_contentType: string = dvbi.a_contentType
+	a_directTuningAvailable: string = "directTuningAvailable"
 	a_originalNetworkID: string = "originalNetworkID"
 	a_regulatorFlag: string = "regulatorFlag"
 	a_regulatorListFlag: string = "regulatorListFlag"
