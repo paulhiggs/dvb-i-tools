@@ -21,13 +21,12 @@ export const CORSmanual: string = "manual",
 
 export const CORSoptions: string[]= [CORSmanual, CORSlibrary, CORSnone];
 
-class _StandardStatus {
+export const StandardStatus = new class {
 	DRAFT: number = 0x01
 	OLD: number = 0x02
 	ETSI: number = 0x04
 	CURRENT: number = 0x08
 };
-export const StandardStatus = new _StandardStatus()
 
 export const fetch_options: Record<string, unknown> /* SyncRequestInit */ = {
 	headers: {

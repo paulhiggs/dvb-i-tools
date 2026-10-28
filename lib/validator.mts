@@ -31,6 +31,7 @@ import type { AddressInfo } from "node:net"
 import { createStream } from "rotating-file-stream";
 
 import { fetch_options, read_string_options, CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts"
+import type { StatsType } from "./globals.mts"
 import { Default_SLEPR, __dirname } from "./data_locations.mts"
 import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults, LINE, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "./ui.mts"
 import type {FormModes} from './ui.mts'
@@ -56,9 +57,10 @@ import ServiceListCheck from "./sl_check.mts"
 import type { SL_Validator_Options } from "./sl_check.mts"
 import PlaylistCheck from "./playlist_check.mts"
 import ContentGuideCheck from "./cg_check.mts"
+import type { CG_Validator_Options } from "./cg_check.mts"
 import ServiceListRegistryCheck from "./slr_check.mts"
 import SLEPR from "./slepr.mts"
-import writeOut, { createPrefix } from "./logger.mts"
+import document_logger, { createPrefix } from "./logger.mts"
 import { init_spam_blocker } from "./spam_disruptions.mts"
 import { GERMAN_A177r6_VARIANT } from "./globals.mts"
 
@@ -69,8 +71,63 @@ let csr: SLEPR | null= null;
 
 const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), read_string_options).toString());
 
-const keyFilename = join(".", "selfsigned.key"),
-	certFilename = join(".", "selfsigned.crt");
+const keyFilename: string = join(".", "selfsigned.key"),
+	certFilename: string = join(".", "selfsigned.crt");
+
+function getDocument(req: express.Request, res: express.Response) : string | null {
+	let resp = null
+	if (req.method == "GET") {
+		try {
+			resp = fetchS(req.query.url as string, fetch_options)
+		} catch (error) {
+			req.parseErr = [`${error}`]
+		}
+		if (resp) {
+			if (resp.ok) 
+				return resp.text()
+			else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`]
+		}
+	} 
+	else if (req.method == "POST")
+		return req.body
+	else 
+		res.status(405)
+	return null
+}
+
+function getVariant(req: express.Request) : number {
+	switch (req.method) {
+		case "GET":
+			if (req.query?.variants && (req.query.variants as string).toLowerCase() == "de")
+				return GERMAN_A177r6_VARIANT
+			break
+		case "POST":
+			if (req.header("X-variants")?.toLowerCase() == "de")
+				return GERMAN_A177r6_VARIANT
+			break
+	}
+	return 0
+}
+
+
+function report(req: express.Request, res: express.Response, jsonResponse: boolean, errs: ErrorList, motd: string | undefined) : void {
+	if (jsonResponse) {
+		res.setHeader("Content-Type", "application/json")
+		if (req.parseErr) 
+			res.write(JSON.stringify({ parseErr: req.parseErr }))
+		else delete errs.markupXML
+		res.write(
+			JSON.stringify(
+				req.query.results && req.query.results == "all" 
+					? { errs } 
+					: { errors: errs.errors.length, warnings: errs.warnings.length, informationals: errs.informationals.length }
+			)
+		)
+	}
+	else 
+		drawResults(req, res, motd, req.parseErr, errs)
+}
+
 
 function DVB_I_check(
 		req: express.Request, res: express.Response, 
@@ -178,7 +235,7 @@ function DVB_I_check(
 		req.diags.countWarnings = errs.numWarnings();
 		req.diags.countInforms = errs.numInformationals();
 
-		writeOut(errs, log_prefix, true, req);
+		document_logger(errs, log_prefix, true, req);
 	}
 	res.end();
 }
@@ -195,49 +252,13 @@ function DVB_I_check(
  */
 function validateServiceList(req: express.Request, res: express.Response, slcheck: ServiceListCheck, motd: string | undefined, jsonResponse: boolean) : void {
 	const errs = new ErrorList();
-	let resp,
-		VVxml = null;
 	const log_prefix = createPrefix(req, MODE_SL);
-	if (req.method == "GET") {
-		try {
-			resp = fetchS(req.query.url as string, fetch_options);
-		} catch (error) {
-			req.parseErr = [`${error}`];
-		}
-		if (resp) {
-			if (resp.ok) VVxml = resp.text();
-			else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`];
-		}
-	} else if (req.method == "POST") {
-		VVxml = req.body;
-	} else {
-		res.status(405).end();
-	}
-	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: 0 }
-	switch (req.method) {
-		case "GET":
-			if (req.query?.variants && (req.query.variants as string).toLowerCase() == "de")
-				_options.variants = GERMAN_A177r6_VARIANT
-			break
-		case "POST":
-			if (req.header("X-variants")?.toLowerCase() == "de")
-				_options.variants = GERMAN_A177r6_VARIANT
-			break
-	}
-	slcheck.doValidateServiceList(VVxml, errs, _options);
-	if (jsonResponse) {
-		res.setHeader("Content-Type", "application/json");
-		if (req.parseErr) res.write(JSON.stringify({ parseErr: req.parseErr }));
-		else delete errs.markupXML;
-		res.write(
-			JSON.stringify(
-				req.query.results && req.query.results == "all" ? { errs } : { errors: errs.errors.length, warnings: errs.warnings.length, informationals: errs.informationals.length }
-			)
-		);
-	} else {
-		drawResults(req, res, motd, req.parseErr, errs);
-	}
-	writeOut(errs, log_prefix, true, req);
+	const SLxml = getDocument(req, res)
+	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
+
+	if (SLxml) slcheck.doValidateServiceList(SLxml, errs, _options);
+	report(req, res, jsonResponse, errs, motd)
+	document_logger(errs, log_prefix, true, req);
 	res.end();
 }
 
@@ -253,38 +274,12 @@ function validateServiceList(req: express.Request, res: express.Response, slchec
  */
 function validatePlaylist(req: express.Request, res: express.Response, plcheck: PlaylistCheck, motd: string | undefined, jsonResponse: boolean) : void {
 	const errs = new ErrorList();
-	let resp,
-		VVxml = null;
 	const log_prefix = createPrefix(req, MODE_PL);
-	if (req.method == "GET") {
-		try {
-			resp = fetchS(req.query.url as string, fetch_options);
-		} catch (error) {
-			req.parseErr = [`${error}`]
-		}
-		if (resp) {
-			if (resp.ok) VVxml = resp.text();
-			else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`]
-		}
-	} else if (req.method == "POST") {
-		VVxml = req.body;
-	} else {
-		res.status(405).end();
-	}
-	plcheck.doValidatePlaylist(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true });
-	if (jsonResponse) {
-		res.setHeader("Content-Type", "application/json");
-		if (req.parseErr) res.write(JSON.stringify({ parseErr: req.parseErr }));
-		else delete errs.markupXML;
-		res.write(
-			JSON.stringify(
-				req.query.results && req.query.results == "all" ? { errs } : { errors: errs.errors.length, warnings: errs.warnings.length, informationals: errs.informationals.length }
-			)
-		);
-	} else {
-		drawResults(req, res, motd, req.parseErr, errs);
-	}
-	writeOut(errs, log_prefix, true, req);
+	const PLxml = getDocument(req, res)
+
+	if (PLxml) plcheck.doValidatePlaylist(PLxml, errs, { log_prefix: log_prefix, report_schema_version: true });
+	report(req, res, jsonResponse, errs, motd)
+	document_logger(errs, log_prefix, true, req);
 	res.end();
 }
 
@@ -301,25 +296,10 @@ function validatePlaylist(req: express.Request, res: express.Response, plcheck: 
  */
 function validateServiceListRegistry(req: express.Request, res: express.Response, slrcheck: ServiceListRegistryCheck, motd: string | undefined, jsonResponse: boolean) : void {
 	const errs = new ErrorList();
-	let resp,
-		VVxml = null;
 	const log_prefix = createPrefix(req, MODE_SLR);
-	if (req.method == "GET") {
-		try {
-			resp = fetchS(req.query.url as string, fetch_options);
-		} catch (error) {
-			req.parseErr =  [`${error}`]
-		}
-		if (resp) {
-			if (resp.ok) VVxml = resp.text();
-			else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`];
-		}
-	} else if (req.method == "POST") {
-		VVxml = req.body;
-	} else {
-		res.status(405).end();
-	}
-	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: 0 }
+	const SLRxml = getDocument(req, res)
+
+	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
 	switch (req.method) {
 		case "GET":
 			if (req.query?.variants && (req.query.variants as string).toLowerCase() == "de")
@@ -330,20 +310,10 @@ function validateServiceListRegistry(req: express.Request, res: express.Response
 				_options.variants = GERMAN_A177r6_VARIANT
 			break
 	}
-	slrcheck.doValidateServiceListRegistry(VVxml, errs, _options);
-	if (jsonResponse) {
-		res.setHeader("Content-Type", "application/json");
-		if (req.parseErr) res.write(JSON.stringify({ parseErr: req.parseErr }));
-		else delete errs.markupXML;
-		res.write(
-			JSON.stringify(
-				req.query.results && req.query.results == "all" ? { errs } : { errors: errs.errors.length, warnings: errs.warnings.length, informationals: errs.informationals.length }
-			)
-		);
-	} else {
-		drawResults(req, res, motd, req.parseErr, errs);
-	}
-	writeOut(errs, log_prefix, true, req);
+	if (SLRxml) slrcheck.doValidateServiceListRegistry(SLRxml, errs, _options);
+	report(req, res, jsonResponse, errs, motd)
+
+	document_logger(errs, log_prefix, true, req);
 	res.end();
 }
 
@@ -358,39 +328,13 @@ function validateServiceListRegistry(req: express.Request, res: express.Response
  */
 function validateContentGuide(req: express.Request, res: express.Response, cgcheck: ContentGuideCheck, motd: string | undefined, jsonResponse: boolean) : void {
 	const errs = new ErrorList();
-	let resp,
-		VVxml = null;
 	const log_prefix = createPrefix(req);
-	if (req.method == "GET") {
-		try {
-			resp = fetchS(req.query.url as string, fetch_options);
-		} catch (error) {
-			console.log(error);
-			req.parseErr =  [`${error}`]
-		}
-		if (resp) {
-			if (resp.ok) VVxml = resp.text();
-			else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`]
-		}
-	} else if (req.method == "POST") {
-		VVxml = req.body;
-	} else {
-		res.status(405).end();
-	}
-	cgcheck.doValidateContentGuide(VVxml, req.query.type as string, errs, { log_prefix: log_prefix, report_schema_version: true });
-	if (jsonResponse) {
-		res.setHeader("Content-Type", "application/json");
-		if (req.parseErr) res.write(JSON.stringify({ parseErr: req.parseErr }));
-		else delete errs.markupXML;
-		res.write(
-			JSON.stringify(
-				req.query.results && req.query.results == "all" ? { errs } : { errors: errs.errors.length, warnings: errs.warnings.length, informationals: errs.informationals.length }
-			)
-		);
-	} else {
-		drawResults(req, res, motd, req.parseErr, errs);
-	}
-	writeOut(errs, log_prefix, true, req);
+	const CGxml = getDocument(req, res)
+	const _options: CG_Validator_Options = { log_prefix: log_prefix, report_schema_version: true }
+
+	if (CGxml) cgcheck.doValidateContentGuide(CGxml, req.query.type as string, errs, _options);
+	report(req, res, jsonResponse, errs, motd)
+	document_logger(errs, log_prefix, true, req);
 	res.end();
 }
 
@@ -515,7 +459,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			cgcheck = undefined,
 			slrcheck = undefined;
 
-		const DFLT_async = true, DFLT_verbose = true;
+		const DFLT_async = false, DFLT_verbose = true;
 
 		if (app_options.urls && app_options.CSRfile == Default_SLEPR.file) app_options.CSRfile = Default_SLEPR.url;
 
@@ -699,7 +643,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			init_spam_blocker(app);
 		}
 
-		const tabulate = function (res: express.Response, group: string, stats: Record<string, string | number>) {
+		const tabulate = function (res: express.Response, group: string, stats: StatsType) {
 			res.write(`<h1>${group}</h1>`);
 			if (Object.keys(stats).length === 0) res.write("<p>No statistics</p>");
 			else {

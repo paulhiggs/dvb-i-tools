@@ -33,7 +33,7 @@ import { cg_InvalidHrefValue, NoChildElement, keys } from "./common_errors.mts"
 import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.mts"
 import type { ElementCardinalityType } from "./schema_checks.mts"
 import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./multilingual_element.mts"
-import writeOut from "./logger.mts"
+import document_logger from "./logger.mts"
 import { StandardStatus } from "./globals.mts"
 import {
 	LoadGenres,
@@ -53,6 +53,10 @@ import {
 import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts"
 import { mlLanguage, NO_DOCUMENT_LANGUAGE } from "./multilingual_element.mts"
 import { CaseInsensitiveSet } from "./StringSet.ts"
+import type { ValidatorOptions } from "./sl_check.mts"
+import { FoundDocumentItems} from "./sl_check.mts"
+import ClassificationScheme from "./classification_scheme.mts";
+import type { StatsType, LoadOptions } from "./globals.mts"
 
 import { fetch_options } from "./globals.mts"
 import fetchS from "sync-fetch"
@@ -162,7 +166,6 @@ const getMediaUri = (RelatedMaterial: XmlElement) : string | null => {
 }
 
 
-import type { LoadOptions } from "./globals.mts"
 let CGschemasLoaded = false;
 function LoadCGschemas(opts: LoadOptions) : void {
 	if (CGschemasLoaded) return;
@@ -185,10 +188,6 @@ export type CG_Validator_Options = {
 	grpInfo_ep?: string
 	mEpisodes_ep?: string
 }
-
-import type { ValidatorOptions } from "./sl_check.mts"
-import { FoundDocumentItems} from "./sl_check.mts"
-import ClassificationScheme from "./classification_scheme.mts";
 
 
 export default class ContentGuideCheck {
@@ -237,8 +236,8 @@ export default class ContentGuideCheck {
 		this.#allowedRatings = opts?.ratings || LoadRatings(opts);
 	}
 
-	stats() : Record<string, string | number> {
-		const res: Record<string, number> = {};
+	stats() : StatsType {
+		const res: StatsType = {};
 		res.numRequests = this.#numRequests;
 		res.numKnownCountries = this.#knownCountries?.count();
 		this.#knownLanguages.stats(res);
@@ -300,8 +299,8 @@ export default class ContentGuideCheck {
 	 * validate the <Synopsis> elements
 	 *
 	 * @param {XmlElement} BasicDescription    the element whose children should be checked
-	 * @param {string[]}      requiredLengths	   @length attributes that are required to be present
-	 * @param {string[]}      optionalLengths	   @length attributes that can optionally be present
+	 * @param {string[]}   requiredLengths     @length attributes that are required to be present
+	 * @param {string[]}   optionalLengths     @length attributes that can optionally be present
 	 * @param {ErrorList}  errs                errors found in validaton
 	 * @param {string}     errCode             error code prefix to be used in reports
 	 */
@@ -571,7 +570,7 @@ export default class ContentGuideCheck {
 				pgCountries = ParentalGuidance.getAnyNs(tva.e_CountryCodes)!.content;
 
 			const pgCountriesList = pgCountries.split(",");
-			pgCountriesList.forEach((pgCountry) => {
+			pgCountriesList.forEach((pgCountry: string) => {
 				let thisCountry = foundCountries.find((c) => c.country == pgCountry);
 				if (!thisCountry) {
 					thisCountry = { country: pgCountry, pgCount: 0 };
@@ -684,7 +683,7 @@ export default class ContentGuideCheck {
 		});
 
 		// now check that for each country, there is a MinimumAge element specified
-		foundCountries.forEach((pgCountry) => {
+		foundCountries.forEach((pgCountry: CountryRatingType) => {
 			if (pgCountry.ParentalRating && !pgCountry.MinimumAge)
 				errs.addError({
 					code: `${errCode}-60`,
@@ -1039,9 +1038,9 @@ export default class ContentGuideCheck {
 				});
 			else {
 				if (MediaLocator.length != 0)
-					MediaLocator.forEach((locator) => {
+					MediaLocator.forEach((locator: XmlElement) => {
 						let hasAuxiliaryURI = false;
-						locator.forEachNamedChildElement(tva.e_AuxiliaryURI, (AuxiliaryURI) => {
+						locator.forEachNamedChildElement(tva.e_AuxiliaryURI, (AuxiliaryURI: XmlElement) => {
 							hasAuxiliaryURI = true;
 							checkAttributes(AuxiliaryURI, [tva.a_contentType], [tva.a_integrity, tva.a_verificationPolicy], tvaEA.AuxiliaryURI, errs, "TA010");
 							const contentType = AuxiliaryURI.attrAnyNsValueOr(tva.a_contentType);
@@ -1255,7 +1254,7 @@ export default class ContentGuideCheck {
 					break;
 			}
 		});
-		secondaryTitles.forEach((title) => {
+		secondaryTitles.forEach((title: TitleInfo) => {
 			if (!mainTitles.find((e) => e.lang == title.lang)) {
 				const tLoc = title.lang != DEFAULT_LANGUAGE ? ` for @xml:${tva.a_lang}=${title.lang.quote()}` : "";
 				errs.addError({
@@ -2177,7 +2176,7 @@ export default class ContentGuideCheck {
 	 *                      traverse              validate referenced DVB-I documents
 	 *                      progInfo_ep           URL to the detailed program information endpoint
 	 *                      grpInfo_ep            URL to the group information endpoint
-	 * @param {integer}    o.childCount        the value from the @numItems attribute of the "category group"
+	 * @param {number}     o.childCount        the value from the @numItems attribute of the "category group"
 	 */
 	/* private */ #CheckGroupInformation(
 			ProgramDescription: XmlElement, 
@@ -2258,7 +2257,7 @@ export default class ContentGuideCheck {
 	 * @param {string}     requestType         the type of content guide request being checked
 	 * @param {CaseInsensitiveSet}   groupIds            buffer to recieve the group ids parsed (null if not needed)
 	 * @param {ErrorList}  errs                errors found in validaton
-	 * @param {integer}    _o.childCount       the value from the @numItems attribute of the "category group" (not used)
+	 * @param {number}     _o.childCount       the value from the @numItems attribute of the "category group" (not used)
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	/* private */ #CheckGroupInformationBoxsetContents(ProgramDescription: XmlElement, requestType: string, groupIds: CaseInsensitiveSet | null, errs: ErrorList, _o: {childCount: number}|null) : void {
@@ -3579,7 +3578,7 @@ export default class ContentGuideCheck {
 		}
 
 		if ((requestType == CG_REQUEST_PROGRAM && cntODP != 0) || requestType != CG_REQUEST_PROGRAM)
-			programCRIDs.forEach((programCRID) => {
+			programCRIDs.forEach((programCRID: string) => {
 				if (!plCRIDs.has(programCRID))
 					errs.addError({
 						code: "PLT022",
@@ -3615,7 +3614,7 @@ export default class ContentGuideCheck {
 		const CG = SchemaLoad(CGtext, errs, "CG001");
 		if (!CG) return;
 
-		writeOut(errs, options.log_prefix, false);
+		document_logger(errs, options.log_prefix, false);
 
 		if (CG.root.name != tva.e_TVAMain) {
 			errs.addError({

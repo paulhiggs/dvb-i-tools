@@ -25,18 +25,18 @@ export default class Role extends ClassificationScheme {
 		super();
 	}
 
-	#addRole(role: string) {
+	#addRole(role: string) : void {
 		this.add({term: role.trim(), leaf: true});
 	}
 
 	/**
-	 * read roles from a URL and load them into a linear list
+	 * read roles from a URL and load them into a lookup list
 	 *
 	 * @param {string} rolesURL URL to the roles file
 	 * @param {boolean} async whether to use asynchronous fetch (true by default)
 	 * @param {boolean} verbose  display verbose output
 	 */
-	#loadFromURL(rolesURL: string, async: boolean = true, verbose: boolean = true) {
+	#loadFromURL(rolesURL: string, async: boolean = true, verbose: boolean = true) : void {
 		const isHTTPurl = isHTTPURL(rolesURL);
 		if (verbose) console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving Roles from ${rolesURL} via fetch()`));
 		if (!isHTTPurl) return;
@@ -44,8 +44,8 @@ export default class Role extends ClassificationScheme {
 		if (async) {
 			fetch(rolesURL, fetch_options)
 				.then(handleErrors)
-				.then((response) => response.text())
-				.then((roles) =>
+				.then((response: Response) => response.text())
+				.then((roles: string) =>
 					roles.split("\n").forEach((role: string) => {
 						this.#addRole(role);
 					})
@@ -63,7 +63,7 @@ export default class Role extends ClassificationScheme {
 					resp
 						.text()
 						.split("\n")
-						.forEach((role) => {
+						.forEach((role: string) => {
 							this.#addRole(role);
 						});
 				} else console.log(chalk.red(`error (${resp.status}:${resp.statusText}) handling ${rolesURL}`));
@@ -72,27 +72,26 @@ export default class Role extends ClassificationScheme {
 	}
 
 	/**
-	 * read roles from a local file and load them into a linear list
+	 * read roles from a local file and load them into a lookup list
 	 *
 	 * @param {string} rolesFile the filename of the roles file
 	 * @param {boolean} async whether to use asynchronous file read (true by default)
 	 * @param {boolean} verbose  display verbose output
 	 */
-	#loadFromFile(rolesFile: string, async: boolean = true, verbose: boolean = true) {
+	#loadFromFile(rolesFile: string, async: boolean = true, verbose: boolean = true) : void {
 		if (verbose) console.log(chalk.yellow(`reading Roles from ${rolesFile}`));
 
 		if (async)
 			readFile(rolesFile, read_string_options, (err: NodeJS.ErrnoException | null, data: string) => {
 				if (!err)
-					data.split("\n").forEach((role) => {
+					data.split("\n").forEach((role: string) => {
 						this.#addRole(role);
 					});
 				else console.log(chalk.red(err));
 			});
 		else {
-			const buff = readFileSync(rolesFile, read_string_options);
-			const data = buff.toString();
-			data.split("\n").forEach((role) => {
+			const data = readFileSync(rolesFile, read_string_options);
+			data.split("\n").forEach((role: string) => {
 				this.#addRole(role);
 			});
 		}
@@ -104,10 +103,10 @@ export default class Role extends ClassificationScheme {
 	 * @param {FileLocations} source  list of URLs and/or files to load, e.g. {url: "http://example.com/roles.txt", file: "local_roles.txt"}
 	 * @param {LoadOptions} options   options for loading the roles into a classification scheme
 	 */
-	loadRoles(source: FileLocations, options: LoadOptions) {
+	loadRoles(source: FileLocations, options: LoadOptions) : void {
 		if (source.file) this.#loadFromFile(source.file, options.async, options.verbose);
-		if (source.files) source.files.forEach((file) => this.#loadFromFile(file, options.async, options.verbose));
+		if (source.files) source.files.forEach((file: string) => this.#loadFromFile(file, options.async, options.verbose));
 		if (source.url) this.#loadFromURL(source.url, options.async, options.verbose);
-		if (source.urls) source.urls.forEach((url) => this.#loadFromURL(url, options.async, options.verbose));
+		if (source.urls) source.urls.forEach((url: string) => this.#loadFromURL(url, options.async, options.verbose));
 	}
 }

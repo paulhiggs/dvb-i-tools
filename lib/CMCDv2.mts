@@ -55,7 +55,7 @@ import ErrorList from "./error_list.mts"
 
 const supported_CMCD_versions: number[] = [1, 2];
 
-class _CMCD_keys {
+const CMCD_keys = new class {
 	aggregate_encoded_bitrate: string = "ab"
 	buffer_length: string = "bl"
 	backgrounded: string = "bg"
@@ -107,7 +107,6 @@ class _CMCD_keys {
 	request_url: string = "url"
 	CMCD_version: string = "v"
 };
-const CMCD_keys = new _CMCD_keys()
 
 const CMCD_EVENT_TYPES: string[] = ["abs","abe","ae","as","b","bc","c","ce","e","h","m","pc","pe","pr","ps","rr","sk","t","um"];
 const CMCD_OBJECT_TYPES: string[] = ["m", "a", "v", "av", "i", "c", "tt", "k", "o"];
@@ -207,7 +206,7 @@ function checkCMCDkeys(Report: XmlElement, version: number, errs: ErrorList, err
 
 	if (configured_keys && configured_keys.length > 0) {
 		let hasURL = false;
-		configured_keys.split(" ").forEach((key) => {
+		configured_keys.split(" ").forEach((key: string) => {
 			if (key == CMCD_keys.request_url) hasURL = true;
 			const reserved_key = keys_to_use.find((e) => e.key == key);
 			if (reserved_key) {
@@ -296,7 +295,7 @@ function list_versions(version_numbers: number[]) {
 	if (version_numbers.length == 0) return ` NONE `;
 	if (version_numbers.length == 1) return ` ${version_numbers[0]} is`;
 	let rc = "s "
-	version_numbers.forEach((version, ix, arr) => {
+	version_numbers.forEach((version: number, ix: number, arr: number[]) => {
 		rc += `${version}`;
 		rc += (ix == arr.length - 2) ? " and " : (ix == arr.length - 1) ? "" : ", ";
 	});
@@ -432,7 +431,7 @@ function ValidateAttributes(Report: XmlElement, CMCDversion: number, counts: Cou
 	const objectTypes = Report.attrAnyNsValueOr(dvbi.a_objectTypes);
 	if (objectTypes) {
 		const objectTypes_array = objectTypes.split(" ");
-		objectTypes_array.forEach((objectType) => {
+		objectTypes_array.forEach((objectType: string) => {
 			if (objectType.length != 0 && !CMCD_OBJECT_TYPES.includes(objectType))
 				errs.addError({
 					code: `${errCode}a`,
@@ -446,7 +445,7 @@ function ValidateAttributes(Report: XmlElement, CMCDversion: number, counts: Cou
 	const eventTypes = Report.attrAnyNsValueOr(dvbi.a_eventTypes);
 	if (eventTypes) {
 		const eventTypes_array = eventTypes.split(" ");
-		eventTypes_array.forEach((eventType) => {
+		eventTypes_array.forEach((eventType: string) => {
 			if (eventType.length != 0 && !CMCD_EVENT_TYPES.includes(eventType))
 				errs.addError({
 					code: `${errCode}b`,
@@ -472,7 +471,7 @@ function ValidateAttributes(Report: XmlElement, CMCDversion: number, counts: Cou
 }
 
 function ValidateCMCDv1Element(CMCDelem: XmlElement, counts: CountsAccumulator, errs: ErrorList, errCode: string) {
-	CMCDelem.forEachNamedChildElement(dvbi.e_Report, (Report) => {
+	CMCDelem.forEachNamedChildElement(dvbi.e_Report, (Report: XmlElement) => {
 		const reporting_mode = Report.attrAnyNsValueOr(dvbi.a_reportingMode);
 		if (reporting_mode != CMCD_MODE_REQUEST)
 			errs.addError({

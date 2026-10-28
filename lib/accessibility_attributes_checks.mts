@@ -128,14 +128,14 @@ const checkSignLanguage = (elem: XmlElement, childName: string, cs: IANAlanguage
 	});
 };
 
-const checkLanguageFmt = (elem: XmlElement, childName: string, errs: ErrorList, errCode: string, errNum: number | string) => {
+const checkLanguageFmt = (elem: XmlElement, childName: string, errs: ErrorList, errCode: string, errNum: number | string) : void => {
 	elem?.forEachNamedChildElement(childName, (child) => {
 		ValidateLanguage(child.content, errs, `${errCode}-${errNum}`, child.line);
 	});
 };
 
-const checkLanguageAttributes = (elem: XmlElement, childName: string, errs: ErrorList, errCode: string, errNum: string) => {
-	elem?.forEachNamedChildElement(childName, (child) => {
+const checkLanguageAttributes = (elem: XmlElement, childName: string, errs: ErrorList, errCode: string, errNum: string) : void=> {
+	elem?.forEachNamedChildElement(childName, (child: XmlElement) => {
 		checkAttributes(child, [], [], tvaEA.AudioLanguage, errs, `${errCode}-${errNum}`);
 		if (child.attrAnyNs(tva.a_purpose)) 
 			errs.errorDescription({
@@ -146,8 +146,8 @@ const checkLanguageAttributes = (elem: XmlElement, childName: string, errs: Erro
 	});
 };
 
-const checkAudioAttributes = (elem: XmlElement, childName: string, csCodec: ClassificationScheme, csPresentation: ClassificationScheme, errs: ErrorList, errCode: string, errNum: number, allowPurpose: boolean = false, disallowClause: string | null = null) => {
-	elem?.forEachNamedChildElement(childName, (child) => {
+const checkAudioAttributes = (elem: XmlElement, childName: string, csCodec: ClassificationScheme, csPresentation: ClassificationScheme, errs: ErrorList, errCode: string, errNum: number, allowPurpose: boolean = false, disallowClause: string | null = null) : void => {
+	elem?.forEachNamedChildElement(childName, (child: XmlElement) => {
 		checkTopElementsAndCardinality(
 			child,
 			[
@@ -163,7 +163,7 @@ const checkAudioAttributes = (elem: XmlElement, childName: string, csCodec: Clas
 		// AccessibilityAttributes.*.AudioAttribites.AudioLanguage
 		checkLanguageFmt(child, tva.e_AudioLanguage, errs, errCode, `${errNum}b`);
 		checkLanguageAttributes(child, tva.e_AudioLanguage, errs, errCode, `${errNum}c`);
-		child?.forEachNamedChildElement([tva.e_Coding, tva.e_MixType], (child2) => {
+		child.forEachNamedChildElement([tva.e_Coding, tva.e_MixType], (child2: XmlElement) => {
 			const href = child2.attrAnyNsValueOr(tva.a_href);
 			switch (child2.name) {
 				case tva.e_Coding:
@@ -212,7 +212,7 @@ const checkAudioAttributes = (elem: XmlElement, childName: string, csCodec: Clas
  * validate TV Anytime <AccessibilityAttribites> element according to DVB A177
  * 
  * @param {XmlElement} AccessibilityAttributes  the <AccessibilityAttribitues> element to check
- * @param {*} cs                                a set of classification schemes for value checks
+ * @param {AccessibilityRequiredSchemes} cs     a set of classification schemes for value checks
  * @param {ErrorList} errs                      the class where errors and warnings relating to the service list processing are stored
  * @param {string} errCode                      the prefix to use for any errors found
  * 

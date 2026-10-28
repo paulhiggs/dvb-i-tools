@@ -37,7 +37,8 @@ export default class CG_helpers {
 					message: `${attrName.attribute(`${elem.parent?.name}.${elem.name}`)} must be ${allowed.join(" or ")}`,
 					fragment: elem,
 				});
-		} else if (isRequired)
+		} 
+		else if (isRequired)
 			errs.addError({
 				code: `${errCode}-2`,
 				message: `${attrName.attribute()} must be specified for ${elem.parent?.name}.${elem.name}`,

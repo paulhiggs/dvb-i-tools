@@ -11,9 +11,10 @@
  * Throw a nice error if there is a problem fetching the information
  *
  * @param {Response} response
- * @returns
+ * @returns {Response} the response if it is OK, otherwise throws an error
  */
 export default function handleErrors(response: Response) : Response {
-	if (response && !response.ok) throw Error(`fetch() returned (${response.status}) ${response.statusText.quote()}`);
+	if (response && !response.ok) 
+		throw Error(`fetch() returned (${response.status}) ${response.statusText.quote()}`);
 	return response;
 }

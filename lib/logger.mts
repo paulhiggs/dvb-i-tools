@@ -18,7 +18,7 @@ import { MODE_URL, MODE_CG, MODE_SL, MODE_SLR, MODE_PL } from "./ui.mts"
 import ErrorList from "./error_list.mts"
 
 export function createPrefix(req: express.Request, testtype?: string) : string | undefined {
-	const logDir = join(".", "arch");
+	const logDir: string = join(".", "arch");
 
 	if (!existsSync(logDir)) return undefined;
 	if (testtype && [MODE_CG, MODE_SL, MODE_SLR, MODE_PL].includes(testtype)) return undefined
@@ -51,7 +51,7 @@ export function createPrefix(req: express.Request, testtype?: string) : string |
 }
 
 
-export default function writeOut(errs: ErrorList, filebase: string | undefined, markup: boolean, req?: express.Request) : void {
+export default function document_logger(errs: ErrorList, filebase: string | undefined, markup: boolean, req?: express.Request) : void {
 	if (!filebase || errs.markupXML?.length == 0) return;
 
 	const outputLines = [];

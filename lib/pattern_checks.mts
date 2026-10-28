@@ -317,7 +317,7 @@ export const isASCII = (ascii_str: string) : boolean => ASCIIregexp.test(ascii_s
  * determine if the passed value conforms to am IETF RFC4151 TAG URI
  *
  * @param {string} identifier  The service identifier to be checked
- * @return {boolean} true if the service identifier is in RFC4151 TAG URI format
+ * @returns {boolean} true if the service identifier is in RFC4151 TAG URI format
  */
 const year: string = "([0-9]{4})", month: string = "([0-9]{2})", day: string = "([0-9]{2})";
 const date: string = `${year}(-${month}(-${day})?)?`

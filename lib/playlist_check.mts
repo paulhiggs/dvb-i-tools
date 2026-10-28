@@ -13,11 +13,11 @@ import { dvbi} from "./DVB-I_definitions.mts"
 import { InvalidURL, keys } from "./common_errors.mts"
 import { SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.mts"
 import { LoadSLschemas, SL_GetSchema, SL_SchemaVersion } from "./sl_data_versions.mts"
-import writeOut from "./logger.mts"
+import document_logger from "./logger.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
 import { DefaultProperty } from "./utils.mts"
 
-import type { LoadOptions } from "./globals.mts"
+import type { StatsType, LoadOptions } from "./globals.mts"
 
 export type PL_Validator_Options = {
 	log_prefix? : string
@@ -32,7 +32,7 @@ export default class PlaylistCheck {
 		this.#numRequests = 0;
 	}
 
-	stats() : Record<string, number> {
+	stats() : StatsType {
 		return {numRequests: this.#numRequests};
 	}
 
@@ -72,7 +72,7 @@ export default class PlaylistCheck {
 
 		const PL = SchemaLoad(PLtext, errs, "PL001");
 		if (!PL) return;
-		writeOut(errs, options.log_prefix, false);
+		document_logger(errs, options.log_prefix, false);
 
 		if (PL.root.name !== dvbi.e_Playlist) {
 			errs.addError({

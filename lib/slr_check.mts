@@ -17,7 +17,7 @@ import { slVersions, dvbi, dvbiEA, dvbiEC, dvbisld, validApplicationTypes, DvbIA
 import ErrorList, { APPLICATION, WARNING } from "./error_list.mts"
 import { CheckExtension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY } from "./extension_check.mts"
 import { ValidateLanguage } from "./IANA_languages.mts"
-import writeOut from "./logger.mts"
+import document_logger from "./logger.mts"
 import { mpeg7 } from "./MPEG7_definitions.mts"
 import { isMIME } from "./MIME_checks.mts"
 import { checkXMLLangs } from "./multilingual_element.mts"
@@ -34,6 +34,7 @@ import type { SL_Validator_Options, ValidatorOptions } from "./sl_check.mts"
 import ClassificationScheme from "./classification_scheme.mts"
 import ISOcountries from "./ISO_countries.mts"
 import ServiceListCheck from "./sl_check.mts"
+import type { StatsType } from "./globals.mts"
 
 
 export function CheckDelivery(Delivery: XmlElement, SchemaVersion: number, ApplicationTypeCS: ClassificationScheme, errs: ErrorList, errCode: string) {
@@ -143,7 +144,7 @@ export default class ServiceListRegistryCheck {
 		this.#service_list_validator = sl_checker ?? undefined
 	}
 
-	stats() {
+	stats() : StatsType {
 		return {
 			numRequests: this.#numRequests,
 			numKnownCountries: this.#knownCountries?.count(),
@@ -356,7 +357,7 @@ export default class ServiceListRegistryCheck {
 				ValidateAnySignaturePolicy(URI, documentInfo, errs, `${errCode}-37`);
 
 				if (options.traverse && this.#service_list_validator) {
-					const sl_errs : ErrorList = new ErrorList(URI.content, "SL", "Nested Service List")
+					const sl_errs: ErrorList = new ErrorList(URI.content, "SL", "Nested Service List")
 					this.#service_list_validator.validateServiceList(URI, URI.content, sl_errs, options)
 					errs.nestedErrors.push(sl_errs)
 				}
@@ -438,7 +439,7 @@ export default class ServiceListRegistryCheck {
 
 		const SLR = SchemaLoad(SLRtext, errs, "SR001");
 		if (!SLR) return;
-		writeOut(errs, options.log_prefix, false);
+		document_logger(errs, options.log_prefix, false);
 
 		if (SLR.root.name !== dvbisld.e_ServiceListEntryPoints) {
 			errs.addError({

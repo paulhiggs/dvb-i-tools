@@ -13,7 +13,7 @@ import { dvbi } from "./DVB-I_definitions.mts"
 import { WARNING } from "./error_list.mts"
 import type { ReportedErrorType } from "./error_list.mts"
 
-class _keys {
+export const keys = new class {
 	k_InvalidHRef: string = "invalid href"
 	k_InvalidValue: string = "invalid value"
 	k_InvalidTag: string = "invalid tag"
@@ -43,7 +43,6 @@ class _keys {
 	k_Icecast: string = "icecast"
 	k_Traversal: string = "Traversal issue"
 };
-export const keys = new _keys()
 
 /**
  * Add an error message when the a required element is not present

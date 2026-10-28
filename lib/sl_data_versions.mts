@@ -222,7 +222,7 @@ export const SL_SchemaSpecVersion = (version: number) : string => {
  * @returns {LoadedVersionInfo} the schema corresponding to the namespace
  */
 export const SL_GetSchema = (namespace: string, variant: number = 0) : LoadedVersionInfo | undefined =>
-	 SL_SchemaVersions.find((s) => (s.namespace == namespace && s.flags == variant))
+	 SL_SchemaVersions.find((s) => (s.namespace == namespace && s.flags == variant)) || SL_SchemaVersions.find((s) => (s.namespace == namespace && s.flags == 0))
 
 /**
  * determines if the identifer provided refers to a valid application being used with the service
@@ -396,14 +396,14 @@ export const a177versionFromURN = (urn: string) : number => {
 
 
 let SLschemasLoaded = false;
-export function LoadSLschemas(opts: LoadOptions) {
+export function LoadSLschemas(opts: LoadOptions) : void {
 	if (SLschemasLoaded) return;
 	SLschemasLoaded = true;
 	// TODO: implement useURLs and async options to load from URL rather than local file
 	if (opts.verbose) console.log(chalk.yellow.underline("loading service list schemas..."));
 	SL_SchemaVersions.forEach((version) => {
 		if (opts.verbose) process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
-		const buf = readmyfile(version.filename, {});
+		const buf = readmyfile(version.filename, {}) as Buffer;
 		if (buf) version.schema = XmlDocument.fromBuffer(buf, { url: version.filename });
 		if (opts.verbose) process.stdout.write(`${version.schema ? chalk.green("OK") : chalk.red.bold("FAIL")}\n`);
 	});

@@ -24,7 +24,7 @@ import { checkValidLogos } from "./related_material_checks.mts"
 import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys, InvalidCountryCode } from "./common_errors.mts"
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./multilingual_element.mts"
 import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.mts"
-import writeOut from "./logger.mts"
+import document_logger from "./logger.mts"
 import { ValidateLanguage } from "./IANA_languages.mts"
 import {
 	LoadGenres,
@@ -142,8 +142,8 @@ export type ValidatorOptions = LoadOptions & {
 export type SL_Validator_Options = {
 	log_prefix? : string
 	report_schema_version?: boolean
-	variants?: number
 	traverse?: boolean
+	variants?: number
 }
 
 export default class ServiceListCheck {
@@ -207,7 +207,7 @@ export default class ServiceListCheck {
 		this.#content_guide_validator = cg_checker
 	}
 
-	stats() {
+	stats() : StatsType {
 		const res: StatsType = {};
 		res.numRequests = this.#numRequests;
 		res.numKnownCountries = this.#knownCountries?.count();
@@ -320,14 +320,16 @@ export default class ServiceListCheck {
 						used: false,
 						line: Region.line,
 					});
-			} else
+			} 
+			else
 				errs.addError({
 					code: "AR013",
 					message: `${dvbi.a_regionID.attribute()} is required`,
 					key: `no ${dvbi.a_regionID.attribute()}`,
 					line: Region.line,
 				});
-		} else {
+		} 
+		else {
 			if (regionID) {
 				if (documentInfo.knownRegionIDs.find((r) => r.region == regionID) != undefined)
 					errs.addError({
@@ -344,7 +346,8 @@ export default class ServiceListCheck {
 						used: false,
 						line: Region.line,
 					});
-			} else
+			} 
+			else
 				errs.addError({
 					code: "AR020",
 					message: `${dvbi.a_regionID.attribute()} is required`,
@@ -2356,7 +2359,7 @@ export default class ServiceListCheck {
 
 		const SL = SchemaLoad(SLtext, errs, "SL001");
 		if (!SL) return;
-		writeOut(errs, options.log_prefix, false);
+		document_logger(errs, options.log_prefix, false);
 
 		if (SL.root.name !== dvbi.e_ServiceList) {
 			errs.addError({

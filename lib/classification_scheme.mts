@@ -24,7 +24,7 @@ import handleErrors from "./fetch_err_handler.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
 import { datatypeIs } from "./utils.mts"
 
-export const CS_URI_DELIMITER = ":";
+export const CS_URI_DELIMITER: string = ":";
 
 type CSnode = {
 	term: string;
@@ -41,7 +41,7 @@ export type FileLocations = {
 /**
  * Constructs a linear list of terms from a heirarical clssification schemes which are read from an XML document and parsed by libxmljs
  *
- * @param {Array}      vals           the array to add the CS term into
+ * @param {CSnode[]}   vals           the array to add the CS term into
  * @param {string}     CSuri          the classification scheme domian
  * @param {XmlElement} term           the classification scheme term that may include nested subterms
  */
@@ -68,12 +68,12 @@ type CSData = {
 }
 
 /**
- * load the hierarical values from an XML classification scheme document into a linear list
+ * Load the hierarical values from an XML classification scheme document into a linear list
  *
  * @param {XmlDocument} xmlCS          the XML document  of the classification scheme
  * @returns {Object} values parsed from the classification scheme in .vals and uri of classification scheme in .uri
  */
-function loadClassificationScheme(xmlCS : XmlDocument): CSData {
+function loadClassificationScheme(xmlCS : XmlDocument) : CSData {
 	const rc: CSData = { vals: [] };
 	if (!xmlCS) return rc;
 
@@ -99,7 +99,7 @@ export default class ClassificationScheme {
 		loadClassificationScheme.bind(this);
 	}
 
-	count() {
+	count() : number {
 		return this.#values.count();
 	}
 
@@ -108,7 +108,7 @@ export default class ClassificationScheme {
 	 * Remove all values from the classification scheme
 	 *
 	 */
-	clear() {
+	clear() : void {
 		this.#values.clear();
 		this.#schemes.clear();
 	}
@@ -119,19 +119,19 @@ export default class ClassificationScheme {
 	 *
 	 * @param {Object} key the value to add to the classification scheme
 	 */
-	add(key: CSnode) {
+	add(key: CSnode) : void {
 		if (key)
 			this.#values.insertIterative(key)
 	}
 
 
 	/**
-	 * read a classification scheme from a URL and load its hierarical values into a linear list
+	 * Read a classification scheme from a URL and load its hierarical values into a linear list
 	 *
 	 * @param {string}  csURL URL to the classification scheme
 	 * @param {boolean} async whether to use asynchronous fetch (true by default)
 	 */
-	#loadFromURL(csURL: string, async: boolean = true, verbose: boolean = true): void {
+	#loadFromURL(csURL: string, async: boolean = true, verbose: boolean = true) : void {
 		const isHTTPurl = isHTTPURL(csURL);
 		if (verbose) console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving CS from ${csURL} via fetch()`));
 		if (!isHTTPurl) return;
@@ -139,13 +139,13 @@ export default class ClassificationScheme {
 		if (async)
 			fetch(csURL, fetch_options)
 				.then(handleErrors)
-				.then((response) => response.text())
-				.then((strXML) => loadClassificationScheme(XmlDocument.fromString(strXML)))
-				.then((res) => {
-					res.vals.forEach((e) => this.add(e));
+				.then((response: Response) => response.text())
+				.then((strXML: string) => loadClassificationScheme(XmlDocument.fromString(strXML)))
+				.then((res: CSData) => {
+					res.vals.forEach((e: CSnode) => this.add(e));
 					this.#schemes.add(res.uri as string);
 				})
-				.catch((error) => console.log(chalk.red(`error (${error}) retrieving ${csURL}`)));
+				.catch((error: Error) => console.log(chalk.red(`error (${error}) retrieving ${csURL}`)));
 		else {
 			let resp = null;
 			try {
@@ -157,7 +157,7 @@ export default class ClassificationScheme {
 			if (resp) {
 				if (resp.ok) {
 					const CStext = loadClassificationScheme(XmlDocument.fromString(resp.text()));
-					CStext.vals.forEach((e) => this.add(e));
+					CStext.vals.forEach((e: CSnode) => this.add(e));
 					this.#schemes.add(CStext.uri as string);
 				} 
 				else if (verbose) console.log(chalk.red(`error (${resp.status}:${resp.statusText}) handling ${csURL}`));
@@ -166,7 +166,7 @@ export default class ClassificationScheme {
 	}
 
 	/**
-	 * read a classification scheme from a local file and load its hierarical values into a linear list
+	 * Read a classification scheme from a local file and load its hierarical values into a linear list
 	 *
 	 * @param {string} classificationScheme the filename of the classification scheme
 	 * @param {boolean} async whether to use asynchronous file read (true by default)
@@ -179,35 +179,37 @@ export default class ClassificationScheme {
 			readFile(classificationScheme, read_string_options, (err: NodeJS.ErrnoException | null, data: string) => {
 				if (!err) {
 					const res = loadClassificationScheme(XmlDocument.fromString(data.replace(/(\r\n|\n|\r|\t)/gm, "")));
-					res.vals.forEach((e) => this.add(e));
+					res.vals.forEach((e: CSnode) => this.add(e));
 					this.#schemes.add(res.uri as string);
-				} else console.log(chalk.red(err));
+				} 
+				else console.log(chalk.red(err));
 			});
 		else {
 			const buff = readFileSync(classificationScheme,read_string_options);
 			const data = buff.toString();
 			const res = loadClassificationScheme(XmlDocument.fromString(data.replace(/(\r\n|\n|\r|\t)/gm, "")));
-			res.vals.forEach((e) => this.add(e));
+			res.vals.forEach((e: CSnode) => this.add(e));
 			this.#schemes.add(res.uri as string);
 		}
 	}
 
 
 	/**
+	 * Load the classification scheme values from the provided file(s) and/or URL(s) and add any extra values to the classification scheme
 	 * 
 	 * @param {FileLocations} source  list of URLs and/or files to load, e.g. {url: "http://example.com/roles.txt", file: "local_roles.txt"}
-	 * @param {LoadOptions} options     options for loading the classification scheme
-	 * @param {string[]} extra_vals     additional values to add to the classification scheme (e.g. from a config file) - these should be full URIs and will be added after any values loaded from files/URLs
+	 * @param {LoadOptions} options   options for loading the classification scheme
+	 * @param {string[]} extra_vals   additional values to add to the classification scheme (e.g. from a config file) - these should be full URIs and will be added after any values loaded from files/URLs
 	 */
-	loadCS(source: FileLocations, options: LoadOptions, extra_vals?: string[]): void {
+	loadCS(source: FileLocations, options: LoadOptions, extra_vals?: string[]) : void {
 
 		if (source.file) this.#loadFromFile(source.file, options.async, options.verbose);
-		if (source.files) source.files.forEach((file) => this.#loadFromFile(file, options.async, options.verbose));
+		if (source.files) source.files.forEach((file: string) => this.#loadFromFile(file, options.async, options.verbose));
 		if (source.url) this.#loadFromURL(source.url, options.async, options.verbose);
-		if (source.urls) source.urls.forEach((url) => this.#loadFromURL(url, options.async, options.verbose));
+		if (source.urls) source.urls.forEach((url: string) => this.#loadFromURL(url, options.async, options.verbose));
 
 		if (extra_vals && datatypeIs(extra_vals, "array")) {
-			extra_vals.forEach((v) => {
+			extra_vals.forEach((v: string) => {
 				if (datatypeIs(v, "string")) this.add({term:v, leaf:true});
 			});
 		}
@@ -215,7 +217,7 @@ export default class ClassificationScheme {
 
 
 	/**
-	 * determines if the value is in the classification scheme
+	 * Determines if the value is in the classification scheme
 	 *
 	 * @param {string} value  The value to check for existance
 	 * @returns {boolean} true if value is in the classification scheme
@@ -227,12 +229,12 @@ export default class ClassificationScheme {
 
 
 	/**
-	 * determines if the value is in the classification scheme and is a leaf node
+	 * Determines if the value is in the classification scheme and is a leaf node
 	 *
 	 * @param {string} value  The value to check for existance
 	 * @returns {boolean} true if value is a leaf node in the classification scheme
 	 */
-	isLeaf(value: string): boolean {
+	isLeaf(value: string) : boolean {
 		const node = this.#values.findKey(value);
 		if (node) {
 			const val = node.getValue();
@@ -242,26 +244,27 @@ export default class ClassificationScheme {
 	}
 
 	/**
-	 * determines if the scheme used by the provided term is included
+	 * Determines if the scheme used by the provided term is included
+	 * 
 	 * @param {string} scheme   The term whose scheme should bechecked
 	 * @returns {boolean}
 	 */
-	hasScheme(scheme: string): boolean {
+	hasScheme(scheme: string) : boolean {
 		const pos = scheme.lastIndexOf(CS_URI_DELIMITER);
 		if (pos == -1) return false;
 		return this.#schemes.has(scheme.slice(0, pos));
 	}
 
-	showMe(prefix = "") {
+	showMe(prefix = "") : void {
 		console.log(`in showme(${prefix.quote()}), count=${this.count()}`);
 		const showNode = (node: CSnode) => {
 			if (prefix == "" || node.term.startsWith(prefix)) 
 				console.log(`${node.term}${node.leaf?" \u{1f33f}":""}`);
-			}
+		}
 		this.#values.traverseInOrderIterative((node) => showNode(node.getValue()));
 	}
 
-	showMeArray() {
+	showMeArray() : void {
 		const showNode = (node: CSnode) => console.log(`{term: "${node.term}", leaf: ${node.leaf}},`);
 		this.#values.traverseInOrderIterative((node: AvlTreeNode<CSnode>) => showNode(node.getValue()));
 	}

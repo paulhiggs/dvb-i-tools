@@ -35,7 +35,7 @@ import type { FoundDocumentItems } from "./sl_check.mts"
 	* @param {ErrorList}  errs                 The class where errors and warnings relating to the serivce list processing are stored
 	* @param {string}     errCode              error code prefix for reporting
 	*/
- export function ValidateAnySignaturePolicy(element: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
+ export function ValidateAnySignaturePolicy(element: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) : void {
 	if (!element) {
 		errs.addError({ type: APPLICATION, code: "VSP000", message: "ValidateAnySignaturePolicy() called with element==null" });
 		return;
@@ -75,7 +75,7 @@ import type { FoundDocumentItems } from "./sl_check.mts"
  }
  
  
-const mimeExtractor = new RegExp(/^data:(?<mime>(?:\w+\/(?:(?!;).)+)?)((?:;[\w=]*[^;])*),(.+)$/, "i");
+const mimeExtractor: RegExp = new RegExp(/^data:(?<mime>(?:\w+\/(?:(?!;).)+)?)((?:;[\w=]*[^;])*),(.+)$/, "i");
 function contentMatches(dataURI: string, contentType: string) : boolean {
 	const prse = dataURI.match(mimeExtractor);
 	return prse?.groups?.mime == contentType || prse?.groups?.mime.length == 0;
@@ -87,7 +87,7 @@ function contentMatches(dataURI: string, contentType: string) : boolean {
  *
  * @param {XmlElement} RelatedMaterial   the <RelatedMaterial> element (a libxmls ojbect tree) to be checked
  * @param {string}     location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
- * @param {string[]}      allowedHowRelated The set of permitted values
+ * @param {string[]}   allowedHowRelated The set of permitted values
  * @param {FoundDocumentItems} documentInfo
  *                  signaturePolicyIDs   Signature Verification policy identifiers defined in this service list
  * @param {ErrorList}  errs              The class where errors and warnings relating to the serivce list processing are stored
@@ -233,7 +233,7 @@ function validateImageRelatedMaterial(RelatedMaterial: XmlElement, location: str
  * @param {ErrorList}  errs              The class where errors and warnings relating to the serivce list processing are stored
  * @param {string}     errCode           Error code prefix for reporting
  */
-export function ValidatePromotionalStillImage(RelatedMaterial: XmlElement, location: string, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
+export function ValidatePromotionalStillImage(RelatedMaterial: XmlElement, location: string, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string): void  {
 	validateImageRelatedMaterial(RelatedMaterial, location, [tva.cs_PromotionalStillImage], documentInfo, errs, errCode);
 }
 
@@ -247,7 +247,7 @@ export function ValidatePromotionalStillImage(RelatedMaterial: XmlElement, locat
  * @param {ErrorList}  errs               The class where errors and warnings relating to the service list processing are stored
  * @param {string}     errCode            Error code prefix for reporting
  */
-export function checkValidLogos(RelatedMaterial: XmlElement, location: string, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
+export function checkValidLogos(RelatedMaterial: XmlElement, location: string, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) : void {
 	if (!RelatedMaterial) return;
 
 	const specifiedMediaTypes: string[] = [];

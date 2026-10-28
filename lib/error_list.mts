@@ -130,7 +130,7 @@ export default class ErrorList {
 	 * @param {string} type     the type of error message, e.g. APPLICATION, ERROR, WARNING...
 	 * @param {string} code     the short code of the error
 	 * @param {string} message  the verbose error message
-	 * @param {integer} lineNo  the line number in the received text to attach the error to
+	 * @param {number} lineNo  the line number in the received text to attach the error to
 	 */
 	/* private method */ #setError(type: string, code: string, message: string, lineNo: number) {
 		const found = this.markupXML!.find((line) => line.ix == lineNo);
@@ -225,7 +225,7 @@ export default class ErrorList {
 	 * @param {string}              e.message     The error message
 	 * @param {string}              e.key         (optional)The category of the message
 	 * @param {string | XmlElement} e.fragment    (optional) The XML fragment (or node in the XML document) triggering the error
-	 * @param {integer}             e.line        (optional) the line number of the element in the XML document that triggered the error
+	 * @param {number}              e.line        (optional) the line number of the element in the XML document that triggered the error
 	 * @param {string}              e.description (optional) a description of the error
 	 * @param {string}              e.clause      (optional) the specification clause/section that is violated (only used with @e.description is provided)
 	 */

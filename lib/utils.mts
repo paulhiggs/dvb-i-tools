@@ -24,7 +24,7 @@ import {} from "./string-extensions.mts"
  * replace ENTITY strings with a generic characterSet
  *
  * @param {string} str    string containing HTML or XML entities (starts with & ends with ;)
- * @return {string} the string with entities replaced with a single character '*'
+ * @returns {string} the string with entities replaced with a single character '*'
  */
 export const unEntity = (str: string) : string => str.replace(/(&.+;)/gi, "*");
 
@@ -115,7 +115,7 @@ export function DuplicatedValue<TYPE>(found: Set<TYPE>, val: TYPE): boolean {
 }
 
 export function DumpString(str : string) : string {
-	const t = [];
+	const t: string[] = [];
 	for (let i = 0; i < str.length; i++) t.push(str.charCodeAt(i).toString(16));
 	return `"${str}" --> ${t.join(" ")}`;
 }
@@ -182,7 +182,7 @@ export function datatypeIs(arg: unknown, requiredType: string | null = null): bo
  * Check if an object is empty
  * 
  * @param {unknown} objectName the object to check for member attributes 
- * @returns true if the object is empty
+ * @returns {boolean} true if the object is empty
  */
 export const isObjectEmpty = (objectName: unknown) : boolean => {
   return (
@@ -208,8 +208,8 @@ export function containsHex(str : string | null | undefined) : boolean {
 }
 
 
-const _HexRegexp = new RegExp(`^(?<hex_ind>(0x))?(?<value>[0-9a-fA-F]+)$`);
-export function HexOrDecValue(str: string) : number{
+const _HexRegexp: RegExp = new RegExp(`^(?<hex_ind>(0x))?(?<value>[0-9a-fA-F]+)$`);
+export function HexOrDecValue(str: string) : number {
 	const res = str.match(_HexRegexp);
 	return parseInt((res?.groups?.value as string), res?.groups?.hex_ind == "0x" || containsHex(res?.groups?.value) ? 16 : 10);	
 }
@@ -219,11 +219,10 @@ export function HexOrDecValue(str: string) : number{
  * 
  * @param {*} obj        The object to check for the property
  * @param {string} prop  The name of the property to check for
- * @returns true if the property exists in the object and is not undefined
+ * @returns {boolean} true if the property exists in the object and is not undefined
  **/
-export const HasProperty = (obj: unknown, prop: string) : boolean => {
-	return Object.prototype.hasOwnProperty.call(obj, prop);
-}
+export const HasProperty = (obj: unknown, prop: string) : boolean => 
+	Object.prototype.hasOwnProperty.call(obj, prop)
 
 /**
  * Sets the default value of a property in an object if the property does not exist or is undefined

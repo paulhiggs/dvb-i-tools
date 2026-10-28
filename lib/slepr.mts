@@ -18,6 +18,7 @@ import { tva } from "./TVA_definitions.mts"
 import { dvbi, dvbisld } from "./DVB-I_definitions.mts"
 
 import { fetch_options, read_string_options } from "./globals.mts"
+import type { StatsType } from "./globals.mts"
 import handleErrors from "./fetch_err_handler.mts"
 import { isHTTPURL, isTVAAudioLanguageType } from "./pattern_checks.mts"
 import { LoadLanguages, LoadCountries, LoadGenres } from "./classification_scheme_loaders.mts"
@@ -82,16 +83,16 @@ export default class SLEPR {
 	#readError: string | undefined
 
 	constructor(useURLs: boolean, SLRmode: string,
-			preloadedLanguageValidator : IANAlanguages | null = null, 
-			preloadedCountries : ISOcountries | null= null, 
-			preloadedGenres: ClassificationScheme | null  = null) {
+			preloadedLanguageValidator?: IANAlanguages, 
+			preloadedCountries?: ISOcountries, 
+			preloadedGenres?: ClassificationScheme) {
 		this.#numRequests = 0;
 		this.#processingMode = SLRmode;
 		this.#registryFilename = undefined;
 		this.loadDataFiles(useURLs, preloadedLanguageValidator, preloadedCountries, preloadedGenres);
 	}
 
-	stats() {
+	stats() : StatsType {
 		const res = {
 			numRequests: this.#numRequests,
 			SLRfile: this.#registryFilename ? this.#registryFilename : "not set",
@@ -106,9 +107,9 @@ export default class SLEPR {
 
 	
 	/* public */ loadDataFiles(useURLs: boolean, 
-			preloadedLanguageValidator: IANAlanguages | null = null, 
-			preloadedCountries: ISOcountries | null = null, 
-			preloadedGenres: ClassificationScheme | null = null) {
+			preloadedLanguageValidator?: IANAlanguages, 
+			preloadedCountries?: ISOcountries, 
+			preloadedGenres?: ClassificationScheme) {
 		this.#knownLanguages = preloadedLanguageValidator || LoadLanguages({useURLs: useURLs, async: true, verbose: true});
 		this.#knownCountries = preloadedCountries || LoadCountries({useURLs: useURLs, async: true, verbose: true});
 		this.#knownGenres = preloadedGenres || LoadGenres({useURLs: useURLs, async: true, verbose: true});

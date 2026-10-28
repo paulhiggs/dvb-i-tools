@@ -14,14 +14,13 @@
  * (DVB-S2x) ETSI EN 303 307-2 - https://www.etsi.org/deliver/etsi_en/302300_302399/30230702/
  */
 
-class dvb_definitions {
+export const dvb = new class {
 	a_termID: string = "termID"
 	a_uri: string = "uri"
 
 	e_ClassificationScheme: string = "ClassificationScheme"
 	e_Term: string = "Term"
 };
-export const dvb = new dvb_definitions()
 
 // ETSI EN 300 421 clause 4.5
 const _S_RollOff: string[] = ["0.35"];  
@@ -52,7 +51,7 @@ const _S2X_Modulation: string[] = ["8PSK-L", "16APSK", "16APSK-L", "32APSK", "32
 // other modulation values found in ETSI EN 302 307-2 V1.4.1 table 1 but not included in A177r6
 // 128APSK, 256APSK, 256APSK-L, BPSK, BPSK-S
 
-class _sats {
+export const sats = new class {
 	MODULATION_S: string = "DVB-S"
 	S_FEC: string[] =  _S_FEC
 	S_RollOff: string[] = _S_RollOff
@@ -69,4 +68,3 @@ class _sats {
 	S2X_Modulation: string[] = _S2X_Modulation
 }
 
-export const sats = new _sats()

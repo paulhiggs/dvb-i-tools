@@ -36,9 +36,9 @@ function isSchemaAttribute(attribute : XmlAttribute) {
  * check that the specified child elements are in the parent element
  *
  * @param {XmlElement} checkElement       the element whose attributes should be checked
- * @param {Array}      requiredAttributes the element names permitted within the parent
- * @param {Array}      optionalAttributes the element names permitted within the parent
- * @param {Array}      definedAttributes  attributes that defined in the schema, whether requited, optional or profiled out
+ * @param {string[]}   requiredAttributes the element names permitted within the parent
+ * @param {string[]}   optionalAttributes the element names permitted within the parent
+ * @param {string[]}   definedAttributes  attributes that defined in the schema, whether requited, optional or profiled out
  * @param {ErrorList}  errs               errors found in validaton
  * @param {string}     errCode            error code to be used in reports,
  */

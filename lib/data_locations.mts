@@ -97,27 +97,24 @@ const idDVB_LinkApplicationTypeCS: string = "DVBLinkedApplicationCS-2019.xml";
 export const DVBI_LinkedApplicationCS: DataLocation = { file: join(pathDVBI, idDVB_LinkApplicationTypeCS), url: `${DVB_METADATA}${url2019CS}/${idDVB_LinkApplicationTypeCS}` };
 
 const idDVB_AudioCodecCS: string = "AudioCodecCS.xml";
-class _DVB_AudioCodecCS {
+export const DVB_AudioCodecCS = new class {
 	y2007: DataLocation = { file: join(path2007CS, idDVB_AudioCodecCS), url: `${DVB_METADATA}${url2007CS}/${idDVB_AudioCodecCS}` }
 	y2020: DataLocation = { file: join(path2020CS, idDVB_AudioCodecCS), url: `${DVB_METADATA}${url2020CS}/${idDVB_AudioCodecCS}` }
 	y2024: DataLocation = { file: join(path2024CS, idDVB_AudioCodecCS), url: `${DVB_METADATA}${url2024CS}/${idDVB_AudioCodecCS}` }
 };
-export const DVB_AudioCodecCS = new _DVB_AudioCodecCS()
 
 const idDVB_VideoCodecCS: string = "VideoCodecCS.xml";
-class _DVB_VideoCodecCS {
+export const DVB_VideoCodecCS = new class {
 	y2007: DataLocation = { file: join(path2007CS, idDVB_VideoCodecCS), url: `${DVB_METADATA}${url2007CS}/${idDVB_VideoCodecCS}` }
 	y2020: DataLocation = { file: join(path2020CS, idDVB_VideoCodecCS), url: `${DVB_METADATA}${url2020CS}/${idDVB_VideoCodecCS}` }
 	y2021: DataLocation = { file: join(path2021CS, idDVB_VideoCodecCS), url: `${DVB_METADATA}${url2021CS}/${idDVB_VideoCodecCS}` }
 	y2022: DataLocation = { file: join(path2022CS, idDVB_VideoCodecCS), url: `${DVB_METADATA}${url2022CS}/${idDVB_VideoCodecCS}` }
 };
-export const DVB_VideoCodecCS = new _DVB_VideoCodecCS()
 
 const idDVB_ColorimetryCS: string = "ColorimetryCS.xml";
-class _DVB_ColorimetryCS {
+export const DVB_ColorimetryCS = new class {
 	y2020: DataLocation = { file: join(path2020CS, idDVB_ColorimetryCS), url: `${DVB_METADATA}${url2020CS}/${idDVB_ColorimetryCS}` }
 };
-export const DVB_ColorimetryCS = new _DVB_ColorimetryCS()
 
 const idMPEG7_AudioCodingFormatCS: string = "AudioCodingFormatCS.xml";
 export const MPEG7_AudioCodingFormatCS: DataLocation = { file: join(pathMPEG7, idMPEG7_AudioCodingFormatCS), url: `${REPO_RAW}${subdirMPEG7}/${idMPEG7_AudioCodingFormatCS}` };
@@ -129,21 +126,19 @@ const idMPEG7_AudioPresentationCS: string = "AudioPresentationCS.xml";
 export const MPEG7_AudioPresentationCS: DataLocation = { file: join(pathMPEG7, idMPEG7_AudioPresentationCS), url: `${REPO_RAW}${subdirMPEG7}/${idMPEG7_AudioPresentationCS}` };
 
 const idDVB_AudioConformanceCS: string = "AudioConformancePointsCS.xml";
-class _DVB_AudioConformanceCS {
+export const DVB_AudioConformanceCS = new class {
 	y2017: DataLocation = { file: join(path2017CS, idDVB_AudioConformanceCS), url: `${DVB_METADATA}${url2017CS}/${idDVB_AudioConformanceCS}` }
 	y2024: DataLocation = { file: join(path2024CS, idDVB_AudioConformanceCS), url: `${DVB_METADATA}${url2024CS}/${idDVB_AudioConformanceCS}` }
 };
-export const DVB_AudioConformanceCS = new _DVB_AudioConformanceCS()
 
 const idDVB_VideoConformanceCS: string = "VideoConformancePointsCS.xml";
-class _DVB_VideoConformanceCS {
+export const DVB_VideoConformanceCS = new class  {
 	y2017: DataLocation = { file: join(path2017CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2017CS}/${idDVB_VideoConformanceCS}` }
 	y2021: DataLocation = { file: join(path2021CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2021CS}/${idDVB_VideoConformanceCS}` }
 	y2022: DataLocation = { file: join(path2022CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2022CS}/${idDVB_VideoConformanceCS}` }
 	y2024: DataLocation = { file: join(path2024CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2024CS}/${idDVB_VideoConformanceCS}` }
 	y2026: DataLocation = { file: join(path2026CS, idDVB_VideoConformanceCS), url: `${DVB_METADATA}${url2026CS}/${idDVB_VideoConformanceCS}` }
 };
-export const DVB_VideoConformanceCS = new _DVB_VideoConformanceCS()
 
 const idISO3166: string = "iso3166-countries.json";
 export const ISO3166: DataLocation = { file: join(pathISO, idISO3166), url: `${REPO_RAW}${subdirISO}/${idISO3166}` };
@@ -166,15 +161,14 @@ const TVAfileprefix: string = "tva_metadata_3-1";
 //type TVAschemaVersions = "v2019" | "v2023" | "v2024" | "v2026";
 type TVASchemaVersonInfo = { namespace: string, file: string };
 //type TVAschemaInfo = { [version in TVAschemaVersions]: TVASchemaVersonInfo }; 
-class _TVAschema {
+export const TVAschema = new class {
 	v2019: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2019`, file: `./${schemasPath}/${TVAfileprefix}_2019.xsd` }
 	v2023: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2023`, file: `./${schemasPath}/${TVAfileprefix}_2023.xsd` }
 	v2024: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2024`, file: `./${schemasPath}/${TVAfileprefix}_2024.xsd` }
 	v2026: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2026`, file: `./${schemasPath}/${TVAfileprefix}_v1141.xsd` }
 };
-export const TVAschema = new _TVAschema()
 
-export const DVBI_ServiceListSchema: { [key: string]: { file: string } } = {
+export const DVBI_ServiceListSchema: { [key: string]: DataLocation } = {
 	r0: { file:  `./${schemasPath}/dvbi_v1.0.xsd` },
 	r1: { file:  `./${schemasPath}/dvbi_v2.0.xsd` },
 	r2: { file:  `./${schemasPath}/dvbi_v3.0.xsd` },
@@ -182,12 +176,12 @@ export const DVBI_ServiceListSchema: { [key: string]: { file: string } } = {
 	r4: { file:  `./${schemasPath}/dvbi_v4.0+hls+hbbtv.xsd` },
 	r5: { file:  `./${schemasPath}/dvbi_v5.0+hls+hbbtv.xsd` },
 	r6: { file:  `./${schemasPath}/dvbi_v6.0+hls+hbbtv.xsd` },
-	r6_Germany: {file:  `./${schemasPath}/dvbi_v6.0+hls+hbbtv-(DE).xsd`},
+	r6_Germany: { file: `./${schemasPath}/dvbi_v6.0+hls+hbbtv-(DE).xsd` },
 	r7: { file:  `./${schemasPath}/dvbi_v7.0+hls+hbbtv.xsd` },
 	r8: { file:  `./${schemasPath}/dvbi_v8.0+hls+hbbtv+dvbhb.xsd` },
 };
 
-export const DVBI_ServiceListRegistrySchema: { [key: string]: { file: string } } = {
+export const DVBI_ServiceListRegistrySchema: { [key: string]: DataLocation } = {
 	r0: { file: `./${schemasPath}/dvbi_service_list_discovery_v1.0.xsd` },
 	r1: { file: `./${schemasPath}/dvbi_service_list_discovery_v1.1.xsd` },
 	r2: { file: `./${schemasPath}/dvbi_service_list_discovery_v1.2.xsd` },

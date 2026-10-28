@@ -134,7 +134,7 @@ const SchemaVersions: LoadedVersionInfo[] = [
  * determine the schema version (and hence the specificaion version) in use
  *
  * @param {string} namespace     The namespace used in defining the schema
- * @returns {numberumber} Representation of the schema version or error code if unknown
+ * @returns {number} Representation of the schema version or error code if unknown
  */
 export const SLR_SchemaVersion = (namespace: string) : number => {
 	const x = SchemaVersions.find((ver) => ver.namespace == namespace);
@@ -155,12 +155,12 @@ export const SLR_SchemaSpecVersion = (version: number) : string => {
 /**
  * determine the DVB Bluebook version for the specified schema namespace
  *
- * @param {string} namespace     The schema namespace
- * @param {integer} variant      The schema variant (0 for default)
+ * @param {string} namespace  The schema namespace
+ * @param {number} variant    The schema variant (0 for default)
  * @returns {XMLDocument} the schema corresponding to the namespace
  */
 export const SLR_GetSchema = (namespace: string, variant: number = 0) : LoadedVersionInfo | undefined => 
-	SchemaVersions.find((s) => (s.namespace == namespace && s.flags == variant));
+	SchemaVersions.find((s) => (s.namespace == namespace && s.flags == variant)) || SchemaVersions.find((s) => (s.namespace == namespace && s.flags == 0));
 
 
 let SLRschemasLoaded = false;

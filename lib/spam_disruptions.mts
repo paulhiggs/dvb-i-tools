@@ -30,7 +30,7 @@ import { read_string_options } from "./globals.mts"
 import { spam_blocker_config } from "./data_locations.mts"
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function random_redirect(app: express.Application, endpoint: string, protocol: string, targets: string[]) {
+function random_redirect(app: express.Application, endpoint: string, protocol: string, targets: string[]) : void {
 	app.all(endpoint, (req:express.Request, res: express.Response) => {
 
 		const clientAddress = (socket: Socket) => {

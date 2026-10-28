@@ -15,5 +15,4 @@ function LoadKnownCustomKeysRegistry(opts: LoadOptions): void
 
 function isKnownCMCDCustomKey(key: string): string | undefined
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CMCD_custom_stats(res: any)
+function CMCD_custom_stats(res: StatsType)

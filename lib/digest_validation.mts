@@ -26,12 +26,11 @@ const fetchContent = (url: string, options: Record<string, unknown>) => {
 		resp = fetchS(url, options);
 	}
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, no-empty 
-	catch (error) {
-	}
+	catch (error) {}
 	return resp?.ok ? resp.buffer() : null;
 };
 
-const DigestRegexp = /^(?<algorithm>([a-z\d]+))=:(?<digest>([a-zA-Z0-9]+)):$/;
+const DigestRegexp = /^(?<algorithm>([a-z\d]+))=:(?<digest>([a-zA-Z\d]+)):$/;
 /**
 * verifies that only premitted content digest algorithms are used for referenced elements
 *  
@@ -39,7 +38,7 @@ const DigestRegexp = /^(?<algorithm>([a-z\d]+))=:(?<digest>([a-zA-Z0-9]+)):$/;
 * @param {ErrorList}  errs     The class where errors and warnings relating to the serivce list processing are stored
 * @param {string}     errCode  Error code prefix for reporting
 */
-export function ValidateAnyContentDigests(element: XmlElement, errs: ErrorList, errCode: string) {
+export function ValidateAnyContentDigests(element: XmlElement, errs: ErrorList, errCode: string) : void {
 	if (!element) {
 		errs.addError({ type: APPLICATION, code: "VD000", message: "ValidateAnyContentDigests() called with element==null" });
 		return;
@@ -47,10 +46,10 @@ export function ValidateAnyContentDigests(element: XmlElement, errs: ErrorList, 
 
 	const contentDigests = element.attrAnyNsValueOr(tva.a_integrity);
 	if (contentDigests) {
-		const img = isDataURI(element.content) ? parseInlineImageData(element.content) :  fetchContent(element.content, fetch_options);
-		contentDigests.split(",").forEach( (contentDigest) => {
+		const img = isDataURI(element.content) ? parseInlineImageData(element.content) : fetchContent(element.content, fetch_options);
+		contentDigests.split(",").forEach( (contentDigest: string) => {
 			const result = contentDigest.match(DigestRegexp);
-			if (result && result.groups) {
+			if (result?.groups) {
 
 				if (!dvbi.ALLOWED_DIGESTS.includes(result.groups.algorithm))
 					errs.addError({

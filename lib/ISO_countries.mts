@@ -72,7 +72,7 @@ export default class ISOcountries {
 	 * @param {string}  countriesFile   the file name to load
 	 * @param {boolean} purge           erase the existing values before loading new
 	 */
-	#loadCountriesFromFile(countriesFile: string, purge: boolean = false, async: boolean = true, verbose: boolean = true) {
+	#loadCountriesFromFile(countriesFile: string, purge: boolean = false, async: boolean = true, verbose: boolean = true) : void {
 		if (verbose) console.log(chalk.yellow(`reading countries from ${countriesFile}`));
 		if (purge) this.reset();
 		if (async)
@@ -98,7 +98,7 @@ export default class ISOcountries {
 	 * @param {boolean} async  load asynchronously
 	 * @param {boolean} verbose  display verbose output
 	 */
-	#loadCountriesFromURL(countriesURL: string, purge: boolean = false, async: boolean = true, verbose: boolean = true) {
+	#loadCountriesFromURL(countriesURL: string, purge: boolean = false, async: boolean = true, verbose: boolean = true) : void {
 		const isHTTPurl = isHTTPURL(countriesURL);
 		if (verbose) console.log(chalk.yellow(`${isHTTPurl ? "" : "--> NOT "}retrieving countries from ${countriesURL} using fetch()`));
 		if (!isHTTPurl) return;
@@ -124,7 +124,7 @@ export default class ISOcountries {
 		}
 	}
 
-	loadCountries(source: FileLocations, options: LoadOptions) {
+	loadCountries(source: FileLocations, options: LoadOptions) : void {
 	
 		DefaultProperty(options, "purge", true);
 
@@ -134,11 +134,11 @@ export default class ISOcountries {
 			this.#loadCountriesFromURL(source.url, options.purge, options.async, options.verbose);
 	}
 
-	reset() {
+	reset() : void {
 		this.#countriesList.length = 0;
 	}
 
-	count() {
+	count() : number {
 		return this.#countriesList.length;
 	}
 
@@ -147,7 +147,7 @@ export default class ISOcountries {
 	 *
 	 * @param {string}  countryCode     the country code to be checked for validity
 	 * @param {boolean} caseSensitive   ignore case
-	 * @return {boolean} true if countryCode is known else false
+	 * @returns {boolean} true if countryCode is known else false
 	 */
 	isISO3166code(countryCode: string, caseSensitive: boolean = true) : boolean {
 		let found = false;

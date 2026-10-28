@@ -14,7 +14,7 @@ import { HBBTV_APP_TYPE } from "./HbbTV_definitions.mts";
 import { HbbTV_Standard_versions, HbbTV_Features } from './HbbTV_definitions.mts'
 import { CTA5000_Standard_versions} from './CTA_definitions.mts'
 
-class _slVersions {
+export const slVersions = new class {
 	r0: number = 0					// A177
 	r1: number = 1					// A177r1
 	r2: number = 2					// A177r2
@@ -26,16 +26,14 @@ class _slVersions {
 	r8: number = 8					// A177r8 - draft ETSI TS 103 770 v1.3.1 (2026-mm)
 	unknown: number = -1
 };
-export const slVersions = new _slVersions()
 
-class _cgVersions {
+export const cgVersions = new class {
 	r0: number = 0
 	r1: number = 1
 	r2: number = 2				// ETSI TS 102 822-3-1 v1.13.1
 	r3: number = 3				// ETSI TS 102 822-3-1 v1.14.1
 	unknown: number = -1
 };
-export const cgVersions = new _cgVersions()
 
 const DVB_metadata: string = "urn:dvb:metadata";
 const DVB_CSmetadata: string = `${DVB_metadata}:cs`,
@@ -74,13 +72,12 @@ export const CMCD_METHOD_HTTP_HEADER: string = `${CMCDdelivery}:customHTTPHeader
 	CMCD_METHOD_QUERY_ARGUMENT: string = `${CMCDdelivery}:queryArguments`,
 	CMCD_METHOD_BODY: string = `${CMCDdelivery}:body`;
 
-class _dvbi_types {
+export const dvbi_types = new class {
 	a_verificationPolicy: string = tva.a_verificationPolicy
 }
-export const dvbi_types = new _dvbi_types()
 
 
-class _dvbi {
+export const dvbi = new class {
 	A177_Namespace: string = `${DVB_metadata}:servicediscovery:2019`
 	A177r1_Namespace: string = `${DVB_metadata}:servicediscovery:2020`
 	A177r2_Namespace: string = `${DVB_metadata}:servicediscovery:2021`
@@ -449,14 +446,13 @@ class _dvbi {
 	e_WildcardPostcode: string = "WildcardPostcode"
 
 	constructor() {
-		HbbTV_Standard_versions.forEach((v) => this.ApplicationStandards.push(v))
-		CTA5000_Standard_versions.forEach((v) => this.ApplicationStandards.push(v))
-		HbbTV_Features.forEach((f) => this.ApplicationOptions.push(f)) 
+		HbbTV_Standard_versions.forEach((v: string) => this.ApplicationStandards.push(v))
+		CTA5000_Standard_versions.forEach((v: string) => this.ApplicationStandards.push(v))
+		HbbTV_Features.forEach((f: string) => this.ApplicationOptions.push(f)) 
 	}
 };
-export const dvbi = new _dvbi()
 
-class _dvbisld {
+export const dvbisld = new class {
 	A177_Namespace: string = `${DVB_metadata}:servicelistdiscovery:2019`
 	A177r1_Namespace: string = `${DVB_metadata}:servicelistdiscovery:2020`
 	A177r2_Namespace: string = `${DVB_metadata}:servicelistdiscovery:2021`
@@ -499,7 +495,6 @@ class _dvbisld {
 
 	q_inlineImages: string = "inlineImages"
 };
-export const dvbisld = new _dvbisld()
 
 export const validApplicationTypes: string[] = [
 	dvbi.XML_AIT_CONTENT_TYPE, 
@@ -518,7 +513,7 @@ export const DvbIApplicationTypes: string[] = [
 	HBBTV_APP_TYPE,
 ];
 
-class _dvbiEA {
+export const dvbiEA = new class {
 	MediaLocator: string[] = [dvbi.a_contentLanguage].concat(tvaEA.MediaLocator)
 	NVOD: string[] =  [dvbi.a_mode, dvbi.a_reference, dvbi.a_offset]
 	ServiceList: string[] =  [dvbi.a_version, tva.a_lang, dvbi.a_responseStatus, dvbi.a_id]
@@ -529,9 +524,9 @@ class _dvbiEA {
 	ServiceInstanceType: string[] = [dvbi.a_priority, dvbi.a_id, tva.a_lang]
 	AudioAttributes: string[] = tvaEA.AudioAttributes
 }
-export const dvbiEA = new _dvbiEA()
+ 
 
-class _dvbiEC {
+export const dvbiEC = new class {
 	// EC = Element-Children - the child elements or each element
 	RelatedMaterial: string[] = tvaEC.RelatedMaterial
 	OrganizationType: string[] = [mpeg7.e_Name, mpeg7.e_Kind, mpeg7.e_ContactName, mpeg7.e_Jurisdiction, mpeg7.e_Address, mpeg7.e_ElectronicAddress]
@@ -577,5 +572,3 @@ class _dvbiEC {
 	VideoAttributes: string[] = tvaEC.VideoAttributes.concat([dvbi.e_Colorimetry])
 	AudioAttributes: string[] = tvaEC.AudioAttributes
 };
-
-export const dvbiEC = new _dvbiEC()

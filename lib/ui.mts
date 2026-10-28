@@ -188,7 +188,7 @@ function tabulateResults(source: string, res: express.Response, error: string[] 
 }
 
 
-const severity_highlight: Record<string, string>[] = [
+const severity_highlight: {background:string, text:string}[] = [
 	/* 0 */ {background:"background-color: palegreen;", text:"color:black;"},
 	/* 1 */ {background:"background-color: skyblue;", text:"color:black;"},
 	/* 2 */ {background:"background-color: yellow;", text:"color:black;"},
@@ -241,7 +241,6 @@ function reportNestedErrors(req: express.Request, res: express.Response, errs: E
 
 	nested_error_row(req, res, errs, 1)
 	res.write("</table>")
-
 }
 
 export type FormModes = {
@@ -262,7 +261,7 @@ export function drawForm(
 		req: express.Request, res: express.Response,
 		modes: FormModes, 
 		supportedRequests: CGRequestType[] | null, 
-		motd?: string, error?: string[], errs?: ErrorList) {
+		motd?: string, error?: string[], errs?: ErrorList) : Promise<express.Response> {
 			
 	const ENTRY_FORM_REQUEST_TYPE_ID = "requestType";
 
@@ -345,7 +344,7 @@ export function drawForm(
 	});
 }
 
-export function drawResults(req: express.Request, res: express.Response, motd?: string, error?: string[], errs?: ErrorList) {
+export function drawResults(req: express.Request, res: express.Response, motd?: string, error?: string[], errs?: ErrorList) : Promise<express.Response>{
 	res.setHeader("Content-Type", "text/html");
 	res.write(PAGE_TOP("DVB-I Validator", req.secure, "DVB-I Validator", motd));
 	tabulateResults(req.query.url ? req.query.url as string: "uploaded list", res, error, errs);

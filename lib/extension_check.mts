@@ -25,46 +25,45 @@ export function CheckExtension(extn: XmlElement, extLoc: number, errs: ErrorList
 	if (!parameterCheck("CheckExtension", extn, null, errs, "CE000")) return;
 
 	// extension type is checked in schema validation
-
 	const extn_extensionName = extn.attrAnyNsValueOr(dvbi.a_extensionName);
-	if (extn_extensionName) {
-		const where = (extension: string, location: string) => `${extension} extension only permitted in ${location}`;
-		switch (extn_extensionName) {
-			case "DVB-HB":
-				if (extLoc != EXTENSION_LOCATION_DASH_INSTANCE)
-					errs.addError({
-						code: `${errCode}-1`,
-						message: where("DVB-HB", "DVB DASH service instance"),
-						fragment: extn,
-						key: keys.k_Extensibility,
-					});
-				break;
-			case hbbtv.serviceIdentifierTriplet_extension:
-				if (extLoc != EXTENSION_LOCATION_SERVICE_ELEMENT)
-					errs.addError({
-						code: `${errCode}-2`,
-						message: where("HbbTV", "Service List"),
-						fragment: extn,
-						key: keys.k_Extensibility,
-					});
-				break;
-			case "vnd.apple.mpegurl":
-				if (extLoc != EXTENSION_LOCATION_OTHER_DELIVERY && extLoc != EXTENSION_LOCATION_SERVICE_LIST_REGISTRY)
-					errs.addError({
-						code: `${errCode}-3`,
-						message: where("HLS", "Service List Registry or Service List"),
-						fragment: extn,
-						key: keys.k_Extensibility,
-					});
-				break;
-			default:
+	if (!extn_extensionName) return
+
+	const where = (extension: string, location: string) => `${extension} extension only permitted in ${location}`;
+	switch (extn_extensionName) {
+		case "DVB-HB":
+			if (extLoc != EXTENSION_LOCATION_DASH_INSTANCE)
 				errs.addError({
-					type: WARNING,
-					code: `${errCode}-100`,
-					key: "unknown extension",
+					code: `${errCode}-1`,
+					message: where("DVB-HB", "DVB DASH service instance"),
 					fragment: extn,
-					message: `extension ${extn_extensionName.quote()} is not known to this tool`,
+					key: keys.k_Extensibility,
 				});
-		}
+			break;
+		case hbbtv.serviceIdentifierTriplet_extension:
+			if (extLoc != EXTENSION_LOCATION_SERVICE_ELEMENT)
+				errs.addError({
+					code: `${errCode}-2`,
+					message: where("HbbTV", "Service List"),
+					fragment: extn,
+					key: keys.k_Extensibility,
+				});
+			break;
+		case "vnd.apple.mpegurl":
+			if (extLoc != EXTENSION_LOCATION_OTHER_DELIVERY && extLoc != EXTENSION_LOCATION_SERVICE_LIST_REGISTRY)
+				errs.addError({
+					code: `${errCode}-3`,
+					message: where("HLS", "Service List Registry or Service List"),
+					fragment: extn,
+					key: keys.k_Extensibility,
+				});
+			break;
+		default:
+			errs.addError({
+				type: WARNING,
+				code: `${errCode}-100`,
+				key: "unknown extension",
+				fragment: extn,
+				message: `extension ${extn_extensionName.quote()} is not known to this tool`,
+			});
 	}
 }

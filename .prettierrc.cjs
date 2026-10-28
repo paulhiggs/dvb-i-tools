@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-undef
 module.exports = {
 	arrowParens: "always",
-	bracketSpacing: true,
+	bracketSpacing: false,
 	endOfLine: "lf",
 	htmlWhitespaceSensitivity: "strict",
 	printWidth: 180,

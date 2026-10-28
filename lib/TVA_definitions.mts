@@ -12,7 +12,7 @@ import { mpeg7 } from "./MPEG7_definitions.mts"
 
 export const TVA_CSmetadata: string = "urn:tva:metadata:cs";
 
-class tva_definitions {
+export const tva = new class {
 	SYNOPSIS_BRIEF_LABEL: string = "brief"
 	SYNOPSIS_BRIEF_LENGTH: number = 30
 	SYNOPSIS_SHORT_LABEL: string = "short"
@@ -239,15 +239,13 @@ class tva_definitions {
 	cs_PromotionalStillImage: string = `${TVA_CSmetadata}:HowRelatedCS:2012:19`
 };
 
-export const tva = new tva_definitions()
-
 const tvaBaseMemberOfTypeAttributes: string[] = [tva.a_crid, tva.a_index],
 	tvaControlledTermTypeAttributes: string[] = [tva.a_href],
 	tvafragmentIdentificationAttributes: string[] = [tva.a_fragmentId, tva.a_fragmentVersion, tva.a_fragmentExpirationDate],
 	tvaExtendedURITypeAttributes: string[] = [tva.a_contentType, tva.a_uriType, tva.a_integrity, tva.a_verificationPolicy],
 	mpeg7UniqueIDTypeAttributes: string[] = [mpeg7.a_type, mpeg7.a_organization, mpeg7.a_authority, mpeg7.a_encoding];
 
-class tvaEA_definitions {
+export const tvaEA = new class {
 	// EA = Element-Attributes - the attributes that are defiend for each element
 	AudioAttributes: string[] = []
 	AudioLanguage: string[] = [tva.a_purpose, mpeg7.a_type, mpeg7.a_supplemental]
@@ -279,12 +277,11 @@ class tvaEA_definitions {
 	Synopsis: string[] = [tva.a_length, tva.a_lang]
 	Title: string[] = [tva.a_type, tva.a_lang]
 };
-export const tvaEA = new tvaEA_definitions()
 
 const ProgramLocationType: string[] = [tva.e_Program, tva.e_ProgramURL, tva.e_AuxiliaryURL, tva.e_InstanceMetadataId, tva.e_InstanceDescription];
 export const BaseAccessibilityAttributesType: string[] = [tva.e_AppInformation, tva.e_Personalisation];
 
-class tvaEC_definitions {
+export const tvaEC = new class {
 	// EC = Element-Children - the child elements or each element
 	AccessibilityAttributes: string[] = [
 		tva.e_SubtitleAttributes,
@@ -429,4 +426,3 @@ class tvaEC_definitions {
 	SubtitleAttributes: string[] = [tva.e_Carriage, tva.e_Coding, tva.e_SubtitleLanguage, tva.e_Purpose, tva.e_SuitableForTTS].concat(BaseAccessibilityAttributesType)
 	VideoAttributes: string[] = [tva.e_Coding, tva.e_Scan, tva.e_HorizontalSize, tva.e_VerticalSize, tva.e_AspectRatio, tva.e_Color, tva.e_FrameRate, tva.e_BitRate, tva.e_BitsPerSample]
 };
-export const tvaEC = new tvaEC_definitions()

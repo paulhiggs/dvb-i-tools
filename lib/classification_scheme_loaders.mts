@@ -99,12 +99,12 @@ export function LoadVideoCodecCS(opts: LoadOptions): ClassificationScheme {
 		opts.useURLs
 			? {
 					urls: [
-						DVB_VideoCodecCS.y2007.url, 
-						DVB_VideoCodecCS.y2020.url, 
-						DVB_VideoCodecCS.y2021.url, 
-						DVB_VideoCodecCS.y2022.url, 
-						MPEG7_VisualCodingFormatCS.url
-					] as string[],
+						DVB_VideoCodecCS.y2007.url!, 
+						DVB_VideoCodecCS.y2020.url!, 
+						DVB_VideoCodecCS.y2021.url!, 
+						DVB_VideoCodecCS.y2022.url!, 
+						MPEG7_VisualCodingFormatCS.url!
+					],
 			  }
 			: {
 					files: [
@@ -113,7 +113,7 @@ export function LoadVideoCodecCS(opts: LoadOptions): ClassificationScheme {
 						DVB_VideoCodecCS.y2021.file,
 						DVB_VideoCodecCS.y2022.file, 
 						MPEG7_VisualCodingFormatCS.file
-					] as string[],
+					],
 			  },
 		opts
 	);
@@ -134,11 +134,11 @@ export function LoadAudioCodecCS(opts: LoadOptions): ClassificationScheme {
 		opts.useURLs
 			? {
 					urls: [
-						MPEG7_AudioCodingFormatCS.url, 
-						DVB_AudioCodecCS.y2007.url, 
-						DVB_AudioCodecCS.y2020.url,
-						DVB_AudioCodecCS.y2024.url
-					] as string[],
+						MPEG7_AudioCodingFormatCS.url!, 
+						DVB_AudioCodecCS.y2007.url!, 
+						DVB_AudioCodecCS.y2020.url!,
+						DVB_AudioCodecCS.y2024.url!
+					],
 			  }
 			: {
 					files: [
@@ -146,7 +146,7 @@ export function LoadAudioCodecCS(opts: LoadOptions): ClassificationScheme {
 						DVB_AudioCodecCS.y2007.file, 
 						DVB_AudioCodecCS.y2020.file, 
 						DVB_AudioCodecCS.y2024.file
-					] as string[],
+					],
 			  },
 		opts,
 		[MPEG1_layer_2]
@@ -166,8 +166,8 @@ export function LoadGenres(opts: LoadOptions): ClassificationScheme {
 	const cs = new ClassificationScheme();
 	cs.loadCS(
 		opts.useURLs
-			? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] as string[] }
-			: {	files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] as string[] },
+			? { urls: [TVA_ContentCS.url!, TVA_FormatCS.url!, DVBI_ContentSubject.url!] }
+			: {	files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] },
 		opts
 	);
 	return cs;
@@ -279,8 +279,8 @@ export function LoadAudioConformanceCS(opts: LoadOptions): ClassificationScheme 
 	const cs = new ClassificationScheme();
 	cs.loadCS(
 		opts.useURLs 
-			? { urls: [DVB_AudioConformanceCS.y2017.url, DVB_AudioConformanceCS.y2024.url] as string[] } 
-			: { files: [DVB_AudioConformanceCS.y2017.file, DVB_AudioConformanceCS.y2024.file] as string[]}, 
+			? { urls: [DVB_AudioConformanceCS.y2017.url!, DVB_AudioConformanceCS.y2024.url!] } 
+			: { files: [DVB_AudioConformanceCS.y2017.file, DVB_AudioConformanceCS.y2024.file] }, 
 		opts
 	);
 	return cs;
@@ -300,12 +300,12 @@ export function LoadVideoConformanceCS(opts: LoadOptions): ClassificationScheme 
 		opts.useURLs
 			? {
 					urls: [
-						DVB_VideoConformanceCS.y2017.url, 
-						DVB_VideoConformanceCS.y2021.url, 
-						DVB_VideoConformanceCS.y2022.url, 
-						DVB_VideoConformanceCS.y2024.url,
-						DVB_VideoConformanceCS.y2026.url,
-					] as string[],
+						DVB_VideoConformanceCS.y2017.url!, 
+						DVB_VideoConformanceCS.y2021.url!, 
+						DVB_VideoConformanceCS.y2022.url!, 
+						DVB_VideoConformanceCS.y2024.url!,
+						DVB_VideoConformanceCS.y2026.url!,
+					],
 				}
 			: {
 					files: [
@@ -314,7 +314,7 @@ export function LoadVideoConformanceCS(opts: LoadOptions): ClassificationScheme 
 						DVB_VideoConformanceCS.y2022.file, 
 						DVB_VideoConformanceCS.y2024.file,
 						DVB_VideoConformanceCS.y2026.file,
-					] as string[],
+					],
 			  },
 		opts
 	);
@@ -427,8 +427,8 @@ export function LoadRatings(opts: LoadOptions): ClassificationScheme {
 	const cs = new ClassificationScheme();
 	cs.loadCS(
 		opts.useURLs 
-			? { urls: [TVA_ContentAlertCS.url, DVB_ParentalGuidanceCS.url] as string[] } 
-			: { files: [TVA_ContentAlertCS.file, DVB_ParentalGuidanceCS.file] as string[] }, 
+			? { urls: [TVA_ContentAlertCS.url!, DVB_ParentalGuidanceCS.url!] } 
+			: { files: [TVA_ContentAlertCS.file, DVB_ParentalGuidanceCS.file] }, 
 		opts
 	);
 	return cs;
@@ -446,8 +446,8 @@ export function LoadCredits(opts: LoadOptions): ClassificationScheme {
 	const credits = new Role();
 	credits.loadRoles(
 		opts.useURLs 
-			? { urls: [DVBI_CreditsItemRoles.url, DVBIv2_CreditsItemRoles.url] as string[]} 
-			: { files: [DVBI_CreditsItemRoles.file, DVBIv2_CreditsItemRoles.file] as string[]}, 
+			? { urls: [DVBI_CreditsItemRoles.url!, DVBIv2_CreditsItemRoles.url!]} 
+			: { files: [DVBI_CreditsItemRoles.file, DVBIv2_CreditsItemRoles.file]}, 
 		opts
 	);
 	return credits;

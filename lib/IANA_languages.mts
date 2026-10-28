@@ -23,7 +23,7 @@ import { isHTTPURL, BCP47_Language_Tag } from "./pattern_checks.mts"
 import ErrorList from "./error_list.mts"
 
 import type { FileLocations } from "./classification_scheme.mts"
-import type { LoadOptions } from "./globals.mts"
+import type { StatsType, LoadOptions } from "./globals.mts"
 
 type RedundntLanguageType = {
 	tag?: string
@@ -85,7 +85,7 @@ export default class IANAlanguages {
 		return `lang=${this.#languagesList.size},sign=${this.#signLanguagesList.size},redun=${this.#redundantLanguagesList.length}`;
 	}
 
-	stats(res: Record<string, string|number>) {
+	stats(res: StatsType) {
 		res.numLanguages = this.#languagesList.size;
 		res.numRedundantLanguages = this.#redundantLanguagesList.length;
 		const t: string[] = [];
@@ -137,11 +137,12 @@ export default class IANAlanguages {
 	 */
 	/* private method */
 	#processLanguageData(languageData: string) : void {
+
 		/**
 		 * determines if provided language information relates to a sign language
 		 *
-		 * @param {Array} items the language subtag
-		 * @return {boolean} true if the language subtag is a sign language
+		 * @param {string[]} items the language subtag
+		 * @returns {boolean} true if the language subtag is a sign language
 		 */
 		function isSignLanguage(items: string[]) : boolean {
 			for (let i = 0; i < items.length; i++)
@@ -155,7 +156,7 @@ export default class IANAlanguages {
 			if (region.indexOf('..') == -1)
 				res.push(region);
 			else {
-				const RegionRange = new RegExp(/^(?<start>(?:[A-Z]{2}))\.\.(?<end>(?:[A-Z]{2}))$/)
+				const RegionRange: RegExp = new RegExp(/^(?<start>(?:[A-Z]{2}))\.\.(?<end>(?:[A-Z]{2}))$/)
 				const match = region.match(RegionRange);
 				if (match && match.groups) {
 					const start1 = match.groups.start.charCodeAt(0), start2 = match.groups.start.charCodeAt(1);
@@ -263,7 +264,7 @@ export default class IANAlanguages {
 	 * @param {string}  languagesURL   the URL to load
 	 * @param {boolean} purge          erase the existing values before loading new
 	 * @param {boolean} async          use asynchronous loading (sync needed for command line execution)
-	 * @param {boolean} verbose         display verbose output
+	 * @param {boolean} verbose        display verbose output
 	 */
 	/* private method */
 	#loadLanguagesFromURL(languagesURL: string, purge: boolean = false, async: boolean = true, verbose: boolean = true) {
@@ -305,7 +306,7 @@ export default class IANAlanguages {
 	 * determines if a language is known
 	 *
 	 * @param {string} value The value to check for existance
-	 * @return {LanguageLookupResponse} indicating the "known" state of the language
+	 * @returns {LanguageLookupResponse} indicating the "known" state of the language
 	 */
 	isKnown(value: string) : LanguageLookupResponse {
 		if (value === null || value === undefined) return { resp: this.languageNotSpecified };
@@ -338,7 +339,7 @@ export default class IANAlanguages {
 	 * determines if a signing language is known
 	 *
 	 * @param {string} language The value to check for existance in the list of known signing languages
-	 * @return {number} indicating the "known" state of the language
+	 * @returns {number} indicating the "known" state of the language
 	 */
 	checkSignLanguage(language: string) : number {
 		return this.#signLanguagesList.has(language.toLowerCase()) ? this.languageKnown : this.languageUnknown;
@@ -353,7 +354,7 @@ export default class IANAlanguages {
 }
 
 // return true is @lang is formatted according to BCP47 Language-Tag
-const BCP47langaugetag_exp = new RegExp(`^${BCP47_Language_Tag}$`);
+const BCP47langaugetag_exp: RegExp = new RegExp(`^${BCP47_Language_Tag}$`);
 const isValidLangFormat = (lang: string) : boolean => BCP47langaugetag_exp.test(lang);
 
 export function ValidateLanguage(lang: string, errs: ErrorList, errCode: string, errLoc: number) : boolean {
