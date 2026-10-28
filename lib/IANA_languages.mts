@@ -20,7 +20,7 @@ import { datatypeIs, DefaultProperty } from "./utils.mts"
 import { tva } from "./TVA_definitions.mts"
 import handleErrors from "./fetch_err_handler.mts"
 import { isHTTPURL, BCP47_Language_Tag } from "./pattern_checks.mts"
-import ErrorList from "./error_list.mts"
+import ErrorList, { WARNING } from "./error_list.mts"
 
 import type { FileLocations } from "./classification_scheme.mts"
 import type { StatsType, LoadOptions } from "./globals.mts"
@@ -359,7 +359,7 @@ const isValidLangFormat = (lang: string) : boolean => BCP47langaugetag_exp.test(
 
 export function ValidateLanguage(lang: string, errs: ErrorList, errCode: string, errLoc: number) : boolean {
 	// language format check
-	const valid = isValidLangFormat(lang);
+	let valid = isValidLangFormat(lang);
 	if (!valid)
 		errs.addError({
 			code: `${errCode}a`,
@@ -367,5 +367,18 @@ export function ValidateLanguage(lang: string, errs: ErrorList, errCode: string,
 			line: errLoc,
 			message: `xml:${tva.a_lang} value ${lang.quote()} does not match format for Language-Tag in BCP47`,
 		});
+	if (valid && lang.indexOf("-") != -1) {
+		errs.addError({
+			code: `${errCode}b`,
+			type: WARNING,
+			key: "invalid language format",
+			line: errLoc,
+			message: "Language code should only include the primary language subtag",
+			clause: "A184 clause 4.14",
+			description: "Language codes should only include the primary language subtag as defined in IETF RFC 5646",
+		});
+		valid = false
+	}
+
 	return valid;
 }
