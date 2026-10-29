@@ -634,7 +634,7 @@ export default class ServiceListCheck {
 	 * @param {XmlElement} node      The XML tree node (either a <Service>, <TestService> or a <ServiceInstance>) to be checked
 	 * @returns {boolean} true if the node contains a <RelatedMaterial> element which signals an application else false
 	 */
-	/*private*/ #hasSignalledApplication(node: XmlElement) {
+	/*private*/ #hasSignalledApplication(node: XmlElement) : boolean {
 		if (node) {
 			node.forEachNamedChildElement(tva.e_RelatedMaterial, (elem) => {
 				const hr = elem.get(tva.e_HowRelated);
@@ -1007,6 +1007,11 @@ export default class ServiceListCheck {
 				line: ServiceInstance.line,
 				key: "empty ID",
 			});
+
+
+		//<ServiceInstance@xml:lang>
+		const ServiceInstance_lang = ServiceInstance.attrAnyNsValueOr(tva.a_lang);
+		if (ServiceInstance_lang) checkLanguage(ServiceInstance_lang, ServiceInstance, errs, "SI013");
 
 		//<ServiceInstance><DisplayName>
 		checkXMLLangs(dvbi.e_DisplayName, `service instance in service=${thisServiceId.quote()}`, ServiceInstance, errs, "SI010");
@@ -1822,6 +1827,9 @@ export default class ServiceListCheck {
 			errs,
 			"SL105"
 		);
+
+		const Service_lang = service.attrAnyNsValueOr(tva.a_lang);
+		if (Service_lang) checkLanguage(Service_lang, service, errs, "SL108");
 
 		// check <UniqueIdentifier>
 		const uID = service.getAnyNs(dvbi.e_UniqueIdentifier);
