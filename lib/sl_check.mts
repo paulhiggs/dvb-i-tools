@@ -2492,6 +2492,9 @@ export default class ServiceListCheck {
 		if (RegionList) {
 			// recurse the regionlist - Regions can be nested in Regions
 			RegionList.forEachNamedChildElement(dvbi.e_Region, (Region) => this.#addRegion(Region, 0, documentInfo, null, errs));
+
+			const RegionList_lang = RegionList.attrAnyNsValueOr(tva.a_lang);
+			if (RegionList_lang) checkLanguage(RegionList_lang, RegionList, errs, "SL045");
 		}
 
 		//check <ServiceList><TargetRegion>
@@ -2557,6 +2560,9 @@ export default class ServiceListCheck {
 						});
 				}
 			});
+
+			const CGSourceList_lang = CGSourceList.attrAnyNsValueOr(tva.a_lang);
+			if (CGSourceList_lang) checkLanguage(CGSourceList_lang, CGSourceList, errs, "SL073");
 		}
 
 		// check  elements in <ServiceList><ContentGuideSource>
