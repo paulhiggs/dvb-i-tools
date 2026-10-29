@@ -2535,6 +2535,9 @@ export default class ServiceListCheck {
 						key: "duplicate subscription package",
 						fragment: SubscriptionPackage,
 					});
+
+				const SubscriptionPackage_lang = SubscriptionPackage.attrAnyNsValueOr(tva.a_lang);
+				if (SubscriptionPackage_lang) checkLanguage(SubscriptionPackage_lang, SubscriptionPackage, errs, "SL064");
 			});
 		}
 
