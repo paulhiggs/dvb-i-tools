@@ -425,7 +425,7 @@ export default class ServiceListCheck {
 					key: "invalid app type",
 				});
 			ValidateAnyContentDigests(MediaUri, errs, "SA015");
-			ValidateAnySignaturePolicy(MediaUri, documentInfo, errs, "SI126");
+			ValidateAnySignaturePolicy(MediaUri, documentInfo, errs, "SA021");
 		});
 		if (!hasMediaURI)
 			errs.addError({
@@ -493,7 +493,7 @@ export default class ServiceListCheck {
 		);
 
 		let HowRelated: XmlElement | null = null;
-		const MediaLocator: XmlElement[] = [],
+		const MediaLocators: XmlElement[] = [],
 			AccessibilityAttributes: XmlElement[] = [];
 		RelatedMaterial.forEachChildElement((child) => {
 			switch (child.name) {
@@ -501,7 +501,7 @@ export default class ServiceListCheck {
 					HowRelated = child;
 					break;
 				case tva.e_MediaLocator:
-					MediaLocator.push(child);
+					MediaLocators.push(child);
 					break;
 				case tva.e_AccessibilityAttributes:
 					AccessibilityAttributes.push(child);
@@ -531,7 +531,7 @@ export default class ServiceListCheck {
 						checkValidLogos(RelatedMaterial, Location, documentInfo, errs, `${errCode}-10`);
 					} else if (validServiceAgreementApp(HowRelated)) {
 						rc = HowRelated_href;
-						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, Location, rc, documentInfo,errs));
+						MediaLocators.forEach((locator) => this.#checkSignalledApplication(locator, Location, rc, documentInfo,errs));
 					} else {
 						errs.addError(sl_InvalidHrefValue(HowRelated_href, HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-11`));
 						errs.errorDescription(SL_helpers.RMErrorDescription(`${errCode}-11`, dvbi.e_ServiceList, 14));
@@ -551,7 +551,7 @@ export default class ServiceListCheck {
 						checkValidLogos(RelatedMaterial, Location, documentInfo, errs, `${errCode}-22`);
 					} else if (this.#validServiceApplication(HowRelated, SL_SchemaVersion(documentNamespace))) {
 						rc = HowRelated_href;
-						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, Location, rc, documentInfo,errs));
+						MediaLocators.forEach((locator) => this.#checkSignalledApplication(locator, Location, rc, documentInfo,errs));
 					} else {
 						errs.addError(sl_InvalidHrefValue(HowRelated_href, HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-24`));
 						errs.errorDescription(SL_helpers.RMErrorDescription(`${errCode}-24`, dvbi.e_Service, 15));
@@ -589,7 +589,7 @@ export default class ServiceListCheck {
 						});
 					else if (this.#validServiceInstanceApplication(HowRelated, SL_SchemaVersion(documentNamespace))) {
 						rc = HowRelated_href;
-						MediaLocator.forEach((locator) => this.#checkSignalledApplication(locator, Location, rc, documentInfo,errs));
+						MediaLocators.forEach((locator) => this.#checkSignalledApplication(locator, Location, rc, documentInfo,errs));
 					} else {
 						errs.addError(sl_InvalidHrefValue(HowRelated_href, HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-34`));
 						errs.errorDescription(SL_helpers.RMErrorDescription(`${errCode}-34`, dvbi.e_ServiceInstance, 16));
