@@ -197,7 +197,7 @@ const severity_highlight: {background:string, text:string}[] = [
 	/* 5 */ {background:"background-color: darkred;", text:"color:yellow;"},
 ]
 
-function nested_error_row(req: express.Request, res: express.Response, errs: ErrorList | undefined, depth: number) {
+function nested_error_row(session: ValidationSession, errs: ErrorList, depth: number) {
 	if (!errs || errs.nestedErrors.length == 0) return
 	errs.nestedErrors.forEach((nest) => {
 		const palette =  severity_highlight[nest.severity()]
@@ -205,7 +205,7 @@ function nested_error_row(req: express.Request, res: express.Response, errs: Err
 		if (nest.source && nest.description) {
 			switch (nest.type) {
 				case "SL":
-					validator=`${req.protocol}://${req.host}/validate_sl?url=${nest.source}`
+					validator=`${session.req.protocol}://${session.req.host}/validate_sl?url=${nest.source}`
 					break
 				case CG_REQUEST_SCHEDULE_TIME:
 				case CG_REQUEST_SCHEDULE_NOWNEXT:
@@ -215,32 +215,32 @@ function nested_error_row(req: express.Request, res: express.Response, errs: Err
 				case CG_REQUEST_BS_CATEGORIES:
 				case CG_REQUEST_BS_LISTS:
 				case CG_REQUEST_BS_CONTENTS:
-					validator=`${req.protocol}://${req.host}/validate_cg?url=${encodeURIComponent(nest.source)}&type=${nest.type}`
+					validator=`${session.req.protocol}://${session.req.host}/validate_cg?url=${encodeURIComponent(nest.source)}&type=${nest.type}`
 					break
 			}
 			
 			refer = `<a target="_blank" href="${validator ?? nest.source}">${nest.description}</a>` 
 		}
-		res.write(
+		session.res.write(
 			`<tr><td>${depth}</td><td>`+
 			refer+
 			(nest.source ? `${BREAK}<span class="url">${nest.source}</span>`: "")+
 			"</td>"+
 			`<td style="${palette.background} ${palette.text}">${nest.compactSummary()}`)
-		nest.debugs.forEach((msg) => res.write(`${BREAK}${msg.code} ${msg.message}`))
-		res.write("</td></tr>")
-		nested_error_row(req, res, nest, depth+1)
+		nest.debugs.forEach((msg) => session.res.write(`${BREAK}${msg.code} ${msg.message}`))
+		session.res.write("</td></tr>")
+		nested_error_row(session, nest, depth+1)
 	});
 }
 
-function reportNestedErrors(req: express.Request, res: express.Response, errs: ErrorList | undefined) {
-	if (!errs || errs.nestedErrors.length == 0) return
+function reportNestedErrors(session: ValidationSession) {
+	if (!session.errs || session.errs.nestedErrors.length == 0) return
 	
-	res.write(`${BREAK}<p><b>Traversed Errors</b></p>`)
-	res.write(`<table><tr><th></th><th>location</th><th>result</th></tr>`)
+	session.res.write(`${BREAK}<p><b>Traversed Errors</b></p>`)
+	session.res.write(`<table><tr><th></th><th>location</th><th>result</th></tr>`)
 
-	nested_error_row(req, res, errs, 1)
-	res.write("</table>")
+	nested_error_row(session, session.errs, 1)
+	session.res.write("</table>")
 }
 
 export type FormModes = {
@@ -257,17 +257,19 @@ export type FormModes = {
 	allowTraversal: boolean
 }
 
+import type { ValidationSession } from "./validator.mts"
+
 export function drawForm(
-		req: express.Request, res: express.Response,
+		session: ValidationSession,
 		modes: FormModes, 
 		supportedRequests: CGRequestType[] | null, 
-		motd?: string, error?: string[], errs?: ErrorList) : Promise<express.Response> {
+		motd?: string) : Promise<express.Response> {
 			
 	const ENTRY_FORM_REQUEST_TYPE_ID = "requestType";
 
-	res.setHeader("Content-Type", "text/html");
-	res.write(PAGE_TOP("DVB-I Validator", req.secure, "DVB-I Validator", motd));
-	res.write(`
+	session.res.setHeader("Content-Type", "text/html");
+	session.res.write(PAGE_TOP("DVB-I Validator", session.req.secure, "DVB-I Validator", motd));
+	session.res.write(`
 	<script>
 	function redrawForm() {
 		document.getElementById("entryURL").hidden=!document.getElementById("radURL").checked
@@ -280,78 +282,76 @@ export function drawForm(
 	<form method="post" encType="multipart/form-data">
 		${
 			modes.hasSL
-				? `<input id="radSL" type="radio" name="testtype" value="${modes.sl}" ${req.session.data?.mode == modes.sl ? "checked" : ""} onclick="redrawForm()">Service List</input>`
+				? `<input id="radSL" type="radio" name="testtype" value="${modes.sl}" ${session.req.session.data?.mode == modes.sl ? "checked" : ""} onclick="redrawForm()">Service List</input>`
 				: ""
 		}
 		${
 			modes.hasPL
-				? `<input id="radPL" type="radio" name="testtype" value="${modes.pl}" ${req.session.data?.mode == modes.pl ? "checked" : ""} onclick="redrawForm()">Playist</input>`
+				? `<input id="radPL" type="radio" name="testtype" value="${modes.pl}" ${session.req.session.data?.mode == modes.pl ? "checked" : ""} onclick="redrawForm()">Playist</input>`
 				: ""
 		}
 		${
 			modes.hasCG
-				? `<input id="radCG" type="radio" name="testtype" value="${modes.cg}" ${req.session.data?.mode == modes.cg ? "checked" : ""} onclick="redrawForm()">Content Guide</input>`
+				? `<input id="radCG" type="radio" name="testtype" value="${modes.cg}" ${session.req.session.data?.mode == modes.cg ? "checked" : ""} onclick="redrawForm()">Content Guide</input>`
 				: ""
 		}
 		${
 			modes.hasSLR
-				? `<input id="radSLR" type="radio" name="testtype" value="${modes.slr}" ${req.session.data?.mode == modes.slr ? "checked" : ""} onclick="redrawForm()">Service List Registry</input>`
+				? `<input id="radSLR" type="radio" name="testtype" value="${modes.slr}" ${session.req.session.data?.mode == modes.slr ? "checked" : ""} onclick="redrawForm()">Service List Registry</input>`
 				: ""
 		}
 
 		<br><br>
-		<input id="radURL" type="radio" name="doclocation" value="${modes.url}" ${req.session.data?.entry == modes.url ? "checked" : ""} onclick="redrawForm()">URL</input>
-		<input id="radFile" type="radio" name="doclocation" value="${modes.file}" ${req.session.data?.entry == modes.file ? "checked" : ""} onclick="redrawForm()">File</input>
+		<input id="radURL" type="radio" name="doclocation" value="${modes.url}" ${session.req.session.data?.entry == modes.url ? "checked" : ""} onclick="redrawForm()">URL</input>
+		<input id="radFile" type="radio" name="doclocation" value="${modes.file}" ${session.req.session.data?.entry == modes.file ? "checked" : ""} onclick="redrawForm()">File</input>
 		<br/>
 		${LINE}
-		<div id="entryURL" ${req.session.data?.entry == modes.url ? "" : "hidden"}><p><i>URL:</i><input type="url" size="70" name="XMLurl" value="${
-			req.session.data?.url ? req.session.data!.url : ""
-		}"></p></div>
-		<div id="entryFile" ${req.session.data?.entry == modes.file ? "" : "hidden"}><p><i>FILE:</i><input type="file" name="XMLfile" value=""></p></div>
-		<div id="variants">Variants: <input id="cbGermany" type="checkbox" name="forGermany" ${req.session.data?.forGermany == true ? "checked" : ""} onclick="redrawForm()">Germany</input></div>
-		${
-			modes.allowTraversal
-			? `<div id="traverser">Options: <input id="cbTraverse" type="checkbox" name="traverse" ${req.session.data?.traverse == true ? "checked" : ""} onclick="redrawForm()">Traverse <span style="color:red">(caution: time consuming)</span></input></div>`
+		<div id="entryURL" ${session.req.session.data?.entry == modes.url ? "" : "hidden"}><p><i>URL:</i>
+		<input type="url" size="70" name="XMLurl" value="${session.req.session.data?.url ?? ""}"></p></div>
+		<div id="entryFile" ${session.req.session.data?.entry == modes.file ? "" : "hidden"}><p><i>FILE:</i><input type="file" name="XMLfile" value=""></p></div>
+		<div id="variants">Variants: <input id="cbGermany" type="checkbox" name="forGermany" ${session.req.session.data?.forGermany == true ? "checked" : ""} onclick="redrawForm()">Germany</input></div>
+		${modes.allowTraversal
+			? `<div id="traverser">Options: <input id="cbTraverse" type="checkbox" name="traverse" ${session.req.session.data?.traverse == true ? "checked" : ""} onclick="redrawForm()">Traverse <span style="color:red">(caution: time consuming)</span></input></div>`
 			: ""
 		}
-		<div id="entryCGtype" ${req.session.data?.mode == modes.cg ? "" : "hidden"}><p>Query type:</p>`);
+		<div id="entryCGtype" ${session.req.session.data?.mode == modes.cg ? "" : "hidden"}><p>Query type:</p>`);
 	if (supportedRequests)
 		supportedRequests.forEach((choice) => {
-			res.write(
-				`<input type="radio" id="${choice.value}" name="${ENTRY_FORM_REQUEST_TYPE_ID}" value="${choice.value}" ${choice.value == req.session.data?.cgmode ? "checked" : ""} onclick="redrawForm()">${choice.label}</input>`
+			session.res.write(
+				`<input type="radio" id="${choice.value}" name="${ENTRY_FORM_REQUEST_TYPE_ID}" value="${choice.value}" ${choice.value == session.req.session.data?.cgmode ? "checked" : ""} onclick="redrawForm()">${choice.label}</input>`
 			);
 		});
-	res.write(`</div>
+	session.res.write(`</div>
 		<br><input type="submit" value="Validate!"><br>	
-	</form>
-	`);
+	</form>`);
 	let source: string = "";
-	switch (req.body?.doclocation) {
+	switch (session.req.body?.doclocation) {
 		case MODE_URL:
-			source = req.body?.XMLurl ? req.body?.XMLurl : "";
+			source = session.req.body.XMLurl ?? "";
 			break;
 		case MODE_FILE:
-			source = (req.files?.XMLfile as UploadedFile)?.name ? (req.files?.XMLfile as UploadedFile).name : "";
+			source = (session.req.files?.XMLfile as UploadedFile).name ?? "";
 			break;
 	}
-	tabulateResults(source, res, error, errs);
-	reportNestedErrors(req, res, errs)
-	res.write(PAGE_BOTTOM);
+	tabulateResults(source, session.res, session.req.parseErr, session.errs);
+	reportNestedErrors(session)
+	session.res.write(PAGE_BOTTOM);
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	return new Promise((resolve, reject) => {
-		resolve(res);
+		resolve(session.res);
 	});
 }
 
-export function drawResults(req: express.Request, res: express.Response, motd?: string, error?: string[], errs?: ErrorList) : Promise<express.Response>{
-	res.setHeader("Content-Type", "text/html");
-	res.write(PAGE_TOP("DVB-I Validator", req.secure, "DVB-I Validator", motd));
-	tabulateResults(req.query.url ? req.query.url as string: "uploaded list", res, error, errs);
-	reportNestedErrors(req, res, errs)
-	res.write(PAGE_BOTTOM);
+// session.req, session.res, motd, session.req.parseErr, session.errs
+export function drawResults(session: ValidationSession, motd?: string) : Promise<express.Response>{
+	session.res.setHeader("Content-Type", "text/html");
+	session.res.write(PAGE_TOP("DVB-I Validator", session.req.secure, "DVB-I Validator", motd));
+	tabulateResults(session.req.query.url ? session.req.query.url as string : "uploaded list", session.res, session.req.parseErr, session.errs);
+	reportNestedErrors(session)
+	session.res.write(PAGE_BOTTOM);
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	return new Promise((resolve, reject) => {
-		resolve(res);
+		resolve(session.res);
 	});
 }

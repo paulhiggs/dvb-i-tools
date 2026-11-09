@@ -66,8 +66,22 @@ import { GERMAN_A177r6_VARIANT } from "./globals.mts"
 
 // initialise string formatting extensions
 import {} from "./string-extensions.mts"
+import { CaseInsensitiveSet } from "./StringSet.ts"
 
 let csr: SLEPR | null= null;
+     
+export type ValidationSession = {
+	req: express.Request										// The Express request that triggered the validation
+	res: express.Response										// The Express response to be written to the requester
+	slrChecker?: ServiceListRegistryCheck		// Initialised Service List Registry validator
+	slChecker?: ServiceListCheck						// Initialised Service List validator
+	cgChecker?: ContentGuideCheck						// Content Guide metadata validator
+	plChecker?: PlaylistCheck								// Initialised Playlist validator
+	traverse: boolean												// Validate documents referenced from teh initial document
+	traversedPaths?: CaseInsensitiveSet			// URLs of documents already checked/validated (avoids duplictated validation and loops)
+	errs?: ErrorList
+	jsonResponse?: boolean
+}
 
 const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), read_string_options).toString());
 
@@ -110,177 +124,173 @@ function getVariant(req: express.Request) : number {
 }
 
 
-function report(req: express.Request, res: express.Response, jsonResponse: boolean, errs: ErrorList, motd: string | undefined) : void {
-	if (jsonResponse) {
-		res.setHeader("Content-Type", "application/json")
-		if (req.parseErr) 
-			res.write(JSON.stringify({ parseErr: req.parseErr }))
-		else delete errs.markupXML
-		res.write(
+function report(session: ValidationSession, motd: string | undefined) : void {
+	if (session.jsonResponse) {
+		session.res.setHeader("Content-Type", "application/json")
+		if (session.req.parseErr) 
+			session.res.write(JSON.stringify({ parseErr: session.req.parseErr }))
+		else delete session.errs?.markupXML
+		session.res.write(
 			JSON.stringify(
-				req.query.results && req.query.results == "all" 
-					? { errs } 
-					: { errors: errs.errors.length, warnings: errs.warnings.length, informationals: errs.informationals.length }
+				session.req.query.results && session.req.query.results == "all" 
+					?  session.errs 
+					: { errors: session.errs?.errors.length, warnings: session.errs?.warnings.length, informationals: session.errs?.informationals.length }
 			)
 		)
 	}
 	else 
-		drawResults(req, res, motd, req.parseErr, errs)
+		drawResults(session, motd)
 }
 
 
 function DVB_I_check(
-		req: express.Request, res: express.Response, 
-		slcheck: ServiceListCheck | undefined, plcheck: PlaylistCheck | undefined, cgcheck: ContentGuideCheck | undefined, slrcheck: ServiceListRegistryCheck | undefined, 
+		session: ValidationSession,
 		hasSL: boolean, hasPL: boolean, hasCG: boolean, hasSLR: boolean, 
 		allow_traversal: boolean,
 		motd: string | undefined, 
 		mode: string = MODE_UNSPECIFIED, linktype: string = MODE_UNSPECIFIED) : void {
-			
-	if (!req.session.data) {
+
+	if (!session.req.session.data) {
 		// setup defaults
-		req.session.data = {};
-		req.session.data.lastUrl = "";
-		req.session.data.mode = mode == MODE_UNSPECIFIED ? (hasSL ? MODE_SL : MODE_CG) : mode;
-		req.session.data.entry = linktype == MODE_UNSPECIFIED ? MODE_URL : linktype;
-		if (cgcheck) req.session.data.cgmode = cgcheck.supportedRequests[0].value;
-		req.session.data.forGermany = false;
-		req.session.data.traverse = false;
+		session.req.session.data = {};
+		session.req.session.data.lastUrl = "";
+		session.req.session.data.mode = mode == MODE_UNSPECIFIED ? (hasSL ? MODE_SL : MODE_CG) : mode;
+		session.req.session.data.entry = linktype == MODE_UNSPECIFIED ? MODE_URL : linktype;
+		if (session.cgChecker)session. req.session.data.cgmode = session.cgChecker.supportedRequests[0].value;
+		session.req.session.data.forGermany = false;
+		session.req.session.data.traverse = false;
 	}
-	if (req.session.data.lastUrl != req.url) {
-		req.session.data.mode = mode == MODE_UNSPECIFIED ? (hasSL ? MODE_SL : MODE_CG) : mode;
-		req.session.data.entry = linktype == MODE_UNSPECIFIED ? MODE_URL : linktype;
-		req.session.data.lastUrl = req.url;
+	if (session.req.session.data.lastUrl != session.req.url) {
+		session.req.session.data.mode = mode == MODE_UNSPECIFIED ? (hasSL ? MODE_SL : MODE_CG) : mode;
+		session.req.session.data.entry = linktype == MODE_UNSPECIFIED ? MODE_URL : linktype;
+		session.req.session.data.lastUrl = session.req.url;
 	}
 	
 	const FormArguments: FormModes = { cg: MODE_CG, sl: MODE_SL, pl: MODE_PL, slr: MODE_SLR, file: MODE_FILE, url: MODE_URL, hasSL: hasSL, hasPL: hasPL, hasCG: hasCG, hasSLR: hasSLR, allowTraversal: allow_traversal };
-	if (!req.body?.testtype) 
-		drawForm(req, res, FormArguments, (cgcheck && cgcheck.supportedRequests) ? cgcheck.supportedRequests : null, motd, undefined, undefined);
+	if (!session.req.body?.testtype) {
+		session.errs = undefined
+		session.req.parseErr = undefined
+		drawForm(session, FormArguments, (session.cgChecker && session.cgChecker.supportedRequests) ? session.cgChecker.supportedRequests : null, motd);
+	}
 	else {
 		let VVxml: string | null = null;
-		req.parseErr = undefined;
+		session.req.parseErr = undefined;
 
-		if (req.body.testtype == MODE_CG && req.body.requestType.length == 0) req.parseErr = ["request type not specified"]
-		else if (req.body.doclocation == MODE_URL && req.body.XMLurl.length == 0) req.parseErr = ["URL not specified"]
-		else if (req.body.doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) req.parseErr = ["File not provided"]
+		if (session.req.body.testtype == MODE_CG && session.req.body.requestType.length == 0) session.req.parseErr = ["request type not specified"]
+		else if (session.req.body.doclocation == MODE_URL && session.req.body.XMLurl.length == 0) session.req.parseErr = ["URL not specified"]
+		else if (session.req.body.doclocation == MODE_FILE && !(session.req.files && session.req.files.XMLfile)) session.req.parseErr = ["File not provided"]
 
-		req.session.data.forGermany = req.body.forGermany == "on";
-		req.session.data.traverse = req.body.traverse == "on"
-		const log_prefix = createPrefix(req, req.body.testtype);
-		const errs = new ErrorList();
-		if (!req.parseErr)
-			switch (req.body.doclocation) {
+		session.req.session.data.forGermany = session.req.body.forGermany == "on";
+		session.req.session.data.traverse = session.req.body.traverse == "on"
+		const log_prefix = createPrefix(session.req, session.req.body.testtype);
+		session.errs = new ErrorList();
+		if (!session.req.parseErr)
+			switch (session.req.body.doclocation) {
 				case MODE_URL:
-					if (isHTTPURL(req.body.XMLurl)) {
+					if (isHTTPURL(session.req.body.XMLurl)) {
 						let resp = null;
 						try {
-							errs.setLocation(req.body.XMLurl)
-							resp = fetchS(req.body.XMLurl, fetch_options);
+							session.errs.setLocation(session.req.body.XMLurl)
+							resp = fetchS(session.req.body.XMLurl, fetch_options);
 						} catch (error) {
-							req.parseErr = [`${error}`];
+							session.req.parseErr = [`${error}`];
 						}
 						if (resp) {
 							if (resp.ok) VVxml = resp.text();
-							else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`];
+							else session.req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${session.req.body.XMLurl}`];
 						}
-					} else req.parseErr = [`${req.body.XMLurl} is not an HTTP(S) URL`];
-					req.session.data.url = req.body.XMLurl;
+					} else session.req.parseErr = [`${session.req.body.XMLurl} is not an HTTP(S) URL`];
+					session.req.session.data.url = session.req.body.XMLurl;
 					break;
 				case MODE_FILE:
 					try {
-						errs.setLocation((req.files!.XMLfile as fileupload.UploadedFile).name)
-						VVxml = (req.files!.XMLfile as fileupload.UploadedFile).data.toString();
+						session.errs.setLocation((session.req.files!.XMLfile as fileupload.UploadedFile).name)
+						VVxml = (session.req.files!.XMLfile as fileupload.UploadedFile).data.toString();
 					} catch (err) {
-						req.parseErr = [`retrieval of FILE ${(req.files!.XMLfile as fileupload.UploadedFile).name} failed (${err})`];
+						session.req.parseErr = [`retrieval of FILE ${(session.req.files!.XMLfile as fileupload.UploadedFile).name} failed (${err})`];
 					}
-					req.session.data.url = undefined;
+					session.req.session.data.url = undefined;
 					break;
 				default:
-					req.parseErr = [`method is not ${MODE_URL.quote()} or ${MODE_FILE.quote()}`];
+					session.req.parseErr = [`method is not ${MODE_URL.quote()} or ${MODE_FILE.quote()}`];
 			}
 
-		if (!req.parseErr && VVxml)
-			switch (req.body.testtype) {
+		if (!session.req.parseErr && VVxml)
+			switch (session.req.body.testtype) {
 				case MODE_CG:
-					errs.setType(`Content Guide-${req.body.requestType}`)
-					if (cgcheck) 
-						cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
+					session.errs.setType(`Content Guide-${session.req.body.requestType}`)
+					if (session.cgChecker) 
+						session.cgChecker.doValidateContentGuide(VVxml, session.req.body.requestType, session.errs, { log_prefix: log_prefix, report_schema_version: true });
 					break;
 				case MODE_SL:
-					errs.setType("Service List")
-					if (slcheck) 
-						slcheck.doValidateServiceList(VVxml, errs, 
-							{ log_prefix: log_prefix, report_schema_version: true, variants: req.session.data.forGermany ? GERMAN_A177r6_VARIANT : 0, traverse: req.session.data.traverse}
+					session.errs.setType("Service List")
+					if (session.slChecker) 
+						session.slChecker.doValidateServiceList(VVxml, session.errs, 
+							{ log_prefix: log_prefix, report_schema_version: true, variants: session.req.session.data.forGermany ? GERMAN_A177r6_VARIANT : 0, traverse: session.req.session.data.traverse}
 						);
 					break;
 				case MODE_PL:
-					errs.setType("Playlist")
-					if (plcheck) 
-						plcheck.doValidatePlaylist(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true });
+					session.errs.setType("Playlist")
+					if (session.plChecker) 
+						session.plChecker.doValidatePlaylist(VVxml, session.errs, { log_prefix: log_prefix, report_schema_version: true });
 					break;
 				case MODE_SLR:
-					errs.setType("Service List Registry")
-					if (slrcheck) 
-						slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, traverse: req.session.data.traverse });
+					session.errs.setType("Service List Registry")
+					if (session.slrChecker) 
+						session.slrChecker.doValidateServiceListRegistry(VVxml, session.errs, { log_prefix: log_prefix, report_schema_version: true, traverse: session.req.session.data.traverse });
 					break;
 			}
 
-		req.session.data.mode = req.body.testtype;
-		req.session.data.entry = req.body.doclocation;
-		if (req.body.requestType) req.session.data.cgmode = req.body.requestType;
-		drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, motd, req.parseErr, errs);
+		session.req.session.data.mode = session.req.body.testtype;
+		session.req.session.data.entry = session.req.body.doclocation;
+		if (session.req.body.requestType) session.req.session.data.cgmode = session.req.body.requestType;
+		drawForm(session, FormArguments, session.cgChecker ? session.cgChecker.supportedRequests : null, motd);
 
-		req.diags = {};
-		req.diags.countErrors = errs.numErrors();
-		req.diags.countWarnings = errs.numWarnings();
-		req.diags.countInforms = errs.numInformationals();
+		session.req.diags = {};
+		session.req.diags.countErrors = session.errs.numErrors();
+		session.req.diags.countWarnings = session.errs.numWarnings();
+		session.req.diags.countInforms = session.errs.numInformationals();
 
-		document_logger(errs, log_prefix, true, req);
+		document_logger(session, log_prefix, true);
 	}
-	res.end();
+	session.res.end();
 }
 
 
 /**
  * Validate a service list
  *
- * @param {express.Request}  req           The Express request that triggered the validation
- * @param {express.Response} res           The Express response to be written to the requester
- * @param {ServiceListCheck} slcheck       Initialised Service List validator
+ * @param {ValidationSession}  session  
  * @param {string | undefined} motd          HTML text for the Message Of The Day
- * @param {boolean}          jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateServiceList(req: express.Request, res: express.Response, slcheck: ServiceListCheck, motd: string | undefined, jsonResponse: boolean) : void {
-	const errs = new ErrorList();
-	const log_prefix = createPrefix(req, MODE_SL);
-	const SLxml = getDocument(req, res)
-	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
+function validateServiceList(session: ValidationSession, motd: string | undefined) : void {
+	session.errs = new ErrorList();
+	const log_prefix = createPrefix(session.req, MODE_SL);
+	const SLxml = getDocument(session.req, session.res)
+	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(session.req) }
 
-	if (SLxml) slcheck.doValidateServiceList(SLxml, errs, _options);
-	report(req, res, jsonResponse, errs, motd)
-	document_logger(errs, log_prefix, true, req);
-	res.end();
+	if (SLxml) session.slChecker?.doValidateServiceList(SLxml, session.errs, _options);
+	report(session, motd)
+	document_logger(session, log_prefix, true);
+	session.res.end();
 }
 
 
 /**
  * Validate a play list
  *
- * @param {express.Request}  req           The Express request that triggered the validation
- * @param {express.Response} res           The Express response to be written to the requester
- * @param {PlaylistCheck}    plcheck       Initialised play List validator
+ * @param {ValidationSession}  session  
  * @param {string | undefined} motd          HTML text for the Message Of The Day
- * @param {boolean}          jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
-function validatePlaylist(req: express.Request, res: express.Response, plcheck: PlaylistCheck, motd: string | undefined, jsonResponse: boolean) : void {
-	const errs = new ErrorList();
-	const log_prefix = createPrefix(req, MODE_PL);
-	const PLxml = getDocument(req, res)
+function validatePlaylist(session: ValidationSession, motd: string | undefined) : void {
+	session.errs = new ErrorList();
+	const log_prefix = createPrefix(session.req, MODE_PL);
+	const PLxml = getDocument(session.req, session.res)
 
-	if (PLxml) plcheck.doValidatePlaylist(PLxml, errs, { log_prefix: log_prefix, report_schema_version: true });
-	report(req, res, jsonResponse, errs, motd)
-	document_logger(errs, log_prefix, true, req);
-	res.end();
+	if (PLxml) session.plChecker?.doValidatePlaylist(PLxml, session.errs, { log_prefix: log_prefix, report_schema_version: true });
+	report(session, motd)
+	document_logger(session, log_prefix, true);
+	session.res.end();
 }
 
 
@@ -288,54 +298,48 @@ function validatePlaylist(req: express.Request, res: express.Response, plcheck: 
 /**
  * Validate a service list registry
  *
- * @param {express.Request}          req           The Express request that triggered the validation
- * @param {express.Response}         res           The Express response to be written to the requester
- * @param {ServiceListRegistryCheck} slrcheck       Initialised Service List validator
- * @param {string | undefined}       motd           HTML text for the Message Of The Day
- * @param {boolean}                  jsonResponse   Flag indicating that the response should ne JSON format rather than HTML
+ * @param {ValidationSession}  session  
+ * @param {string | undefined} motd          HTML text for the Message Of The Day
  */
-function validateServiceListRegistry(req: express.Request, res: express.Response, slrcheck: ServiceListRegistryCheck, motd: string | undefined, jsonResponse: boolean) : void {
-	const errs = new ErrorList();
-	const log_prefix = createPrefix(req, MODE_SLR);
-	const SLRxml = getDocument(req, res)
+function validateServiceListRegistry(session: ValidationSession, motd: string | undefined) : void {
+	session.errs = new ErrorList();
+	const log_prefix = createPrefix(session.req, MODE_SLR);
+	const SLRxml = getDocument(session.req, session.res)
 
-	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
-	switch (req.method) {
+	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(session.req) }
+	switch (session.req.method) {
 		case "GET":
-			if (req.query?.variants && (req.query.variants as string).toLowerCase() == "de")
+			if (session.req.query?.variants && (session.req.query.variants as string).toLowerCase() == "de")
 				_options.variants = GERMAN_A177r6_VARIANT
 			break
 		case "POST":
-			if (req.header("X-variants")?.toLowerCase() == "de")
+			if (session.req.header("X-variants")?.toLowerCase() == "de")
 				_options.variants = GERMAN_A177r6_VARIANT
 			break
 	}
-	if (SLRxml) slrcheck.doValidateServiceListRegistry(SLRxml, errs, _options);
-	report(req, res, jsonResponse, errs, motd)
+	if (SLRxml) session.slrChecker?.doValidateServiceListRegistry(SLRxml, session.errs, _options);
+	report(session, motd)
 
-	document_logger(errs, log_prefix, true, req);
-	res.end();
+	document_logger(session, log_prefix, true);
+	session.res.end();
 }
 
 /**
  * Validate a content guide metadata
  *
- * @param {express.Request}   req           The Express request that triggered the validation
- * @param {express.Response}  res           The Express response to be written to the requester
- * @param {ContentGuideCheck} cgcheck       Initialised Content Guide Metadata validator
+ * @param {ValidationSession}  session  
  * @param {string | undefined} motd          HTML text for the Message Of The Day
- * @param {boolean}           jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateContentGuide(req: express.Request, res: express.Response, cgcheck: ContentGuideCheck, motd: string | undefined, jsonResponse: boolean) : void {
-	const errs = new ErrorList();
-	const log_prefix = createPrefix(req);
-	const CGxml = getDocument(req, res)
+function validateContentGuide(session: ValidationSession, motd: string | undefined) : void {
+	session.errs = new ErrorList();
+	const log_prefix = createPrefix(session.req);
+	const CGxml = getDocument(session.req, session.res)
 	const _options: CG_Validator_Options = { log_prefix: log_prefix, report_schema_version: true }
 
-	if (CGxml) cgcheck.doValidateContentGuide(CGxml, req.query.type as string, errs, _options);
-	report(req, res, jsonResponse, errs, motd)
-	document_logger(errs, log_prefix, true, req);
-	res.end();
+	if (CGxml) session.cgChecker?.doValidateContentGuide(CGxml, session.req.query.type as string, session.errs, _options);
+	report(session, motd)
+	document_logger(session, log_prefix, true);
+	session.res.end();
 }
 
 
@@ -546,41 +550,105 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 
 		if (!app_options.nosl) {
 			app.all("/validate_sl", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validateServiceList(req, res, slcheck!, motd, false);
+				const session: ValidationSession = {
+					req: req,
+					res: res,
+					slChecker: slcheck,
+					jsonResponse: false,
+					traverse: false,
+					traversedPaths: undefined,
+				}
+				validateServiceList(session, motd);
 			});
 
 			app.all("/validate_sl_json", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validateServiceList(req, res, slcheck!, motd, true);
+				const session: ValidationSession = {
+					req: req,
+					res: res,
+					slChecker: slcheck,
+					jsonResponse: true,
+					traverse: false,
+					traversedPaths: undefined,
+				}
+				validateServiceList(session, motd);
 			});
 		}
 
 		if (!app_options.nopl) {
 			app.all("/validate_pl", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validatePlaylist(req, res, plcheck!, motd, false);
+				const session: ValidationSession = {
+					req: req,
+					res: res,
+					plChecker: plcheck,
+					jsonResponse: false,
+					traverse: false,
+					traversedPaths: undefined,
+				}
+				validatePlaylist(session, motd);
 			});
 
 			app.all("/validate_pl_json", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validatePlaylist(req, res, plcheck!, motd, true);
+				const session: ValidationSession = {
+					req: req,
+					res: res,
+					plChecker: plcheck,
+					jsonResponse: true,
+					traverse: false,
+					traversedPaths: undefined,
+				}
+				validatePlaylist(session, motd);
 			});
 		}
 
 		if (!app_options.nocg) {
 			app.all("/validate_cg", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validateContentGuide(req, res, cgcheck!, motd, false);
+				const session: ValidationSession = {
+					req: req,
+					res: res,
+					cgChecker: cgcheck,
+					jsonResponse: false,
+					traverse: false,
+					traversedPaths: undefined,
+				}
+				validateContentGuide(session, motd);
 			});
 
 			app.all("/validate_cg_json", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validateContentGuide(req, res, cgcheck!, motd, true);
+				const session: ValidationSession = {
+					req: req,
+					res: res,
+					cgChecker: cgcheck,
+					jsonResponse: true,
+					traverse: false,
+					traversedPaths: undefined,
+				}
+				validateContentGuide(session, motd);
 			});
 		}
 
 		if (!app_options.noslr) {
 			app.all("/validate_slr", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validateServiceListRegistry(req, res, slrcheck!, motd, false);
+				const session: ValidationSession = {
+					req: req,
+					res: res,
+					slrChecker: slrcheck,
+					jsonResponse: false,
+					traverse: false,
+					traversedPaths: undefined,
+				}
+				validateServiceListRegistry(session, motd);
 			});
 
 			app.all("/validate_slr_json", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validateServiceListRegistry(req, res, slrcheck!, motd, true);
+				const session: ValidationSession = {
+					req: req,
+					res: res,
+					slrChecker: slrcheck,
+					jsonResponse: true,
+					traverse: false,
+					traversedPaths: undefined,
+				}
+				validateServiceListRegistry(session, motd);
 			});
 		}
 
@@ -615,7 +683,19 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 				const saved_port = req.socket.localPort  
 				if (cluster.isWorker && app_options.workers > 1)
 					req.socket.server!.close();
-				DVB_I_check(req, res, slcheck, plcheck, cgcheck, slrcheck, !app_options.nosl, !app_options.nopl, !app_options.nocg, !app_options.noslr, app_options.allow_traversal, motd);
+
+				const session: ValidationSession= {
+					req: req,
+					res: res,
+					slrChecker: slrcheck,
+					slChecker: slcheck,
+					cgChecker: cgcheck,
+					plChecker: plcheck,
+					traverse: app_options.allow_traversal,
+					traversedPaths: new CaseInsensitiveSet(),
+				}
+	
+				DVB_I_check(session, !app_options.nosl, !app_options.nopl, !app_options.nocg, !app_options.noslr, app_options.allow_traversal, motd);
 				if (req.socket.server!.listening == false)
 					req.socket.server!.listen(saved_port)
 			});

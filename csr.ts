@@ -121,50 +121,50 @@ const commandLineHelp = [
 	},
 ];
 
-let options = null;
+let app_options = null;
 try {
-	options = commandLineArgs(optionDefinitions);
+	app_options = commandLineArgs(optionDefinitions);
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 } catch (err) {
 	console.log(commandLineUsage(commandLineHelp));
 	process.exit(1);
 }
 
-if (options.help) {
+if (app_options.help) {
 	console.log(commandLineUsage(commandLineHelp));
 	process.exit(0);
 }
 
-if (!CORSoptions.includes(options.CORSmode)) {
+if (!CORSoptions.includes(app_options.CORSmode)) {
 	console.log(chalk.red(`CORSmode must be ${CORSnone.quote()}, ${CORSlibrary.quote()} to use the Express cors() handler, or ${CORSmanual.quote()} to have headers inserted manually`));
 	process.exit(1);
 }
 
-if (!SLR_Processing_Modes.includes(options.SLRmode)) {
+if (!SLR_Processing_Modes.includes(app_options.SLRmode)) {
 	console.log(chalk.red(`SLRmode must be one of [${SLR_Processing_Modes.join(", ")}]`));
 	process.exit(1);
 }
 
-if (options.urls && options.CSRfile == Default_SLEPR.file) options.CSRfile = Default_SLEPR.url;
+if (app_options.urls && app_options.CSRfile == Default_SLEPR.file) app_options.CSRfile = Default_SLEPR.url;
 
 const knownLanguages = new IANAlanguages();
 knownLanguages.loadLanguages(
-	options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file },
-	{async: true, verbose: true, useURLs: options.urls}
+	app_options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file },
+	{async: true, verbose: true, useURLs: app_options.urls}
 );
 
 const knownCountries = new ISOcountries(false, true);
 knownCountries.loadCountries(
-	options.urls ? { url: ISO3166.url } : { file: ISO3166.file },
-{async: true, verbose: true, useURLs: options.urls}
+	app_options.urls ? { url: ISO3166.url } : { file: ISO3166.file },
+{async: true, verbose: true, useURLs: app_options.urls}
 );
 
 const knownGenres = new ClassificationScheme();
 knownGenres.loadCS(
-	options.urls 
+	app_options.urls 
 		? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] as string[] } 
 		: { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] },
-	{async: true, verbose: true, useURLs: options.urls}
+	{async: true, verbose: true, useURLs: app_options.urls}
 );
 
 const RELOAD = "RELOAD",
@@ -178,9 +178,9 @@ type IPCmessage = {
 }
 
 if (cluster.isPrimary) {
-	if (options.workers > numCPUs) options.workers = numCPUs;
-	else if (options.workers < 1) options.workers = 1;
-	console.log(chalk.green(`Number of CPUs is ${numCPUs}, ${options.workers} workers`));
+	if (app_options.workers > numCPUs) app_options.workers = numCPUs;
+	else if (app_options.workers < 1) app_options.workers = 1;
+	console.log(chalk.green(`Number of CPUs is ${numCPUs}, ${app_options.workers} workers`));
 	console.log(chalk.green(`Primary ${process.pid} is running`));
 
 	const metrics = {
@@ -190,7 +190,7 @@ if (cluster.isPrimary) {
 	};
 
 	// Fork workers.
-	for (let i = 0; i < options.workers; i++) 
+	for (let i = 0; i < app_options.workers; i++) 
 		cluster.fork();
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -224,7 +224,7 @@ if (cluster.isPrimary) {
 					console.log(`numCPUs=${numCPUs}`);
 					console.log(`knownCountries.length=${knownCountries.count()}`);
 					console.log(`requests=${metrics.numRequests} failed=${metrics.numFailed} reloads=${metrics.reloadRequests}`);
-					console.log(`SLEPR file=${options.CSRfile}`);
+					console.log(`SLEPR file=${app_options.CSRfile}`);
 					console.log(`application version=${pkg?.version ? pkg.version : "unknown"}`);
 					break;
 			}
@@ -260,9 +260,9 @@ else {
 	let manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
 		next();
 	};
-	if (options.CORSmode == CORSlibrary) {
+	if (app_options.CORSmode == CORSlibrary) {
 		app.use(cors());
-	} else if (options.CORSmode == CORSmanual) {
+	} else if (app_options.CORSmode == CORSmanual) {
 		manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
 			let opts : string[] | undefined = res.getHeader("X-Frame-Options") as string[] | undefined;
 			if (opts) {
@@ -276,8 +276,8 @@ else {
 		};
 	}
 
-	const csr = new SLEPR(options.urls, options.SLRmode, knownLanguages, knownCountries, knownGenres);
-	csr.loadServiceListRegistry(options.CSRfile);
+	const csr = new SLEPR(app_options.urls, app_options.SLRmode, knownLanguages, knownCountries, knownGenres);
+	csr.loadServiceListRegistry(app_options.CSRfile);
 
 	const LOG_FORMAT = ":pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr :vary :redirect"
 	app.use(morgan(LOG_FORMAT));
@@ -294,9 +294,9 @@ else {
 
 
 	app.use(favicon(join("icon", "ph-icon.ico")));
-	if (options.CORSmode == CORSlibrary) 
+	if (app_options.CORSmode == CORSlibrary) 
 		app.options(SLEPR_query_route, cors());
-	else if (options.CORSmode == CORSmanual) 
+	else if (app_options.CORSmode == CORSmanual) 
 		app.options(SLEPR_query_route, manualCORS);
 	app.get(SLEPR_query_route, (req: express.Request, res: express.Response) => {
 		if (process.send) process.send({ topic: INCR_REQUESTS });
@@ -313,7 +313,7 @@ else {
 		res.status(404).end();
 	});
 
-	if (options.spam_blocker) {
+	if (app_options.spam_blocker) {
 		init_spam_blocker(app);
 	}
 
@@ -326,30 +326,30 @@ else {
 			switch (msg.topic) {
 				case UPDATE:
 					knownCountries.loadCountries(
-						options.urls ? { url: ISO3166.url } : { file: ISO3166.file },
-						{useURLs: options.urls, async: true, verbose: false},
+						app_options.urls ? { url: ISO3166.url } : { file: ISO3166.file },
+						{useURLs: app_options.urls, async: true, verbose: false},
 					);
 					knownLanguages.loadLanguages(
-						options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file },
-						{useURLs: options.urls, async: true, verbose: false},
+						app_options.urls ? { url: IANA_Subtag_Registry.url } : { file: IANA_Subtag_Registry.file },
+						{useURLs: app_options.urls, async: true, verbose: false},
 					);
 					knownGenres.loadCS(
-						options.urls 
+						app_options.urls 
 							? { urls: [TVA_ContentCS.url, TVA_FormatCS.url, DVBI_ContentSubject.url] as string[] } 
 							: { files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] },
-						{useURLs: options.urls, async: true, verbose: false},
+						{useURLs: app_options.urls, async: true, verbose: false},
 					);
-					csr.loadDataFiles(options.urls, knownLanguages, knownCountries, knownGenres);
-					csr.loadServiceListRegistry(options.CSRfile);
+					csr.loadDataFiles(app_options.urls, knownLanguages, knownCountries, knownGenres);
+					csr.loadServiceListRegistry(app_options.CSRfile);
 					break;
 			}
 	});
 
 	// start the HTTP server
-	const http_server = app.listen(options.port, () => {
+	const http_server = app.listen(app_options.port, () => {
 		if ((http_server.address() as AddressInfo).port) 
 			console.log(chalk.cyan(`HTTP listening on port number ${(http_server.address() as AddressInfo).port}`));
-		else console.log(chalk.red(`HTTP port ${options.port} already in use -- HTTP server not started`));
+		else console.log(chalk.red(`HTTP port ${app_options.port} already in use -- HTTP server not started`));
 	});
 	// start the HTTPS server
 	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
@@ -358,10 +358,10 @@ else {
 		cert: readmyfile(certFilename, {}) as Buffer,
 	};
 	if (https_options.key && https_options.cert) {
-		if (options.sport == options.port) options.sport = options.port + 1;
+		if (app_options.sport == app_options.port) app_options.sport = app_options.port + 1;
 
 		const https_server : Server = createServer(https_options, app);
-		https_server.listen(options.sport, () => {
+		https_server.listen(app_options.sport, () => {
 			console.log(chalk.cyan(`HTTPS listening on port number ${(https_server!.address() as AddressInfo).port}, PID=${process.pid}`));
 		});
 	}

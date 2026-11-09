@@ -15,7 +15,9 @@ import chalk from "chalk"
 import { existsSync, writeFile } from "fs"
 import { join, sep } from "path"
 import { MODE_URL, MODE_CG, MODE_SL, MODE_SLR, MODE_PL } from "./ui.mts"
-import ErrorList from "./error_list.mts"
+
+import type {ValidationSession} from "./validator.mts"
+
 
 export function createPrefix(req: express.Request, testtype?: string) : string | undefined {
 	const logDir: string = join(".", "arch");
@@ -51,19 +53,19 @@ export function createPrefix(req: express.Request, testtype?: string) : string |
 }
 
 
-export default function document_logger(errs: ErrorList, filebase: string | undefined, markup: boolean, req?: express.Request) : void {
-	if (!filebase || errs.markupXML?.length == 0) return;
+export default function document_logger(session: ValidationSession, filebase: string | undefined, markup: boolean) : void {
+	if (!filebase || session.errs?.markupXML?.length == 0) return;
 
-	const outputLines = [];
-	if (markup && req?.body?.XMLurl) outputLines.push(`<!-- source: ${req.body.XMLurl} -->`);
-	errs.markupXML?.forEach((line) => {
+	const outputLines: string[] = [];
+	if (markup && session.req?.body?.XMLurl) outputLines.push(`<!-- source: ${session.req.body.XMLurl} -->`);
+	session.errs?.markupXML?.forEach((line) => {
 		outputLines.push(line.value);
 		if (markup && line.validationErrors)
 			line.validationErrors.forEach((error) => {
 				outputLines.push(`<!--${error.replace(/[\n]/g, "")}-->`);
 			});
 	});
-	const filename = markup ? `${filebase}.mkup.txt` : `${filebase}.raw.txt`;
+	const filename = `${filebase}.${markup ? "mkup" : "raw"}.txt`
 	writeFile(filename, outputLines.join("\n"), (err) => {
 		if (err) console.log(chalk.red(err));
 	});
