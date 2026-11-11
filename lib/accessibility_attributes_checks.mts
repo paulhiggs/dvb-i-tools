@@ -322,10 +322,10 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes: Xm
 				);
 				// eslint-disable-next-line no-case-declarations
 				const hasAppInformation = checkAppInformation(child, errs, errCode, 52);
-				checkCS(child, tva.e_Carriage, cs.SubtitleCarriageCS, false, errs, errCode, 53, carriages);
-				checkCS(child, tva.e_Coding, cs.SubtitleCodingFormatCS, false, errs, errCode, 54, codings);
+				checkCS(child, tva.e_Carriage, cs.SubtitleCarriageCS, true, errs, errCode, 53, carriages);
+				checkCS(child, tva.e_Coding, cs.SubtitleCodingFormatCS, true, errs, errCode, 54, codings);
 				checkLanguageFmt(child, tva.e_SubtitleLanguage, errs, errCode, 55);
-				checkCS(child, tva.e_Purpose, cs.SubtitlePurposeTypeCS, false, errs, errCode, 56);
+				checkCS(child, tva.e_Purpose, cs.SubtitlePurposeTypeCS, true, errs, errCode, 56);
 				if (carriages.includes(tva.APPLICATION_SUBTITLE_CARRIAGE) || codings.includes(tva.APPLICATION_SUBTITLE_CODING)) {
 					// A177r6 clause 4.5.2.3 - When the SubtitlesAttributes.Carriage element is set to “Application Subtitles” and/or the
 					// SubtitlesAttributes.Coding element is set to “Application - defined Subtitle Format”, the SubtitlesAttributes.AppInformation
