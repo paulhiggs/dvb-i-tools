@@ -10,7 +10,6 @@
 
 
 import { dvbi } from "./DVB-I_definitions.mts"
-import { DuplicatedValue } from "./utils.mts"
 import { keys } from "./common_errors.mts"
 import ErrorList from "./error_list.mts"
 import type { SignaturePolicy } from "./sl_check.mts"
@@ -37,16 +36,16 @@ export function ValidateSignaturePolicies(element: XmlElement, errs: ErrorList, 
 					if (TrustAnchor)
 						TrustAnchor.forEachNamedChildElement(dvbi.e_CAFingerprint, (CAFingerprint) => {
 							const Fingerprint_algorithm = CAFingerprint.attrAnyNsValueOr(dvbi.a_algorithm);
-							if (Fingerprint_algorithm && dvbi.ALLOWED_FINGERPRINT_ALGOS.length > 0 && !dvbi.ALLOWED_FINGERPRINT_ALGOS.includes(Fingerprint_algorithm))
-								errs.addError({
-									code: `${errCode}-02`,
-									message: `${Fingerprint_algorithm} is not a valid algorithm for ${dvbi.e_CAFingerprint.elementize()}`,
-									key: keys.k_SignaturePolicies,
-									fragment: CAFingerprint,
-								})
-							else {
-								new_policy.CAfingerprint.push({
-									algorithm: Fingerprint_algorithm as string,
+							if (Fingerprint_algorithm) {
+								if (dvbi.ALLOWED_FINGERPRINT_ALGOS.length > 0 && !dvbi.ALLOWED_FINGERPRINT_ALGOS.includes(Fingerprint_algorithm))
+									errs.addError({
+										code: `${errCode}-02`,
+										message: `${Fingerprint_algorithm} is not a valid algorithm for ${dvbi.e_CAFingerprint.elementize()}`,
+										key: keys.k_SignaturePolicies,
+										fragment: CAFingerprint,
+									})
+								else new_policy.CAfingerprint.push({
+									algorithm: Fingerprint_algorithm,
 									fingerprint: CAFingerprint.content
 								})
 							}
