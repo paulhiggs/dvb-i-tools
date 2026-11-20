@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools.ts",
-	"version": "1.11.13",
+	"version": "1.12.0",
 	"description": "DVB-I V&V Tools - up to A177r8",
 	"keywords": [
 		"DVB-I"
@@ -23,7 +23,7 @@
 		"express-session": "^1.19.0",
 		"libxml2-wasm": "^0.7.2",
 		"morgan": "^1.12.1",
-		"rotating-file-stream": "^3.2.10",
+		"rotating-file-stream": "^4.0.0",
 		"serve-favicon": "^2.5.1",
 		"sha.js": "^2.4.12",
 		"sync-fetch": "^0.7.1",
@@ -50,7 +50,6 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
-		"@types/chalk": "^0.4.31",
 		"@types/command-line-args": "^5.2.3",
 		"@types/command-line-usage": "^5.0.4",
 		"@types/cors": "^2.8.19",
