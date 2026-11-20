@@ -58,7 +58,7 @@ import { FoundDocumentItems} from "./sl_check.mts"
 import ClassificationScheme from "./classification_scheme.mts";
 import type { StatsType, LoadOptions } from "./globals.mts"
 
-import { safeFetch, enterTraversal, exitTraversal, resetTraversalBudget } from "./safe_fetch.mts"
+import { safeFetch, allowTraversal, deferTask, ValidationScope } from "./safe_fetch.mts"
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";
@@ -1593,7 +1593,7 @@ export default class ContentGuideCheck {
 				const piErrs = new ErrorList(piURL, CG_REQUEST_PROGRAM, "Program Information")
 	/*dbg*/console.log(`traverse:: DPI of ${piURL}`)
 				this.validateContentGuide(ProgramInformation, piURL, CG_REQUEST_PROGRAM, piErrs, {} )
-				delete piErrs.markupXML
+				piErrs.discardMarkup()
 				errs.nestedErrors.push(piErrs)
 			}
 
@@ -1603,7 +1603,7 @@ export default class ContentGuideCheck {
 				const mepErrs = new ErrorList(mepURL, CG_REQUEST_MORE_EPISODES, `More Episodes for ${programCRID}`)
 	/*dbg*/console.log(`traverse:: More Episodes of ${mepURL}`)
 				this.validateContentGuide(ProgramInformation, mepURL, CG_REQUEST_MORE_EPISODES, mepErrs, options )
-				delete mepErrs.markupXML
+				mepErrs.discardMarkup()
 				errs.nestedErrors.push(mepErrs)
 			}
 		}
@@ -1822,7 +1822,7 @@ export default class ContentGuideCheck {
 									const paginationErrs = new ErrorList(paginationURL, CG_REQUEST_BS_CATEGORIES, "Box Set Categories (pagination)")
 	/*dbg*/console.log(`traverse:: Next pagination for Box Set Categories of ${paginationURL}`)
 									this.validateContentGuide(rm, paginationURL, CG_REQUEST_BS_CATEGORIES, paginationErrs, options)
-									delete paginationErrs.markupXML
+									paginationErrs.discardMarkup()
 									errs.nestedErrors.push(paginationErrs)
 								}
 							}
@@ -1844,7 +1844,7 @@ export default class ContentGuideCheck {
 						const bslErrs = new ErrorList(bslURL, CG_REQUEST_BS_LISTS, "Box Set List")
 	/*dbg*/console.log(`traverse:: Box Set List of ${bslURL}`)
 						this.validateContentGuide(GroupInformation, bslURL, CG_REQUEST_BS_LISTS, bslErrs, options )
-						delete bslErrs.markupXML
+						bslErrs.discardMarkup()
 						errs.nestedErrors.push(bslErrs)
 					}
 				}
@@ -1880,7 +1880,7 @@ export default class ContentGuideCheck {
 									const paginationErrs = new ErrorList(paginationURL, CG_REQUEST_BS_LISTS, "Box Set Lists (pagination)")
 	/*dbg*/console.log(`traverse:: Next pagination for Box Set Lists of ${paginationURL}`)
 									this.validateContentGuide(rm, paginationURL, CG_REQUEST_BS_LISTS, paginationErrs, options)
-									delete paginationErrs.markupXML
+									paginationErrs.discardMarkup()
 									errs.nestedErrors.push(paginationErrs)
 								}
 							}
@@ -1902,7 +1902,7 @@ export default class ContentGuideCheck {
 						const bscErrs = new ErrorList(bscURL, CG_REQUEST_BS_CONTENTS, "Box Set Contents")
 	/*dbg*/console.log(`traverse:: Box Set Contents of ${bscURL}`)
 						this.validateContentGuide(GroupInformation, bscURL, CG_REQUEST_BS_CONTENTS, bscErrs, options)
-						delete bscErrs.markupXML
+						bscErrs.discardMarkup()
 						errs.nestedErrors.push(bscErrs)
 					}
 				}
@@ -1928,7 +1928,7 @@ export default class ContentGuideCheck {
 									const paginationErrs = new ErrorList(paginationURL, CG_REQUEST_BS_CONTENTS, "Box Set Contents (pagination)")
 	/*dbg*/console.log(`traverse:: Next pagination for Box Set Contents of ${paginationURL}`)
 									this.validateContentGuide(rm, paginationURL, CG_REQUEST_BS_CONTENTS, paginationErrs, options)
-									delete paginationErrs.markupXML
+									paginationErrs.discardMarkup()
 									errs.nestedErrors.push(paginationErrs)
 								}
 							}
@@ -3599,9 +3599,10 @@ export default class ContentGuideCheck {
 	 *                      progInfo_ep           URL to the detailed program information endpoint
 	 *                      grpInfo_ep            URL to the group information endpoint
 	 */
-	doValidateContentGuide(CGtext: string, requestType: string, errs: ErrorList, options: CG_Validator_Options = {}) : void {
+	async doValidateContentGuide(CGtext: string, requestType: string, errs: ErrorList, options: CG_Validator_Options = {}) : Promise<void> {
 		this.#numRequests++;
-		resetTraversalBudget();
+		// collects the network work (traversal, content digests) that is performed once the rules below have been checked
+		using scope = ValidationScope.open();
 
 		if (!CGtext) {
 			errs.addError({ type: APPLICATION, code: "CG000", message: "doValidateContentGuide() called with CGtext==null" });
@@ -3756,6 +3757,8 @@ export default class ContentGuideCheck {
 				break;
 		}
 
+		// perform the deferred network work before the document is disposed (at the end of this method)
+		await scope.finish();
 	}
 
 	/**
@@ -3772,7 +3775,7 @@ export default class ContentGuideCheck {
 	 */
 	/* public */
 	validateContentGuide(Location: XmlElement, requestUrl: string,  requestType: string, errs: ErrorList, options: CG_Validator_Options) : void {
-		const limited = enterTraversal();
+		const limited = allowTraversal();
 		if (limited) {
 			errs.addError({
 				code: `VCG003`,
@@ -3783,8 +3786,9 @@ export default class ContentGuideCheck {
 			})
 			return;
 		}
-		try {
-			const { response: resp, error } = safeFetch(requestUrl);
+		// the referenced content guide is retrieved and validated after the current document's rules have been checked
+		deferTask(async () => {
+			const { response: resp, error } = await safeFetch(requestUrl);
 			if (error)
 				errs.addError({
 					code: `VCG001`,
@@ -3794,7 +3798,7 @@ export default class ContentGuideCheck {
 				})
 			if (resp) {
 				if (resp.ok)
-					this.doValidateContentGuide(resp.text(), requestType, errs, options);
+					await this.doValidateContentGuide(resp.text(), requestType, errs, options);
 				else errs.addError({
 					code: `VCG002`,
 					message: `error with "${Location.content}" - ${resp.status} ${resp.statusText}`,
@@ -3802,10 +3806,7 @@ export default class ContentGuideCheck {
 					key: keys.k_Traversal,
 				})
 			}
-		}
-		finally {
-			exitTraversal();
-		}
+		});
 	}
 
 }
