@@ -14,6 +14,7 @@ import os from "node:os"
 import process from "process"
 import { readFileSync, existsSync } from "fs"
 import cluster from "cluster"
+import { randomBytes } from "crypto"
 import { cpus } from "os"
 const numCPUs = cpus().length;
 
@@ -380,6 +381,10 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		motd = readmyfile(app_options.motd, read_string_options) as string;
 	}
 
+	// session cookies are signed with SESSION_SECRET. If it is not provided, a random secret is used for this run.
+	// It is set in the environment before any workers are forked, so all workers share it.
+	if (!process.env.SESSION_SECRET) process.env.SESSION_SECRET = randomBytes(32).toString("hex");
+
 	if (app_options.workers != 0 && cluster.isPrimary) {
 		if (app_options.workers > numCPUs) app_options.workers = numCPUs;
 		else if (app_options.workers < 1) app_options.workers = 1;
@@ -479,7 +484,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		app.set("trust proxy", 1);
 		app.use(
 			session({
-				secret: "keyboard car",
+				secret: process.env.SESSION_SECRET as string,
 				resave: false,
 				saveUninitialized: true,
 				cookie: { maxAge: 60000 },
