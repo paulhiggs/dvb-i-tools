@@ -15,6 +15,7 @@ import { LoadGenres, LoadCountries, LoadLinkedApplicationCS } from "./classifica
 import { keys, InvalidCountryCode, InvalidURL } from "./common_errors.mts"
 import { slVersions, dvbi, dvbiEA, dvbiEC, dvbisld, validApplicationTypes, DvbIApplicationTypes, XMLdocumentType } from "./DVB-I_definitions.mts"
 import ErrorList, { APPLICATION, WARNING } from "./error_list.mts"
+import { resetTraversalBudget } from "./safe_fetch.mts"
 import { CheckExtension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY } from "./extension_check.mts"
 import { ValidateLanguage } from "./IANA_languages.mts"
 import document_logger from "./logger.mts"
@@ -423,6 +424,7 @@ export default class ServiceListRegistryCheck {
 	 */
 	/*public*/ doValidateServiceListRegistry(SLRtext: string, errs: ErrorList, options: SLR_Validator_Options = {}) : void {
 		this.#numRequests++;
+		resetTraversalBudget();
 
 		if (!SLRtext) {
 			errs.addError({

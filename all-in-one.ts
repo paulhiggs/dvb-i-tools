@@ -21,6 +21,11 @@ import { Default_SLEPR, MOTD } from "./lib/data_locations.mts"
 import validator from "./lib/validator.mts"
 import { DEFAULT_PROCESSING, SLR_Processing_Modes } from "./lib/slepr.mts";
 
+// command-line-args Boolean options cannot be turned off, so options that default to true take an explicit value
+function parseBooleanOption(value: string): boolean {
+	return !["false", "no", "off", "0"].includes(value.toLowerCase());
+}
+
 // parse command line options
 const optionDefinitions = [
 	{ name: "urls", alias: "u", type: Boolean, defaultValue: false, description: "Load data files from network locations." },
@@ -65,6 +70,13 @@ const optionDefinitions = [
 	},
 	{ name: "spam_blocker", alias: "b", type: Boolean, defaultValue: false, description: "enable frustrator for network scanners"},
 	{ name: "allow_traversal", alias: "t", type: Boolean, defaultValue: false, description: "allow use of metadata traversal"},
+	{
+		name: "allow_private_fetch",
+		type: parseBooleanOption,
+		defaultValue: true,
+		typeLabel: "{underline true|false}",
+		description: "allow documents to be retrieved from localhost and private network addresses (literal IP addresses only). Default: true",
+	},
 	{ name: "help", alias: "h", type: Boolean, defaultValue: false, description: "This help" },
 ];
 

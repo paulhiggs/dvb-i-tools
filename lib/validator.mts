@@ -24,19 +24,18 @@ import session from "express-session"
 import morgan, { token } from "morgan"
 import fileupload from "express-fileupload"
 import favicon from "serve-favicon"
-import fetchS from "sync-fetch"
 import commandLineArgs from "command-line-args"
 import { Server } from "https"
 import type { AddressInfo } from "node:net"
 import { createStream } from "rotating-file-stream";
 
-import { fetch_options, read_string_options, CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts"
+import { read_string_options, CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts"
 import type { StatsType } from "./globals.mts"
 import { Default_SLEPR, __dirname } from "./data_locations.mts"
 import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults, LINE, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "./ui.mts"
 import type {FormModes} from './ui.mts'
 import ErrorList from "./error_list.mts"
-import { isHTTPURL } from "./pattern_checks.mts"
+import { safeFetch, configureFetchPolicy } from "./safe_fetch.mts"
 import { readmyfile, HasProperty, escapeHTML } from "./utils.mts"
 import {
 	LoadGenres,
@@ -75,19 +74,16 @@ const keyFilename: string = join(".", "selfsigned.key"),
 	certFilename: string = join(".", "selfsigned.crt");
 
 function getDocument(req: express.Request, res: express.Response) : string | null {
-	let resp = null
 	if (req.method == "GET") {
-		try {
-			resp = fetchS(req.query.url as string, fetch_options)
-		} catch (error) {
-			req.parseErr = [`${error}`]
-		}
+		const { response: resp, error } = safeFetch(req.query.url as string)
+		if (error)
+			req.parseErr = [error]
 		if (resp) {
-			if (resp.ok) 
+			if (resp.ok)
 				return resp.text()
-			else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`]
+			else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.query.url}`]
 		}
-	} 
+	}
 	else if (req.method == "POST")
 		return req.body
 	else 
@@ -171,19 +167,16 @@ function DVB_I_check(
 		if (!req.parseErr)
 			switch (req.body.doclocation) {
 				case MODE_URL:
-					if (isHTTPURL(req.body.XMLurl)) {
-						let resp = null;
-						try {
-							errs.setLocation(req.body.XMLurl)
-							resp = fetchS(req.body.XMLurl, fetch_options);
-						} catch (error) {
-							req.parseErr = [`${error}`];
-						}
+					{
+						errs.setLocation(req.body.XMLurl)
+						const { response: resp, error } = safeFetch(req.body.XMLurl);
+						if (error)
+							req.parseErr = [error];
 						if (resp) {
 							if (resp.ok) VVxml = resp.text();
 							else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`];
 						}
-					} else req.parseErr = [`${req.body.XMLurl} is not an HTTP(S) URL`];
+					}
 					req.session.data.url = req.body.XMLurl;
 					break;
 				case MODE_FILE:
@@ -360,6 +353,9 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		console.log(chalk.red(`CORSmode must be ${CORSnone.quote()}, ${CORSlibrary.quote()} to use the Express cors() handler, or ${CORSmanual.quote()} to have headers inserted manually`));
 		process.exit(1);
 	}
+
+	// a flag given without a value (null) means true
+	configureFetchPolicy({ allowPrivateAddresses: app_options.allow_private_fetch !== false });
 
 	let motd: string | undefined = undefined;
 	if (HasProperty(app_options, "motd")) {

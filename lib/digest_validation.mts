@@ -8,10 +8,9 @@
  * Checks a resource against any specified content digests
  */
 
-import fetchS from "sync-fetch";
 import SHA from "sha.js"
 
-import { fetch_options } from "./globals.mts"
+import { safeFetch } from "./safe_fetch.mts"
 import { tva} from "./TVA_definitions.mts"
 import { dvbi} from "./DVB-I_definitions.mts"
 import { APPLICATION, INFORMATION, WARNING } from "./error_list.mts"
@@ -20,14 +19,9 @@ import { keys } from "./common_errors.mts"
 import { isDataURI } from "./pattern_checks.mts"
 
 const parseInlineImageData = (inline_image: string) : string => inline_image.substring(inline_image.indexOf(","));
-const fetchContent = (url: string, options: Record<string, unknown>) => {
-	let resp = null;
-	try {
-		resp = fetchS(url, options);
-	}
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars, no-empty 
-	catch (error) {}
-	return resp?.ok ? resp.buffer() : null;
+const fetchContent = (url: string) => {
+	const { response } = safeFetch(url);
+	return response?.ok ? response.buffer() : null;
 };
 
 const DigestRegexp = /^(?<algorithm>([a-z\d]+))=:(?<digest>([a-zA-Z\d]+)):$/;
@@ -46,7 +40,7 @@ export function ValidateAnyContentDigests(element: XmlElement, errs: ErrorList, 
 
 	const contentDigests = element.attrAnyNsValueOr(tva.a_integrity);
 	if (contentDigests) {
-		const img = isDataURI(element.content) ? parseInlineImageData(element.content) : fetchContent(element.content, fetch_options);
+		const img = isDataURI(element.content) ? parseInlineImageData(element.content) : fetchContent(element.content);
 		contentDigests.split(",").forEach( (contentDigest: string) => {
 			const result = contentDigest.match(DigestRegexp);
 			if (result?.groups) {

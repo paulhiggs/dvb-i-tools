@@ -114,7 +114,10 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 - `--SLRmode <mode>` select the type of processing for the SLR response
   - `"default"` - default mode - according to A177 specification
 - `--allow_traversal [-t]` flag to allow document-to-document traversal <span style="color:red">(experimental, takes much time)</span>	
+- `--allow_private_fetch <true|false>` allow documents to be retrieved from `localhost` and private network addresses (default: true). Set to `false` on a public deployment. Only literal IP addresses and `localhost` are recognised, not hostnames that resolve to private addresses.
 - `--help [-h]` server and client command help
+
+Documents retrieved for validation (by URL or by traversal) must use `http:` or `https:`, are limited to 10 MB and a 3 second timeout. A single validation traverses at most 10 levels deep and at most 100 referenced documents.
 
 ### Logging
 
