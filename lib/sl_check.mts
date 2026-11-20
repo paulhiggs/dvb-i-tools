@@ -121,6 +121,7 @@ import IANAlanguages from "./IANA_languages.mts"
 import ClassificationScheme from "./classification_scheme.mts"
 
 import type { LoadOptions, StatsType } from "./globals.mts"
+import { GERMAN_A177r6_VARIANT } from "./globals.mts"
 export type ValidatorOptions = LoadOptions & {
 	accessibilities? : ClassificationScheme
 	appfmts?: ClassificationScheme
@@ -2013,8 +2014,9 @@ export default class ServiceListCheck {
 					const today = Temporal.Now.plainDateISO()
 					const start_of_today = Temporal.ZonedDateTime.from({day: today.day, month: today.month, year: today.year, timeZone: "UTC"})
 
-					// A177r8 - the programme guide should be available for 28 days before and 28 days after today
-					const NEEDED_DAYS = 28
+					// A177r8 - the programme guide should be available for 28 days before and 28 days after today.
+					// German service lists only need 7 days before and 7 days after today
+					const NEEDED_DAYS = (options.variants ?? 0) & GERMAN_A177r6_VARIANT ? 7 : 28
 					for (let test_day=-NEEDED_DAYS; test_day<=NEEDED_DAYS; test_day++) {
 						const start_of_day = start_of_today.add({days: test_day})
 						for (let start_hour=0; start_hour<24; start_hour+=6) {
