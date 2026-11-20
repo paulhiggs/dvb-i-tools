@@ -240,5 +240,9 @@ accepted valies for `<type>`
 #### Playlist validation endpoints
 *todo writeup needed*
 
+## Acknowledgements
+
+A 2026 code review of this repository, and the fixes that came out of it (output escaping, a single fetch policy for retrieved documents, resource clean-up, schema validator reuse, TypeScript and CI checks, and Docker and server start-up fixes), were carried out with help from [Claude](https://claude.com/claude-code), an AI assistant by Anthropic.
+
 *Copyright (c) 2021-2026, Paul Higgs*<br/>
 *All rights reserved*
