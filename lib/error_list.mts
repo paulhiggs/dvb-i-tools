@@ -63,7 +63,13 @@ export type ReportedErrorType = {
 
 export type ErrorListOptions = {
 	markup?: boolean; // keep a marked up copy of the document and the fragment text of each error
+	summaryOnly?: boolean; // keep only the number of times each code is reported, not the individual messages
 };
+
+type SeverityList = "fatals" | "errors" | "warnings" | "informationals";
+
+// the number of times each code has been reported, in order of first report
+export type CodeCounts = Record<SeverityList, Record<string, number>>;
 
 type DebugMessageType = {
 	code: string;
@@ -89,6 +95,10 @@ export default class ErrorList {
 
 	nestedErrors: ErrorList[]
 
+	// when only a summary is kept (for traversed documents), the number of times each code is reported replaces the
+	// individual messages in fatals/errors/warnings/informationals, and no error descriptions or category counts are kept
+	codeCounts?: CodeCounts
+
 	// true when a marked up copy of the document and the text of each error's fragment are kept. Only the document that a
 	// validation was requested for needs them (for the report and the archive), so they are not kept for traversed
 	// documents. Private fields are not included when the list is serialised to JSON
@@ -105,6 +115,7 @@ export default class ErrorList {
 	 * @param {ErrorListOptions} options
 	 *                             markup     keep a marked up copy of the document and the fragment text of each error
 	 *                                        (default false)
+	 *                           summaryOnly  keep only the number of times each code is reported (default false)
 	 */
 	constructor(location?: string, type?: string, description?: string, options: ErrorListOptions = {}) {
 		this.#keepMarkup = options.markup ?? false;
@@ -121,6 +132,7 @@ export default class ErrorList {
 		this.errorDescriptions = [];
 
 		this.nestedErrors = []
+		if (options.summaryOnly) this.codeCounts = { fatals: {}, errors: {}, warnings: {}, informationals: {} }
 		this.source = location
 		this.type = type
 		this.description = description
@@ -140,6 +152,13 @@ export default class ErrorList {
 	 */
 	static withMarkup(): ErrorList {
 		return new ErrorList(undefined, undefined, undefined, { markup: true });
+	}
+
+	/**
+	 * an error list for a document reached by traversal, which is only reported by its compact summary
+	 */
+	static summaryOnly(location: string, type: string, description: string): ErrorList {
+		return new ErrorList(location, type, description, { summaryOnly: true });
 	}
 
 	/**
@@ -166,41 +185,49 @@ export default class ErrorList {
 	}
 
 	/* private method*/ #incrementF(key: string) {
+		if (this.codeCounts) return;
 		const c = this.countsFatal.find((e) => e.key == key);
 		if (c) c.count++;
 		else this.countsFatal.push({ key: key, count: 1 });
 	}
 	setF(key: string, value: number = 1) {
+		if (this.codeCounts) return;
 		const c = this.countsFatal.find((e) => e.key == key);
 		if (c) c.count++;
 		else this.countsFatal.push({ key: key, count: value });
 	}
 	/* private method*/ #increment(key: string) {
+		if (this.codeCounts) return;
 		const c = this.countsErr.find((e) => e.key == key);
 		if (c) c.count++;
 		else this.countsErr.push({ key: key, count: 1 });
 	}
 	set(key: string, value: number = 1) {
+		if (this.codeCounts) return;
 		const c = this.countsErr.find((e) => e.key == key);
 		if (c) c.count++;
 		else this.countsErr.push({ key: key, count: value });
 	}
 	/* private method*/ #incrementW(key: string) {
+		if (this.codeCounts) return;
 		const c = this.countsWarn.find((e) => e.key == key);
 		if (c) c.count++;
 		else this.countsWarn.push({ key: key, count: 1 });
 	}
 	setW(key: string, value: number = 1) {
+		if (this.codeCounts) return;
 		const c = this.countsWarn.find((e) => e.key == key);
 		if (c) c.count++;
 		else this.countsWarn.push({ key: key, count: value });
 	}
 	/* private method*/ #incrementI(key: string) {
+		if (this.codeCounts) return;
 		const c = this.countsInfo.find((e) => e.key == key);
 		if (c) c.count++;
 		else this.countsInfo.push({ key: key, count: 1 });
 	}
 	setI(key: string, value: number = 1) {
+		if (this.codeCounts) return;
 		const c = this.countsInfo.find((e) => e.key == key);
 		if (c) c.count++;
 		else this.countsInfo.push({ key: key, count: value });
@@ -214,29 +241,41 @@ export default class ErrorList {
 		return maxLen == -1 ? t : `${t.slice(0, maxLen)}\n....\n`;
 	}
 
+	/* private method */ #store(list: SeverityList, err: ErrorType) {
+		if (this.codeCounts) {
+			const counts = this.codeCounts[list];
+			counts[err.code] = (counts[err.code] ?? 0) + 1;
+		}
+		else this[list].push(err);
+	}
+
 	/* private method */ #insertErrorData( key: string | undefined, err: ErrorType) {
 		switch (err.type) {
 			case FATAL:
-				this.fatals.push(err);
+				this.#store("fatals", err);
 				if (key) this.#incrementF(key);
 				break;
 			case ERROR:
-				this.errors.push(err);
+				this.#store("errors", err);
 				if (key) this.#increment(key);
 				break;
 			case APPLICATION:
-				this.errors.push(err);
+				this.#store("errors", err);
 				this.#increment("application process error");
 				break;
 			case WARNING:
-				this.warnings.push(err);
+				this.#store("warnings", err);
 				if (key) this.#incrementW(key);
 				break;
 			case INFORMATION:
-				this.informationals.push(err);
+				this.#store("informationals", err);
 				if (key) this.#incrementI(key);
 				break;
 		}
+	}
+
+	/* private method */ #count(list: SeverityList): number {
+		return this.codeCounts ? Object.values(this.codeCounts[list]).reduce((a, b) => a + b, 0) : this[list].length;
 	}
 
 	/* private method */ #debugMessage(err: DebugMessageType) {
@@ -263,18 +302,18 @@ export default class ErrorList {
 		DefaultProperty(e, "reportInTable", true);
 
 		if (![FATAL, ERROR, WARNING, INFORMATION, APPLICATION, DEBUG].includes(e.type as string)) {
-			this.errors.push({ code: "ERR000", type: APPLICATION, message: `addError() called with invalid type property (${e.type})` });
+			this.#store("errors", { code: "ERR000", type: APPLICATION, message: `addError() called with invalid type property (${e.type})` });
 			this.#increment(_INVALID_CALL);
 			argsOK = false;
 		}
 		if (!e.code) {
-			this.errors.push({ code: "ERR001", type: APPLICATION, message: "addError() called without code property" });
+			this.#store("errors", { code: "ERR001", type: APPLICATION, message: "addError() called without code property" });
 			this.#increment(_INVALID_CALL);
 			e.code = "ERR001";
 			argsOK = false;
 		}
 		if (!e.message) {
-			this.errors.push({ code: "ERR002", type: APPLICATION, message: "addError() called without message property" });
+			this.#store("errors", { code: "ERR002", type: APPLICATION, message: "addError() called without message property" });
 			this.#increment(_INVALID_CALL);
 			e.message = "no error message";
 			argsOK = false;
@@ -349,16 +388,16 @@ export default class ErrorList {
 	}
 
 	numFatals() {
-		return this.fatals.length;
+		return this.#count("fatals");
 	}
 	numErrors() {
-		return this.errors.length;
+		return this.#count("errors");
 	}
 	numWarnings() {
-		return this.warnings.length;
+		return this.#count("warnings");
 	}
 	numInformationals() {
-		return this.informationals.length;
+		return this.#count("informationals");
 	}
 
 	numCountsFatal() {
@@ -375,28 +414,27 @@ export default class ErrorList {
 	}
 
 	compactSummary() {
-		const summary = (counts: ErrorType[]) => {
-			const s: { code: string; count: number }[] = [];
-			counts.forEach((e: ErrorType) => {
-				const i = s.find((f) => f.code == e.code);
-				if (i != undefined) 
-					i.count++;
-				else s.push({ code: e.code, count: 1 });
-			})
-			return s.map((e) => `"${e.code}"${e.count>1 ? `=${e.count}` : ""}`).join(", ");
+		const summary = (list: SeverityList) => {
+			let counts: Record<string, number>;
+			if (this.codeCounts) counts = this.codeCounts[list];
+			else {
+				counts = {};
+				this[list].forEach((e: ErrorType) => (counts[e.code] = (counts[e.code] ?? 0) + 1));
+			}
+			return Object.entries(counts).map(([code, count]) => `"${code}"${count > 1 ? `=${count}` : ""}`).join(", ");
 		};
-		return `F(${summary(this.fatals)}) E(${summary(this.errors)}) W(${summary(this.warnings)}) I(${summary(this.informationals)}) D:${this.debugs.length}`;
+		return `F(${summary("fatals")}) E(${summary("errors")}) W(${summary("warnings")}) I(${summary("informationals")}) D:${this.debugs.length}`;
 	}
 
 	countsSummary() {
-		return `F:${this.fatals.length} E:${this.errors.length} W:${this.warnings.length} I:${this.informationals.length} D:${this.debugs.length} `;
+		return `F:${this.numFatals()} E:${this.numErrors()} W:${this.numWarnings()} I:${this.numInformationals()} D:${this.debugs.length} `;
 	}
 
 	severity() : number {
-		if (this.fatals.length > 0) return 5
-		else if (this.errors.length > 0) return 4
-		else if (this.warnings.length > 0) return 3
-		else if (this.informationals.length > 0) return 2
+		if (this.numFatals() > 0) return 5
+		else if (this.numErrors() > 0) return 4
+		else if (this.numWarnings() > 0) return 3
+		else if (this.numInformationals() > 0) return 2
 		else if (this.debugs.length > 0) return 1
 		return 0
 	}
@@ -409,7 +447,7 @@ export default class ErrorList {
 	 * @param {string}  e.clause      (optional) the specification clause/section that is violated (only used with @e.description is provided)
 	 */
 	errorDescription(e: ErrorDescriptionType) {
-		if (!e.code || !e.description) return;
+		if (this.codeCounts || !e.code || !e.description) return;
 		const found = this.errorDescriptions.find((element) => e.code == element.code);
 		if (found) {
 			if (found.description.indexOf(e.description) == -1) found.description += `\n${e.description}`;

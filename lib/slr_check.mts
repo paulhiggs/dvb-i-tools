@@ -358,7 +358,7 @@ export default class ServiceListRegistryCheck {
 				ValidateAnySignaturePolicy(URI, documentInfo, errs, `${errCode}-37`);
 
 				if (options.traverse && this.#service_list_validator) {
-					const sl_errs: ErrorList = new ErrorList(URI.content, "SL", "Nested Service List")
+					const sl_errs: ErrorList = ErrorList.summaryOnly(URI.content, "SL", "Nested Service List")
 					this.#service_list_validator.validateServiceList(URI, URI.content, sl_errs, options)
 					errs.nestedErrors.push(sl_errs)
 				}
