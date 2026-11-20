@@ -1997,7 +1997,7 @@ export default class ServiceListCheck {
 				// check now/next via ScheduleInfoEndpoint
 				if (siEpURL && serviceID) {
 					const NowNextURL = `${siEpURL}?sid=${serviceID}&now_next=true`
-					const cg_errors = new ErrorList(NowNextURL, CG_REQUEST_SCHEDULE_NOWNEXT, "Now/Next")
+					const cg_errors = ErrorList.summaryOnly(NowNextURL, CG_REQUEST_SCHEDULE_NOWNEXT, "Now/Next")
 	/*dbg*/console.log(` ${NowNextURL} Now/Next lookup for serviceID ${serviceID}`)
 					this.#content_guide_validator.validateContentGuide(
 						myContentGuide.getAnyNs(dvbi.e_ScheduleInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
@@ -2026,7 +2026,7 @@ export default class ServiceListCheck {
 							const end_sec = end.epochMilliseconds / 1000
 
 							const TimestampInterval = `${siEpURL}?sid=${serviceID}&start=${start_sec}&end=${end_sec}`
-							const cg_errors = new ErrorList(TimestampInterval, CG_REQUEST_SCHEDULE_TIME, `Timestamp filtered schedule: ${start}-${end}`)
+							const cg_errors = ErrorList.summaryOnly(TimestampInterval, CG_REQUEST_SCHEDULE_TIME, `Timestamp filtered schedule: ${start}-${end}`)
 	/*dbg*/console.log(`traverse:: ${TimestampInterval} Timestamp ${start}-${end} lookup for serviceID ${serviceID}`)
 							this.#content_guide_validator.validateContentGuide(
 								myContentGuide.getAnyNs(dvbi.e_ScheduleInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
@@ -2044,7 +2044,7 @@ export default class ServiceListCheck {
 	/*dbg*/console.log(`traverse:: ${giEpURL} Boxset categories lookup for serviceID ${serviceID}`)
 //						const BSCategoriesSvcURL = `${giEpURL}categories?sid=${serviceID}&page_size=all`
 						const BSCategoriesSvcURL = `${giEpURL}categories?sid=${serviceID}`
-						const cg_errors = new ErrorList(BSCategoriesSvcURL, CG_REQUEST_BS_CATEGORIES, `Boxset Categories for ${serviceID}`)
+						const cg_errors = ErrorList.summaryOnly(BSCategoriesSvcURL, CG_REQUEST_BS_CATEGORIES, `Boxset Categories for ${serviceID}`)
 						this.#content_guide_validator.validateContentGuide(
 							myContentGuide.getAnyNs(dvbi.e_GroupInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
 							BSCategoriesSvcURL, 
@@ -2057,7 +2057,7 @@ export default class ServiceListCheck {
 	/*dbg*/console.log(`traverse:: ${giEpURL} Boxset categories lookup endpoint`)
 //					const BSCategoriesAllURL = `${giEpURL}categories&page_size=all`
 					const BSCategoriesAllURL = `${giEpURL}categories`
-					const cg_errors = new ErrorList(BSCategoriesAllURL, CG_REQUEST_BS_CATEGORIES, "Boxset Categories for all services")
+					const cg_errors = ErrorList.summaryOnly(BSCategoriesAllURL, CG_REQUEST_BS_CATEGORIES, "Boxset Categories for all services")
 					this.#content_guide_validator.validateContentGuide(
 						myContentGuide.getAnyNs(dvbi.e_GroupInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
 						BSCategoriesAllURL, 
