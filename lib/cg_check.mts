@@ -1593,7 +1593,6 @@ export default class ContentGuideCheck {
 				const piErrs = new ErrorList(piURL, CG_REQUEST_PROGRAM, "Program Information")
 	/*dbg*/console.log(`traverse:: DPI of ${piURL}`)
 				this.validateContentGuide(ProgramInformation, piURL, CG_REQUEST_PROGRAM, piErrs, {} )
-				piErrs.discardMarkup()
 				errs.nestedErrors.push(piErrs)
 			}
 
@@ -1604,7 +1603,6 @@ export default class ContentGuideCheck {
 				const mepErrs = new ErrorList(mepURL, CG_REQUEST_MORE_EPISODES, `More Episodes for ${programCRID}`)
 	/*dbg*/console.log(`traverse:: More Episodes of ${mepURL}`)
 				this.validateContentGuide(ProgramInformation, mepURL, CG_REQUEST_MORE_EPISODES, mepErrs, options )
-				mepErrs.discardMarkup()
 				errs.nestedErrors.push(mepErrs)
 			}
 		}
@@ -1823,7 +1821,6 @@ export default class ContentGuideCheck {
 									const paginationErrs = new ErrorList(paginationURL, CG_REQUEST_BS_CATEGORIES, "Box Set Categories (pagination)")
 	/*dbg*/console.log(`traverse:: Next pagination for Box Set Categories of ${paginationURL}`)
 									this.validateContentGuide(rm, paginationURL, CG_REQUEST_BS_CATEGORIES, paginationErrs, options)
-									paginationErrs.discardMarkup()
 									errs.nestedErrors.push(paginationErrs)
 								}
 							}
@@ -1845,7 +1842,6 @@ export default class ContentGuideCheck {
 						const bslErrs = new ErrorList(bslURL, CG_REQUEST_BS_LISTS, "Box Set List")
 	/*dbg*/console.log(`traverse:: Box Set List of ${bslURL}`)
 						this.validateContentGuide(GroupInformation, bslURL, CG_REQUEST_BS_LISTS, bslErrs, options )
-						bslErrs.discardMarkup()
 						errs.nestedErrors.push(bslErrs)
 					}
 				}
@@ -1881,7 +1877,6 @@ export default class ContentGuideCheck {
 									const paginationErrs = new ErrorList(paginationURL, CG_REQUEST_BS_LISTS, "Box Set Lists (pagination)")
 	/*dbg*/console.log(`traverse:: Next pagination for Box Set Lists of ${paginationURL}`)
 									this.validateContentGuide(rm, paginationURL, CG_REQUEST_BS_LISTS, paginationErrs, options)
-									paginationErrs.discardMarkup()
 									errs.nestedErrors.push(paginationErrs)
 								}
 							}
@@ -1903,7 +1898,6 @@ export default class ContentGuideCheck {
 						const bscErrs = new ErrorList(bscURL, CG_REQUEST_BS_CONTENTS, "Box Set Contents")
 	/*dbg*/console.log(`traverse:: Box Set Contents of ${bscURL}`)
 						this.validateContentGuide(GroupInformation, bscURL, CG_REQUEST_BS_CONTENTS, bscErrs, options)
-						bscErrs.discardMarkup()
 						errs.nestedErrors.push(bscErrs)
 					}
 				}
@@ -1929,7 +1923,6 @@ export default class ContentGuideCheck {
 									const paginationErrs = new ErrorList(paginationURL, CG_REQUEST_BS_CONTENTS, "Box Set Contents (pagination)")
 	/*dbg*/console.log(`traverse:: Next pagination for Box Set Contents of ${paginationURL}`)
 									this.validateContentGuide(rm, paginationURL, CG_REQUEST_BS_CONTENTS, paginationErrs, options)
-									paginationErrs.discardMarkup()
 									errs.nestedErrors.push(paginationErrs)
 								}
 							}

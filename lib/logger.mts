@@ -64,7 +64,7 @@ export function createPrefix(req: express.Request, testtype?: string) : string |
 
 
 export default function document_logger(errs: ErrorList, filebase: string | undefined, markup: boolean, req?: express.Request) : void {
-	if (!filebase || errs.markupXML?.length == 0) return;
+	if (!filebase || !errs.markupXML?.length) return;
 
 	const outputLines = [];
 	if (markup && req?.body?.XMLurl) outputLines.push(`<!-- source: ${req.body.XMLurl} -->`);

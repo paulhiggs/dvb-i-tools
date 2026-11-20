@@ -178,7 +178,7 @@ async function DVB_I_check(
 		req.session.data.forGermany = req.body.forGermany == "on";
 		req.session.data.traverse = req.body.traverse == "on"
 		const log_prefix = createPrefix(req, req.body.testtype);
-		const errs = new ErrorList();
+		const errs = ErrorList.withMarkup();
 		if (!req.parseErr)
 			switch (req.body.doclocation) {
 				case MODE_URL:
@@ -260,7 +260,7 @@ async function DVB_I_check(
  */
 async function validateServiceList(req: express.Request, res: express.Response, slcheck: ServiceListCheck, motd: string | undefined, jsonResponse: boolean) : Promise<void> {
 	if (!checkMethod(req, res)) return;
-	const errs = new ErrorList();
+	const errs = ErrorList.withMarkup();
 	const log_prefix = createPrefix(req, MODE_SL);
 	const SLxml = await getDocument(req)
 	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
@@ -283,7 +283,7 @@ async function validateServiceList(req: express.Request, res: express.Response, 
  */
 async function validatePlaylist(req: express.Request, res: express.Response, plcheck: PlaylistCheck, motd: string | undefined, jsonResponse: boolean) : Promise<void> {
 	if (!checkMethod(req, res)) return;
-	const errs = new ErrorList();
+	const errs = ErrorList.withMarkup();
 	const log_prefix = createPrefix(req, MODE_PL);
 	const PLxml = await getDocument(req)
 
@@ -306,7 +306,7 @@ async function validatePlaylist(req: express.Request, res: express.Response, plc
  */
 async function validateServiceListRegistry(req: express.Request, res: express.Response, slrcheck: ServiceListRegistryCheck, motd: string | undefined, jsonResponse: boolean) : Promise<void> {
 	if (!checkMethod(req, res)) return;
-	const errs = new ErrorList();
+	const errs = ErrorList.withMarkup();
 	const log_prefix = createPrefix(req, MODE_SLR);
 	const SLRxml = await getDocument(req)
 
@@ -329,7 +329,7 @@ async function validateServiceListRegistry(req: express.Request, res: express.Re
  */
 async function validateContentGuide(req: express.Request, res: express.Response, cgcheck: ContentGuideCheck, motd: string | undefined, jsonResponse: boolean) : Promise<void> {
 	if (!checkMethod(req, res)) return;
-	const errs = new ErrorList();
+	const errs = ErrorList.withMarkup();
 	const log_prefix = createPrefix(req, MODE_CG);
 	const CGxml = await getDocument(req)
 	const _options: CG_Validator_Options = { log_prefix: log_prefix, report_schema_version: true }
