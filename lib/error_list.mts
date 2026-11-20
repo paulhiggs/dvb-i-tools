@@ -193,7 +193,9 @@ export default class ErrorList {
 		else this.countsInfo.push({ key: key, count: value });
 	}
 
-	/* private method */ #prettyPrint(node: XmlElement) {
+	/* private method */ #prettyPrint(node: XmlElement) : string | null {
+		// the fragment text is only displayed with the marked up document, so is not kept for a traversed document
+		if (!this.#keepMarkup) return null;
 		const t = node.toString();
 		const maxLen = nthIndexOf(t, "\n", MAX_FRAGMENT_LINES);
 		return maxLen == -1 ? t : `${t.slice(0, maxLen)}\n....\n`;
