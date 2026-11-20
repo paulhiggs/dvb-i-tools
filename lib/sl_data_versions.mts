@@ -17,7 +17,7 @@ import { StandardStatus, GERMAN_A177r6_VARIANT } from "./globals.mts"
 import type { LoadOptions } from "./globals.mts"
 
 import { slVersions, dvbi, CONTENT_FINISHED_TERM, OUTSIDE_AVAILABILITY_TERM } from "./DVB-I_definitions.mts"
-import { DVBI_ServiceListSchema } from "./data_locations.mts"
+import { DVBI_ServiceListSchema, schemaURL } from "./data_locations.mts"
 import { SLR_SchemaVersion } from "./slr_data_versions.mts"
 import type { LoadedVersionInfo } from "./slr_data_versions.mts"
 import { readmyfile } from "./utils.mts"
@@ -404,7 +404,7 @@ export function LoadSLschemas(opts: LoadOptions) : void {
 	SL_SchemaVersions.forEach((version) => {
 		if (opts.verbose) process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
 		const buf = readmyfile(version.filename, {}) as Buffer;
-		if (buf) version.schema = XmlDocument.fromBuffer(buf, { url: version.filename });
+		if (buf) version.schema = XmlDocument.fromBuffer(buf, { url: schemaURL(version.filename) });
 		if (opts.verbose) process.stdout.write(`${version.schema ? chalk.green("OK") : chalk.red.bold("FAIL")}\n`);
 	});
 }

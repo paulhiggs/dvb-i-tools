@@ -15,6 +15,7 @@ import process from "process"
 import { readFileSync, existsSync } from "fs"
 import cluster from "cluster"
 import { randomBytes } from "crypto"
+import { restartWorkersOnExit } from "./cluster_restart.mts"
 import { cpus } from "os"
 const numCPUs = cpus().length;
 
@@ -71,8 +72,8 @@ let csr: SLEPR | null= null;
 
 const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), read_string_options).toString());
 
-const keyFilename: string = join(".", "selfsigned.key"),
-	certFilename: string = join(".", "selfsigned.crt");
+const keyFilename: string = join(__dirname, "selfsigned.key"),
+	certFilename: string = join(__dirname, "selfsigned.crt");
 
 function getDocument(req: express.Request) : string | null {
 	if (req.method == "GET") {
@@ -310,16 +311,6 @@ function validateServiceListRegistry(req: express.Request, res: express.Response
 	const SLRxml = getDocument(req)
 
 	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
-	switch (req.method) {
-		case "GET":
-			if (req.query?.variants && (req.query.variants as string).toLowerCase() == "de")
-				_options.variants = GERMAN_A177r6_VARIANT
-			break
-		case "POST":
-			if (req.header("X-variants")?.toLowerCase() == "de")
-				_options.variants = GERMAN_A177r6_VARIANT
-			break
-	}
 	if (SLRxml) slrcheck.doValidateServiceListRegistry(SLRxml, errs, _options);
 	report(req, res, jsonResponse, errs, motd)
 
@@ -400,12 +391,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		for (let i = 0; i < app_options.workers; i++) 
 			cluster.fork();
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		cluster.on("exit", (worker, code, signal) => {
-			console.log(chalk.red(`worker ${worker.process.pid} died`));
-			console.log(chalk.red("Let's fork another worker!"));
-			cluster.fork();
-		});
+		restartWorkersOnExit();
 	}
 	else {
 
@@ -472,7 +458,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		const logDir = join(".", "logs");
 		if (existsSync(logDir)) {
 			const logStream = createStream('access.log', {
-				interval: "1M", // rotate daily
+				interval: "1M", // rotate monthly
 				compress: "gzip", // compress rotated files
 				path: logDir,
 			})
@@ -755,8 +741,9 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			const http_server = createHttpServer(app);
 			http_server.on("error", (err: NodeJS.ErrnoException) => {
 				listenFailed("HTTP", app_options.port, "HTTP server not started")(err);
-				// nothing is listening, so the process will end - report it as a failure (e.g. for systemd Restart=on-failure)
-				process.exitCode = 1;
+				// nothing is listening, so stop with a failure status (e.g. for systemd Restart=on-failure, or the cluster primary
+				// to restart the worker). An explicit exit is needed as a cluster worker's IPC channel would otherwise keep it running
+				process.exit(1);
 			});
 			http_server.listen(app_options.port, () => {
 				console.log(chalk.cyan(`HTTP listening on port number ${(http_server.address() as AddressInfo).port}`));

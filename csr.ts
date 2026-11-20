@@ -37,11 +37,12 @@ import IANAlanguages from "./lib/IANA_languages.mts"
 import ISOcountries from "./lib/ISO_countries.mts"
 import ClassificationScheme from "./lib/classification_scheme.mts"
 import { __dirname } from "./lib/data_locations.mts"
+import { restartWorkersOnExit } from "./lib/cluster_restart.mts"
 
 import {} from "./lib/string-extensions.mts"
 
-const keyFilename = join(".", "selfsigned.key"),
-	certFilename = join(".", "selfsigned.crt");
+const keyFilename = join(__dirname, "selfsigned.key"),
+	certFilename = join(__dirname, "selfsigned.crt");
 
 const numCPUs = cpus().length;
 const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), read_string_options).toString());
@@ -193,12 +194,7 @@ if (cluster.isPrimary) {
 	for (let i = 0; i < options.workers; i++) 
 		cluster.fork();
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	cluster.on("exit", (worker, code, signal) => {
-		console.log(chalk.red(`worker ${worker.process.pid} died`));
-		console.log(chalk.red("Let's fork another worker!"));
-		cluster.fork();
-	});
+	restartWorkersOnExit();
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	cluster.on("message", (worker, msg: IPCmessage, handle) => {
 		if (msg.topic)
@@ -284,7 +280,7 @@ else {
 	const logDir = join(".", "logs");
 	if (existsSync(logDir)) {
 		const logStream = createStream('access.log', {
-			interval: "1M", // rotate daily
+			interval: "1M", // rotate monthly
 			compress: "gzip", // compress rotated files
 			path: logDir,
 		})
@@ -292,7 +288,7 @@ else {
 	}
 
 
-	app.use(favicon(join("icon", "ph-icon.ico")));
+	app.use(favicon(join(__dirname, "icon", "ph-icon.ico")));
 	// in library mode, cors() is already applied to all routes by app.use() above
 	if (options.CORSmode == CORSmanual)
 		app.options(SLEPR_query_route, manualCORS);

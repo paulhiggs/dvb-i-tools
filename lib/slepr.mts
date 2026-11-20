@@ -29,7 +29,8 @@ import ClassificationScheme from "./classification_scheme.mts"
 let masterSLEPR = "";
 const EMPTY_SLEPR = (err?: string) =>
 	`<ServiceListEntryPoints xmlns="urn:dvb:metadata:servicelistdiscovery:2024">${err ? `\n<!--${err} -->\n` : ""}<ServiceListRegistryEntity><Name>EMPTY</Name></ServiceListRegistryEntity></ServiceListEntryPoints>`;
-const REGISTRY_ERROR = (message: string, document: string) => `<Error><Message><![CDATA[${message}]]></Message>\n<SLRDocument><![CDATA[\n${document}]]>\n</SLRDocument></Error>`;
+// the registry document itself is not returned to the client, the problem is logged on the server
+const REGISTRY_ERROR = (message: string) => `<Error><Message>${message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</Message></Error>`;
 
 const RFC2397_PREFIX = "data:";
 
@@ -245,8 +246,9 @@ export default class SLEPR {
 		} catch (err) {
 			res.type("application/xml");
 			res.status(500);
-			const message = (err instanceof XmlError) ? err.message : "sometghign bad happened"
-			res.send(REGISTRY_ERROR(message, masterSLEPR));
+			const message = (err instanceof XmlError) ? err.message : "something bad happened";
+			console.log(chalk.red(`unable to parse the service list registry (${this.#registryFilename}): ${message}`));
+			res.send(REGISTRY_ERROR(`the service list registry could not be parsed: ${message}`));
 			return false;
 		}
 		if (queryParams.ProviderName) {
@@ -444,8 +446,8 @@ export default class SLEPR {
 		}
 		providersToRemove.forEach((provider) => provider.remove());
 
-		const removeImages = queryParams.inlineImages && queryParams.inlineImages[0].toLowerCase() == "true" ? true : false;
-		if (!removeImages) {
+		const keepInlineImages = queryParams.inlineImages && queryParams.inlineImages[0].toLowerCase() == "true" ? true : false;
+		if (!keepInlineImages) {
 			// remove any 'data:' URLs from RelatedMaterial elements. if there are no remaining MediaLocator elements, then remove the RelatedMaterial
 			let prov,
 				p = 0;

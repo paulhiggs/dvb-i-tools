@@ -21,7 +21,7 @@ import { mpeg7 } from "./MPEG7_definitions.mts"
 import { tva, tvaEA, tvaEC } from "./TVA_definitions.mts"
 import { cgVersions, slVersions, dvbi } from "./DVB-I_definitions.mts"
 
-import { TVAschema } from "./data_locations.mts"
+import { TVAschema, schemaURL } from "./data_locations.mts"
 
 import ErrorList, { WARNING, APPLICATION } from "./error_list.mts"
 import type { ReportedErrorType } from "./error_list.mts"
@@ -174,7 +174,7 @@ function LoadCGschemas(opts: LoadOptions) : void {
 	CG_SchemaVersions.forEach((version) => {
 		if (opts.verbose) process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
 		const schema = readFileSync(version.filename);
-		if (schema) version.schema = XmlDocument.fromBuffer(schema, { url: version.filename });
+		if (schema) version.schema = XmlDocument.fromBuffer(schema, { url: schemaURL(version.filename) });
 		if (opts.verbose) process.stdout.write(`${version.schema ? chalk.green("OK") : chalk.red.bold("FAIL")}\n`);
 	});
 }

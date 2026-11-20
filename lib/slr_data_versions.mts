@@ -15,7 +15,7 @@ import { XmlDocument } from "libxml2-wasm"
 
 import { StandardStatus } from "./globals.mts"
 import { slVersions, dvbisld } from "./DVB-I_definitions.mts"
-import { DVBI_ServiceListRegistrySchema } from "./data_locations.mts"
+import { DVBI_ServiceListRegistrySchema, schemaURL } from "./data_locations.mts"
 import { readmyfile } from "./utils.mts"
 
 import { GERMAN_A177r6_VARIANT } from "./globals.mts"
@@ -172,7 +172,7 @@ export function LoadSLRschemas(opts: LoadOptions) : void {
 	SchemaVersions.forEach((version) => {
 		if (opts.verbose) process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
 		const buf = readmyfile(version.filename, {}) as Buffer;
-		if (buf) version.schema = XmlDocument.fromBuffer(buf, { url: version.filename });
+		if (buf) version.schema = XmlDocument.fromBuffer(buf, { url: schemaURL(version.filename) });
 		if (opts.verbose) process.stdout.write(`${version.schema ? chalk.green("OK") : chalk.red.bold("FAIL")}\n`);
 	});
 }
