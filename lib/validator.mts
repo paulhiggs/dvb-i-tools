@@ -429,11 +429,9 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			};
 		}
 
-		app.use(express.static(__dirname));
-
-		app.set("view engine", "ejs");
+		// no static file serving: the pages are generated, and the installation directory holds keys, logs and configuration
 		app.use(fileupload());
-		app.use(favicon(join("icon", "ph-icon.ico")));
+		app.use(favicon(join(__dirname, "icon", "ph-icon.ico")));
 
 		token("protocol", (req: express.Request) => {
 			return req.protocol;
