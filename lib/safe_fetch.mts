@@ -217,12 +217,18 @@ type TraversalBudget = {
 };
 
 /**
- * the reason a traversal is not performed
+ * the reason a traversal is not performed, as reported to the user
+ *   TRAV000  traversal requested or performed outside a validation (application error)
+ *   TRAV001  the URL has already been traversed during this validation
+ *   TRAV002  the maximum traversal depth has been reached
+ *   TRAV003  the maximum number of traversed documents has been reached
  */
 export type TraversalRefusal = {
-	duplicate: boolean; // true if the URL has already been traversed during this validation
-	reason: string;
+	code: string;
+	message: string;
 };
+
+const refusal = (code: string, url: string, reason: string): TraversalRefusal => ({ code, message: `traversal into ${url} skipped, ${reason}` });
 
 // compare URLs in their normalised form, so trivially different spellings of the same URL are treated as one
 const normaliseURL = (url: string): string => {
@@ -332,12 +338,13 @@ export function deferRetrieval<T>(retrieve: () => Promise<T>, complete: (retriev
  * claimTraversal() when its retrieval is performed, so that documents referenced by traversed documents
  * (e.g. Program Information in a schedule) are not starved by the requests made by the outermost document
  *
- * @returns {string | null} null if the traversal can be scheduled, otherwise the reason it cannot
+ * @param {string} url  the URL of the document to be traversed into
+ * @returns {TraversalRefusal | null} null if the traversal can be scheduled, otherwise the reason it cannot
  */
-export function allowTraversal(): string | null {
+export function allowTraversal(url: string): TraversalRefusal | null {
 	const scope = openScopes.at(-1);
-	if (!scope) return "traversal requested outside a validation";
-	if (scope.depth + 1 > policy.maxTraversalDepth) return `maximum traversal depth (${policy.maxTraversalDepth}) reached`;
+	if (!scope) return refusal("TRAV000", url, "traversal requested outside a validation");
+	if (scope.depth + 1 > policy.maxTraversalDepth) return refusal("TRAV002", url, `maximum traversal depth (${policy.maxTraversalDepth}) reached`);
 	return null;
 }
 
@@ -350,11 +357,11 @@ export function allowTraversal(): string | null {
  */
 export function claimTraversal(url: string): TraversalRefusal | null {
 	const scope = runningScope.getStore();
-	if (!scope) return { duplicate: false, reason: "traversal performed outside a validation" };
+	if (!scope) return refusal("TRAV000", url, "traversal performed outside a validation");
 	const key = normaliseURL(url);
-	if (scope.budget.traversed.has(key)) return { duplicate: true, reason: `${url} already validated` };
+	if (scope.budget.traversed.has(key)) return { code: "TRAV001", message: `skipped - ${url} already validated` };
 	if (scope.budget.documents >= policy.maxTraversalDocuments)
-		return { duplicate: false, reason: `maximum number of traversed documents (${policy.maxTraversalDocuments}) reached` };
+		return refusal("TRAV003", url, `maximum number of traversed documents (${policy.maxTraversalDocuments}) reached`);
 	scope.budget.documents++;
 	scope.budget.traversed.add(key);
 	return null;

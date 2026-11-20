@@ -121,6 +121,12 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 
 Documents retrieved for validation (by URL or by traversal) must use `http:` or `https:`, are limited to 10 MB and a 3 second timeout. A single validation traverses at most 10 levels deep and at most 100 referenced documents (see `--max_traversal`).
 
+A referenced document that is not traversed is reported with a warning:
+- `TRAV001` the URL has already been validated during this validation (each URL is validated only once)
+- `TRAV002` the maximum traversal depth has been reached
+- `TRAV003` the maximum number of traversed documents has been reached
+- `TRAV000` the traversal was requested outside a validation (an internal error)
+
 ### Logging
 
 If a subdirectory named `./arch` exists, then any XML document for validation will be copied there. There will be the original document with the suffix "`.txt`" and a second document with the suffix "`.mkup.txt`" containing line based validation results as XML comments 

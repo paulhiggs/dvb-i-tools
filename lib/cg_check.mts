@@ -3776,12 +3776,12 @@ export default class ContentGuideCheck {
 	 */
 	/* public */
 	validateContentGuide(Location: XmlElement, requestUrl: string,  requestType: string, errs: ErrorList, options: CG_Validator_Options) : void {
-		const limited = allowTraversal();
+		const limited = allowTraversal(requestUrl);
 		if (limited) {
 			errs.addError({
-				code: `VCG003`,
+				code: limited.code,
 				type: WARNING,
-				message: `traversal into ${Location.content} skipped, ${limited}`,
+				message: limited.message,
 				fragment: Location,
 				key: keys.k_Traversal,
 			})
@@ -3792,9 +3792,9 @@ export default class ContentGuideCheck {
 		deferRetrieval(() => retrieveTraversal(requestUrl), async ({ refused, response: resp, error }) => {
 			if (refused) {
 				errs.addError({
-					code: refused.duplicate ? `TRAV001` : `VCG003`,
+					code: refused.code,
 					type: WARNING,
-					message: refused.duplicate ? `skipped - ${refused.reason}` : `traversal into ${Location.content} skipped, ${refused.reason}`,
+					message: refused.message,
 					fragment: Location,
 					key: keys.k_Traversal,
 				})

@@ -2875,12 +2875,12 @@ export default class ServiceListCheck {
 	/*public*/ 
 	validateServiceList(Location: XmlElement, requestUrl: string, errs: ErrorList, options: SL_Validator_Options) : void {
 
-		const limited = allowTraversal();
+		const limited = allowTraversal(requestUrl);
 		if (limited) {
 			errs.addError({
-				code: `VSL003`,
+				code: limited.code,
 				type: WARNING,
-				message: `traversal into ${Location.content} skipped, ${limited}`,
+				message: limited.message,
 				fragment: Location,
 				key: keys.k_Traversal,
 			})
@@ -2891,9 +2891,9 @@ export default class ServiceListCheck {
 		deferRetrieval(() => retrieveTraversal(requestUrl), async ({ refused, response: resp, error }) => {
 			if (refused) {
 				errs.addError({
-					code: refused.duplicate ? `TRAV001` : `VSL003`,
+					code: refused.code,
 					type: WARNING,
-					message: refused.duplicate ? `skipped - ${refused.reason}` : `traversal into ${Location.content} skipped, ${refused.reason}`,
+					message: refused.message,
 					fragment: Location,
 					key: keys.k_Traversal,
 				})
