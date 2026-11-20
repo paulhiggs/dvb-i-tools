@@ -239,10 +239,9 @@ export default class SLEPR {
 			return false;
 		}
 
-		// eslint-disable-next-line no-useless-assignment
-		let slepr = undefined;
+		let parsed: XmlDocument;
 		try {
-			slepr = XmlDocument.fromString(masterSLEPR);
+			parsed = XmlDocument.fromString(masterSLEPR);
 		} catch (err) {
 			res.type("application/xml");
 			res.status(500);
@@ -251,6 +250,8 @@ export default class SLEPR {
 			res.send(REGISTRY_ERROR(`the service list registry could not be parsed: ${message}`));
 			return false;
 		}
+		// 'using' disposes the document (WASM memory) however this method exits, including exceptions while filtering
+		using slepr = parsed;
 		if (queryParams.ProviderName) {
 			// if ProviderName is specified, remove any ProviderOffering entries that do not match the name
 			let prov,
@@ -483,7 +484,6 @@ export default class SLEPR {
 
 		res.type("application/xml");
 		res.send(slepr.toString());
-		slepr.dispose()
 		return true;
 	}
 }

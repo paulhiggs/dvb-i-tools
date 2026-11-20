@@ -17,6 +17,9 @@ import { join, sep } from "path"
 import { MODE_URL, MODE_CG, MODE_SL, MODE_SLR, MODE_PL } from "./ui.mts"
 import ErrorList from "./error_list.mts"
 
+let lastArchiveStamp = "",
+	archiveSequence = 0;
+
 export function createPrefix(req: express.Request, testtype?: string) : string | undefined {
 	const logDir: string = join(".", "arch");
 
@@ -27,7 +30,11 @@ export function createPrefix(req: express.Request, testtype?: string) : string |
 	const getDate = (i : Temporal.Instant) : string=> {
 		const fillZero = (t: number) : string => `${t < 10 ? "0" : ""}${t}`;
 		const d = Temporal.Instant.fromEpochMilliseconds(i.epochMilliseconds).toZonedDateTimeISO("UTC");
-		return `${d.year}-${fillZero(d.month)}-${fillZero(d.day)} ${fillZero(d.hour)}.${fillZero(d.minute)}.${fillZero(d.second)}`;
+		const stamp = `${d.year}-${fillZero(d.month)}-${fillZero(d.day)} ${fillZero(d.hour)}.${fillZero(d.minute)}.${fillZero(d.second)}.${d.millisecond.toString().padStart(3, "0")}`;
+		// documents archived within the same millisecond get a sequence number so they do not overwrite each other
+		archiveSequence = stamp == lastArchiveStamp ? archiveSequence + 1 : 0;
+		lastArchiveStamp = stamp;
+		return archiveSequence ? `${stamp}-${archiveSequence}` : stamp;
 	};
 
 	const lastPathSegment = (url: unknown) : string | undefined =>

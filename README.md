@@ -159,7 +159,7 @@ If the document cannot be retrieved, a `parseErr` array describing the problem i
 }
 ```
 
-`<server>/validate_sl_json?url=<service_list_url>&results=all` valdiates the list "url"-parameter and gives the complete validation results as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. 
+`<server>/validate_sl_json?url=<service_list_url>&results=all` validates the list in the "url"-parameter and gives the complete validation results as JSON. The marked-up copy of the document (`markupXML`) is not included. The HTTP status is 200 whenever the request is accepted, including when the document cannot be retrieved: check for `parseErr` in the response. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. 
 The optional `variants=` query parameter can be used with a GET to specify region specific validation, or via the `X-variants` HTTP header for post.
 Example response:
 
@@ -179,26 +179,6 @@ Example response:
 		],
 		"warnings": [],
 		"informationals": [],
-		"markupXML": [
-			{ "value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "ix": 1 },
-			{
-				"value": "<ServiceList xmlns=\"urn:dvb:metadata:servicediscovery:2024\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema‑instance\" id=\"tag:example.com,2024:list1\" version=\"20240611115822\" xml:lang=\"en\">",
-				"ix": 2
-			},
-			{ "value": "  <Name>List</Name>", "ix": 3 },
-			{ "value": "  <ProviderName>Provider</ProviderName>", "ix": 4 },
-			{
-				"value": "  <Service version=\"1\">",
-				"ix": 5,
-				"validationErrors": [
-					"(E) SL005:6: Error: Element '{urn:dvb:metadata:servicediscovery:2024}Service': Missing child element(s). Expected is one of ( {urn:dvb:metadata:servicediscovery:2024}ServiceName, {urn:dvb:metadata:servicediscovery:2024}ProviderName ).\n"
-				]
-			},
-			{ "value": "   <UniqueIdentifier>tag:example.com,2024:ch1</UniqueIdentifier>", "ix": 6 },
-			{ "value": "   <ServiceName>Service</ServiceName>", "ix": 7 },
-			{ "value": " </Service>", "ix": 8 },
-			{ "value": "</ServiceList>", "ix": 9 }
-		],
 		"errorDescriptions": []
 	}
 }
