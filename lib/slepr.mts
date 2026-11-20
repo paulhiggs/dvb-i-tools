@@ -175,8 +175,14 @@ export default class SLEPR {
 			//const queryParams = qs.parse(req.query) as qs.ParsedQs;
 			const queryParams = req.query
 			for (const key in queryParams) {
-				if (allowed_arguments.includes(key)) 
-					params[key] = datatypeIs(queryParams[key], "array") as boolean ? queryParams[key] as string : [queryParams[key]] as string[];
+				// accept both "Delivery=dvb-t" and the array form "Delivery[]=dvb-t". Express 5's default (simple) query
+				// parser keeps the "[]" in the name, and repeated arguments of either form are combined
+				const name = key.endsWith("[]") ? key.slice(0, -2) : key;
+				if (allowed_arguments.includes(name)) {
+					const value = queryParams[key];
+					const values = Array.isArray(value) ? (value as string[]) : [value as string];
+					params[name] = [...((params[name] as string[] | undefined) ?? []), ...values];
+				}
 				else req.parseErr.push(`invalid argument - ${key}`);
 			}
 
@@ -328,7 +334,7 @@ export default class SLEPR {
 			}
 		}
 
-		if (queryParams.regulatorListFlag || queryParams.Language || queryParams.TargetCountry || queryParams.Genre || requestedVersion != -1) {
+		if (queryParams.regulatorListFlag || queryParams.Language || queryParams.TargetCountry || queryParams.Genre || queryParams.Delivery || requestedVersion != -1) {
 			let prov,
 				p = 0
 			const servicesToRemove = [];

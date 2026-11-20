@@ -101,14 +101,14 @@ const commandLineHelp = [
 		content: [
 			{ header: "{underline arg}" },
 			{ name: "regulatorListFlag", summary: "Select only service lists that have the @regulatorListFlag set as specified (true|false)" },
-			{ name: "Delivery[]", summary: "Select only service lists that use the specified delivery system (dvb-t|dvb-dash|dvb-c|dvb-s|dvb-iptv)" },
+			{ name: "Delivery[]", summary: "Select only service lists that use the specified delivery system (dvb-t|dvb-dash|dvb-c|dvb-s|dvb-iptv|application)" },
 			{ name: "TargetCountry[]", summary: "Select only service lists that apply to the specified countries (form: {underline ISO3166 3-digit code})" },
 			{ name: "Language[]", summary: "Select only service lists that use the specified language (form: {underline IANA 2 digit language code})" },
 			{ name: "Genre[]", summary: "Select only service lists that match one of the given Genres" },
-			{ name: "Provider[]", summary: "Select only service lists that match one of the specified Provider names" },
+			{ name: "ProviderName[]", summary: "Select only service lists that match one of the specified Provider names" },
 		],
 	},
-	{ content: "note that all query values except Provider are checked against constraints. An HTTP 400 response is returned with errors in the response body." },
+	{ content: "each argument can be given with or without the [] suffix, and repeated to give several values. Note that all query values except ProviderName are checked against constraints. An HTTP 400 response is returned with errors in the response body." },
 	{
 		header: "About",
 		content: "Project home: {underline https://github.com/paulhiggs/dvb-i-tools/}",
