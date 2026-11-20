@@ -389,7 +389,28 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 
 		// initialize Express
 		const app = express();
-		app.use(cors());
+
+		// CORS handling, according to --CORSmode. This is registered before any routes so that it applies to all of them
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		type nextFn = (err?: any) => any  // cors module doesnot strictly type this
+
+		let manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
+			next();
+		};
+		if (app_options.CORSmode == CORSlibrary) {
+			app.use(cors());
+		} else if (app_options.CORSmode == CORSmanual) {
+			manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
+				let opts : string[] | undefined = res.getHeader("X-Frame-Options") as string[] | undefined;
+				if (opts) {
+					if (!opts.includes("SAMEORIGIN"))
+						opts.push("SAMEORIGIN");
+				} else opts = ["SAMEORIGIN"];
+				res.setHeader("X-Frame-Options", opts);
+				res.setHeader("Access-Control-Allow-Origin", "*");
+				next();
+			};
+		}
 
 		app.use(express.static(__dirname));
 
@@ -583,27 +604,6 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		const SLEPR_query_route = "/query",
 			SLEPR_reload_route = "/reload";
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		type nextFn = (err?: any) => any  // cors module doesnot strictly type this
-
-		let manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
-			next();
-		};
-		if (app_options.CORSmode == CORSlibrary) {
-			app.use(cors());
-		} else if (app_options.CORSmode == CORSmanual) {
-			manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
-				let opts : string[] | undefined = res.getHeader("X-Frame-Options") as string[] | undefined;
-				if (opts) {
-					if (!opts.includes("SAMEORIGIN")) 
-						opts.push("SAMEORIGIN");
-				} else opts = ["SAMEORIGIN"];
-				res.setHeader("X-Frame-Options", opts);
-				res.setHeader("Access-Control-Allow-Origin", "*");
-				next();
-			};
-		}
-
 		if (!app_options.nosl || !app_options.nopl || !app_options.nocg || !app_options.noslr) {
 			app.all("/check", express.text(Express_Options), (req: express.Request, res: express.Response) => {
 				// we need to disable listening as the Windows cluster seems to 'prefer' some workers, expecialy  when the validator is being used to verify 
@@ -621,7 +621,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			csr = new SLEPR(app_options.urls, app_options.SLRmode, knownLanguages, isoCountries, knownGenres);
 			csr.loadServiceListRegistry(app_options.CSRfile);
 
-			if (app_options.CORSmode == "manual") {
+			if (app_options.CORSmode == CORSmanual) {
 				app.options(SLEPR_query_route, manualCORS);
 			}
 			app.get(SLEPR_query_route, manualCORS, (req: express.Request, res: express.Response) => {

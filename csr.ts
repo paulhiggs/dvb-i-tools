@@ -232,7 +232,6 @@ if (cluster.isPrimary) {
 } 
 else {
 	const app = express();
-	app.use(cors());
 	token("protocol", (req: express.Request) => {
 		return req.protocol;
 	});
@@ -294,11 +293,10 @@ else {
 
 
 	app.use(favicon(join("icon", "ph-icon.ico")));
-	if (options.CORSmode == CORSlibrary) 
-		app.options(SLEPR_query_route, cors());
-	else if (options.CORSmode == CORSmanual) 
+	// in library mode, cors() is already applied to all routes by app.use() above
+	if (options.CORSmode == CORSmanual)
 		app.options(SLEPR_query_route, manualCORS);
-	app.get(SLEPR_query_route, (req: express.Request, res: express.Response) => {
+	app.get(SLEPR_query_route, manualCORS, (req: express.Request, res: express.Response) => {
 		if (process.send) process.send({ topic: INCR_REQUESTS });
 		if (!csr.processServiceListRequest(req, res)) 
 			if (process.send) process.send({ topic: INCR_FAILURES });
