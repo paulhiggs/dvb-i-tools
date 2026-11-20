@@ -23,10 +23,15 @@ import {} from "./string-extensions.mts"
 /**
  * replace ENTITY strings with a generic characterSet
  *
+ * Only well formed references are replaced: named (&amp;), decimal (&#233;) and hexadecimal (&#xE9;).
+ * Note that XmlElement.content has already decoded the references in the XML document, so for that text
+ * this only affects references that were themselves escaped (e.g. &amp;amp; in the document)
+ *
  * @param {string} str    string containing HTML or XML entities (starts with & ends with ;)
  * @returns {string} the string with entities replaced with a single character '*'
  */
-export const unEntity = (str: string) : string => str.replace(/(&.+;)/gi, "*");
+const ENTITY_REFERENCE = /&(?:#[0-9]+|#x[0-9a-f]+|[a-z][a-z0-9]*);/gi;
+export const unEntity = (str: string) : string => str.replace(ENTITY_REFERENCE, "*");
 
 /**
  * checks is an object has none of its own properties
@@ -159,6 +164,18 @@ export const attribute = (attr : string, elem : string= "") : string => attr.att
  * convert characters in the string to HTML entities
  */
 export const HTMLize = (str : string) : string => str.HTMLize();
+
+
+/**
+ * escape the characters that are significant in HTML text and quoted attribute values.
+ * Unlike HTMLize(), the text is otherwise unchanged (e.g. hyphens are kept) so it is safe for URLs placed in attributes
+ *
+ * @param {unknown} value  the value to be escaped (converted to a string, null/undefined become "")
+ * @returns {string} the escaped string
+ */
+const HTML_ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#x27;", "`": "&#x60;" };
+export const escapeHTML = (value: unknown) : string =>
+	value === null || value === undefined ? "" : String(value).replace(/[&<>"'`]/g, (chr) => HTML_ESCAPES[chr]);
 
 
 /**

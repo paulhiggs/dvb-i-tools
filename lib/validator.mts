@@ -14,6 +14,8 @@ import os from "node:os"
 import process from "process"
 import { readFileSync, existsSync } from "fs"
 import cluster from "cluster"
+import { randomBytes } from "crypto"
+import { restartWorkersOnExit } from "./cluster_restart.mts"
 import { cpus } from "os"
 const numCPUs = cpus().length;
 
@@ -24,20 +26,19 @@ import session from "express-session"
 import morgan, { token } from "morgan"
 import fileupload from "express-fileupload"
 import favicon from "serve-favicon"
-import fetchS from "sync-fetch"
 import commandLineArgs from "command-line-args"
-import { Server } from "https"
+import { createServer as createHttpServer } from "http"
 import type { AddressInfo } from "node:net"
 import { createStream } from "rotating-file-stream";
 
-import { fetch_options, read_string_options, CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts"
+import { read_string_options, CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts"
 import type { StatsType } from "./globals.mts"
 import { Default_SLEPR, __dirname } from "./data_locations.mts"
 import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults, LINE, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "./ui.mts"
 import type {FormModes} from './ui.mts'
 import ErrorList from "./error_list.mts"
-import { isHTTPURL } from "./pattern_checks.mts"
-import { readmyfile, HasProperty } from "./utils.mts"
+import { safeFetch, configureFetchPolicy } from "./safe_fetch.mts"
+import { readmyfile, HasProperty, escapeHTML } from "./utils.mts"
 import {
 	LoadGenres,
 	LoadRatings,
@@ -71,28 +72,36 @@ let csr: SLEPR | null= null;
 
 const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), read_string_options).toString());
 
-const keyFilename: string = join(".", "selfsigned.key"),
-	certFilename: string = join(".", "selfsigned.crt");
+const keyFilename: string = join(__dirname, "selfsigned.key"),
+	certFilename: string = join(__dirname, "selfsigned.crt");
 
-function getDocument(req: express.Request, res: express.Response) : string | null {
-	let resp = null
+function getDocument(req: express.Request) : string | null {
 	if (req.method == "GET") {
-		try {
-			resp = fetchS(req.query.url as string, fetch_options)
-		} catch (error) {
-			req.parseErr = [`${error}`]
-		}
+		const { response: resp, error } = safeFetch(req.query.url as string)
+		if (error)
+			req.parseErr = [error]
 		if (resp) {
-			if (resp.ok) 
+			if (resp.ok)
 				return resp.text()
-			else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`]
+			else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.query.url}`]
 		}
-	} 
+	}
 	else if (req.method == "POST")
 		return req.body
-	else 
-		res.status(405)
 	return null
+}
+
+const ALLOWED_VALIDATION_METHODS = ["GET", "POST"]
+
+/**
+ * reject requests to the validation endpoints that do not use an allowed HTTP method
+ *
+ * @returns {boolean} true if the request method is allowed, otherwise a 405 response has been sent and the request should not be processed further
+ */
+function checkMethod(req: express.Request, res: express.Response) : boolean {
+	if (ALLOWED_VALIDATION_METHODS.includes(req.method)) return true
+	res.status(405).set("Allow", ALLOWED_VALIDATION_METHODS.join(", ")).type("text/plain").send(`method ${req.method} is not allowed, use ${ALLOWED_VALIDATION_METHODS.join(" or ")}`)
+	return false
 }
 
 function getVariant(req: express.Request) : number {
@@ -113,16 +122,18 @@ function getVariant(req: express.Request) : number {
 function report(req: express.Request, res: express.Response, jsonResponse: boolean, errs: ErrorList, motd: string | undefined) : void {
 	if (jsonResponse) {
 		res.setHeader("Content-Type", "application/json")
-		if (req.parseErr) 
-			res.write(JSON.stringify({ parseErr: req.parseErr }))
-		else delete errs.markupXML
-		res.write(
-			JSON.stringify(
-				req.query.results && req.query.results == "all" 
-					? { errs } 
-					: { errors: errs.errors.length, warnings: errs.warnings.length, informationals: errs.informationals.length }
-			)
-		)
+		if (!req.parseErr) delete errs.markupXML
+		// a single JSON document is returned, with parseErr included only when the document could not be obtained
+		const result: Record<string, unknown> = req.parseErr ? { parseErr: req.parseErr } : {}
+		if (req.query.results && req.query.results == "all")
+			result.errs = errs
+		else {
+			result.fatals = errs.fatals.length
+			result.errors = errs.errors.length
+			result.warnings = errs.warnings.length
+			result.informationals = errs.informationals.length
+		}
+		res.write(JSON.stringify(result))
 	}
 	else 
 		drawResults(req, res, motd, req.parseErr, errs)
@@ -171,19 +182,16 @@ function DVB_I_check(
 		if (!req.parseErr)
 			switch (req.body.doclocation) {
 				case MODE_URL:
-					if (isHTTPURL(req.body.XMLurl)) {
-						let resp = null;
-						try {
-							errs.setLocation(req.body.XMLurl)
-							resp = fetchS(req.body.XMLurl, fetch_options);
-						} catch (error) {
-							req.parseErr = [`${error}`];
-						}
+					{
+						errs.setLocation(req.body.XMLurl)
+						const { response: resp, error } = safeFetch(req.body.XMLurl);
+						if (error)
+							req.parseErr = [error];
 						if (resp) {
 							if (resp.ok) VVxml = resp.text();
 							else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`];
 						}
-					} else req.parseErr = [`${req.body.XMLurl} is not an HTTP(S) URL`];
+					}
 					req.session.data.url = req.body.XMLurl;
 					break;
 				case MODE_FILE:
@@ -251,9 +259,10 @@ function DVB_I_check(
  * @param {boolean}          jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
 function validateServiceList(req: express.Request, res: express.Response, slcheck: ServiceListCheck, motd: string | undefined, jsonResponse: boolean) : void {
+	if (!checkMethod(req, res)) return;
 	const errs = new ErrorList();
 	const log_prefix = createPrefix(req, MODE_SL);
-	const SLxml = getDocument(req, res)
+	const SLxml = getDocument(req)
 	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
 
 	if (SLxml) slcheck.doValidateServiceList(SLxml, errs, _options);
@@ -273,9 +282,10 @@ function validateServiceList(req: express.Request, res: express.Response, slchec
  * @param {boolean}          jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
 function validatePlaylist(req: express.Request, res: express.Response, plcheck: PlaylistCheck, motd: string | undefined, jsonResponse: boolean) : void {
+	if (!checkMethod(req, res)) return;
 	const errs = new ErrorList();
 	const log_prefix = createPrefix(req, MODE_PL);
-	const PLxml = getDocument(req, res)
+	const PLxml = getDocument(req)
 
 	if (PLxml) plcheck.doValidatePlaylist(PLxml, errs, { log_prefix: log_prefix, report_schema_version: true });
 	report(req, res, jsonResponse, errs, motd)
@@ -295,21 +305,12 @@ function validatePlaylist(req: express.Request, res: express.Response, plcheck: 
  * @param {boolean}                  jsonResponse   Flag indicating that the response should ne JSON format rather than HTML
  */
 function validateServiceListRegistry(req: express.Request, res: express.Response, slrcheck: ServiceListRegistryCheck, motd: string | undefined, jsonResponse: boolean) : void {
+	if (!checkMethod(req, res)) return;
 	const errs = new ErrorList();
 	const log_prefix = createPrefix(req, MODE_SLR);
-	const SLRxml = getDocument(req, res)
+	const SLRxml = getDocument(req)
 
 	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
-	switch (req.method) {
-		case "GET":
-			if (req.query?.variants && (req.query.variants as string).toLowerCase() == "de")
-				_options.variants = GERMAN_A177r6_VARIANT
-			break
-		case "POST":
-			if (req.header("X-variants")?.toLowerCase() == "de")
-				_options.variants = GERMAN_A177r6_VARIANT
-			break
-	}
 	if (SLRxml) slrcheck.doValidateServiceListRegistry(SLRxml, errs, _options);
 	report(req, res, jsonResponse, errs, motd)
 
@@ -327,9 +328,10 @@ function validateServiceListRegistry(req: express.Request, res: express.Response
  * @param {boolean}           jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
 function validateContentGuide(req: express.Request, res: express.Response, cgcheck: ContentGuideCheck, motd: string | undefined, jsonResponse: boolean) : void {
+	if (!checkMethod(req, res)) return;
 	const errs = new ErrorList();
-	const log_prefix = createPrefix(req);
-	const CGxml = getDocument(req, res)
+	const log_prefix = createPrefix(req, MODE_CG);
+	const CGxml = getDocument(req)
 	const _options: CG_Validator_Options = { log_prefix: log_prefix, report_schema_version: true }
 
 	if (CGxml) cgcheck.doValidateContentGuide(CGxml, req.query.type as string, errs, _options);
@@ -361,11 +363,18 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		process.exit(1);
 	}
 
+	// a flag given without a value (null) means true
+	configureFetchPolicy({ allowPrivateAddresses: app_options.allow_private_fetch !== false });
+
 	let motd: string | undefined = undefined;
 	if (HasProperty(app_options, "motd")) {
 		console.log(chalk.yellow("reading Message Of The Day from " + chalk.green(app_options.motd)));
 		motd = readmyfile(app_options.motd, read_string_options) as string;
 	}
+
+	// session cookies are signed with SESSION_SECRET. If it is not provided, a random secret is used for this run.
+	// It is set in the environment before any workers are forked, so all workers share it.
+	if (!process.env.SESSION_SECRET) process.env.SESSION_SECRET = randomBytes(32).toString("hex");
 
 	if (app_options.workers != 0 && cluster.isPrimary) {
 		if (app_options.workers > numCPUs) app_options.workers = numCPUs;
@@ -382,24 +391,38 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		for (let i = 0; i < app_options.workers; i++) 
 			cluster.fork();
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		cluster.on("exit", (worker, code, signal) => {
-			console.log(chalk.red(`worker ${worker.process.pid} died`));
-			console.log(chalk.red("Let's fork another worker!"));
-			cluster.fork();
-		});
+		restartWorkersOnExit();
 	}
 	else {
 
 		// initialize Express
 		const app = express();
-		app.use(cors());
 
-		app.use(express.static(__dirname));
+		// CORS handling, according to --CORSmode. This is registered before any routes so that it applies to all of them
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		type nextFn = (err?: any) => any  // cors module doesnot strictly type this
 
-		app.set("view engine", "ejs");
+		let manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
+			next();
+		};
+		if (app_options.CORSmode == CORSlibrary) {
+			app.use(cors());
+		} else if (app_options.CORSmode == CORSmanual) {
+			manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
+				let opts : string[] | undefined = res.getHeader("X-Frame-Options") as string[] | undefined;
+				if (opts) {
+					if (!opts.includes("SAMEORIGIN"))
+						opts.push("SAMEORIGIN");
+				} else opts = ["SAMEORIGIN"];
+				res.setHeader("X-Frame-Options", opts);
+				res.setHeader("Access-Control-Allow-Origin", "*");
+				next();
+			};
+		}
+
+		// no static file serving: the pages are generated, and the installation directory holds keys, logs and configuration
 		app.use(fileupload());
-		app.use(favicon(join("icon", "ph-icon.ico")));
+		app.use(favicon(join(__dirname, "icon", "ph-icon.ico")));
 
 		token("protocol", (req: express.Request) => {
 			return req.protocol;
@@ -435,7 +458,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		const logDir = join(".", "logs");
 		if (existsSync(logDir)) {
 			const logStream = createStream('access.log', {
-				interval: "1M", // rotate daily
+				interval: "1M", // rotate monthly
 				compress: "gzip", // compress rotated files
 				path: logDir,
 			})
@@ -447,7 +470,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		app.set("trust proxy", 1);
 		app.use(
 			session({
-				secret: "keyboard car",
+				secret: process.env.SESSION_SECRET as string,
 				resave: false,
 				saveUninitialized: true,
 				cookie: { maxAge: 60000 },
@@ -587,27 +610,6 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		const SLEPR_query_route = "/query",
 			SLEPR_reload_route = "/reload";
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		type nextFn = (err?: any) => any  // cors module doesnot strictly type this
-
-		let manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
-			next();
-		};
-		if (app_options.CORSmode == CORSlibrary) {
-			app.use(cors());
-		} else if (app_options.CORSmode == CORSmanual) {
-			manualCORS = function (req: express.Request, res: express.Response, next: nextFn) {
-				let opts : string[] | undefined = res.getHeader("X-Frame-Options") as string[] | undefined;
-				if (opts) {
-					if (!opts.includes("SAMEORIGIN")) 
-						opts.push("SAMEORIGIN");
-				} else opts = ["SAMEORIGIN"];
-				res.setHeader("X-Frame-Options", opts);
-				res.setHeader("Access-Control-Allow-Origin", "*");
-				next();
-			};
-		}
-
 		if (!app_options.nosl || !app_options.nopl || !app_options.nocg || !app_options.noslr) {
 			app.all("/check", express.text(Express_Options), (req: express.Request, res: express.Response) => {
 				// we need to disable listening as the Windows cluster seems to 'prefer' some workers, expecialy  when the validator is being used to verify 
@@ -625,7 +627,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			csr = new SLEPR(app_options.urls, app_options.SLRmode, knownLanguages, isoCountries, knownGenres);
 			csr.loadServiceListRegistry(app_options.CSRfile);
 
-			if (app_options.CORSmode == "manual") {
+			if (app_options.CORSmode == CORSmanual) {
 				app.options(SLEPR_query_route, manualCORS);
 			}
 			app.get(SLEPR_query_route, manualCORS, (req: express.Request, res: express.Response) => {
@@ -648,7 +650,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			if (Object.keys(stats).length === 0) res.write("<p>No statistics</p>");
 			else {
 				res.write("<table><tr><th>item</th><th>count</th></tr>");
-				Object.getOwnPropertyNames(stats).forEach((key) => res.write(`<tr><td>${key}</td><td>${stats[key]}</td></tr>`));
+				Object.getOwnPropertyNames(stats).forEach((key) => res.write(`<tr><td>${escapeHTML(key)}</td><td>${escapeHTML(stats[key])}</td></tr>`));
 				res.write("</table>");
 			}
 			res.write(LINE);
@@ -696,7 +698,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 						res.write(`${firstRow ? "" : "</tr>"}<tr>`)
 						firstRow = false;
 					}
-					res.write(`<td>${values[i]}</td>`);
+					res.write(`<td>${escapeHTML(values[i])}</td>`);
 				}
 				res.write("</table>");
 			}
@@ -728,40 +730,52 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			key: readmyfile(keyFilename, {}) as Buffer,
 			cert: readmyfile(certFilename, {}) as Buffer,
 		};
-		let https_server : Server | null = null;
+		// Only one server uses the HTTP port: the validator itself when HTTPS is not available, otherwise a redirect to HTTPS.
+		// The choice is made from the HTTPS server's 'listening' and 'error' events, as listen() is asynchronous.
+		const listenFailed = (protocol: string, port: number, consequence: string) => (err: NodeJS.ErrnoException) => {
+			const reason = err.code == "EADDRINUSE" ? "already in use" : `${err.code ?? ""} ${err.message}`.trim();
+			console.log(chalk.red(`${protocol} port ${port} ${reason} -- ${consequence}`));
+		};
+
+		const startHTTP = () => {
+			const http_server = createHttpServer(app);
+			http_server.on("error", (err: NodeJS.ErrnoException) => {
+				listenFailed("HTTP", app_options.port, "HTTP server not started")(err);
+				// nothing is listening, so stop with a failure status (e.g. for systemd Restart=on-failure, or the cluster primary
+				// to restart the worker). An explicit exit is needed as a cluster worker's IPC channel would otherwise keep it running
+				process.exit(1);
+			});
+			http_server.listen(app_options.port, () => {
+				console.log(chalk.cyan(`HTTP listening on port number ${(http_server.address() as AddressInfo).port}`));
+			});
+		};
+
+		const startHTTPredirect = () => {
+			const redirect_app = express();
+			redirect_app.use(morgan(LOGGING_TEMPLATE));
+			redirect_app.use(function(req, res) {
+				res.redirect(`https://${req.hostname}:${app_options.sport}${req.originalUrl}`);
+			});
+			const redirect_server = createHttpServer(redirect_app);
+			redirect_server.on("error", listenFailed("HTTP", app_options.port, "HTTP to HTTPS redirect not started"));
+			redirect_server.listen(app_options.port, () => {
+				console.log(chalk.cyan(`HTTP redirecting to HTTPS on port number ${app_options.port}`));
+			});
+		};
 
 		if (https_options.key && https_options.cert) {
 			if (app_options.sport == app_options.port) app_options.sport = app_options.port + 1;
 
-			https_server = createServer(https_options, app);
+			const https_server = createServer(https_options, app);
+			https_server.once("error", (err: NodeJS.ErrnoException) => {
+				listenFailed("HTTPS", app_options.sport, "HTTPS server not started, using HTTP")(err);
+				startHTTP();
+			});
 			https_server.listen(app_options.sport, () => {
-				if ((https_server?.address() as AddressInfo)?.port) {
-					console.log(chalk.cyan(`HTTPS listening on port number ${(https_server!.address() as AddressInfo).port}`));
-
-					const redirect_app = express();
-					redirect_app.use(morgan(LOGGING_TEMPLATE));
-					redirect_app.use(function(req, res) {
-						res.redirect(`https://${req.hostname}:${app_options.sport}${req.originalUrl}`);
-					})
-					redirect_app.listen(app_options.port, () => {
-						console.log(chalk.cyan(`HTTP redirecting to HTTPS on port number ${app_options.port}`));
-					});
-				}
-				else console.log(chalk.red(`HTTPS port ${app_options.sport} already in use -- HTTPS server not started`));
-
+				console.log(chalk.cyan(`HTTPS listening on port number ${(https_server.address() as AddressInfo).port}`));
+				startHTTPredirect();
 			});
 		}
-
-		const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-		delay(3000); // give the HTTPS server time to start before starting the HTTP server
-
-		if (!https_server?.listening) {
-		// start the HTTP server
-			const http_server = app.listen(app_options.port, () => {
-				if ((http_server.address() as AddressInfo)?.port) 
-					console.log(chalk.cyan(`HTTP listening on port number ${(http_server.address() as AddressInfo).port}`));
-				else console.log(chalk.red(`HTTP port ${app_options.port} already in use -- HTTP server not started`));
-			});
-		}
+		else startHTTP();
 	}
 }

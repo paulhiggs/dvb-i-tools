@@ -1,0 +1,8 @@
+# Store and check out all text files with LF line endings, whatever the local core.autocrlf setting
+* text=auto eol=lf
+
+# binary files - never convert
+*.ico binary
+*.jpg binary
+*.png binary
+*.gz binary

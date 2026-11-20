@@ -1,0 +1,14 @@
+# https://editorconfig.org
+root = true
+
+[*]
+end_of_line = lf
+charset = utf-8
+indent_style = tab
+indent_size = 2
+tab_width = 2
+
+# YAML does not allow tabs for indentation
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2

@@ -70,7 +70,8 @@ export default class PlaylistCheck {
 		DefaultProperty(options, "log_prefix", null);
 		DefaultProperty(options, "report_schema_version", true);
 
-		const PL = SchemaLoad(PLtext, errs, "PL001");
+		// 'using' disposes the document (WASM memory) on every exit from this method, including early returns and exceptions
+		using PL = SchemaLoad(PLtext, errs, "PL001");
 		if (!PL) return;
 		document_logger(errs, options.log_prefix, false);
 
@@ -118,7 +119,6 @@ export default class PlaylistCheck {
 				);
 		});
 
-		PL.dispose();
 	}
 
 

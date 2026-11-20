@@ -17,33 +17,45 @@ import { join, sep } from "path"
 import { MODE_URL, MODE_CG, MODE_SL, MODE_SLR, MODE_PL } from "./ui.mts"
 import ErrorList from "./error_list.mts"
 
+let lastArchiveStamp = "",
+	archiveSequence = 0;
+
 export function createPrefix(req: express.Request, testtype?: string) : string | undefined {
 	const logDir: string = join(".", "arch");
 
 	if (!existsSync(logDir)) return undefined;
-	if (testtype && [MODE_CG, MODE_SL, MODE_SLR, MODE_PL].includes(testtype)) return undefined
+	// a specified test type must be one of the known validation types
+	if (testtype && ![MODE_CG, MODE_SL, MODE_SLR, MODE_PL].includes(testtype)) return undefined
 
 	const getDate = (i : Temporal.Instant) : string=> {
 		const fillZero = (t: number) : string => `${t < 10 ? "0" : ""}${t}`;
 		const d = Temporal.Instant.fromEpochMilliseconds(i.epochMilliseconds).toZonedDateTimeISO("UTC");
-		return `${d.year}-${fillZero(d.month)}-${fillZero(d.day)} ${fillZero(d.hour)}.${fillZero(d.minute)}.${fillZero(d.second)}`;
+		const stamp = `${d.year}-${fillZero(d.month)}-${fillZero(d.day)} ${fillZero(d.hour)}.${fillZero(d.minute)}.${fillZero(d.second)}.${d.millisecond.toString().padStart(3, "0")}`;
+		// documents archived within the same millisecond get a sequence number so they do not overwrite each other
+		archiveSequence = stamp == lastArchiveStamp ? archiveSequence + 1 : 0;
+		lastArchiveStamp = stamp;
+		return archiveSequence ? `${stamp}-${archiveSequence}` : stamp;
 	};
+
+	const lastPathSegment = (url: unknown) : string | undefined =>
+		typeof url == "string" ? url.substring(url.lastIndexOf("/") + 1) : undefined
 
 	let fname: string | undefined = undefined,
 		mode: string | undefined = undefined
 	switch (req.method) {
 		case "GET":
-			if (req.query?.url) {
-				const _url = req.query.url as string
-				fname = _url.substring(_url.lastIndexOf("/") + 1)
-			}
+			fname = lastPathSegment(req.query?.url)
 			mode = testtype || req.query?.testtype as string | undefined
 			break
 		case "POST":
-			fname = req.body.doclocation == MODE_URL 
-				? req.body.XMLurl.substring(req.body.XMLurl.lastIndexOf("/") + 1) 
-				: (req?.files?.XMLfile as fileupload.UploadedFile).name
-			mode = testtype || req.body.requestType
+			if (typeof req.body == "string")
+				// document POSTed directly to a /validate_* endpoint (parsed by express.text())
+				fname = "posted.xml"
+			else if (req.body?.doclocation == MODE_URL)
+				fname = lastPathSegment(req.body.XMLurl)
+			else
+				fname = (req.files?.XMLfile as fileupload.UploadedFile | undefined)?.name
+			mode = testtype || (typeof req.body == "object" ? req.body?.requestType : undefined)
 			break
 	}
 	if (!fname || !mode) return undefined

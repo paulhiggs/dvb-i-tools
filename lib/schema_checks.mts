@@ -7,13 +7,15 @@
  * 
  */
 
-import { XsdValidator, XmlDocument, XmlAttribute, XmlValidateError } from "libxml2-wasm"
+import { XsdValidator, XmlDocument, XmlAttribute, XmlValidateError, XmlParseError } from "libxml2-wasm"
 import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs"
 xmlRegisterFsInputProviders();
 
-import formatXml from "xml-formatter"
+// xml-formatter ships CommonJS with ES module style types: at runtime the default import is the formatter function
+import xmlFormatter from "xml-formatter"
+const formatXml = xmlFormatter as unknown as typeof xmlFormatter.default
 
-import { elementize, datatypeIs } from "./utils.mts"
+import { elementize } from "./utils.mts"
 
 import { dvbi } from "./DVB-I_definitions.mts"
 import { FATAL, APPLICATION, INFORMATION, WARNING, DEBUG } from "./error_list.mts"
@@ -189,15 +191,7 @@ export function checkTopElementsAndCardinality(parentElement: XmlElement, childE
  * @param {string}      errCode      the error code to report with each error
  */
 export function SchemaCheck(XML: XmlDocument, XSD: XmlDocument, XSDfilename: string, errs: ErrorList, errCode: string) {
-	let validator = undefined;
-	try {
-		validator = XsdValidator.fromDoc(XSD);
-	} catch (err) {
-		(err as XmlValidateError).details.forEach((e) => {
-			errs.addError({ code: "LS000", type: DEBUG, message: `${JSON.stringify(e)}, url: ${XSDfilename}` });
-		});
-	}
-
+	const validator = getValidator(XSD, XSDfilename, errs);
 	if (!validator) {
 		errs.addError({ code: "LS001", type: DEBUG, message: `validator not loaded. XSDfilename=${XSDfilename.quote()}` });
 		return;
@@ -205,16 +199,56 @@ export function SchemaCheck(XML: XmlDocument, XSD: XmlDocument, XSDfilename: str
 	try {
 		validator.validate(XML);
 	} catch (err) {
-		//console.log(err.message)
-		if ((err as XmlValidateError).details) {
+		const details = validationDetails(err);
+		if (details) {
 			const lines = formatXml(XML.toString(), { collapseContent: true, lineSeparator: "\n", strictMode: true }).split("\n");
-			(err as XmlValidateError).details.forEach((ve) => {
+			details.forEach((ve) => {
 				errs.addError({ code: errCode, message: ve.message, fragment: lines[ve.line - 1], line: ve.line, key: keys.k_XSDValidation });
 			});
-		}
+		} else
+			// the document could not be validated, so it must not be reported as schema valid
+			errs.addError({
+				type: APPLICATION,
+				code: "LS002",
+				message: `schema validation against ${XSDfilename.quote()} failed: ${errorMessage(err)}`,
+				key: keys.k_XSDValidation,
+			});
 	}
-	validator?.dispose()
 }
+
+/**
+ * compiled schema validators, one for each loaded schema document.
+ * Schemas are loaded once at startup and are not disposed, so the validators are kept for the life of the process.
+ * If a schema document is ever disposed or replaced, its validator must be disposed and removed from here.
+ */
+const validators = new WeakMap<XmlDocument, XsdValidator>();
+
+function getValidator(XSD: XmlDocument, XSDfilename: string, errs: ErrorList): XsdValidator | undefined {
+	const cached = validators.get(XSD);
+	if (cached) return cached;
+	try {
+		const validator = XsdValidator.fromDoc(XSD);
+		validators.set(XSD, validator);
+		return validator;
+	} catch (err) {
+		const details = validationDetails(err);
+		if (details)
+			details.forEach((e) => {
+				errs.addError({ code: "LS000", type: DEBUG, message: `${JSON.stringify(e)}, url: ${XSDfilename}` });
+			});
+		else errs.addError({ code: "LS000", type: DEBUG, message: `${errorMessage(err)}, url: ${XSDfilename}` });
+	}
+	return undefined;
+}
+
+/**
+ * @returns the validation details from an XmlValidateError, or undefined if the error is of another kind or has no details
+ */
+function validationDetails(err: unknown) {
+	return err instanceof XmlValidateError && Array.isArray(err.details) && err.details.length > 0 ? err.details : undefined;
+}
+
+const errorMessage = (err: unknown): string => (err instanceof Error ? err.message : String(err));
 
 /**
  * report if the schema version being used is not 'formal'
@@ -249,28 +283,31 @@ export function SchemaLoad(document: string, errs: ErrorList, errCode: string): 
 	// eslint-disable-next-line no-useless-assignment
 	let tmp = null, prettyXML = null;
 	try {
-		tmp = XmlDocument.fromString(document);
+		// this parse of the raw document is only used to report errors with their original positions,
+		// the document returned is parsed from the formatted text below
+		XmlDocument.fromString(document).dispose();
 	} catch (err) {
-		if (err.details && datatypeIs(err.details, "array"))
+		if (err instanceof XmlParseError && Array.isArray(err.details))
 			err.details.forEach((e) =>
 				errs.addError({ type: FATAL, code: `${errCode}-1`, message: `Raw XML parsing failed: ${e.message} at char ${e.col}`, line: e.line, key: keys.k_MalformedXML })
 			);
-		else errs.addError({ type: FATAL, code: `${errCode}-2`, message: `Raw XML parsing failed: ${err.message}`, key: keys.k_MalformedXML });
+		else errs.addError({ type: FATAL, code: `${errCode}-2`, message: `Raw XML parsing failed: ${errorMessage(err)}`, key: keys.k_MalformedXML });
 	}
 	try {
 		prettyXML = formatXml(document.replace(/(\n\t)/gm, "\n"), { collapseContent: true, lineSeparator: "\n" });
 	} catch (err) {
-		errs.addError({ type: FATAL, code: `${errCode}-10`, message: `XML format failed: ${err.cause}`, key: keys.k_MalformedXML });
+		errs.addError({ type: FATAL, code: `${errCode}-10`, message: `XML format failed: ${err instanceof Error ? err.cause : err}`, key: keys.k_MalformedXML });
 		return null;
 	}
 	try {
 		tmp = XmlDocument.fromString(prettyXML);
 	} catch (err) {
-		errs.addError({ type: FATAL, code: `${errCode}-11`, message: `XML parsing failed: ${err.message}`, key: keys.k_MalformedXML });
+		errs.addError({ type: FATAL, code: `${errCode}-11`, message: `XML parsing failed: ${errorMessage(err)}`, key: keys.k_MalformedXML });
 		errs.loadDocument(prettyXML);
 		return null;
 	}
 	if (!tmp || !tmp.root) {
+		tmp?.dispose();
 		errs.addError({ type: FATAL, code: `${errCode}-12`, message: "XML document is empty", key: keys.k_MalformedXML });
 		errs.loadDocument(prettyXML);
 		return null;

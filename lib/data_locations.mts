@@ -9,10 +9,10 @@
  */
 
 import { join } from "path"
-import process from "node:process"
+import { pathToFileURL } from "url"
 
-const TESTSUITE_DIR: string = "testsuite";
-export const __dirname: string = process.cwd().endsWith(TESTSUITE_DIR) ? process.cwd().substring(0, process.cwd().length - TESTSUITE_DIR.length) : process.cwd();
+// the installation directory (the parent of lib/), so data files are found whatever the current working directory is
+export const __dirname: string = join(import.meta.dirname, "..");
 export const __dirname_linux: string = __dirname.replace(/\\/g, "/");
 
 const REPO_RAW: string = "https://raw.githubusercontent.com/paulhiggs/dvb-i-tools/main/";
@@ -20,7 +20,7 @@ const DVB_METADATA: string = "https://dvb.org/metadata/";
 
 export const resouces_subDir: string = "res";
 const SLEPR_subDir: string = "registries",
-	schemasPath: string = process.cwd().endsWith(TESTSUITE_DIR) ? "../schemas": "schemas";
+	schemasPath: string = join(__dirname, "schemas");
 
 const subdirDVBI: string = join(resouces_subDir, "dvbi"),
 	subdirISO: string = join(resouces_subDir, "iso"),
@@ -162,41 +162,47 @@ const TVAfileprefix: string = "tva_metadata_3-1";
 type TVASchemaVersonInfo = { namespace: string, file: string };
 //type TVAschemaInfo = { [version in TVAschemaVersions]: TVASchemaVersonInfo }; 
 export const TVAschema = new class {
-	v2019: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2019`, file: `./${schemasPath}/${TVAfileprefix}_2019.xsd` }
-	v2023: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2023`, file: `./${schemasPath}/${TVAfileprefix}_2023.xsd` }
-	v2024: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2024`, file: `./${schemasPath}/${TVAfileprefix}_2024.xsd` }
-	v2026: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2026`, file: `./${schemasPath}/${TVAfileprefix}_v1141.xsd` }
+	v2019: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2019`, file: `${schemasPath}/${TVAfileprefix}_2019.xsd` }
+	v2023: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2023`, file: `${schemasPath}/${TVAfileprefix}_2023.xsd` }
+	v2024: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2024`, file: `${schemasPath}/${TVAfileprefix}_2024.xsd` }
+	v2026: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2026`, file: `${schemasPath}/${TVAfileprefix}_v1141.xsd` }
 };
 
 export const DVBI_ServiceListSchema: { [key: string]: DataLocation } = {
-	r0: { file:  `./${schemasPath}/dvbi_v1.0.xsd` },
-	r1: { file:  `./${schemasPath}/dvbi_v2.0.xsd` },
-	r2: { file:  `./${schemasPath}/dvbi_v3.0.xsd` },
-	r3: { file:  `./${schemasPath}/dvbi_v3.1.xsd` },
-	r4: { file:  `./${schemasPath}/dvbi_v4.0+hls+hbbtv.xsd` },
-	r5: { file:  `./${schemasPath}/dvbi_v5.0+hls+hbbtv.xsd` },
-	r6: { file:  `./${schemasPath}/dvbi_v6.0+hls+hbbtv.xsd` },
-	r6_Germany: { file: `./${schemasPath}/dvbi_v6.0+hls+hbbtv-(DE).xsd` },
-	r7: { file:  `./${schemasPath}/dvbi_v7.0+hls+hbbtv.xsd` },
-	r8: { file:  `./${schemasPath}/dvbi_v8.0+hls+hbbtv+dvbhb.xsd` },
+	r0: { file:  `${schemasPath}/dvbi_v1.0.xsd` },
+	r1: { file:  `${schemasPath}/dvbi_v2.0.xsd` },
+	r2: { file:  `${schemasPath}/dvbi_v3.0.xsd` },
+	r3: { file:  `${schemasPath}/dvbi_v3.1.xsd` },
+	r4: { file:  `${schemasPath}/dvbi_v4.0+hls+hbbtv.xsd` },
+	r5: { file:  `${schemasPath}/dvbi_v5.0+hls+hbbtv.xsd` },
+	r6: { file:  `${schemasPath}/dvbi_v6.0+hls+hbbtv.xsd` },
+	r6_Germany: { file: `${schemasPath}/dvbi_v6.0+hls+hbbtv-(DE).xsd` },
+	r7: { file:  `${schemasPath}/dvbi_v7.0+hls+hbbtv.xsd` },
+	r8: { file:  `${schemasPath}/dvbi_v8.0+hls+hbbtv+dvbhb.xsd` },
 };
 
 export const DVBI_ServiceListRegistrySchema: { [key: string]: DataLocation } = {
-	r0: { file: `./${schemasPath}/dvbi_service_list_discovery_v1.0.xsd` },
-	r1: { file: `./${schemasPath}/dvbi_service_list_discovery_v1.1.xsd` },
-	r2: { file: `./${schemasPath}/dvbi_service_list_discovery_v1.2.xsd` },
-	r3: { file: `./${schemasPath}/dvbi_service_list_discovery_v1.3.xsd` },
-	r4: { file: `./${schemasPath}/dvbi_service_list_discovery_v1.4+hls.xsd` },
-	r5: { file: `./${schemasPath}/dvbi_service_list_discovery_v1.5+hls.xsd` },
-	r6: { file: `./${schemasPath}/dvbi_service_list_discovery_v1.6+hls.xsd` },
-	r6_Germany: { file: `./${schemasPath}/dvbi_service_list_discovery_v1.6+hls-(DE).xsd` },
-	r7: { file: `./${schemasPath}/dvbi_service_list_discovery_v1.7+hls.xsd` },
-	r8: { file: `./${schemasPath}/dvbi_service_list_discovery_v1.8+hls.xsd` },
+	r0: { file: `${schemasPath}/dvbi_service_list_discovery_v1.0.xsd` },
+	r1: { file: `${schemasPath}/dvbi_service_list_discovery_v1.1.xsd` },
+	r2: { file: `${schemasPath}/dvbi_service_list_discovery_v1.2.xsd` },
+	r3: { file: `${schemasPath}/dvbi_service_list_discovery_v1.3.xsd` },
+	r4: { file: `${schemasPath}/dvbi_service_list_discovery_v1.4+hls.xsd` },
+	r5: { file: `${schemasPath}/dvbi_service_list_discovery_v1.5+hls.xsd` },
+	r6: { file: `${schemasPath}/dvbi_service_list_discovery_v1.6+hls.xsd` },
+	r6_Germany: { file: `${schemasPath}/dvbi_service_list_discovery_v1.6+hls-(DE).xsd` },
+	r7: { file: `${schemasPath}/dvbi_service_list_discovery_v1.7+hls.xsd` },
+	r8: { file: `${schemasPath}/dvbi_service_list_discovery_v1.8+hls.xsd` },
 };
 
 const languagesFilename: string = "language-subtag-registry";
 export const IANA_Subtag_Registry: DataLocation = { file: join(pathIANA, languagesFilename), url: `https://www.iana.org/assignments/language-subtag-registry/${languagesFilename}` };
 
 export const MOTD: DataLocation = {
-	file: join(".", "motd.html"),
+	file: join(__dirname, "motd.html"),
 };
+
+/**
+ * the location to give libxml2-wasm for a schema file, so that its <xs:include> and <xs:import> files are found.
+ * libxml2-wasm does not open absolute Windows paths (c:/...), but does open file: URLs, whatever the working directory
+ */
+export const schemaURL = (filename: string): string => pathToFileURL(filename).href;

@@ -1,4 +1,3 @@
-version: '1.0'
 services:
   dvb-i-tools:
     # Comment build and uncomment image if you want to use prebuilt image rather than build from the source code
@@ -7,4 +6,7 @@ services:
     environment:
       - no_proxy=localhost,127.0.0.1
     ports:
+      # HTTP - redirects to HTTPS as the image contains a self-signed certificate
       - "3030:3030"
+      # HTTPS
+      - "3031:3031"

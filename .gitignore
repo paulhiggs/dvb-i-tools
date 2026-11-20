@@ -1,0 +1,11 @@
+# dependencies
+node_modules/
+
+# runtime output
+logs/
+arch/
+
+# locally generated keys and certificates
+selfsigned.key
+selfsigned.crt
+*.pem

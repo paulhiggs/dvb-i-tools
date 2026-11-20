@@ -114,7 +114,10 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 - `--SLRmode <mode>` select the type of processing for the SLR response
   - `"default"` - default mode - according to A177 specification
 - `--allow_traversal [-t]` flag to allow document-to-document traversal <span style="color:red">(experimental, takes much time)</span>	
+- `--allow_private_fetch <true|false>` allow documents to be retrieved from `localhost` and private network addresses (default: true). Set to `false` on a public deployment. Only literal IP addresses and `localhost` are recognised, not hostnames that resolve to private addresses.
 - `--help [-h]` server and client command help
+
+Documents retrieved for validation (by URL or by traversal) must use `http:` or `https:`, are limited to 10 MB and a 3 second timeout. A single validation traverses at most 10 levels deep and at most 100 referenced documents.
 
 ### Logging
 
@@ -131,19 +134,32 @@ If a subdirectory named `./logs` extists, then enhanced HTTP server logging will
 `<server>/validate_sl?url=<service_list_url>&variants=DE` gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the servicelist in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML.
 The optional `variants=` query parameter can be used with a GET to specify region specific validation, or via the `X-variants` HTTP header for post.
 
-`<server>/validate_sl_json?url=<service_list_url>&variants=DE` validates the list in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter.
+`<server>/validate_sl_json?url=<service_list_url>&variants=DE` validates the list in the "url"-parameter and gives the number of fatals, errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter.
 The optional `variants=` query parameter can be used with a GET to specify region specific validation, or via the `X-variants` HTTP header for post.
 Example response:
 
 ```json
 {
+	"fatals": 0,
 	"errors": 1,
 	"warnings": 0,
 	"informationals": 0
 }
 ```
 
-`<server>/validate_sl_json?url=<service_list_url>&results=all` valdiates the list "url"-parameter and gives the complete validation results as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. 
+If the document cannot be retrieved, a `parseErr` array describing the problem is included in the same JSON object, e.g.
+
+```json
+{
+	"parseErr": ["error (404:Not Found) handling https://example.com/list.xml"],
+	"fatals": 0,
+	"errors": 0,
+	"warnings": 0,
+	"informationals": 0
+}
+```
+
+`<server>/validate_sl_json?url=<service_list_url>&results=all` validates the list in the "url"-parameter and gives the complete validation results as JSON. The marked-up copy of the document (`markupXML`) is not included. The HTTP status is 200 whenever the request is accepted, including when the document cannot be retrieved: check for `parseErr` in the response. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. 
 The optional `variants=` query parameter can be used with a GET to specify region specific validation, or via the `X-variants` HTTP header for post.
 Example response:
 
@@ -163,26 +179,6 @@ Example response:
 		],
 		"warnings": [],
 		"informationals": [],
-		"markupXML": [
-			{ "value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "ix": 1 },
-			{
-				"value": "<ServiceList xmlns=\"urn:dvb:metadata:servicediscovery:2024\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema‑instance\" id=\"tag:example.com,2024:list1\" version=\"20240611115822\" xml:lang=\"en\">",
-				"ix": 2
-			},
-			{ "value": "  <Name>List</Name>", "ix": 3 },
-			{ "value": "  <ProviderName>Provider</ProviderName>", "ix": 4 },
-			{
-				"value": "  <Service version=\"1\">",
-				"ix": 5,
-				"validationErrors": [
-					"(E) SL005:6: Error: Element '{urn:dvb:metadata:servicediscovery:2024}Service': Missing child element(s). Expected is one of ( {urn:dvb:metadata:servicediscovery:2024}ServiceName, {urn:dvb:metadata:servicediscovery:2024}ProviderName ).\n"
-				]
-			},
-			{ "value": "   <UniqueIdentifier>tag:example.com,2024:ch1</UniqueIdentifier>", "ix": 6 },
-			{ "value": "   <ServiceName>Service</ServiceName>", "ix": 7 },
-			{ "value": " </Service>", "ix": 8 },
-			{ "value": "</ServiceList>", "ix": 9 }
-		],
 		"errorDescriptions": []
 	}
 }
@@ -223,6 +219,10 @@ accepted valies for `<type>`
 
 #### Playlist validation endpoints
 *todo writeup needed*
+
+## Acknowledgements
+
+A 2026 code review of this repository, and the fixes that came out of it (output escaping, a single fetch policy for retrieved documents, resource clean-up, schema validator reuse, TypeScript and CI checks, and Docker and server start-up fixes), were carried out with help from [Claude](https://claude.com/claude-code), an AI assistant by Anthropic.
 
 *Copyright (c) 2021-2026, Paul Higgs*<br/>
 *All rights reserved*

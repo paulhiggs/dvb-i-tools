@@ -29,7 +29,8 @@ import ClassificationScheme from "./classification_scheme.mts"
 let masterSLEPR = "";
 const EMPTY_SLEPR = (err?: string) =>
 	`<ServiceListEntryPoints xmlns="urn:dvb:metadata:servicelistdiscovery:2024">${err ? `\n<!--${err} -->\n` : ""}<ServiceListRegistryEntity><Name>EMPTY</Name></ServiceListRegistryEntity></ServiceListEntryPoints>`;
-const REGISTRY_ERROR = (message: string, document: string) => `<Error><Message><![CDATA[${message}]]></Message>\n<SLRDocument><![CDATA[\n${document}]]>\n</SLRDocument></Error>`;
+// the registry document itself is not returned to the client, the problem is logged on the server
+const REGISTRY_ERROR = (message: string) => `<Error><Message>${message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</Message></Error>`;
 
 const RFC2397_PREFIX = "data:";
 
@@ -174,8 +175,14 @@ export default class SLEPR {
 			//const queryParams = qs.parse(req.query) as qs.ParsedQs;
 			const queryParams = req.query
 			for (const key in queryParams) {
-				if (allowed_arguments.includes(key)) 
-					params[key] = datatypeIs(queryParams[key], "array") as boolean ? queryParams[key] as string : [queryParams[key]] as string[];
+				// accept both "Delivery=dvb-t" and the array form "Delivery[]=dvb-t". Express 5's default (simple) query
+				// parser keeps the "[]" in the name, and repeated arguments of either form are combined
+				const name = key.endsWith("[]") ? key.slice(0, -2) : key;
+				if (allowed_arguments.includes(name)) {
+					const value = queryParams[key];
+					const values = Array.isArray(value) ? (value as string[]) : [value as string];
+					params[name] = [...((params[name] as string[] | undefined) ?? []), ...values];
+				}
 				else req.parseErr.push(`invalid argument - ${key}`);
 			}
 
@@ -230,22 +237,27 @@ export default class SLEPR {
 		const requestedVersion = (UASinfo.ok && UASinfo.version! >= 6) ? UASinfo.version! : -1;
 		const queryParams: Record<string, string> = {};
 		if (!this.#checkQuery(req, queryParams)) {
-			if (req.parseErr) res.write(`[${req.parseErr.join(",\n\t")}]`);
+			// the errors echo the query values supplied by the client, so they must not be interpreted as HTML
+			res.type("text/plain");
+			res.setHeader("X-Content-Type-Options", "nosniff");
 			res.status(400);
+			if (req.parseErr) res.write(`[${req.parseErr.join(",\n\t")}]`);
 			return false;
 		}
 
-		// eslint-disable-next-line no-useless-assignment
-		let slepr = undefined;
+		let parsed: XmlDocument;
 		try {
-			slepr = XmlDocument.fromString(masterSLEPR);
+			parsed = XmlDocument.fromString(masterSLEPR);
 		} catch (err) {
 			res.type("application/xml");
 			res.status(500);
-			const message = (err instanceof XmlError) ? err.message : "sometghign bad happened"
-			res.send(REGISTRY_ERROR(message, masterSLEPR));
+			const message = (err instanceof XmlError) ? err.message : "something bad happened";
+			console.log(chalk.red(`unable to parse the service list registry (${this.#registryFilename}): ${message}`));
+			res.send(REGISTRY_ERROR(`the service list registry could not be parsed: ${message}`));
 			return false;
 		}
+		// 'using' disposes the document (WASM memory) however this method exits, including exceptions while filtering
+		using slepr = parsed;
 		if (queryParams.ProviderName) {
 			// if ProviderName is specified, remove any ProviderOffering entries that do not match the name
 			let prov,
@@ -322,7 +334,7 @@ export default class SLEPR {
 			}
 		}
 
-		if (queryParams.regulatorListFlag || queryParams.Language || queryParams.TargetCountry || queryParams.Genre || requestedVersion != -1) {
+		if (queryParams.regulatorListFlag || queryParams.Language || queryParams.TargetCountry || queryParams.Genre || queryParams.Delivery || requestedVersion != -1) {
 			let prov,
 				p = 0
 			const servicesToRemove = [];
@@ -441,8 +453,8 @@ export default class SLEPR {
 		}
 		providersToRemove.forEach((provider) => provider.remove());
 
-		const removeImages = queryParams.inlineImages && queryParams.inlineImages[0].toLowerCase() == "true" ? true : false;
-		if (!removeImages) {
+		const keepInlineImages = queryParams.inlineImages && queryParams.inlineImages[0].toLowerCase() == "true" ? true : false;
+		if (!keepInlineImages) {
 			// remove any 'data:' URLs from RelatedMaterial elements. if there are no remaining MediaLocator elements, then remove the RelatedMaterial
 			let prov,
 				p = 0;
@@ -478,7 +490,6 @@ export default class SLEPR {
 
 		res.type("application/xml");
 		res.send(slepr.toString());
-		slepr.dispose()
 		return true;
 	}
 }

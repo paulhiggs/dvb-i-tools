@@ -21,6 +21,11 @@ import { Default_SLEPR, MOTD } from "./lib/data_locations.mts"
 import validator from "./lib/validator.mts"
 import { DEFAULT_PROCESSING, SLR_Processing_Modes } from "./lib/slepr.mts";
 
+// command-line-args Boolean options cannot be turned off, so options that default to true take an explicit value
+function parseBooleanOption(value: string): boolean {
+	return !["false", "no", "off", "0"].includes(value.toLowerCase());
+}
+
 // parse command line options
 const optionDefinitions = [
 	{ name: "urls", alias: "u", type: Boolean, defaultValue: false, description: "Load data files from network locations." },
@@ -65,6 +70,13 @@ const optionDefinitions = [
 	},
 	{ name: "spam_blocker", alias: "b", type: Boolean, defaultValue: false, description: "enable frustrator for network scanners"},
 	{ name: "allow_traversal", alias: "t", type: Boolean, defaultValue: false, description: "allow use of metadata traversal"},
+	{
+		name: "allow_private_fetch",
+		type: parseBooleanOption,
+		defaultValue: true,
+		typeLabel: "{underline true|false}",
+		description: "allow documents to be retrieved from localhost and private network addresses (literal IP addresses only). Default: true",
+	},
 	{ name: "help", alias: "h", type: Boolean, defaultValue: false, description: "This help" },
 ];
 
@@ -89,14 +101,14 @@ const commandLineHelp = [
 		content: [
 			{ header: "{underline arg}" },
 			{ name: "regulatorListFlag", summary: "Select only service lists that have the @regulatorListFlag set as specified (true|false)" },
-			{ name: "Delivery[]", summary: "Select only service lists that use the specified delivery system (dvb-t|dvb-dash|dvb-c|dvb-s|dvb-iptv)" },
+			{ name: "Delivery[]", summary: "Select only service lists that use the specified delivery system (dvb-t|dvb-dash|dvb-c|dvb-s|dvb-iptv|application)" },
 			{ name: "TargetCountry[]", summary: "Select only service lists that apply to the specified countries (form: {underline ISO3166 3-digit code})" },
 			{ name: "Language[]", summary: "Select only service lists that use the specified language (form: {underline IANA 2 digit language code})" },
 			{ name: "Genre[]", summary: "Select only service lists that match one of the given Genres" },
-			{ name: "Provider[]", summary: "Select only service lists that match one of the specified Provider names" },
+			{ name: "ProviderName[]", summary: "Select only service lists that match one of the specified Provider names" },
 		],
 	},
-	{ content: "note that all query values except Provider are checked against constraints. An HTTP 400 response is returned with errors in the response body." },
+	{ content: "each argument can be given with or without the [] suffix, and repeated to give several values. Note that all query values except ProviderName are checked against constraints. An HTTP 400 response is returned with errors in the response body." },
 	{
 		header: "About",
 		content: "Project home: {underline https://github.com/paulhiggs/dvb-i-tools/}",

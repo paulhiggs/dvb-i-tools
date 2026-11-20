@@ -68,8 +68,7 @@ import { ValidateAnyContentDigests } from "./digest_validation.mts"
 import { ValidateSignaturePolicies } from "./signature_policies.mts"
 
 import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES } from "./cg_check.mts"
-import { fetch_options } from "./globals.mts"
-import fetchS from "sync-fetch"
+import { safeFetch, enterTraversal, exitTraversal, resetTraversalBudget } from "./safe_fetch.mts"
 
 
 const LCN_TABLE_NO_TARGETREGION: string = "unspecifiedRegion",
@@ -2351,6 +2350,7 @@ export default class ServiceListCheck {
 	 */
 	/*public*/ doValidateServiceList(SLtext: string, errs: ErrorList, options: SL_Validator_Options = {}) {
 		this.#numRequests++;
+		resetTraversalBudget();
 		if (!SLtext) {
 			errs.addError({
 				type: APPLICATION,
@@ -2365,7 +2365,8 @@ export default class ServiceListCheck {
 		DefaultProperty(options, "variants", 0);
 		DefaultProperty(options, "traverse", false)
 
-		const SL = SchemaLoad(SLtext, errs, "SL001");
+		// 'using' disposes the document (WASM memory) on every exit from this method, including early returns and exceptions
+		using SL = SchemaLoad(SLtext, errs, "SL001");
 		if (!SL) return;
 		document_logger(errs, options.log_prefix, false);
 
@@ -2861,7 +2862,6 @@ export default class ServiceListCheck {
 				multiElementError: documentInfo.directSatScan.instances
 			})
 
-		SL.dispose();
 	}
 
 	/**
@@ -2880,27 +2880,39 @@ export default class ServiceListCheck {
 	/*public*/ 
 	validateServiceList(Location: XmlElement, requestUrl: string, errs: ErrorList, options: SL_Validator_Options) : void {
 
-		let resp
-		try {
-			resp = fetchS(requestUrl, fetch_options);
-		}
-		catch (error) {
+		const limited = enterTraversal();
+		if (limited) {
 			errs.addError({
-				code: `VSL001`,
-				message: `cannot traverse into ${Location.content}, error=${error}`,
+				code: `VSL003`,
+				type: WARNING,
+				message: `traversal into ${Location.content} skipped, ${limited}`,
 				fragment: Location,
 				key: keys.k_Traversal,
 			})
+			return;
 		}
-		if (resp) {
-			if (resp.ok) 
-				this.doValidateServiceList(resp.text(), errs, options);
-			else errs.addError({
-				code: `VSL002`,
-				message: `error with "${Location.content}" - ${resp.status} ${resp.statusText}`,
-				fragment: Location,
-				key: keys.k_Traversal,
-			})
+		try {
+			const { response: resp, error } = safeFetch(requestUrl);
+			if (error)
+				errs.addError({
+					code: `VSL001`,
+					message: `cannot traverse into ${Location.content}, error=${error}`,
+					fragment: Location,
+					key: keys.k_Traversal,
+				})
+			if (resp) {
+				if (resp.ok)
+					this.doValidateServiceList(resp.text(), errs, options);
+				else errs.addError({
+					code: `VSL002`,
+					message: `error with "${Location.content}" - ${resp.status} ${resp.statusText}`,
+					fragment: Location,
+					key: keys.k_Traversal,
+				})
+			}
+		}
+		finally {
+			exitTraversal();
 		}
 	}
 

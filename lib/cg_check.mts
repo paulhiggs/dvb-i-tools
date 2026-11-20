@@ -21,7 +21,7 @@ import { mpeg7 } from "./MPEG7_definitions.mts"
 import { tva, tvaEA, tvaEC } from "./TVA_definitions.mts"
 import { cgVersions, slVersions, dvbi } from "./DVB-I_definitions.mts"
 
-import { TVAschema } from "./data_locations.mts"
+import { TVAschema, schemaURL } from "./data_locations.mts"
 
 import ErrorList, { WARNING, APPLICATION } from "./error_list.mts"
 import type { ReportedErrorType } from "./error_list.mts"
@@ -58,8 +58,7 @@ import { FoundDocumentItems} from "./sl_check.mts"
 import ClassificationScheme from "./classification_scheme.mts";
 import type { StatsType, LoadOptions } from "./globals.mts"
 
-import { fetch_options } from "./globals.mts"
-import fetchS from "sync-fetch"
+import { safeFetch, enterTraversal, exitTraversal, resetTraversalBudget } from "./safe_fetch.mts"
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";
@@ -175,7 +174,7 @@ function LoadCGschemas(opts: LoadOptions) : void {
 	CG_SchemaVersions.forEach((version) => {
 		if (opts.verbose) process.stdout.write(chalk.yellow(`..loading ${version.version} ${version.namespace} from ${version.filename} `));
 		const schema = readFileSync(version.filename);
-		if (schema) version.schema = XmlDocument.fromBuffer(schema, { url: version.filename });
+		if (schema) version.schema = XmlDocument.fromBuffer(schema, { url: schemaURL(version.filename) });
 		if (opts.verbose) process.stdout.write(`${version.schema ? chalk.green("OK") : chalk.red.bold("FAIL")}\n`);
 	});
 }
@@ -3602,6 +3601,7 @@ export default class ContentGuideCheck {
 	 */
 	doValidateContentGuide(CGtext: string, requestType: string, errs: ErrorList, options: CG_Validator_Options = {}) : void {
 		this.#numRequests++;
+		resetTraversalBudget();
 
 		if (!CGtext) {
 			errs.addError({ type: APPLICATION, code: "CG000", message: "doValidateContentGuide() called with CGtext==null" });
@@ -3611,7 +3611,8 @@ export default class ContentGuideCheck {
 		DefaultProperty(options, "log_prefix", null);
 		DefaultProperty(options, "report_schema_version", true);
 
-		const CG = SchemaLoad(CGtext, errs, "CG001");
+		// 'using' disposes the document (WASM memory) on every exit from this method, including early returns and exceptions
+		using CG = SchemaLoad(CGtext, errs, "CG001");
 		if (!CG) return;
 
 		document_logger(errs, options.log_prefix, false);
@@ -3755,7 +3756,6 @@ export default class ContentGuideCheck {
 				break;
 		}
 
-		CG.dispose();
 	}
 
 	/**
@@ -3772,27 +3772,39 @@ export default class ContentGuideCheck {
 	 */
 	/* public */
 	validateContentGuide(Location: XmlElement, requestUrl: string,  requestType: string, errs: ErrorList, options: CG_Validator_Options) : void {
-		let resp
-		try {
-			resp = fetchS(requestUrl, fetch_options);
-		}
-		catch (error) {
+		const limited = enterTraversal();
+		if (limited) {
 			errs.addError({
-				code: `VCG001`,
-				message: `cannot traverse into ${Location.content}, error=${error}`,
+				code: `VCG003`,
+				type: WARNING,
+				message: `traversal into ${Location.content} skipped, ${limited}`,
 				fragment: Location,
 				key: keys.k_Traversal,
 			})
+			return;
 		}
-		if (resp) {
-			if (resp.ok) 
-				this.doValidateContentGuide(resp.text(), requestType, errs, options);
-			else errs.addError({
-				code: `VCG002`,
-				message: `error with "${Location.content}" - ${resp.status} ${resp.statusText}`,
-				fragment: Location,
-				key: keys.k_Traversal,
-			})
+		try {
+			const { response: resp, error } = safeFetch(requestUrl);
+			if (error)
+				errs.addError({
+					code: `VCG001`,
+					message: `cannot traverse into ${Location.content}, error=${error}`,
+					fragment: Location,
+					key: keys.k_Traversal,
+				})
+			if (resp) {
+				if (resp.ok)
+					this.doValidateContentGuide(resp.text(), requestType, errs, options);
+				else errs.addError({
+					code: `VCG002`,
+					message: `error with "${Location.content}" - ${resp.status} ${resp.statusText}`,
+					fragment: Location,
+					key: keys.k_Traversal,
+				})
+			}
+		}
+		finally {
+			exitTraversal();
 		}
 	}
 

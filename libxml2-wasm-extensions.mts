@@ -40,10 +40,10 @@ XmlElement.prototype.attrAnyNsValueOr = function (name: string, default_value: s
 
 XmlElement.prototype.getAnyNs = function (name: string, index: number = 1) : XmlElement | null {
 	if (this == null) {
-		throw new TypeError("XmlDocument.prototype.getAnyNs called on null or undefined");
+		throw new TypeError("XmlElement.prototype.getAnyNs called on null or undefined");
 	}
 	if (!name) {
-		throw new Error("XmlDocument.prototype.getAnyNs called without name");
+		throw new Error("XmlElement.prototype.getAnyNs called without name");
 	}
 	let ix = 0,
 		child = this.firstChild;
@@ -58,7 +58,7 @@ XmlElement.prototype.getAnyNs = function (name: string, index: number = 1) : Xml
 
 
 /**
- * return true there is at least one child element as named
+ * return true if there is at least one child element with exactly the given name (irrespective of namespace)
  */
 XmlElement.prototype.hasChild = function (childName: string) : boolean {
 	if (this == null) {
@@ -67,10 +67,10 @@ XmlElement.prototype.hasChild = function (childName: string) : boolean {
 	if (!childName) {
 		throw new Error("XmlElement.prototype.hasChild called without name");
 	}
-	let child = this.firstChild as XmlElement;
+	let child = this.firstChild;
 	while (child) {
-		if (child.name?.endsWith(childName)) return true;
-		child = child.next as XmlElement;
+		if (child instanceof XmlElement && child.name == childName) return true;
+		child = child.next;
 	}
 	return false;
 };
@@ -81,7 +81,7 @@ XmlElement.prototype.hasChild = function (childName: string) : boolean {
  */
 XmlElement.prototype.hasChildren = function () : boolean {
 	if (this == null) {
-		throw new TypeError("XmlElement.prototype.hasChilden called on null or undefined");
+		throw new TypeError("XmlElement.prototype.hasChildren called on null or undefined");
 	}
 	let child = this.firstChild;
 	while (child) {
@@ -132,7 +132,7 @@ XmlElement.prototype.forEachNamedChildElement = function (name: string | string[
  */
 XmlDocument.prototype.hasChildren = function () : boolean {
 	if (this == null) {
-		throw new TypeError("XmlDocument.prototype.hasChilden called on null or undefined");
+		throw new TypeError("XmlDocument.prototype.hasChildren called on null or undefined");
 	}
 	let child = this.root.firstChild;
 	while (child) {
@@ -162,7 +162,7 @@ XmlDocument.prototype.forEachChildElement = function (callback: (child: XmlEleme
 /**
  * invoke the given callback for each child with the given name (irrespective of namespace)
  */
-XmlDocument.prototype.forEachNamedChildElement = function (name: string, callback: (child: XmlElement) => void) : void {
+XmlDocument.prototype.forEachNamedChildElement = function (name: string | string[], callback: (child: XmlElement) => void) : void {
 	if (this == null) {
 		throw new TypeError("XmlDocument.prototype.forEachNamedChildElement called on null or undefined");
 	}
@@ -183,7 +183,7 @@ XmlDocument.prototype.forEachNamedChildElement = function (name: string, callbac
  */
 XmlElement.prototype.documentNamespace = function () : string {
 	if (this == null) {
-		throw new TypeError("XmlDocument.prototype.hasChild called on null or undefined");
+		throw new TypeError("XmlElement.prototype.documentNamespace called on null or undefined");
 	}
 	return this.parent
 		? (this.parent as XmlElement).documentNamespace()

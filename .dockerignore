@@ -1,0 +1,19 @@
+# installed inside the image by "npm i" - host modules may be built for a different platform
+node_modules
+
+# repository and editor metadata
+.git
+.github
+.vscode
+
+# test documents are not needed to run the validator
+testsuite
+
+# runtime output from a local instance
+logs
+arch
+
+# keys and certificates are generated in the image - never copy local ones in
+selfsigned.key
+selfsigned.crt
+*.pem

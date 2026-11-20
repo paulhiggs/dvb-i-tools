@@ -15,6 +15,7 @@ import { LoadGenres, LoadCountries, LoadLinkedApplicationCS } from "./classifica
 import { keys, InvalidCountryCode, InvalidURL } from "./common_errors.mts"
 import { slVersions, dvbi, dvbiEA, dvbiEC, dvbisld, validApplicationTypes, DvbIApplicationTypes, XMLdocumentType } from "./DVB-I_definitions.mts"
 import ErrorList, { APPLICATION, WARNING } from "./error_list.mts"
+import { resetTraversalBudget } from "./safe_fetch.mts"
 import { CheckExtension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY } from "./extension_check.mts"
 import { ValidateLanguage } from "./IANA_languages.mts"
 import document_logger from "./logger.mts"
@@ -423,6 +424,7 @@ export default class ServiceListRegistryCheck {
 	 */
 	/*public*/ doValidateServiceListRegistry(SLRtext: string, errs: ErrorList, options: SLR_Validator_Options = {}) : void {
 		this.#numRequests++;
+		resetTraversalBudget();
 
 		if (!SLRtext) {
 			errs.addError({
@@ -437,7 +439,8 @@ export default class ServiceListRegistryCheck {
 		DefaultProperty(options, "report_schema_version", true);
 		DefaultProperty(options, "variants", 0);
 
-		const SLR = SchemaLoad(SLRtext, errs, "SR001");
+		// 'using' disposes the document (WASM memory) on every exit from this method, including early returns and exceptions
+		using SLR = SchemaLoad(SLRtext, errs, "SR001");
 		if (!SLR) return;
 		document_logger(errs, options.log_prefix, false);
 
@@ -508,7 +511,6 @@ export default class ServiceListRegistryCheck {
 			CheckExtension(Extension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY, errs, "SR089");
 		});
 
-		SLR.dispose()
 	}
 
 	/**
