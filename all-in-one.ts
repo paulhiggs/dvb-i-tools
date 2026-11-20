@@ -26,10 +26,14 @@ function parseBooleanOption(value: string): boolean {
 	return !["false", "no", "off", "0"].includes(value.toLowerCase());
 }
 
+// a positive whole number. Anything else is NaN, which is reported when the options are checked
+function parsePositiveInteger(value: string): number {
+	return /^\d+$/.test(value) && parseInt(value, 10) > 0 ? parseInt(value, 10) : NaN;
+}
+
 // a positive whole number, or "unlimited" (Infinity). Anything else is NaN, which is reported when the options are checked
 function parseTraversalLimit(value: string): number {
-	if (value.toLowerCase() == "unlimited") return Infinity;
-	return /^\d+$/.test(value) && parseInt(value, 10) > 0 ? parseInt(value, 10) : NaN;
+	return value.toLowerCase() == "unlimited" ? Infinity : parsePositiveInteger(value);
 }
 
 // parse command line options
@@ -82,6 +86,13 @@ const optionDefinitions = [
 		defaultValue: 100,
 		typeLabel: "{underline number|unlimited}",
 		description: "maximum number of documents retrieved by traversal during a single validation. Default: 100",
+	},
+	{
+		name: "fetch_concurrency",
+		type: parsePositiveInteger,
+		defaultValue: 8,
+		typeLabel: "{underline number}",
+		description: "maximum number of documents retrieved at the same time. Default: 8",
 	},
 	{
 		name: "allow_private_fetch",

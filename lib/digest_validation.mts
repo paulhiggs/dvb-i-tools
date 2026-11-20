@@ -10,7 +10,7 @@
 
 import SHA from "sha.js"
 
-import { safeFetch, deferTask } from "./safe_fetch.mts"
+import { safeFetch, deferRetrieval } from "./safe_fetch.mts"
 import { tva} from "./TVA_definitions.mts"
 import { dvbi} from "./DVB-I_definitions.mts"
 import { APPLICATION, INFORMATION, WARNING } from "./error_list.mts"
@@ -107,10 +107,10 @@ export function ValidateAnyContentDigests(element: XmlElement, errs: ErrorList, 
 		else {
 			// the referenced resource is retrieved after the document rules have been checked
 			const location = element.content;
-			deferTask(async () => {
-				const { response } = await safeFetch(location);
-				checkDigests(response?.ok ? response.buffer() : null);
-			});
+			deferRetrieval(
+				() => safeFetch(location),
+				async ({ response }) => checkDigests(response?.ok ? response.buffer() : null)
+			);
 		}
 	}
 }

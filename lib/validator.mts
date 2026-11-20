@@ -375,6 +375,15 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		configureFetchPolicy({ maxTraversalDocuments: maxTraversal });
 	}
 
+	if (HasProperty(app_options, "fetch_concurrency")) {
+		const fetchConcurrency = app_options.fetch_concurrency;
+		if (typeof fetchConcurrency != "number" || Number.isNaN(fetchConcurrency)) {
+			console.log(chalk.red("fetch_concurrency must be a positive whole number"));
+			process.exit(1);
+		}
+		configureFetchPolicy({ fetchConcurrency: fetchConcurrency });
+	}
+
 	let motd: string | undefined = undefined;
 	if (HasProperty(app_options, "motd")) {
 		console.log(chalk.yellow("reading Message Of The Day from " + chalk.green(app_options.motd)));

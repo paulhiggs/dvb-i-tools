@@ -115,6 +115,7 @@ Occassionally, the language-subtag-registry file can be updated from https://www
   - `"default"` - default mode - according to A177 specification
 - `--allow_traversal [-t]` flag to allow document-to-document traversal <span style="color:red">(experimental, takes much time)</span>	
 - `--max_traversal <number|unlimited>` maximum number of documents retrieved by traversal during a single validation (default: 100). `unlimited` removes the limit, which can make a traversal of a large service list take a very long time.
+- `--fetch_concurrency <number>` maximum number of documents retrieved at the same time (default: 8). During traversal, referenced documents are downloaded ahead while earlier ones are validated; results are still reported in the order the documents are referenced. Use `1` to make one request at a time.
 - `--allow_private_fetch <true|false>` allow documents to be retrieved from `localhost` and private network addresses (default: true). Set to `false` on a public deployment. Only literal IP addresses and `localhost` are recognised, not hostnames that resolve to private addresses.
 - `--help [-h]` server and client command help
 

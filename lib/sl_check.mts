@@ -68,7 +68,7 @@ import { ValidateAnyContentDigests } from "./digest_validation.mts"
 import { ValidateSignaturePolicies } from "./signature_policies.mts"
 
 import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES } from "./cg_check.mts"
-import { safeFetch, allowTraversal, claimTraversal, deferTask, ValidationScope } from "./safe_fetch.mts"
+import { allowTraversal, deferRetrieval, retrieveTraversal, ValidationScope } from "./safe_fetch.mts"
 
 
 const LCN_TABLE_NO_TARGETREGION: string = "unspecifiedRegion",
@@ -2895,8 +2895,8 @@ export default class ServiceListCheck {
 			return;
 		}
 		// the referenced service list is retrieved and validated after the current document's rules have been checked
-		deferTask(async () => {
-			const refused = claimTraversal(requestUrl);
+		// (it may be retrieved concurrently with other referenced documents, but is validated in the order of reference)
+		deferRetrieval(() => retrieveTraversal(requestUrl), async ({ refused, response: resp, error }) => {
 			if (refused) {
 				errs.addError({
 					code: refused.duplicate ? `TRAV001` : `VSL003`,
@@ -2907,7 +2907,6 @@ export default class ServiceListCheck {
 				})
 				return;
 			}
-			const { response: resp, error } = await safeFetch(requestUrl);
 			if (error)
 				errs.addError({
 					code: `VSL001`,
