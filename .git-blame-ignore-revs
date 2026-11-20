@@ -1,0 +1,5 @@
+# Commits that only reformat or change line endings, ignored by "git blame" and GitHub blame.
+# Locally: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Normalize line endings to LF
+6b063350e2cbbbd8b0360cc3a88e04e396584098
