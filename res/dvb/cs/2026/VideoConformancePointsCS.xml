@@ -194,7 +194,7 @@
 			</Term>
 			<Term termID="2.3.4">
 				<Name>urn:dvb:dash:hdr-dmi:T/UWA-005</Name>
-				<Definition>High dynamic range UHD bitstream using PQ10 as defined in clauses 5.2.7, 5.3.7 and 5.4.8 of ETSI TS 103 285, and HDR dynamic mapping information conforming to the encoding constraints in clause L.3.3.10.4.5, 5.15.1.10.3.4.6 or 5.16.2.5.4.65 of ETSI TS 101 154</Definition>
+				<Definition>High dynamic range UHD bitstream using PQ10 as defined in clauses 5.2.7, 5.3.7 and 5.4.8 of ETSI TS 103 285, and HDR dynamic mapping information conforming to the encoding constraints in clause L.3.3.10.4.5, 5.15.1.10.3.4.6 or 5.16.2.5.4.6 of ETSI TS 101 154</Definition>
 			</Term>
 		</Term>
     </Term>
