@@ -61,6 +61,10 @@ export type ReportedErrorType = {
 	reportInTable?: boolean;
 }
 
+export type ErrorListOptions = {
+	markup?: boolean; // keep a marked up copy of the document and the fragment text of each error
+};
+
 type DebugMessageType = {
 	code: string;
 	message: string;
@@ -85,14 +89,25 @@ export default class ErrorList {
 
 	nestedErrors: ErrorList[]
 
-	// false once discardMarkup() is called (private fields are not included when the list is serialised to JSON)
-	#keepMarkup: boolean = true
+	// true when a marked up copy of the document and the text of each error's fragment are kept. Only the document that a
+	// validation was requested for needs them (for the report and the archive), so they are not kept for traversed
+	// documents. Private fields are not included when the list is serialised to JSON
+	#keepMarkup: boolean
 
 	source?: string
 	type?: string
 	description?: string
 
-	constructor(location?: string, type?: string, description?: string) {
+	/**
+	 * @param {string}           location     where the document came from (URL or file name)
+	 * @param {string}           type         the type of document or request
+	 * @param {string}           description  a printable description of the document
+	 * @param {ErrorListOptions} options
+	 *                             markup     keep a marked up copy of the document and the fragment text of each error
+	 *                                        (default false)
+	 */
+	constructor(location?: string, type?: string, description?: string, options: ErrorListOptions = {}) {
+		this.#keepMarkup = options.markup ?? false;
 		this.countsFatal = [];
 		this.countsErr = [];
 		this.countsWarn = [];
@@ -102,7 +117,7 @@ export default class ErrorList {
 		this.warnings = [];
 		this.debugs = [];
 		this.informationals = [];
-		this.markupXML = [];
+		if (this.#keepMarkup) this.markupXML = [];
 		this.errorDescriptions = [];
 
 		this.nestedErrors = []
@@ -121,20 +136,18 @@ export default class ErrorList {
 
 
 	/**
-	 * loads the text that can be marked up with any validation errors/warnings etc
+	 * an error list for the document a validation was requested for, keeping the marked up copy of the document
+	 */
+	static withMarkup(): ErrorList {
+		return new ErrorList(undefined, undefined, undefined, { markup: true });
+	}
+
+	/**
+	 * loads the text that can be marked up with any validation errors/warnings etc (only if this list keeps markup)
 	 * @param {string} doc   The document received for validation
 	 */
 	loadDocument(doc: string) {
 		if (this.#keepMarkup) this.markupXML = doc.split("\n").map((str, index) => ({ value: str, ix: index + 1 }));
-	}
-
-	/**
-	 * do not keep a marked up copy of the document, e.g. for the results of a traversed document.
-	 * Also applies to a document loaded later, as traversed documents are validated after the traversal is requested
-	 */
-	discardMarkup() {
-		this.#keepMarkup = false;
-		delete this.markupXML;
 	}
 
 	/**
@@ -194,7 +207,7 @@ export default class ErrorList {
 	}
 
 	/* private method */ #prettyPrint(node: XmlElement) : string | null {
-		// the fragment text is only displayed with the marked up document, so is not kept for a traversed document
+		// the fragment text is only kept by a list that keeps markup (i.e. not for a traversed document)
 		if (!this.#keepMarkup) return null;
 		const t = node.toString();
 		const maxLen = nthIndexOf(t, "\n", MAX_FRAGMENT_LINES);
