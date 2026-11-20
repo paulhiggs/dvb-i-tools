@@ -68,7 +68,7 @@ import { ValidateAnyContentDigests } from "./digest_validation.mts"
 import { ValidateSignaturePolicies } from "./signature_policies.mts"
 
 import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES } from "./cg_check.mts"
-import { safeFetch, allowTraversal, deferTask, ValidationScope } from "./safe_fetch.mts"
+import { safeFetch, allowTraversal, claimTraversal, deferTask, ValidationScope } from "./safe_fetch.mts"
 
 
 const LCN_TABLE_NO_TARGETREGION: string = "unspecifiedRegion",
@@ -2008,8 +2008,8 @@ export default class ServiceListCheck {
 					const today = Temporal.Now.plainDateISO()
 					const start_of_today = Temporal.ZonedDateTime.from({day: today.day, month: today.month, year: today.year, timeZone: "UTC"})
 
-					// look back 28 days
-					const NEEDED_DAYS = 1
+					// A177r8 - the programme guide should be available for 28 days before and 28 days after today
+					const NEEDED_DAYS = 28
 					for (let test_day=-NEEDED_DAYS; test_day<=NEEDED_DAYS; test_day++) {
 						const start_of_day = start_of_today.add({days: test_day})
 						for (let start_hour=0; start_hour<24; start_hour+=6) {
@@ -2896,6 +2896,17 @@ export default class ServiceListCheck {
 		}
 		// the referenced service list is retrieved and validated after the current document's rules have been checked
 		deferTask(async () => {
+			const refused = claimTraversal(requestUrl);
+			if (refused) {
+				errs.addError({
+					code: refused.duplicate ? `TRAV001` : `VSL003`,
+					type: WARNING,
+					message: refused.duplicate ? `skipped - ${refused.reason}` : `traversal into ${Location.content} skipped, ${refused.reason}`,
+					fragment: Location,
+					key: keys.k_Traversal,
+				})
+				return;
+			}
 			const { response: resp, error } = await safeFetch(requestUrl);
 			if (error)
 				errs.addError({

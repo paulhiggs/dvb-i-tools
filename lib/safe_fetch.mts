@@ -175,7 +175,27 @@ export async function safeFetch(url: string): Promise<SafeFetchResult> {
  * the validation calls ValidationScope.finish(). Nested validations started by those tasks open their own scope, and
  * share the traversal limits of the validation they belong to.
  */
-type TraversalBudget = { documents: number };
+type TraversalBudget = {
+	documents: number; // number of documents retrieved by traversal
+	traversed: Set<string>; // URLs of the documents retrieved by traversal
+};
+
+/**
+ * the reason a traversal is not performed
+ */
+export type TraversalRefusal = {
+	duplicate: boolean; // true if the URL has already been traversed during this validation
+	reason: string;
+};
+
+// compare URLs in their normalised form, so trivially different spellings of the same URL are treated as one
+const normaliseURL = (url: string): string => {
+	try {
+		return new URL(url).href;
+	} catch {
+		return url;
+	}
+};
 
 const runningScope = new AsyncLocalStorage<ValidationScope>(); // the scope whose deferred tasks are being performed
 const openScopes: ValidationScope[] = []; // scopes whose synchronous rules are being checked (innermost last)
@@ -188,7 +208,7 @@ export class ValidationScope {
 
 	private constructor(parent: ValidationScope | undefined) {
 		this.depth = parent ? parent.depth + 1 : 0;
-		this.budget = parent ? parent.budget : { documents: 0 };
+		this.budget = parent ? parent.budget : { documents: 0, traversed: new Set<string>() };
 	}
 
 	/**
@@ -237,15 +257,35 @@ export function deferTask(task: () => Promise<void>): void {
 }
 
 /**
- * check whether the current validation may traverse into another document, and count it if so
+ * check, when a traversal is requested by the validation rules, whether the current validation may traverse into
+ * another document. Only the depth is checked here: the document is counted against the shared budget by
+ * claimTraversal() when its retrieval is performed, so that documents referenced by traversed documents
+ * (e.g. Program Information in a schedule) are not starved by the requests made by the outermost document
  *
- * @returns {string | null} null if the traversal can proceed, otherwise the reason it cannot
+ * @returns {string | null} null if the traversal can be scheduled, otherwise the reason it cannot
  */
 export function allowTraversal(): string | null {
 	const scope = openScopes.at(-1);
 	if (!scope) return "traversal requested outside a validation";
 	if (scope.depth + 1 > policy.maxTraversalDepth) return `maximum traversal depth (${policy.maxTraversalDepth}) reached`;
-	if (scope.budget.documents >= policy.maxTraversalDocuments) return `maximum number of traversed documents (${policy.maxTraversalDocuments}) reached`;
+	return null;
+}
+
+/**
+ * count a traversed document against the budget of the validation. Call from the deferred task, immediately before
+ * the document is retrieved. A URL is only traversed once during a validation, and a repeated URL is not counted
+ *
+ * @param {string} url  the URL of the document to be retrieved
+ * @returns {TraversalRefusal | null} null if the document can be retrieved, otherwise the reason it cannot
+ */
+export function claimTraversal(url: string): TraversalRefusal | null {
+	const scope = runningScope.getStore();
+	if (!scope) return { duplicate: false, reason: "traversal performed outside a validation" };
+	const key = normaliseURL(url);
+	if (scope.budget.traversed.has(key)) return { duplicate: true, reason: `${url} already validated` };
+	if (scope.budget.documents >= policy.maxTraversalDocuments)
+		return { duplicate: false, reason: `maximum number of traversed documents (${policy.maxTraversalDocuments}) reached` };
 	scope.budget.documents++;
+	scope.budget.traversed.add(key);
 	return null;
 }

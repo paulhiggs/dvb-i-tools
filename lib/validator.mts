@@ -366,6 +366,15 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 	// a flag given without a value (null) means true
 	configureFetchPolicy({ allowPrivateAddresses: app_options.allow_private_fetch !== false });
 
+	if (HasProperty(app_options, "max_traversal")) {
+		const maxTraversal = app_options.max_traversal;
+		if (typeof maxTraversal != "number" || Number.isNaN(maxTraversal)) {
+			console.log(chalk.red(`max_traversal must be a positive whole number or ${"unlimited".quote()}`));
+			process.exit(1);
+		}
+		configureFetchPolicy({ maxTraversalDocuments: maxTraversal });
+	}
+
 	let motd: string | undefined = undefined;
 	if (HasProperty(app_options, "motd")) {
 		console.log(chalk.yellow("reading Message Of The Day from " + chalk.green(app_options.motd)));

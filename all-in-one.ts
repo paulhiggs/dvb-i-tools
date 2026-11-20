@@ -26,6 +26,12 @@ function parseBooleanOption(value: string): boolean {
 	return !["false", "no", "off", "0"].includes(value.toLowerCase());
 }
 
+// a positive whole number, or "unlimited" (Infinity). Anything else is NaN, which is reported when the options are checked
+function parseTraversalLimit(value: string): number {
+	if (value.toLowerCase() == "unlimited") return Infinity;
+	return /^\d+$/.test(value) && parseInt(value, 10) > 0 ? parseInt(value, 10) : NaN;
+}
+
 // parse command line options
 const optionDefinitions = [
 	{ name: "urls", alias: "u", type: Boolean, defaultValue: false, description: "Load data files from network locations." },
@@ -70,6 +76,13 @@ const optionDefinitions = [
 	},
 	{ name: "spam_blocker", alias: "b", type: Boolean, defaultValue: false, description: "enable frustrator for network scanners"},
 	{ name: "allow_traversal", alias: "t", type: Boolean, defaultValue: false, description: "allow use of metadata traversal"},
+	{
+		name: "max_traversal",
+		type: parseTraversalLimit,
+		defaultValue: 100,
+		typeLabel: "{underline number|unlimited}",
+		description: "maximum number of documents retrieved by traversal during a single validation. Default: 100",
+	},
 	{
 		name: "allow_private_fetch",
 		type: parseBooleanOption,

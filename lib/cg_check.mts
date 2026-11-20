@@ -58,7 +58,7 @@ import { FoundDocumentItems} from "./sl_check.mts"
 import ClassificationScheme from "./classification_scheme.mts";
 import type { StatsType, LoadOptions } from "./globals.mts"
 
-import { safeFetch, allowTraversal, deferTask, ValidationScope } from "./safe_fetch.mts"
+import { safeFetch, allowTraversal, claimTraversal, deferTask, ValidationScope } from "./safe_fetch.mts"
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";
@@ -3788,6 +3788,17 @@ export default class ContentGuideCheck {
 		}
 		// the referenced content guide is retrieved and validated after the current document's rules have been checked
 		deferTask(async () => {
+			const refused = claimTraversal(requestUrl);
+			if (refused) {
+				errs.addError({
+					code: refused.duplicate ? `TRAV001` : `VCG003`,
+					type: WARNING,
+					message: refused.duplicate ? `skipped - ${refused.reason}` : `traversal into ${Location.content} skipped, ${refused.reason}`,
+					fragment: Location,
+					key: keys.k_Traversal,
+				})
+				return;
+			}
 			const { response: resp, error } = await safeFetch(requestUrl);
 			if (error)
 				errs.addError({
