@@ -3611,7 +3611,8 @@ export default class ContentGuideCheck {
 		DefaultProperty(options, "log_prefix", null);
 		DefaultProperty(options, "report_schema_version", true);
 
-		const CG = SchemaLoad(CGtext, errs, "CG001");
+		// 'using' disposes the document (WASM memory) on every exit from this method, including early returns and exceptions
+		using CG = SchemaLoad(CGtext, errs, "CG001");
 		if (!CG) return;
 
 		document_logger(errs, options.log_prefix, false);
@@ -3755,7 +3756,6 @@ export default class ContentGuideCheck {
 				break;
 		}
 
-		CG.dispose();
 	}
 
 	/**

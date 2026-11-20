@@ -439,7 +439,8 @@ export default class ServiceListRegistryCheck {
 		DefaultProperty(options, "report_schema_version", true);
 		DefaultProperty(options, "variants", 0);
 
-		const SLR = SchemaLoad(SLRtext, errs, "SR001");
+		// 'using' disposes the document (WASM memory) on every exit from this method, including early returns and exceptions
+		using SLR = SchemaLoad(SLRtext, errs, "SR001");
 		if (!SLR) return;
 		document_logger(errs, options.log_prefix, false);
 
@@ -510,7 +511,6 @@ export default class ServiceListRegistryCheck {
 			CheckExtension(Extension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY, errs, "SR089");
 		});
 
-		SLR.dispose()
 	}
 
 	/**

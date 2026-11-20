@@ -2365,7 +2365,8 @@ export default class ServiceListCheck {
 		DefaultProperty(options, "variants", 0);
 		DefaultProperty(options, "traverse", false)
 
-		const SL = SchemaLoad(SLtext, errs, "SL001");
+		// 'using' disposes the document (WASM memory) on every exit from this method, including early returns and exceptions
+		using SL = SchemaLoad(SLtext, errs, "SL001");
 		if (!SL) return;
 		document_logger(errs, options.log_prefix, false);
 
@@ -2861,7 +2862,6 @@ export default class ServiceListCheck {
 				multiElementError: documentInfo.directSatScan.instances
 			})
 
-		SL.dispose();
 	}
 
 	/**

@@ -281,7 +281,9 @@ export function SchemaLoad(document: string, errs: ErrorList, errCode: string): 
 	// eslint-disable-next-line no-useless-assignment
 	let tmp = null, prettyXML = null;
 	try {
-		tmp = XmlDocument.fromString(document);
+		// this parse of the raw document is only used to report errors with their original positions,
+		// the document returned is parsed from the formatted text below
+		XmlDocument.fromString(document).dispose();
 	} catch (err) {
 		if (err.details && datatypeIs(err.details, "array"))
 			err.details.forEach((e) =>
@@ -303,6 +305,7 @@ export function SchemaLoad(document: string, errs: ErrorList, errCode: string): 
 		return null;
 	}
 	if (!tmp || !tmp.root) {
+		tmp?.dispose();
 		errs.addError({ type: FATAL, code: `${errCode}-12`, message: "XML document is empty", key: keys.k_MalformedXML });
 		errs.loadDocument(prettyXML);
 		return null;
