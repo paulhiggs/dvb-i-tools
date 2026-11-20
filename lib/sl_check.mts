@@ -2005,7 +2005,7 @@ export default class ServiceListCheck {
 						CG_REQUEST_SCHEDULE_NOWNEXT, 
 						cg_errors, 
 						{ ...cgOptions })
-					delete cg_errors.markupXML;
+					cg_errors.discardMarkup()
 					errs.nestedErrors.push(cg_errors)
 				}
 
@@ -2035,7 +2035,7 @@ export default class ServiceListCheck {
 								CG_REQUEST_SCHEDULE_TIME, 
 								cg_errors, 
 								{ ...cgOptions })
-							delete cg_errors.markupXML
+							cg_errors.discardMarkup()
 							errs.nestedErrors.push(cg_errors)
 						}
 					}
@@ -2053,7 +2053,7 @@ export default class ServiceListCheck {
 							CG_REQUEST_BS_CATEGORIES, 
 							cg_errors, 
 							{ ...cgOptions })
-						delete cg_errors.markupXML
+						cg_errors.discardMarkup()
 						errs.nestedErrors.push(cg_errors)
 					}
 
@@ -2067,7 +2067,7 @@ export default class ServiceListCheck {
 						CG_REQUEST_BS_CATEGORIES, 
 						cg_errors, 
 						{ ...cgOptions })
-					delete cg_errors.markupXML
+					cg_errors.discardMarkup()
 					errs.nestedErrors.push(cg_errors)
 				}
 			}
