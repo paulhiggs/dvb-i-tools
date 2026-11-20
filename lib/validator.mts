@@ -25,7 +25,7 @@ import morgan, { token } from "morgan"
 import fileupload from "express-fileupload"
 import favicon from "serve-favicon"
 import commandLineArgs from "command-line-args"
-import { Server } from "https"
+import { createServer as createHttpServer } from "http"
 import type { AddressInfo } from "node:net"
 import { createStream } from "rotating-file-stream";
 
@@ -741,40 +741,51 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			key: readmyfile(keyFilename, {}) as Buffer,
 			cert: readmyfile(certFilename, {}) as Buffer,
 		};
-		let https_server : Server | null = null;
+		// Only one server uses the HTTP port: the validator itself when HTTPS is not available, otherwise a redirect to HTTPS.
+		// The choice is made from the HTTPS server's 'listening' and 'error' events, as listen() is asynchronous.
+		const listenFailed = (protocol: string, port: number, consequence: string) => (err: NodeJS.ErrnoException) => {
+			const reason = err.code == "EADDRINUSE" ? "already in use" : `${err.code ?? ""} ${err.message}`.trim();
+			console.log(chalk.red(`${protocol} port ${port} ${reason} -- ${consequence}`));
+		};
+
+		const startHTTP = () => {
+			const http_server = createHttpServer(app);
+			http_server.on("error", (err: NodeJS.ErrnoException) => {
+				listenFailed("HTTP", app_options.port, "HTTP server not started")(err);
+				// nothing is listening, so the process will end - report it as a failure (e.g. for systemd Restart=on-failure)
+				process.exitCode = 1;
+			});
+			http_server.listen(app_options.port, () => {
+				console.log(chalk.cyan(`HTTP listening on port number ${(http_server.address() as AddressInfo).port}`));
+			});
+		};
+
+		const startHTTPredirect = () => {
+			const redirect_app = express();
+			redirect_app.use(morgan(LOGGING_TEMPLATE));
+			redirect_app.use(function(req, res) {
+				res.redirect(`https://${req.hostname}:${app_options.sport}${req.originalUrl}`);
+			});
+			const redirect_server = createHttpServer(redirect_app);
+			redirect_server.on("error", listenFailed("HTTP", app_options.port, "HTTP to HTTPS redirect not started"));
+			redirect_server.listen(app_options.port, () => {
+				console.log(chalk.cyan(`HTTP redirecting to HTTPS on port number ${app_options.port}`));
+			});
+		};
 
 		if (https_options.key && https_options.cert) {
 			if (app_options.sport == app_options.port) app_options.sport = app_options.port + 1;
 
-			https_server = createServer(https_options, app);
+			const https_server = createServer(https_options, app);
+			https_server.once("error", (err: NodeJS.ErrnoException) => {
+				listenFailed("HTTPS", app_options.sport, "HTTPS server not started, using HTTP")(err);
+				startHTTP();
+			});
 			https_server.listen(app_options.sport, () => {
-				if ((https_server?.address() as AddressInfo)?.port) {
-					console.log(chalk.cyan(`HTTPS listening on port number ${(https_server!.address() as AddressInfo).port}`));
-
-					const redirect_app = express();
-					redirect_app.use(morgan(LOGGING_TEMPLATE));
-					redirect_app.use(function(req, res) {
-						res.redirect(`https://${req.hostname}:${app_options.sport}${req.originalUrl}`);
-					})
-					redirect_app.listen(app_options.port, () => {
-						console.log(chalk.cyan(`HTTP redirecting to HTTPS on port number ${app_options.port}`));
-					});
-				}
-				else console.log(chalk.red(`HTTPS port ${app_options.sport} already in use -- HTTPS server not started`));
-
+				console.log(chalk.cyan(`HTTPS listening on port number ${(https_server.address() as AddressInfo).port}`));
+				startHTTPredirect();
 			});
 		}
-
-		const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-		delay(3000); // give the HTTPS server time to start before starting the HTTP server
-
-		if (!https_server?.listening) {
-		// start the HTTP server
-			const http_server = app.listen(app_options.port, () => {
-				if ((http_server.address() as AddressInfo)?.port) 
-					console.log(chalk.cyan(`HTTP listening on port number ${(http_server.address() as AddressInfo).port}`));
-				else console.log(chalk.red(`HTTP port ${app_options.port} already in use -- HTTP server not started`));
-			});
-		}
+		else startHTTP();
 	}
 }
