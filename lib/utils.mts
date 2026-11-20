@@ -23,10 +23,15 @@ import {} from "./string-extensions.mts"
 /**
  * replace ENTITY strings with a generic characterSet
  *
+ * Only well formed references are replaced: named (&amp;), decimal (&#233;) and hexadecimal (&#xE9;).
+ * Note that XmlElement.content has already decoded the references in the XML document, so for that text
+ * this only affects references that were themselves escaped (e.g. &amp;amp; in the document)
+ *
  * @param {string} str    string containing HTML or XML entities (starts with & ends with ;)
  * @returns {string} the string with entities replaced with a single character '*'
  */
-export const unEntity = (str: string) : string => str.replace(/(&.+;)/gi, "*");
+const ENTITY_REFERENCE = /&(?:#[0-9]+|#x[0-9a-f]+|[a-z][a-z0-9]*);/gi;
+export const unEntity = (str: string) : string => str.replace(ENTITY_REFERENCE, "*");
 
 /**
  * checks is an object has none of its own properties
