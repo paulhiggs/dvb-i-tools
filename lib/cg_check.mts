@@ -2845,24 +2845,27 @@ export default class ContentGuideCheck {
 		if (AVAttributes) this.#ValidateAVAttributes(AVAttributes, this.#allowedAudioSchemes, errs);
 
 		// <OtherIdentifier>
+		// A177r8 clause 6.10.16 - @type is the only attribute used (@organization, @authority and @encoding are profiled out),
+		// and its value is restricted according to the element containing the <InstanceDescription>
 		InstanceDescription.forEachNamedChildElement(tva.e_OtherIdentifier, (OtherIdentifier) => {
 			checkAttributes(OtherIdentifier, [tva.a_type], [], tvaEA.OtherIdentifier, errs, "VID052");
 			const OtherIdentifier_type = OtherIdentifier.attrAnyNsValueOr(tva.a_type);
 			if (OtherIdentifier_type) {
-				if (
-					(VerifyType == tva.e_ScheduleEvent && ["CPSIndex", dvbi.EIT_PROGRAMME_CRID_TYPE, dvbi.EIT_SERIES_CRID_TYPE].includes(OtherIdentifier_type)) ||
-					(VerifyType == tva.e_OnDemandProgram && OtherIdentifier_type == "CPSIndex")
-				) {
-					// all good
-				} else {
-					if (!OtherIdentifier.attrAnyNs(mpeg7.a_organization))
-						// don't throw errors for other organisations <OtherIdentifier> values
-						errs.addError({
-							code: "ID050",
-							message: `${tva.a_type.attribute(tva.e_OtherIdentifier)}=${OtherIdentifier_type.quote()} is not valid for ${VerifyType}.${InstanceDescription.name}`,
-							fragment: OtherIdentifier,
-						});
-				}
+				const allowedTypes: string[] =
+					VerifyType == tva.e_ScheduleEvent
+						? [dvbi.EIT_PROGRAMME_CRID_TYPE, dvbi.EIT_SERIES_CRID_TYPE, "CPSIndex"]
+						: VerifyType == tva.e_OnDemandProgram
+							? ["CPSIndex"]
+							: [];
+				if (!allowedTypes.includes(OtherIdentifier_type))
+					errs.addError({
+						code: "ID050",
+						message: `${tva.a_type.attribute(tva.e_OtherIdentifier)}=${OtherIdentifier_type.quote()} is not valid for ${VerifyType}.${InstanceDescription.name}${
+							allowedTypes.length ? `, permitted values are ${allowedTypes.map((t) => t.quote()).join(", ")}` : ""
+						}`,
+						fragment: OtherIdentifier,
+						clause: "A177r8 clause 6.10.16",
+					});
 				if ([dvbi.EIT_PROGRAMME_CRID_TYPE, dvbi.EIT_SERIES_CRID_TYPE].includes(OtherIdentifier_type))
 					if (!isCRIDURI(OtherIdentifier.content))
 						errs.addError({
