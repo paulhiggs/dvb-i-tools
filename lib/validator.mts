@@ -338,7 +338,7 @@ function validateServiceListRegistry(req: express.Request, res: express.Response
 function validateContentGuide(req: express.Request, res: express.Response, cgcheck: ContentGuideCheck, motd: string | undefined, jsonResponse: boolean) : void {
 	if (!checkMethod(req, res)) return;
 	const errs = new ErrorList();
-	const log_prefix = createPrefix(req);
+	const log_prefix = createPrefix(req, MODE_CG);
 	const CGxml = getDocument(req)
 	const _options: CG_Validator_Options = { log_prefix: log_prefix, report_schema_version: true }
 

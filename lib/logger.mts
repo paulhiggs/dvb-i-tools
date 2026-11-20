@@ -21,7 +21,8 @@ export function createPrefix(req: express.Request, testtype?: string) : string |
 	const logDir: string = join(".", "arch");
 
 	if (!existsSync(logDir)) return undefined;
-	if (testtype && [MODE_CG, MODE_SL, MODE_SLR, MODE_PL].includes(testtype)) return undefined
+	// only documents for a known validation type are archived
+	if (!testtype || ![MODE_CG, MODE_SL, MODE_SLR, MODE_PL].includes(testtype)) return undefined
 
 	const getDate = (i : Temporal.Instant) : string=> {
 		const fillZero = (t: number) : string => `${t < 10 ? "0" : ""}${t}`;
@@ -29,24 +30,26 @@ export function createPrefix(req: express.Request, testtype?: string) : string |
 		return `${d.year}-${fillZero(d.month)}-${fillZero(d.day)} ${fillZero(d.hour)}.${fillZero(d.minute)}.${fillZero(d.second)}`;
 	};
 
-	let fname: string | undefined = undefined,
-		mode: string | undefined = undefined
+	const lastPathSegment = (url: unknown) : string | undefined =>
+		typeof url == "string" ? url.substring(url.lastIndexOf("/") + 1) : undefined
+
+	let fname: string | undefined = undefined
 	switch (req.method) {
 		case "GET":
-			if (req.query?.url) {
-				const _url = req.query.url as string
-				fname = _url.substring(_url.lastIndexOf("/") + 1)
-			}
-			mode = testtype || req.query?.testtype as string | undefined
+			fname = lastPathSegment(req.query?.url)
 			break
 		case "POST":
-			fname = req.body.doclocation == MODE_URL 
-				? req.body.XMLurl.substring(req.body.XMLurl.lastIndexOf("/") + 1) 
-				: (req?.files?.XMLfile as fileupload.UploadedFile).name
-			mode = testtype || req.body.requestType
+			if (typeof req.body == "string")
+				// document POSTed directly to a /validate_* endpoint (parsed by express.text())
+				fname = "posted.xml"
+			else if (req.body?.doclocation == MODE_URL)
+				fname = lastPathSegment(req.body.XMLurl)
+			else
+				fname = (req.files?.XMLfile as fileupload.UploadedFile | undefined)?.name
 			break
 	}
-	if (!fname || !mode) return undefined
+	const mode = testtype
+	if (!fname) return undefined
 	return `${logDir}${sep}${getDate(Temporal.Now.instant())} (${mode}) ${fname.replace(/[/\\?%*:|"<>]/g, "-")}`
 }
 
