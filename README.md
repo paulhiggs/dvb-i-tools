@@ -134,13 +134,26 @@ If a subdirectory named `./logs` extists, then enhanced HTTP server logging will
 `<server>/validate_sl?url=<service_list_url>&variants=DE` gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the servicelist in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML.
 The optional `variants=` query parameter can be used with a GET to specify region specific validation, or via the `X-variants` HTTP header for post.
 
-`<server>/validate_sl_json?url=<service_list_url>&variants=DE` validates the list in the "url"-parameter and gives the number of errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter.
+`<server>/validate_sl_json?url=<service_list_url>&variants=DE` validates the list in the "url"-parameter and gives the number of fatals, errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter.
 The optional `variants=` query parameter can be used with a GET to specify region specific validation, or via the `X-variants` HTTP header for post.
 Example response:
 
 ```json
 {
+	"fatals": 0,
 	"errors": 1,
+	"warnings": 0,
+	"informationals": 0
+}
+```
+
+If the document cannot be retrieved, a `parseErr` array describing the problem is included in the same JSON object, e.g.
+
+```json
+{
+	"parseErr": ["error (404:Not Found) handling https://example.com/list.xml"],
+	"fatals": 0,
+	"errors": 0,
 	"warnings": 0,
 	"informationals": 0
 }

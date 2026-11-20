@@ -109,16 +109,18 @@ function getVariant(req: express.Request) : number {
 function report(req: express.Request, res: express.Response, jsonResponse: boolean, errs: ErrorList, motd: string | undefined) : void {
 	if (jsonResponse) {
 		res.setHeader("Content-Type", "application/json")
-		if (req.parseErr) 
-			res.write(JSON.stringify({ parseErr: req.parseErr }))
-		else delete errs.markupXML
-		res.write(
-			JSON.stringify(
-				req.query.results && req.query.results == "all" 
-					? { errs } 
-					: { errors: errs.errors.length, warnings: errs.warnings.length, informationals: errs.informationals.length }
-			)
-		)
+		if (!req.parseErr) delete errs.markupXML
+		// a single JSON document is returned, with parseErr included only when the document could not be obtained
+		const result: Record<string, unknown> = req.parseErr ? { parseErr: req.parseErr } : {}
+		if (req.query.results && req.query.results == "all")
+			result.errs = errs
+		else {
+			result.fatals = errs.fatals.length
+			result.errors = errs.errors.length
+			result.warnings = errs.warnings.length
+			result.informationals = errs.informationals.length
+		}
+		res.write(JSON.stringify(result))
 	}
 	else 
 		drawResults(req, res, motd, req.parseErr, errs)
