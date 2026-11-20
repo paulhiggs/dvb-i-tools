@@ -68,7 +68,7 @@ import { ValidateAnyContentDigests } from "./digest_validation.mts"
 import { ValidateSignaturePolicies } from "./signature_policies.mts"
 
 import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES } from "./cg_check.mts"
-import { safeFetch, enterTraversal, exitTraversal, resetTraversalBudget } from "./safe_fetch.mts"
+import { safeFetch, allowTraversal, deferTask, ValidationScope } from "./safe_fetch.mts"
 
 
 const LCN_TABLE_NO_TARGETREGION: string = "unspecifiedRegion",
@@ -2348,9 +2348,10 @@ export default class ServiceListCheck {
 	 *                                              GERMAN_A177r6_VARIANT  use the German schema variants for A177r6
 	 *                      traverse              validate referenced DVB-I documents
 	 */
-	/*public*/ doValidateServiceList(SLtext: string, errs: ErrorList, options: SL_Validator_Options = {}) {
+	/*public*/ async doValidateServiceList(SLtext: string, errs: ErrorList, options: SL_Validator_Options = {}) : Promise<void> {
 		this.#numRequests++;
-		resetTraversalBudget();
+		// collects the network work (traversal, content digests) that is performed once the rules below have been checked
+		using scope = ValidationScope.open();
 		if (!SLtext) {
 			errs.addError({
 				type: APPLICATION,
@@ -2862,6 +2863,8 @@ export default class ServiceListCheck {
 				multiElementError: documentInfo.directSatScan.instances
 			})
 
+		// perform the deferred network work before the document is disposed (at the end of this method)
+		await scope.finish();
 	}
 
 	/**
@@ -2880,7 +2883,7 @@ export default class ServiceListCheck {
 	/*public*/ 
 	validateServiceList(Location: XmlElement, requestUrl: string, errs: ErrorList, options: SL_Validator_Options) : void {
 
-		const limited = enterTraversal();
+		const limited = allowTraversal();
 		if (limited) {
 			errs.addError({
 				code: `VSL003`,
@@ -2891,8 +2894,9 @@ export default class ServiceListCheck {
 			})
 			return;
 		}
-		try {
-			const { response: resp, error } = safeFetch(requestUrl);
+		// the referenced service list is retrieved and validated after the current document's rules have been checked
+		deferTask(async () => {
+			const { response: resp, error } = await safeFetch(requestUrl);
 			if (error)
 				errs.addError({
 					code: `VSL001`,
@@ -2902,7 +2906,7 @@ export default class ServiceListCheck {
 				})
 			if (resp) {
 				if (resp.ok)
-					this.doValidateServiceList(resp.text(), errs, options);
+					await this.doValidateServiceList(resp.text(), errs, options);
 				else errs.addError({
 					code: `VSL002`,
 					message: `error with "${Location.content}" - ${resp.status} ${resp.statusText}`,
@@ -2910,10 +2914,7 @@ export default class ServiceListCheck {
 					key: keys.k_Traversal,
 				})
 			}
-		}
-		finally {
-			exitTraversal();
-		}
+		});
 	}
 
 }

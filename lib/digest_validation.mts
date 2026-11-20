@@ -10,7 +10,7 @@
 
 import SHA from "sha.js"
 
-import { safeFetch } from "./safe_fetch.mts"
+import { safeFetch, deferTask } from "./safe_fetch.mts"
 import { tva} from "./TVA_definitions.mts"
 import { dvbi} from "./DVB-I_definitions.mts"
 import { APPLICATION, INFORMATION, WARNING } from "./error_list.mts"
@@ -19,10 +19,6 @@ import { keys } from "./common_errors.mts"
 import { isDataURI } from "./pattern_checks.mts"
 
 const parseInlineImageData = (inline_image: string) : string => inline_image.substring(inline_image.indexOf(","));
-const fetchContent = (url: string) => {
-	const { response } = safeFetch(url);
-	return response?.ok ? response.buffer() : null;
-};
 
 const DigestRegexp = /^(?<algorithm>([a-z\d]+))=:(?<digest>([a-zA-Z\d]+)):$/;
 /**
@@ -40,69 +36,82 @@ export function ValidateAnyContentDigests(element: XmlElement, errs: ErrorList, 
 
 	const contentDigests = element.attrAnyNsValueOr(tva.a_integrity);
 	if (contentDigests) {
-		const img = isDataURI(element.content) ? parseInlineImageData(element.content) : fetchContent(element.content);
-		contentDigests.split(",").forEach( (contentDigest: string) => {
-			const result = contentDigest.match(DigestRegexp);
-			if (result?.groups) {
+		// compare the resource with each digest. img is null when the resource could not be retrieved
+		const checkDigests = (img: string | Buffer | null) : void => {
+			contentDigests.split(",").forEach( (contentDigest: string) => {
+				const result = contentDigest.match(DigestRegexp);
+				if (result?.groups) {
 
-				if (!dvbi.ALLOWED_DIGESTS.includes(result.groups.algorithm))
-					errs.addError({
-						code: `${errCode}a`,
-						message: `invalid digest algorithm specified (${result.groups.algorithm})`,
-						fragment: element,
-						key: `invalid ${tva.a_integrity.attribute()}`,
-					})
- 
-					if (img) 
-						switch (result.groups.algorithm) {
-							case "sha1":
-								if (SHA('sha1').update(img).digest('hex') != result.groups.digest)
+					if (!dvbi.ALLOWED_DIGESTS.includes(result.groups.algorithm))
+						errs.addError({
+							code: `${errCode}a`,
+							message: `invalid digest algorithm specified (${result.groups.algorithm})`,
+							fragment: element,
+							key: `invalid ${tva.a_integrity.attribute()}`,
+						})
+	 
+						if (img) 
+							switch (result.groups.algorithm) {
+								case "sha1":
+									if (SHA('sha1').update(img).digest('hex') != result.groups.digest)
+										errs.addError({
+											code: `${errCode}c`,
+											message: `incorrect digest specified for "${result.groups.algorithm}"`,
+											fragment: element,
+											key: keys.k_InvalidDigest,
+										});
+									break;
+								case "sha256":
+									if (SHA('sha256').update(img).digest('hex') != result.groups.digest)
+										errs.addError({
+											code: `${errCode}d`,
+											message: `incorrect digest specified for "${result.groups.algorithm}"`,
+											fragment: element,
+											key: keys.k_InvalidDigest,
+										});
+									break;
+								case "sm3":
 									errs.addError({
-										code: `${errCode}c`,
-										message: `incorrect digest specified for "${result.groups.algorithm}"`,
+										type: WARNING,
+										code: `${errCode}e`,
+										message: `digest not calculated/compared for "result.groups.algorithm"`,
 										fragment: element,
-										key: keys.k_InvalidDigest,
 									});
-								break;
-							case "sha256":
-								if (SHA('sha256').update(img).digest('hex') != result.groups.digest)
-									errs.addError({
-										code: `${errCode}d`,
-										message: `incorrect digest specified for "${result.groups.algorithm}"`,
-										fragment: element,
-										key: keys.k_InvalidDigest,
-									});
-								break;
-							case "sm3":
-								errs.addError({
-									type: WARNING,
-									code: `${errCode}e`,
-									message: `digest not calculated/compared for "result.groups.algorithm"`,
-									fragment: element,
-								});
-								break;
-						}
-				}
-		});
- 
-		if (isDataURI(element.content))
-			errs.addError({
-				type: WARNING,
-				code: `${errCode}h`,
-				message: "digest with inline image provides no meaningful security protection",
-				fragment: element,
-				key: `unnecessary ${tva.a_integrity.attribute()}`,
-				clause: "A177 clause 7.5.3",
-				description: "There is limited merit in including the content digest and inline images in the same document.",
+									break;
+							}
+					}
 			});
+	 
+			if (isDataURI(element.content))
+				errs.addError({
+					type: WARNING,
+					code: `${errCode}h`,
+					message: "digest with inline image provides no meaningful security protection",
+					fragment: element,
+					key: `unnecessary ${tva.a_integrity.attribute()}`,
+					clause: "A177 clause 7.5.3",
+					description: "There is limited merit in including the content digest and inline images in the same document.",
+				});
 
-		if (!img)
-			errs.addError({
-				type: INFORMATION,
-				code: `${errCode}${isDataURI(element.content)?"i":"u"}`,
-				message: `${isDataURI(element.content)?"inline ":""}resource${isDataURI(element.content)?"":` at "${element.content}"`} could not be retrieved`,
-				key: "unavailable resource",
-			})
+			if (!img)
+				errs.addError({
+					type: INFORMATION,
+					code: `${errCode}${isDataURI(element.content)?"i":"u"}`,
+					message: `${isDataURI(element.content)?"inline ":""}resource${isDataURI(element.content)?"":` at "${element.content}"`} could not be retrieved`,
+					key: "unavailable resource",
+				})
+		};
+
+		if (isDataURI(element.content)) 
+			checkDigests(parseInlineImageData(element.content));
+		else {
+			// the referenced resource is retrieved after the document rules have been checked
+			const location = element.content;
+			deferTask(async () => {
+				const { response } = await safeFetch(location);
+				checkDigests(response?.ok ? response.buffer() : null);
+			});
+		}
 	}
 }
  

@@ -85,6 +85,9 @@ export default class ErrorList {
 
 	nestedErrors: ErrorList[]
 
+	// false once discardMarkup() is called (private fields are not included when the list is serialised to JSON)
+	#keepMarkup: boolean = true
+
 	source?: string
 	type?: string
 	description?: string
@@ -122,7 +125,16 @@ export default class ErrorList {
 	 * @param {string} doc   The document received for validation
 	 */
 	loadDocument(doc: string) {
-		this.markupXML = doc.split("\n").map((str, index) => ({ value: str, ix: index + 1 }));
+		if (this.#keepMarkup) this.markupXML = doc.split("\n").map((str, index) => ({ value: str, ix: index + 1 }));
+	}
+
+	/**
+	 * do not keep a marked up copy of the document, e.g. for the results of a traversed document.
+	 * Also applies to a document loaded later, as traversed documents are validated after the traversal is requested
+	 */
+	discardMarkup() {
+		this.#keepMarkup = false;
+		delete this.markupXML;
 	}
 
 	/**
@@ -133,7 +145,7 @@ export default class ErrorList {
 	 * @param {number} lineNo  the line number in the received text to attach the error to
 	 */
 	/* private method */ #setError(type: string, code: string, message: string, lineNo: number) {
-		const found = this.markupXML!.find((line) => line.ix == lineNo);
+		const found = this.markupXML?.find((line) => line.ix == lineNo);
 		if (found) {
 			if (!found.validationErrors) found.validationErrors = [];
 			found.validationErrors.push(`${type} ${code}: ${message}`);

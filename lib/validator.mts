@@ -75,9 +75,9 @@ const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), read_string
 const keyFilename: string = join(__dirname, "selfsigned.key"),
 	certFilename: string = join(__dirname, "selfsigned.crt");
 
-function getDocument(req: express.Request) : string | null {
+async function getDocument(req: express.Request) : Promise<string | null> {
 	if (req.method == "GET") {
-		const { response: resp, error } = safeFetch(req.query.url as string)
+		const { response: resp, error } = await safeFetch(req.query.url as string)
 		if (error)
 			req.parseErr = [error]
 		if (resp) {
@@ -140,13 +140,13 @@ function report(req: express.Request, res: express.Response, jsonResponse: boole
 }
 
 
-function DVB_I_check(
+async function DVB_I_check(
 		req: express.Request, res: express.Response, 
 		slcheck: ServiceListCheck | undefined, plcheck: PlaylistCheck | undefined, cgcheck: ContentGuideCheck | undefined, slrcheck: ServiceListRegistryCheck | undefined, 
 		hasSL: boolean, hasPL: boolean, hasCG: boolean, hasSLR: boolean, 
 		allow_traversal: boolean,
 		motd: string | undefined, 
-		mode: string = MODE_UNSPECIFIED, linktype: string = MODE_UNSPECIFIED) : void {
+		mode: string = MODE_UNSPECIFIED, linktype: string = MODE_UNSPECIFIED) : Promise<void> {
 			
 	if (!req.session.data) {
 		// setup defaults
@@ -184,7 +184,7 @@ function DVB_I_check(
 				case MODE_URL:
 					{
 						errs.setLocation(req.body.XMLurl)
-						const { response: resp, error } = safeFetch(req.body.XMLurl);
+						const { response: resp, error } = await safeFetch(req.body.XMLurl);
 						if (error)
 							req.parseErr = [error];
 						if (resp) {
@@ -212,24 +212,24 @@ function DVB_I_check(
 				case MODE_CG:
 					errs.setType(`Content Guide-${req.body.requestType}`)
 					if (cgcheck) 
-						cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
+						await cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
 					break;
 				case MODE_SL:
 					errs.setType("Service List")
 					if (slcheck) 
-						slcheck.doValidateServiceList(VVxml, errs, 
+						await slcheck.doValidateServiceList(VVxml, errs, 
 							{ log_prefix: log_prefix, report_schema_version: true, variants: req.session.data.forGermany ? GERMAN_A177r6_VARIANT : 0, traverse: req.session.data.traverse}
 						);
 					break;
 				case MODE_PL:
 					errs.setType("Playlist")
 					if (plcheck) 
-						plcheck.doValidatePlaylist(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true });
+						await plcheck.doValidatePlaylist(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true });
 					break;
 				case MODE_SLR:
 					errs.setType("Service List Registry")
 					if (slrcheck) 
-						slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, traverse: req.session.data.traverse });
+						await slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, traverse: req.session.data.traverse });
 					break;
 			}
 
@@ -258,14 +258,14 @@ function DVB_I_check(
  * @param {string | undefined} motd          HTML text for the Message Of The Day
  * @param {boolean}          jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateServiceList(req: express.Request, res: express.Response, slcheck: ServiceListCheck, motd: string | undefined, jsonResponse: boolean) : void {
+async function validateServiceList(req: express.Request, res: express.Response, slcheck: ServiceListCheck, motd: string | undefined, jsonResponse: boolean) : Promise<void> {
 	if (!checkMethod(req, res)) return;
 	const errs = new ErrorList();
 	const log_prefix = createPrefix(req, MODE_SL);
-	const SLxml = getDocument(req)
+	const SLxml = await getDocument(req)
 	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
 
-	if (SLxml) slcheck.doValidateServiceList(SLxml, errs, _options);
+	if (SLxml) await slcheck.doValidateServiceList(SLxml, errs, _options);
 	report(req, res, jsonResponse, errs, motd)
 	document_logger(errs, log_prefix, true, req);
 	res.end();
@@ -281,13 +281,13 @@ function validateServiceList(req: express.Request, res: express.Response, slchec
  * @param {string | undefined} motd          HTML text for the Message Of The Day
  * @param {boolean}          jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
-function validatePlaylist(req: express.Request, res: express.Response, plcheck: PlaylistCheck, motd: string | undefined, jsonResponse: boolean) : void {
+async function validatePlaylist(req: express.Request, res: express.Response, plcheck: PlaylistCheck, motd: string | undefined, jsonResponse: boolean) : Promise<void> {
 	if (!checkMethod(req, res)) return;
 	const errs = new ErrorList();
 	const log_prefix = createPrefix(req, MODE_PL);
-	const PLxml = getDocument(req)
+	const PLxml = await getDocument(req)
 
-	if (PLxml) plcheck.doValidatePlaylist(PLxml, errs, { log_prefix: log_prefix, report_schema_version: true });
+	if (PLxml) await plcheck.doValidatePlaylist(PLxml, errs, { log_prefix: log_prefix, report_schema_version: true });
 	report(req, res, jsonResponse, errs, motd)
 	document_logger(errs, log_prefix, true, req);
 	res.end();
@@ -304,14 +304,14 @@ function validatePlaylist(req: express.Request, res: express.Response, plcheck: 
  * @param {string | undefined}       motd           HTML text for the Message Of The Day
  * @param {boolean}                  jsonResponse   Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateServiceListRegistry(req: express.Request, res: express.Response, slrcheck: ServiceListRegistryCheck, motd: string | undefined, jsonResponse: boolean) : void {
+async function validateServiceListRegistry(req: express.Request, res: express.Response, slrcheck: ServiceListRegistryCheck, motd: string | undefined, jsonResponse: boolean) : Promise<void> {
 	if (!checkMethod(req, res)) return;
 	const errs = new ErrorList();
 	const log_prefix = createPrefix(req, MODE_SLR);
-	const SLRxml = getDocument(req)
+	const SLRxml = await getDocument(req)
 
 	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
-	if (SLRxml) slrcheck.doValidateServiceListRegistry(SLRxml, errs, _options);
+	if (SLRxml) await slrcheck.doValidateServiceListRegistry(SLRxml, errs, _options);
 	report(req, res, jsonResponse, errs, motd)
 
 	document_logger(errs, log_prefix, true, req);
@@ -327,14 +327,14 @@ function validateServiceListRegistry(req: express.Request, res: express.Response
  * @param {string | undefined} motd          HTML text for the Message Of The Day
  * @param {boolean}           jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
-function validateContentGuide(req: express.Request, res: express.Response, cgcheck: ContentGuideCheck, motd: string | undefined, jsonResponse: boolean) : void {
+async function validateContentGuide(req: express.Request, res: express.Response, cgcheck: ContentGuideCheck, motd: string | undefined, jsonResponse: boolean) : Promise<void> {
 	if (!checkMethod(req, res)) return;
 	const errs = new ErrorList();
 	const log_prefix = createPrefix(req, MODE_CG);
-	const CGxml = getDocument(req)
+	const CGxml = await getDocument(req)
 	const _options: CG_Validator_Options = { log_prefix: log_prefix, report_schema_version: true }
 
-	if (CGxml) cgcheck.doValidateContentGuide(CGxml, req.query.type as string, errs, _options);
+	if (CGxml) await cgcheck.doValidateContentGuide(CGxml, req.query.type as string, errs, _options);
 	report(req, res, jsonResponse, errs, motd)
 	document_logger(errs, log_prefix, true, req);
 	res.end();
@@ -568,42 +568,42 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		}
 
 		if (!app_options.nosl) {
-			app.all("/validate_sl", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validateServiceList(req, res, slcheck!, motd, false);
+			app.all("/validate_sl", express.text(Express_Options), async (req: express.Request, res: express.Response) => {
+				await validateServiceList(req, res, slcheck!, motd, false);
 			});
 
-			app.all("/validate_sl_json", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validateServiceList(req, res, slcheck!, motd, true);
+			app.all("/validate_sl_json", express.text(Express_Options), async (req: express.Request, res: express.Response) => {
+				await validateServiceList(req, res, slcheck!, motd, true);
 			});
 		}
 
 		if (!app_options.nopl) {
-			app.all("/validate_pl", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validatePlaylist(req, res, plcheck!, motd, false);
+			app.all("/validate_pl", express.text(Express_Options), async (req: express.Request, res: express.Response) => {
+				await validatePlaylist(req, res, plcheck!, motd, false);
 			});
 
-			app.all("/validate_pl_json", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validatePlaylist(req, res, plcheck!, motd, true);
+			app.all("/validate_pl_json", express.text(Express_Options), async (req: express.Request, res: express.Response) => {
+				await validatePlaylist(req, res, plcheck!, motd, true);
 			});
 		}
 
 		if (!app_options.nocg) {
-			app.all("/validate_cg", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validateContentGuide(req, res, cgcheck!, motd, false);
+			app.all("/validate_cg", express.text(Express_Options), async (req: express.Request, res: express.Response) => {
+				await validateContentGuide(req, res, cgcheck!, motd, false);
 			});
 
-			app.all("/validate_cg_json", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validateContentGuide(req, res, cgcheck!, motd, true);
+			app.all("/validate_cg_json", express.text(Express_Options), async (req: express.Request, res: express.Response) => {
+				await validateContentGuide(req, res, cgcheck!, motd, true);
 			});
 		}
 
 		if (!app_options.noslr) {
-			app.all("/validate_slr", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validateServiceListRegistry(req, res, slrcheck!, motd, false);
+			app.all("/validate_slr", express.text(Express_Options), async (req: express.Request, res: express.Response) => {
+				await validateServiceListRegistry(req, res, slrcheck!, motd, false);
 			});
 
-			app.all("/validate_slr_json", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				validateServiceListRegistry(req, res, slrcheck!, motd, true);
+			app.all("/validate_slr_json", express.text(Express_Options), async (req: express.Request, res: express.Response) => {
+				await validateServiceListRegistry(req, res, slrcheck!, motd, true);
 			});
 		}
 
@@ -611,15 +611,8 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			SLEPR_reload_route = "/reload";
 
 		if (!app_options.nosl || !app_options.nopl || !app_options.nocg || !app_options.noslr) {
-			app.all("/check", express.text(Express_Options), (req: express.Request, res: express.Response) => {
-				// we need to disable listening as the Windows cluster seems to 'prefer' some workers, expecialy  when the validator is being used to verify 
-				// a file it is serving itself (like an SLR respose from `SLEPR_query_route`)
-				const saved_port = req.socket.localPort  
-				if (cluster.isWorker && app_options.workers > 1)
-					req.socket.server!.close();
-				DVB_I_check(req, res, slcheck, plcheck, cgcheck, slrcheck, !app_options.nosl, !app_options.nopl, !app_options.nocg, !app_options.noslr, app_options.allow_traversal, motd);
-				if (req.socket.server!.listening == false)
-					req.socket.server!.listen(saved_port)
+			app.all("/check", express.text(Express_Options), async (req: express.Request, res: express.Response) => {
+				await DVB_I_check(req, res, slcheck, plcheck, cgcheck, slrcheck, !app_options.nosl, !app_options.nopl, !app_options.nocg, !app_options.noslr, app_options.allow_traversal, motd);
 			});
 		}
 

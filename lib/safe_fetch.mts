@@ -7,11 +7,12 @@
  *
  * A single place to retrieve documents whose location is supplied by a client or found in a validated document.
  * The retrieval policy (allowed URL schemes, private/local addresses, response size, timeout) and the limits
- * on traversing into referenced documents are applied here.
+ * on traversing into referenced documents are applied here, and network work is deferred until the synchronous
+ * validation rules have run (see ValidationScope).
  */
 
 import { BlockList, isIP } from "node:net"
-import fetchS from "sync-fetch"
+import { AsyncLocalStorage } from "node:async_hooks"
 
 import { fetch_options } from "./globals.mts"
 
@@ -123,18 +124,34 @@ export type FetchedResponse = {
 export type SafeFetchResult = { response?: FetchedResponse; error?: string };
 
 /**
- * synchronously retrieve a resource, applying the fetch policy
+ * read a response body, stopping if it grows beyond the policy limit
+ */
+async function readLimitedBody(response: Response, url: string): Promise<Buffer> {
+	const declared = Number(response.headers.get("content-length"));
+	if (declared > policy.maxResponseBytes) throw new Error(`content size at ${url} over limit: ${policy.maxResponseBytes}`);
+	if (!response.body) return Buffer.alloc(0);
+	const chunks: Uint8Array[] = [];
+	let total = 0;
+	for await (const chunk of response.body) {
+		total += chunk.byteLength;
+		if (total > policy.maxResponseBytes) throw new Error(`content size at ${url} over limit: ${policy.maxResponseBytes}`);
+		chunks.push(chunk);
+	}
+	return Buffer.concat(chunks);
+}
+
+/**
+ * retrieve a resource, applying the fetch policy
  *
  * @param {string} url  the URL to retrieve
- * @returns {SafeFetchResult} either the response (which may have a non-2xx status) or the reason the retrieval did not happen or failed
+ * @returns {Promise<SafeFetchResult>} either the response (which may have a non-2xx status) or the reason the retrieval did not happen or failed
  */
-export function safeFetch(url: string): SafeFetchResult {
+export async function safeFetch(url: string): Promise<SafeFetchResult> {
 	const refused = checkFetchURL(url);
 	if (refused) return { error: refused };
 	try {
-		const resp = fetchS(url, { ...fetch_options, timeout: policy.timeout, size: policy.maxResponseBytes });
-		// sync-fetch reports body errors (such as exceeding the size limit) when the body is read, and the body can only be read once
-		const body = resp.buffer();
+		const resp = await fetch(url, { headers: fetch_options.headers as Record<string, string>, signal: AbortSignal.timeout(policy.timeout) });
+		const body = await readLimitedBody(resp, url);
 		return {
 			response: {
 				ok: resp.ok,
@@ -145,42 +162,90 @@ export function safeFetch(url: string): SafeFetchResult {
 			},
 		};
 	} catch (error) {
-		return { error: `${error}` };
+		const reason = error instanceof Error && error.name == "TimeoutError" ? `timeout after ${policy.timeout}ms retrieving ${url}` : `${error instanceof Error ? error.message : error}`;
+		return { error: reason };
 	}
 }
 
 /*
- * Traversal limits
+ * Validation scopes
  *
- * Validation (including the retrieval of referenced documents) is fully synchronous, so a module level counter
- * reflects the validation in progress. This will need to become per-validation state if validation becomes asynchronous.
+ * The validation rules are synchronous. Work that needs the network (traversing into referenced documents, checking
+ * content digests of referenced resources) is registered with deferTask() while the rules run, and is performed when
+ * the validation calls ValidationScope.finish(). Nested validations started by those tasks open their own scope, and
+ * share the traversal limits of the validation they belong to.
  */
-let traversalDepth = 0,
-	traversedDocuments = 0;
+type TraversalBudget = { documents: number };
 
-/**
- * start the traversal budget for a new top level validation. Has no effect when called for a nested (traversed) document
- */
-export function resetTraversalBudget(): void {
-	if (traversalDepth == 0) traversedDocuments = 0;
+const runningScope = new AsyncLocalStorage<ValidationScope>(); // the scope whose deferred tasks are being performed
+const openScopes: ValidationScope[] = []; // scopes whose synchronous rules are being checked (innermost last)
+
+export class ValidationScope {
+	readonly depth: number; // 0 for the document being validated, 1 for a document it references, ...
+	readonly budget: TraversalBudget; // shared by all the scopes of one validation
+	#tasks: (() => Promise<void>)[] = [];
+	#open = true;
+
+	private constructor(parent: ValidationScope | undefined) {
+		this.depth = parent ? parent.depth + 1 : 0;
+		this.budget = parent ? parent.budget : { documents: 0 };
+	}
+
+	/**
+	 * open a scope at the start of a validation. Use with "using" so it is closed on every exit from the validation
+	 */
+	static open(): ValidationScope {
+		const scope = new ValidationScope(runningScope.getStore());
+		openScopes.push(scope);
+		return scope;
+	}
+
+	defer(task: () => Promise<void>): void {
+		this.#tasks.push(task);
+	}
+
+	/**
+	 * close the scope to new tasks and perform the deferred tasks (in the order they were registered)
+	 */
+	async finish(): Promise<void> {
+		this.#close();
+		while (this.#tasks.length > 0) {
+			const task = this.#tasks.shift()!;
+			await runningScope.run(this, task);
+		}
+	}
+
+	#close(): void {
+		if (!this.#open) return;
+		this.#open = false;
+		const ix = openScopes.lastIndexOf(this);
+		if (ix != -1) openScopes.splice(ix, 1);
+	}
+
+	[Symbol.dispose](): void {
+		this.#close();
+	}
 }
 
 /**
- * record entry into a referenced document
- *
- * @returns {string | null} null if the traversal can proceed (exitTraversal() must then be called), otherwise the reason it cannot
+ * register work to be done when the current validation finishes its synchronous rules
  */
-export function enterTraversal(): string | null {
-	if (traversalDepth >= policy.maxTraversalDepth) return `maximum traversal depth (${policy.maxTraversalDepth}) reached`;
-	if (traversedDocuments >= policy.maxTraversalDocuments) return `maximum number of traversed documents (${policy.maxTraversalDocuments}) reached`;
-	traversalDepth++;
-	traversedDocuments++;
+export function deferTask(task: () => Promise<void>): void {
+	const scope = openScopes.at(-1);
+	if (!scope) throw new Error("deferTask() called outside a validation scope");
+	scope.defer(task);
+}
+
+/**
+ * check whether the current validation may traverse into another document, and count it if so
+ *
+ * @returns {string | null} null if the traversal can proceed, otherwise the reason it cannot
+ */
+export function allowTraversal(): string | null {
+	const scope = openScopes.at(-1);
+	if (!scope) return "traversal requested outside a validation";
+	if (scope.depth + 1 > policy.maxTraversalDepth) return `maximum traversal depth (${policy.maxTraversalDepth}) reached`;
+	if (scope.budget.documents >= policy.maxTraversalDocuments) return `maximum number of traversed documents (${policy.maxTraversalDocuments}) reached`;
+	scope.budget.documents++;
 	return null;
-}
-
-/**
- * record exit from a referenced document
- */
-export function exitTraversal(): void {
-	if (traversalDepth > 0) traversalDepth--;
 }

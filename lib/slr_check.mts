@@ -15,7 +15,7 @@ import { LoadGenres, LoadCountries, LoadLinkedApplicationCS } from "./classifica
 import { keys, InvalidCountryCode, InvalidURL } from "./common_errors.mts"
 import { slVersions, dvbi, dvbiEA, dvbiEC, dvbisld, validApplicationTypes, DvbIApplicationTypes, XMLdocumentType } from "./DVB-I_definitions.mts"
 import ErrorList, { APPLICATION, WARNING } from "./error_list.mts"
-import { resetTraversalBudget } from "./safe_fetch.mts"
+import { ValidationScope } from "./safe_fetch.mts"
 import { CheckExtension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY } from "./extension_check.mts"
 import { ValidateLanguage } from "./IANA_languages.mts"
 import document_logger from "./logger.mts"
@@ -422,9 +422,10 @@ export default class ServiceListRegistryCheck {
 	 *                                              GERMAN_A177r6_VARIANT  use the German schema variants for A177r6
 	 *                      traverse              validate referenced DVB-I documents
 	 */
-	/*public*/ doValidateServiceListRegistry(SLRtext: string, errs: ErrorList, options: SLR_Validator_Options = {}) : void {
+	/*public*/ async doValidateServiceListRegistry(SLRtext: string, errs: ErrorList, options: SLR_Validator_Options = {}) : Promise<void> {
 		this.#numRequests++;
-		resetTraversalBudget();
+		// collects the network work (traversal, content digests) that is performed once the rules below have been checked
+		using scope = ValidationScope.open();
 
 		if (!SLRtext) {
 			errs.addError({
@@ -511,6 +512,8 @@ export default class ServiceListRegistryCheck {
 			CheckExtension(Extension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY, errs, "SR089");
 		});
 
+		// perform the deferred network work before the document is disposed (at the end of this method)
+		await scope.finish();
 	}
 
 	/**

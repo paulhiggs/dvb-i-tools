@@ -16,6 +16,7 @@ import { LoadSLschemas, SL_GetSchema, SL_SchemaVersion } from "./sl_data_version
 import document_logger from "./logger.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
 import { DefaultProperty } from "./utils.mts"
+import { ValidationScope } from "./safe_fetch.mts"
 
 import type { StatsType, LoadOptions } from "./globals.mts"
 
@@ -56,8 +57,10 @@ export default class PlaylistCheck {
 	 *                      log_prefix            the first part of the logging location (or null if no logging)
 	 *                      report_schema_version report the state of the schema in the error/warning list
 	 */
-	/*public*/ doValidatePlaylist(PLtext: string, errs: ErrorList, options: PL_Validator_Options = {}) : void {
+	/*public*/ async doValidatePlaylist(PLtext: string, errs: ErrorList, options: PL_Validator_Options = {}) : Promise<void> {
 		this.#numRequests++;
+		// collects any network work, performed once the rules below have been checked
+		using scope = ValidationScope.open();
 		if (!PLtext) {
 			errs.addError({
 				type: APPLICATION,
@@ -119,6 +122,8 @@ export default class PlaylistCheck {
 				);
 		});
 
+		// perform the deferred network work before the document is disposed (at the end of this method)
+		await scope.finish();
 	}
 
 
