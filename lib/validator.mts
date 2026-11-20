@@ -73,7 +73,7 @@ const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), read_string
 const keyFilename: string = join(".", "selfsigned.key"),
 	certFilename: string = join(".", "selfsigned.crt");
 
-function getDocument(req: express.Request, res: express.Response) : string | null {
+function getDocument(req: express.Request) : string | null {
 	if (req.method == "GET") {
 		const { response: resp, error } = safeFetch(req.query.url as string)
 		if (error)
@@ -86,9 +86,20 @@ function getDocument(req: express.Request, res: express.Response) : string | nul
 	}
 	else if (req.method == "POST")
 		return req.body
-	else 
-		res.status(405)
 	return null
+}
+
+const ALLOWED_VALIDATION_METHODS = ["GET", "POST"]
+
+/**
+ * reject requests to the validation endpoints that do not use an allowed HTTP method
+ *
+ * @returns {boolean} true if the request method is allowed, otherwise a 405 response has been sent and the request should not be processed further
+ */
+function checkMethod(req: express.Request, res: express.Response) : boolean {
+	if (ALLOWED_VALIDATION_METHODS.includes(req.method)) return true
+	res.status(405).set("Allow", ALLOWED_VALIDATION_METHODS.join(", ")).type("text/plain").send(`method ${req.method} is not allowed, use ${ALLOWED_VALIDATION_METHODS.join(" or ")}`)
+	return false
 }
 
 function getVariant(req: express.Request) : number {
@@ -246,9 +257,10 @@ function DVB_I_check(
  * @param {boolean}          jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
 function validateServiceList(req: express.Request, res: express.Response, slcheck: ServiceListCheck, motd: string | undefined, jsonResponse: boolean) : void {
+	if (!checkMethod(req, res)) return;
 	const errs = new ErrorList();
 	const log_prefix = createPrefix(req, MODE_SL);
-	const SLxml = getDocument(req, res)
+	const SLxml = getDocument(req)
 	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
 
 	if (SLxml) slcheck.doValidateServiceList(SLxml, errs, _options);
@@ -268,9 +280,10 @@ function validateServiceList(req: express.Request, res: express.Response, slchec
  * @param {boolean}          jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
 function validatePlaylist(req: express.Request, res: express.Response, plcheck: PlaylistCheck, motd: string | undefined, jsonResponse: boolean) : void {
+	if (!checkMethod(req, res)) return;
 	const errs = new ErrorList();
 	const log_prefix = createPrefix(req, MODE_PL);
-	const PLxml = getDocument(req, res)
+	const PLxml = getDocument(req)
 
 	if (PLxml) plcheck.doValidatePlaylist(PLxml, errs, { log_prefix: log_prefix, report_schema_version: true });
 	report(req, res, jsonResponse, errs, motd)
@@ -290,9 +303,10 @@ function validatePlaylist(req: express.Request, res: express.Response, plcheck: 
  * @param {boolean}                  jsonResponse   Flag indicating that the response should ne JSON format rather than HTML
  */
 function validateServiceListRegistry(req: express.Request, res: express.Response, slrcheck: ServiceListRegistryCheck, motd: string | undefined, jsonResponse: boolean) : void {
+	if (!checkMethod(req, res)) return;
 	const errs = new ErrorList();
 	const log_prefix = createPrefix(req, MODE_SLR);
-	const SLRxml = getDocument(req, res)
+	const SLRxml = getDocument(req)
 
 	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
 	switch (req.method) {
@@ -322,9 +336,10 @@ function validateServiceListRegistry(req: express.Request, res: express.Response
  * @param {boolean}           jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
  */
 function validateContentGuide(req: express.Request, res: express.Response, cgcheck: ContentGuideCheck, motd: string | undefined, jsonResponse: boolean) : void {
+	if (!checkMethod(req, res)) return;
 	const errs = new ErrorList();
 	const log_prefix = createPrefix(req);
-	const CGxml = getDocument(req, res)
+	const CGxml = getDocument(req)
 	const _options: CG_Validator_Options = { log_prefix: log_prefix, report_schema_version: true }
 
 	if (CGxml) cgcheck.doValidateContentGuide(CGxml, req.query.type as string, errs, _options);
