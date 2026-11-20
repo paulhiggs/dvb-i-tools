@@ -67,7 +67,7 @@ import { ValidateAnySignaturePolicy } from "./related_material_checks.mts"
 import { ValidateAnyContentDigests } from "./digest_validation.mts"
 import { ValidateSignaturePolicies } from "./signature_policies.mts"
 
-import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES } from "./cg_check.mts"
+import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES, type CG_Validator_Options } from "./cg_check.mts"
 import { allowTraversal, deferRetrieval, retrieveTraversal, ValidationScope } from "./safe_fetch.mts"
 
 
@@ -1979,6 +1979,16 @@ export default class ServiceListCheck {
 				const siEpURL = myContentGuide.getAnyNs(dvbi.e_ScheduleInfoEndpoint)?.getAnyNs(dvbi.e_URI)?.content
 				const giEpURL = myContentGuide.getAnyNs(dvbi.e_GroupInfoEndpoint)?.getAnyNs(dvbi.e_URI)?.content
 				const dpiEpURL = myContentGuide.getAnyNs(dvbi.e_ProgramInfoEndpoint)?.getAnyNs(dvbi.e_URI)?.content
+				const meEpURL = myContentGuide.getAnyNs(dvbi.e_MoreEpisodesEndpoint)?.getAnyNs(dvbi.e_URI)?.content
+
+				// endpoints used when traversing from the content guide responses (a copy is passed to each validation)
+				const cgOptions: CG_Validator_Options = {
+					report_schema_version: options.report_schema_version,
+					traverse: options.traverse,
+					progInfo_ep: dpiEpURL,
+					grpInfo_ep: giEpURL,
+					mEpisodes_ep: meEpURL,
+				}
 
 				const useRef = uID && uID.parent ? (uID.parent as XmlElement).getAnyNs(dvbi.e_ContentGuideServiceRef)?.content: null
 				const serviceID = useRef || (uID ? uID.content : null)
@@ -1993,12 +2003,7 @@ export default class ServiceListCheck {
 						NowNextURL, 
 						CG_REQUEST_SCHEDULE_NOWNEXT, 
 						cg_errors, 
-						{
-							report_schema_version: options.report_schema_version, 
-							traverse: options.traverse, 
-							progInfo_ep: dpiEpURL,
-							grpInfo_ep: giEpURL,
-						})
+						{ ...cgOptions })
 					delete cg_errors.markupXML;
 					errs.nestedErrors.push(cg_errors)
 				}
@@ -2027,12 +2032,7 @@ export default class ServiceListCheck {
 								TimestampInterval, 
 								CG_REQUEST_SCHEDULE_TIME, 
 								cg_errors, 
-								{
-									report_schema_version: options.report_schema_version, 
-									traverse: options.traverse, 
-									progInfo_ep: dpiEpURL,
-									grpInfo_ep: giEpURL,
-								})
+								{ ...cgOptions })
 							delete cg_errors.markupXML
 							errs.nestedErrors.push(cg_errors)
 						}
@@ -2050,12 +2050,7 @@ export default class ServiceListCheck {
 							BSCategoriesSvcURL, 
 							CG_REQUEST_BS_CATEGORIES, 
 							cg_errors, 
-							{
-								report_schema_version: options.report_schema_version, 
-								traverse: options.traverse, 
-								progInfo_ep: dpiEpURL,
-								grpInfo_ep: giEpURL,
-							})
+							{ ...cgOptions })
 						delete cg_errors.markupXML
 						errs.nestedErrors.push(cg_errors)
 					}
@@ -2069,12 +2064,7 @@ export default class ServiceListCheck {
 						BSCategoriesAllURL, 
 						CG_REQUEST_BS_CATEGORIES, 
 						cg_errors, 
-						{
-							report_schema_version: options.report_schema_version, 
-							traverse: options.traverse, 
-							progInfo_ep: dpiEpURL,
-							grpInfo_ep: giEpURL,
-						})
+						{ ...cgOptions })
 					delete cg_errors.markupXML
 					errs.nestedErrors.push(cg_errors)
 				}

@@ -1597,8 +1597,9 @@ export default class ContentGuideCheck {
 				errs.nestedErrors.push(piErrs)
 			}
 
-			// traverse more episodes if provided
-			if (options?.traverse && options?.mEpisodes_ep) {
+			// traverse more episodes if provided. The episodes in a More Episodes response are not themselves traversed for
+			// more episodes, as each would request the same series again under a different URL
+			if (options?.traverse && options?.mEpisodes_ep && requestType != CG_REQUEST_MORE_EPISODES) {
 				const mepURL = `${options?.mEpisodes_ep}?pid=${programCRID}`
 				const mepErrs = new ErrorList(mepURL, CG_REQUEST_MORE_EPISODES, `More Episodes for ${programCRID}`)
 	/*dbg*/console.log(`traverse:: More Episodes of ${mepURL}`)
