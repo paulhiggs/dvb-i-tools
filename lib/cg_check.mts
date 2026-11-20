@@ -58,7 +58,7 @@ import { FoundDocumentItems} from "./sl_check.mts"
 import ClassificationScheme from "./classification_scheme.mts";
 import type { StatsType, LoadOptions } from "./globals.mts"
 
-import { safeFetch, allowTraversal, deferTask, ValidationScope } from "./safe_fetch.mts"
+import { allowTraversal, deferRetrieval, retrieveTraversal, ValidationScope } from "./safe_fetch.mts"
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";
@@ -1597,8 +1597,9 @@ export default class ContentGuideCheck {
 				errs.nestedErrors.push(piErrs)
 			}
 
-			// traverse more episodes if provided
-			if (options?.traverse && options?.mEpisodes_ep) {
+			// traverse more episodes if provided. The episodes in a More Episodes response are not themselves traversed for
+			// more episodes, as each would request the same series again under a different URL
+			if (options?.traverse && options?.mEpisodes_ep && requestType != CG_REQUEST_MORE_EPISODES) {
 				const mepURL = `${options?.mEpisodes_ep}?pid=${programCRID}`
 				const mepErrs = new ErrorList(mepURL, CG_REQUEST_MORE_EPISODES, `More Episodes for ${programCRID}`)
 	/*dbg*/console.log(`traverse:: More Episodes of ${mepURL}`)
@@ -3778,20 +3779,30 @@ export default class ContentGuideCheck {
 	 */
 	/* public */
 	validateContentGuide(Location: XmlElement, requestUrl: string,  requestType: string, errs: ErrorList, options: CG_Validator_Options) : void {
-		const limited = allowTraversal();
+		const limited = allowTraversal(requestUrl);
 		if (limited) {
 			errs.addError({
-				code: `VCG003`,
+				code: limited.code,
 				type: WARNING,
-				message: `traversal into ${Location.content} skipped, ${limited}`,
+				message: limited.message,
 				fragment: Location,
 				key: keys.k_Traversal,
 			})
 			return;
 		}
 		// the referenced content guide is retrieved and validated after the current document's rules have been checked
-		deferTask(async () => {
-			const { response: resp, error } = await safeFetch(requestUrl);
+		// (it may be retrieved concurrently with other referenced documents, but is validated in the order of reference)
+		deferRetrieval(() => retrieveTraversal(requestUrl), async ({ refused, response: resp, error }) => {
+			if (refused) {
+				errs.addError({
+					code: refused.code,
+					type: WARNING,
+					message: refused.message,
+					fragment: Location,
+					key: keys.k_Traversal,
+				})
+				return;
+			}
 			if (error)
 				errs.addError({
 					code: `VCG001`,

@@ -67,8 +67,8 @@ import { ValidateAnySignaturePolicy } from "./related_material_checks.mts"
 import { ValidateAnyContentDigests } from "./digest_validation.mts"
 import { ValidateSignaturePolicies } from "./signature_policies.mts"
 
-import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES } from "./cg_check.mts"
-import { safeFetch, allowTraversal, deferTask, ValidationScope } from "./safe_fetch.mts"
+import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES, type CG_Validator_Options } from "./cg_check.mts"
+import { allowTraversal, deferRetrieval, retrieveTraversal, ValidationScope } from "./safe_fetch.mts"
 
 
 const LCN_TABLE_NO_TARGETREGION: string = "unspecifiedRegion",
@@ -121,6 +121,7 @@ import IANAlanguages from "./IANA_languages.mts"
 import ClassificationScheme from "./classification_scheme.mts"
 
 import type { LoadOptions, StatsType } from "./globals.mts"
+import { GERMAN_A177r6_VARIANT } from "./globals.mts"
 export type ValidatorOptions = LoadOptions & {
 	accessibilities? : ClassificationScheme
 	appfmts?: ClassificationScheme
@@ -1979,6 +1980,16 @@ export default class ServiceListCheck {
 				const siEpURL = myContentGuide.getAnyNs(dvbi.e_ScheduleInfoEndpoint)?.getAnyNs(dvbi.e_URI)?.content
 				const giEpURL = myContentGuide.getAnyNs(dvbi.e_GroupInfoEndpoint)?.getAnyNs(dvbi.e_URI)?.content
 				const dpiEpURL = myContentGuide.getAnyNs(dvbi.e_ProgramInfoEndpoint)?.getAnyNs(dvbi.e_URI)?.content
+				const meEpURL = myContentGuide.getAnyNs(dvbi.e_MoreEpisodesEndpoint)?.getAnyNs(dvbi.e_URI)?.content
+
+				// endpoints used when traversing from the content guide responses (a copy is passed to each validation)
+				const cgOptions: CG_Validator_Options = {
+					report_schema_version: options.report_schema_version,
+					traverse: options.traverse,
+					progInfo_ep: dpiEpURL,
+					grpInfo_ep: giEpURL,
+					mEpisodes_ep: meEpURL,
+				}
 
 				const useRef = uID && uID.parent ? (uID.parent as XmlElement).getAnyNs(dvbi.e_ContentGuideServiceRef)?.content: null
 				const serviceID = useRef || (uID ? uID.content : null)
@@ -1993,12 +2004,7 @@ export default class ServiceListCheck {
 						NowNextURL, 
 						CG_REQUEST_SCHEDULE_NOWNEXT, 
 						cg_errors, 
-						{
-							report_schema_version: options.report_schema_version, 
-							traverse: options.traverse, 
-							progInfo_ep: dpiEpURL,
-							grpInfo_ep: giEpURL,
-						})
+						{ ...cgOptions })
 					delete cg_errors.markupXML;
 					errs.nestedErrors.push(cg_errors)
 				}
@@ -2008,8 +2014,9 @@ export default class ServiceListCheck {
 					const today = Temporal.Now.plainDateISO()
 					const start_of_today = Temporal.ZonedDateTime.from({day: today.day, month: today.month, year: today.year, timeZone: "UTC"})
 
-					// look back 28 days
-					const NEEDED_DAYS = 1
+					// A177r8 - the programme guide should be available for 28 days before and 28 days after today.
+					// German service lists only need 7 days before and 7 days after today
+					const NEEDED_DAYS = (options.variants ?? 0) & GERMAN_A177r6_VARIANT ? 7 : 28
 					for (let test_day=-NEEDED_DAYS; test_day<=NEEDED_DAYS; test_day++) {
 						const start_of_day = start_of_today.add({days: test_day})
 						for (let start_hour=0; start_hour<24; start_hour+=6) {
@@ -2027,12 +2034,7 @@ export default class ServiceListCheck {
 								TimestampInterval, 
 								CG_REQUEST_SCHEDULE_TIME, 
 								cg_errors, 
-								{
-									report_schema_version: options.report_schema_version, 
-									traverse: options.traverse, 
-									progInfo_ep: dpiEpURL,
-									grpInfo_ep: giEpURL,
-								})
+								{ ...cgOptions })
 							delete cg_errors.markupXML
 							errs.nestedErrors.push(cg_errors)
 						}
@@ -2050,12 +2052,7 @@ export default class ServiceListCheck {
 							BSCategoriesSvcURL, 
 							CG_REQUEST_BS_CATEGORIES, 
 							cg_errors, 
-							{
-								report_schema_version: options.report_schema_version, 
-								traverse: options.traverse, 
-								progInfo_ep: dpiEpURL,
-								grpInfo_ep: giEpURL,
-							})
+							{ ...cgOptions })
 						delete cg_errors.markupXML
 						errs.nestedErrors.push(cg_errors)
 					}
@@ -2069,12 +2066,7 @@ export default class ServiceListCheck {
 						BSCategoriesAllURL, 
 						CG_REQUEST_BS_CATEGORIES, 
 						cg_errors, 
-						{
-							report_schema_version: options.report_schema_version, 
-							traverse: options.traverse, 
-							progInfo_ep: dpiEpURL,
-							grpInfo_ep: giEpURL,
-						})
+						{ ...cgOptions })
 					delete cg_errors.markupXML
 					errs.nestedErrors.push(cg_errors)
 				}
@@ -2883,20 +2875,30 @@ export default class ServiceListCheck {
 	/*public*/ 
 	validateServiceList(Location: XmlElement, requestUrl: string, errs: ErrorList, options: SL_Validator_Options) : void {
 
-		const limited = allowTraversal();
+		const limited = allowTraversal(requestUrl);
 		if (limited) {
 			errs.addError({
-				code: `VSL003`,
+				code: limited.code,
 				type: WARNING,
-				message: `traversal into ${Location.content} skipped, ${limited}`,
+				message: limited.message,
 				fragment: Location,
 				key: keys.k_Traversal,
 			})
 			return;
 		}
 		// the referenced service list is retrieved and validated after the current document's rules have been checked
-		deferTask(async () => {
-			const { response: resp, error } = await safeFetch(requestUrl);
+		// (it may be retrieved concurrently with other referenced documents, but is validated in the order of reference)
+		deferRetrieval(() => retrieveTraversal(requestUrl), async ({ refused, response: resp, error }) => {
+			if (refused) {
+				errs.addError({
+					code: refused.code,
+					type: WARNING,
+					message: refused.message,
+					fragment: Location,
+					key: keys.k_Traversal,
+				})
+				return;
+			}
 			if (error)
 				errs.addError({
 					code: `VSL001`,

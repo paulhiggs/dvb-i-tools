@@ -22,6 +22,7 @@ export type FetchPolicy = {
 	timeout: number // milliseconds
 	maxTraversalDepth: number // maximum nesting of documents traversed from the document being validated
 	maxTraversalDocuments: number // maximum number of documents traversed during a single validation
+	fetchConcurrency: number // maximum number of retrievals in progress at once (across all validations), and how far each validation retrieves ahead
 };
 
 const policy: FetchPolicy = {
@@ -30,7 +31,28 @@ const policy: FetchPolicy = {
 	timeout: fetch_options.timeout as number,
 	maxTraversalDepth: 10,
 	maxTraversalDocuments: 100,
+	fetchConcurrency: 8,
 };
+
+/*
+ * limit on the number of retrievals in progress. Waiting for a slot does not count towards the retrieval timeout
+ */
+let activeFetches = 0;
+const waitingFetches: (() => void)[] = [];
+
+async function acquireFetchSlot(): Promise<void> {
+	if (activeFetches < Math.max(1, policy.fetchConcurrency)) {
+		activeFetches++;
+		return;
+	}
+	await new Promise<void>((resolve) => waitingFetches.push(resolve));
+}
+
+function releaseFetchSlot(): void {
+	const next = waitingFetches.shift();
+	if (next) next(); // the slot passes directly to the next waiting retrieval
+	else activeFetches--;
+}
 
 /**
  * update the fetch policy - unspecified values are unchanged
@@ -149,6 +171,7 @@ async function readLimitedBody(response: Response, url: string): Promise<Buffer>
 export async function safeFetch(url: string): Promise<SafeFetchResult> {
 	const refused = checkFetchURL(url);
 	if (refused) return { error: refused };
+	await acquireFetchSlot();
 	try {
 		const resp = await fetch(url, { headers: fetch_options.headers as Record<string, string>, signal: AbortSignal.timeout(policy.timeout) });
 		const body = await readLimitedBody(resp, url);
@@ -164,6 +187,8 @@ export async function safeFetch(url: string): Promise<SafeFetchResult> {
 	} catch (error) {
 		const reason = error instanceof Error && error.name == "TimeoutError" ? `timeout after ${policy.timeout}ms retrieving ${url}` : `${error instanceof Error ? error.message : error}`;
 		return { error: reason };
+	} finally {
+		releaseFetchSlot();
 	}
 }
 
@@ -171,11 +196,48 @@ export async function safeFetch(url: string): Promise<SafeFetchResult> {
  * Validation scopes
  *
  * The validation rules are synchronous. Work that needs the network (traversing into referenced documents, checking
- * content digests of referenced resources) is registered with deferTask() while the rules run, and is performed when
- * the validation calls ValidationScope.finish(). Nested validations started by those tasks open their own scope, and
- * share the traversal limits of the validation they belong to.
+ * content digests of referenced resources) is registered with deferRetrieval() or deferTask() while the rules run, and
+ * is performed when the validation calls ValidationScope.finish(). Nested validations started by those tasks open their
+ * own scope, and share the traversal limits of the validation they belong to.
+ *
+ * A deferred task has a retrieve part (the network work) and a complete part (validating what was retrieved).
+ * finish() runs the retrieve parts of up to policy.fetchConcurrency tasks ahead of the task being completed, so
+ * documents download while earlier ones are validated. The complete parts run one at a time, in the order the tasks
+ * were registered, so the results are reported in the same order and nesting as when the tasks ran sequentially.
  */
-type TraversalBudget = { documents: number };
+type DeferredTask = {
+	retrieve?: () => Promise<unknown>;
+	complete: (retrieved: unknown) => Promise<void>;
+};
+type SettledRetrieval = { value: unknown } | { error: unknown };
+
+type TraversalBudget = {
+	documents: number; // number of documents retrieved by traversal
+	traversed: Set<string>; // URLs of the documents retrieved by traversal
+};
+
+/**
+ * the reason a traversal is not performed, as reported to the user
+ *   TRAV000  traversal requested or performed outside a validation (application error)
+ *   TRAV001  the URL has already been traversed during this validation
+ *   TRAV002  the maximum traversal depth has been reached
+ *   TRAV003  the maximum number of traversed documents has been reached
+ */
+export type TraversalRefusal = {
+	code: string;
+	message: string;
+};
+
+const refusal = (code: string, url: string, reason: string): TraversalRefusal => ({ code, message: `traversal into ${url} skipped, ${reason}` });
+
+// compare URLs in their normalised form, so trivially different spellings of the same URL are treated as one
+const normaliseURL = (url: string): string => {
+	try {
+		return new URL(url).href;
+	} catch {
+		return url;
+	}
+};
 
 const runningScope = new AsyncLocalStorage<ValidationScope>(); // the scope whose deferred tasks are being performed
 const openScopes: ValidationScope[] = []; // scopes whose synchronous rules are being checked (innermost last)
@@ -183,12 +245,12 @@ const openScopes: ValidationScope[] = []; // scopes whose synchronous rules are 
 export class ValidationScope {
 	readonly depth: number; // 0 for the document being validated, 1 for a document it references, ...
 	readonly budget: TraversalBudget; // shared by all the scopes of one validation
-	#tasks: (() => Promise<void>)[] = [];
+	#tasks: DeferredTask[] = [];
 	#open = true;
 
 	private constructor(parent: ValidationScope | undefined) {
 		this.depth = parent ? parent.depth + 1 : 0;
-		this.budget = parent ? parent.budget : { documents: 0 };
+		this.budget = parent ? parent.budget : { documents: 0, traversed: new Set<string>() };
 	}
 
 	/**
@@ -200,18 +262,38 @@ export class ValidationScope {
 		return scope;
 	}
 
-	defer(task: () => Promise<void>): void {
+	defer(task: DeferredTask): void {
 		this.#tasks.push(task);
 	}
 
 	/**
-	 * close the scope to new tasks and perform the deferred tasks (in the order they were registered)
+	 * close the scope to new tasks and perform the deferred tasks. Retrievals run ahead, up to policy.fetchConcurrency
+	 * tasks, and the tasks are completed in the order they were registered
 	 */
 	async finish(): Promise<void> {
 		this.#close();
-		while (this.#tasks.length > 0) {
-			const task = this.#tasks.shift()!;
-			await runningScope.run(this, task);
+		const started: { task: DeferredTask; retrieval: Promise<SettledRetrieval> }[] = [];
+		const startAhead = () => {
+			while (started.length < Math.max(1, policy.fetchConcurrency) && this.#tasks.length > 0) {
+				const task = this.#tasks.shift()!;
+				// the retrieve part is started in this scope, so claimTraversal() counts it against this validation.
+				// Its synchronous start (e.g. claiming the budget) runs now, so claims are made in registration order
+				const retrieval: Promise<SettledRetrieval> = task.retrieve
+					? runningScope.run(this, task.retrieve).then(
+							(value) => ({ value }),
+							(error) => ({ error })
+						)
+					: Promise.resolve({ value: undefined });
+				started.push({ task, retrieval });
+			}
+		};
+		startAhead();
+		while (started.length > 0) {
+			const { task, retrieval } = started.shift()!;
+			const settled = await retrieval;
+			startAhead(); // keep the window full while this task is completed
+			if ("error" in settled) throw settled.error;
+			await runningScope.run(this, () => task.complete(settled.value));
 		}
 	}
 
@@ -233,19 +315,69 @@ export class ValidationScope {
 export function deferTask(task: () => Promise<void>): void {
 	const scope = openScopes.at(-1);
 	if (!scope) throw new Error("deferTask() called outside a validation scope");
-	scope.defer(task);
+	scope.defer({ complete: task });
 }
 
 /**
- * check whether the current validation may traverse into another document, and count it if so
+ * register a retrieval, and the work that uses its result, to be done when the current validation finishes its
+ * synchronous rules. The retrieval may run concurrently with other tasks' retrievals and completions; the completions
+ * run one at a time in registration order
  *
- * @returns {string | null} null if the traversal can proceed, otherwise the reason it cannot
+ * @param {() => Promise<T>} retrieve           network work - must not report errors or start nested validations
+ * @param {(retrieved: T) => Promise<void>} complete  uses the retrieved result (validation, error reporting)
  */
-export function allowTraversal(): string | null {
+export function deferRetrieval<T>(retrieve: () => Promise<T>, complete: (retrieved: T) => Promise<void>): void {
 	const scope = openScopes.at(-1);
-	if (!scope) return "traversal requested outside a validation";
-	if (scope.depth + 1 > policy.maxTraversalDepth) return `maximum traversal depth (${policy.maxTraversalDepth}) reached`;
-	if (scope.budget.documents >= policy.maxTraversalDocuments) return `maximum number of traversed documents (${policy.maxTraversalDocuments}) reached`;
-	scope.budget.documents++;
+	if (!scope) throw new Error("deferRetrieval() called outside a validation scope");
+	scope.defer({ retrieve, complete: complete as (retrieved: unknown) => Promise<void> });
+}
+
+/**
+ * check, when a traversal is requested by the validation rules, whether the current validation may traverse into
+ * another document. Only the depth is checked here: the document is counted against the shared budget by
+ * claimTraversal() when its retrieval is performed, so that documents referenced by traversed documents
+ * (e.g. Program Information in a schedule) are not starved by the requests made by the outermost document
+ *
+ * @param {string} url  the URL of the document to be traversed into
+ * @returns {TraversalRefusal | null} null if the traversal can be scheduled, otherwise the reason it cannot
+ */
+export function allowTraversal(url: string): TraversalRefusal | null {
+	const scope = openScopes.at(-1);
+	if (!scope) return refusal("TRAV000", url, "traversal requested outside a validation");
+	if (scope.depth + 1 > policy.maxTraversalDepth) return refusal("TRAV002", url, `maximum traversal depth (${policy.maxTraversalDepth}) reached`);
 	return null;
+}
+
+/**
+ * count a traversed document against the budget of the validation. Call from the deferred task, immediately before
+ * the document is retrieved. A URL is only traversed once during a validation, and a repeated URL is not counted
+ *
+ * @param {string} url  the URL of the document to be retrieved
+ * @returns {TraversalRefusal | null} null if the document can be retrieved, otherwise the reason it cannot
+ */
+export function claimTraversal(url: string): TraversalRefusal | null {
+	const scope = runningScope.getStore();
+	if (!scope) return refusal("TRAV000", url, "traversal performed outside a validation");
+	const key = normaliseURL(url);
+	if (scope.budget.traversed.has(key)) return { code: "TRAV001", message: `skipped - ${url} already validated` };
+	if (scope.budget.documents >= policy.maxTraversalDocuments)
+		return refusal("TRAV003", url, `maximum number of traversed documents (${policy.maxTraversalDocuments}) reached`);
+	scope.budget.documents++;
+	scope.budget.traversed.add(key);
+	return null;
+}
+
+export type TraversalRetrieval = SafeFetchResult & { refused?: TraversalRefusal };
+
+/**
+ * the retrieve part of a traversal (for deferRetrieval): claim the document against the validation's budget, then
+ * retrieve it
+ *
+ * @param {string} url  the URL of the document to be traversed into
+ * @returns {Promise<TraversalRetrieval>} the refusal, or the result of the retrieval
+ */
+export async function retrieveTraversal(url: string): Promise<TraversalRetrieval> {
+	const refused = claimTraversal(url);
+	if (refused) return { refused };
+	return await safeFetch(url);
 }

@@ -114,10 +114,18 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 - `--SLRmode <mode>` select the type of processing for the SLR response
   - `"default"` - default mode - according to A177 specification
 - `--allow_traversal [-t]` flag to allow document-to-document traversal <span style="color:red">(experimental, takes much time)</span>	
+- `--max_traversal <number|unlimited>` maximum number of documents retrieved by traversal during a single validation (default: 100). `unlimited` removes the limit, which can make a traversal of a large service list take a very long time.
+- `--fetch_concurrency <number>` maximum number of documents retrieved at the same time (default: 8). During traversal, referenced documents are downloaded ahead while earlier ones are validated; results are still reported in the order the documents are referenced. Use `1` to make one request at a time.
 - `--allow_private_fetch <true|false>` allow documents to be retrieved from `localhost` and private network addresses (default: true). Set to `false` on a public deployment. Only literal IP addresses and `localhost` are recognised, not hostnames that resolve to private addresses.
 - `--help [-h]` server and client command help
 
-Documents retrieved for validation (by URL or by traversal) must use `http:` or `https:`, are limited to 10 MB and a 3 second timeout. A single validation traverses at most 10 levels deep and at most 100 referenced documents.
+Documents retrieved for validation (by URL or by traversal) must use `http:` or `https:`, are limited to 10 MB and a 3 second timeout. A single validation traverses at most 10 levels deep and at most 100 referenced documents (see `--max_traversal`).
+
+A referenced document that is not traversed is reported with a warning:
+- `TRAV001` the URL has already been validated during this validation (each URL is validated only once)
+- `TRAV002` the maximum traversal depth has been reached
+- `TRAV003` the maximum number of traversed documents has been reached
+- `TRAV000` the traversal was requested outside a validation (an internal error)
 
 ### Logging
 
