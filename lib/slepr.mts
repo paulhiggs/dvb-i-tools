@@ -230,8 +230,11 @@ export default class SLEPR {
 		const requestedVersion = (UASinfo.ok && UASinfo.version! >= 6) ? UASinfo.version! : -1;
 		const queryParams: Record<string, string> = {};
 		if (!this.#checkQuery(req, queryParams)) {
-			if (req.parseErr) res.write(`[${req.parseErr.join(",\n\t")}]`);
+			// the errors echo the query values supplied by the client, so they must not be interpreted as HTML
+			res.type("text/plain");
+			res.setHeader("X-Content-Type-Options", "nosniff");
 			res.status(400);
+			if (req.parseErr) res.write(`[${req.parseErr.join(",\n\t")}]`);
 			return false;
 		}
 

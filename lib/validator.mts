@@ -37,7 +37,7 @@ import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults, LINE, MODE_URL, MODE_FILE
 import type {FormModes} from './ui.mts'
 import ErrorList from "./error_list.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
-import { readmyfile, HasProperty } from "./utils.mts"
+import { readmyfile, HasProperty, escapeHTML } from "./utils.mts"
 import {
 	LoadGenres,
 	LoadRatings,
@@ -648,7 +648,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			if (Object.keys(stats).length === 0) res.write("<p>No statistics</p>");
 			else {
 				res.write("<table><tr><th>item</th><th>count</th></tr>");
-				Object.getOwnPropertyNames(stats).forEach((key) => res.write(`<tr><td>${key}</td><td>${stats[key]}</td></tr>`));
+				Object.getOwnPropertyNames(stats).forEach((key) => res.write(`<tr><td>${escapeHTML(key)}</td><td>${escapeHTML(stats[key])}</td></tr>`));
 				res.write("</table>");
 			}
 			res.write(LINE);
@@ -696,7 +696,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 						res.write(`${firstRow ? "" : "</tr>"}<tr>`)
 						firstRow = false;
 					}
-					res.write(`<td>${values[i]}</td>`);
+					res.write(`<td>${escapeHTML(values[i])}</td>`);
 				}
 				res.write("</table>");
 			}

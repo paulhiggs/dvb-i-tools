@@ -162,6 +162,18 @@ export const HTMLize = (str : string) : string => str.HTMLize();
 
 
 /**
+ * escape the characters that are significant in HTML text and quoted attribute values.
+ * Unlike HTMLize(), the text is otherwise unchanged (e.g. hyphens are kept) so it is safe for URLs placed in attributes
+ *
+ * @param {unknown} value  the value to be escaped (converted to a string, null/undefined become "")
+ * @returns {string} the escaped string
+ */
+const HTML_ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#x27;", "`": "&#x60;" };
+export const escapeHTML = (value: unknown) : string =>
+	value === null || value === undefined ? "" : String(value).replace(/[&<>"'`]/g, (chr) => HTML_ESCAPES[chr]);
+
+
+/**
  * return the type of the argument passed
  * 
  * @param {unknown} arg the argument whose type we are interested in

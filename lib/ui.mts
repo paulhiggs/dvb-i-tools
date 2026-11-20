@@ -22,7 +22,8 @@ import type { ErrorType } from "./error_list.mts"
 import type { CGRequestType } from "./cg_check.mts"
 import { CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM, CG_REQUEST_MORE_EPISODES, CG_REQUEST_BS_CATEGORIES, CG_REQUEST_BS_LISTS, CG_REQUEST_BS_CONTENTS } from "./cg_check.mts"
 
-import { HasProperty } from "./utils.mts"
+import { HasProperty, escapeHTML } from "./utils.mts"
+import { isHTTPURL } from "./pattern_checks.mts"
 import { read_string_options } from "./globals.mts"
 
 export const MODE_UNSPECIFIED = "none",
@@ -59,7 +60,7 @@ export function PAGE_TOP(pageTitle: string, secure: boolean, label?:string, motd
 
 export const PAGE_BOTTOM = `${BREAK}${LINE}<p><i>Submit issues at </i><a href="${pkg?.bugs?.url}">${pkg?.bugs?.url}</a></p></body></html>`;
 
-const RESULT_WITH_INSTRUCTION = (source: string) =>`${BREAK}<p><i>Results:</i> ${source}</p>`;
+const RESULT_WITH_INSTRUCTION = (source: string) =>`${BREAK}<p><i>Results:</i> ${escapeHTML(source)}</p>`;
 const SUMMARY_FORM_HEADER = "<table><tr><th>item</th><th>count</th></tr>";
 const Dodger_Blue = "#1E90FF",
 	link_css = "jump";
@@ -85,7 +86,7 @@ const tabluateMessage = (res: express.Response, value: ErrorType) => {
 };
 
 const simpleMessage = (res: express.Response, value: {code: string, message: string}) => {
-	res.write(`<tr><td>${value.code}</td><td>${value.message}</td></tr>`);
+	res.write(`<tr><td>${escapeHTML(value.code)}</td><td>${escapeHTML(value.message)}</td></tr>`);
 };
 
 const lineCompareFn = (a: ErrorType, b: ErrorType) => a?.line && b?.line ? a.line - b.line : 0;
@@ -151,7 +152,7 @@ function tabulateResults(source: string, res: express.Response, error: string[] 
 		errs.errorDescriptions.forEach((desc) => {
 			res.write(`<tr><td>${desc.code.HTMLize()}</td>`);
 			res.write(`<td>${desc.description.HTMLize().replace(/\n/, BREAK)}`);
-			if (desc.clause && desc.clause.length) res.write(`${BREAK}reference: ${desc.clause}`);
+			if (desc.clause && desc.clause.length) res.write(`${BREAK}reference: ${escapeHTML(desc.clause)}`);
 			res.write("</td></tr>");
 		});
 		res.write(TABLE_FOOTER);
@@ -205,7 +206,7 @@ function nested_error_row(req: express.Request, res: express.Response, errs: Err
 		if (nest.source && nest.description) {
 			switch (nest.type) {
 				case "SL":
-					validator=`${req.protocol}://${req.host}/validate_sl?url=${nest.source}`
+					validator=`${req.protocol}://${req.host}/validate_sl?url=${encodeURIComponent(nest.source)}`
 					break
 				case CG_REQUEST_SCHEDULE_TIME:
 				case CG_REQUEST_SCHEDULE_NOWNEXT:
@@ -215,19 +216,24 @@ function nested_error_row(req: express.Request, res: express.Response, errs: Err
 				case CG_REQUEST_BS_CATEGORIES:
 				case CG_REQUEST_BS_LISTS:
 				case CG_REQUEST_BS_CONTENTS:
-					validator=`${req.protocol}://${req.host}/validate_cg?url=${encodeURIComponent(nest.source)}&type=${nest.type}`
+					validator=`${req.protocol}://${req.host}/validate_cg?url=${encodeURIComponent(nest.source)}&type=${encodeURIComponent(nest.type)}`
 					break
 			}
-			
-			refer = `<a target="_blank" href="${validator ?? nest.source}">${nest.description}</a>` 
+			// only link to HTTP(S) locations - the source is taken from the validated document and could be a javascript: or data: URL
+			let isHTTP = false
+			try { isHTTP = isHTTPURL(nest.source) } catch { /* malformed %-encoding in the URL */ }
+			const href = validator ?? (isHTTP ? nest.source : undefined)
+			refer = href
+				? `<a target="_blank" rel="noopener noreferrer" href="${escapeHTML(href)}">${escapeHTML(nest.description)}</a>`
+				: escapeHTML(nest.description)
 		}
 		res.write(
 			`<tr><td>${depth}</td><td>`+
 			refer+
-			(nest.source ? `${BREAK}<span class="url">${nest.source}</span>`: "")+
+			(nest.source ? `${BREAK}<span class="url">${escapeHTML(nest.source)}</span>`: "")+
 			"</td>"+
-			`<td style="${palette.background} ${palette.text}">${nest.compactSummary()}`)
-		nest.debugs.forEach((msg) => res.write(`${BREAK}${msg.code} ${msg.message}`))
+			`<td style="${palette.background} ${palette.text}">${escapeHTML(nest.compactSummary())}`)
+		nest.debugs.forEach((msg) => res.write(`${BREAK}${escapeHTML(msg.code)} ${escapeHTML(msg.message)}`))
 		res.write("</td></tr>")
 		nested_error_row(req, res, nest, depth+1)
 	});
@@ -305,7 +311,7 @@ export function drawForm(
 		<br/>
 		${LINE}
 		<div id="entryURL" ${req.session.data?.entry == modes.url ? "" : "hidden"}><p><i>URL:</i><input type="url" size="70" name="XMLurl" value="${
-			req.session.data?.url ? req.session.data!.url : ""
+			escapeHTML(req.session.data?.url)
 		}"></p></div>
 		<div id="entryFile" ${req.session.data?.entry == modes.file ? "" : "hidden"}><p><i>FILE:</i><input type="file" name="XMLfile" value=""></p></div>
 		<div id="variants">Variants: <input id="cbGermany" type="checkbox" name="forGermany" ${req.session.data?.forGermany == true ? "checked" : ""} onclick="redrawForm()">Germany</input></div>
@@ -318,7 +324,7 @@ export function drawForm(
 	if (supportedRequests)
 		supportedRequests.forEach((choice) => {
 			res.write(
-				`<input type="radio" id="${choice.value}" name="${ENTRY_FORM_REQUEST_TYPE_ID}" value="${choice.value}" ${choice.value == req.session.data?.cgmode ? "checked" : ""} onclick="redrawForm()">${choice.label}</input>`
+				`<input type="radio" id="${escapeHTML(choice.value)}" name="${ENTRY_FORM_REQUEST_TYPE_ID}" value="${escapeHTML(choice.value)}" ${choice.value == req.session.data?.cgmode ? "checked" : ""} onclick="redrawForm()">${escapeHTML(choice.label)}</input>`
 			);
 		});
 	res.write(`</div>
