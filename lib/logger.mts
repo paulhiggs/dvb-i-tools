@@ -21,8 +21,8 @@ export function createPrefix(req: express.Request, testtype?: string) : string |
 	const logDir: string = join(".", "arch");
 
 	if (!existsSync(logDir)) return undefined;
-	// only documents for a known validation type are archived
-	if (!testtype || ![MODE_CG, MODE_SL, MODE_SLR, MODE_PL].includes(testtype)) return undefined
+	// a specified test type must be one of the known validation types
+	if (testtype && ![MODE_CG, MODE_SL, MODE_SLR, MODE_PL].includes(testtype)) return undefined
 
 	const getDate = (i : Temporal.Instant) : string=> {
 		const fillZero = (t: number) : string => `${t < 10 ? "0" : ""}${t}`;
@@ -33,10 +33,12 @@ export function createPrefix(req: express.Request, testtype?: string) : string |
 	const lastPathSegment = (url: unknown) : string | undefined =>
 		typeof url == "string" ? url.substring(url.lastIndexOf("/") + 1) : undefined
 
-	let fname: string | undefined = undefined
+	let fname: string | undefined = undefined,
+		mode: string | undefined = undefined
 	switch (req.method) {
 		case "GET":
 			fname = lastPathSegment(req.query?.url)
+			mode = testtype || req.query?.testtype as string | undefined
 			break
 		case "POST":
 			if (typeof req.body == "string")
@@ -46,10 +48,10 @@ export function createPrefix(req: express.Request, testtype?: string) : string |
 				fname = lastPathSegment(req.body.XMLurl)
 			else
 				fname = (req.files?.XMLfile as fileupload.UploadedFile | undefined)?.name
+			mode = testtype || (typeof req.body == "object" ? req.body?.requestType : undefined)
 			break
 	}
-	const mode = testtype
-	if (!fname) return undefined
+	if (!fname || !mode) return undefined
 	return `${logDir}${sep}${getDate(Temporal.Now.instant())} (${mode}) ${fname.replace(/[/\\?%*:|"<>]/g, "-")}`
 }
 
