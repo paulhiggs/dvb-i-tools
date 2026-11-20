@@ -7,13 +7,15 @@
  * 
  */
 
-import { XsdValidator, XmlDocument, XmlAttribute, XmlValidateError } from "libxml2-wasm"
+import { XsdValidator, XmlDocument, XmlAttribute, XmlValidateError, XmlParseError } from "libxml2-wasm"
 import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs"
 xmlRegisterFsInputProviders();
 
-import formatXml from "xml-formatter"
+// xml-formatter ships CommonJS with ES module style types: at runtime the default import is the formatter function
+import xmlFormatter from "xml-formatter"
+const formatXml = xmlFormatter as unknown as typeof xmlFormatter.default
 
-import { elementize, datatypeIs } from "./utils.mts"
+import { elementize } from "./utils.mts"
 
 import { dvbi } from "./DVB-I_definitions.mts"
 import { FATAL, APPLICATION, INFORMATION, WARNING, DEBUG } from "./error_list.mts"
@@ -285,22 +287,22 @@ export function SchemaLoad(document: string, errs: ErrorList, errCode: string): 
 		// the document returned is parsed from the formatted text below
 		XmlDocument.fromString(document).dispose();
 	} catch (err) {
-		if (err.details && datatypeIs(err.details, "array"))
+		if (err instanceof XmlParseError && Array.isArray(err.details))
 			err.details.forEach((e) =>
 				errs.addError({ type: FATAL, code: `${errCode}-1`, message: `Raw XML parsing failed: ${e.message} at char ${e.col}`, line: e.line, key: keys.k_MalformedXML })
 			);
-		else errs.addError({ type: FATAL, code: `${errCode}-2`, message: `Raw XML parsing failed: ${err.message}`, key: keys.k_MalformedXML });
+		else errs.addError({ type: FATAL, code: `${errCode}-2`, message: `Raw XML parsing failed: ${errorMessage(err)}`, key: keys.k_MalformedXML });
 	}
 	try {
 		prettyXML = formatXml(document.replace(/(\n\t)/gm, "\n"), { collapseContent: true, lineSeparator: "\n" });
 	} catch (err) {
-		errs.addError({ type: FATAL, code: `${errCode}-10`, message: `XML format failed: ${err.cause}`, key: keys.k_MalformedXML });
+		errs.addError({ type: FATAL, code: `${errCode}-10`, message: `XML format failed: ${err instanceof Error ? err.cause : err}`, key: keys.k_MalformedXML });
 		return null;
 	}
 	try {
 		tmp = XmlDocument.fromString(prettyXML);
 	} catch (err) {
-		errs.addError({ type: FATAL, code: `${errCode}-11`, message: `XML parsing failed: ${err.message}`, key: keys.k_MalformedXML });
+		errs.addError({ type: FATAL, code: `${errCode}-11`, message: `XML parsing failed: ${errorMessage(err)}`, key: keys.k_MalformedXML });
 		errs.loadDocument(prettyXML);
 		return null;
 	}

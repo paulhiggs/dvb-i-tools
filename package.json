@@ -6,7 +6,6 @@
 		"DVB-I"
 	],
 	"main": "all-in-one.ts",
-	"types": "./lib/extensions.d.ts",
 	"type": "module",
 	"private": true,
 	"author": "Paul Higgs <paul_higgs@hotmail.com>",
@@ -38,6 +37,7 @@
 		"start": "node all-in-one.ts",
 		"lint": "eslint . ",
 		"lint:fix": "eslint . --fix ",
+		"typecheck": "tsc --noEmit -p .",
 		"test-expressions": "node testsuite/test-expressions.ts",
 		"test-documents": "node testsuite/test-documents.ts",
 		"test-lookups": "node testsuite/test-lookups.ts",
