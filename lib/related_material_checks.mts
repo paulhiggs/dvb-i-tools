@@ -12,67 +12,22 @@ import { mpeg7 } from "./MPEG7_definitions.mts"
 import { tva, tvaEA, tvaEC } from "./TVA_definitions.mts"
 import { dvbi, dvbiEA } from "./DVB-I_definitions.mts"
 
-import { APPLICATION, INFORMATION, WARNING } from "./error_list.mts"
+import { WARNING } from "./error_list.mts"
 import ErrorList from "./error_list.mts"
 import { checkLanguage } from "./multilingual_element.mts"
 import { checkAttributes, checkTopElementsAndCardinality } from "./schema_checks.mts"
 import { isJPEGmime, isPNGmime, validImageSet, isAllowedImageMime } from "./MIME_checks.mts"
-import { isHTTPURL, isInlineImage, isDataURI, isHTTSPURL } from "./pattern_checks.mts"
+import { isHTTPURL, isInlineImage, isDataURI } from "./pattern_checks.mts"
 import { cg_InvalidHrefValue, InvalidURL, keys } from "./common_errors.mts"
 import { parameterCheck } from "./utils.mts"
 import { CG_SchemaVersion} from "./cg_check.mts"
 import { cgVersions } from "./DVB-I_definitions.mts"
-import { ValidateAnyContentDigests } from "./digest_validation.mts"
+import { checkReferencedResource, ValidateAnySignaturePolicy } from "./resource_checks.mts"
 
 import type { FoundDocumentItems } from "./sl_check.mts"
 
-/**
-	* verifies that any specified signature policy is already defined in the service list
-	*  
-	* @param {Xmlelement} element              The XML element possibly containing the @verificationPolicy attribute
-	* @param {FoundDocumentItems} documentInfo
-	*                     signaturePolicyIDs   Signature Verification policy identifiers defined in this service list
-	* @param {ErrorList}  errs                 The class where errors and warnings relating to the serivce list processing are stored
-	* @param {string}     errCode              error code prefix for reporting
-	*/
- export function ValidateAnySignaturePolicy(element: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) : void {
-	if (!element) {
-		errs.addError({ type: APPLICATION, code: "VSP000", message: "ValidateAnySignaturePolicy() called with element==null" });
-		return;
-	}
- 
-	const policy = element.attrAnyNsValueOr(dvbi.a_verificationPolicy);
-	if (!policy) return;
- 
-	if (!documentInfo.definesPolicies) {
-		errs.addError({
-			type: INFORMATION,
-			code: `${errCode}-1`,
-			message: "document type does not define signature policies. ID checking is skipped",
-			fragment: element,
-			key: keys.k_SignaturePolicies,
-		})
-		return;
-	}
- 
-	if (!documentInfo.signaturePolicyIDs.has(policy))
-		errs.addError({
-			type: WARNING,
-			code: `${errCode}-2`,
-			message: `${policy.quote()} is not defined in this document`,
-			fragment: element,
-			key: keys.k_SignaturePolicies,
-		});
-
-	if (!isHTTSPURL(element.content.trim()))
-		errs.addError({
-			type: WARNING,
-			code: `${errCode}-3`,
-			message: "Signature validation is only applicable to secure (https) connections",
-			fragment: element,
-			key: keys.k_SignaturePolicies,
-		});
- }
+// the signature policy check is with the other checks of referenced resources, and is also available from here
+export { ValidateAnySignaturePolicy }
  
  
 const mimeExtractor: RegExp = new RegExp(/^data:(?<mime>(?:\w+\/(?:(?!;).)+)?)((?:;[\w=]*[^;])*),(.+)$/, "i");
@@ -191,8 +146,7 @@ function validateImageRelatedMaterial(RelatedMaterial: XmlElement, location: str
 				});
 			}
 		}
-		ValidateAnyContentDigests(MediaUri, errs, `${errCode}-25`);
-		ValidateAnySignaturePolicy(MediaUri, documentInfo, errs, `${errCode}-26`);
+		checkReferencedResource(MediaUri, documentInfo, errs, { digest: `${errCode}-25`, policy: `${errCode}-26` }, { contentType: MediaUri_contentType });
 
 		if (!isHTTPURL(MediaUri.content) && !isDataURI(MediaUri.content))
 			errs.addError({
@@ -272,8 +226,7 @@ export function checkValidLogos(RelatedMaterial: XmlElement, location: string, d
 				specifiedMediaTypes.push(MediaURI_contentType);
 			}
 
-			ValidateAnyContentDigests(MediaUri, errs, `${errCode}-6`);
-    	ValidateAnySignaturePolicy(MediaUri, documentInfo, errs, `${errCode}-7`)
+			checkReferencedResource(MediaUri, documentInfo, errs, { digest: `${errCode}-6`, policy: `${errCode}-7` }, { contentType: MediaURI_contentType });
 
 			if (!isHTTPURL(MediaUri.content) && !isInlineImage(MediaUri.content)) 
 				errs.addError(InvalidURL(MediaUri.content, MediaUri, tva.e_MediaUri.elementize(), `${errCode}-8`));

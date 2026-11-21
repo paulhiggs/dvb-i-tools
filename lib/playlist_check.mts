@@ -17,12 +17,14 @@ import document_logger from "./logger.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
 import { DefaultProperty } from "./utils.mts"
 import { ValidationScope } from "./safe_fetch.mts"
+import type { ImageChecking } from "./safe_fetch.mts"
 
 import type { StatsType, LoadOptions } from "./globals.mts"
 
 export type PL_Validator_Options = {
 	log_prefix? : string
 	report_schema_version?: boolean
+	images?: ImageChecking // how referenced images are checked (default "yes"; "scaled" also checks the server scales them)
 }
 
 export default class PlaylistCheck {
@@ -60,7 +62,7 @@ export default class PlaylistCheck {
 	/*public*/ async doValidatePlaylist(PLtext: string, errs: ErrorList, options: PL_Validator_Options = {}) : Promise<void> {
 		this.#numRequests++;
 		// collects any network work, performed once the rules below have been checked
-		using scope = ValidationScope.open();
+		using scope = ValidationScope.open({ images: options.images });
 		if (!PLtext) {
 			errs.addError({
 				type: APPLICATION,
@@ -124,6 +126,8 @@ export default class PlaylistCheck {
 
 		// perform the deferred network work before the document is disposed (at the end of this method)
 		await scope.finish();
+		// the outermost validation reports how long it took, including the documents it traversed
+		if (scope.depth == 0) errs.timing = scope.timing();
 	}
 
 

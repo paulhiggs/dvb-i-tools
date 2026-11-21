@@ -424,8 +424,8 @@ export default class ServiceListRegistryCheck {
 	 */
 	/*public*/ async doValidateServiceListRegistry(SLRtext: string, errs: ErrorList, options: SLR_Validator_Options = {}) : Promise<void> {
 		this.#numRequests++;
-		// collects the network work (traversal, content digests) that is performed once the rules below have been checked
-		using scope = ValidationScope.open();
+		// collects the network work (traversal, referenced resources) that is performed once the rules below have been checked
+		using scope = ValidationScope.open({ images: options.images });
 
 		if (!SLRtext) {
 			errs.addError({
@@ -514,6 +514,8 @@ export default class ServiceListRegistryCheck {
 
 		// perform the deferred network work before the document is disposed (at the end of this method)
 		await scope.finish();
+		// the outermost validation reports how long it took, including the documents it traversed
+		if (scope.depth == 0) errs.timing = scope.timing();
 	}
 
 	/**

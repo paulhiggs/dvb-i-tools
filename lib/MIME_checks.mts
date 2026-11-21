@@ -10,7 +10,10 @@
 
 const JPEG_MIME: string = "image/jpeg",
 	PNG_MIME: string = "image/png",
-	WebP_MIME: string = "image/WebP"; 
+	WebP_MIME: string = "image/webp";
+
+// media types are case-insensitive (IETF RFC 6838 clause 4.2), and may carry parameters after a ";"
+const mediaType = (mime: string): string => mime.split(";")[0].trim().toLowerCase();
 
 const REQUIRED_MIMES: string[] = [JPEG_MIME, PNG_MIME];
 export const allowedImageTypes: string[] = [JPEG_MIME, PNG_MIME, WebP_MIME];
@@ -29,7 +32,7 @@ export const isMIME = (mime: string) : boolean => simple_mime_regex.test(mime.tr
  * @param {string} mime the MIME type
  * @returns {boolean} true if the MIME type represents a JPEG image, otherwise false
  */
-export const isJPEGmime = (mime: string) : boolean => mime == JPEG_MIME;
+export const isJPEGmime = (mime: string) : boolean => mediaType(mime) == JPEG_MIME;
 
 /**
  * determines if the value is a valid PNG MIME type
@@ -37,7 +40,7 @@ export const isJPEGmime = (mime: string) : boolean => mime == JPEG_MIME;
  * @param {string} mime the MIME type
  * @returns {boolean} true if the MIME type represents a PNG image, otherwise false
  */
-export const isPNGmime = (mime: string) : boolean => mime == PNG_MIME;
+export const isPNGmime = (mime: string) : boolean => mediaType(mime) == PNG_MIME;
 
 /**
  * determines if the value is a valid WebP MIME type
@@ -45,7 +48,7 @@ export const isPNGmime = (mime: string) : boolean => mime == PNG_MIME;
  * @param {string} mime the MIME type
  * @returns {boolean} true if the MIME type represents a WebP image, otherwise false
  */
-export const isWebPmime = (mime: string) : boolean => mime == WebP_MIME;
+export const isWebPmime = (mime: string) : boolean => mediaType(mime) == WebP_MIME;
 
 /**
  * determines if the value is a DVB-I permitted image MIME type
@@ -53,7 +56,7 @@ export const isWebPmime = (mime: string) : boolean => mime == WebP_MIME;
  * @param {string} mime the MIME type
  * @returns {boolean} true if the MIME type is permitted by DVB-I, otherwise false
  */
-export const isAllowedImageMime = (mime: string) : boolean => allowedImageTypes.includes(mime);
+export const isAllowedImageMime = (mime: string) : boolean => allowedImageTypes.includes(mediaType(mime));
 
 /**
  * determines if the value is a DVB-I required image MIME type
@@ -61,7 +64,16 @@ export const isAllowedImageMime = (mime: string) : boolean => allowedImageTypes.
  * @param {string} mime the MIME type
  * @returns {boolean} true if the MIME type is required by DVB-I, otherwise false
  */
-export const isRequiredImageMime = (mime: string) : boolean => REQUIRED_MIMES.includes(mime);
+export const isRequiredImageMime = (mime: string) : boolean => REQUIRED_MIMES.includes(mediaType(mime));
+
+/**
+ * the image format a media type represents, for comparison with the format of a retrieved image
+ *
+ * @param {string} mime the MIME type
+ * @returns {string | undefined} "jpeg", "png" or "webp", or undefined for any other media type
+ */
+export const imageFormatOf = (mime: string): string | undefined =>
+	({ [JPEG_MIME]: "jpeg", [PNG_MIME]: "png", [WebP_MIME]: "webp" })[mediaType(mime)];
 
 /**
  *
@@ -73,7 +85,7 @@ export function validImageSet(MIMEs: string[]) : boolean {
 
 	let hasRequired = false,
 		hasOther = false;
-	const uniqueMIMEs = [...new Set<string>(MIMEs)];
+	const uniqueMIMEs = [...new Set<string>(MIMEs.map(mediaType))];
 
 	uniqueMIMEs.forEach((MIME) => {
 		if (REQUIRED_MIMES.includes(MIME)) hasRequired = true;

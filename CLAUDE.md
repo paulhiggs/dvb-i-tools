@@ -93,4 +93,16 @@ XML is handled by `libxml2-wasm`. [libxml2-wasm-extensions.mts](libxml2-wasm-ext
 - Format with tabs (width 2), LF line endings, double quotes and a print width of 180 (see `.prettierrc.cjs` and `.editorconfig`).
 - Imports include the `.mts`/`.ts` extension (`allowImportingTsExtensions`, `module: nodenext`).
 - Source files start with the standard header comment: file name, copyright Paul Higgs, BSD-2-Clause.
-- Commit messages are short and imperative. PRs are merged with `Merge pull request #N: <summary>`. Version bumps in `package.json` are separate commits.
+- Commit messages are short and imperative. PRs are merged with `Merge pull request #N: <summary>`. Each PR bumps the patch version (`npm version patch --no-git-tag-version`), and the bump in `package.json` and `package-lock.json` is part of the change's own commit.
+
+## Issues
+
+Always record as much information as possible in the related GitHub issue. The issues are the project's record of why things are the way they are, which helps future maintenance and learning. Include:
+- the problem and how it was investigated, including measurements (timings, memory, report sizes, counts) and the commands or method used to get them
+- the decisions taken and the alternatives considered, with the reasons
+- the specification clauses that apply (A177 revision and clause)
+- what was implemented, the files changed, and any new error codes with their meaning
+- how it was tested and what the tests covered, including results on real service lists such as the BMT Germany testbed
+- any limitations, follow-up work, or other issues it relates to
+
+Add this as a comment when the work is done, and before a branch with experimental work is deleted. A PR description can summarise the change, but the issue keeps the full detail.

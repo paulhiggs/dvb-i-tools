@@ -5,12 +5,11 @@
  *  Copyright (c) 2026, Paul Higgs
  *  BSD-2-Clause license, see LICENSE.txt file
  * 
- * Checks a resource against any specified content digests
+ * Checks a resource against any specified content digests. The resource is retrieved by checkReferencedResource() in
+ * resource_checks.mts, which also performs the other checks of the resource from the same retrieval
  */
 
-import SHA from "sha.js"
-
-import { safeFetch, deferRetrieval } from "./safe_fetch.mts"
+import type { Digests } from "./resource_checks.mts"
 import { tva} from "./TVA_definitions.mts"
 import { dvbi} from "./DVB-I_definitions.mts"
 import { APPLICATION, INFORMATION, WARNING } from "./error_list.mts"
@@ -18,26 +17,30 @@ import ErrorList from "./error_list.mts";
 import { keys } from "./common_errors.mts"
 import { isDataURI } from "./pattern_checks.mts"
 
-const parseInlineImageData = (inline_image: string) : string => inline_image.substring(inline_image.indexOf(","));
+// the part of a data: URI that its content digest is calculated over
+export const parseInlineImageData = (inline_image: string) : string => inline_image.substring(inline_image.indexOf(","));
 
 const DigestRegexp = /^(?<algorithm>([a-z\d]+))=:(?<digest>([a-zA-Z\d]+)):$/;
 /**
-* verifies that only premitted content digest algorithms are used for referenced elements
-*  
+* prepares the check of any content digests (@integrity) of a referenced resource: that only permitted algorithms are
+* used, and that each digest matches the resource
+*
 * @param {XmlElement} element  The XML element possibly containing the @integrity attribute
 * @param {ErrorList}  errs     The class where errors and warnings relating to the serivce list processing are stored
 * @param {string}     errCode  Error code prefix for reporting
+* @returns {((digests: Digests | null) => void) | null} null if the element has no content digest, otherwise the check,
+*          to be called with the digests of the resource, or null if the resource could not be retrieved
 */
-export function ValidateAnyContentDigests(element: XmlElement, errs: ErrorList, errCode: string) : void {
+export function contentDigestCheck(element: XmlElement, errs: ErrorList, errCode: string) : ((digests: Digests | null) => void) | null {
 	if (!element) {
-		errs.addError({ type: APPLICATION, code: "VD000", message: "ValidateAnyContentDigests() called with element==null" });
-		return;
+		errs.addError({ type: APPLICATION, code: "VD000", message: "contentDigestCheck() called with element==null" });
+		return null;
 	}
 
 	const contentDigests = element.attrAnyNsValueOr(tva.a_integrity);
 	if (contentDigests) {
-		// compare the resource with each digest. img is null when the resource could not be retrieved
-		const checkDigests = (img: string | Buffer | null) : void => {
+		// compare the resource with each digest. digests is null when the resource could not be retrieved
+		const checkDigests = (digests: Digests | null) : void => {
 			contentDigests.split(",").forEach( (contentDigest: string) => {
 				const result = contentDigest.match(DigestRegexp);
 				if (result?.groups) {
@@ -50,10 +53,10 @@ export function ValidateAnyContentDigests(element: XmlElement, errs: ErrorList, 
 							key: `invalid ${tva.a_integrity.attribute()}`,
 						})
 	 
-						if (img) 
+						if (digests) 
 							switch (result.groups.algorithm) {
 								case "sha1":
-									if (SHA('sha1').update(img).digest('hex') != result.groups.digest)
+									if (digests.sha1 != result.groups.digest)
 										errs.addError({
 											code: `${errCode}c`,
 											message: `incorrect digest specified for "${result.groups.algorithm}"`,
@@ -62,7 +65,7 @@ export function ValidateAnyContentDigests(element: XmlElement, errs: ErrorList, 
 										});
 									break;
 								case "sha256":
-									if (SHA('sha256').update(img).digest('hex') != result.groups.digest)
+									if (digests.sha256 != result.groups.digest)
 										errs.addError({
 											code: `${errCode}d`,
 											message: `incorrect digest specified for "${result.groups.algorithm}"`,
@@ -93,7 +96,7 @@ export function ValidateAnyContentDigests(element: XmlElement, errs: ErrorList, 
 					description: "There is limited merit in including the content digest and inline images in the same document.",
 				});
 
-			if (!img)
+			if (!digests)
 				errs.addError({
 					type: INFORMATION,
 					code: `${errCode}${isDataURI(element.content)?"i":"u"}`,
@@ -102,17 +105,9 @@ export function ValidateAnyContentDigests(element: XmlElement, errs: ErrorList, 
 				})
 		};
 
-		if (isDataURI(element.content)) 
-			checkDigests(parseInlineImageData(element.content));
-		else {
-			// the referenced resource is retrieved after the document rules have been checked
-			const location = element.content;
-			deferRetrieval(
-				() => safeFetch(location),
-				async ({ response }) => checkDigests(response?.ok ? response.buffer() : null)
-			);
-		}
+		return checkDigests;
 	}
+	return null;
 }
  
  

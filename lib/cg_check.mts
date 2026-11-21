@@ -28,8 +28,9 @@ import { nestedTraversal } from "./traversal.mts"
 import type { ReportedErrorType } from "./error_list.mts"
 import { unEntity, DuplicatedValue, parameterCheck } from "./utils.mts"
 import { isHTTPURL, isDVBLocator, isUTCDateTime, isCRIDURI, isTAGURI } from "./pattern_checks.mts"
-import { ValidatePromotionalStillImage, ValidateAnySignaturePolicy } from "./related_material_checks.mts"
-import { ValidateAnyContentDigests } from "./digest_validation.mts"
+import { ValidatePromotionalStillImage } from "./related_material_checks.mts"
+import { checkReferencedResource } from "./resource_checks.mts"
+import type { ImageChecking } from "./safe_fetch.mts"
 import { cg_InvalidHrefValue, NoChildElement, keys } from "./common_errors.mts"
 import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.mts"
 import type { ElementCardinalityType } from "./schema_checks.mts"
@@ -187,6 +188,7 @@ export type CG_Validator_Options = {
 	progInfo_ep?: string
 	grpInfo_ep?: string
 	mEpisodes_ep?: string
+	images?: ImageChecking // how referenced images are checked (default "yes"; "scaled" also checks the server scales them)
 }
 
 
@@ -1051,9 +1053,7 @@ export default class ContentGuideCheck {
 									fragment: AuxiliaryURI,
 									key: keys.k_InvalidValue,
 								});
-							ValidateAnyContentDigests(AuxiliaryURI, errs, "TA021");
-							if (CG_SchemaVersion(AuxiliaryURI.documentNamespace()) >= cgVersions.r3) 
-								ValidateAnySignaturePolicy(AuxiliaryURI, new FoundDocumentItems(false), errs, "TA022");
+							checkReferencedResource(AuxiliaryURI, new FoundDocumentItems(false), errs, { digest: "TA021", policy: CG_SchemaVersion(AuxiliaryURI.documentNamespace()) >= cgVersions.r3 ? "TA022" : undefined });
 						});
 						if (!hasAuxiliaryURI) errs.addError(NoChildElement(tva.e_AuxiliaryURI.elementize(), locator, Location, "TA031"));
 					});
@@ -3059,18 +3059,14 @@ export default class ContentGuideCheck {
 		const ProgramURL = OnDemandProgram.getAnyNs(tva.e_ProgramURL);
 		if (ProgramURL) {
 			this.#CheckPlayerApplication(ProgramURL, [dvbi.XML_AIT_CONTENT_TYPE], errs, "OD020");
-			ValidateAnyContentDigests(ProgramURL, errs, "OD021");
-			if (CG_SchemaVersion(ProgramURL.documentNamespace()) >= cgVersions.r3)
-				ValidateAnySignaturePolicy(ProgramURL, new FoundDocumentItems(false), errs, "OD022");
+			checkReferencedResource(ProgramURL, new FoundDocumentItems(false), errs, { digest: "OD021", policy: CG_SchemaVersion(ProgramURL.documentNamespace()) >= cgVersions.r3 ? "OD022" : undefined });
 		}
 
 		// <AuxiliaryURL>
 		const AuxiliaryURL = OnDemandProgram.getAnyNs(tva.e_AuxiliaryURL);
 		if (AuxiliaryURL) {
 			this.#CheckPlayerApplication(AuxiliaryURL, [dvbi.XML_AIT_CONTENT_TYPE /*, dvbi.HTML5_APP, dvbi.XHTML_APP, dvbi.iOS_APP, dvbi.ANDROID_APP*/], errs, "OD030");
-			ValidateAnyContentDigests(AuxiliaryURL, errs, "OD031");
-			if (CG_SchemaVersion(AuxiliaryURL.documentNamespace()) >= cgVersions.r3)
-				ValidateAnySignaturePolicy(AuxiliaryURL, new FoundDocumentItems(false), errs, "OD032");
+			checkReferencedResource(AuxiliaryURL, new FoundDocumentItems(false), errs, { digest: "OD031", policy: CG_SchemaVersion(AuxiliaryURL.documentNamespace()) >= cgVersions.r3 ? "OD032" : undefined });
 		}
 
 		// <InstanceDescription>
@@ -3592,8 +3588,8 @@ export default class ContentGuideCheck {
 	 */
 	async doValidateContentGuide(CGtext: string, requestType: string, errs: ErrorList, options: CG_Validator_Options = {}) : Promise<void> {
 		this.#numRequests++;
-		// collects the network work (traversal, content digests) that is performed once the rules below have been checked
-		using scope = ValidationScope.open();
+		// collects the network work (traversal, referenced resources) that is performed once the rules below have been checked
+		using scope = ValidationScope.open({ images: options.images });
 
 		if (!CGtext) {
 			errs.addError({ type: APPLICATION, code: "CG000", message: "doValidateContentGuide() called with CGtext==null" });
@@ -3750,6 +3746,8 @@ export default class ContentGuideCheck {
 
 		// perform the deferred network work before the document is disposed (at the end of this method)
 		await scope.finish();
+		// the outermost validation reports how long it took, including the documents it traversed
+		if (scope.depth == 0) errs.timing = scope.timing();
 	}
 
 	/**

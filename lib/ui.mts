@@ -18,6 +18,7 @@ import { __dirname } from "./data_locations.mts"
 import { APPLICATION, ERROR, FATAL, WARNING } from "./error_list.mts"
 import ErrorList from "./error_list.mts";
 import type { ErrorType, SeverityList } from "./error_list.mts"
+import type { ValidationTiming } from "./safe_fetch.mts"
 
 import type { CGRequestType } from "./cg_check.mts"
 import { CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM, CG_REQUEST_MORE_EPISODES, CG_REQUEST_BS_CATEGORIES, CG_REQUEST_BS_LISTS, CG_REQUEST_BS_CONTENTS } from "./cg_check.mts"
@@ -119,6 +120,9 @@ legend { padding: 0; margin-bottom: 8px; font-size: var(--step--1); font-weight:
 	form:not(:has(#radSL:checked, #radSLR:checked)) .sl-options { display: none; }
 }
 .options { display: grid; gap: 10px; }
+.choice { display: grid; gap: 6px; padding-top: 4px; }
+.choice-label { font-weight: 500; }
+.choice .seg span { padding: 6px 12px; }
 .check { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: start; }
 .check input { margin: 4px 0 0; width: 16px; height: 16px; accent-color: var(--accent); }
 .check .hint, .check .note { grid-column: 2; }
@@ -198,6 +202,10 @@ a.chip:hover { text-decoration: underline; }
 .trav[data-show="info"] tbody tr:not(.s-info), .trav[data-show="ok"] tbody tr:not(.s-ok) { display: none; }
 
 footer { color: var(--muted); font-size: var(--step--1); display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 16px; }
+.timing td:not(:first-child), .timing th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.timing tr.s-warn td:nth-child(7) { color: var(--sev); font-weight: 600; }
+.timing td.url { font-size: var(--step--1); }
+.timing-note { margin: 0; padding: 10px 18px; border-top: 1px solid var(--line); }
 .stats h2 { padding: 14px 18px 10px; }
 .stats table { border-top: 1px solid var(--line); }
 @media (max-width: 720px) {
@@ -236,9 +244,9 @@ const tabulateMessage = function* (value: ErrorType): Generator<string> {
 
 const lineCompareFn = (a: ErrorType, b: ErrorType) => a?.line && b?.line ? a.line - b.line : 0;
 
-// a collapsible section of the results, open by default
-const sectionStart = (id: string, title: string, count: string, severityClass: string, aside?: string) =>
-	`<details class="section ${severityClass}" id="${id}" open><summary>${title} <span class="count">${count}</span>${aside ? `<span class="aside">${aside}</span>` : ""}</summary><div class="section-body">`;
+// a collapsible section of the results, open unless stated
+const sectionStart = (id: string, title: string, count: string, severityClass: string, aside?: string, open = true) =>
+	`<details class="section ${severityClass}" id="${id}"${open ? " open" : ""}><summary>${title} <span class="count">${count}</span>${aside ? `<span class="aside">${aside}</span>` : ""}</summary><div class="section-body">`;
 const SECTION_END = "</div></details>";
 
 const ErrorTable = function* (errors: ErrorType[], id: string, title: string, severityClass: string): Generator<string> {
@@ -264,7 +272,8 @@ const messageText = (message: string): string => {
 function* tabulateResults(source: string, error: string[] | undefined, errs: ErrorList | undefined): Generator<string> {
 	if (!error && !errs) return; // nothing has been validated yet
 
-	yield `<section class="results-head" aria-label="Results"><span class="eyebrow">Results</span><div class="source">${escapeHTML(source)}</div>${errs?.type ? `<div class="meta">${escapeHTML(errs.type)}</div>` : ""}</section>`;
+	const meta = [errs?.type ? escapeHTML(errs.type) : "", errs?.timing ? timingSummary(errs.timing) : ""].filter((m) => m.length > 0).join(" · ");
+	yield `<section class="results-head" aria-label="Results"><span class="eyebrow">Results</span><div class="source">${escapeHTML(source)}</div>${meta ? `<div class="meta">${meta}</div>` : ""}</section>`;
 	if (error) yield `<div class="alert s-error" role="alert">${error.map((e) => `<p>${e.HTMLize()}</p>`).join("")}</div>`;
 
 	let resultsShown = false;
@@ -416,10 +425,40 @@ function* reportNestedErrors(req: express.Request, errs: ErrorList | undefined):
 	yield `</tbody></table></div>${SECTION_END}`
 }
 
+// a duration, e.g. "850 ms", "15.2 s" or "7 min 12 s"
+const formatDuration = (ms: number): string => {
+	if (ms < 1000) return `${Math.round(ms)} ms`;
+	if (ms < 60000) return `${(ms / 1000).toFixed(1)} s`;
+	const s = Math.round(ms / 1000);
+	return s < 3600 ? `${Math.floor(s / 60)} min ${s % 60} s` : `${Math.floor(s / 3600)} h ${Math.floor((s % 3600) / 60)} min`;
+};
+
+// how long the validation took, and what it retrieved, for the results header
+function timingSummary(timing: ValidationTiming): string {
+	const parts = [`validated in ${formatDuration(timing.durationMs)}`];
+	if (timing.documentsTraversed > 0) parts.push(plural(timing.documentsTraversed, "document traversed", "documents traversed"));
+	if (timing.resourcesRetrieved > 0)
+		parts.push(`${plural(timing.resourcesRetrieved, "resource retrieved", "resources retrieved")}${timing.imagesChecked > 0 ? ` (${plural(timing.imagesChecked, "image", "images")} checked)` : ""}`);
+	if (timing.timeouts > 0) parts.push(`<a href="#timing">${plural(timing.timeouts, "timeout", "timeouts")}</a>`);
+	return parts.join(" · ");
+}
+
+// the time spent retrieving from each host, which shows which servers slowed the validation down
+function* reportTiming(errs: ErrorList | undefined): Generator<string> {
+	const timing = errs?.timing;
+	if (!timing || timing.hosts.length == 0) return;
+	yield sectionStart("timing", "Retrieval timing", plural(timing.requests, "request", "requests"), timing.timeouts > 0 ? "s-warn" : "", `${plural(timing.hosts.length, "host", "hosts")}, most time first`, false);
+	yield `<div class="scroll"><table class="timing"><thead><tr><th scope="col">Host</th><th scope="col">Requests</th><th scope="col">Total time</th><th scope="col">Average</th><th scope="col">95%</th><th scope="col">Slowest</th><th scope="col">Timeouts</th><th scope="col">Errors</th></tr></thead><tbody>`;
+	for (const h of timing.hosts)
+		yield `<tr${h.timeouts > 0 ? ' class="s-warn"' : ""}><td class="url">${escapeHTML(h.host)}</td><td>${formatCount(h.requests)}</td><td>${formatDuration(h.totalMs)}</td><td>${formatDuration(h.averageMs)}</td><td>${formatDuration(h.p95Ms)}</td><td>${formatDuration(h.maxMs)}</td><td>${h.timeouts ? formatCount(h.timeouts) : ""}</td><td>${h.errors ? formatCount(h.errors) : ""}</td></tr>`;
+	yield `</tbody></table></div><p class="hint timing-note">Times are for each retrieval once it started. Retrievals from different hosts run at the same time, so the totals add up to more than the validation took.</p>${SECTION_END}`;
+}
+
 // the results part of a page: the validation results, the traversed documents and the page bottom
 function* resultsPage(req: express.Request, source: string, error: string[] | undefined, errs: ErrorList | undefined): Generator<string> {
 	yield* tabulateResults(source, error, errs);
 	yield* reportNestedErrors(req, errs);
+	yield* reportTiming(errs);
 	yield PAGE_BOTTOM;
 }
 
@@ -505,8 +544,10 @@ export async function drawForm(
 		? supportedRequests.map((choice) => segmentChoice(ENTRY_FORM_REQUEST_TYPE_ID, choice.value, choice.value, choice.label, choice.value == session?.cgmode)).join("")
 		: "";
 	const traverse = modes.allowTraversal
-		? `<label class="check"><input type="checkbox" id="cbTraverse" name="traverse"${session?.traverse == true ? " checked" : ""}><span>Traverse referenced documents</span><span class="hint">Also validate the schedules, programme information, box sets and service lists that the document refers to.</span><span class="note">This can take a long time: 20 minutes or more for a large service list.</span></label>`
+		? `<label class="check sl-options"><input type="checkbox" id="cbTraverse" name="traverse"${session?.traverse == true ? " checked" : ""}><span>Traverse referenced documents</span><span class="hint">Also validate the schedules, programme information, box sets and service lists that the document refers to.</span><span class="note">This can take a long time: 20 minutes or more for a large service list.</span></label>`
 		: "";
+	const images = session?.images ?? "yes";
+	const imageChecking = `<div class="choice" role="group" aria-labelledby="images-label"><span class="choice-label" id="images-label">Image checking</span><div class="seg">${segmentChoice("images", "no", "imgNo", "No", images == "no")}${segmentChoice("images", "yes", "imgYes", "Yes", images == "yes")}${segmentChoice("images", "scaled", "imgScaled", "Yes and scaled", images == "scaled")}</div><span class="hint">Yes retrieves each referenced image once and checks its format, size, colour depth and pixel aspect ratio. Yes and scaled also requests each image at half its width with ?w= to check that the server scales it, which doubles the image requests.</span></div>`;
 
 	res.write(`<form class="panel" id="check-form" method="post" enctype="multipart/form-data">
 <fieldset><legend>What to validate</legend><div class="seg">${types}</div></fieldset>
@@ -516,9 +557,10 @@ export async function drawForm(
 <div class="field field-file"><input type="file" id="XMLfile" name="XMLfile" aria-label="Document file"></div>
 </div></fieldset>
 <fieldset class="cg-type"><legend>Content guide query type</legend><div class="seg">${requestTypes}</div></fieldset>
-<fieldset class="sl-options"><legend>Options</legend><div class="options">
-<label class="check"><input type="checkbox" id="cbGermany" name="forGermany"${session?.forGermany == true ? " checked" : ""}><span>Germany</span><span class="hint">Validate against the German profile of A177, which requires 7 days of programme guide either side of today instead of 28.</span></label>
+<fieldset><legend>Options</legend><div class="options">
+<label class="check sl-options"><input type="checkbox" id="cbGermany" name="forGermany"${session?.forGermany == true ? " checked" : ""}><span>Germany</span><span class="hint">Validate against the German profile of A177, which requires 7 days of programme guide either side of today instead of 28.</span></label>
 ${traverse}
+${imageChecking}
 </div></fieldset>
 <div class="actions"><button type="submit" class="primary" id="validate">Validate</button><span class="hint" id="submit-hint">${SUBMIT_HINT}</span></div>
 </form>${SUBMIT_SCRIPT}`);

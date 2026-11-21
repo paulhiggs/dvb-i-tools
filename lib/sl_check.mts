@@ -65,7 +65,8 @@ import { ValidateCMCDinDASH } from "./CMCDv2.mts"
 import { CMCD_custom_stats, LoadKnownCustomKeysRegistry } from "./CMCD_custom_keys.js"
 import { CheckExtension, EXTENSION_LOCATION_SERVICE_ELEMENT, EXTENSION_LOCATION_DASH_INSTANCE, EXTENSION_LOCATION_OTHER_DELIVERY } from "./extension_check.mts"
 import { ValidateAnySignaturePolicy } from "./related_material_checks.mts"
-import { ValidateAnyContentDigests } from "./digest_validation.mts"
+import { checkReferencedResource } from "./resource_checks.mts"
+import type { ImageChecking } from "./safe_fetch.mts"
 import { ValidateSignaturePolicies } from "./signature_policies.mts"
 
 import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES, type CG_Validator_Options } from "./cg_check.mts"
@@ -145,6 +146,7 @@ export type SL_Validator_Options = {
 	report_schema_version?: boolean
 	traverse?: boolean
 	variants?: number
+	images?: ImageChecking // how referenced images are checked (default "yes"; "scaled" also checks the server scales them)
 }
 
 export default class ServiceListCheck {
@@ -425,8 +427,7 @@ export default class ServiceListCheck {
 					fragment: MediaUri,
 					key: "invalid app type",
 				});
-			ValidateAnyContentDigests(MediaUri, errs, "SA015");
-			ValidateAnySignaturePolicy(MediaUri, documentInfo, errs, "SA021");
+			checkReferencedResource(MediaUri, documentInfo, errs, { digest: "SA015", policy: "SA021" });
 		});
 		if (!hasMediaURI)
 			errs.addError({
@@ -1058,8 +1059,7 @@ export default class ServiceListCheck {
 								clause: "A177 table 7a note 3",
 								description: `Applications that are allowed to be signalled at either the service or service instance level shall be signalled at either one or the other but not both unless ${tva.a_contentType.attribute(tva.e_MediaUri)} is different`,
 							});
-						ValidateAnyContentDigests(MediaUri, errs, "SI025");
-						ValidateAnySignaturePolicy(MediaUri, documentInfo, errs, "SI026");
+						checkReferencedResource(MediaUri, documentInfo, errs, { digest: "SI025", policy: "SI026" });
 					}
 				});
 			}
@@ -1608,8 +1608,7 @@ export default class ServiceListCheck {
 							fragment: uri,
 							key: "invalid resource URL",
 						});
-					ValidateAnyContentDigests(uri, errs, "SI176");
-					ValidateAnySignaturePolicy(uri, documentInfo, errs, "SI177");
+					checkReferencedResource(uri, documentInfo, errs, { digest: "SI176", policy: "SI177" });
 				}
 			}
 
@@ -2335,8 +2334,8 @@ export default class ServiceListCheck {
 	 */
 	/*public*/ async doValidateServiceList(SLtext: string, errs: ErrorList, options: SL_Validator_Options = {}) : Promise<void> {
 		this.#numRequests++;
-		// collects the network work (traversal, content digests) that is performed once the rules below have been checked
-		using scope = ValidationScope.open();
+		// collects the network work (traversal, referenced resources) that is performed once the rules below have been checked
+		using scope = ValidationScope.open({ images: options.images });
 		if (!SLtext) {
 			errs.addError({
 				type: APPLICATION,
@@ -2850,6 +2849,8 @@ export default class ServiceListCheck {
 
 		// perform the deferred network work before the document is disposed (at the end of this method)
 		await scope.finish();
+		// the outermost validation reports how long it took, including the documents it traversed
+		if (scope.depth == 0) errs.timing = scope.timing();
 	}
 
 	/**

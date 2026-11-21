@@ -23,6 +23,8 @@ export type FetchPolicy = {
 	maxTraversalDepth: number // maximum nesting of documents traversed from the document being validated
 	maxTraversalDocuments: number // maximum number of documents traversed during a single validation
 	fetchConcurrency: number // maximum number of retrievals in progress at once (across all validations), and how far each validation retrieves ahead
+	checkImages: boolean // retrieve referenced images and check them (format, dimensions, server scaling). Each image is checked once per validation
+	fetchesPerHost: number // maximum number of retrievals in progress at once from one host (within fetchConcurrency)
 };
 
 const policy: FetchPolicy = {
@@ -32,6 +34,8 @@ const policy: FetchPolicy = {
 	maxTraversalDepth: 10,
 	maxTraversalDocuments: 100,
 	fetchConcurrency: 8,
+	checkImages: false,
+	fetchesPerHost: 4,
 };
 
 /*
@@ -52,6 +56,31 @@ function releaseFetchSlot(): void {
 	const next = waitingFetches.shift();
 	if (next) next(); // the slot passes directly to the next waiting retrieval
 	else activeFetches--;
+}
+
+/*
+ * limit on the number of retrievals in progress from one host, so that one server (e.g. an image server referenced by
+ * every programme) is not sent more requests at once than it can answer within the timeout. A retrieval waits for its
+ * host slot before taking one of the fetchConcurrency slots, so retrievals from other hosts are not held up
+ */
+const hostFetches = new Map<string, { active: number; waiting: (() => void)[] }>();
+
+async function acquireHostSlot(host: string): Promise<void> {
+	let state = hostFetches.get(host);
+	if (!state) hostFetches.set(host, (state = { active: 0, waiting: [] }));
+	if (state.active < Math.max(1, policy.fetchesPerHost)) {
+		state.active++;
+		return;
+	}
+	await new Promise<void>((resolve) => state.waiting.push(resolve));
+}
+
+function releaseHostSlot(host: string): void {
+	const state = hostFetches.get(host);
+	if (!state) return;
+	const next = state.waiting.shift();
+	if (next) next();
+	else if (--state.active == 0) hostFetches.delete(host);
 }
 
 /**
@@ -140,6 +169,7 @@ export type FetchedResponse = {
 	ok: boolean
 	status: number
 	statusText: string
+	contentType: string | null // the Content-Type response header
 	text(): string
 	buffer(): Buffer
 };
@@ -168,27 +198,38 @@ async function readLimitedBody(response: Response, url: string): Promise<Buffer>
  * @param {string} url  the URL to retrieve
  * @returns {Promise<SafeFetchResult>} either the response (which may have a non-2xx status) or the reason the retrieval did not happen or failed
  */
-export async function safeFetch(url: string): Promise<SafeFetchResult> {
+export async function safeFetch(url: string, validation?: ValidationHandle): Promise<SafeFetchResult> {
 	const refused = checkFetchURL(url);
 	if (refused) return { error: refused };
+	// the retrieval is counted in the timing of the validation it is made for
+	const budget = (validation as TraversalBudget | undefined) ?? (runningScope.getStore() ?? openScopes.at(-1))?.budget;
+	const host = new URL(url).host.toLowerCase(); // checkFetchURL() has parsed the URL
+	await acquireHostSlot(host);
 	await acquireFetchSlot();
+	const started = performance.now();
+	let outcome: "ok" | "timeout" | "error" = "error";
 	try {
 		const resp = await fetch(url, { headers: fetch_options.headers as Record<string, string>, signal: AbortSignal.timeout(policy.timeout) });
 		const body = await readLimitedBody(resp, url);
+		outcome = "ok";
 		return {
 			response: {
 				ok: resp.ok,
 				status: resp.status,
 				statusText: resp.statusText,
+				contentType: resp.headers.get("content-type"),
 				text: () => body.toString("utf8"),
 				buffer: () => body,
 			},
 		};
 	} catch (error) {
-		const reason = error instanceof Error && error.name == "TimeoutError" ? `timeout after ${policy.timeout}ms retrieving ${url}` : `${error instanceof Error ? error.message : error}`;
-		return { error: reason };
+		const timedOut = error instanceof Error && error.name == "TimeoutError";
+		if (timedOut) outcome = "timeout";
+		return { error: timedOut ? `timeout after ${policy.timeout}ms retrieving ${url}` : `${error instanceof Error ? error.message : error}` };
 	} finally {
 		releaseFetchSlot();
+		releaseHostSlot(host);
+		if (budget) recordFetch(budget, host, performance.now() - started, outcome);
 	}
 }
 
@@ -214,10 +255,59 @@ type SettledRetrieval = { value: unknown } | { error: unknown };
 // something that records the results of a requested traversal, and counts how many times the URL is referenced
 export type TraversalRequest = { references?: number };
 
+// the retrievals made from one host during a validation
+type HostFetches = { durations: number[]; timeouts: number; errors: number };
+
+function recordFetch(budget: TraversalBudget, host: string, duration: number, outcome: "ok" | "timeout" | "error"): void {
+	let fetches = budget.fetches.get(host);
+	if (!fetches) budget.fetches.set(host, (fetches = { durations: [], timeouts: 0, errors: 0 }));
+	fetches.durations.push(duration);
+	if (outcome == "timeout") fetches.timeouts++;
+	else if (outcome == "error") fetches.errors++;
+}
+
+export type HostTiming = {
+	host: string;
+	requests: number;
+	totalMs: number; // the time spent retrieving from the host (retrievals from different hosts overlap)
+	averageMs: number;
+	p95Ms: number; // 95% of the retrievals took this long or less
+	maxMs: number;
+	timeouts: number;
+	errors: number; // network errors other than timeouts (an HTTP error status is not counted)
+};
+
+// how long a validation took, and the retrievals it made (including those of the documents it traversed)
+export type ValidationTiming = {
+	durationMs: number;
+	documentsTraversed: number;
+	resourcesRetrieved: number; // referenced resources (images, applications...) retrieved, each once
+	imagesChecked: number;
+	requests: number;
+	timeouts: number;
+	errors: number;
+	hosts: HostTiming[]; // slowest (most time spent) first
+};
+
+// how referenced images are checked: not at all, retrieved and checked (the default), or also requested scaled to check
+// that the server scales them (A177r8 clause 5.2.8.2.2), which doubles the image requests
+export type ImageChecking = "no" | "yes" | "scaled";
+export const IMAGE_CHECKING: ImageChecking[] = ["no", "yes", "scaled"];
+
+// choices made for a whole validation, by the request that started it
+export type ValidationSettings = {
+	images?: ImageChecking; // default "yes"
+};
+
 type TraversalBudget = {
+	settings: ValidationSettings;
+	started: number; // when the validation started (performance.now())
+	fetches: Map<string, HostFetches>; // the retrievals made for the validation, by host
 	documents: number; // number of documents retrieved by traversal
 	traversed: Set<string>; // URLs of the documents retrieved by traversal
 	requested: Map<string, TraversalRequest>; // the first request to traverse into each URL
+	retrievals: Map<string, Promise<unknown>>; // retrievals shared by the checks of a validation, by key (see sharedRetrieval())
+	referenced: Set<string>; // resources that have been checked, by kind and URL (see firstReference())
 };
 
 /**
@@ -253,16 +343,21 @@ export class ValidationScope {
 	#tasks: DeferredTask[] = [];
 	#open = true;
 
-	private constructor(parent: ValidationScope | undefined) {
+	private constructor(parent: ValidationScope | undefined, settings: ValidationSettings) {
 		this.depth = parent ? parent.depth + 1 : 0;
-		this.budget = parent ? parent.budget : { documents: 0, traversed: new Set<string>(), requested: new Map<string, TraversalRequest>() };
+		this.budget = parent
+			? parent.budget
+			: { settings, started: performance.now(), fetches: new Map<string, HostFetches>(), documents: 0, traversed: new Set<string>(), requested: new Map<string, TraversalRequest>(), retrievals: new Map<string, Promise<unknown>>(), referenced: new Set<string>() };
 	}
 
 	/**
 	 * open a scope at the start of a validation. Use with "using" so it is closed on every exit from the validation
+	 *
+	 * @param {ValidationSettings} settings  choices for the validation. A nested validation (of a traversed document) uses
+	 *                                       the settings of the validation it belongs to, and ignores these
 	 */
-	static open(): ValidationScope {
-		const scope = new ValidationScope(runningScope.getStore());
+	static open(settings: ValidationSettings = {}): ValidationScope {
+		const scope = new ValidationScope(runningScope.getStore(), settings);
 		openScopes.push(scope);
 		return scope;
 	}
@@ -311,6 +406,40 @@ export class ValidationScope {
 
 	[Symbol.dispose](): void {
 		this.#close();
+	}
+
+	/**
+	 * how long the validation has taken so far, and the retrievals it has made, including those of the documents it
+	 * traversed. Call after finish() of the validation's own (outermost) scope
+	 */
+	timing(): ValidationTiming {
+		const budget = this.budget;
+		const hosts: HostTiming[] = [...budget.fetches].map(([host, f]) => {
+			const sorted = [...f.durations].sort((a, b) => a - b);
+			const total = sorted.reduce((a, b) => a + b, 0);
+			return {
+				host,
+				requests: sorted.length,
+				totalMs: Math.round(total),
+				averageMs: Math.round(total / sorted.length),
+				p95Ms: Math.round(sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))]),
+				maxMs: Math.round(sorted[sorted.length - 1]),
+				timeouts: f.timeouts,
+				errors: f.errors,
+			};
+		});
+		hosts.sort((a, b) => b.totalMs - a.totalMs);
+		const keys = (set: Iterable<string>, prefix: string) => [...set].filter((k) => k.startsWith(prefix)).length;
+		return {
+			durationMs: Math.round(performance.now() - budget.started),
+			documentsTraversed: budget.documents,
+			resourcesRetrieved: keys(budget.retrievals.keys(), "resource "),
+			imagesChecked: keys(budget.referenced, "image "),
+			requests: hosts.reduce((n, h) => n + h.requests, 0),
+			timeouts: hosts.reduce((n, h) => n + h.timeouts, 0),
+			errors: hosts.reduce((n, h) => n + h.errors, 0),
+			hosts,
+		};
 	}
 }
 
@@ -405,6 +534,70 @@ export function claimTraversal(url: string): TraversalRefusal | null {
 }
 
 export type TraversalRetrieval = SafeFetchResult & { refused?: TraversalRefusal };
+
+/**
+ * perform a retrieval once per validation: the first call with a key starts it, and later calls with the same key (in
+ * the same validation, including its nested validations) get the same result without retrieving again. Use from the
+ * retrieve part of deferRetrieval(). Outside a validation, the retrieval is performed every time
+ *
+ * @param {string} key                 identifies the retrieval, e.g. a normalised URL
+ * @param {() => Promise<T>} retrieve  performs the retrieval. The result is kept until the validation finishes, so it
+ *                                     should be small (e.g. digests rather than the content)
+ * @param {ValidationHandle} validation the validation the retrieval belongs to, from currentValidation(). Needed when
+ *                                     the call is made after the rule that requested it (e.g. once another retrieval
+ *                                     has completed), when the current scope may belong to a different validation
+ * @returns {Promise<T>} the result of the retrieval
+ */
+export function sharedRetrieval<T>(key: string, retrieve: () => Promise<T>, validation?: ValidationHandle): Promise<T> {
+	const budget = (validation as TraversalBudget | undefined) ?? (runningScope.getStore() ?? openScopes.at(-1))?.budget;
+	if (!budget) return retrieve();
+	let retrieval = budget.retrievals.get(key) as Promise<T> | undefined;
+	if (!retrieval) {
+		retrieval = retrieve();
+		budget.retrievals.set(key, retrieval);
+	}
+	return retrieval;
+}
+
+/**
+ * check, while the validation rules are checked, whether a resource is referenced for the first time in this validation
+ * (including its nested validations), so that its checks are reported only once
+ *
+ * @param {string} kind  the kind of check, e.g. "image"
+ * @param {string} url   the URL of the resource
+ * @returns {boolean} true for the first reference to the URL (and outside a validation), false for a repeat
+ */
+export function firstReference(kind: string, url: string): boolean {
+	const scope = openScopes.at(-1);
+	if (!scope) return true;
+	const key = `${kind} ${normaliseURL(url)}`;
+	if (scope.budget.referenced.has(key)) return false;
+	scope.budget.referenced.add(key);
+	return true;
+}
+
+export { normaliseURL };
+
+// identifies a validation (with its nested validations), for sharedRetrieval()
+export type ValidationHandle = object;
+
+/**
+ * the validation whose rules are being checked, or whose deferred work is being performed
+ *
+ * @returns {ValidationHandle | undefined} the validation, or undefined outside a validation
+ */
+export function currentValidation(): ValidationHandle | undefined {
+	return (openScopes.at(-1) ?? runningScope.getStore())?.budget;
+}
+
+/**
+ * the settings of the validation whose rules are being checked, or whose deferred work is being performed
+ *
+ * @returns {ValidationSettings} the settings, which are empty outside a validation
+ */
+export function validationSettings(): ValidationSettings {
+	return (openScopes.at(-1) ?? runningScope.getStore())?.budget.settings ?? {};
+}
 
 /**
  * the retrieve part of a traversal (for deferRetrieval): claim the document against the validation's budget, then
