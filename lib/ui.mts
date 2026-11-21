@@ -75,91 +75,89 @@ const DESCRIPTION_TABLE_HEADER = () => `<table><tr><th>code</th><th>description<
 const DEBUG_FORM_HEADER = (mode: string) => `${scrollFunc}<table><tr><th>code</th><th>${mode}</th></tr>`;
 const TABLE_FOOTER = `</table>${BREAK}`;
 
-const tabluateMessage = (res: express.Response, value: ErrorType) => {
-	res.write(`<tr>`);
+const tabluateMessage = function* (value: ErrorType): Generator<string> {
+	yield `<tr>`;
 	const anchor = HasProperty(value, "line") ? `line-${value.line}` : null;
-	if (SHOW_LINE_NUMBER) res.write(`<td>${Object.prototype.hasOwnProperty.call(value, "line") ? value.line : ""}</td>`);
-	res.write(`<td>${anchor ? `<span class="${link_css}" onclick="myScrollTo('${anchor}')">` : ""}${value.code ? value.code.HTMLize() : ""}${anchor ? "</span>" : ""}</td>`);
-	res.write(`<td>${value.message ? value.message.HTMLize() : ""}`);
-	res.write(`${value.element ? `<br/><span class="xmlfont"><pre>${value.element.HTMLize()}</pre></span>` : ""}</td>`);
-	res.write("</tr>");
+	if (SHOW_LINE_NUMBER) yield `<td>${Object.prototype.hasOwnProperty.call(value, "line") ? value.line : ""}</td>`;
+	yield `<td>${anchor ? `<span class="${link_css}" onclick="myScrollTo('${anchor}')">` : ""}${value.code ? value.code.HTMLize() : ""}${anchor ? "</span>" : ""}</td>`;
+	yield `<td>${value.message ? value.message.HTMLize() : ""}`;
+	yield `${value.element ? `<br/><span class="xmlfont"><pre>${value.element.HTMLize()}</pre></span>` : ""}</td>`;
+	yield "</tr>";
 };
 
-const simpleMessage = (res: express.Response, value: {code: string, message: string}) => {
-	res.write(`<tr><td>${escapeHTML(value.code)}</td><td>${escapeHTML(value.message)}</td></tr>`);
-};
+const simpleMessage = (value: {code: string, message: string}) => `<tr><td>${escapeHTML(value.code)}</td><td>${escapeHTML(value.message)}</td></tr>`;
 
 const lineCompareFn = (a: ErrorType, b: ErrorType) => a?.line && b?.line ? a.line - b.line : 0;
 
-const ErrorTable = (res: express.Response, errors: ErrorType[], title: string, colour?: string) => {
-	res.write(DETAIL_FORM_HEADER(title, colour));
+const ErrorTable = function* (errors: ErrorType[], title: string, colour?: string): Generator<string> {
+	yield DETAIL_FORM_HEADER(title, colour);
 	if (MESSAGES_IN_ORDER) errors.sort(lineCompareFn);
-	errors.forEach((e) => tabluateMessage(res, e));
-	res.write(TABLE_FOOTER);
+	for (const e of errors) yield* tabluateMessage(e);
+	yield TABLE_FOOTER;
 }
 
-function tabulateResults(source: string, res: express.Response, error: string[] | undefined, errs: ErrorList | undefined) {
+function* tabulateResults(source: string, error: string[] | undefined, errs: ErrorList | undefined): Generator<string> {
 
-	res.write(RESULT_WITH_INSTRUCTION(source));
+	yield RESULT_WITH_INSTRUCTION(source);
 	if (error)
-		error.forEach((e) => res.write(`<p>${e.HTMLize()}</p>`))
-		
+		for (const e of error) yield `<p>${e.HTMLize()}</p>`;
+
 	let resultsShown = false;
 	if (errs) {
-		res.write(`<style>span.${link_css} {} span.${link_css} {color: ${Dodger_Blue}; text-decoration: underline;} </style>`);
+		yield `<style>span.${link_css} {} span.${link_css} {color: ${Dodger_Blue}; text-decoration: underline;} </style>`;
 
 		if (errs.numCountsFatal() > 0 || errs.numCountsErr() > 0 || errs.numCountsWarn() > 0 || errs.numCountsInfo() > 0) {
-			res.write(SUMMARY_FORM_HEADER);
-			errs.countsFatal.forEach((f) => res.write(`<tr style="color:red;"><td>FATAL: ${f.key.HTMLize()}</td><td>${f.count}</td></tr>`));
-			errs.countsErr.forEach((e) => res.write(`<tr><td>${e.key.HTMLize()}</td><td>${e.count}</td></tr>`));
-			errs.countsWarn.forEach((w) => res.write(`<tr><td><i>W: ${w.key.HTMLize()}</i></td><td>${w.count}</td></tr>`));
-			errs.countsInfo.forEach((i) => res.write(`<tr><td><i>I: ${i.key.HTMLize()}</i></td><td>${i.count}</td></tr>`));
+			yield SUMMARY_FORM_HEADER;
+			for (const f of errs.countsFatal) yield `<tr style="color:red;"><td>FATAL: ${f.key.HTMLize()}</td><td>${f.count}</td></tr>`;
+			for (const e of errs.countsErr) yield `<tr><td>${e.key.HTMLize()}</td><td>${e.count}</td></tr>`;
+			for (const w of errs.countsWarn) yield `<tr><td><i>W: ${w.key.HTMLize()}</i></td><td>${w.count}</td></tr>`;
+			for (const i of errs.countsInfo) yield `<tr><td><i>I: ${i.key.HTMLize()}</i></td><td>${i.count}</td></tr>`;
 			resultsShown = true;
-			res.write(TABLE_FOOTER);
+			yield TABLE_FOOTER;
 		}
 
 		if (errs.numFatals() > 0) {
-			ErrorTable(res, errs.fatals, "fatals (further validation aborted)", "red");
+			yield* ErrorTable(errs.fatals, "fatals (further validation aborted)", "red");
 			resultsShown = true;
 		}
 
 		if (errs.numErrors() > 0) {
-			ErrorTable(res, errs.errors, "errors");
+			yield* ErrorTable(errs.errors, "errors");
 			resultsShown = true;
 		}
 
 		if (errs.numWarnings() > 0) {
-			ErrorTable(res, errs.warnings, "warnings");
+			yield* ErrorTable(errs.warnings, "warnings");
 			resultsShown = true;
 		}
 
 		if (errs.numInformationals() > 0) {
-			ErrorTable(res, errs.informationals, "informationals");
+			yield* ErrorTable(errs.informationals, "informationals");
 			resultsShown = true;
 		}
 
 		if (errs.debugs.length > 0) {
-			res.write(DEBUG_FORM_HEADER("debug"));
-			errs.debugs.forEach((d) => simpleMessage(res, d));
+			yield DEBUG_FORM_HEADER("debug");
+			for (const d of errs.debugs) yield simpleMessage(d);
 			resultsShown = true;
-			res.write(TABLE_FOOTER);
+			yield TABLE_FOOTER;
 		}
 	}
 
-	if (!error && !resultsShown) res.write(`no errors, warnings or informationals${BREAK}`);
+	if (!error && !resultsShown) yield `no errors, warnings or informationals${BREAK}`;
 	else if (errs?.errorDescriptions.length) {
-		res.write(DESCRIPTION_TABLE_HEADER());
-		errs.errorDescriptions.forEach((desc) => {
-			res.write(`<tr><td>${desc.code.HTMLize()}</td>`);
-			res.write(`<td>${desc.description.HTMLize().replace(/\n/, BREAK)}`);
-			if (desc.clause && desc.clause.length) res.write(`${BREAK}reference: ${escapeHTML(desc.clause)}`);
-			res.write("</td></tr>");
-		});
-		res.write(TABLE_FOOTER);
+		yield DESCRIPTION_TABLE_HEADER();
+		for (const desc of errs.errorDescriptions) {
+			yield `<tr><td>${desc.code.HTMLize()}</td>`;
+			yield `<td>${desc.description.HTMLize().replace(/\n/, BREAK)}`;
+			if (desc.clause && desc.clause.length) yield `${BREAK}reference: ${escapeHTML(desc.clause)}`;
+			yield "</td></tr>";
+		}
+		yield TABLE_FOOTER;
 	}
 
 	if (errs && errs.markupXML && errs.markupXML.length > 0) {
-		res.write(LINE);
+		yield LINE;
 		const FATAL = "fatals",
 			ERR = "errors",
 			WARN = "warnings",
@@ -167,9 +165,9 @@ function tabulateResults(source: string, res: express.Response, error: string[] 
 			style = (name: string, colour: string) => `<style>.${name} {position:relative; cursor:pointer; color:${colour};} .${name}[title]:hover:after {opacity:1; transition-delay:.1s; }</style>`;
 		let lineNum = 0;
 		const maxLineNumLength = errs.markupXML!.length.toString().length;
-		res.write(`${style(FATAL, "red")}${style(ERR, "red")}${style(WARN, "blue")}${style(INFO, "orange")}<pre>`);
+		yield `${style(FATAL, "red")}${style(ERR, "red")}${style(WARN, "blue")}${style(INFO, "orange")}<pre>`;
 
-		errs.markupXML!.forEach((line) => {
+		for (const line of errs.markupXML!) {
 			let cla = "";
 			const tip = line.validationErrors ? line.validationErrors.map((err) => err.HTMLize()).join("&#10;") : null;
 			if (tip) {
@@ -180,11 +178,11 @@ function tabulateResults(source: string, res: express.Response, error: string[] 
 			const qualifier = tip ? ` class="${cla}" title="${tip}"` : "";
 			if (SHOW_LINE_NUMBER) {
 				lineNum++;
-				res.write(`<span>${lineNum.toString().padStart(maxLineNumLength)} : </span>`);
+				yield `<span>${lineNum.toString().padStart(maxLineNumLength)} : </span>`;
 			}
-			res.write(`<span id="line-${line.ix}"${qualifier}>${line.value.HTMLize()}</span>${BREAK}`);
-		});
-		res.write(`</pre>${LINE}`);
+			yield `<span id="line-${line.ix}"${qualifier}>${line.value.HTMLize()}</span>${BREAK}`;
+		}
+		yield `</pre>${LINE}`;
 	}
 }
 
@@ -198,9 +196,9 @@ const severity_highlight: {background:string, text:string}[] = [
 	/* 5 */ {background:"background-color: darkred;", text:"color:yellow;"},
 ]
 
-function nested_error_row(req: express.Request, res: express.Response, errs: ErrorList | undefined, depth: number) {
+function* nested_error_row(req: express.Request, errs: ErrorList | undefined, depth: number): Generator<string> {
 	if (!errs || errs.nestedErrors.length == 0) return
-	errs.nestedErrors.forEach((nest) => {
+	for (const nest of errs.nestedErrors) {
 		const palette =  severity_highlight[nest.severity()]
 		let validator=undefined, refer = "<b><i>unknown</i></b>"
 		if (nest.source && nest.description) {
@@ -227,26 +225,70 @@ function nested_error_row(req: express.Request, res: express.Response, errs: Err
 				? `<a target="_blank" rel="noopener noreferrer" href="${escapeHTML(href)}">${escapeHTML(nest.description)}</a>`
 				: escapeHTML(nest.description)
 		}
-		res.write(
-			`<tr><td>${depth}</td><td>`+
+		yield `<tr><td>${depth}</td><td>`+
 			refer+
 			(nest.source ? `${BREAK}<span class="url">${escapeHTML(nest.source)}</span>`: "")+
 			"</td>"+
-			`<td style="${palette.background} ${palette.text}">${escapeHTML(nest.compactSummary())}`)
-		nest.debugs.forEach((msg) => res.write(`${BREAK}${escapeHTML(msg.code)} ${escapeHTML(msg.message)}`))
-		res.write("</td></tr>")
-		nested_error_row(req, res, nest, depth+1)
-	});
+			`<td style="${palette.background} ${palette.text}">${escapeHTML(nest.compactSummary())}`
+		for (const msg of nest.debugs) yield `${BREAK}${escapeHTML(msg.code)} ${escapeHTML(msg.message)}`
+		yield "</td></tr>"
+		yield* nested_error_row(req, nest, depth+1)
+	}
 }
 
-function reportNestedErrors(req: express.Request, res: express.Response, errs: ErrorList | undefined) {
+function* reportNestedErrors(req: express.Request, errs: ErrorList | undefined): Generator<string> {
 	if (!errs || errs.nestedErrors.length == 0) return
-	
-	res.write(`${BREAK}<p><b>Traversed Errors</b></p>`)
-	res.write(`<table><tr><th></th><th>location</th><th>result</th></tr>`)
 
-	nested_error_row(req, res, errs, 1)
-	res.write("</table>")
+	yield `${BREAK}<p><b>Traversed Errors</b></p>`
+	yield `<table><tr><th></th><th>location</th><th>result</th></tr>`
+
+	yield* nested_error_row(req, errs, 1)
+	yield "</table>"
+}
+
+// the results part of a page: the validation results, the traversed documents and the page bottom
+function* resultsPage(req: express.Request, source: string, error: string[] | undefined, errs: ErrorList | undefined): Generator<string> {
+	yield* tabulateResults(source, error, errs);
+	yield* reportNestedErrors(req, errs);
+	yield PAGE_BOTTOM;
+}
+
+const WRITE_CHUNK_SIZE = 64 * 1024; // characters joined into each write to the response
+
+/**
+ * write the parts of a page to the response, joined into chunks of about WRITE_CHUNK_SIZE characters. When the response
+ * cannot take more data, waits for it to drain before producing more, so a large report is not buffered in memory.
+ * Stops producing the page if the client disconnects
+ *
+ * @param {express.Response} res    the response to write to
+ * @param {Iterable<string>} parts  the parts of the page, in order
+ */
+async function sendHTML(res: express.Response, parts: Iterable<string>): Promise<void> {
+	let chunk: string[] = [],
+		size = 0;
+	const flush = async (): Promise<boolean> => {
+		if (res.destroyed) return false;
+		const ok = res.write(chunk.join(""));
+		chunk = [];
+		size = 0;
+		if (!ok && !res.destroyed)
+			await new Promise<void>((resolve) => {
+				const done = () => {
+					res.off("drain", done);
+					res.off("close", done);
+					resolve();
+				};
+				res.on("drain", done);
+				res.on("close", done);
+			});
+		return !res.destroyed;
+	};
+	for (const part of parts) {
+		chunk.push(part);
+		size += part.length;
+		if (size >= WRITE_CHUNK_SIZE && !(await flush())) return;
+	}
+	if (size > 0) await flush();
 }
 
 export type FormModes = {
@@ -263,7 +305,7 @@ export type FormModes = {
 	allowTraversal: boolean
 }
 
-export function drawForm(
+export async function drawForm(
 		req: express.Request, res: express.Response,
 		modes: FormModes, 
 		supportedRequests: CGRequestType[] | null, 
@@ -340,24 +382,13 @@ export function drawForm(
 			source = (req.files?.XMLfile as UploadedFile)?.name ? (req.files?.XMLfile as UploadedFile).name : "";
 			break;
 	}
-	tabulateResults(source, res, error, errs);
-	reportNestedErrors(req, res, errs)
-	res.write(PAGE_BOTTOM);
-
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	return new Promise((resolve, reject) => {
-		resolve(res);
-	});
+	await sendHTML(res, resultsPage(req, source, error, errs));
+	return res;
 }
 
-export function drawResults(req: express.Request, res: express.Response, motd?: string, error?: string[], errs?: ErrorList) : Promise<express.Response>{
+export async function drawResults(req: express.Request, res: express.Response, motd?: string, error?: string[], errs?: ErrorList) : Promise<express.Response>{
 	res.setHeader("Content-Type", "text/html");
 	res.write(PAGE_TOP("DVB-I Validator", req.secure, "DVB-I Validator", motd));
-	tabulateResults(req.query.url ? req.query.url as string: "uploaded list", res, error, errs);
-	reportNestedErrors(req, res, errs)
-	res.write(PAGE_BOTTOM);
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	return new Promise((resolve, reject) => {
-		resolve(res);
-	});
+	await sendHTML(res, resultsPage(req, req.query.url ? req.query.url as string: "uploaded list", error, errs));
+	return res;
 }
