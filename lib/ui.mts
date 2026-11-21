@@ -392,7 +392,7 @@ export async function drawForm(
 	let source: string = "";
 	switch (req.body?.doclocation) {
 		case MODE_URL:
-			source = req.body?.XMLurl ? req.body?.XMLurl : "";
+			source = typeof req.body?.XMLurl == "string" ? req.body.XMLurl : "";
 			break;
 		case MODE_FILE:
 			source = (req.files?.XMLfile as UploadedFile)?.name ? (req.files?.XMLfile as UploadedFile).name : "";
