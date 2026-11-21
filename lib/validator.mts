@@ -37,7 +37,8 @@ import { Default_SLEPR, __dirname } from "./data_locations.mts"
 import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "./ui.mts"
 import type {FormModes} from './ui.mts'
 import ErrorList from "./error_list.mts"
-import { safeFetch, configureFetchPolicy } from "./safe_fetch.mts"
+import { safeFetch, configureFetchPolicy, IMAGE_CHECKING } from "./safe_fetch.mts"
+import type { ImageChecking } from "./safe_fetch.mts"
 import { readmyfile, HasProperty, escapeHTML } from "./utils.mts"
 import {
 	LoadGenres,
@@ -119,6 +120,18 @@ function getVariant(req: express.Request) : number {
 }
 
 
+/**
+ * how a request asks for referenced images to be checked: "no", "yes" or "scaled". For a /validate_* endpoint this is
+ * the images query parameter (GET) or the X-images header (POST); for /check it is the images form field.
+ * Anything else (including nothing) is "yes"
+ */
+function imageChecking(value: unknown) : ImageChecking {
+	const v = typeof value == "string" ? value.toLowerCase() : "";
+	return (IMAGE_CHECKING as string[]).includes(v) ? (v as ImageChecking) : "yes";
+}
+const getImageChecking = (req: express.Request) : ImageChecking => imageChecking(req.method == "GET" ? req.query?.images : req.header("X-images"));
+
+
 async function report(req: express.Request, res: express.Response, jsonResponse: boolean, errs: ErrorList, motd: string | undefined) : Promise<void> {
 	if (jsonResponse) {
 		res.setHeader("Content-Type", "application/json")
@@ -157,6 +170,7 @@ async function DVB_I_check(
 		if (cgcheck) req.session.data.cgmode = cgcheck.supportedRequests[0].value;
 		req.session.data.forGermany = false;
 		req.session.data.traverse = false;
+		req.session.data.images = "yes";
 	}
 	if (req.session.data.lastUrl != req.url) {
 		req.session.data.mode = mode == MODE_UNSPECIFIED ? (hasSL ? MODE_SL : MODE_CG) : mode;
@@ -192,6 +206,7 @@ async function DVB_I_check(
 
 		req.session.data.forGermany = req.body.forGermany == "on";
 		req.session.data.traverse = req.body.traverse == "on"
+		req.session.data.images = imageChecking(req.body.images)
 		const log_prefix = createPrefix(req, testtype);
 		const errs = ErrorList.withMarkup();
 		if (!req.parseErr)
@@ -227,24 +242,24 @@ async function DVB_I_check(
 				case MODE_CG:
 					errs.setType(`Content Guide-${requestType}`)
 					if (cgcheck) 
-						await cgcheck.doValidateContentGuide(VVxml, requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
+						await cgcheck.doValidateContentGuide(VVxml, requestType, errs, { log_prefix: log_prefix, report_schema_version: true, images: req.session.data.images });
 					break;
 				case MODE_SL:
 					errs.setType("Service List")
 					if (slcheck) 
 						await slcheck.doValidateServiceList(VVxml, errs, 
-							{ log_prefix: log_prefix, report_schema_version: true, variants: req.session.data.forGermany ? GERMAN_A177r6_VARIANT : 0, traverse: req.session.data.traverse}
+							{ log_prefix: log_prefix, report_schema_version: true, variants: req.session.data.forGermany ? GERMAN_A177r6_VARIANT : 0, traverse: req.session.data.traverse, images: req.session.data.images }
 						);
 					break;
 				case MODE_PL:
 					errs.setType("Playlist")
 					if (plcheck) 
-						await plcheck.doValidatePlaylist(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true });
+						await plcheck.doValidatePlaylist(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, images: req.session.data.images });
 					break;
 				case MODE_SLR:
 					errs.setType("Service List Registry")
 					if (slrcheck) 
-						await slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, traverse: req.session.data.traverse });
+						await slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, traverse: req.session.data.traverse, images: req.session.data.images });
 					break;
 			}
 
@@ -278,7 +293,7 @@ async function validateServiceList(req: express.Request, res: express.Response, 
 	const errs = ErrorList.withMarkup();
 	const log_prefix = createPrefix(req, MODE_SL);
 	const SLxml = await getDocument(req)
-	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
+	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req), images: getImageChecking(req) }
 
 	if (SLxml) await slcheck.doValidateServiceList(SLxml, errs, _options);
 	await report(req, res, jsonResponse, errs, motd)
@@ -302,7 +317,7 @@ async function validatePlaylist(req: express.Request, res: express.Response, plc
 	const log_prefix = createPrefix(req, MODE_PL);
 	const PLxml = await getDocument(req)
 
-	if (PLxml) await plcheck.doValidatePlaylist(PLxml, errs, { log_prefix: log_prefix, report_schema_version: true });
+	if (PLxml) await plcheck.doValidatePlaylist(PLxml, errs, { log_prefix: log_prefix, report_schema_version: true, images: getImageChecking(req) });
 	await report(req, res, jsonResponse, errs, motd)
 	document_logger(errs, log_prefix, true, req);
 	res.end();
@@ -325,7 +340,7 @@ async function validateServiceListRegistry(req: express.Request, res: express.Re
 	const log_prefix = createPrefix(req, MODE_SLR);
 	const SLRxml = await getDocument(req)
 
-	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
+	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req), images: getImageChecking(req) }
 	if (SLRxml) await slrcheck.doValidateServiceListRegistry(SLRxml, errs, _options);
 	await report(req, res, jsonResponse, errs, motd)
 
@@ -347,7 +362,7 @@ async function validateContentGuide(req: express.Request, res: express.Response,
 	const errs = ErrorList.withMarkup();
 	const log_prefix = createPrefix(req, MODE_CG);
 	const CGxml = await getDocument(req)
-	const _options: CG_Validator_Options = { log_prefix: log_prefix, report_schema_version: true }
+	const _options: CG_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, images: getImageChecking(req) }
 
 	if (CGxml) await cgcheck.doValidateContentGuide(CGxml, req.query.type as string, errs, _options);
 	await report(req, res, jsonResponse, errs, motd)
@@ -380,6 +395,9 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 
 	// a flag given without a value (null) means true
 	configureFetchPolicy({ allowPrivateAddresses: app_options.allow_private_fetch !== false });
+	// every validation made through the server retrieves and checks the images it references. The library default is off,
+	// so documents validated directly (e.g. by the testsuite) do not make network requests for their images
+	configureFetchPolicy({ checkImages: true });
 
 	if (HasProperty(app_options, "max_traversal")) {
 		const maxTraversal = app_options.max_traversal;
@@ -397,6 +415,15 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			process.exit(1);
 		}
 		configureFetchPolicy({ fetchConcurrency: fetchConcurrency });
+	}
+
+	if (HasProperty(app_options, "fetch_per_host")) {
+		const fetchesPerHost = app_options.fetch_per_host;
+		if (typeof fetchesPerHost != "number" || Number.isNaN(fetchesPerHost)) {
+			console.log(chalk.red("fetch_per_host must be a positive whole number"));
+			process.exit(1);
+		}
+		configureFetchPolicy({ fetchesPerHost: fetchesPerHost });
 	}
 
 	let motd: string | undefined = undefined;

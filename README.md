@@ -116,6 +116,7 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 - `--allow_traversal [-t]` flag to allow document-to-document traversal <span style="color:red">(experimental, takes much time)</span>	
 - `--max_traversal <number|unlimited>` maximum number of documents retrieved by traversal during a single validation (default: 100). `unlimited` removes the limit, which can make a traversal of a large service list take a very long time.
 - `--fetch_concurrency <number>` maximum number of documents retrieved at the same time (default: 8). During traversal, referenced documents are downloaded ahead while earlier ones are validated; results are still reported in the order the documents are referenced. Use `1` to make one request at a time.
+- `--fetch_per_host <number>` maximum number of documents retrieved at the same time from any one host (default: 4), within `--fetch_concurrency`. This stops a single server, such as an image server referenced by every programme, being sent more requests at once than it can answer within the timeout.
 - `--allow_private_fetch <true|false>` allow documents to be retrieved from `localhost` and private network addresses (default: true). Set to `false` on a public deployment. Only literal IP addresses and `localhost` are recognised, not hostnames that resolve to private addresses.
 - `--help [-h]` server and client command help
 
@@ -128,6 +129,33 @@ A referenced document that is not traversed is reported with a warning:
 - `TRAV002` the maximum traversal depth has been reached
 - `TRAV003` the maximum number of traversed documents has been reached
 - `TRAV000` the traversal was requested outside a validation (an internal error)
+
+### Image checks
+
+Every validation made through the server retrieves the images referenced in `<RelatedMaterial><MediaLocator><MediaUri>` (service list, service, content guide source and service banner logos, and promotional still images) and checks them against A177r8 clause 5.2.8. Inline (`data:`) images are checked without any retrieval. Each image URL is retrieved and reported only once per validation, including traversed documents, so a logo shared by many services is checked once. The content digest check (`@integrity`) uses the same retrieval. Images do not count towards `--max_traversal`, but they share the `--fetch_concurrency` and `--fetch_per_host` limits. A referenced resource is retrieved as soon as the rule that refers to it is checked, so retrievals proceed while the rest of the document is validated.
+
+**Image checking** on the form chooses how images are checked:
+- **No**: images are not retrieved (their URLs and `@contentType` are still checked).
+- **Yes** (the default): each image is retrieved once and checked as below.
+- **Yes and scaled**: each image is also requested at half its width with `?w=<width>` to check that the server scales it (A177r8 clause 5.2.8.2.2). This doubles the image requests.
+
+For the `/validate_*` endpoints, add `images=no`, `images=yes` or `images=scaled` to the query of a `GET` request, or send the header `X-images` with a `POST`. Without it, images are checked (`yes`).
+
+Referenced resources that are not images (applications, program URLs...) have their signature policy (`@verificationPolicy`) and content digest (`@integrity`) checked, with the same single retrieval.
+
+- `IMG001` the image could not be retrieved (network error, timeout or a refused URL)
+- `IMG002` the image request did not return a `2xx` status
+- `IMG003` (warning) the response `Content-Type` is not the signalled `@contentType`
+- `IMG004` the resource is not a readable image, or has no pixels
+- `IMG005` the image format is not the one signalled in `@contentType`
+- `IMG006` the image is in a format that is not permitted (GIF, BMP or SVG)
+- `IMG007` the pixel aspect ratio is not 1:1
+- `IMG008` (warning) the image does not have 8 bits per colour component
+- `IMG009` (warning) the image uses a CMYK colour space, not sRGB
+- `IMG010` the scaled image is not the requested width
+- `IMG011` (warning) the scaled image could not be retrieved, or the server answered `400 Bad Request` (an unsupported width)
+- `IMG012` the scaled image does not keep the aspect ratio of the original (it is cropped or stretched)
+- `IMG013` the scaled image is not a readable image, or is in a different format from the original
 
 ### Logging
 

@@ -9,6 +9,7 @@
  */
 
 import { datatypeIs, DefaultProperty, HasProperty } from "./utils.mts"
+import type { ValidationTiming } from "./safe_fetch.mts"
 
 export const ERROR: string = "(E)",
 	DEBUG: string = "(D)",
@@ -111,6 +112,9 @@ export default class ErrorList {
 	// for a traversed document, the number of times its URL was referenced during the validation. It is only validated
 	// (and reported) once
 	references?: number
+
+	// for the document a validation was requested for: how long the validation took, and the retrievals it made
+	timing?: ValidationTiming
 
 	/**
 	 * @param {string}           location     where the document came from (URL or file name)

@@ -95,6 +95,13 @@ const optionDefinitions = [
 		description: "maximum number of documents retrieved at the same time. Default: 8",
 	},
 	{
+		name: "fetch_per_host",
+		type: parsePositiveInteger,
+		defaultValue: 4,
+		typeLabel: "{underline number}",
+		description: "maximum number of documents retrieved at the same time from one host. Default: 4",
+	},
+	{
 		name: "allow_private_fetch",
 		type: parseBooleanOption,
 		defaultValue: true,

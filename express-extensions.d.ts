@@ -20,6 +20,7 @@ declare module "express-session" {
 
 			forGermany?: boolean
 			traverse?: boolean
+			images?: "no" | "yes" | "scaled"
 		}
 	}
 }
