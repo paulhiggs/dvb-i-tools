@@ -12,7 +12,7 @@
 
 import SHA from "sha.js"
 
-import { currentFetchPolicy, currentValidation, deferRetrieval, firstReference, normaliseURL, safeFetch, sharedRetrieval, signaturePoliciesInEffect, currentRequest } from "./safe_fetch.mts"
+import { currentFetchPolicy, currentValidation, deferRetrieval, firstReference, normaliseURL, safeFetch, sharedRetrieval, signaturePoliciesInEffect, currentRequest, connectionCertificatesChecked, responseSignaturesChecked } from "./safe_fetch.mts"
 import type { FetchedResponse, ValidationHandle } from "./safe_fetch.mts"
 import { evaluateSignature, reportSignature } from "./jws_checks.mts"
 import type { SignatureEvaluation } from "./jws_checks.mts"
@@ -72,7 +72,7 @@ export function retrieveResource(url: string, validation?: ValidationHandle): Pr
 				outcome.digests = digestsOf(content);
 				outcome.image = readImageInfo(content);
 				// the signature is evaluated now, while the content is available, and compared with any policy when reported
-				if (currentFetchPolicy().checkResponseSignatures) outcome.signature = evaluateSignature(response.jwsSignature, content, response.reportingEndpoints);
+				if (responseSignaturesChecked(validation)) outcome.signature = evaluateSignature(response.jwsSignature, content, response.reportingEndpoints);
 			}
 			return outcome;
 		},
@@ -172,8 +172,8 @@ export function checkReferencedResource(element: XmlElement, documentInfo: Found
 	// the response to a resource with a signature policy is checked once per policy in the validation: its signature, and the
 	// certificate chain of the server it finally came from
 	const signed = policy != undefined && isHTTPURL(location) && firstReference(`signed ${policy.policyId}`, location),
-		checkSignature = signed && currentFetchPolicy().checkResponseSignatures,
-		checkCertificates = signed && currentFetchPolicy().checkConnectionCertificates;
+		checkSignature = signed && responseSignaturesChecked(),
+		checkCertificates = signed && connectionCertificatesChecked();
 	if (!compareDigests && !imageFirst && !checkSignature && !checkCertificates) return;
 
 	const validation = currentValidation(),
@@ -225,7 +225,7 @@ export function signaturePolicyOf(element: XmlElement): SignaturePolicy | undefi
  * @param {ValidationHandle} validation  the validation the response belongs to
  */
 export async function checkSignedResponse(element: XmlElement, url: string, response: FetchedResponse, policy: SignaturePolicy, errs: ErrorList, validation?: ValidationHandle): Promise<void> {
-	if (currentFetchPolicy().checkResponseSignatures)
+	if (responseSignaturesChecked(validation))
 		reportSignature(evaluateSignature(response.jwsSignature, response.buffer(), response.reportingEndpoints), url, response.url, policy, element, errs);
 	await reportConnection(element, response.url, policy, errs, validation);
 }

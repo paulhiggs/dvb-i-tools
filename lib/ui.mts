@@ -26,6 +26,7 @@ import { CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHED
 import { HasProperty, escapeHTML } from "./utils.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
 import { read_string_options } from "./globals.mts"
+import { currentFetchPolicy } from "./safe_fetch.mts"
 import { skippedTraversal } from "./traversal.mts"
 
 export const MODE_UNSPECIFIED = "none",
@@ -549,10 +550,13 @@ export async function drawForm(
 	const requestTypes = supportedRequests
 		? supportedRequests.map((choice) => segmentChoice(ENTRY_FORM_REQUEST_TYPE_ID, choice.value, choice.value, choice.label, choice.value == session?.cgmode)).join("")
 		: "";
+	const maxDepth = currentFetchPolicy().maxTraversalDepth; // the server's limit, which a request can lower
 	const traverse = modes.allowTraversal
-		? `<label class="check sl-options"><input type="checkbox" id="cbTraverse" name="traverse"${session?.traverse == true ? " checked" : ""}><span>Traverse referenced documents</span><span class="hint">Also validate the schedules, programme information, box sets and service lists that the document refers to.</span><span class="note">This can take a long time: 20 minutes or more for a large service list.</span></label><div class="traverse-limit sl-options"><label for="maxTraversal">Maximum documents</label><input type="text" id="maxTraversal" name="maxTraversal" inputmode="numeric" size="10" value="${escapeHTML(session?.maxTraversal ?? "100")}" aria-describedby="maxTraversal-hint"><span class="hint" id="maxTraversal-hint">The most documents to traverse: a number, or unlimited. Unlimited can take hours for a large service list.</span></div>`
+		? `<label class="check sl-options"><input type="checkbox" id="cbTraverse" name="traverse"${session?.traverse == true ? " checked" : ""}><span>Traverse referenced documents</span><span class="hint">Also validate the schedules, programme information, box sets and service lists that the document refers to.</span><span class="note">This can take a long time: 20 minutes or more for a large service list.</span></label><div class="traverse-limit sl-options"><label for="maxTraversal">Maximum documents</label><input type="text" id="maxTraversal" name="maxTraversal" inputmode="numeric" size="10" value="${escapeHTML(session?.maxTraversal ?? "100")}" aria-describedby="maxTraversal-hint"><span class="hint" id="maxTraversal-hint">The most documents to traverse: a number, or unlimited. Unlimited can take hours for a large service list.</span><label for="maxDepth">Maximum depth</label><input type="text" id="maxDepth" name="maxDepth" inputmode="numeric" size="10" value="${escapeHTML(session?.maxDepth ?? String(maxDepth))}" aria-describedby="maxDepth-hint"><span class="hint" id="maxDepth-hint">The deepest level of documents to traverse into, up to ${maxDepth}. 1 validates only the documents the service list refers to.</span></div>`
 		: "";
 	const images = session?.images ?? "yes";
+	const checks = session?.signatureChecks ?? "both";
+	const signatureChecks = `<div class="choice" role="group" aria-labelledby="sigchecks-label"><span class="choice-label" id="sigchecks-label">Signature policy checks</span><div class="seg">${segmentChoice("signatureChecks", "both", "sigBoth", "Both", checks == "both")}${segmentChoice("signatureChecks", "connection", "sigConnection", "Certificates only", checks == "connection")}${segmentChoice("signatureChecks", "signature", "sigSignature", "Signatures only", checks == "signature")}${segmentChoice("signatureChecks", "none", "sigNone", "None", checks == "none")}</div><span class="hint">For references with a signature policy: Certificates checks the certificate chain of the HTTPS connection, and Signatures checks the X-JWS-Signature of the response.</span></div>`;
 	const imageChecking = `<div class="choice" role="group" aria-labelledby="images-label"><span class="choice-label" id="images-label">Image checking</span><div class="seg">${segmentChoice("images", "no", "imgNo", "No", images == "no")}${segmentChoice("images", "yes", "imgYes", "Yes", images == "yes")}${segmentChoice("images", "scaled", "imgScaled", "Yes and scaled", images == "scaled")}</div><span class="hint">Yes retrieves each referenced image once and checks its format, size, colour depth and pixel aspect ratio. Yes and scaled also requests each image at half its width with ?w= to check that the server scales it, which doubles the image requests.</span></div>`;
 
 	res.write(`<form class="panel" id="check-form" method="post" enctype="multipart/form-data">
@@ -567,6 +571,7 @@ export async function drawForm(
 <label class="check sl-options"><input type="checkbox" id="cbGermany" name="forGermany"${session?.forGermany == true ? " checked" : ""}><span>Germany</span><span class="hint">Validate against the German profile of A177, which requires 7 days of programme guide either side of today instead of 28.</span></label>
 ${traverse}
 ${imageChecking}
+${signatureChecks}
 </div></fieldset>
 <div class="actions"><button type="submit" class="primary" id="validate">Validate</button><span class="hint" id="submit-hint">${SUBMIT_HINT}</span></div>
 </form>${SUBMIT_SCRIPT}`);

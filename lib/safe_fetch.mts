@@ -345,6 +345,9 @@ export const IMAGE_CHECKING: ImageChecking[] = ["no", "yes", "scaled"];
 export type ValidationRequest = {
 	traverse: boolean; // validate the documents referenced from the document (default false)
 	maxTraversal: number; // the most documents to traverse (Infinity for no limit; default the fetch policy's)
+	maxTraversalDepth: number; // the deepest level of documents to traverse into: at most, and by default, the fetch policy's
+	connectionCertificates: boolean; // check HTTPS certificate chains against signature policies, when the server does (default true)
+	responseSignatures: boolean; // check X-JWS-Signature of responses against signature policies, when the server does (default true)
 	images: ImageChecking; // how referenced images are checked (default "yes")
 	variants: number; // A177 variants to validate against, e.g. GERMAN_A177r6_VARIANT (default 0)
 	report_schema_version: boolean; // report the state of each document's schema (default true)
@@ -360,6 +363,10 @@ export type ValidationOptions = Partial<ValidationRequest>;
 export const validationRequest = (options: ValidationOptions = {}): ValidationRequest => ({
 	traverse: options.traverse ?? false,
 	maxTraversal: options.maxTraversal ?? policy.maxTraversalDocuments,
+	// a request can only lower the server's depth limit
+	maxTraversalDepth: Math.min(options.maxTraversalDepth ?? policy.maxTraversalDepth, policy.maxTraversalDepth),
+	connectionCertificates: options.connectionCertificates ?? true,
+	responseSignatures: options.responseSignatures ?? true,
 	images: options.images ?? "yes",
 	variants: options.variants ?? 0,
 	report_schema_version: options.report_schema_version ?? true,
@@ -562,7 +569,8 @@ export function deferRetrieval<T>(retrieve: () => Promise<T>, complete: (retriev
 export function allowTraversal(url: string): TraversalRefusal | null {
 	const scope = openScopes.at(-1);
 	if (!scope) return refusal("TRAV000", url, "traversal requested outside a validation");
-	if (scope.depth + 1 > policy.maxTraversalDepth) return refusal("TRAV002", url, `maximum traversal depth (${policy.maxTraversalDepth}) reached`);
+	const depth = scope.budget.request.maxTraversalDepth;
+	if (scope.depth + 1 > depth) return refusal("TRAV002", url, `maximum traversal depth (${depth}) reached`);
 	return null;
 }
 
@@ -704,6 +712,27 @@ export function currentValidation(): ValidationHandle | undefined {
 export function currentRequest(): Readonly<ValidationRequest> {
 	return (openScopes.at(-1) ?? runningScope.getStore())?.budget.request ?? validationRequest();
 }
+
+/**
+ * the choices of a validation, given its handle (from currentValidation()), or else of the validation whose rules are being
+ * checked. Use when the call is made after the rule that requested it, e.g. when a retrieval has completed
+ */
+export const requestFor = (validation?: ValidationHandle): Readonly<ValidationRequest> =>
+	(validation as TraversalBudget | undefined)?.request ?? currentRequest();
+
+/**
+ * whether HTTPS certificate chains are checked against signature policies for a validation: the server must enable the
+ * check (checkConnectionCertificates), and the request must not turn it off
+ */
+export const connectionCertificatesChecked = (validation?: ValidationHandle): boolean =>
+	policy.checkConnectionCertificates && requestFor(validation).connectionCertificates;
+
+/**
+ * whether response signatures (X-JWS-Signature) are checked against signature policies for a validation: the server must
+ * enable the check (checkResponseSignatures), and the request must not turn it off
+ */
+export const responseSignaturesChecked = (validation?: ValidationHandle): boolean =>
+	policy.checkResponseSignatures && requestFor(validation).responseSignatures;
 
 /**
  * whether the document whose rules are being checked is the one the validation was requested for, rather than one it

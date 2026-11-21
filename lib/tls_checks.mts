@@ -9,8 +9,8 @@
  * by the server must contain every CAFingerprint of the policy's TrustAnchor, its certificates must be valid, and the host
  * must be one the policy's SubjectConstraint permits. The chain of each host:port is obtained once per validation.
  *
- * This check is separate from the check of a response's X-JWS-Signature (jws_checks.mts), and is enabled with the
- * checkConnectionCertificates fetch policy
+ * This check is separate from the check of a response's X-JWS-Signature (jws_checks.mts). It is enabled for the server
+ * with the checkConnectionCertificates fetch policy, and a request can turn it off (ValidationRequest.connectionCertificates)
  */
 
 import { connect, checkServerIdentity } from "node:tls"
@@ -18,7 +18,7 @@ import type { DetailedPeerCertificate, PeerCertificate } from "node:tls"
 import { X509Certificate } from "node:crypto"
 import { isIP } from "node:net"
 
-import { checkFetchURL, currentFetchPolicy, currentValidation, deferRetrieval, firstReference, sharedRetrieval, withFetchSlots } from "./safe_fetch.mts"
+import { checkFetchURL, connectionCertificatesChecked, currentFetchPolicy, currentValidation, deferRetrieval, firstReference, sharedRetrieval, withFetchSlots } from "./safe_fetch.mts"
 import type { ValidationHandle } from "./safe_fetch.mts"
 import { chainHasFingerprint, chainProblems, enforcementSeverity, hostPermitted, summariseChain } from "./certificate_utils.mts"
 import type { CertificateSummary, SignaturePolicy } from "./certificate_utils.mts"
@@ -132,7 +132,7 @@ function reportChain(endpoint: { host: string; port: number }, result: Connectio
  * @param {ErrorList}       errs     where findings are reported
  */
 export function checkConnection(element: XmlElement, url: string, policy: SignaturePolicy, errs: ErrorList): void {
-	if (!currentFetchPolicy().checkConnectionCertificates) return;
+	if (!connectionCertificatesChecked()) return;
 	const endpoint = endpointOf(url);
 	if (!endpoint || !firstReference(`tls ${policy.policyId}`, `https://${endpoint.host}:${endpoint.port}/`)) return;
 	const chain = connectionChain(endpoint.host, endpoint.port, currentValidation());
@@ -146,7 +146,7 @@ export function checkConnection(element: XmlElement, url: string, policy: Signat
  * start obtaining the certificate chain of the server of a URL, so it is ready when reportConnection() needs it
  */
 export function prefetchConnection(url: string, validation?: ValidationHandle): void {
-	if (!currentFetchPolicy().checkConnectionCertificates) return;
+	if (!connectionCertificatesChecked(validation)) return;
 	const endpoint = endpointOf(url);
 	if (endpoint) void connectionChain(endpoint.host, endpoint.port, validation);
 }
@@ -163,7 +163,7 @@ export function prefetchConnection(url: string, validation?: ValidationHandle): 
  * @param {ValidationHandle} validation  the validation the response belongs to
  */
 export async function reportConnection(element: XmlElement, finalURL: string, policy: SignaturePolicy, errs: ErrorList, validation?: ValidationHandle): Promise<void> {
-	if (!currentFetchPolicy().checkConnectionCertificates) return;
+	if (!connectionCertificatesChecked(validation)) return;
 	const endpoint = endpointOf(finalURL);
 	if (!endpoint || !firstReference(`tls ${policy.policyId}`, `https://${endpoint.host}:${endpoint.port}/`, validation)) return;
 	reportChain(endpoint, await connectionChain(endpoint.host, endpoint.port, validation), policy, element, errs);

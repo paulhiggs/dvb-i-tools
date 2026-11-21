@@ -121,7 +121,7 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 
 Documents retrieved for validation (by URL or by traversal) must use `http:` or `https:`, are limited to 10 MB and a 3 second timeout. A single validation traverses at most 10 levels deep.
 
-When **Traverse referenced documents** is selected on the `/check` form, **Maximum documents** sets the most documents the validation traverses: a positive whole number (default 100), or `unlimited`. Unlimited can make a traversal of a large service list take hours. Traversal is only available when the server is started with `--allow_traversal`.
+When **Traverse referenced documents** is selected on the `/check` form, **Maximum documents** sets the most documents the validation traverses: a positive whole number (default 100), or `unlimited`. Unlimited can make a traversal of a large service list take hours. **Maximum depth** sets how many levels deep the validation traverses: a positive whole number, up to the server's limit of 10 (a larger value is lowered to 10). Traversal is only available when the server is started with `--allow_traversal`.
 
 Each URL is validated only once during a validation. When the same URL is referenced again, it is not retrieved or reported again: the "references" column of the traversed documents table shows how many times it was referenced.
 
@@ -169,6 +169,8 @@ For each reference with a defined policy, every validation made through the serv
   - the response of a referenced resource, such as a logo
 
 The connection is also checked for endpoints that are not traversed.
+
+Either check can be turned off for a validation. **Signature policy checks** on the form chooses **Both** (the default), **Certificates only** (the connection), **Signatures only** (the `X-JWS-Signature`) or **None**. For the `/validate_*` endpoints, add `connection_certificates=false` and/or `response_signatures=false` to the query of a `GET`, or send the headers `X-connection-certificates: false` and/or `X-response-signatures: false` with a `POST`. A request can only turn a check off: neither check runs when the server does not make it.
 
 Findings are errors when the policy's `Enforcement` is `required`, warnings for `warn`, and information for `vendor`.
 
@@ -237,6 +239,9 @@ The response also includes `timing`: how long the validation took, and the retri
 The service list and service list registry endpoints (`/validate_sl`, `/validate_sl_json`, `/validate_slr`, `/validate_slr_json`) can traverse into the documents they reference, as **Traverse referenced documents** does on the form:
 - `traverse=true`: in the query of a `GET`, or the header `X-traverse: true` with a `POST`.
 - `max_traversal=<number|unlimited>`: the most documents to traverse (default 100). In the query, or the header `X-max-traversal` with a `POST`. An invalid value is reported in `parseErr`, and the document is not validated.
+- `max_depth=<number>`: the most levels deep to traverse, a positive whole number (default, and at most, 10: a larger value is lowered to 10). In the query, or the header `X-max-depth` with a `POST`. An invalid value is reported in `parseErr`, and the document is not validated.
+
+The other limits on retrievals (concurrency, the timeout, the size limit and private addresses) are set when the server is started, and cannot be changed by a request.
 
 Traversal is only done when the server is started with `--allow_traversal`. Otherwise the response has an informational `TRAV004`, "traversal was requested, but is not allowed on this server".
 
