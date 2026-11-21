@@ -15,6 +15,11 @@ export const HTTPPort: Record<string, number> = {
 	all_in_one: 3030,
 };
 
+// how long a shutdown (SIGTERM or SIGINT) waits for the requests in progress before the process exits. It is less than the
+// 10 s that "docker stop" waits before it kills the container
+export const SHUTDOWN_GRACE_MS = 8000;
+export const SHUTDOWN_SIGNALS: NodeJS.Signals[] = ["SIGTERM", "SIGINT"];
+
 export const CORSmanual: string = "manual",
 	CORSlibrary: string = "library",
 	CORSnone: string = "none";

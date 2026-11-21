@@ -18,7 +18,7 @@ Validators for DVB-I XML documents defined in DVB Bluebook A177 (revisions r0 to
     It does not listen or exit, so it can be tested in-process on an ephemeral port. `routes/request_handling.mts` holds the shared request readers and `report()`.
 
     The handlers check the request first, then validate, then send the results. The readers return what they found instead of changing `req`: `getDocument()` gives `{document, parseErr}` and `requestFromQuery()` gives `{options}` or `{parseErr}`. The outcome for the request log (`parseErr`, `diags`, `vary`) goes in `res.locals`, typed in `express-extensions.d.ts`, through `recordOutcome()` or `sendRegistryResponse()`. `SLEPR.processServiceListRequest(query, userAgent)` returns a `RegistryResponse` and does not use Express.
-  - [lib/server.mts](lib/server.mts): `startWorkers()` for `--workers`, and `startServer()` for the HTTP/HTTPS listeners and the HTTP-to-HTTPS redirect.
+  - [lib/server.mts](lib/server.mts): `startWorkers()` for `--workers`, and `startServer()` for the HTTP/HTTPS listeners and the HTTP-to-HTTPS redirect. On `SIGTERM`/`SIGINT` it sets `app.locals.stopping` (so `/healthz` reports `stopping`), closes the servers, calls `stopAllValidations()` (`safe_fetch.mts`) and exits within `SHUTDOWN_GRACE_MS`. With workers, `restartWorkersOnExit()` passes the signal on and stops restarting them.
   - [lib/request_logging.mts](lib/request_logging.mts): the morgan request log.
 - [csr.ts](csr.ts): a standalone SLR server with only the `/query` endpoint.
 - [README.md](README.md) documents the command-line options and HTTP endpoints. Update it when you change either of them.

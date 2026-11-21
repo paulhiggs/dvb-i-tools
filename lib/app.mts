@@ -28,6 +28,8 @@ import { checkRouter } from "./routes/check.mts"
 import { sleprRouter } from "./routes/slepr.mts"
 import { infoRouter } from "./routes/info.mts"
 
+export const HEALTH_ROUTE = "/healthz";
+
 /**
  * create the validator's Express application
  *
@@ -56,6 +58,14 @@ export function createApp(config: ValidatorConfig, services: ValidatorServices):
 			xFrameOptions: { action: "sameorigin" },
 		})
 	);
+
+	// the health of the server, for a load balancer or container orchestrator. It is not logged, as it is asked for often.
+	// The server is ready once the service list registry has been read (the other reference data is loaded before the server
+	// listens), and stops being ready when it shuts down (server.mts sets app.locals.stopping)
+	app.get(HEALTH_ROUTE, (req: express.Request, res: express.Response) => {
+		const state = req.app.locals.stopping ? "stopping" : services.csr && !services.csr.loaded ? "starting" : "ok";
+		res.status(state == "ok" ? 200 : 503).set("Cache-Control", "no-store").type("text/plain").send(state);
+	});
 
 	// no static file serving: the pages are generated, and the installation directory holds keys, logs and configuration.
 	// The form's body parsers (file upload and URL encoded fields) are only on the /check route (routes/check.mts)

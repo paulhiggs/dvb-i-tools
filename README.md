@@ -95,6 +95,18 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 1. Clone this repository `git clone  https://github.com/paulhiggs/dvb-i-tools.git`
 1. run it - `docker compose up`
 
+The image installs only the runtime dependencies (`npm ci --omit=dev`, `NODE_ENV=production`), and has a `HEALTHCHECK` that asks `/healthz` over HTTPS.
+
+#### Stopping
+
+On `SIGTERM` (for example `docker stop`) or `SIGINT` (Ctrl-C), the server shuts down gracefully:
+- `/healthz` reports `stopping`
+- it stops accepting connections
+- the validations in progress are stopped, and their requests are answered with the results so far
+- it exits when the connections have closed, or after 8 seconds (less than the 10 seconds `docker stop` waits)
+
+With `--workers`, the primary passes the signal on to the workers and does not restart them. A second signal stops the process at once.
+
 ### Command Line Arguments
 
 - `--urls [-u]` forces the classification scheme, country and language values to be read from the internet. Default is to load values from local files.
@@ -372,6 +384,10 @@ accepted valies for `<type>`
 
 #### Playlist validation endpoints
 *todo writeup needed*
+
+#### Health
+
+`<server>/healthz` answers `200` with `ok` when the server is ready, and `503` with `starting` until the service list registry has been read, or `stopping` while it shuts down. It is not written to the request log.
 
 ## Acknowledgements
 

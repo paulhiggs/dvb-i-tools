@@ -397,7 +397,22 @@ type TraversalBudget = {
 	retrievals: Map<string, Promise<unknown>>; // retrievals shared by the checks of a validation, by key (see sharedRetrieval())
 	referenced: Set<string>; // resources that have been checked, by kind and URL (see firstReference())
 	observer?: ValidationObserver; // follows the progress of the validation (see observeValidation())
+	stopped?: boolean; // set by stopAllValidations(), when the server is shutting down
 };
+
+// the validations in progress, so they can be stopped when the server shuts down
+const activeValidations = new Set<TraversalBudget>();
+
+/**
+ * stop every validation in progress, e.g. when the server is shutting down: as when a validation is cancelled, the deferred
+ * work not yet done is dropped, so each validation finishes with the results it has
+ *
+ * @returns {number} the number of validations stopped
+ */
+export function stopAllValidations(): number {
+	for (const budget of activeValidations) budget.stopped = true;
+	return activeValidations.size;
+}
 
 /**
  * follows the progress of a validation, e.g. to show results while a traversal is in progress (issue #104). Every method is
@@ -467,6 +482,7 @@ export class ValidationScope {
 		else {
 			this.budget = { request: validationRequest(options), started: performance.now(), fetches: new Map<string, HostFetches>(), documents: 0, traversed: new Set<string>(), requested: new Map<string, TraversalRequest>(), retrievals: new Map<string, Promise<unknown>>(), referenced: new Set<string>(), observer: observing.getStore() };
 			this.budget.observer?.attached?.(this.budget);
+			activeValidations.add(this.budget);
 		}
 	}
 
@@ -493,10 +509,11 @@ export class ValidationScope {
 	async finish(): Promise<void> {
 		this.#close();
 		const observer = this.budget.observer;
+		const stopped = () => this.budget.stopped || observer?.cancelled;
 		if (this.depth == 0) observer?.rulesChecked?.();
 		const started: { task: DeferredTask; retrieval: Promise<SettledRetrieval> }[] = [];
 		const startAhead = () => {
-			while (started.length < Math.max(1, policy.fetchConcurrency) && this.#tasks.length > 0 && !observer?.cancelled) {
+			while (started.length < Math.max(1, policy.fetchConcurrency) && this.#tasks.length > 0 && !stopped()) {
 				const task = this.#tasks.shift()!;
 				// the retrieve part is started in this scope, so claimTraversal() counts it against this validation.
 				// Its synchronous start (e.g. claiming the budget) runs now, so claims are made in registration order
@@ -513,9 +530,9 @@ export class ValidationScope {
 		while (started.length > 0) {
 			const { task, retrieval } = started.shift()!;
 			const settled = await retrieval;
-			// a cancelled validation (e.g. the client has gone away) drops the work not yet done; retrievals in progress finish
-			// but are not used
-			if (observer?.cancelled) {
+			// a cancelled validation (e.g. the client has gone away) or one stopped as the server shuts down drops the work not
+			// yet done; retrievals in progress finish but are not used
+			if (stopped()) {
 				this.#tasks.length = 0;
 				return;
 			}
@@ -534,6 +551,7 @@ export class ValidationScope {
 
 	[Symbol.dispose](): void {
 		this.#close();
+		if (this.depth == 0) activeValidations.delete(this.budget);
 	}
 
 	/**
