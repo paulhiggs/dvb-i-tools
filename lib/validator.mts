@@ -37,7 +37,7 @@ import { Default_SLEPR, __dirname } from "./data_locations.mts"
 import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "./ui.mts"
 import type {FormModes} from './ui.mts'
 import ErrorList from "./error_list.mts"
-import { safeFetch, configureFetchPolicy, IMAGE_CHECKING } from "./safe_fetch.mts"
+import { safeFetch, configureFetchPolicy, IMAGE_CHECKING, DEFAULT_MAX_TRAVERSAL, parseTraversalLimit } from "./safe_fetch.mts"
 import type { ImageChecking } from "./safe_fetch.mts"
 import { readmyfile, HasProperty, escapeHTML } from "./utils.mts"
 import {
@@ -170,6 +170,7 @@ async function DVB_I_check(
 		if (cgcheck) req.session.data.cgmode = cgcheck.supportedRequests[0].value;
 		req.session.data.forGermany = false;
 		req.session.data.traverse = false;
+		req.session.data.maxTraversal = String(DEFAULT_MAX_TRAVERSAL);
 		req.session.data.images = "yes";
 	}
 	if (req.session.data.lastUrl != req.url) {
@@ -191,7 +192,11 @@ async function DVB_I_check(
 		const testtype = field("testtype"),
 			doclocation = field("doclocation"),
 			requestType = field("requestType"),
-			XMLurl = field("XMLurl");
+			XMLurl = field("XMLurl"),
+			maxTraversalField = field("maxTraversal").trim();
+		// the most documents to traverse: a positive whole number or "unlimited", given when traversal is selected
+		const traverse = req.body.traverse == "on" && (testtype == MODE_SL || testtype == MODE_SLR),
+			maxTraversal = maxTraversalField.length == 0 ? DEFAULT_MAX_TRAVERSAL : parseTraversalLimit(maxTraversalField);
 		const available: Record<string, boolean> = { [MODE_SL]: hasSL, [MODE_PL]: hasPL, [MODE_CG]: hasCG, [MODE_SLR]: hasSLR };
 
 		if (testtype.length == 0) req.parseErr = ["validation type not specified"]
@@ -203,9 +208,12 @@ async function DVB_I_check(
 		else if (doclocation == MODE_URL && XMLurl.length == 0) req.parseErr = ["URL not specified"]
 		else if (doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) req.parseErr = ["File not provided"]
 		else if (doclocation == MODE_FILE && Array.isArray(req.files!.XMLfile)) req.parseErr = ["only one file can be validated at a time"]
+		else if (traverse && maxTraversal == undefined)
+			req.parseErr = [`the maximum number of documents to traverse must be a positive whole number or ${"unlimited".quote()}, not ${maxTraversalField.quote()}`]
 
 		req.session.data.forGermany = req.body.forGermany == "on";
 		req.session.data.traverse = req.body.traverse == "on"
+		req.session.data.maxTraversal = maxTraversalField.length > 0 ? maxTraversalField : String(DEFAULT_MAX_TRAVERSAL)
 		req.session.data.images = imageChecking(req.body.images)
 		const log_prefix = createPrefix(req, testtype);
 		const errs = ErrorList.withMarkup();
@@ -248,7 +256,7 @@ async function DVB_I_check(
 					errs.setType("Service List")
 					if (slcheck) 
 						await slcheck.doValidateServiceList(VVxml, errs, 
-							{ log_prefix: log_prefix, report_schema_version: true, variants: req.session.data.forGermany ? GERMAN_A177r6_VARIANT : 0, traverse: req.session.data.traverse, images: req.session.data.images }
+							{ log_prefix: log_prefix, report_schema_version: true, variants: req.session.data.forGermany ? GERMAN_A177r6_VARIANT : 0, traverse: req.session.data.traverse, maxTraversal: maxTraversal, images: req.session.data.images }
 						);
 					break;
 				case MODE_PL:
@@ -259,7 +267,7 @@ async function DVB_I_check(
 				case MODE_SLR:
 					errs.setType("Service List Registry")
 					if (slrcheck) 
-						await slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, traverse: req.session.data.traverse, images: req.session.data.images });
+						await slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, traverse: req.session.data.traverse, maxTraversal: maxTraversal, images: req.session.data.images });
 					break;
 			}
 
@@ -398,15 +406,6 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 	// every validation made through the server retrieves and checks the images it references. The library default is off,
 	// so documents validated directly (e.g. by the testsuite) do not make network requests for their images
 	configureFetchPolicy({ checkImages: true });
-
-	if (HasProperty(app_options, "max_traversal")) {
-		const maxTraversal = app_options.max_traversal;
-		if (typeof maxTraversal != "number" || Number.isNaN(maxTraversal)) {
-			console.log(chalk.red(`max_traversal must be a positive whole number or ${"unlimited".quote()}`));
-			process.exit(1);
-		}
-		configureFetchPolicy({ maxTraversalDocuments: maxTraversal });
-	}
 
 	if (HasProperty(app_options, "fetch_concurrency")) {
 		const fetchConcurrency = app_options.fetch_concurrency;

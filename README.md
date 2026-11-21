@@ -114,13 +114,14 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 - `--SLRmode <mode>` select the type of processing for the SLR response
   - `"default"` - default mode - according to A177 specification
 - `--allow_traversal [-t]` flag to allow document-to-document traversal <span style="color:red">(experimental, takes much time)</span>	
-- `--max_traversal <number|unlimited>` maximum number of documents retrieved by traversal during a single validation (default: 100). `unlimited` removes the limit, which can make a traversal of a large service list take a very long time.
 - `--fetch_concurrency <number>` maximum number of documents retrieved at the same time (default: 8). During traversal, referenced documents are downloaded ahead while earlier ones are validated; results are still reported in the order the documents are referenced. Use `1` to make one request at a time.
 - `--fetch_per_host <number>` maximum number of documents retrieved at the same time from any one host (default: 4), within `--fetch_concurrency`. This stops a single server, such as an image server referenced by every programme, being sent more requests at once than it can answer within the timeout.
 - `--allow_private_fetch <true|false>` allow documents to be retrieved from `localhost` and private network addresses (default: true). Set to `false` on a public deployment. Only literal IP addresses and `localhost` are recognised, not hostnames that resolve to private addresses.
 - `--help [-h]` server and client command help
 
-Documents retrieved for validation (by URL or by traversal) must use `http:` or `https:`, are limited to 10 MB and a 3 second timeout. A single validation traverses at most 10 levels deep and at most 100 referenced documents (see `--max_traversal`).
+Documents retrieved for validation (by URL or by traversal) must use `http:` or `https:`, are limited to 10 MB and a 3 second timeout. A single validation traverses at most 10 levels deep.
+
+When **Traverse referenced documents** is selected on the `/check` form, **Maximum documents** sets the most documents the validation traverses: a positive whole number (default 100), or `unlimited`. Unlimited can make a traversal of a large service list take hours. Traversal is only available when the server is started with `--allow_traversal`.
 
 Each URL is validated only once during a validation. When the same URL is referenced again, it is not retrieved or reported again: the "references" column of the traversed documents table shows how many times it was referenced.
 
@@ -132,7 +133,7 @@ A referenced document that is not traversed is reported with a warning:
 
 ### Image checks
 
-Every validation made through the server retrieves the images referenced in `<RelatedMaterial><MediaLocator><MediaUri>` (service list, service, content guide source and service banner logos, and promotional still images) and checks them against A177r8 clause 5.2.8. Inline (`data:`) images are checked without any retrieval. Each image URL is retrieved and reported only once per validation, including traversed documents, so a logo shared by many services is checked once. The content digest check (`@integrity`) uses the same retrieval. Images do not count towards `--max_traversal`, but they share the `--fetch_concurrency` and `--fetch_per_host` limits. A referenced resource is retrieved as soon as the rule that refers to it is checked, so retrievals proceed while the rest of the document is validated.
+Every validation made through the server retrieves the images referenced in `<RelatedMaterial><MediaLocator><MediaUri>` (service list, service, content guide source and service banner logos, and promotional still images) and checks them against A177r8 clause 5.2.8. Inline (`data:`) images are checked without any retrieval. Each image URL is retrieved and reported only once per validation, including traversed documents, so a logo shared by many services is checked once. The content digest check (`@integrity`) uses the same retrieval. Images do not count towards the maximum number of documents to traverse, but they share the `--fetch_concurrency` and `--fetch_per_host` limits. A referenced resource is retrieved as soon as the rule that refers to it is checked, so retrievals proceed while the rest of the document is validated.
 
 **Image checking** on the form chooses how images are checked:
 - **No**: images are not retrieved (their URLs and `@contentType` are still checked).

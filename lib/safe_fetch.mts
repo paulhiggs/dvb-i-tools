@@ -16,6 +16,9 @@ import { AsyncLocalStorage } from "node:async_hooks"
 
 import { fetch_options } from "./globals.mts"
 
+// the most documents a validation traverses, unless the validation sets its own limit
+export const DEFAULT_MAX_TRAVERSAL = 100;
+
 export type FetchPolicy = {
 	allowPrivateAddresses: boolean // when false, URLs whose host is a loopback, private, link-local etc. address are refused
 	maxResponseBytes: number // responses larger than this are rejected
@@ -32,7 +35,7 @@ const policy: FetchPolicy = {
 	maxResponseBytes: 10 * 1024 * 1024,
 	timeout: fetch_options.timeout as number,
 	maxTraversalDepth: 10,
-	maxTraversalDocuments: 100,
+	maxTraversalDocuments: DEFAULT_MAX_TRAVERSAL,
 	fetchConcurrency: 8,
 	checkImages: false,
 	fetchesPerHost: 4,
@@ -297,7 +300,21 @@ export const IMAGE_CHECKING: ImageChecking[] = ["no", "yes", "scaled"];
 // choices made for a whole validation, by the request that started it
 export type ValidationSettings = {
 	images?: ImageChecking; // default "yes"
+	maxTraversalDocuments?: number; // the most documents the validation may traverse (Infinity for no limit), instead of the policy's
 };
+
+/**
+ * read a limit on the number of documents to traverse: a positive whole number, or "unlimited"
+ *
+ * @param {unknown} value  the value given, e.g. in a form field
+ * @returns {number | undefined} the limit (Infinity for "unlimited"), or undefined if the value is not valid
+ */
+export function parseTraversalLimit(value: unknown): number | undefined {
+	if (typeof value != "string") return undefined;
+	const v = value.trim().toLowerCase();
+	if (v == "unlimited") return Infinity;
+	return /^[1-9][0-9]*$/.test(v) ? Number(v) : undefined;
+}
 
 type TraversalBudget = {
 	settings: ValidationSettings;
@@ -526,8 +543,8 @@ export function claimTraversal(url: string): TraversalRefusal | null {
 	if (!scope) return refusal("TRAV000", url, "traversal performed outside a validation");
 	const key = normaliseURL(url);
 	if (scope.budget.traversed.has(key)) return { code: "TRAV001", message: `skipped - ${url} already validated` };
-	if (scope.budget.documents >= policy.maxTraversalDocuments)
-		return refusal("TRAV003", url, `maximum number of traversed documents (${policy.maxTraversalDocuments}) reached`);
+	const limit = scope.budget.settings.maxTraversalDocuments ?? policy.maxTraversalDocuments;
+	if (scope.budget.documents >= limit) return refusal("TRAV003", url, `maximum number of traversed documents (${limit}) reached`);
 	scope.budget.documents++;
 	scope.budget.traversed.add(key);
 	return null;

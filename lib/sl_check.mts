@@ -145,6 +145,7 @@ export type SL_Validator_Options = {
 	log_prefix? : string
 	report_schema_version?: boolean
 	traverse?: boolean
+	maxTraversal?: number // the most documents to traverse (Infinity for no limit); default DEFAULT_MAX_TRAVERSAL
 	variants?: number
 	images?: ImageChecking // how referenced images are checked (default "yes"; "scaled" also checks the server scales them)
 }
@@ -2335,7 +2336,7 @@ export default class ServiceListCheck {
 	/*public*/ async doValidateServiceList(SLtext: string, errs: ErrorList, options: SL_Validator_Options = {}) : Promise<void> {
 		this.#numRequests++;
 		// collects the network work (traversal, referenced resources) that is performed once the rules below have been checked
-		using scope = ValidationScope.open({ images: options.images });
+		using scope = ValidationScope.open({ images: options.images, maxTraversalDocuments: options.maxTraversal });
 		if (!SLtext) {
 			errs.addError({
 				type: APPLICATION,
