@@ -67,12 +67,12 @@ import { CheckExtension, EXTENSION_LOCATION_SERVICE_ELEMENT, EXTENSION_LOCATION_
 import { ValidateAnySignaturePolicy } from "./related_material_checks.mts"
 import { checkReferencedResource, checkSignedResponse, signaturePolicyOf } from "./resource_checks.mts"
 import { checkConnection } from "./tls_checks.mts"
-import type { ImageChecking } from "./safe_fetch.mts"
+import type { ValidationOptions } from "./safe_fetch.mts"
 import { ValidateSignaturePolicies } from "./signature_policies.mts"
 import type { SignaturePolicy } from "./certificate_utils.mts"
 
 import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES, type CG_Validator_Options } from "./cg_check.mts"
-import { allowTraversal, currentValidation, deferRetrieval, retrieveTraversal, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
+import { allowTraversal, currentRequest, currentValidation, deferRetrieval, retrieveTraversal, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
 
 
 const LCN_TABLE_NO_TARGETREGION: string = "unspecifiedRegion",
@@ -143,14 +143,9 @@ export type ValidatorOptions = LoadOptions & {
 	videofmts?: ClassificationScheme
 }
 
-export type SL_Validator_Options = {
-	log_prefix? : string
-	report_schema_version?: boolean
-	traverse?: boolean
-	maxTraversal?: number // the most documents to traverse (Infinity for no limit); default DEFAULT_MAX_TRAVERSAL
-	variants?: number
-	images?: ImageChecking // how referenced images are checked (default "yes"; "scaled" also checks the server scales them)
-}
+// the choices of a service list validation (see ValidationRequest). For a service list reached by traversal, the choices of
+// the validation that traversed into it are used
+export type SL_Validator_Options = ValidationOptions
 
 export default class ServiceListCheck {
 	#numRequests: number
@@ -1799,11 +1794,9 @@ export default class ServiceListCheck {
 	 *                     declaredSubscriptionPackages  subscription packages that are declared in the service list
 	 *                     declaredAudioLanguages        language values declared in the <LanguageList> of the service list
 	 *                     ContentGuideSourceIDs         identifiers of content guide sources found in the service list
-	 * @param {SL_Validator_Options} options
-	 *                     traverse                      drill into resources referenced in the service
 	 * @param {ErrorList}  errs                          errors found in validaton
 	 */
-	/*private*/ #validateService(service: XmlElement, thisServiceId: string, documentInfo: FoundDocumentItems, errs: ErrorList, options: SL_Validator_Options) {
+	/*private*/ #validateService(service: XmlElement, thisServiceId: string, documentInfo: FoundDocumentItems, errs: ErrorList) {
 		if (!parameterCheck("validateService", service, [dvbi.e_Service, dvbi.e_TestService], errs, "SL100")) return;
 		checkAttributes(service, [], [dvbi.a_dynamic, dvbi.a_version, dvbi.a_replayAvailable, tva.a_lang], dvbiEA.ServiceType, errs, "SL104");
 		checkTopElementsAndCardinality(
@@ -1978,7 +1971,7 @@ export default class ServiceListCheck {
 				key: "unspecified content guide source",
 			});
 
-		if (this.#content_guide_validator != undefined && options.traverse) {
+		if (this.#content_guide_validator != undefined && currentRequest().traverse) {
 			const myContentGuide = sCG ?? this.#getContentGuideById(service.parent as XmlElement, sCGref?.content) ?? this.#getDefaultContentGuide(service.parent as XmlElement)
 			if (myContentGuide != null) {
 				// this is the content guide source for the service
@@ -1987,10 +1980,9 @@ export default class ServiceListCheck {
 				const dpiEpURL = myContentGuide.getAnyNs(dvbi.e_ProgramInfoEndpoint)?.getAnyNs(dvbi.e_URI)?.content
 				const meEpURL = myContentGuide.getAnyNs(dvbi.e_MoreEpisodesEndpoint)?.getAnyNs(dvbi.e_URI)?.content
 
-				// endpoints used when traversing from the content guide responses (a copy is passed to each validation)
+				// the endpoints the content guide responses' references are built from (a copy is passed to each validation). The
+				// other choices, such as traversal, are those of the whole validation (currentRequest())
 				const cgOptions: CG_Validator_Options = {
-					report_schema_version: options.report_schema_version,
-					traverse: options.traverse,
 					progInfo_ep: dpiEpURL,
 					grpInfo_ep: giEpURL,
 					mEpisodes_ep: meEpURL,
@@ -2019,7 +2011,7 @@ export default class ServiceListCheck {
 
 					// A177r8 - the programme guide should be available for 28 days before and 28 days after today.
 					// German service lists only need 7 days before and 7 days after today
-					const NEEDED_DAYS = (options.variants ?? 0) & GERMAN_A177r6_VARIANT ? 7 : 28
+					const NEEDED_DAYS = currentRequest().variants & GERMAN_A177r6_VARIANT ? 7 : 28
 					for (let test_day=-NEEDED_DAYS; test_day<=NEEDED_DAYS; test_day++) {
 						const start_of_day = start_of_today.add({days: test_day})
 						for (let start_hour=0; start_hour<24; start_hour+=6) {
@@ -2340,7 +2332,9 @@ export default class ServiceListCheck {
 	/*public*/ async doValidateServiceList(SLtext: string, errs: ErrorList, options: SL_Validator_Options = {}) : Promise<void> {
 		this.#numRequests++;
 		// collects the network work (traversal, referenced resources) that is performed once the rules below have been checked
-		using scope = ValidationScope.open({ images: options.images, maxTraversalDocuments: options.maxTraversal });
+		using scope = ValidationScope.open(options);
+		// the choices of the whole validation: for a traversed service list, those of the validation that traversed into it
+		const request = currentRequest();
 		if (!SLtext) {
 			errs.addError({
 				type: APPLICATION,
@@ -2350,15 +2344,10 @@ export default class ServiceListCheck {
 			return;
 		}
 
-		DefaultProperty(options, "log_prefix", null);
-		DefaultProperty(options, "report_schema_version", true);
-		DefaultProperty(options, "variants", 0);
-		DefaultProperty(options, "traverse", false)
-
 		// 'using' disposes the document (WASM memory) on every exit from this method, including early returns and exceptions
 		using SL = SchemaLoad(SLtext, errs, "SL001");
 		if (!SL) return;
-		document_logger(errs, options.log_prefix, false);
+		document_logger(errs, scope.depth == 0 ? request.log_prefix : undefined, false);
 
 		if (SL.root.name !== dvbi.e_ServiceList) {
 			errs.addError({
@@ -2387,7 +2376,7 @@ export default class ServiceListCheck {
 		const ns = SL.root.namespaceUri;
 		const documentInfo = new FoundDocumentItems(true); // collection of things we learn when parsing the service list
 
-		if (!this.#doSchemaVerification(SL as XmlDocument, errs, "SL005", options.report_schema_version, options.variants)) {
+		if (!this.#doSchemaVerification(SL as XmlDocument, errs, "SL005", request.report_schema_version, request.variants)) {
 			errs.addError({
 				code: "SL010",
 				message: `Unsupported namespace ${ns.quote()}.`,
@@ -2579,8 +2568,7 @@ export default class ServiceListCheck {
 				service,
 				`service-${s}`, // use a default value in case <UniqueIdentifier> is not specified
 				documentInfo,
-				errs,
-				options
+				errs
 			);
 		});
 
@@ -2596,8 +2584,7 @@ export default class ServiceListCheck {
 					testService,
 					`testservice-${ts}`, // use a default value in case <UniqueIdentifier> is not specified
 					documentInfo,
-					errs,
-					options
+					errs
 				);
 			});
 		}
@@ -2874,7 +2861,7 @@ export default class ServiceListCheck {
 	 *                      traverse              validate referenced DVB-I documents
 	 */
 	/*public*/ 
-	validateServiceList(Location: XmlElement, requestUrl: string, errs: ErrorList, options: SL_Validator_Options) : void {
+	validateServiceList(Location: XmlElement, requestUrl: string, errs: ErrorList) : void {
 
 		const limited = allowTraversal(requestUrl);
 		if (limited) {
@@ -2913,7 +2900,7 @@ export default class ServiceListCheck {
 			if (resp) {
 				if (policy) await checkSignedResponse(Location, requestUrl, resp, policy, errs, validation);
 				if (resp.ok)
-					await this.doValidateServiceList(resp.text(), errs, options);
+					await this.doValidateServiceList(resp.text(), errs);
 				else errs.addError({
 					code: `VSL002`,
 					message: `error with "${Location.content}" - ${resp.status} ${resp.statusText}`,
