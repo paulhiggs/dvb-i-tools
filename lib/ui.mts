@@ -231,16 +231,32 @@ function* nested_error_row(req: express.Request, errs: ErrorList | undefined, de
 			"</td>"+
 			`<td style="${palette.background} ${palette.text}">${escapeHTML(nest.compactSummary())}`
 		for (const msg of nest.debugs) yield `${BREAK}${escapeHTML(msg.code)} ${escapeHTML(msg.message)}`
-		yield "</td></tr>"
+		yield `</td><td>${(nest.references ?? 1) > 1 ? nest.references : ""}</td></tr>`
 		yield* nested_error_row(req, nest, depth+1)
 	}
+}
+
+// the number of traversed documents, and the number of further references to them that were not validated again
+function traversalCounts(errs: ErrorList): { documents: number; repeats: number } {
+	let documents = 0,
+		repeats = 0;
+	const pending = [...errs.nestedErrors];
+	while (pending.length > 0) {
+		const nest = pending.pop()!;
+		documents++;
+		repeats += (nest.references ?? 1) - 1;
+		pending.push(...nest.nestedErrors);
+	}
+	return { documents, repeats };
 }
 
 function* reportNestedErrors(req: express.Request, errs: ErrorList | undefined): Generator<string> {
 	if (!errs || errs.nestedErrors.length == 0) return
 
+	const { documents, repeats } = traversalCounts(errs)
 	yield `${BREAK}<p><b>Traversed Errors</b></p>`
-	yield `<table><tr><th></th><th>location</th><th>result</th></tr>`
+	yield `<p>${documents} ${documents == 1 ? "document" : "documents"} traversed${repeats > 0 ? `, ${repeats} further ${repeats == 1 ? "reference" : "references"} to them not validated again` : ""}</p>`
+	yield `<table><tr><th></th><th>location</th><th>result</th><th>references</th></tr>`
 
 	yield* nested_error_row(req, errs, 1)
 	yield "</table>"

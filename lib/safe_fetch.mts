@@ -211,15 +211,20 @@ type DeferredTask = {
 };
 type SettledRetrieval = { value: unknown } | { error: unknown };
 
+// something that records the results of a requested traversal, and counts how many times the URL is referenced
+export type TraversalRequest = { references?: number };
+
 type TraversalBudget = {
 	documents: number; // number of documents retrieved by traversal
 	traversed: Set<string>; // URLs of the documents retrieved by traversal
+	requested: Map<string, TraversalRequest>; // the first request to traverse into each URL
 };
 
 /**
  * the reason a traversal is not performed, as reported to the user
  *   TRAV000  traversal requested or performed outside a validation (application error)
- *   TRAV001  the URL has already been traversed during this validation
+ *   TRAV001  the URL has already been traversed during this validation (only if a repeated request was not caught
+ *            by repeatedTraversal(), which counts it against the first request instead)
  *   TRAV002  the maximum traversal depth has been reached
  *   TRAV003  the maximum number of traversed documents has been reached
  */
@@ -250,7 +255,7 @@ export class ValidationScope {
 
 	private constructor(parent: ValidationScope | undefined) {
 		this.depth = parent ? parent.depth + 1 : 0;
-		this.budget = parent ? parent.budget : { documents: 0, traversed: new Set<string>() };
+		this.budget = parent ? parent.budget : { documents: 0, traversed: new Set<string>(), requested: new Map<string, TraversalRequest>() };
 	}
 
 	/**
@@ -346,6 +351,38 @@ export function allowTraversal(url: string): TraversalRefusal | null {
 	if (!scope) return refusal("TRAV000", url, "traversal requested outside a validation");
 	if (scope.depth + 1 > policy.maxTraversalDepth) return refusal("TRAV002", url, `maximum traversal depth (${policy.maxTraversalDepth}) reached`);
 	return null;
+}
+
+/**
+ * check, when a traversal is requested by the validation rules, whether the same URL has already been requested during
+ * this validation. If it has, the repeat is counted against the first request (whose results are reported once) and
+ * the caller should not traverse again
+ *
+ * @param {string} url  the URL of the document to be traversed into
+ * @returns {TraversalRequest | undefined} the first request for the URL, with its count of references increased, or
+ *                                         undefined if the URL has not been requested before
+ */
+export function repeatedTraversal(url: string): TraversalRequest | undefined {
+	const scope = openScopes.at(-1);
+	if (!scope) return undefined;
+	const first = scope.budget.requested.get(normaliseURL(url));
+	if (first) first.references = (first.references ?? 1) + 1;
+	return first;
+}
+
+/**
+ * record the first request to traverse into a URL, so that later requests for it are counted by repeatedTraversal().
+ * A request that is refused because of the traversal depth is not recorded, so the URL can still be traversed when it
+ * is referenced from a shallower document
+ *
+ * @param {string}           url      the URL of the document to be traversed into
+ * @param {TraversalRequest} request  records the results of the traversal
+ */
+export function recordTraversal(url: string, request: TraversalRequest): void {
+	const scope = openScopes.at(-1);
+	if (!scope || allowTraversal(url)) return;
+	request.references = 1;
+	scope.budget.requested.set(normaliseURL(url), request);
 }
 
 /**

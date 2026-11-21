@@ -24,6 +24,7 @@ import { cgVersions, slVersions, dvbi } from "./DVB-I_definitions.mts"
 import { TVAschema, schemaURL } from "./data_locations.mts"
 
 import ErrorList, { WARNING, APPLICATION } from "./error_list.mts"
+import { nestedTraversal } from "./traversal.mts"
 import type { ReportedErrorType } from "./error_list.mts"
 import { unEntity, DuplicatedValue, parameterCheck } from "./utils.mts"
 import { isHTTPURL, isDVBLocator, isUTCDateTime, isCRIDURI, isTAGURI } from "./pattern_checks.mts"
@@ -1590,20 +1591,18 @@ export default class ContentGuideCheck {
 
 			if (options?.traverse && options?.progInfo_ep) {
 				const piURL = `${options?.progInfo_ep}?pid=${programCRID}`
-				const piErrs = ErrorList.summaryOnly(piURL, CG_REQUEST_PROGRAM, "Program Information")
+				const piErrs = nestedTraversal(errs, piURL, CG_REQUEST_PROGRAM, "Program Information")
 	/*dbg*/console.log(`traverse:: DPI of ${piURL}`)
-				this.validateContentGuide(ProgramInformation, piURL, CG_REQUEST_PROGRAM, piErrs, {} )
-				errs.nestedErrors.push(piErrs)
+				if (piErrs) this.validateContentGuide(ProgramInformation, piURL, CG_REQUEST_PROGRAM, piErrs, {} )
 			}
 
 			// traverse more episodes if provided. The episodes in a More Episodes response are not themselves traversed for
 			// more episodes, as each would request the same series again under a different URL
 			if (options?.traverse && options?.mEpisodes_ep && requestType != CG_REQUEST_MORE_EPISODES) {
 				const mepURL = `${options?.mEpisodes_ep}?pid=${programCRID}`
-				const mepErrs = ErrorList.summaryOnly(mepURL, CG_REQUEST_MORE_EPISODES, `More Episodes for ${programCRID}`)
+				const mepErrs = nestedTraversal(errs, mepURL, CG_REQUEST_MORE_EPISODES, `More Episodes for ${programCRID}`)
 	/*dbg*/console.log(`traverse:: More Episodes of ${mepURL}`)
-				this.validateContentGuide(ProgramInformation, mepURL, CG_REQUEST_MORE_EPISODES, mepErrs, options )
-				errs.nestedErrors.push(mepErrs)
+				if (mepErrs) this.validateContentGuide(ProgramInformation, mepURL, CG_REQUEST_MORE_EPISODES, mepErrs, options )
 			}
 		}
 
@@ -1818,10 +1817,9 @@ export default class ContentGuideCheck {
 							if (getHowRelated(rm) == dvbi.PAGINATION_NEXT_URI) {
 								const paginationURL = getMediaUri(rm)
 								if (paginationURL) {
-									const paginationErrs = ErrorList.summaryOnly(paginationURL, CG_REQUEST_BS_CATEGORIES, "Box Set Categories (pagination)")
+									const paginationErrs = nestedTraversal(errs, paginationURL, CG_REQUEST_BS_CATEGORIES, "Box Set Categories (pagination)")
 	/*dbg*/console.log(`traverse:: Next pagination for Box Set Categories of ${paginationURL}`)
-									this.validateContentGuide(rm, paginationURL, CG_REQUEST_BS_CATEGORIES, paginationErrs, options)
-									errs.nestedErrors.push(paginationErrs)
+									if (paginationErrs) this.validateContentGuide(rm, paginationURL, CG_REQUEST_BS_CATEGORIES, paginationErrs, options)
 								}
 							}
 						})
@@ -1839,10 +1837,9 @@ export default class ContentGuideCheck {
 					const list_groupId = GroupInformation.attrAnyNsValueOr(tva.a_groupId)
 					if (list_groupId && options?.traverse && options?.grpInfo_ep) {
 						const bslURL = `${options.grpInfo_ep}?groupId=${list_groupId}`
-						const bslErrs = ErrorList.summaryOnly(bslURL, CG_REQUEST_BS_LISTS, "Box Set List")
+						const bslErrs = nestedTraversal(errs, bslURL, CG_REQUEST_BS_LISTS, "Box Set List")
 	/*dbg*/console.log(`traverse:: Box Set List of ${bslURL}`)
-						this.validateContentGuide(GroupInformation, bslURL, CG_REQUEST_BS_LISTS, bslErrs, options )
-						errs.nestedErrors.push(bslErrs)
+						if (bslErrs) this.validateContentGuide(GroupInformation, bslURL, CG_REQUEST_BS_LISTS, bslErrs, options )
 					}
 				}
 				break;
@@ -1874,10 +1871,9 @@ export default class ContentGuideCheck {
 							if (getHowRelated(rm) == dvbi.PAGINATION_NEXT_URI) {
 								const paginationURL = getMediaUri(rm)
 								if (paginationURL) {
-									const paginationErrs = ErrorList.summaryOnly(paginationURL, CG_REQUEST_BS_LISTS, "Box Set Lists (pagination)")
+									const paginationErrs = nestedTraversal(errs, paginationURL, CG_REQUEST_BS_LISTS, "Box Set Lists (pagination)")
 	/*dbg*/console.log(`traverse:: Next pagination for Box Set Lists of ${paginationURL}`)
-									this.validateContentGuide(rm, paginationURL, CG_REQUEST_BS_LISTS, paginationErrs, options)
-									errs.nestedErrors.push(paginationErrs)
+									if (paginationErrs) this.validateContentGuide(rm, paginationURL, CG_REQUEST_BS_LISTS, paginationErrs, options)
 								}
 							}
 						})	
@@ -1895,10 +1891,9 @@ export default class ContentGuideCheck {
 					const list_groupId = GroupInformation.attrAnyNsValueOr(tva.a_groupId)
 					if (list_groupId && options?.traverse && options?.grpInfo_ep) {
 						const bscURL = `${options.grpInfo_ep}contents?groupId=${list_groupId}`
-						const bscErrs = ErrorList.summaryOnly(bscURL, CG_REQUEST_BS_CONTENTS, "Box Set Contents")
+						const bscErrs = nestedTraversal(errs, bscURL, CG_REQUEST_BS_CONTENTS, "Box Set Contents")
 	/*dbg*/console.log(`traverse:: Box Set Contents of ${bscURL}`)
-						this.validateContentGuide(GroupInformation, bscURL, CG_REQUEST_BS_CONTENTS, bscErrs, options)
-						errs.nestedErrors.push(bscErrs)
+						if (bscErrs) this.validateContentGuide(GroupInformation, bscURL, CG_REQUEST_BS_CONTENTS, bscErrs, options)
 					}
 				}
 				break;
@@ -1920,10 +1915,9 @@ export default class ContentGuideCheck {
 							if (getHowRelated(rm) == dvbi.PAGINATION_NEXT_URI) {
 								const paginationURL = getMediaUri(rm)
 								if (paginationURL) {
-									const paginationErrs = ErrorList.summaryOnly(paginationURL, CG_REQUEST_BS_CONTENTS, "Box Set Contents (pagination)")
+									const paginationErrs = nestedTraversal(errs, paginationURL, CG_REQUEST_BS_CONTENTS, "Box Set Contents (pagination)")
 	/*dbg*/console.log(`traverse:: Next pagination for Box Set Contents of ${paginationURL}`)
-									this.validateContentGuide(rm, paginationURL, CG_REQUEST_BS_CONTENTS, paginationErrs, options)
-									errs.nestedErrors.push(paginationErrs)
+									if (paginationErrs) this.validateContentGuide(rm, paginationURL, CG_REQUEST_BS_CONTENTS, paginationErrs, options)
 								}
 							}
 						})	

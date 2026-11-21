@@ -121,8 +121,10 @@ Occassionally, the language-subtag-registry file can be updated from https://www
 
 Documents retrieved for validation (by URL or by traversal) must use `http:` or `https:`, are limited to 10 MB and a 3 second timeout. A single validation traverses at most 10 levels deep and at most 100 referenced documents (see `--max_traversal`).
 
+Each URL is validated only once during a validation. When the same URL is referenced again, it is not retrieved or reported again: the "references" column of the traversed documents table shows how many times it was referenced.
+
 A referenced document that is not traversed is reported with a warning:
-- `TRAV001` the URL has already been validated during this validation (each URL is validated only once)
+- `TRAV001` the URL has already been validated during this validation (repeats are normally counted in the "references" column instead)
 - `TRAV002` the maximum traversal depth has been reached
 - `TRAV003` the maximum number of traversed documents has been reached
 - `TRAV000` the traversal was requested outside a validation (an internal error)

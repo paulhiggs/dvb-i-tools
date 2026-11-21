@@ -108,6 +108,10 @@ export default class ErrorList {
 	type?: string
 	description?: string
 
+	// for a traversed document, the number of times its URL was referenced during the validation. It is only validated
+	// (and reported) once
+	references?: number
+
 	/**
 	 * @param {string}           location     where the document came from (URL or file name)
 	 * @param {string}           type         the type of document or request
