@@ -29,8 +29,8 @@ Node ≥ 26.9 runs the `.ts`/`.mts` sources directly through type stripping. The
 npm start                 # node all-in-one.ts (HTTP :3030, HTTPS :3031 if selfsigned.crt/.key exist)
 npm run lint              # eslint
 npm run typecheck         # tsc --noEmit
-npm test                  # testsuite/test-runner.ts runs all four test files
-npm run test-documents    # only the XML document tests (also: test-expressions, test-lookups, test-languages)
+npm test                  # testsuite/test-runner.ts runs all five test files
+npm run test-documents    # only the XML document tests (also: test-expressions, test-lookups, test-languages, test-app)
 ```
 
 CI ([.github/workflows](.github/workflows)) runs lint, typecheck and test on every push, so all three must pass.

@@ -42,6 +42,7 @@
 		"test-documents": "node testsuite/test-documents.ts",
 		"test-lookups": "node testsuite/test-lookups.ts",
 		"test-languages": "node testsuite/test-languages.ts",
+		"test-app": "node testsuite/test-app.ts",
 		"test": "node testsuite/test-runner.ts"
 	},
 	"repository": {
