@@ -34,7 +34,7 @@ import { createStream } from "rotating-file-stream";
 import { read_string_options, CORSlibrary, CORSmanual, CORSnone, CORSoptions } from "./globals.mts"
 import type { StatsType } from "./globals.mts"
 import { Default_SLEPR, __dirname } from "./data_locations.mts"
-import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults, LINE, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "./ui.mts"
+import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "./ui.mts"
 import type {FormModes} from './ui.mts'
 import ErrorList from "./error_list.mts"
 import { safeFetch, configureFetchPolicy } from "./safe_fetch.mts"
@@ -672,14 +672,14 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		}
 
 		const tabulate = function (res: express.Response, group: string, stats: StatsType) {
-			res.write(`<h1>${group}</h1>`);
-			if (Object.keys(stats).length === 0) res.write("<p>No statistics</p>");
+			res.write(`<section class="panel stats"><h2>${group}</h2>`);
+			if (Object.keys(stats).length === 0) res.write(`<p class="hint">No statistics</p>`);
 			else {
-				res.write("<table><tr><th>item</th><th>count</th></tr>");
+				res.write(`<div class="scroll"><table><thead><tr><th scope="col">Item</th><th scope="col">Value</th></tr></thead><tbody>`);
 				Object.getOwnPropertyNames(stats).forEach((key) => res.write(`<tr><td>${escapeHTML(key)}</td><td>${escapeHTML(stats[key])}</td></tr>`));
-				res.write("</table>");
+				res.write("</tbody></table></div>");
 			}
-			res.write(LINE);
+			res.write("</section>");
 		}
 
 		app.get("/stats", (req : express.Request, res: express.Response) => {
@@ -711,11 +711,11 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		});
 
 		const tabularize = function(res : express.Response, groupname: string, values: string[] ) {
-			res.write(`<h1>${groupname}</h1>`);
+			res.write(`<section class="panel stats"><h2>${escapeHTML(groupname)}</h2>`);
 			if (values.length == 0)
-				res.write("<p>No values</p>");
+				res.write(`<p class="hint">No values</p>`);
 			else {
-				res.write("<table>");
+				res.write(`<div class="scroll"><table>`);
 				let maxLen = 0;
 				values.forEach((value) => {if (value.length > maxLen) maxLen = value.length});
 				let firstRow = true; 
@@ -726,8 +726,9 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 					}
 					res.write(`<td>${escapeHTML(values[i])}</td>`);
 				}
-				res.write("</table>");
+				res.write(`${firstRow ? "" : "</tr>"}</table></div>`);
 			}
+			res.write("</section>");
 		}
 		app.get("/langs", (req: express.Request, res: express.Response) => {
 			res.setHeader("Content-Type", "text/html");
@@ -737,7 +738,7 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 			if (slcheck) langs = slcheck.langs(true) as Record<string, string[]>;
 
 			if (HasProperty(langs, "empty"))
-				res.write("<p>No statistics</p>");
+				res.write(`<p class="hint">No statistics</p>`);
 			else {
 				Object.getOwnPropertyNames(langs).forEach((key) => tabularize(res, key, langs[key] as string[]));
 			}
