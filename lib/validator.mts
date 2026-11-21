@@ -119,7 +119,7 @@ function getVariant(req: express.Request) : number {
 }
 
 
-function report(req: express.Request, res: express.Response, jsonResponse: boolean, errs: ErrorList, motd: string | undefined) : void {
+async function report(req: express.Request, res: express.Response, jsonResponse: boolean, errs: ErrorList, motd: string | undefined) : Promise<void> {
 	if (jsonResponse) {
 		res.setHeader("Content-Type", "application/json")
 		if (!req.parseErr) delete errs.markupXML
@@ -136,7 +136,7 @@ function report(req: express.Request, res: express.Response, jsonResponse: boole
 		res.write(JSON.stringify(result))
 	}
 	else 
-		drawResults(req, res, motd, req.parseErr, errs)
+		await drawResults(req, res, motd, req.parseErr, errs)
 }
 
 
@@ -166,7 +166,7 @@ async function DVB_I_check(
 	
 	const FormArguments: FormModes = { cg: MODE_CG, sl: MODE_SL, pl: MODE_PL, slr: MODE_SLR, file: MODE_FILE, url: MODE_URL, hasSL: hasSL, hasPL: hasPL, hasCG: hasCG, hasSLR: hasSLR, allowTraversal: allow_traversal };
 	if (!req.body?.testtype) 
-		drawForm(req, res, FormArguments, (cgcheck && cgcheck.supportedRequests) ? cgcheck.supportedRequests : null, motd, undefined, undefined);
+		await drawForm(req, res, FormArguments, (cgcheck && cgcheck.supportedRequests) ? cgcheck.supportedRequests : null, motd, undefined, undefined);
 	else {
 		let VVxml: string | null = null;
 		req.parseErr = undefined;
@@ -236,7 +236,7 @@ async function DVB_I_check(
 		req.session.data.mode = req.body.testtype;
 		req.session.data.entry = req.body.doclocation;
 		if (req.body.requestType) req.session.data.cgmode = req.body.requestType;
-		drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, motd, req.parseErr, errs);
+		await drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, motd, req.parseErr, errs);
 
 		req.diags = {};
 		req.diags.countErrors = errs.numErrors();
@@ -266,7 +266,7 @@ async function validateServiceList(req: express.Request, res: express.Response, 
 	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
 
 	if (SLxml) await slcheck.doValidateServiceList(SLxml, errs, _options);
-	report(req, res, jsonResponse, errs, motd)
+	await report(req, res, jsonResponse, errs, motd)
 	document_logger(errs, log_prefix, true, req);
 	res.end();
 }
@@ -288,7 +288,7 @@ async function validatePlaylist(req: express.Request, res: express.Response, plc
 	const PLxml = await getDocument(req)
 
 	if (PLxml) await plcheck.doValidatePlaylist(PLxml, errs, { log_prefix: log_prefix, report_schema_version: true });
-	report(req, res, jsonResponse, errs, motd)
+	await report(req, res, jsonResponse, errs, motd)
 	document_logger(errs, log_prefix, true, req);
 	res.end();
 }
@@ -312,7 +312,7 @@ async function validateServiceListRegistry(req: express.Request, res: express.Re
 
 	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req) }
 	if (SLRxml) await slrcheck.doValidateServiceListRegistry(SLRxml, errs, _options);
-	report(req, res, jsonResponse, errs, motd)
+	await report(req, res, jsonResponse, errs, motd)
 
 	document_logger(errs, log_prefix, true, req);
 	res.end();
@@ -335,7 +335,7 @@ async function validateContentGuide(req: express.Request, res: express.Response,
 	const _options: CG_Validator_Options = { log_prefix: log_prefix, report_schema_version: true }
 
 	if (CGxml) await cgcheck.doValidateContentGuide(CGxml, req.query.type as string, errs, _options);
-	report(req, res, jsonResponse, errs, motd)
+	await report(req, res, jsonResponse, errs, motd)
 	document_logger(errs, log_prefix, true, req);
 	res.end();
 }
