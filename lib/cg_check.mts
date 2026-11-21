@@ -24,7 +24,7 @@ import { cgVersions, slVersions, dvbi } from "./DVB-I_definitions.mts"
 import { TVAschema, schemaURL } from "./data_locations.mts"
 
 import ErrorList, { WARNING, APPLICATION } from "./error_list.mts"
-import { nestedTraversal } from "./traversal.mts"
+import { nestedTraversal, traversalFinished, traversalSkipped, traversalStarted } from "./traversal.mts"
 import type { ReportedErrorType } from "./error_list.mts"
 import { unEntity, DuplicatedValue, parameterCheck } from "./utils.mts"
 import { isHTTPURL, isDVBLocator, isUTCDateTime, isCRIDURI, isTAGURI } from "./pattern_checks.mts"
@@ -3774,6 +3774,7 @@ export default class ContentGuideCheck {
 				fragment: Location,
 				key: keys.k_Traversal,
 			})
+			traversalSkipped(errs);
 			return;
 		}
 		// the referenced content guide is retrieved and validated after the current document's rules have been checked
@@ -3790,8 +3791,10 @@ export default class ContentGuideCheck {
 					fragment: Location,
 					key: keys.k_Traversal,
 				})
+				traversalSkipped(errs);
 				return;
 			}
+			traversalStarted(errs);
 			if (error)
 				errs.addError({
 					code: `VCG001`,
@@ -3810,6 +3813,7 @@ export default class ContentGuideCheck {
 					key: keys.k_Traversal,
 				})
 			}
+			traversalFinished(errs);
 		});
 	}
 

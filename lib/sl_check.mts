@@ -17,7 +17,7 @@ import { sats } from "./DVB_definitions.mts"
 import { slVersions, dvbi, dvbisld, dvbiEC, dvbiEA, XMLdocumentType} from "./DVB-I_definitions.mts"
 
 import ErrorList, { WARNING, APPLICATION } from "./error_list.mts"
-import { nestedTraversal } from "./traversal.mts"
+import { nestedTraversal, traversalFinished, traversalSkipped, traversalStarted } from "./traversal.mts"
 import type { ReportedErrorType } from "./error_list.mts"
 import { unEntity, DuplicatedValue, parameterCheck, HexOrDecValue, DefaultProperty, HasProperty } from "./utils.mts"
 import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isRTSPURL, isTAGURI, isUUIDformat } from "./pattern_checks.mts"
@@ -2872,6 +2872,7 @@ export default class ServiceListCheck {
 				fragment: Location,
 				key: keys.k_Traversal,
 			})
+			traversalSkipped(errs);
 			return;
 		}
 		// the referenced service list is retrieved and validated after the current document's rules have been checked
@@ -2888,8 +2889,10 @@ export default class ServiceListCheck {
 					fragment: Location,
 					key: keys.k_Traversal,
 				})
+				traversalSkipped(errs);
 				return;
 			}
+			traversalStarted(errs);
 			if (error)
 				errs.addError({
 					code: `VSL001`,
@@ -2908,6 +2911,7 @@ export default class ServiceListCheck {
 					key: keys.k_Traversal,
 				})
 			}
+			traversalFinished(errs);
 		});
 	}
 

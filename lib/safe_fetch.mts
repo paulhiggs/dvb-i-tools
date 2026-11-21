@@ -16,6 +16,7 @@ import { AsyncLocalStorage } from "node:async_hooks"
 
 import { fetch_options } from "./globals.mts"
 import type { SignaturePolicy } from "./certificate_utils.mts"
+import type ErrorList from "./error_list.mts"
 
 // the most documents a validation traverses, unless the validation sets its own limit
 export const DEFAULT_MAX_TRAVERSAL = 100;
@@ -395,7 +396,33 @@ type TraversalBudget = {
 	requested: Map<string, TraversalRequest>; // the first request to traverse into each URL
 	retrievals: Map<string, Promise<unknown>>; // retrievals shared by the checks of a validation, by key (see sharedRetrieval())
 	referenced: Set<string>; // resources that have been checked, by kind and URL (see firstReference())
+	observer?: ValidationObserver; // follows the progress of the validation (see observeValidation())
 };
+
+/**
+ * follows the progress of a validation, e.g. to show results while a traversal is in progress (issue #104). Every method is
+ * optional. The document methods are called from traversal.mts with the results (ErrorList) of each traversed document
+ */
+export interface ValidationObserver {
+	attached?(validation: ValidationHandle): void; // the validation has started (its handle gives validationTiming())
+	rulesChecked?(): void; // the outermost document's own rules have been checked; its deferred work (traversal...) follows
+	requested?(document: ErrorList, parent: ErrorList): void; // a traversal into a document has been requested
+	started?(document: ErrorList): void; // a traversed document has been retrieved, and is being validated
+	finished?(document: ErrorList): void; // a traversed document, and the documents it traversed into, have been validated
+	skipped?(document: ErrorList): void; // a requested document was not traversed, as a traversal limit was reached
+	readonly cancelled?: boolean; // when true, the validation stops: deferred work that has not been done is dropped
+}
+
+const observing = new AsyncLocalStorage<ValidationObserver>(); // the observer for validations started by observeValidation()
+
+/**
+ * run work (a call to a validator) so that the validation it starts is followed by an observer
+ *
+ * @param {ValidationObserver} observer  the observer
+ * @param {() => Promise<T>}   work      the work, which starts one (outermost) validation
+ * @returns {Promise<T>} the result of the work
+ */
+export const observeValidation = <T,>(observer: ValidationObserver, work: () => Promise<T>): Promise<T> => observing.run(observer, work);
 
 /**
  * the reason a traversal is not performed, as reported to the user
@@ -436,9 +463,11 @@ export class ValidationScope {
 	private constructor(parent: ValidationScope | undefined, options: ValidationOptions) {
 		this.depth = parent ? parent.depth + 1 : 0;
 		this.signaturePolicies = parent?.signaturePolicies;
-		this.budget = parent
-			? parent.budget
-			: { request: validationRequest(options), started: performance.now(), fetches: new Map<string, HostFetches>(), documents: 0, traversed: new Set<string>(), requested: new Map<string, TraversalRequest>(), retrievals: new Map<string, Promise<unknown>>(), referenced: new Set<string>() };
+		if (parent) this.budget = parent.budget;
+		else {
+			this.budget = { request: validationRequest(options), started: performance.now(), fetches: new Map<string, HostFetches>(), documents: 0, traversed: new Set<string>(), requested: new Map<string, TraversalRequest>(), retrievals: new Map<string, Promise<unknown>>(), referenced: new Set<string>(), observer: observing.getStore() };
+			this.budget.observer?.attached?.(this.budget);
+		}
 	}
 
 	/**
@@ -463,9 +492,11 @@ export class ValidationScope {
 	 */
 	async finish(): Promise<void> {
 		this.#close();
+		const observer = this.budget.observer;
+		if (this.depth == 0) observer?.rulesChecked?.();
 		const started: { task: DeferredTask; retrieval: Promise<SettledRetrieval> }[] = [];
 		const startAhead = () => {
-			while (started.length < Math.max(1, policy.fetchConcurrency) && this.#tasks.length > 0) {
+			while (started.length < Math.max(1, policy.fetchConcurrency) && this.#tasks.length > 0 && !observer?.cancelled) {
 				const task = this.#tasks.shift()!;
 				// the retrieve part is started in this scope, so claimTraversal() counts it against this validation.
 				// Its synchronous start (e.g. claiming the budget) runs now, so claims are made in registration order
@@ -482,6 +513,12 @@ export class ValidationScope {
 		while (started.length > 0) {
 			const { task, retrieval } = started.shift()!;
 			const settled = await retrieval;
+			// a cancelled validation (e.g. the client has gone away) drops the work not yet done; retrievals in progress finish
+			// but are not used
+			if (observer?.cancelled) {
+				this.#tasks.length = 0;
+				return;
+			}
 			startAhead(); // keep the window full while this task is completed
 			if ("error" in settled) throw settled.error;
 			await runningScope.run(this, () => task.complete(settled.value));
@@ -504,35 +541,52 @@ export class ValidationScope {
 	 * traversed. Call after finish() of the validation's own (outermost) scope
 	 */
 	timing(): ValidationTiming {
-		const budget = this.budget;
-		const hosts: HostTiming[] = [...budget.fetches].map(([host, f]) => {
-			const sorted = [...f.durations].sort((a, b) => a - b);
-			const total = sorted.reduce((a, b) => a + b, 0);
-			return {
-				host,
-				requests: sorted.length,
-				totalMs: Math.round(total),
-				averageMs: Math.round(total / sorted.length),
-				p95Ms: Math.round(sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))]),
-				maxMs: Math.round(sorted[sorted.length - 1]),
-				timeouts: f.timeouts,
-				errors: f.errors,
-			};
-		});
-		hosts.sort((a, b) => b.totalMs - a.totalMs);
-		const keys = (set: Iterable<string>, prefix: string) => [...set].filter((k) => k.startsWith(prefix)).length;
-		return {
-			durationMs: Math.round(performance.now() - budget.started),
-			documentsTraversed: budget.documents,
-			resourcesRetrieved: keys(budget.retrievals.keys(), "resource "),
-			imagesChecked: keys(budget.referenced, "image "),
-			requests: hosts.reduce((n, h) => n + h.requests, 0),
-			timeouts: hosts.reduce((n, h) => n + h.timeouts, 0),
-			errors: hosts.reduce((n, h) => n + h.errors, 0),
-			hosts,
-		};
+		return validationTiming(this.budget);
 	}
 }
+
+/**
+ * how long a validation has taken so far, and the retrievals it has made, including those of the documents it traversed
+ *
+ * @param {ValidationHandle} validation  the validation (see currentValidation() and ValidationObserver.attached())
+ * @returns {ValidationTiming} the timing so far
+ */
+export function validationTiming(validation: ValidationHandle): ValidationTiming {
+	const budget = validation as TraversalBudget;
+	const hosts: HostTiming[] = [...budget.fetches].map(([host, f]) => {
+		const sorted = [...f.durations].sort((a, b) => a - b);
+		const total = sorted.reduce((a, b) => a + b, 0);
+		return {
+			host,
+			requests: sorted.length,
+			totalMs: Math.round(total),
+			averageMs: Math.round(total / sorted.length),
+			p95Ms: Math.round(sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))]),
+			maxMs: Math.round(sorted[sorted.length - 1]),
+			timeouts: f.timeouts,
+			errors: f.errors,
+		};
+	});
+	hosts.sort((a, b) => b.totalMs - a.totalMs);
+	const keys = (set: Iterable<string>, prefix: string) => [...set].filter((k) => k.startsWith(prefix)).length;
+	return {
+		durationMs: Math.round(performance.now() - budget.started),
+		documentsTraversed: budget.documents,
+		resourcesRetrieved: keys(budget.retrievals.keys(), "resource "),
+		imagesChecked: keys(budget.referenced, "image "),
+		requests: hosts.reduce((n, h) => n + h.requests, 0),
+		timeouts: hosts.reduce((n, h) => n + h.timeouts, 0),
+		errors: hosts.reduce((n, h) => n + h.errors, 0),
+		hosts,
+	};
+}
+
+/**
+ * the observer of the validation whose rules are being checked, or whose deferred work is being performed
+ *
+ * @returns {ValidationObserver | undefined} the observer, if the validation has one
+ */
+export const currentObserver = (): ValidationObserver | undefined => (openScopes.at(-1) ?? runningScope.getStore())?.budget.observer;
 
 /**
  * register work to be done when the current validation finishes its synchronous rules

@@ -12,10 +12,12 @@
 import express from "express"
 import fileupload from "express-fileupload"
 
-import { drawForm, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "../ui.mts"
+import { drawForm, liveDocumentResults, sendCheckResults, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "../ui.mts"
 import type { FormModes } from "../ui.mts"
 import ErrorList from "../error_list.mts"
-import { safeFetch, currentFetchPolicy, DEFAULT_MAX_TRAVERSAL, parseTraversalLimit } from "../safe_fetch.mts"
+import { safeFetch, currentFetchPolicy, observeValidation, DEFAULT_MAX_TRAVERSAL, parseTraversalLimit } from "../safe_fetch.mts"
+import type { ValidationObserver } from "../safe_fetch.mts"
+import { ProgressReport } from "../progress.mts"
 import { HasProperty } from "../utils.mts"
 import ServiceListCheck from "../sl_check.mts"
 import PlaylistCheck from "../playlist_check.mts"
@@ -107,6 +109,27 @@ async function DVB_I_check(
 		// the choices for the validation, and every document it traverses into
 		const request = requestFromCheckForm(req, testtype, log_prefix, maxTraversal, maxDepth);
 		const errs = ErrorList.withMarkup();
+
+		// the live view (issue #104) asks for the progress of the validation as events, one JSON object on each line, followed by
+		// {"event":"results"} and the HTML of the results. Otherwise the results come with the page, when the validation has
+		// finished
+		const live = (req.get("Accept") ?? "").includes("application/x-ndjson");
+		let observer: ValidationObserver & { cancel(): void; stop?(): void };
+		if (live) {
+			res.status(200).set({ "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store", "X-Accel-Buffering": "no" });
+			res.flushHeaders();
+			const send = (event: object) => {
+				if (!res.destroyed) res.write(`${JSON.stringify(event)}\n`);
+			};
+			observer = new ProgressReport(errs, send, { rootHTML: liveDocumentResults, canSend: () => !res.writableNeedDrain });
+		} else {
+			let cancelled = false;
+			observer = { get cancelled() { return cancelled }, cancel: () => { cancelled = true } };
+		}
+		// when the client goes away before the results are sent, the validation stops, as nobody will see the results
+		res.on("close", () => {
+			if (!res.writableEnded) observer.cancel();
+		});
 		if (!req.parseErr)
 			switch (doclocation) {
 				case MODE_URL:
@@ -135,36 +158,42 @@ async function DVB_I_check(
 					req.parseErr = [`method is not ${MODE_URL.quote()} or ${MODE_FILE.quote()}`];
 			}
 
-		if (!req.parseErr && VVxml)
+		if (!req.parseErr && VVxml) await observeValidation(observer, async () => {
 			switch (testtype) {
 				case MODE_CG:
 					errs.setType(`Content Guide-${requestType}`)
 					if (cgcheck) 
-						await cgcheck.doValidateContentGuide(VVxml, requestType, errs, request);
+						await cgcheck.doValidateContentGuide(VVxml!, requestType, errs, request);
 					break;
 				case MODE_SL:
 					errs.setType("Service List")
 					if (slcheck) 
-						await slcheck.doValidateServiceList(VVxml, errs, 
+						await slcheck.doValidateServiceList(VVxml!, errs, 
 							request
 						);
 					break;
 				case MODE_PL:
 					errs.setType("Playlist")
 					if (plcheck) 
-						await plcheck.doValidatePlaylist(VVxml, errs, request);
+						await plcheck.doValidatePlaylist(VVxml!, errs, request);
 					break;
 				case MODE_SLR:
 					errs.setType("Service List Registry")
 					if (slrcheck) 
-						await slrcheck.doValidateServiceListRegistry(VVxml, errs, request);
+						await slrcheck.doValidateServiceListRegistry(VVxml!, errs, request);
 					break;
 			}
+		});
+		observer.stop?.();
 
 		req.session.data.mode = testtype;
 		req.session.data.entry = doclocation;
 		if (requestType) req.session.data.cgmode = requestType;
-		await drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, motd, req.parseErr, errs);
+		if (live) {
+			if (!res.destroyed) res.write(`${JSON.stringify({ event: "results" })}\n`);
+			await sendCheckResults(req, res, req.parseErr, errs);
+		}
+		else await drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, motd, req.parseErr, errs);
 
 		req.diags = {};
 		req.diags.countErrors = errs.numErrors();

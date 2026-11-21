@@ -9,7 +9,7 @@
  */
 
 import ErrorList from "./error_list.mts"
-import { recordTraversal, repeatedTraversal } from "./safe_fetch.mts"
+import { currentObserver, recordTraversal, repeatedTraversal } from "./safe_fetch.mts"
 
 /**
  * create the error list for a document to be traversed into, and add it to the results of the referencing document.
@@ -27,8 +27,22 @@ export function nestedTraversal(errs: ErrorList, url: string, type: string, desc
 	const nested = ErrorList.summaryOnly(url, type, description)
 	recordTraversal(url, nested)
 	errs.nestedErrors.push(nested)
+	currentObserver()?.requested?.(nested, errs)
 	return nested
 }
+
+/**
+ * tell the validation's observer (if any) about the progress of a traversed document, whose results are in errs (from
+ * nestedTraversal()):
+ * - skipped: the document is not traversed into, as a traversal limit was reached (TRAV002 / TRAV003)
+ * - started: the document has been retrieved, and is being validated
+ * - finished: the document, and any documents it traversed into, have been validated
+ *
+ * @param {ErrorList} errs  the results of the traversed document
+ */
+export const traversalSkipped = (errs: ErrorList): void => currentObserver()?.skipped?.(errs)
+export const traversalStarted = (errs: ErrorList): void => currentObserver()?.started?.(errs)
+export const traversalFinished = (errs: ErrorList): void => currentObserver()?.finished?.(errs)
 
 /**
  * the reason a referenced document was skipped (not retrieved) because a traversal limit was reached: the depth (TRAV002)

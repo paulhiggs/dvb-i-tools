@@ -205,6 +205,10 @@ a.chip:hover { text-decoration: underline; }
 .trav[data-show="error"] tbody tr:not(.s-error, .s-fatal), .trav[data-show="warn"] tbody tr:not(.s-warn),
 .trav[data-show="info"] tbody tr:not(.s-info), .trav[data-show="ok"] tbody tr:not(.s-ok) { display: none; }
 
+#results { display: contents; }
+.live-note { margin: 0; }
+.trav tr.s-pending td:first-child { color: var(--muted); }
+.trav .pending { font-size: var(--step--1); color: var(--muted); font-style: italic; }
 footer { color: var(--muted); font-size: var(--step--1); display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 16px; }
 .timing td:not(:first-child), .timing th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .timing tr.s-warn td:nth-child(7) { color: var(--sev); font-weight: 600; }
@@ -253,8 +257,8 @@ const sectionStart = (id: string, title: string, count: string, severityClass: s
 	`<details class="section ${severityClass}" id="${id}"${open ? " open" : ""}><summary>${title} <span class="count">${count}</span>${aside ? `<span class="aside">${aside}</span>` : ""}</summary><div class="section-body">`;
 const SECTION_END = "</div></details>";
 
-const ErrorTable = function* (errors: ErrorType[], id: string, title: string, severityClass: string): Generator<string> {
-	yield sectionStart(id, title, formatCount(errors.length), severityClass, MESSAGES_IN_ORDER ? "in document order" : undefined);
+const ErrorTable = function* (errors: ErrorType[], id: string, title: string, severityClass: string, open = true): Generator<string> {
+	yield sectionStart(id, title, formatCount(errors.length), severityClass, MESSAGES_IN_ORDER ? "in document order" : undefined, open);
 	yield `<div class="scroll"><table><thead><tr>${SHOW_LINE_NUMBER ? "<th>Line</th>" : ""}<th scope="col">Code</th><th scope="col">Finding</th></tr></thead><tbody>`;
 	if (MESSAGES_IN_ORDER) errors.sort(lineCompareFn);
 	for (const e of errors) yield* tabulateMessage(e);
@@ -273,13 +277,26 @@ const messageText = (message: string): string => {
 	return type ? `${type[1]} ${message.slice(type[0].length + 1)}` : message;
 };
 
-function* tabulateResults(source: string, error: string[] | undefined, errs: ErrorList | undefined): Generator<string> {
+// what the results of a document show: the live view of the document's own results (while the documents it traverses
+// into are validated) has no head, as the live view has its own, and no marked up listing, which comes in the final
+// results. Its findings are collapsed, so the traversed documents below them can be seen as they are added
+type ResultsParts = { head: boolean; listing: boolean; open: boolean };
+const ALL_PARTS: ResultsParts = { head: true, listing: true, open: true };
+
+function* tabulateResults(source: string, error: string[] | undefined, errs: ErrorList | undefined, parts: ResultsParts = ALL_PARTS): Generator<string> {
 	if (!error && !errs) return; // nothing has been validated yet
 
+	if (parts.head) yield* resultsHead(source, errs);
+	if (error) yield `<div class="alert s-error" role="alert">${error.map((e) => `<p>${e.HTMLize()}</p>`).join("")}</div>`;
+	yield* resultsBody(error, errs, parts);
+}
+
+function* resultsHead(source: string, errs: ErrorList | undefined): Generator<string> {
 	const meta = [errs?.type ? escapeHTML(errs.type) : "", errs?.timing ? timingSummary(errs.timing) : ""].filter((m) => m.length > 0).join(" · ");
 	yield `<section class="results-head" aria-label="Results"><span class="eyebrow">Results</span><div class="source">${escapeHTML(source)}</div>${meta ? `<div class="meta">${meta}</div>` : ""}</section>`;
-	if (error) yield `<div class="alert s-error" role="alert">${error.map((e) => `<p>${e.HTMLize()}</p>`).join("")}</div>`;
+}
 
+function* resultsBody(error: string[] | undefined, errs: ErrorList | undefined, parts: ResultsParts): Generator<string> {
 	let resultsShown = false;
 	if (errs) {
 		const badge = (count: number, id: string, label: string, severityClass: string) =>
@@ -299,22 +316,22 @@ function* tabulateResults(source: string, error: string[] | undefined, errs: Err
 		}
 
 		if (errs.numFatals() > 0) {
-			yield* ErrorTable(errs.fatals, "fatals", "Fatal errors (further validation aborted)", "s-fatal");
+			yield* ErrorTable(errs.fatals, "fatals", "Fatal errors (further validation aborted)", "s-fatal", parts.open);
 			resultsShown = true;
 		}
 
 		if (errs.numErrors() > 0) {
-			yield* ErrorTable(errs.errors, "errors", "Errors", "s-error");
+			yield* ErrorTable(errs.errors, "errors", "Errors", "s-error", parts.open);
 			resultsShown = true;
 		}
 
 		if (errs.numWarnings() > 0) {
-			yield* ErrorTable(errs.warnings, "warnings", "Warnings", "s-warn");
+			yield* ErrorTable(errs.warnings, "warnings", "Warnings", "s-warn", parts.open);
 			resultsShown = true;
 		}
 
 		if (errs.numInformationals() > 0) {
-			yield* ErrorTable(errs.informationals, "informationals", "Informational", "s-info");
+			yield* ErrorTable(errs.informationals, "informationals", "Informational", "s-info", parts.open);
 			resultsShown = true;
 		}
 
@@ -340,7 +357,7 @@ function* tabulateResults(source: string, error: string[] | undefined, errs: Err
 		yield `</tbody></table></div>${SECTION_END}`;
 	}
 
-	if (errs && errs.markupXML && errs.markupXML.length > 0) {
+	if (parts.listing && errs && errs.markupXML && errs.markupXML.length > 0) {
 		const flagged = errs.markupXML.reduce((n, line) => n + (line.validationErrors?.length ? 1 : 0), 0);
 		yield sectionStart("listing", "Document with findings marked", plural(errs.markupXML.length, "line", "lines"), "", flagged > 0 ? `${plural(flagged, "line", "lines")} with findings` : undefined);
 		yield `<pre class="listing">`;
@@ -461,12 +478,57 @@ function* reportTiming(errs: ErrorList | undefined): Generator<string> {
 	yield `</tbody></table></div><p class="hint timing-note">Times are for each retrieval once it started. Retrievals from different hosts run at the same time, so the totals add up to more than the validation took.</p>${SECTION_END}`;
 }
 
-// the results part of a page: the validation results, the traversed documents and the page bottom
-function* resultsPage(req: express.Request, source: string, error: string[] | undefined, errs: ErrorList | undefined): Generator<string> {
+// the results part of a page: the validation results, the traversed documents and the retrieval timing
+function* results(req: express.Request, source: string, error: string[] | undefined, errs: ErrorList | undefined): Generator<string> {
 	yield* tabulateResults(source, error, errs);
 	yield* reportNestedErrors(req, errs);
 	yield* reportTiming(errs);
+}
+
+// the results part of a page, then the page bottom
+function* resultsPage(req: express.Request, source: string, error: string[] | undefined, errs: ErrorList | undefined): Generator<string> {
+	yield* results(req, source, error, errs);
 	yield PAGE_BOTTOM;
+}
+
+/**
+ * the document's own results, shown while the documents it traverses into are validated (issue #104). The findings of its
+ * deferred work (images, signature policies, traversal limits) and its marked up listing come with the final results
+ *
+ * @param {ErrorList} errs  the results of the document so far
+ * @returns {string} the HTML
+ */
+export const liveDocumentResults = (errs: ErrorList): string =>
+	[...tabulateResults("", undefined, errs, { head: false, listing: false, open: false })].join("") +
+	`<p class="hint live-note">Findings of images, signature policies and traversal limits, and the document with its findings marked, are shown when the validation finishes.</p>`;
+
+/**
+ * the name of the document given with the /check form: its URL, or the name of the file
+ *
+ * @param {express.Request} req  the request
+ * @returns {string} the name, or "" if none was given
+ */
+export function checkedSource(req: express.Request): string {
+	switch (req.body?.doclocation) {
+		case MODE_URL:
+			return typeof req.body?.XMLurl == "string" ? req.body.XMLurl : "";
+		case MODE_FILE:
+			return (req.files?.XMLfile as UploadedFile)?.name ?? "";
+	}
+	return "";
+}
+
+/**
+ * write the results of a /check validation (without the page around them), for the live view (issue #104), which replaces
+ * its progress with them
+ *
+ * @param {express.Request}  req    the request
+ * @param {express.Response} res    the response
+ * @param {string[]}         error  problems with the request, if any
+ * @param {ErrorList}        errs   the results
+ */
+export async function sendCheckResults(req: express.Request, res: express.Response, error: string[] | undefined, errs: ErrorList): Promise<void> {
+	await sendHTML(res, results(req, checkedSource(req), error, errs));
 }
 
 const WRITE_CHUNK_SIZE = 64 * 1024; // characters joined into each write to the response
@@ -535,6 +597,80 @@ const submitScript = (modes: FormModes) => {
 	return `<script>(function(){var f=document.getElementById("check-form"),b=document.getElementById("validate"),h=document.getElementById("submit-hint");if(!f||!b||!h)return;f.addEventListener("submit",function(){b.disabled=true;b.textContent="Validating\\u2026";h.textContent=${hint}});window.addEventListener("pageshow",function(){b.disabled=false;b.textContent="Validate";h.textContent=${JSON.stringify(SUBMIT_HINT)}})})();</script>`;
 };
 
+// the live view of a validation with traversal (issue #104): when traversal is selected for a service list or registry,
+// the form is sent with fetch() asking for progress events (application/x-ndjson). The document's own results are shown
+// once its rules have been checked, the traversed documents are added to a table as they are validated, and the counts are
+// updated every second. The final results then replace the live view. Without scripting, or if the response is not a
+// stream of events, the form is submitted as usual and the results come with the page
+const LIVE_VIEW =
+	`<section class="results-head" aria-label="Results"><span class="eyebrow">Validating</span><div class="source live-source"></div><div class="meta live-status">Retrieving and checking the document…</div></section>` +
+	`<div class="live-root"></div>` +
+	`<details class="section" open><summary>Traversed documents <span class="count live-count">0</span><span class="aside">validated so far, in the order referenced</span></summary><div class="section-body">` +
+	`<div class="scroll"><table class="trav"><thead><tr><th scope="col">Document</th><th scope="col">Result</th><th scope="col">References</th></tr></thead><tbody class="live-rows"></tbody></table></div></div></details>`;
+
+const liveScript = (modes: FormModes) => `<script>(function(){
+var f=document.getElementById("check-form"),b=document.getElementById("validate"),h=document.getElementById("submit-hint");
+if(!f||!b||!h||!window.fetch||!window.TextDecoder||!window.ReadableStream||!window.FormData)return;
+var TYPES=${JSON.stringify([modes.sl, modes.slr])},SEV=${JSON.stringify(SEVERITY_CLASS)},LIST=${JSON.stringify(LIST_CLASS)};
+function traversing(){var t=document.getElementById("cbTraverse"),k=f.querySelector('input[name="testtype"]:checked');return !!(t&&t.checked&&k&&TYPES.indexOf(k.value)>=0)}
+function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
+function n(x){return Number(x).toLocaleString("en-GB")}
+function duration(ms){var s=Math.round(ms/1000);return s<60?s+" s":s<3600?Math.floor(s/60)+" min "+(s%60)+" s":Math.floor(s/3600)+" h "+Math.floor((s%3600)/60)+" min"}
+function done(){b.disabled=false;b.textContent="Validate";h.textContent=${JSON.stringify(SUBMIT_HINT)}}
+f.addEventListener("submit",function(ev){
+	var out=document.getElementById("results");
+	if(!out||!traversing())return;
+	ev.preventDefault();
+	out.innerHTML=${JSON.stringify(LIVE_VIEW)};
+	var root=out.querySelector(".live-root"),rows=out.querySelector(".live-rows"),status=out.querySelector(".live-status"),count=out.querySelector(".live-count");
+	var u=document.getElementById("XMLurl"),file=document.getElementById("XMLfile"),fromFile=document.getElementById("radFile");
+	out.querySelector(".live-source").textContent=fromFile&&fromFile.checked?(file&&file.files&&file.files[0]?file.files[0].name:""):(u?u.value:"");
+	var docs={0:{last:null,parent:null}};
+	function progress(e){
+		var c=e.counts,parts=[n(c.validated)+" validated"];
+		if(c.waiting>0)parts.push(n(c.waiting)+" waiting");
+		if(c.skipped>0)parts.push(n(c.skipped)+" skipped (document or depth limit)");
+		parts.push(duration(c.durationMs));
+		if(c.requests>0)parts.push(n(c.requests)+" requests");
+		if(c.timeouts>0)parts.push(n(c.timeouts)+" timeouts");
+		status.textContent=parts.join(" \\u00b7 ");
+		count.textContent=n(c.validated);
+		e.documents.forEach(function(d){
+			var doc=docs[d.id];
+			if(!doc){
+				var parent=docs[d.parent]?d.parent:0,tr=el("tr"),first=el("td");
+				first.appendChild(document.createTextNode(d.description));first.appendChild(el("span","url",d.url));
+				tr.appendChild(first);tr.appendChild(el("td"));tr.appendChild(el("td"));
+				var after=docs[parent].last;if(after)after.after(tr);else rows.appendChild(tr);
+				doc=docs[d.id]={row:tr,last:tr,parent:parent};
+				for(var q=parent;q!=null;q=docs[q].parent)docs[q].last=tr;
+			}
+			var td=doc.row.children[1];td.textContent="";
+			if(d.state=="done"){
+				doc.row.className=SEV[d.severity]+" d"+Math.min(d.depth,10);
+				Object.keys(LIST).forEach(function(list){var codes=(d.codes||{})[list]||{};Object.keys(codes).forEach(function(code){td.appendChild(el("span","c "+LIST[list],code+(codes[code]>1?" \\u00d7"+codes[code]:"")))})});
+			}else{doc.row.className="s-pending d"+Math.min(d.depth,10);td.appendChild(el("span","pending","validating\\u2026"))}
+		});
+	}
+	function failed(){status.textContent="The validation could not be completed. Try again, or without traversal.";status.className="meta alert s-error";done()}
+	function finish(html){out.innerHTML=html;out.querySelectorAll("script").forEach(function(old){var s=document.createElement("script");s.textContent=old.textContent;old.replaceWith(s)});done()}
+	fetch(f.action||location.href,{method:"POST",body:new FormData(f),headers:{Accept:"application/x-ndjson"},credentials:"same-origin"}).then(function(r){
+		if(!r.ok||!r.body||(r.headers.get("Content-Type")||"").indexOf("application/x-ndjson")<0){HTMLFormElement.prototype.submit.call(f);return}
+		var reader=r.body.getReader(),dec=new TextDecoder(),buf="",html=null;
+		function line(l){if(!l)return;var e=JSON.parse(l);if(e.event=="results")html=[];else if(e.event=="root")root.innerHTML=e.html;else if(e.event=="progress")progress(e)}
+		function pump(){return reader.read().then(function(x){
+			if(x.done){if(html){html.push(dec.decode());finish(html.join(""))}else failed();return}
+			var t=dec.decode(x.value,{stream:true});
+			if(html){html.push(t);return pump()}
+			buf+=t;var i;
+			while(html===null&&(i=buf.indexOf("\\n"))>=0){var l=buf.slice(0,i);buf=buf.slice(i+1);line(l)}
+			if(html!==null){html.push(buf);buf=""}
+			return pump()})}
+		return pump();
+	}).catch(failed);
+});
+})();</script>`;
+
 export async function drawForm(
 		req: express.Request, res: express.Response,
 		modes: FormModes,
@@ -580,18 +716,12 @@ ${imageChecking}
 ${signatureChecks}
 </div></fieldset>
 <div class="actions"><button type="submit" class="primary" id="validate">Validate</button><span class="hint" id="submit-hint">${SUBMIT_HINT}</span></div>
-</form>${submitScript(modes)}`);
+</form>${submitScript(modes)}${modes.allowTraversal ? liveScript(modes) : ""}`);
 
-	let source: string = "";
-	switch (req.body?.doclocation) {
-		case MODE_URL:
-			source = typeof req.body?.XMLurl == "string" ? req.body.XMLurl : "";
-			break;
-		case MODE_FILE:
-			source = (req.files?.XMLfile as UploadedFile)?.name ? (req.files?.XMLfile as UploadedFile).name : "";
-			break;
-	}
-	await sendHTML(res, resultsPage(req, source, error, errs));
+	// the results are in one element, which the live view replaces (issue #104)
+	res.write(`<div id="results">`);
+	await sendHTML(res, results(req, checkedSource(req), error, errs));
+	if (!res.destroyed) res.write(`</div>${PAGE_BOTTOM}`);
 	return res;
 }
 

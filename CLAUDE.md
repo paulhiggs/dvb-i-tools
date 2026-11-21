@@ -98,7 +98,13 @@ Two kinds of input reach a validator, and they travel differently:
 Other context is also carried by the scope:
 - **Signature policies:** `setSignaturePolicies()` / `signaturePoliciesInEffect()`
 - **Retrievals shared within a validation:** `sharedRetrieval()`, `firstReference()`
-- **Timing:** `ValidationScope.timing()`
+- **Timing:** `ValidationScope.timing()`, or `validationTiming(handle)` while the validation runs
+- **Progress:**
+  - `observeValidation(observer, work)` attaches a `ValidationObserver` to the validation that the work starts.
+  - The observer is told when the outermost document's own rules have been checked, and when each traversed document is requested, started, finished or skipped (the `traversal*()` calls in `traversal.mts`).
+  - Its `cancelled` flag stops the validation.
+  - `ProgressReport` in [lib/progress.mts](lib/progress.mts) uses this for the live view of `/check` (`Accept: application/x-ndjson`).
+  - A new place that traverses into a document must call `traversalStarted()`, `traversalFinished()` and `traversalSkipped()`, as `validateContentGuide()` and `validateServiceList()` do.
 
 The public `doValidate…(text, errs, options)` methods keep their option names (`SL_Validator_Options` and the others are `ValidationOptions`), so the testsuite can call them directly.
 
