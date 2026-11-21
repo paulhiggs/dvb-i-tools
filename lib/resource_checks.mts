@@ -12,7 +12,7 @@
 
 import SHA from "sha.js"
 
-import { currentFetchPolicy, currentValidation, deferRetrieval, firstReference, normaliseURL, safeFetch, sharedRetrieval, signaturePoliciesInEffect, validationSettings } from "./safe_fetch.mts"
+import { currentFetchPolicy, currentValidation, deferRetrieval, firstReference, normaliseURL, safeFetch, sharedRetrieval, signaturePoliciesInEffect, currentRequest } from "./safe_fetch.mts"
 import type { FetchedResponse, ValidationHandle } from "./safe_fetch.mts"
 import { evaluateSignature, reportSignature } from "./jws_checks.mts"
 import type { SignatureEvaluation } from "./jws_checks.mts"
@@ -159,7 +159,7 @@ export function checkReferencedResource(element: XmlElement, documentInfo: Found
 	const policy = codes.policy ? ValidateAnySignaturePolicy(element, documentInfo, errs, codes.policy) : undefined;
 	if (!element) return;
 
-	const images = validationSettings().images ?? "yes";
+	const images = currentRequest().images;
 	const location = element.content.trim(),
 		checkingImage = image != undefined && currentFetchPolicy().checkImages && images != "no";
 	if (isDataURI(location)) {

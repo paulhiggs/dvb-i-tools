@@ -71,6 +71,26 @@ Rules that depend on the revision compare `SL_SchemaVersion(ns)` (or the CG/SLR 
 
 A validation opens `using scope = ValidationScope.open()`. While the synchronous rules run, any network work is registered with `deferRetrieval(retrieve, complete)` or `deferTask()`. That work only runs at `scope.finish()`. Retrievals then run ahead concurrently, but the completions run in the order they were registered, so the report order stays deterministic. A nested validation of a traversed document opens a child scope that shares its parent's budget. Do not `await` a fetch directly inside rule code; use `deferRetrieval`.
 
+### Validation request and per-document options
+
+Two kinds of input reach a validator, and they travel differently:
+- **Choices for the whole validation** are a `ValidationRequest` (`lib/safe_fetch.mts`):
+  - the fields are `traverse`, `maxTraversal`, `images`, `variants`, `report_schema_version` and `log_prefix`
+  - the outermost validation sets them once, from the options it is given: `ValidationScope.open(options)`
+  - every document it traverses into uses the same choices, and ignores the options it is given for them
+  - rules read them with `currentRequest()`, never from their `options` parameter
+  - only the outermost document (`scope.depth == 0`) is archived with `log_prefix`
+
+  `validator.mts` builds the request in one place for each entry point: `requestFromCheckForm()` for `/check`, and `requestFromQuery()` for the `/validate_*` endpoints. A new per-request choice is added to `ValidationRequest`, to these builders, and to the rule that reads it. Nothing needs to be passed on at traversal points.
+- **Values that belong to one document** are passed explicitly. Today these are only the content guide endpoints (`CG_Endpoints`: `progInfo_ep`, `grpInfo_ep`, `mEpisodes_ep`), which come from the service list that refers to the document.
+
+Other context is also carried by the scope:
+- **Signature policies:** `setSignaturePolicies()` / `signaturePoliciesInEffect()`
+- **Retrievals shared within a validation:** `sharedRetrieval()`, `firstReference()`
+- **Timing:** `ValidationScope.timing()`
+
+The public `doValidate…(text, errs, options)` methods keep their option names (`SL_Validator_Options` and the others are `ValidationOptions`), so the testsuite can call them directly.
+
 ### libxml2-wasm
 
 XML is handled by `libxml2-wasm`. [libxml2-wasm-extensions.mts](libxml2-wasm-extensions.mts) and its `.d.ts` add helper methods (`attrAnyNs`, `attrAnyNsValueOr`, `getAnyNs`, `hasChild`, …) to `XmlElement` and `XmlDocument`, and the code uses these throughout. Documents live in WASM memory and must be disposed, so load them with `using` (e.g. `using SL = SchemaLoad(...)`). Call `xmlRegisterFsInputProviders()` before loading XSDs that use `xs:include`.

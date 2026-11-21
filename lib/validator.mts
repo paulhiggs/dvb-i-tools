@@ -38,7 +38,7 @@ import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults, MODE_URL, MODE_FILE, MODE
 import type {FormModes} from './ui.mts'
 import ErrorList from "./error_list.mts"
 import { safeFetch, configureFetchPolicy, IMAGE_CHECKING, DEFAULT_MAX_TRAVERSAL, parseTraversalLimit } from "./safe_fetch.mts"
-import type { ImageChecking } from "./safe_fetch.mts"
+import type { ImageChecking, ValidationOptions } from "./safe_fetch.mts"
 import { readmyfile, HasProperty, escapeHTML } from "./utils.mts"
 import {
 	LoadGenres,
@@ -131,6 +131,41 @@ function imageChecking(value: unknown) : ImageChecking {
 }
 const getImageChecking = (req: express.Request) : ImageChecking => imageChecking(req.method == "GET" ? req.query?.images : req.header("X-images"));
 
+/**
+ * the choices of a validation requested through a /validate_* endpoint: the A177 variant and image checking, from the
+ * query (GET) or the X- headers (POST). These endpoints do not traverse
+ *
+ * @param {express.Request} req         the request
+ * @param {string}          log_prefix  where the document is archived, if it is
+ * @returns {ValidationOptions} the choices for the validation
+ */
+function requestFromQuery(req: express.Request, log_prefix: string | undefined): ValidationOptions {
+	return { log_prefix, report_schema_version: true, variants: getVariant(req), images: getImageChecking(req) };
+}
+
+/**
+ * the choices of a validation requested with the /check form, from its fields (already checked, and kept in the session)
+ *
+ * @param {express.Request} req           the request
+ * @param {string}          testtype      the type of document being validated
+ * @param {string}          log_prefix    where the document is archived, if it is
+ * @param {number}          maxTraversal  the most documents to traverse, from the form
+ * @returns {ValidationOptions} the choices for the validation
+ */
+function requestFromCheckForm(req: express.Request, testtype: string, log_prefix: string | undefined, maxTraversal: number | undefined): ValidationOptions {
+	// the Germany variant and traversal are offered for service lists and service list registries
+	const list = testtype == MODE_SL || testtype == MODE_SLR,
+		form = req.session.data;
+	return {
+		log_prefix,
+		report_schema_version: true,
+		variants: list && form?.forGermany ? GERMAN_A177r6_VARIANT : 0,
+		traverse: list && form?.traverse == true,
+		maxTraversal,
+		images: form?.images,
+	};
+}
+
 
 async function report(req: express.Request, res: express.Response, jsonResponse: boolean, errs: ErrorList, motd: string | undefined) : Promise<void> {
 	if (jsonResponse) {
@@ -216,6 +251,8 @@ async function DVB_I_check(
 		req.session.data.maxTraversal = maxTraversalField.length > 0 ? maxTraversalField : String(DEFAULT_MAX_TRAVERSAL)
 		req.session.data.images = imageChecking(req.body.images)
 		const log_prefix = createPrefix(req, testtype);
+		// the choices for the validation, and every document it traverses into
+		const request = requestFromCheckForm(req, testtype, log_prefix, maxTraversal);
 		const errs = ErrorList.withMarkup();
 		if (!req.parseErr)
 			switch (doclocation) {
@@ -250,24 +287,24 @@ async function DVB_I_check(
 				case MODE_CG:
 					errs.setType(`Content Guide-${requestType}`)
 					if (cgcheck) 
-						await cgcheck.doValidateContentGuide(VVxml, requestType, errs, { log_prefix: log_prefix, report_schema_version: true, images: req.session.data.images });
+						await cgcheck.doValidateContentGuide(VVxml, requestType, errs, request);
 					break;
 				case MODE_SL:
 					errs.setType("Service List")
 					if (slcheck) 
 						await slcheck.doValidateServiceList(VVxml, errs, 
-							{ log_prefix: log_prefix, report_schema_version: true, variants: req.session.data.forGermany ? GERMAN_A177r6_VARIANT : 0, traverse: req.session.data.traverse, maxTraversal: maxTraversal, images: req.session.data.images }
+							request
 						);
 					break;
 				case MODE_PL:
 					errs.setType("Playlist")
 					if (plcheck) 
-						await plcheck.doValidatePlaylist(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, images: req.session.data.images });
+						await plcheck.doValidatePlaylist(VVxml, errs, request);
 					break;
 				case MODE_SLR:
 					errs.setType("Service List Registry")
 					if (slrcheck) 
-						await slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, traverse: req.session.data.traverse, maxTraversal: maxTraversal, images: req.session.data.images });
+						await slrcheck.doValidateServiceListRegistry(VVxml, errs, request);
 					break;
 			}
 
@@ -301,7 +338,7 @@ async function validateServiceList(req: express.Request, res: express.Response, 
 	const errs = ErrorList.withMarkup();
 	const log_prefix = createPrefix(req, MODE_SL);
 	const SLxml = await getDocument(req)
-	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req), images: getImageChecking(req) }
+	const _options: SL_Validator_Options = requestFromQuery(req, log_prefix)
 
 	if (SLxml) await slcheck.doValidateServiceList(SLxml, errs, _options);
 	await report(req, res, jsonResponse, errs, motd)
@@ -325,7 +362,7 @@ async function validatePlaylist(req: express.Request, res: express.Response, plc
 	const log_prefix = createPrefix(req, MODE_PL);
 	const PLxml = await getDocument(req)
 
-	if (PLxml) await plcheck.doValidatePlaylist(PLxml, errs, { log_prefix: log_prefix, report_schema_version: true, images: getImageChecking(req) });
+	if (PLxml) await plcheck.doValidatePlaylist(PLxml, errs, requestFromQuery(req, log_prefix));
 	await report(req, res, jsonResponse, errs, motd)
 	document_logger(errs, log_prefix, true, req);
 	res.end();
@@ -348,7 +385,7 @@ async function validateServiceListRegistry(req: express.Request, res: express.Re
 	const log_prefix = createPrefix(req, MODE_SLR);
 	const SLRxml = await getDocument(req)
 
-	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req), images: getImageChecking(req) }
+	const _options: SL_Validator_Options = requestFromQuery(req, log_prefix)
 	if (SLRxml) await slrcheck.doValidateServiceListRegistry(SLRxml, errs, _options);
 	await report(req, res, jsonResponse, errs, motd)
 
@@ -370,7 +407,7 @@ async function validateContentGuide(req: express.Request, res: express.Response,
 	const errs = ErrorList.withMarkup();
 	const log_prefix = createPrefix(req, MODE_CG);
 	const CGxml = await getDocument(req)
-	const _options: CG_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, images: getImageChecking(req) }
+	const _options: CG_Validator_Options = requestFromQuery(req, log_prefix)
 
 	if (CGxml) await cgcheck.doValidateContentGuide(CGxml, req.query.type as string, errs, _options);
 	await report(req, res, jsonResponse, errs, motd)
