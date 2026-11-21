@@ -15,6 +15,7 @@ import { LoadGenres, LoadCountries, LoadLinkedApplicationCS } from "./classifica
 import { keys, InvalidCountryCode, InvalidURL } from "./common_errors.mts"
 import { slVersions, dvbi, dvbiEA, dvbiEC, dvbisld, validApplicationTypes, DvbIApplicationTypes, XMLdocumentType } from "./DVB-I_definitions.mts"
 import ErrorList, { APPLICATION, WARNING } from "./error_list.mts"
+import { nestedTraversal } from "./traversal.mts"
 import { ValidationScope } from "./safe_fetch.mts"
 import { CheckExtension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY } from "./extension_check.mts"
 import { ValidateLanguage } from "./IANA_languages.mts"
@@ -358,9 +359,8 @@ export default class ServiceListRegistryCheck {
 				ValidateAnySignaturePolicy(URI, documentInfo, errs, `${errCode}-37`);
 
 				if (options.traverse && this.#service_list_validator) {
-					const sl_errs: ErrorList = ErrorList.summaryOnly(URI.content, "SL", "Nested Service List")
-					this.#service_list_validator.validateServiceList(URI, URI.content, sl_errs, options)
-					errs.nestedErrors.push(sl_errs)
+					const sl_errs = nestedTraversal(errs, URI.content, "SL", "Nested Service List")
+					if (sl_errs) this.#service_list_validator.validateServiceList(URI, URI.content, sl_errs, options)
 				}
 			}
 		});

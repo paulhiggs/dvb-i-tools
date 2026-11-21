@@ -17,6 +17,7 @@ import { sats } from "./DVB_definitions.mts"
 import { slVersions, dvbi, dvbisld, dvbiEC, dvbiEA, XMLdocumentType} from "./DVB-I_definitions.mts"
 
 import ErrorList, { WARNING, APPLICATION } from "./error_list.mts"
+import { nestedTraversal } from "./traversal.mts"
 import type { ReportedErrorType } from "./error_list.mts"
 import { unEntity, DuplicatedValue, parameterCheck, HexOrDecValue, DefaultProperty, HasProperty } from "./utils.mts"
 import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isRTSPURL, isTAGURI, isUUIDformat } from "./pattern_checks.mts"
@@ -1997,15 +1998,14 @@ export default class ServiceListCheck {
 				// check now/next via ScheduleInfoEndpoint
 				if (siEpURL && serviceID) {
 					const NowNextURL = `${siEpURL}?sid=${serviceID}&now_next=true`
-					const cg_errors = ErrorList.summaryOnly(NowNextURL, CG_REQUEST_SCHEDULE_NOWNEXT, "Now/Next")
+					const cg_errors = nestedTraversal(errs, NowNextURL, CG_REQUEST_SCHEDULE_NOWNEXT, "Now/Next")
 	/*dbg*/console.log(` ${NowNextURL} Now/Next lookup for serviceID ${serviceID}`)
-					this.#content_guide_validator.validateContentGuide(
+					if (cg_errors) this.#content_guide_validator.validateContentGuide(
 						myContentGuide.getAnyNs(dvbi.e_ScheduleInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
 						NowNextURL, 
 						CG_REQUEST_SCHEDULE_NOWNEXT, 
 						cg_errors, 
 						{ ...cgOptions })
-					errs.nestedErrors.push(cg_errors)
 				}
 
 				// check timestamp filtered schedule via ScheduleInfoEndpoint
@@ -2026,15 +2026,14 @@ export default class ServiceListCheck {
 							const end_sec = end.epochMilliseconds / 1000
 
 							const TimestampInterval = `${siEpURL}?sid=${serviceID}&start=${start_sec}&end=${end_sec}`
-							const cg_errors = ErrorList.summaryOnly(TimestampInterval, CG_REQUEST_SCHEDULE_TIME, `Timestamp filtered schedule: ${start}-${end}`)
+							const cg_errors = nestedTraversal(errs, TimestampInterval, CG_REQUEST_SCHEDULE_TIME, `Timestamp filtered schedule: ${start}-${end}`)
 	/*dbg*/console.log(`traverse:: ${TimestampInterval} Timestamp ${start}-${end} lookup for serviceID ${serviceID}`)
-							this.#content_guide_validator.validateContentGuide(
+							if (cg_errors) this.#content_guide_validator.validateContentGuide(
 								myContentGuide.getAnyNs(dvbi.e_ScheduleInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
 								TimestampInterval, 
 								CG_REQUEST_SCHEDULE_TIME, 
 								cg_errors, 
 								{ ...cgOptions })
-							errs.nestedErrors.push(cg_errors)
 						}
 					}
 				}
@@ -2044,27 +2043,25 @@ export default class ServiceListCheck {
 	/*dbg*/console.log(`traverse:: ${giEpURL} Boxset categories lookup for serviceID ${serviceID}`)
 //						const BSCategoriesSvcURL = `${giEpURL}categories?sid=${serviceID}&page_size=all`
 						const BSCategoriesSvcURL = `${giEpURL}categories?sid=${serviceID}`
-						const cg_errors = ErrorList.summaryOnly(BSCategoriesSvcURL, CG_REQUEST_BS_CATEGORIES, `Boxset Categories for ${serviceID}`)
-						this.#content_guide_validator.validateContentGuide(
+						const cg_errors = nestedTraversal(errs, BSCategoriesSvcURL, CG_REQUEST_BS_CATEGORIES, `Boxset Categories for ${serviceID}`)
+						if (cg_errors) this.#content_guide_validator.validateContentGuide(
 							myContentGuide.getAnyNs(dvbi.e_GroupInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
 							BSCategoriesSvcURL, 
 							CG_REQUEST_BS_CATEGORIES, 
 							cg_errors, 
 							{ ...cgOptions })
-						errs.nestedErrors.push(cg_errors)
 					}
 
 	/*dbg*/console.log(`traverse:: ${giEpURL} Boxset categories lookup endpoint`)
 //					const BSCategoriesAllURL = `${giEpURL}categories&page_size=all`
 					const BSCategoriesAllURL = `${giEpURL}categories`
-					const cg_errors = ErrorList.summaryOnly(BSCategoriesAllURL, CG_REQUEST_BS_CATEGORIES, "Boxset Categories for all services")
-					this.#content_guide_validator.validateContentGuide(
+					const cg_errors = nestedTraversal(errs, BSCategoriesAllURL, CG_REQUEST_BS_CATEGORIES, "Boxset Categories for all services")
+					if (cg_errors) this.#content_guide_validator.validateContentGuide(
 						myContentGuide.getAnyNs(dvbi.e_GroupInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
 						BSCategoriesAllURL, 
 						CG_REQUEST_BS_CATEGORIES, 
 						cg_errors, 
 						{ ...cgOptions })
-					errs.nestedErrors.push(cg_errors)
 				}
 			}
 		}
