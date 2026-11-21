@@ -36,9 +36,12 @@ import type { StatsType } from "./globals.mts"
 import { Default_SLEPR, __dirname } from "./data_locations.mts"
 import { drawForm, PAGE_TOP, PAGE_BOTTOM, drawResults, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "./ui.mts"
 import type {FormModes} from './ui.mts'
-import ErrorList from "./error_list.mts"
+import ErrorList, { INFORMATION } from "./error_list.mts"
+import { jsonResult } from "./json_results.mts"
+import type { ResultMode } from "./json_results.mts"
+import { keys } from "./common_errors.mts"
 import { safeFetch, configureFetchPolicy, IMAGE_CHECKING, DEFAULT_MAX_TRAVERSAL, parseTraversalLimit } from "./safe_fetch.mts"
-import type { ImageChecking } from "./safe_fetch.mts"
+import type { ImageChecking, ValidationOptions } from "./safe_fetch.mts"
 import { readmyfile, HasProperty, escapeHTML } from "./utils.mts"
 import {
 	LoadGenres,
@@ -131,22 +134,82 @@ function imageChecking(value: unknown) : ImageChecking {
 }
 const getImageChecking = (req: express.Request) : ImageChecking => imageChecking(req.method == "GET" ? req.query?.images : req.header("X-images"));
 
+// a parameter of a /validate_* request: from the query of a GET, or from an X- header of a POST (whose body is the document)
+const requestParameter = (req: express.Request, name: string): string | undefined => {
+	const value = req.method == "GET" ? req.query?.[name] : req.header(`X-${name.replace(/_/g, "-")}`);
+	return typeof value == "string" ? value : undefined;
+};
+const isTrue = (value: string | undefined): boolean => value != undefined && ["true", "on", "yes", "1"].includes(value.trim().toLowerCase());
+
+/**
+ * the choices of a validation requested through a /validate_* endpoint, from the query (GET) or the X- headers (POST):
+ * the A177 variant (variants / X-variants), image checking (images / X-images) and, for a document that can traverse
+ * (a service list or service list registry), traversal (traverse / X-traverse) and its limit (max_traversal /
+ * X-max-traversal)
+ *
+ * @param {express.Request} req         the request
+ * @param {string}          log_prefix  where the document is archived, if it is
+ * @param {ErrorList}       errs        where a note is added when traversal is requested but not allowed
+ * @param {object}          traversal   for a document that can traverse: whether the server allows traversal
+ * @returns {ValidationOptions | undefined} the choices for the validation, or undefined if a parameter is not valid (the
+ *                                          reason is in req.parseErr)
+ */
+function requestFromQuery(req: express.Request, log_prefix: string | undefined, errs?: ErrorList, traversal?: { allowed: boolean }): ValidationOptions | undefined {
+	const options: ValidationOptions = { log_prefix, report_schema_version: true, variants: getVariant(req), images: getImageChecking(req) };
+	if (!traversal || !isTrue(requestParameter(req, "traverse"))) return options;
+
+	if (!traversal.allowed) {
+		errs?.addError({
+			type: INFORMATION,
+			code: "TRAV004",
+			message: "traversal was requested, but is not allowed on this server (it is started without --allow_traversal), so referenced documents are not validated",
+			key: keys.k_Traversal,
+		});
+		return options;
+	}
+	const limit = requestParameter(req, "max_traversal");
+	const maxTraversal = limit == undefined || limit.trim().length == 0 ? DEFAULT_MAX_TRAVERSAL : parseTraversalLimit(limit);
+	if (maxTraversal == undefined) {
+		req.parseErr = [`the maximum number of documents to traverse must be a positive whole number or ${"unlimited".quote()}, not ${limit!.quote()}`];
+		return undefined;
+	}
+	return { ...options, traverse: true, maxTraversal };
+}
+
+/**
+ * the choices of a validation requested with the /check form, from its fields (already checked, and kept in the session)
+ *
+ * @param {express.Request} req           the request
+ * @param {string}          testtype      the type of document being validated
+ * @param {string}          log_prefix    where the document is archived, if it is
+ * @param {number}          maxTraversal  the most documents to traverse, from the form
+ * @returns {ValidationOptions} the choices for the validation
+ */
+function requestFromCheckForm(req: express.Request, testtype: string, log_prefix: string | undefined, maxTraversal: number | undefined): ValidationOptions {
+	// the Germany variant and traversal are offered for service lists and service list registries
+	const list = testtype == MODE_SL || testtype == MODE_SLR,
+		form = req.session.data;
+	return {
+		log_prefix,
+		report_schema_version: true,
+		variants: list && form?.forGermany ? GERMAN_A177r6_VARIANT : 0,
+		traverse: list && form?.traverse == true,
+		maxTraversal,
+		images: form?.images,
+	};
+}
+
 
 async function report(req: express.Request, res: express.Response, jsonResponse: boolean, errs: ErrorList, motd: string | undefined) : Promise<void> {
 	if (jsonResponse) {
 		res.setHeader("Content-Type", "application/json")
 		if (!req.parseErr) delete errs.markupXML
-		// a single JSON document is returned, with parseErr included only when the document could not be obtained
-		const result: Record<string, unknown> = req.parseErr ? { parseErr: req.parseErr } : {}
-		if (req.query.results && req.query.results == "all")
-			result.errs = errs
-		else {
-			result.fatals = errs.fatals.length
-			result.errors = errs.errors.length
-			result.warnings = errs.warnings.length
-			result.informationals = errs.informationals.length
-		}
-		res.write(JSON.stringify(result))
+		// a single JSON document is returned, with parseErr included only when the document could not be obtained or the
+		// request was not valid. results=tree adds a node for each document (nested=problems and depth=N narrow it), and
+		// results=all returns the whole ErrorList
+		const mode: ResultMode = req.query.results == "all" ? "all" : req.query.results == "tree" ? "tree" : "summary"
+		const depth = typeof req.query.depth == "string" && /^\d+$/.test(req.query.depth) ? Number(req.query.depth) : undefined
+		res.write(JSON.stringify(jsonResult(errs, mode, { problemsOnly: req.query.nested == "problems", maxDepth: depth }, req.parseErr)))
 	}
 	else 
 		await drawResults(req, res, motd, req.parseErr, errs)
@@ -216,6 +279,8 @@ async function DVB_I_check(
 		req.session.data.maxTraversal = maxTraversalField.length > 0 ? maxTraversalField : String(DEFAULT_MAX_TRAVERSAL)
 		req.session.data.images = imageChecking(req.body.images)
 		const log_prefix = createPrefix(req, testtype);
+		// the choices for the validation, and every document it traverses into
+		const request = requestFromCheckForm(req, testtype, log_prefix, maxTraversal);
 		const errs = ErrorList.withMarkup();
 		if (!req.parseErr)
 			switch (doclocation) {
@@ -250,24 +315,24 @@ async function DVB_I_check(
 				case MODE_CG:
 					errs.setType(`Content Guide-${requestType}`)
 					if (cgcheck) 
-						await cgcheck.doValidateContentGuide(VVxml, requestType, errs, { log_prefix: log_prefix, report_schema_version: true, images: req.session.data.images });
+						await cgcheck.doValidateContentGuide(VVxml, requestType, errs, request);
 					break;
 				case MODE_SL:
 					errs.setType("Service List")
 					if (slcheck) 
 						await slcheck.doValidateServiceList(VVxml, errs, 
-							{ log_prefix: log_prefix, report_schema_version: true, variants: req.session.data.forGermany ? GERMAN_A177r6_VARIANT : 0, traverse: req.session.data.traverse, maxTraversal: maxTraversal, images: req.session.data.images }
+							request
 						);
 					break;
 				case MODE_PL:
 					errs.setType("Playlist")
 					if (plcheck) 
-						await plcheck.doValidatePlaylist(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, images: req.session.data.images });
+						await plcheck.doValidatePlaylist(VVxml, errs, request);
 					break;
 				case MODE_SLR:
 					errs.setType("Service List Registry")
 					if (slrcheck) 
-						await slrcheck.doValidateServiceListRegistry(VVxml, errs, { log_prefix: log_prefix, report_schema_version: true, traverse: req.session.data.traverse, maxTraversal: maxTraversal, images: req.session.data.images });
+						await slrcheck.doValidateServiceListRegistry(VVxml, errs, request);
 					break;
 			}
 
@@ -295,15 +360,16 @@ async function DVB_I_check(
  * @param {ServiceListCheck} slcheck       Initialised Service List validator
  * @param {string | undefined} motd          HTML text for the Message Of The Day
  * @param {boolean}          jsonResponse  Flag indicating that the response should ne JSON format rather than HTML
+ * @param {boolean}          allowTraversal Whether the server allows traversal (--allow_traversal), which the request can ask for
  */
-async function validateServiceList(req: express.Request, res: express.Response, slcheck: ServiceListCheck, motd: string | undefined, jsonResponse: boolean) : Promise<void> {
+async function validateServiceList(req: express.Request, res: express.Response, slcheck: ServiceListCheck, motd: string | undefined, jsonResponse: boolean, allowTraversal: boolean = false) : Promise<void> {
 	if (!checkMethod(req, res)) return;
 	const errs = ErrorList.withMarkup();
 	const log_prefix = createPrefix(req, MODE_SL);
 	const SLxml = await getDocument(req)
-	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req), images: getImageChecking(req) }
+	const _options: SL_Validator_Options | undefined = requestFromQuery(req, log_prefix, errs, { allowed: allowTraversal })
 
-	if (SLxml) await slcheck.doValidateServiceList(SLxml, errs, _options);
+	if (SLxml && _options) await slcheck.doValidateServiceList(SLxml, errs, _options);
 	await report(req, res, jsonResponse, errs, motd)
 	document_logger(errs, log_prefix, true, req);
 	res.end();
@@ -325,7 +391,7 @@ async function validatePlaylist(req: express.Request, res: express.Response, plc
 	const log_prefix = createPrefix(req, MODE_PL);
 	const PLxml = await getDocument(req)
 
-	if (PLxml) await plcheck.doValidatePlaylist(PLxml, errs, { log_prefix: log_prefix, report_schema_version: true, images: getImageChecking(req) });
+	if (PLxml) await plcheck.doValidatePlaylist(PLxml, errs, requestFromQuery(req, log_prefix)!);
 	await report(req, res, jsonResponse, errs, motd)
 	document_logger(errs, log_prefix, true, req);
 	res.end();
@@ -341,15 +407,16 @@ async function validatePlaylist(req: express.Request, res: express.Response, plc
  * @param {ServiceListRegistryCheck} slrcheck       Initialised Service List validator
  * @param {string | undefined}       motd           HTML text for the Message Of The Day
  * @param {boolean}                  jsonResponse   Flag indicating that the response should ne JSON format rather than HTML
+ * @param {boolean}                  allowTraversal Whether the server allows traversal (--allow_traversal), which the request can ask for
  */
-async function validateServiceListRegistry(req: express.Request, res: express.Response, slrcheck: ServiceListRegistryCheck, motd: string | undefined, jsonResponse: boolean) : Promise<void> {
+async function validateServiceListRegistry(req: express.Request, res: express.Response, slrcheck: ServiceListRegistryCheck, motd: string | undefined, jsonResponse: boolean, allowTraversal: boolean = false) : Promise<void> {
 	if (!checkMethod(req, res)) return;
 	const errs = ErrorList.withMarkup();
 	const log_prefix = createPrefix(req, MODE_SLR);
 	const SLRxml = await getDocument(req)
 
-	const _options: SL_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, variants: getVariant(req), images: getImageChecking(req) }
-	if (SLRxml) await slrcheck.doValidateServiceListRegistry(SLRxml, errs, _options);
+	const _options: SL_Validator_Options | undefined = requestFromQuery(req, log_prefix, errs, { allowed: allowTraversal })
+	if (SLRxml && _options) await slrcheck.doValidateServiceListRegistry(SLRxml, errs, _options);
 	await report(req, res, jsonResponse, errs, motd)
 
 	document_logger(errs, log_prefix, true, req);
@@ -370,7 +437,7 @@ async function validateContentGuide(req: express.Request, res: express.Response,
 	const errs = ErrorList.withMarkup();
 	const log_prefix = createPrefix(req, MODE_CG);
 	const CGxml = await getDocument(req)
-	const _options: CG_Validator_Options = { log_prefix: log_prefix, report_schema_version: true, images: getImageChecking(req) }
+	const _options: CG_Validator_Options = requestFromQuery(req, log_prefix)!
 
 	if (CGxml) await cgcheck.doValidateContentGuide(CGxml, req.query.type as string, errs, _options);
 	await report(req, res, jsonResponse, errs, motd)
@@ -631,11 +698,11 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 
 		if (!app_options.nosl) {
 			app.all("/validate_sl", express.text(Express_Options), async (req: express.Request, res: express.Response) => {
-				await validateServiceList(req, res, slcheck!, motd, false);
+				await validateServiceList(req, res, slcheck!, motd, false, app_options.allow_traversal);
 			});
 
 			app.all("/validate_sl_json", express.text(Express_Options), async (req: express.Request, res: express.Response) => {
-				await validateServiceList(req, res, slcheck!, motd, true);
+				await validateServiceList(req, res, slcheck!, motd, true, app_options.allow_traversal);
 			});
 		}
 
@@ -661,11 +728,11 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 
 		if (!app_options.noslr) {
 			app.all("/validate_slr", express.text(Express_Options), async (req: express.Request, res: express.Response) => {
-				await validateServiceListRegistry(req, res, slrcheck!, motd, false);
+				await validateServiceListRegistry(req, res, slrcheck!, motd, false, app_options.allow_traversal);
 			});
 
 			app.all("/validate_slr_json", express.text(Express_Options), async (req: express.Request, res: express.Response) => {
-				await validateServiceListRegistry(req, res, slrcheck!, motd, true);
+				await validateServiceListRegistry(req, res, slrcheck!, motd, true, app_options.allow_traversal);
 			});
 		}
 

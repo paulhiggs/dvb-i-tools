@@ -16,7 +16,7 @@ import { keys, InvalidCountryCode, InvalidURL } from "./common_errors.mts"
 import { slVersions, dvbi, dvbiEA, dvbiEC, dvbisld, validApplicationTypes, DvbIApplicationTypes, XMLdocumentType } from "./DVB-I_definitions.mts"
 import ErrorList, { APPLICATION, WARNING } from "./error_list.mts"
 import { nestedTraversal } from "./traversal.mts"
-import { setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
+import { currentRequest, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
 import { checkConnection } from "./tls_checks.mts"
 import { CheckExtension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY } from "./extension_check.mts"
 import { ValidateLanguage } from "./IANA_languages.mts"
@@ -254,7 +254,7 @@ export default class ServiceListRegistryCheck {
 		);
 	}
 
-	/* private */ #CheckServiceListOffering(Offering: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string, options: SLR_Validator_Options) {
+	/* private */ #CheckServiceListOffering(Offering: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) {
 		const offeringNamespace = Offering.documentNamespace();
 		// ServiceListOfferingType @regulatorListFlag checked by schema
 
@@ -361,9 +361,9 @@ export default class ServiceListRegistryCheck {
 				// the service list's server is checked against the policy even when the service list is not traversed into
 				if (policy) checkConnection(URI, URI.content.trim(), policy, errs);
 
-				if (options.traverse && this.#service_list_validator) {
+				if (currentRequest().traverse && this.#service_list_validator) {
 					const sl_errs = nestedTraversal(errs, URI.content, "SL", "Nested Service List")
-					if (sl_errs) this.#service_list_validator.validateServiceList(URI, URI.content, sl_errs, options)
+					if (sl_errs) this.#service_list_validator.validateServiceList(URI, URI.content, sl_errs)
 				}
 			}
 		});
@@ -428,7 +428,8 @@ export default class ServiceListRegistryCheck {
 	/*public*/ async doValidateServiceListRegistry(SLRtext: string, errs: ErrorList, options: SLR_Validator_Options = {}) : Promise<void> {
 		this.#numRequests++;
 		// collects the network work (traversal, referenced resources) that is performed once the rules below have been checked
-		using scope = ValidationScope.open({ images: options.images, maxTraversalDocuments: options.maxTraversal });
+		using scope = ValidationScope.open(options);
+		const request = currentRequest();
 
 		if (!SLRtext) {
 			errs.addError({
@@ -439,14 +440,11 @@ export default class ServiceListRegistryCheck {
 			return;
 		}
 
-		DefaultProperty(options, "log_prefix", null);
-		DefaultProperty(options, "report_schema_version", true);
-		DefaultProperty(options, "variants", 0);
 
 		// 'using' disposes the document (WASM memory) on every exit from this method, including early returns and exceptions
 		using SLR = SchemaLoad(SLRtext, errs, "SR001");
 		if (!SLR) return;
-		document_logger(errs, options.log_prefix, false);
+		document_logger(errs, scope.depth == 0 ? request.log_prefix : undefined, false);
 
 		if (SLR.root.name !== dvbisld.e_ServiceListEntryPoints) {
 			errs.addError({
@@ -471,7 +469,7 @@ export default class ServiceListRegistryCheck {
 			return;
 		}
 
-		if (!this.#doSchemaVerification(SLR as XmlDocument, errs, "SR005", options.report_schema_version, options.variants)) {
+		if (!this.#doSchemaVerification(SLR as XmlDocument, errs, "SR005", request.report_schema_version, request.variants)) {
 			errs.addError({
 				code: "SR010",
 				message: `Unsupported namespace ${(SLR.root as XmlElement).documentNamespace().quote()}`,
@@ -508,7 +506,7 @@ export default class ServiceListRegistryCheck {
 			if (Provider) this.#CheckOrganisationType(Provider, errs, "SR081");
 
 			ProviderOffering.forEachNamedChildElement(dvbisld.e_ServiceListOffering, (ServiceListOffering) => {
-				this.#CheckServiceListOffering(ServiceListOffering, documentInfo ,errs, "SR082", options);
+				this.#CheckServiceListOffering(ServiceListOffering, documentInfo ,errs, "SR082");
 			});
 		});
 

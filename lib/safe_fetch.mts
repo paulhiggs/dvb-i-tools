@@ -337,11 +337,34 @@ export type ValidationTiming = {
 export type ImageChecking = "no" | "yes" | "scaled";
 export const IMAGE_CHECKING: ImageChecking[] = ["no", "yes", "scaled"];
 
-// choices made for a whole validation, by the request that started it
-export type ValidationSettings = {
-	images?: ImageChecking; // default "yes"
-	maxTraversalDocuments?: number; // the most documents the validation may traverse (Infinity for no limit), instead of the policy's
+/**
+ * the choices made for a whole validation by the request that started it. They are set once, by the outermost validation,
+ * and every document it traverses into uses the same choices (see currentRequest()). The field names are those of the
+ * validators' options (e.g. SL_Validator_Options), which are the way a caller gives them
+ */
+export type ValidationRequest = {
+	traverse: boolean; // validate the documents referenced from the document (default false)
+	maxTraversal: number; // the most documents to traverse (Infinity for no limit; default the fetch policy's)
+	images: ImageChecking; // how referenced images are checked (default "yes")
+	variants: number; // A177 variants to validate against, e.g. GERMAN_A177r6_VARIANT (default 0)
+	report_schema_version: boolean; // report the state of each document's schema (default true)
+	log_prefix?: string; // where the outermost document is archived (default none); traversed documents are not archived
 };
+
+// the choices of a request, as a caller gives them: any that are left out take their default
+export type ValidationOptions = Partial<ValidationRequest>;
+
+/**
+ * the choices for a validation, with defaults for any not given
+ */
+export const validationRequest = (options: ValidationOptions = {}): ValidationRequest => ({
+	traverse: options.traverse ?? false,
+	maxTraversal: options.maxTraversal ?? policy.maxTraversalDocuments,
+	images: options.images ?? "yes",
+	variants: options.variants ?? 0,
+	report_schema_version: options.report_schema_version ?? true,
+	log_prefix: options.log_prefix,
+});
 
 /**
  * read a limit on the number of documents to traverse: a positive whole number, or "unlimited"
@@ -357,7 +380,7 @@ export function parseTraversalLimit(value: unknown): number | undefined {
 }
 
 type TraversalBudget = {
-	settings: ValidationSettings;
+	request: ValidationRequest;
 	started: number; // when the validation started (performance.now())
 	fetches: Map<string, HostFetches>; // the retrievals made for the validation, by host
 	documents: number; // number of documents retrieved by traversal
@@ -403,22 +426,22 @@ export class ValidationScope {
 	#tasks: DeferredTask[] = [];
 	#open = true;
 
-	private constructor(parent: ValidationScope | undefined, settings: ValidationSettings) {
+	private constructor(parent: ValidationScope | undefined, options: ValidationOptions) {
 		this.depth = parent ? parent.depth + 1 : 0;
 		this.signaturePolicies = parent?.signaturePolicies;
 		this.budget = parent
 			? parent.budget
-			: { settings, started: performance.now(), fetches: new Map<string, HostFetches>(), documents: 0, traversed: new Set<string>(), requested: new Map<string, TraversalRequest>(), retrievals: new Map<string, Promise<unknown>>(), referenced: new Set<string>() };
+			: { request: validationRequest(options), started: performance.now(), fetches: new Map<string, HostFetches>(), documents: 0, traversed: new Set<string>(), requested: new Map<string, TraversalRequest>(), retrievals: new Map<string, Promise<unknown>>(), referenced: new Set<string>() };
 	}
 
 	/**
 	 * open a scope at the start of a validation. Use with "using" so it is closed on every exit from the validation
 	 *
-	 * @param {ValidationSettings} settings  choices for the validation. A nested validation (of a traversed document) uses
-	 *                                       the settings of the validation it belongs to, and ignores these
+	 * @param {ValidationOptions} options  the choices of the request, for the outermost validation. A nested validation (of a
+	 *                                     traversed document) uses the choices of the validation it belongs to, and ignores these
 	 */
-	static open(settings: ValidationSettings = {}): ValidationScope {
-		const scope = new ValidationScope(runningScope.getStore(), settings);
+	static open(options: ValidationOptions = {}): ValidationScope {
+		const scope = new ValidationScope(runningScope.getStore(), options);
 		openScopes.push(scope);
 		return scope;
 	}
@@ -587,7 +610,7 @@ export function claimTraversal(url: string): TraversalRefusal | null {
 	if (!scope) return refusal("TRAV000", url, "traversal performed outside a validation");
 	const key = normaliseURL(url);
 	if (scope.budget.traversed.has(key)) return { code: "TRAV001", message: `skipped - ${url} already validated` };
-	const limit = scope.budget.settings.maxTraversalDocuments ?? policy.maxTraversalDocuments;
+	const limit = scope.budget.request.maxTraversal;
 	if (scope.budget.documents >= limit) return refusal("TRAV003", url, `maximum number of traversed documents (${limit}) reached`);
 	scope.budget.documents++;
 	scope.budget.traversed.add(key);
@@ -673,13 +696,20 @@ export function currentValidation(): ValidationHandle | undefined {
 }
 
 /**
- * the settings of the validation whose rules are being checked, or whose deferred work is being performed
+ * the choices of the validation whose rules are being checked, or whose deferred work is being performed. Every document
+ * of a validation, including those it traverses into, has the same choices
  *
- * @returns {ValidationSettings} the settings, which are empty outside a validation
+ * @returns {Readonly<ValidationRequest>} the choices, which are the defaults outside a validation
  */
-export function validationSettings(): ValidationSettings {
-	return (openScopes.at(-1) ?? runningScope.getStore())?.budget.settings ?? {};
+export function currentRequest(): Readonly<ValidationRequest> {
+	return (openScopes.at(-1) ?? runningScope.getStore())?.budget.request ?? validationRequest();
 }
+
+/**
+ * whether the document whose rules are being checked is the one the validation was requested for, rather than one it
+ * traversed into. Only that document is archived (log_prefix)
+ */
+export const isOutermostDocument = (): boolean => (openScopes.at(-1)?.depth ?? 0) == 0;
 
 /**
  * the retrieve part of a traversal (for deferRetrieval): claim the document against the validation's budget, then

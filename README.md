@@ -230,6 +230,66 @@ If the document cannot be retrieved, a `parseErr` array describing the problem i
 }
 ```
 
+The response also includes `timing`: how long the validation took, and the retrievals it made from each host.
+
+##### Traversal from the validation endpoints
+
+The service list and service list registry endpoints (`/validate_sl`, `/validate_sl_json`, `/validate_slr`, `/validate_slr_json`) can traverse into the documents they reference, as **Traverse referenced documents** does on the form:
+- `traverse=true`: in the query of a `GET`, or the header `X-traverse: true` with a `POST`.
+- `max_traversal=<number|unlimited>`: the most documents to traverse (default 100). In the query, or the header `X-max-traversal` with a `POST`. An invalid value is reported in `parseErr`, and the document is not validated.
+
+Traversal is only done when the server is started with `--allow_traversal`. Otherwise the response has an informational `TRAV004`, "traversal was requested, but is not allowed on this server".
+
+With traversal, the JSON summary has a `traversed` object:
+- `documents`: how many documents were traversed into.
+- `skipped`: referenced documents that were not retrieved because the depth or document limit was reached (`TRAV002`, `TRAV003`).
+- `repeats`: further references to the referenced documents, whether traversed or not, which were not requested again. This is the same count as "further references to them not validated again" in the HTML report.
+- `withFatals`, `withErrors`, `withWarnings`: how many traversed documents had findings of each kind.
+- `totals`: the findings of all the traversed documents together.
+- `traversal`: how many times each `TRAV` code was reported.
+
+```json
+{
+	"fatals": 0, "errors": 345, "warnings": 39, "informationals": 0,
+	"traversed": {
+		"documents": 30, "skipped": 9404, "repeats": 671,
+		"withFatals": 0, "withErrors": 11, "withWarnings": 11,
+		"totals": { "fatals": 0, "errors": 319, "warnings": 76, "informationals": 1581 },
+		"traversal": { "TRAV003": 9404 }
+	},
+	"timing": { "durationMs": 3120, "documentsTraversed": 30, "...": "..." }
+}
+```
+
+`results=tree` also gives a `document` node for the validated document, with a node in `nested` for each document it traversed into. Each node has:
+- `url`, `type` and `description`
+- `severity`: `none`, `debug`, `information`, `warning`, `error` or `fatal`
+- `counts`
+- `codes`: how many times each code was reported, for each severity
+- `references`: how many times the document was referenced, when more than once
+- `skipped`: `TRAV002` or `TRAV003`, for a document that was skipped because a traversal limit was reached
+
+Two query parameters narrow the tree. Leaving documents out is counted in `omitted` on the node above them.
+- `nested=problems`: only documents with fatals, errors or warnings, and the documents leading to them. Skipped documents are left out.
+- `depth=<n>`: only documents up to `n` levels below the validated document.
+
+```json
+{
+	"document": {
+		"url": "https://example.com/sl.xml", "type": "Service List", "severity": "error",
+		"counts": { "fatals": 0, "errors": 345, "warnings": 39, "informationals": 0 },
+		"codes": { "errors": { "SL263": 18, "SI112-53": 327 }, "warnings": { "SL270": 38, "SL283": 1 } },
+		"nested": [
+			{ "url": "https://example.com/sip?sid=1&now_next=true", "type": "NowNext", "description": "Now/Next", "severity": "error",
+			  "counts": { "fatals": 0, "errors": 8, "warnings": 2, "informationals": 28 },
+			  "codes": { "errors": { "AV020": 2, "AV051-53": 6 }, "warnings": { "AV051-52a": 2 }, "informationals": { "PI021-3": 28 } },
+			  "omitted": 2 }
+		],
+		"omitted": 9332
+	}
+}
+```
+
 `<server>/validate_sl_json?url=<service_list_url>&results=all` validates the list in the "url"-parameter and gives the complete validation results as JSON. The marked-up copy of the document (`markupXML`) is not included. The HTTP status is 200 whenever the request is accepted, including when the document cannot be retrieved: check for `parseErr` in the response. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. 
 The optional `variants=` query parameter can be used with a GET to specify region specific validation, or via the `X-variants` HTTP header for post.
 Example response:

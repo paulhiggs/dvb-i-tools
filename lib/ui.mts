@@ -26,6 +26,7 @@ import { CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHED
 import { HasProperty, escapeHTML } from "./utils.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
 import { read_string_options } from "./globals.mts"
+import { skippedTraversal } from "./traversal.mts"
 
 export const MODE_UNSPECIFIED = "none",
 	MODE_SL = "sl",
@@ -396,18 +397,21 @@ function* nested_error_row(req: express.Request, errs: ErrorList | undefined, de
 	}
 }
 
-// the number of traversed documents, and the number of further references to them that were not validated again
-function traversalCounts(errs: ErrorList): { documents: number; repeats: number } {
-	let documents = 0,
+// the rows of the traversed documents table, the documents validated and those skipped (a traversal limit was reached), and
+// the further references to them that were not requested again. These are the counts of the JSON summary (json_results.mts)
+function traversalCounts(errs: ErrorList): { rows: number; documents: number; skipped: number; repeats: number } {
+	let rows = 0,
+		skipped = 0,
 		repeats = 0;
 	const pending = [...errs.nestedErrors];
 	while (pending.length > 0) {
 		const nest = pending.pop()!;
-		documents++;
+		rows++;
+		if (skippedTraversal(nest)) skipped++;
 		repeats += (nest.references ?? 1) - 1;
 		pending.push(...nest.nestedErrors);
 	}
-	return { documents, repeats };
+	return { rows, documents: rows - skipped, skipped, repeats };
 }
 
 // shows the severity filter of the traversed documents table, which needs scripting (without it, all rows are shown)
@@ -416,9 +420,9 @@ const TRAVERSAL_FILTER_SCRIPT = `<script>(function(){var f=document.currentScrip
 function* reportNestedErrors(req: express.Request, errs: ErrorList | undefined): Generator<string> {
 	if (!errs || errs.nestedErrors.length == 0) return
 
-	const { documents, repeats } = traversalCounts(errs)
-	yield sectionStart("traversed", "Traversed documents", formatCount(documents), "", "in the order referenced")
-	yield `<div class="trav-summary"><span><b>${formatCount(documents)}</b> ${documents == 1 ? "document" : "documents"} validated</span>${repeats > 0 ? `<span><b>${formatCount(repeats)}</b> further ${repeats == 1 ? "reference" : "references"} to them not validated again</span>` : ""}</div>`
+	const { rows, documents, skipped, repeats } = traversalCounts(errs)
+	yield sectionStart("traversed", "Traversed documents", formatCount(rows), "", "in the order referenced")
+	yield `<div class="trav-summary"><span><b>${formatCount(documents)}</b> ${documents == 1 ? "document" : "documents"} validated</span>${skipped > 0 ? `<span><b>${formatCount(skipped)}</b> skipped (document or depth limit)</span>` : ""}${repeats > 0 ? `<span><b>${formatCount(repeats)}</b> further ${repeats == 1 ? "reference" : "references"} not requested again</span>` : ""}</div>`
 	const filter = (show: string, label: string) => `<button type="button" data-show="${show}" aria-pressed="${show == "all"}">${label}</button>`
 	yield `<div class="filters" role="group" aria-label="Show traversed documents" hidden><span class="lbl">Show</span>${filter("all", "All")}${filter("error", "Errors")}${filter("warn", "Warnings")}${filter("info", "Informational")}${filter("ok", "No findings")}</div>${TRAVERSAL_FILTER_SCRIPT}`
 	yield `<div class="scroll"><table class="trav" id="trav" data-show="all"><thead><tr><th scope="col">Document</th><th scope="col">Result</th><th scope="col">References</th></tr></thead><tbody>`

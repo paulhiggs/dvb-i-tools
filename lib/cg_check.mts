@@ -30,7 +30,7 @@ import { unEntity, DuplicatedValue, parameterCheck } from "./utils.mts"
 import { isHTTPURL, isDVBLocator, isUTCDateTime, isCRIDURI, isTAGURI } from "./pattern_checks.mts"
 import { ValidatePromotionalStillImage } from "./related_material_checks.mts"
 import { checkReferencedResource, checkSignedResponse, signaturePolicyOf } from "./resource_checks.mts"
-import type { ImageChecking } from "./safe_fetch.mts"
+import type { ValidationOptions } from "./safe_fetch.mts"
 import { cg_InvalidHrefValue, NoChildElement, keys } from "./common_errors.mts"
 import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.mts"
 import type { ElementCardinalityType } from "./schema_checks.mts"
@@ -60,7 +60,7 @@ import { FoundDocumentItems} from "./sl_check.mts"
 import ClassificationScheme from "./classification_scheme.mts";
 import type { StatsType, LoadOptions } from "./globals.mts"
 
-import { allowTraversal, currentValidation, deferRetrieval, retrieveTraversal, ValidationScope } from "./safe_fetch.mts"
+import { allowTraversal, currentRequest, currentValidation, deferRetrieval, retrieveTraversal, ValidationScope } from "./safe_fetch.mts"
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";
@@ -181,15 +181,16 @@ function LoadCGschemas(opts: LoadOptions) : void {
 	});
 }
 
-export type CG_Validator_Options = {
-	log_prefix? : string
-	report_schema_version?: boolean
-	traverse?: boolean
-	progInfo_ep?: string
-	grpInfo_ep?: string
-	mEpisodes_ep?: string
-	images?: ImageChecking // how referenced images are checked (default "yes"; "scaled" also checks the server scales them)
+// the endpoints a content guide document's references are built from, which come from the service list that refers to it
+export type CG_Endpoints = {
+	progInfo_ep?: string // ProgramInfoEndpoint
+	grpInfo_ep?: string // GroupInfoEndpoint
+	mEpisodes_ep?: string // MoreEpisodesEndpoint
 }
+
+// the choices of a content guide validation (see ValidationRequest), and the endpoints of this document. For a document
+// reached by traversal, the choices of the validation that traversed into it are used, and only the endpoints are its own
+export type CG_Validator_Options = ValidationOptions & CG_Endpoints
 
 
 export default class ContentGuideCheck {
@@ -1589,7 +1590,7 @@ export default class ContentGuideCheck {
 					line: ProgramInformation.line,
 				});
 
-			if (options?.traverse && options?.progInfo_ep) {
+			if (currentRequest().traverse && options?.progInfo_ep) {
 				const piURL = `${options?.progInfo_ep}?pid=${programCRID}`
 				const piErrs = nestedTraversal(errs, piURL, CG_REQUEST_PROGRAM, "Program Information")
 	/*dbg*/console.log(`traverse:: DPI of ${piURL}`)
@@ -1598,7 +1599,7 @@ export default class ContentGuideCheck {
 
 			// traverse more episodes if provided. The episodes in a More Episodes response are not themselves traversed for
 			// more episodes, as each would request the same series again under a different URL
-			if (options?.traverse && options?.mEpisodes_ep && requestType != CG_REQUEST_MORE_EPISODES) {
+			if (currentRequest().traverse && options?.mEpisodes_ep && requestType != CG_REQUEST_MORE_EPISODES) {
 				const mepURL = `${options?.mEpisodes_ep}?pid=${programCRID}`
 				const mepErrs = nestedTraversal(errs, mepURL, CG_REQUEST_MORE_EPISODES, `More Episodes for ${programCRID}`)
 	/*dbg*/console.log(`traverse:: More Episodes of ${mepURL}`)
@@ -1812,7 +1813,7 @@ export default class ContentGuideCheck {
 						});
 					//look for any "next pagination links" and traverse into them
 					const BasicDescription = GroupInformation.getAnyNs(tva.e_BasicDescription)
-					if (options?.traverse && options?.grpInfo_ep && BasicDescription)
+					if (currentRequest().traverse && options?.grpInfo_ep && BasicDescription)
 						BasicDescription.forEachNamedChildElement(tva.e_RelatedMaterial, (rm) => {
 							if (getHowRelated(rm) == dvbi.PAGINATION_NEXT_URI) {
 								const paginationURL = getMediaUri(rm)
@@ -1835,7 +1836,7 @@ export default class ContentGuideCheck {
 					);
 					//traverse:: validate the Box Set List
 					const list_groupId = GroupInformation.attrAnyNsValueOr(tva.a_groupId)
-					if (list_groupId && options?.traverse && options?.grpInfo_ep) {
+					if (list_groupId && currentRequest().traverse && options?.grpInfo_ep) {
 						const bslURL = `${options.grpInfo_ep}?groupId=${list_groupId}`
 						const bslErrs = nestedTraversal(errs, bslURL, CG_REQUEST_BS_LISTS, "Box Set List")
 	/*dbg*/console.log(`traverse:: Box Set List of ${bslURL}`)
@@ -1866,7 +1867,7 @@ export default class ContentGuideCheck {
 						});
 					//look for any "next pagination links" and traverse into them
 					const BasicDescription = GroupInformation.getAnyNs(tva.e_BasicDescription)
-					if (options?.traverse && options?.traverse && options?.grpInfo_ep && BasicDescription)
+					if (currentRequest().traverse && options?.grpInfo_ep && BasicDescription)
 						BasicDescription.forEachNamedChildElement(tva.e_RelatedMaterial, (rm) => {
 							if (getHowRelated(rm) == dvbi.PAGINATION_NEXT_URI) {
 								const paginationURL = getMediaUri(rm)
@@ -1889,7 +1890,7 @@ export default class ContentGuideCheck {
 					);
 					//traverse:: validate the Box Set Contents 
 					const list_groupId = GroupInformation.attrAnyNsValueOr(tva.a_groupId)
-					if (list_groupId && options?.traverse && options?.grpInfo_ep) {
+					if (list_groupId && currentRequest().traverse && options?.grpInfo_ep) {
 						const bscURL = `${options.grpInfo_ep}contents?groupId=${list_groupId}`
 						const bscErrs = nestedTraversal(errs, bscURL, CG_REQUEST_BS_CONTENTS, "Box Set Contents")
 	/*dbg*/console.log(`traverse:: Box Set Contents of ${bscURL}`)
@@ -1910,7 +1911,7 @@ export default class ContentGuideCheck {
 				if (isParentGroup) {
 					//look for any "next pagination links" and traverse into them
 					const BasicDescription = GroupInformation.getAnyNs(tva.e_BasicDescription)
-					if (options?.traverse && options?.grpInfo_ep && BasicDescription)
+					if (currentRequest().traverse && options?.grpInfo_ep && BasicDescription)
 						BasicDescription.forEachNamedChildElement(tva.e_RelatedMaterial, (rm) => {
 							if (getHowRelated(rm) == dvbi.PAGINATION_NEXT_URI) {
 								const paginationURL = getMediaUri(rm)
@@ -3589,21 +3590,21 @@ export default class ContentGuideCheck {
 	async doValidateContentGuide(CGtext: string, requestType: string, errs: ErrorList, options: CG_Validator_Options = {}) : Promise<void> {
 		this.#numRequests++;
 		// collects the network work (traversal, referenced resources) that is performed once the rules below have been checked
-		using scope = ValidationScope.open({ images: options.images });
+		using scope = ValidationScope.open(options);
+		// the choices of the whole validation: for a traversed document, those of the validation that traversed into it
+		const request = currentRequest();
 
 		if (!CGtext) {
 			errs.addError({ type: APPLICATION, code: "CG000", message: "doValidateContentGuide() called with CGtext==null" });
 			return;
 		}
 
-		DefaultProperty(options, "log_prefix", null);
-		DefaultProperty(options, "report_schema_version", true);
 
 		// 'using' disposes the document (WASM memory) on every exit from this method, including early returns and exceptions
 		using CG = SchemaLoad(CGtext, errs, "CG001");
 		if (!CG) return;
 
-		document_logger(errs, options.log_prefix, false);
+		document_logger(errs, scope.depth == 0 ? request.log_prefix : undefined, false);
 
 		if (CG.root.name != tva.e_TVAMain) {
 			errs.addError({
@@ -3614,7 +3615,7 @@ export default class ContentGuideCheck {
 			return;
 		}
 
-		if (!this.#doSchemaVerification(CG, errs, "CG003", options.report_schema_version)) {
+		if (!this.#doSchemaVerification(CG, errs, "CG003", request.report_schema_version)) {
 			errs.addError({
 				code: "CG004",
 				message: `unrecognised namespace ${(CG.root as XmlElement).documentNamespace()} for ${tva.e_TVAMain.elementize()}`,

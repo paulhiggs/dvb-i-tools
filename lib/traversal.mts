@@ -29,3 +29,16 @@ export function nestedTraversal(errs: ErrorList, url: string, type: string, desc
 	errs.nestedErrors.push(nested)
 	return nested
 }
+
+/**
+ * the reason a referenced document was skipped (not retrieved) because a traversal limit was reached: the depth (TRAV002)
+ * or the maximum number of documents (TRAV003). A skipped document is recorded with only that warning
+ *
+ * @param {ErrorList} errs  the results recorded for the referenced document
+ * @returns {string | undefined} TRAV002 or TRAV003, or undefined for a document that was traversed into
+ */
+export function skippedTraversal(errs: ErrorList): string | undefined {
+	const warnings = errs.codesReported("warnings");
+	if (warnings.length != 1 || errs.numFatals() + errs.numErrors() + errs.numInformationals() > 0 || errs.nestedErrors.length > 0) return undefined;
+	return ["TRAV002", "TRAV003"].includes(warnings[0][0]) ? warnings[0][0] : undefined;
+}

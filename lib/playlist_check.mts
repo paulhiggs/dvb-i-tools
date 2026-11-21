@@ -15,17 +15,13 @@ import { SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.mts
 import { LoadSLschemas, SL_GetSchema, SL_SchemaVersion } from "./sl_data_versions.mts"
 import document_logger from "./logger.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
-import { DefaultProperty } from "./utils.mts"
-import { ValidationScope } from "./safe_fetch.mts"
-import type { ImageChecking } from "./safe_fetch.mts"
+import { currentRequest, ValidationScope } from "./safe_fetch.mts"
+import type { ValidationOptions } from "./safe_fetch.mts"
 
 import type { StatsType, LoadOptions } from "./globals.mts"
 
-export type PL_Validator_Options = {
-	log_prefix? : string
-	report_schema_version?: boolean
-	images?: ImageChecking // how referenced images are checked (default "yes"; "scaled" also checks the server scales them)
-}
+// the choices of a playlist validation (see ValidationRequest)
+export type PL_Validator_Options = ValidationOptions
 
 export default class PlaylistCheck {
 	#numRequests;
@@ -62,7 +58,8 @@ export default class PlaylistCheck {
 	/*public*/ async doValidatePlaylist(PLtext: string, errs: ErrorList, options: PL_Validator_Options = {}) : Promise<void> {
 		this.#numRequests++;
 		// collects any network work, performed once the rules below have been checked
-		using scope = ValidationScope.open({ images: options.images });
+		using scope = ValidationScope.open(options);
+		const request = currentRequest();
 		if (!PLtext) {
 			errs.addError({
 				type: APPLICATION,
@@ -72,13 +69,11 @@ export default class PlaylistCheck {
 			return;
 		}
 
-		DefaultProperty(options, "log_prefix", null);
-		DefaultProperty(options, "report_schema_version", true);
 
 		// 'using' disposes the document (WASM memory) on every exit from this method, including early returns and exceptions
 		using PL = SchemaLoad(PLtext, errs, "PL001");
 		if (!PL) return;
-		document_logger(errs, options.log_prefix, false);
+		document_logger(errs, scope.depth == 0 ? request.log_prefix : undefined, false);
 
 		if (PL.root.name !== dvbi.e_Playlist) {
 			errs.addError({
@@ -106,7 +101,7 @@ export default class PlaylistCheck {
 
 		const ns = PL.root.namespaceUri;
 
-		if (!this.#doSchemaVerification(PL as XmlDocument, errs, "PL005", options.report_schema_version)) {
+		if (!this.#doSchemaVerification(PL as XmlDocument, errs, "PL005", request.report_schema_version)) {
 			errs.addError({
 				code: "PL010",
 				message: `Unsupported namespace ${ns.quote()}`,
