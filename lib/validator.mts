@@ -171,28 +171,43 @@ async function DVB_I_check(
 		let VVxml: string | null = null;
 		req.parseErr = undefined;
 
-		if (req.body.testtype == MODE_CG && req.body.requestType.length == 0) req.parseErr = ["request type not specified"]
-		else if (req.body.doclocation == MODE_URL && req.body.XMLurl.length == 0) req.parseErr = ["URL not specified"]
-		else if (req.body.doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) req.parseErr = ["File not provided"]
+		// a form field is only used when it is a single string - a missing field is treated as empty, and express.urlencoded()
+		// can also produce arrays or objects (e.g. XMLurl[]=a&XMLurl[]=b), which are not valid values for any field
+		const field = (name: string): string => (typeof req.body[name] == "string" ? req.body[name] : "");
+		const testtype = field("testtype"),
+			doclocation = field("doclocation"),
+			requestType = field("requestType"),
+			XMLurl = field("XMLurl");
+		const available: Record<string, boolean> = { [MODE_SL]: hasSL, [MODE_PL]: hasPL, [MODE_CG]: hasCG, [MODE_SLR]: hasSLR };
+
+		if (testtype.length == 0) req.parseErr = ["validation type not specified"]
+		else if (!HasProperty(available, testtype)) req.parseErr = [`unknown validation type ${testtype.quote()}`]
+		else if (!available[testtype]) req.parseErr = [`validation type ${testtype.quote()} is not available`]
+		else if (testtype == MODE_CG && requestType.length == 0) req.parseErr = ["request type not specified"]
+		else if (testtype == MODE_CG && !cgcheck?.supportedRequests.some((r) => r.value == requestType)) req.parseErr = [`unknown request type ${requestType.quote()}`]
+		else if (doclocation != MODE_URL && doclocation != MODE_FILE) req.parseErr = [`method is not ${MODE_URL.quote()} or ${MODE_FILE.quote()}`]
+		else if (doclocation == MODE_URL && XMLurl.length == 0) req.parseErr = ["URL not specified"]
+		else if (doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) req.parseErr = ["File not provided"]
+		else if (doclocation == MODE_FILE && Array.isArray(req.files!.XMLfile)) req.parseErr = ["only one file can be validated at a time"]
 
 		req.session.data.forGermany = req.body.forGermany == "on";
 		req.session.data.traverse = req.body.traverse == "on"
-		const log_prefix = createPrefix(req, req.body.testtype);
+		const log_prefix = createPrefix(req, testtype);
 		const errs = ErrorList.withMarkup();
 		if (!req.parseErr)
-			switch (req.body.doclocation) {
+			switch (doclocation) {
 				case MODE_URL:
 					{
-						errs.setLocation(req.body.XMLurl)
-						const { response: resp, error } = await safeFetch(req.body.XMLurl);
+						errs.setLocation(XMLurl)
+						const { response: resp, error } = await safeFetch(XMLurl);
 						if (error)
 							req.parseErr = [error];
 						if (resp) {
 							if (resp.ok) VVxml = resp.text();
-							else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.body.XMLurl}`];
+							else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${XMLurl}`];
 						}
 					}
-					req.session.data.url = req.body.XMLurl;
+					req.session.data.url = XMLurl;
 					break;
 				case MODE_FILE:
 					try {
@@ -208,11 +223,11 @@ async function DVB_I_check(
 			}
 
 		if (!req.parseErr && VVxml)
-			switch (req.body.testtype) {
+			switch (testtype) {
 				case MODE_CG:
-					errs.setType(`Content Guide-${req.body.requestType}`)
+					errs.setType(`Content Guide-${requestType}`)
 					if (cgcheck) 
-						await cgcheck.doValidateContentGuide(VVxml, req.body.requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
+						await cgcheck.doValidateContentGuide(VVxml, requestType, errs, { log_prefix: log_prefix, report_schema_version: true });
 					break;
 				case MODE_SL:
 					errs.setType("Service List")
@@ -233,9 +248,9 @@ async function DVB_I_check(
 					break;
 			}
 
-		req.session.data.mode = req.body.testtype;
-		req.session.data.entry = req.body.doclocation;
-		if (req.body.requestType) req.session.data.cgmode = req.body.requestType;
+		req.session.data.mode = testtype;
+		req.session.data.entry = doclocation;
+		if (requestType) req.session.data.cgmode = requestType;
 		await drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, motd, req.parseErr, errs);
 
 		req.diags = {};
@@ -732,6 +747,18 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 
 		app.get("{*splat}", (req, res) => {
 			res.status(404).end();
+		});
+
+		// an error not handled by a route (including a rejected async handler) is logged, and reported to the client
+		// without any detail of the server, such as a stack trace or file paths
+		app.use((err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
+			console.log(chalk.red(`unhandled error for ${req.method} ${req.originalUrl}: ${err instanceof Error ? err.stack : String(err)}`));
+			if (res.headersSent) return next(err); // part of the response has been sent, so the connection can only be closed
+			// errors from the body parsers carry an HTTP status (e.g. 413 when a document exceeds the size limit), and
+			// "expose" when their message is safe to return to the client
+			const { status, expose, message } = (err ?? {}) as { status?: unknown; expose?: unknown; message?: unknown };
+			const code = typeof status == "number" && status >= 400 && status < 600 ? status : 500;
+			res.status(code).type("text/plain").send(expose === true && typeof message == "string" ? message : "internal error while processing the request");
 		});
 
 
