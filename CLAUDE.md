@@ -125,7 +125,12 @@ XML is handled by `libxml2-wasm`. [libxml2-wasm-extensions.mts](libxml2-wasm-ext
 
 ### UI
 
-[lib/ui.mts](lib/ui.mts) renders the `/check` form and the HTML results, which are streamed with backpressure. All values from documents or requests must go through `escapeHTML` from `utils.mts`.
+[lib/ui.mts](lib/ui.mts) renders every page (the `/check` form, the HTML results, `/stats` and `/langs`). The results are streamed with backpressure. Pages are built with the `html` tagged template from [lib/html.mts](lib/html.mts):
+- `html` escapes every interpolated value with `escapeHTML`, unless the value is already `HTML`. Arrays are joined, and `undefined`, `null` and `false` give nothing.
+- `text(value)` shows text with `HTMLize()`, which also gives non-breaking hyphens. It is used for codes, messages and the marked-up listing.
+- `raw(markup)` is only for markup the validator provides itself (the stylesheet, scripts, the `--motd` file). Never use it for a value from a document or a request.
+
+Build new markup with `html`, not with plain template strings.
 
 ## Conventions
 

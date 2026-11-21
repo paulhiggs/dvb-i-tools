@@ -23,9 +23,11 @@ import type { ValidationTiming } from "./safe_fetch.mts"
 import type { CGRequestType } from "./cg_check.mts"
 import { CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM, CG_REQUEST_MORE_EPISODES, CG_REQUEST_BS_CATEGORIES, CG_REQUEST_BS_LISTS, CG_REQUEST_BS_CONTENTS } from "./cg_check.mts"
 
-import { HasProperty, escapeHTML } from "./utils.mts"
+import { HasProperty } from "./utils.mts"
+import { HTML, html, join as joinHTML, raw, text } from "./html.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
 import { read_string_options } from "./globals.mts"
+import type { StatsType } from "./globals.mts"
 import { currentFetchPolicy } from "./safe_fetch.mts"
 import { skippedTraversal } from "./traversal.mts"
 
@@ -44,6 +46,7 @@ const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), read_string
 
 export const BREAK = "<br/>",
 	LINE = "<hr/>";
+const BR = raw(BREAK);
 
 const formatCount = (n: number): string => n.toLocaleString("en-GB");
 const plural = (n: number, one: string, many: string): string => `${formatCount(n)} ${n == 1 ? one : many}`;
@@ -223,30 +226,43 @@ footer { color: var(--muted); font-size: var(--step--1); display: flex; flex-wra
 }
 `.replace(/\n\t*/g, "\n");
 
-export function PAGE_TOP(pageTitle: string, secure: boolean, label?:string, motd?:string) {
+/**
+ * the top of a page, up to and including the message of the day
+ *
+ * @param {string}  pageTitle  the title
+ * @param {boolean} secure     whether the page is served over HTTPS
+ * @param {string}  label      the heading, if not the title
+ * @param {string}  motd       the message of the day (HTML from the --motd file)
+ * @returns {string} the HTML
+ */
+export function PAGE_TOP(pageTitle: string, secure: boolean, label?:string, motd?:string): string {
 	// dont allow Chrome to translate the page - seems to 'detect' German
-	const METAS = '<meta charset="utf-8"><meta name="google" content="notranslate"><meta name="viewport" content="width=device-width, initial-scale=1">';
-	const HEAD = `<head>${METAS}<title>${escapeHTML(pageTitle)}</title><style>${STYLESHEET}</style></head>`;
-	const BARS = `<div class="bars" aria-hidden="true">${"<span></span>".repeat(7)}</div>`;
-	const NAV = `<nav aria-label="Validator links"><a href="${escapeHTML(pkg?.repository?.url)}" target="_blank" rel="noopener noreferrer">Source</a><a href="${escapeHTML(pkg?.bugs?.url)}" target="_blank" rel="noopener noreferrer">Report an issue</a><a href="/stats">Statistics</a></nav>`;
-	const MASTHEAD = `<header class="masthead">${BARS}<div class="masthead-row"><div class="brand"><h1>${escapeHTML(label ?? pageTitle)}</h1><span class="version">${escapeHTML(pkg.name)} v${escapeHTML(pkg.version)} · ${secure ? "https" : "http"}</span></div>${NAV}</div></header>`;
-	const MOTD = motd ? `<div class="motd">${motd}</div>` : "";
-	return `<!DOCTYPE html>\n<html lang="en">${HEAD}<body><div class="page">${MASTHEAD}${MOTD}`;
+	const METAS = raw('<meta charset="utf-8"><meta name="google" content="notranslate"><meta name="viewport" content="width=device-width, initial-scale=1">');
+	const HEAD = html`<head>${METAS}<title>${pageTitle}</title><style>${raw(STYLESHEET)}</style></head>`;
+	const BARS = html`<div class="bars" aria-hidden="true">${raw("<span></span>".repeat(7))}</div>`;
+	const NAV = html`<nav aria-label="Validator links"><a href="${pkg?.repository?.url}" target="_blank" rel="noopener noreferrer">Source</a><a href="${pkg?.bugs?.url}" target="_blank" rel="noopener noreferrer">Report an issue</a><a href="/stats">Statistics</a></nav>`;
+	const MASTHEAD = html`<header class="masthead">${BARS}<div class="masthead-row"><div class="brand"><h1>${label ?? pageTitle}</h1><span class="version">${pkg.name} v${pkg.version} · ${secure ? "https" : "http"}</span></div>${NAV}</div></header>`;
+	// the message of the day is HTML provided by whoever runs the server
+	const MOTD = motd && html`<div class="motd">${raw(motd)}</div>`;
+	return html`<!DOCTYPE html>\n<html lang="en">${HEAD}<body><div class="page">${MASTHEAD}${MOTD}`.markup;
 }
 
-export const PAGE_BOTTOM = `<footer><span>${escapeHTML(pkg.name)} v${escapeHTML(pkg.version)} by ${pkg.author.HTMLize()}</span><span>Report issues at <a href="${escapeHTML(pkg?.bugs?.url)}">${escapeHTML(pkg?.bugs?.url)}</a></span></footer></div></body></html>`;
+export const PAGE_BOTTOM = html`<footer><span>${pkg.name} v${pkg.version} by ${text(pkg.author)}</span><span>Report issues at <a href="${pkg?.bugs?.url}">${pkg?.bugs?.url}</a></span></footer></div></body></html>`.markup;
 
 // the CSS class for each value of ErrorList.severity(), used by the severity filter of the traversed documents table
 const SEVERITY_CLASS = ["s-ok", "s-debug", "s-info", "s-warn", "s-error", "s-fatal"];
 const LIST_CLASS: Record<SeverityList, string> = { fatals: "s-fatal", errors: "s-error", warnings: "s-warn", informationals: "s-info" };
 
-const tabulateMessage = function* (value: ErrorType): Generator<string> {
+// the parts of a page, written in order by sendHTML()
+type Parts = Generator<HTML | string>;
+
+const tabulateMessage = function* (value: ErrorType): Parts {
 	const anchor = HasProperty(value, "line") ? `#line-${value.line}` : null;
-	const code = value.code ? value.code.HTMLize() : "";
+	const code = text(value.code);
 	yield "<tr>";
-	if (SHOW_LINE_NUMBER) yield `<td>${HasProperty(value, "line") ? value.line : ""}</td>`;
-	yield `<td>${anchor ? `<a class="chip" href="${anchor}">${code}</a>` : `<span class="chip">${code}</span>`}</td>`;
-	yield `<td class="msg">${value.message ? value.message.HTMLize() : ""}${value.element ? `<pre class="fragment">${value.element.HTMLize()}</pre>` : ""}</td>`;
+	if (SHOW_LINE_NUMBER) yield html`<td>${HasProperty(value, "line") ? value.line : ""}</td>`;
+	yield html`<td>${anchor ? html`<a class="chip" href="${anchor}">${code}</a>` : html`<span class="chip">${code}</span>`}</td>`;
+	yield html`<td class="msg">${text(value.message)}${value.element && html`<pre class="fragment">${text(value.element)}</pre>`}</td>`;
 	yield "</tr>";
 };
 
@@ -254,12 +270,12 @@ const lineCompareFn = (a: ErrorType, b: ErrorType) => a?.line && b?.line ? a.lin
 
 // a collapsible section of the results, open unless stated
 const sectionStart = (id: string, title: string, count: string, severityClass: string, aside?: string, open = true) =>
-	`<details class="section ${severityClass}" id="${id}"${open ? " open" : ""}><summary>${title} <span class="count">${count}</span>${aside ? `<span class="aside">${aside}</span>` : ""}</summary><div class="section-body">`;
+	html`<details class="section ${severityClass}" id="${id}"${open && raw(" open")}><summary>${title} <span class="count">${count}</span>${aside && html`<span class="aside">${aside}</span>`}</summary><div class="section-body">`;
 const SECTION_END = "</div></details>";
 
-const ErrorTable = function* (errors: ErrorType[], id: string, title: string, severityClass: string, open = true): Generator<string> {
+const ErrorTable = function* (errors: ErrorType[], id: string, title: string, severityClass: string, open = true): Parts {
 	yield sectionStart(id, title, formatCount(errors.length), severityClass, MESSAGES_IN_ORDER ? "in document order" : undefined, open);
-	yield `<div class="scroll"><table><thead><tr>${SHOW_LINE_NUMBER ? "<th>Line</th>" : ""}<th scope="col">Code</th><th scope="col">Finding</th></tr></thead><tbody>`;
+	yield html`<div class="scroll"><table><thead><tr>${SHOW_LINE_NUMBER && raw("<th>Line</th>")}<th scope="col">Code</th><th scope="col">Finding</th></tr></thead><tbody>`;
 	if (MESSAGES_IN_ORDER) errors.sort(lineCompareFn);
 	for (const e of errors) yield* tabulateMessage(e);
 	yield `</tbody></table></div>${SECTION_END}`;
@@ -283,34 +299,34 @@ const messageText = (message: string): string => {
 type ResultsParts = { head: boolean; listing: boolean; open: boolean };
 const ALL_PARTS: ResultsParts = { head: true, listing: true, open: true };
 
-function* tabulateResults(source: string, error: string[] | undefined, errs: ErrorList | undefined, parts: ResultsParts = ALL_PARTS): Generator<string> {
+function* tabulateResults(source: string, error: string[] | undefined, errs: ErrorList | undefined, parts: ResultsParts = ALL_PARTS): Parts {
 	if (!error && !errs) return; // nothing has been validated yet
 
 	if (parts.head) yield* resultsHead(source, errs);
-	if (error) yield `<div class="alert s-error" role="alert">${error.map((e) => `<p>${e.HTMLize()}</p>`).join("")}</div>`;
+	if (error) yield html`<div class="alert s-error" role="alert">${error.map((e) => html`<p>${text(e)}</p>`)}</div>`;
 	yield* resultsBody(error, errs, parts);
 }
 
-function* resultsHead(source: string, errs: ErrorList | undefined): Generator<string> {
-	const meta = [errs?.type ? escapeHTML(errs.type) : "", errs?.timing ? timingSummary(errs.timing) : ""].filter((m) => m.length > 0).join(" · ");
-	yield `<section class="results-head" aria-label="Results"><span class="eyebrow">Results</span><div class="source">${escapeHTML(source)}</div>${meta ? `<div class="meta">${meta}</div>` : ""}</section>`;
+function* resultsHead(source: string, errs: ErrorList | undefined): Parts {
+	const meta = joinHTML([errs?.type, errs?.timing && timingSummary(errs.timing)].filter((m) => m && m.length > 0), raw(" · "));
+	yield html`<section class="results-head" aria-label="Results"><span class="eyebrow">Results</span><div class="source">${source}</div>${meta.length > 0 && html`<div class="meta">${meta}</div>`}</section>`;
 }
 
-function* resultsBody(error: string[] | undefined, errs: ErrorList | undefined, parts: ResultsParts): Generator<string> {
+function* resultsBody(error: string[] | undefined, errs: ErrorList | undefined, parts: ResultsParts): Parts {
 	let resultsShown = false;
 	if (errs) {
 		const badge = (count: number, id: string, label: string, severityClass: string) =>
 			count > 0
-				? `<a class="badge ${severityClass}" href="#${id}"><span class="n">${formatCount(count)}</span><span class="label">${label}</span></a>`
-				: `<span class="badge zero ${severityClass}"><span class="n">0</span><span class="label">${label}</span></span>`;
-		yield `<div class="badges">${badge(errs.numFatals(), "fatals", "fatal", "s-fatal")}${badge(errs.numErrors(), "errors", "errors", "s-error")}${badge(errs.numWarnings(), "warnings", "warnings", "s-warn")}${badge(errs.numInformationals(), "informationals", "informational", "s-info")}</div>`;
+				? html`<a class="badge ${severityClass}" href="#${id}"><span class="n">${formatCount(count)}</span><span class="label">${label}</span></a>`
+				: html`<span class="badge zero ${severityClass}"><span class="n">0</span><span class="label">${label}</span></span>`;
+		yield html`<div class="badges">${badge(errs.numFatals(), "fatals", "fatal", "s-fatal")}${badge(errs.numErrors(), "errors", "errors", "s-error")}${badge(errs.numWarnings(), "warnings", "warnings", "s-warn")}${badge(errs.numInformationals(), "informationals", "informational", "s-info")}</div>`;
 
 		if (errs.numCountsFatal() > 0 || errs.numCountsErr() > 0 || errs.numCountsWarn() > 0 || errs.numCountsInfo() > 0) {
 			yield `<div class="categories" role="group" aria-label="Counts by category">`;
-			for (const f of errs.countsFatal) yield `<span class="cat s-fatal">${f.key.HTMLize()} <b>${formatCount(f.count)}</b></span>`;
-			for (const e of errs.countsErr) yield `<span class="cat">${e.key.HTMLize()} <b>${formatCount(e.count)}</b></span>`;
-			for (const w of errs.countsWarn) yield `<span class="cat s-warn">${w.key.HTMLize()} <b>${formatCount(w.count)}</b></span>`;
-			for (const i of errs.countsInfo) yield `<span class="cat s-info">${i.key.HTMLize()} <b>${formatCount(i.count)}</b></span>`;
+			for (const f of errs.countsFatal) yield html`<span class="cat s-fatal">${text(f.key)} <b>${formatCount(f.count)}</b></span>`;
+			for (const e of errs.countsErr) yield html`<span class="cat">${text(e.key)} <b>${formatCount(e.count)}</b></span>`;
+			for (const w of errs.countsWarn) yield html`<span class="cat s-warn">${text(w.key)} <b>${formatCount(w.count)}</b></span>`;
+			for (const i of errs.countsInfo) yield html`<span class="cat s-info">${text(i.key)} <b>${formatCount(i.count)}</b></span>`;
 			yield "</div>";
 			resultsShown = true;
 		}
@@ -338,7 +354,7 @@ function* resultsBody(error: string[] | undefined, errs: ErrorList | undefined, 
 		if (errs.debugs.length > 0) {
 			yield sectionStart("debug", "Debug messages", formatCount(errs.debugs.length), "s-debug");
 			yield `<div class="scroll"><table><thead><tr><th scope="col">Code</th><th scope="col">Message</th></tr></thead><tbody>`;
-			for (const d of errs.debugs) yield `<tr><td><span class="chip">${escapeHTML(d.code)}</span></td><td class="msg">${escapeHTML(d.message)}</td></tr>`;
+			for (const d of errs.debugs) yield html`<tr><td><span class="chip">${d.code}</span></td><td class="msg">${d.message}</td></tr>`;
 			yield `</tbody></table></div>${SECTION_END}`;
 			resultsShown = true;
 		}
@@ -349,9 +365,11 @@ function* resultsBody(error: string[] | undefined, errs: ErrorList | undefined, 
 		yield sectionStart("descriptions", "What the codes mean", formatCount(errs.errorDescriptions.length), "");
 		yield `<div class="scroll"><table class="desc"><tbody>`;
 		for (const desc of errs.errorDescriptions) {
-			yield `<tr><td><span class="chip">${desc.code.HTMLize()}</span></td>`;
-			yield `<td>${desc.description.HTMLize().replace(/\n/, BREAK)}`;
-			if (desc.clause && desc.clause.length) yield `${BREAK}<span class="ref">Reference: ${escapeHTML(desc.clause)}</span>`;
+			yield html`<tr><td><span class="chip">${text(desc.code)}</span></td>`;
+			// the first line break of the description starts a new line
+			const breakAt = desc.description.indexOf("\n");
+			yield html`<td>${breakAt < 0 ? text(desc.description) : html`${text(desc.description.slice(0, breakAt))}${BR}${text(desc.description.slice(breakAt + 1))}`}`;
+			if (desc.clause && desc.clause.length) yield html`${BR}<span class="ref">Reference: ${desc.clause}</span>`;
 			yield "</td></tr>";
 		}
 		yield `</tbody></table></div>${SECTION_END}`;
@@ -365,21 +383,21 @@ function* resultsBody(error: string[] | undefined, errs: ErrorList | undefined, 
 			if (line.validationErrors?.length) {
 				const all = line.validationErrors.join(" ");
 				const severityClass = all.includes(FATAL) || all.includes(ERROR) || all.includes(APPLICATION) ? "s-error" : all.includes(WARNING) ? "s-warn" : "s-info";
-				yield `<span id="line-${line.ix}" class="${severityClass}">${line.value.HTMLize()}</span>`;
-				yield `<span class="f ${severityClass}">${line.validationErrors.map((message) => messageText(message).HTMLize()).join(BREAK)}</span>`;
+				yield html`<span id="line-${line.ix}" class="${severityClass}">${text(line.value)}</span>`;
+				yield html`<span class="f ${severityClass}">${joinHTML(line.validationErrors.map((message) => text(messageText(message))), BR)}</span>`;
 			}
-			else yield `<span id="line-${line.ix}">${line.value.HTMLize()}</span>`;
+			else yield html`<span id="line-${line.ix}">${text(line.value)}</span>`;
 		}
 		yield `</pre>${SECTION_END}`;
 	}
 }
 
 
-function* nested_error_row(req: express.Request, errs: ErrorList | undefined, depth: number): Generator<string> {
+function* nested_error_row(req: express.Request, errs: ErrorList | undefined, depth: number): Parts {
 	if (!errs || errs.nestedErrors.length == 0) return
 	for (const nest of errs.nestedErrors) {
 		const severity = nest.severity()
-		let validator=undefined, refer = "<b><i>unknown</i></b>"
+		let validator=undefined, refer: HTML = raw("<b><i>unknown</i></b>")
 		if (nest.source && nest.description) {
 			switch (nest.type) {
 				case "SL":
@@ -401,16 +419,16 @@ function* nested_error_row(req: express.Request, errs: ErrorList | undefined, de
 			try { isHTTP = isHTTPURL(nest.source) } catch { /* malformed %-encoding in the URL */ }
 			const href = validator ?? (isHTTP ? nest.source : undefined)
 			refer = href
-				? `<a target="_blank" rel="noopener noreferrer" href="${escapeHTML(href)}">${escapeHTML(nest.description)}</a>`
-				: escapeHTML(nest.description)
+				? html`<a target="_blank" rel="noopener noreferrer" href="${href}">${nest.description}</a>`
+				: html`${nest.description}`
 		}
 		// the codes reported are shown as chips in their severity colours; the row's class is used by the severity filter
-		yield `<tr class="${SEVERITY_CLASS[severity]} d${Math.min(depth, 10)}"><td>${refer}${nest.source ? `<span class="url">${escapeHTML(nest.source)}</span>` : ""}</td><td>`
+		yield html`<tr class="${SEVERITY_CLASS[severity]} d${Math.min(depth, 10)}"><td>${refer}${nest.source && html`<span class="url">${nest.source}</span>`}</td><td>`
 		for (const list of ["fatals", "errors", "warnings", "informationals"] as SeverityList[])
 			for (const [code, count] of nest.codesReported(list))
-				yield `<span class="c ${LIST_CLASS[list]}">${escapeHTML(code)}${count > 1 ? ` ×${count}` : ""}</span>`
-		for (const msg of nest.debugs) yield `<span class="dbg">${escapeHTML(msg.code)} ${escapeHTML(msg.message)}</span>`
-		yield `</td><td>${(nest.references ?? 1) > 1 ? formatCount(nest.references!) : ""}</td></tr>`
+				yield html`<span class="c ${LIST_CLASS[list]}">${code}${count > 1 && ` ×${count}`}</span>`
+		for (const msg of nest.debugs) yield html`<span class="dbg">${msg.code} ${msg.message}</span>`
+		yield html`</td><td>${(nest.references ?? 1) > 1 && formatCount(nest.references!)}</td></tr>`
 		yield* nested_error_row(req, nest, depth+1)
 	}
 }
@@ -435,14 +453,14 @@ function traversalCounts(errs: ErrorList): { rows: number; documents: number; sk
 // shows the severity filter of the traversed documents table, which needs scripting (without it, all rows are shown)
 const TRAVERSAL_FILTER_SCRIPT = `<script>(function(){var f=document.currentScript.previousElementSibling;f.hidden=false;f.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;var t=document.getElementById("trav");if(t)t.dataset.show=b.dataset.show;f.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed",String(x===b))})})})();</script>`;
 
-function* reportNestedErrors(req: express.Request, errs: ErrorList | undefined): Generator<string> {
+function* reportNestedErrors(req: express.Request, errs: ErrorList | undefined): Parts {
 	if (!errs || errs.nestedErrors.length == 0) return
 
 	const { rows, documents, skipped, repeats } = traversalCounts(errs)
 	yield sectionStart("traversed", "Traversed documents", formatCount(rows), "", "in the order referenced")
-	yield `<div class="trav-summary"><span><b>${formatCount(documents)}</b> ${documents == 1 ? "document" : "documents"} validated</span>${skipped > 0 ? `<span><b>${formatCount(skipped)}</b> skipped (document or depth limit)</span>` : ""}${repeats > 0 ? `<span><b>${formatCount(repeats)}</b> further ${repeats == 1 ? "reference" : "references"} not requested again</span>` : ""}</div>`
-	const filter = (show: string, label: string) => `<button type="button" data-show="${show}" aria-pressed="${show == "all"}">${label}</button>`
-	yield `<div class="filters" role="group" aria-label="Show traversed documents" hidden><span class="lbl">Show</span>${filter("all", "All")}${filter("error", "Errors")}${filter("warn", "Warnings")}${filter("info", "Informational")}${filter("ok", "No findings")}</div>${TRAVERSAL_FILTER_SCRIPT}`
+	yield html`<div class="trav-summary"><span><b>${formatCount(documents)}</b> ${documents == 1 ? "document" : "documents"} validated</span>${skipped > 0 && html`<span><b>${formatCount(skipped)}</b> skipped (document or depth limit)</span>`}${repeats > 0 && html`<span><b>${formatCount(repeats)}</b> further ${repeats == 1 ? "reference" : "references"} not requested again</span>`}</div>`
+	const filter = (show: string, label: string) => html`<button type="button" data-show="${show}" aria-pressed="${String(show == "all")}">${label}</button>`
+	yield html`<div class="filters" role="group" aria-label="Show traversed documents" hidden><span class="lbl">Show</span>${filter("all", "All")}${filter("error", "Errors")}${filter("warn", "Warnings")}${filter("info", "Informational")}${filter("ok", "No findings")}</div>${raw(TRAVERSAL_FILTER_SCRIPT)}`
 	yield `<div class="scroll"><table class="trav" id="trav" data-show="all"><thead><tr><th scope="col">Document</th><th scope="col">Result</th><th scope="col">References</th></tr></thead><tbody>`
 
 	yield* nested_error_row(req, errs, 1)
@@ -458,35 +476,35 @@ const formatDuration = (ms: number): string => {
 };
 
 // how long the validation took, and what it retrieved, for the results header
-function timingSummary(timing: ValidationTiming): string {
-	const parts = [`validated in ${formatDuration(timing.durationMs)}`];
+function timingSummary(timing: ValidationTiming): HTML {
+	const parts: (string | HTML)[] = [`validated in ${formatDuration(timing.durationMs)}`];
 	if (timing.documentsTraversed > 0) parts.push(plural(timing.documentsTraversed, "document traversed", "documents traversed"));
 	if (timing.resourcesRetrieved > 0)
 		parts.push(`${plural(timing.resourcesRetrieved, "resource retrieved", "resources retrieved")}${timing.imagesChecked > 0 ? ` (${plural(timing.imagesChecked, "image", "images")} checked)` : ""}`);
-	if (timing.timeouts > 0) parts.push(`<a href="#timing">${plural(timing.timeouts, "timeout", "timeouts")}</a>`);
-	return parts.join(" · ");
+	if (timing.timeouts > 0) parts.push(html`<a href="#timing">${plural(timing.timeouts, "timeout", "timeouts")}</a>`);
+	return joinHTML(parts, raw(" · "));
 }
 
 // the time spent retrieving from each host, which shows which servers slowed the validation down
-function* reportTiming(errs: ErrorList | undefined): Generator<string> {
+function* reportTiming(errs: ErrorList | undefined): Parts {
 	const timing = errs?.timing;
 	if (!timing || timing.hosts.length == 0) return;
 	yield sectionStart("timing", "Retrieval timing", plural(timing.requests, "request", "requests"), timing.timeouts > 0 ? "s-warn" : "", `${plural(timing.hosts.length, "host", "hosts")}, most time first`, false);
 	yield `<div class="scroll"><table class="timing"><thead><tr><th scope="col">Host</th><th scope="col">Requests</th><th scope="col">Total time</th><th scope="col">Average</th><th scope="col">95%</th><th scope="col">Slowest</th><th scope="col">Timeouts</th><th scope="col">Errors</th></tr></thead><tbody>`;
 	for (const h of timing.hosts)
-		yield `<tr${h.timeouts > 0 ? ' class="s-warn"' : ""}><td class="url">${escapeHTML(h.host)}</td><td>${formatCount(h.requests)}</td><td>${formatDuration(h.totalMs)}</td><td>${formatDuration(h.averageMs)}</td><td>${formatDuration(h.p95Ms)}</td><td>${formatDuration(h.maxMs)}</td><td>${h.timeouts ? formatCount(h.timeouts) : ""}</td><td>${h.errors ? formatCount(h.errors) : ""}</td></tr>`;
+		yield html`<tr${h.timeouts > 0 && raw(' class="s-warn"')}><td class="url">${h.host}</td><td>${formatCount(h.requests)}</td><td>${formatDuration(h.totalMs)}</td><td>${formatDuration(h.averageMs)}</td><td>${formatDuration(h.p95Ms)}</td><td>${formatDuration(h.maxMs)}</td><td>${h.timeouts > 0 && formatCount(h.timeouts)}</td><td>${h.errors > 0 && formatCount(h.errors)}</td></tr>`;
 	yield `</tbody></table></div><p class="hint timing-note">Times are for each retrieval once it started. Retrievals from different hosts run at the same time, so the totals add up to more than the validation took.</p>${SECTION_END}`;
 }
 
 // the results part of a page: the validation results, the traversed documents and the retrieval timing
-function* results(req: express.Request, source: string, error: string[] | undefined, errs: ErrorList | undefined): Generator<string> {
+function* results(req: express.Request, source: string, error: string[] | undefined, errs: ErrorList | undefined): Parts {
 	yield* tabulateResults(source, error, errs);
 	yield* reportNestedErrors(req, errs);
 	yield* reportTiming(errs);
 }
 
 // the results part of a page, then the page bottom
-function* resultsPage(req: express.Request, source: string, error: string[] | undefined, errs: ErrorList | undefined): Generator<string> {
+function* resultsPage(req: express.Request, source: string, error: string[] | undefined, errs: ErrorList | undefined): Parts {
 	yield* results(req, source, error, errs);
 	yield PAGE_BOTTOM;
 }
@@ -500,7 +518,7 @@ function* resultsPage(req: express.Request, source: string, error: string[] | un
  */
 export const liveDocumentResults = (errs: ErrorList): string =>
 	[...tabulateResults("", undefined, errs, { head: false, listing: false, open: false })].join("") +
-	`<p class="hint live-note">Findings of images, signature policies and traversal limits, and the document with its findings marked, are shown when the validation finishes.</p>`;
+	"<p class=\"hint live-note\">Findings of images, signature policies and traversal limits, and the document with its findings marked, are shown when the validation finishes.</p>";
 
 /**
  * the name of the document given with the /check form: its URL, or the name of the file
@@ -538,10 +556,10 @@ const WRITE_CHUNK_SIZE = 64 * 1024; // characters joined into each write to the 
  * cannot take more data, waits for it to drain before producing more, so a large report is not buffered in memory.
  * Stops producing the page if the client disconnects
  *
- * @param {express.Response} res    the response to write to
- * @param {Iterable<string>} parts  the parts of the page, in order
+ * @param {express.Response}        res    the response to write to
+ * @param {Iterable<HTML | string>} parts  the parts of the page, in order (a string is markup)
  */
-async function sendHTML(res: express.Response, parts: Iterable<string>): Promise<void> {
+async function sendHTML(res: express.Response, parts: Iterable<HTML | string>): Promise<void> {
 	let chunk: string[] = [],
 		size = 0;
 	const flush = async (): Promise<boolean> => {
@@ -562,7 +580,7 @@ async function sendHTML(res: express.Response, parts: Iterable<string>): Promise
 		return !res.destroyed;
 	};
 	for (const part of parts) {
-		chunk.push(part);
+		chunk.push(String(part));
 		size += part.length;
 		if (size >= WRITE_CHUNK_SIZE && !(await flush())) return;
 	}
@@ -600,7 +618,7 @@ export type FormState = {
 
 // a choice shown as one of a row of buttons
 const segmentChoice = (name: string, value: string, id: string, label: string, checked: boolean) =>
-	`<label><input type="radio" name="${name}" value="${escapeHTML(value)}" id="${escapeHTML(id)}"${checked ? " checked" : ""}><span>${escapeHTML(label)}</span></label>`;
+	html`<label><input type="radio" name="${name}" value="${value}" id="${id}"${checked && raw(" checked")}><span>${label}</span></label>`;
 
 const SUBMIT_HINT = "Results appear below this form.";
 // feedback while a validation is running (the form works without it). The note that traversal can take many minutes is
@@ -699,39 +717,36 @@ export async function drawForm(
 	res.write(PAGE_TOP("DVB-I Validator", req.secure, "DVB-I Validator", motd));
 
 	const types = [
-		modes.hasSL ? segmentChoice("testtype", modes.sl, "radSL", "Service List", form.mode == modes.sl) : "",
-		modes.hasPL ? segmentChoice("testtype", modes.pl, "radPL", "Playlist", form.mode == modes.pl) : "",
-		modes.hasCG ? segmentChoice("testtype", modes.cg, "radCG", "Content Guide", form.mode == modes.cg) : "",
-		modes.hasSLR ? segmentChoice("testtype", modes.slr, "radSLR", "Service List Registry", form.mode == modes.slr) : "",
-	].join("");
-	const requestTypes = supportedRequests
-		? supportedRequests.map((choice) => segmentChoice(ENTRY_FORM_REQUEST_TYPE_ID, choice.value, choice.value, choice.label, choice.value == form.cgmode)).join("")
-		: "";
+		modes.hasSL && segmentChoice("testtype", modes.sl, "radSL", "Service List", form.mode == modes.sl),
+		modes.hasPL && segmentChoice("testtype", modes.pl, "radPL", "Playlist", form.mode == modes.pl),
+		modes.hasCG && segmentChoice("testtype", modes.cg, "radCG", "Content Guide", form.mode == modes.cg),
+		modes.hasSLR && segmentChoice("testtype", modes.slr, "radSLR", "Service List Registry", form.mode == modes.slr),
+	];
+	const requestTypes = supportedRequests?.map((choice) => segmentChoice(ENTRY_FORM_REQUEST_TYPE_ID, choice.value, choice.value, choice.label, choice.value == form.cgmode));
 	const maxDepth = currentFetchPolicy().maxTraversalDepth; // the server's limit, which a request can lower
 	const traverse = modes.allowTraversal
-		? `<label class="check sl-options"><input type="checkbox" id="cbTraverse" name="traverse"${form.traverse ? " checked" : ""}><span>Traverse referenced documents</span><span class="hint">Also validate the schedules, programme information, box sets and service lists that the document refers to.</span><span class="note">This can take a long time: 20 minutes or more for a large service list.</span></label><div class="traverse-limit sl-options"><label for="maxTraversal">Maximum documents</label><input type="text" id="maxTraversal" name="maxTraversal" inputmode="numeric" size="10" value="${escapeHTML(form.maxTraversal)}" aria-describedby="maxTraversal-hint"><span class="hint" id="maxTraversal-hint">The most documents to traverse: a number, or unlimited. Unlimited can take hours for a large service list.</span><label for="maxDepth">Maximum depth</label><input type="text" id="maxDepth" name="maxDepth" inputmode="numeric" size="10" value="${escapeHTML(form.maxDepth)}" aria-describedby="maxDepth-hint"><span class="hint" id="maxDepth-hint">The deepest level of documents to traverse into, up to ${maxDepth}. 1 validates only the documents the service list refers to.</span></div>`
-		: "";
+		&& html`<label class="check sl-options"><input type="checkbox" id="cbTraverse" name="traverse"${form.traverse && raw(" checked")}><span>Traverse referenced documents</span><span class="hint">Also validate the schedules, programme information, box sets and service lists that the document refers to.</span><span class="note">This can take a long time: 20 minutes or more for a large service list.</span></label><div class="traverse-limit sl-options"><label for="maxTraversal">Maximum documents</label><input type="text" id="maxTraversal" name="maxTraversal" inputmode="numeric" size="10" value="${form.maxTraversal}" aria-describedby="maxTraversal-hint"><span class="hint" id="maxTraversal-hint">The most documents to traverse: a number, or unlimited. Unlimited can take hours for a large service list.</span><label for="maxDepth">Maximum depth</label><input type="text" id="maxDepth" name="maxDepth" inputmode="numeric" size="10" value="${form.maxDepth}" aria-describedby="maxDepth-hint"><span class="hint" id="maxDepth-hint">The deepest level of documents to traverse into, up to ${maxDepth}. 1 validates only the documents the service list refers to.</span></div>`;
 	const images = form.images;
 	const checks = form.signatureChecks;
-	const signatureChecks = `<div class="choice" role="group" aria-labelledby="sigchecks-label"><span class="choice-label" id="sigchecks-label">Signature policy checks</span><div class="seg">${segmentChoice("signatureChecks", "both", "sigBoth", "Both", checks == "both")}${segmentChoice("signatureChecks", "connection", "sigConnection", "Certificates only", checks == "connection")}${segmentChoice("signatureChecks", "signature", "sigSignature", "Signatures only", checks == "signature")}${segmentChoice("signatureChecks", "none", "sigNone", "None", checks == "none")}</div><span class="hint">For references with a signature policy: Certificates checks the certificate chain of the HTTPS connection, and Signatures checks the X-JWS-Signature of the response.</span></div>`;
-	const imageChecking = `<div class="choice" role="group" aria-labelledby="images-label"><span class="choice-label" id="images-label">Image checking</span><div class="seg">${segmentChoice("images", "no", "imgNo", "No", images == "no")}${segmentChoice("images", "yes", "imgYes", "Yes", images == "yes")}${segmentChoice("images", "scaled", "imgScaled", "Yes and scaled", images == "scaled")}</div><span class="hint">Yes retrieves each referenced image once and checks its format, size, colour depth and pixel aspect ratio. Yes and scaled also requests each image at half its width with ?w= to check that the server scales it, which doubles the image requests.</span></div>`;
+	const signatureChecks = html`<div class="choice" role="group" aria-labelledby="sigchecks-label"><span class="choice-label" id="sigchecks-label">Signature policy checks</span><div class="seg">${segmentChoice("signatureChecks", "both", "sigBoth", "Both", checks == "both")}${segmentChoice("signatureChecks", "connection", "sigConnection", "Certificates only", checks == "connection")}${segmentChoice("signatureChecks", "signature", "sigSignature", "Signatures only", checks == "signature")}${segmentChoice("signatureChecks", "none", "sigNone", "None", checks == "none")}</div><span class="hint">For references with a signature policy: Certificates checks the certificate chain of the HTTPS connection, and Signatures checks the X-JWS-Signature of the response.</span></div>`;
+	const imageChecking = html`<div class="choice" role="group" aria-labelledby="images-label"><span class="choice-label" id="images-label">Image checking</span><div class="seg">${segmentChoice("images", "no", "imgNo", "No", images == "no")}${segmentChoice("images", "yes", "imgYes", "Yes", images == "yes")}${segmentChoice("images", "scaled", "imgScaled", "Yes and scaled", images == "scaled")}</div><span class="hint">Yes retrieves each referenced image once and checks its format, size, colour depth and pixel aspect ratio. Yes and scaled also requests each image at half its width with ?w= to check that the server scales it, which doubles the image requests.</span></div>`;
 
-	res.write(`<form class="panel" id="check-form" method="post" enctype="multipart/form-data">
+	res.write(String(html`<form class="panel" id="check-form" method="post" enctype="multipart/form-data">
 <fieldset><legend>What to validate</legend><div class="seg">${types}</div></fieldset>
 <fieldset><legend>Document</legend><div class="source-row">
 <div class="seg" role="group" aria-label="Document source">${segmentChoice("doclocation", modes.url, "radURL", "URL", form.entry == modes.url)}${segmentChoice("doclocation", modes.file, "radFile", "File", form.entry == modes.file)}</div>
-<div class="field field-url"><input type="url" id="XMLurl" name="XMLurl" aria-label="Document URL" placeholder="https://example.com/servicelist.xml" value="${escapeHTML(form.url)}"></div>
+<div class="field field-url"><input type="url" id="XMLurl" name="XMLurl" aria-label="Document URL" placeholder="https://example.com/servicelist.xml" value="${form.url}"></div>
 <div class="field field-file"><input type="file" id="XMLfile" name="XMLfile" aria-label="Document file"></div>
 </div></fieldset>
 <fieldset class="cg-type"><legend>Content guide query type</legend><div class="seg">${requestTypes}</div></fieldset>
 <fieldset><legend>Options</legend><div class="options">
-<label class="check sl-options"><input type="checkbox" id="cbGermany" name="forGermany"${form.forGermany ? " checked" : ""}><span>Germany</span><span class="hint">Validate against the German profile of A177, which requires 7 days of programme guide either side of today instead of 28.</span></label>
+<label class="check sl-options"><input type="checkbox" id="cbGermany" name="forGermany"${form.forGermany && raw(" checked")}><span>Germany</span><span class="hint">Validate against the German profile of A177, which requires 7 days of programme guide either side of today instead of 28.</span></label>
 ${traverse}
 ${imageChecking}
 ${signatureChecks}
 </div></fieldset>
 <div class="actions"><button type="submit" class="primary" id="validate">Validate</button><span class="hint" id="submit-hint">${SUBMIT_HINT}</span></div>
-</form>${submitScript(modes)}${modes.allowTraversal ? liveScript(modes) : ""}`);
+</form>${raw(submitScript(modes))}${modes.allowTraversal && raw(liveScript(modes))}`));
 
 	// the results are in one element, which the live view replaces (issue #104)
 	res.write(`<div id="results">`);
@@ -745,4 +760,65 @@ export async function drawResults(req: express.Request, res: express.Response, m
 	res.write(PAGE_TOP("DVB-I Validator", req.secure, "DVB-I Validator", motd));
 	await sendHTML(res, resultsPage(req, req.query.url ? req.query.url as string: "uploaded list", error, errs));
 	return res;
+}
+
+// a table of statistics: an item and its value on each row
+function* statsSection(group: string, stats: StatsType): Parts {
+	yield html`<section class="panel stats"><h2>${group}</h2>`;
+	if (Object.keys(stats).length === 0) yield `<p class="hint">No statistics</p>`;
+	else {
+		yield `<div class="scroll"><table><thead><tr><th scope="col">Item</th><th scope="col">Value</th></tr></thead><tbody>`;
+		for (const key of Object.getOwnPropertyNames(stats)) yield html`<tr><td>${key}</td><td>${stats[key]}</td></tr>`;
+		yield "</tbody></table></div>";
+	}
+	yield "</section>";
+}
+
+// a table of values, 10 to a row (20 when they are all short)
+function* valuesSection(group: string, values: string[]): Parts {
+	yield html`<section class="panel stats"><h2>${group}</h2>`;
+	if (values.length == 0) yield `<p class="hint">No values</p>`;
+	else {
+		yield `<div class="scroll"><table>`;
+		const perRow = values.some((value) => value.length > 4) ? 10 : 20;
+		for (let i = 0; i < values.length; i++) {
+			if (i % perRow == 0) yield i == 0 ? "<tr>" : "</tr><tr>";
+			yield html`<td>${values[i]}</td>`;
+		}
+		yield "</tr></table></div>";
+	}
+	yield "</section>";
+}
+
+/**
+ * the /stats page: a table for each group of statistics
+ *
+ * @param {express.Request}       req     the request
+ * @param {express.Response}      res     the response
+ * @param {[string, StatsType][]} groups  the name and statistics of each group
+ */
+export async function drawStats(req: express.Request, res: express.Response, groups: [string, StatsType][]): Promise<void> {
+	res.setHeader("Content-Type", "text/html");
+	await sendHTML(res, (function* () {
+		yield PAGE_TOP("Validator Stats", req.secure);
+		for (const [group, stats] of groups) yield* statsSection(group, stats);
+		yield PAGE_BOTTOM;
+	})());
+}
+
+/**
+ * the /langs page: the languages known, in groups
+ *
+ * @param {express.Request}          req    the request
+ * @param {express.Response}         res    the response
+ * @param {Record<string, string[]>} langs  the languages of each group, or { empty: [] } when there are none
+ */
+export async function drawLanguages(req: express.Request, res: express.Response, langs: Record<string, string[]>): Promise<void> {
+	res.setHeader("Content-Type", "text/html");
+	await sendHTML(res, (function* () {
+		yield PAGE_TOP("Languages", req.secure);
+		if (HasProperty(langs, "empty")) yield `<p class="hint">No statistics</p>`;
+		else for (const group of Object.getOwnPropertyNames(langs)) yield* valuesSection(group, langs[group]);
+		yield PAGE_BOTTOM;
+	})());
 }
