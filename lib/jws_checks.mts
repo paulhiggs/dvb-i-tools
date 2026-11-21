@@ -14,8 +14,8 @@
  * response body need not be kept. The evaluation is compared with the policy when the findings are reported
  * (reportSignature()).
  *
- * This check is separate from the check of the HTTPS connection's certificate chain (tls_checks.mts), and is enabled with
- * the checkResponseSignatures fetch policy
+ * This check is separate from the check of the HTTPS connection's certificate chain (tls_checks.mts). It is enabled for the
+ * server with the checkResponseSignatures fetch policy, and a request can turn it off (ValidationRequest.responseSignatures)
  */
 
 import { X509Certificate, verify, constants } from "node:crypto"

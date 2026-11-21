@@ -15,7 +15,7 @@ import fileupload from "express-fileupload"
 import { drawForm, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "../ui.mts"
 import type { FormModes } from "../ui.mts"
 import ErrorList from "../error_list.mts"
-import { safeFetch, DEFAULT_MAX_TRAVERSAL, parseTraversalLimit } from "../safe_fetch.mts"
+import { safeFetch, currentFetchPolicy, DEFAULT_MAX_TRAVERSAL, parseTraversalLimit } from "../safe_fetch.mts"
 import { HasProperty } from "../utils.mts"
 import ServiceListCheck from "../sl_check.mts"
 import PlaylistCheck from "../playlist_check.mts"
@@ -24,7 +24,7 @@ import ServiceListRegistryCheck from "../slr_check.mts"
 import document_logger, { createPrefix } from "../logger.mts"
 import type { ValidatorConfig } from "../config.mts"
 import type { ValidatorServices } from "../services.mts"
-import { imageChecking, requestFromCheckForm } from "./request_handling.mts"
+import { imageChecking, parseDepthLimit, requestFromCheckForm, signatureChecks } from "./request_handling.mts"
 import { XML_BODY } from "./validate.mts"
 
 // initialise string formatting extensions
@@ -48,7 +48,9 @@ async function DVB_I_check(
 		req.session.data.forGermany = false;
 		req.session.data.traverse = false;
 		req.session.data.maxTraversal = String(DEFAULT_MAX_TRAVERSAL);
+		req.session.data.maxDepth = String(currentFetchPolicy().maxTraversalDepth);
 		req.session.data.images = "yes";
+		req.session.data.signatureChecks = "both";
 	}
 	if (req.session.data.lastUrl != req.url) {
 		req.session.data.mode = mode == MODE_UNSPECIFIED ? (hasSL ? MODE_SL : MODE_CG) : mode;
@@ -70,10 +72,13 @@ async function DVB_I_check(
 			doclocation = field("doclocation"),
 			requestType = field("requestType"),
 			XMLurl = field("XMLurl"),
-			maxTraversalField = field("maxTraversal").trim();
+			maxTraversalField = field("maxTraversal").trim(),
+			maxDepthField = field("maxDepth").trim();
 		// the most documents to traverse: a positive whole number or "unlimited", given when traversal is selected
 		const traverse = req.body.traverse == "on" && (testtype == MODE_SL || testtype == MODE_SLR),
-			maxTraversal = maxTraversalField.length == 0 ? DEFAULT_MAX_TRAVERSAL : parseTraversalLimit(maxTraversalField);
+			maxTraversal = maxTraversalField.length == 0 ? DEFAULT_MAX_TRAVERSAL : parseTraversalLimit(maxTraversalField),
+			// the deepest level to traverse into: a positive whole number, lowered to the server's limit if above it
+			maxDepth = maxDepthField.length == 0 ? undefined : parseDepthLimit(maxDepthField);
 		const available: Record<string, boolean> = { [MODE_SL]: hasSL, [MODE_PL]: hasPL, [MODE_CG]: hasCG, [MODE_SLR]: hasSLR };
 
 		if (testtype.length == 0) req.parseErr = ["validation type not specified"]
@@ -87,14 +92,18 @@ async function DVB_I_check(
 		else if (doclocation == MODE_FILE && Array.isArray(req.files!.XMLfile)) req.parseErr = ["only one file can be validated at a time"]
 		else if (traverse && maxTraversal == undefined)
 			req.parseErr = [`the maximum number of documents to traverse must be a positive whole number or ${"unlimited".quote()}, not ${maxTraversalField.quote()}`]
+		else if (traverse && maxDepthField.length > 0 && maxDepth == undefined)
+			req.parseErr = [`the maximum depth of traversal must be a positive whole number, not ${maxDepthField.quote()}`]
 
 		req.session.data.forGermany = req.body.forGermany == "on";
 		req.session.data.traverse = req.body.traverse == "on"
 		req.session.data.maxTraversal = maxTraversalField.length > 0 ? maxTraversalField : String(DEFAULT_MAX_TRAVERSAL)
+		req.session.data.maxDepth = maxDepthField.length > 0 ? maxDepthField : String(currentFetchPolicy().maxTraversalDepth)
 		req.session.data.images = imageChecking(req.body.images)
+		req.session.data.signatureChecks = signatureChecks(req.body.signatureChecks)
 		const log_prefix = createPrefix(req, testtype);
 		// the choices for the validation, and every document it traverses into
-		const request = requestFromCheckForm(req, testtype, log_prefix, maxTraversal);
+		const request = requestFromCheckForm(req, testtype, log_prefix, maxTraversal, maxDepth);
 		const errs = ErrorList.withMarkup();
 		if (!req.parseErr)
 			switch (doclocation) {

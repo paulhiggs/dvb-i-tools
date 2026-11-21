@@ -21,6 +21,8 @@ declare module "express-session" {
 			forGermany?: boolean
 			traverse?: boolean
 			maxTraversal?: string
+			maxDepth?: string
+			signatureChecks?: "both" | "connection" | "signature" | "none"
 			images?: "no" | "yes" | "scaled"
 		}
 	}
