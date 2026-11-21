@@ -12,8 +12,11 @@
 
 import SHA from "sha.js"
 
-import { currentFetchPolicy, currentValidation, deferRetrieval, firstReference, normaliseURL, safeFetch, sharedRetrieval, validationSettings } from "./safe_fetch.mts"
-import type { ValidationHandle } from "./safe_fetch.mts"
+import { currentFetchPolicy, currentValidation, deferRetrieval, firstReference, normaliseURL, safeFetch, sharedRetrieval, signaturePoliciesInEffect, validationSettings } from "./safe_fetch.mts"
+import type { FetchedResponse, ValidationHandle } from "./safe_fetch.mts"
+import { evaluateSignature, reportSignature } from "./jws_checks.mts"
+import type { SignatureEvaluation } from "./jws_checks.mts"
+import { prefetchConnection, reportConnection } from "./tls_checks.mts"
 import { readImageInfo } from "./image_format.mts"
 import type { ImageInfo } from "./image_format.mts"
 import { checkInlineImage, reportImage, reportImageScaling, scaledURL, scalingWidth } from "./image_checks.mts"
@@ -25,6 +28,7 @@ import { keys } from "./common_errors.mts"
 import { isDataURI, isHTTPURL, isHTTSPURL } from "./pattern_checks.mts"
 
 import type { FoundDocumentItems } from "./sl_check.mts"
+import type { SignaturePolicy } from "./certificate_utils.mts"
 
 export type Digests = { sha1: string; sha256: string };
 
@@ -40,6 +44,8 @@ export type ResourceOutcome = {
 	contentType?: string | null; // the Content-Type response header
 	digests?: Digests; // of the content, for a 2xx response
 	image?: ImageInfo; // the image properties read from the content, for a 2xx response
+	url?: string; // the URL the response came from, after any redirects
+	signature?: SignatureEvaluation; // the X-JWS-Signature of the response, when response signatures are checked
 };
 
 export const digestsOf = (content: Buffer | string): Digests => ({
@@ -60,11 +66,13 @@ export function retrieveResource(url: string, validation?: ValidationHandle): Pr
 		async (): Promise<ResourceOutcome> => {
 			const { response, error } = await safeFetch(url, validation);
 			if (!response) return { ok: false, error };
-			const outcome: ResourceOutcome = { ok: response.ok, status: response.status, statusText: response.statusText, contentType: response.contentType };
+			const outcome: ResourceOutcome = { ok: response.ok, status: response.status, statusText: response.statusText, contentType: response.contentType, url: response.url };
 			if (response.ok) {
 				const content = response.buffer();
 				outcome.digests = digestsOf(content);
 				outcome.image = readImageInfo(content);
+				// the signature is evaluated now, while the content is available, and compared with any policy when reported
+				if (currentFetchPolicy().checkResponseSignatures) outcome.signature = evaluateSignature(response.jwsSignature, content, response.reportingEndpoints);
 			}
 			return outcome;
 		},
@@ -73,39 +81,44 @@ export function retrieveResource(url: string, validation?: ValidationHandle): Pr
 }
 
 /**
- * verifies that any specified signature policy is already defined in the service list
+ * verifies that any specified signature policy is defined, in the document (a service list or service list registry) or,
+ * for a document that does not define policies (a content guide document), in the service list that traversed into it
  *
  * @param {Xmlelement} element              The XML element possibly containing the @verificationPolicy attribute
  * @param {FoundDocumentItems} documentInfo
- *                     signaturePolicyIDs   Signature Verification policy identifiers defined in this service list
+ *                     signaturePolicies    Signature Verification policies defined in this service list
  * @param {ErrorList}  errs                 The class where errors and warnings relating to the serivce list processing are stored
  * @param {string}     errCode              error code prefix for reporting
+ * @returns {SignaturePolicy | undefined} the policy the element refers to, if it is defined
  */
-export function ValidateAnySignaturePolicy(element: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string): void {
+export function ValidateAnySignaturePolicy(element: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string): SignaturePolicy | undefined {
 	if (!element) {
 		errs.addError({ type: APPLICATION, code: "VSP000", message: "ValidateAnySignaturePolicy() called with element==null" });
-		return;
+		return undefined;
 	}
 
-	const policy = element.attrAnyNsValueOr(dvbi.a_verificationPolicy);
-	if (!policy) return;
+	const policyId = element.attrAnyNsValueOr(dvbi.a_verificationPolicy);
+	if (!policyId) return undefined;
 
-	if (!documentInfo.definesPolicies) {
+	const inherited = !documentInfo.definesPolicies,
+		policies = inherited ? signaturePoliciesInEffect() : documentInfo.signaturePolicies;
+	if (!policies) {
 		errs.addError({
 			type: INFORMATION,
 			code: `${errCode}-1`,
-			message: "document type does not define signature policies. ID checking is skipped",
+			message: "document type does not define signature policies, and was not reached from a service list that does. ID checking is skipped",
 			fragment: element,
 			key: keys.k_SignaturePolicies,
 		});
-		return;
+		return undefined;
 	}
 
-	if (!documentInfo.signaturePolicyIDs.has(policy))
+	const policy = policies.get(policyId);
+	if (!policy)
 		errs.addError({
 			type: WARNING,
 			code: `${errCode}-2`,
-			message: `${policy.quote()} is not defined in this document`,
+			message: `${policyId.quote()} is not defined in ${inherited ? "the service list that refers to this document" : "this document"}`,
 			fragment: element,
 			key: keys.k_SignaturePolicies,
 		});
@@ -118,6 +131,7 @@ export function ValidateAnySignaturePolicy(element: XmlElement, documentInfo: Fo
 			fragment: element,
 			key: keys.k_SignaturePolicies,
 		});
+	return policy;
 }
 
 export type ResourceCheckCodes = {
@@ -142,7 +156,7 @@ export type ResourceCheckCodes = {
  */
 export function checkReferencedResource(element: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, codes: ResourceCheckCodes, image?: { contentType: string | null }): void {
 	const compareDigests = contentDigestCheck(element, errs, codes.digest);
-	if (codes.policy) ValidateAnySignaturePolicy(element, documentInfo, errs, codes.policy);
+	const policy = codes.policy ? ValidateAnySignaturePolicy(element, documentInfo, errs, codes.policy) : undefined;
 	if (!element) return;
 
 	const images = validationSettings().images ?? "yes";
@@ -155,10 +169,16 @@ export function checkReferencedResource(element: XmlElement, documentInfo: Found
 	}
 
 	const imageFirst = checkingImage && isHTTPURL(location) && firstReference("image", location);
-	if (!compareDigests && !imageFirst) return;
+	// the response to a resource with a signature policy is checked once per policy in the validation: its signature, and the
+	// certificate chain of the server it finally came from
+	const signed = policy != undefined && isHTTPURL(location) && firstReference(`signed ${policy.policyId}`, location),
+		checkSignature = signed && currentFetchPolicy().checkResponseSignatures,
+		checkCertificates = signed && currentFetchPolicy().checkConnectionCertificates;
+	if (!compareDigests && !imageFirst && !checkSignature && !checkCertificates) return;
 
 	const validation = currentValidation(),
 		scaling = imageFirst && images == "scaled";
+	if (checkCertificates) prefetchConnection(location, validation);
 	const work = (async () => {
 		const original = await retrieveResource(location, validation);
 		const target = scaling ? scalingWidth(original) : undefined,
@@ -172,6 +192,40 @@ export function checkReferencedResource(element: XmlElement, documentInfo: Found
 			compareDigests?.(original.ok ? (original.digests ?? null) : null);
 			if (imageFirst && reportImage(original, location, image!.contentType, element, errs) && target && scaled)
 				reportImageScaling(original, target, scaled, location, element, errs);
+			const finalURL = original.url ?? location;
+			if (checkSignature)
+				reportSignature(original.ok ? original.signature : undefined, location, finalURL, policy!, element, errs, original.ok ? undefined : (original.error ?? `${original.status} ${original.statusText}`));
+			if (checkCertificates) await reportConnection(element, finalURL, policy!, errs, validation);
 		}
 	);
+}
+
+/**
+ * the signature policy an element refers to with @verificationPolicy, from the policies in effect for the document whose
+ * rules are being checked. Nothing is reported: the reference is checked by ValidateAnySignaturePolicy()
+ *
+ * @param {XmlElement} element  the element, e.g. the <URI> of an endpoint
+ * @returns {SignaturePolicy | undefined} the policy, if the element refers to one that is defined
+ */
+export function signaturePolicyOf(element: XmlElement): SignaturePolicy | undefined {
+	const policyId = element?.attrAnyNsValueOr(dvbi.a_verificationPolicy);
+	return policyId ? signaturePoliciesInEffect()?.get(policyId) : undefined;
+}
+
+/**
+ * check a response retrieved from an endpoint whose <URI> refers to a signature policy, e.g. a document reached by
+ * traversal: its signature (every response), and the certificate chain of the server it came from (once per host). Call
+ * from the complete part of the retrieval
+ *
+ * @param {XmlElement}       element     the endpoint's <URI>, which carries @verificationPolicy
+ * @param {string}           url         the URL requested
+ * @param {FetchedResponse}  response    the response
+ * @param {SignaturePolicy}  policy      the policy
+ * @param {ErrorList}        errs        where findings are reported (the results of the retrieved document)
+ * @param {ValidationHandle} validation  the validation the response belongs to
+ */
+export async function checkSignedResponse(element: XmlElement, url: string, response: FetchedResponse, policy: SignaturePolicy, errs: ErrorList, validation?: ValidationHandle): Promise<void> {
+	if (currentFetchPolicy().checkResponseSignatures)
+		reportSignature(evaluateSignature(response.jwsSignature, response.buffer(), response.reportingEndpoints), url, response.url, policy, element, errs);
+	await reportConnection(element, response.url, policy, errs, validation);
 }

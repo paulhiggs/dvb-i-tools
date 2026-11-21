@@ -406,6 +406,9 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 	// every validation made through the server retrieves and checks the images it references. The library default is off,
 	// so documents validated directly (e.g. by the testsuite) do not make network requests for their images
 	configureFetchPolicy({ checkImages: true });
+	// references with a signature policy have the certificate chain of their HTTPS connection and the signature of their
+	// response checked. These are separate settings, so either can be turned off without the other
+	configureFetchPolicy({ checkConnectionCertificates: true, checkResponseSignatures: true });
 
 	if (HasProperty(app_options, "fetch_concurrency")) {
 		const fetchConcurrency = app_options.fetch_concurrency;

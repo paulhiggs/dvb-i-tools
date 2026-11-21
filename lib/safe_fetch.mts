@@ -15,6 +15,7 @@ import { BlockList, isIP } from "node:net"
 import { AsyncLocalStorage } from "node:async_hooks"
 
 import { fetch_options } from "./globals.mts"
+import type { SignaturePolicy } from "./certificate_utils.mts"
 
 // the most documents a validation traverses, unless the validation sets its own limit
 export const DEFAULT_MAX_TRAVERSAL = 100;
@@ -28,6 +29,8 @@ export type FetchPolicy = {
 	fetchConcurrency: number // maximum number of retrievals in progress at once (across all validations), and how far each validation retrieves ahead
 	checkImages: boolean // retrieve referenced images and check them (format, dimensions, server scaling). Each image is checked once per validation
 	fetchesPerHost: number // maximum number of retrievals in progress at once from one host (within fetchConcurrency)
+	checkConnectionCertificates: boolean // check the certificate chain of an HTTPS connection against a signature policy (tls_checks.mts)
+	checkResponseSignatures: boolean // check the X-JWS-Signature of a response against a signature policy (jws_checks.mts)
 };
 
 const policy: FetchPolicy = {
@@ -39,6 +42,8 @@ const policy: FetchPolicy = {
 	fetchConcurrency: 8,
 	checkImages: false,
 	fetchesPerHost: 4,
+	checkConnectionCertificates: false,
+	checkResponseSignatures: false,
 };
 
 /*
@@ -173,6 +178,9 @@ export type FetchedResponse = {
 	status: number
 	statusText: string
 	contentType: string | null // the Content-Type response header
+	url: string // the URL the response came from, after any redirects
+	jwsSignature: string | null // the X-JWS-Signature response header (A177r8 clause 7.7.1.2)
+	reportingEndpoints: string | null // the Reporting-Endpoints response header (A177r8 clause 7.6.2.5)
 	text(): string
 	buffer(): Buffer
 };
@@ -193,6 +201,35 @@ async function readLimitedBody(response: Response, url: string): Promise<Buffer>
 		chunks.push(chunk);
 	}
 	return Buffer.concat(chunks);
+}
+
+/**
+ * perform network work other than an HTTP retrieval (e.g. a TLS handshake) within the same limits as retrievals: the
+ * host's slot (fetchesPerHost) and one of the fetchConcurrency slots
+ *
+ * @param {string} host           the host the work connects to
+ * @param {() => Promise<T>} work the network work
+ * @param {ValidationHandle} validation  the validation the work is counted in (see ValidationScope.timing())
+ * @param {(result: T) => string} outcomeOf  whether the work succeeded, timed out or failed, for the timing
+ * @returns {Promise<T>} the result of the work
+ */
+export async function withFetchSlots<T>(host: string, work: () => Promise<T>, validation?: ValidationHandle, outcomeOf?: (result: T) => "ok" | "timeout" | "error"): Promise<T> {
+	const key = host.toLowerCase();
+	const budget = (validation as TraversalBudget | undefined) ?? (runningScope.getStore() ?? openScopes.at(-1))?.budget;
+	await acquireHostSlot(key);
+	await acquireFetchSlot();
+	const started = performance.now();
+	let outcome: "ok" | "timeout" | "error" = "error";
+	try {
+		const result = await work();
+		outcome = outcomeOf ? outcomeOf(result) : "ok";
+		return result;
+	} finally {
+		releaseFetchSlot();
+		releaseHostSlot(key);
+		// counted in the timing of the validation, like a retrieval
+		if (budget) recordFetch(budget, key, performance.now() - started, outcome);
+	}
 }
 
 /**
@@ -221,6 +258,9 @@ export async function safeFetch(url: string, validation?: ValidationHandle): Pro
 				status: resp.status,
 				statusText: resp.statusText,
 				contentType: resp.headers.get("content-type"),
+				url: resp.url || url,
+				jwsSignature: resp.headers.get("x-jws-signature"),
+				reportingEndpoints: resp.headers.get("reporting-endpoints"),
 				text: () => body.toString("utf8"),
 				buffer: () => body,
 			},
@@ -357,11 +397,15 @@ const openScopes: ValidationScope[] = []; // scopes whose synchronous rules are 
 export class ValidationScope {
 	readonly depth: number; // 0 for the document being validated, 1 for a document it references, ...
 	readonly budget: TraversalBudget; // shared by all the scopes of one validation
+	// the signature policies that @verificationPolicy references are resolved against: those defined by the document being
+	// validated (a service list or registry), or else those of the document that traversed into it
+	signaturePolicies: ReadonlyMap<string, SignaturePolicy> | undefined;
 	#tasks: DeferredTask[] = [];
 	#open = true;
 
 	private constructor(parent: ValidationScope | undefined, settings: ValidationSettings) {
 		this.depth = parent ? parent.depth + 1 : 0;
+		this.signaturePolicies = parent?.signaturePolicies;
 		this.budget = parent
 			? parent.budget
 			: { settings, started: performance.now(), fetches: new Map<string, HostFetches>(), documents: 0, traversed: new Set<string>(), requested: new Map<string, TraversalRequest>(), retrievals: new Map<string, Promise<unknown>>(), referenced: new Set<string>() };
@@ -582,18 +626,39 @@ export function sharedRetrieval<T>(key: string, retrieve: () => Promise<T>, vali
  *
  * @param {string} kind  the kind of check, e.g. "image"
  * @param {string} url   the URL of the resource
+ * @param {ValidationHandle} validation  the validation, when the call is not made while its rules are checked
  * @returns {boolean} true for the first reference to the URL (and outside a validation), false for a repeat
  */
-export function firstReference(kind: string, url: string): boolean {
-	const scope = openScopes.at(-1);
-	if (!scope) return true;
+export function firstReference(kind: string, url: string, validation?: ValidationHandle): boolean {
+	const budget = (validation as TraversalBudget | undefined) ?? openScopes.at(-1)?.budget;
+	if (!budget) return true;
 	const key = `${kind} ${normaliseURL(url)}`;
-	if (scope.budget.referenced.has(key)) return false;
-	scope.budget.referenced.add(key);
+	if (budget.referenced.has(key)) return false;
+	budget.referenced.add(key);
 	return true;
 }
 
 export { normaliseURL };
+
+/**
+ * set the signature policies defined by the document whose rules are being checked (a service list or service list
+ * registry). They replace any policies of the document that traversed into it, and are used by the documents it traverses
+ * into
+ */
+export function setSignaturePolicies(policies: ReadonlyMap<string, SignaturePolicy>): void {
+	const scope = openScopes.at(-1);
+	if (scope) scope.signaturePolicies = policies;
+}
+
+/**
+ * the signature policies in effect for the document whose rules are being checked: its own, or those of the document that
+ * traversed into it
+ *
+ * @returns {ReadonlyMap<string, SignaturePolicy> | undefined} the policies, or undefined if there are none in effect
+ */
+export function signaturePoliciesInEffect(): ReadonlyMap<string, SignaturePolicy> | undefined {
+	return (openScopes.at(-1) ?? runningScope.getStore())?.signaturePolicies;
+}
 
 // identifies a validation (with its nested validations), for sharedRetrieval()
 export type ValidationHandle = object;

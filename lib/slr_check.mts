@@ -16,7 +16,8 @@ import { keys, InvalidCountryCode, InvalidURL } from "./common_errors.mts"
 import { slVersions, dvbi, dvbiEA, dvbiEC, dvbisld, validApplicationTypes, DvbIApplicationTypes, XMLdocumentType } from "./DVB-I_definitions.mts"
 import ErrorList, { APPLICATION, WARNING } from "./error_list.mts"
 import { nestedTraversal } from "./traversal.mts"
-import { ValidationScope } from "./safe_fetch.mts"
+import { setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
+import { checkConnection } from "./tls_checks.mts"
 import { CheckExtension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY } from "./extension_check.mts"
 import { ValidateLanguage } from "./IANA_languages.mts"
 import document_logger from "./logger.mts"
@@ -195,7 +196,7 @@ export default class ServiceListRegistryCheck {
 	 *
 	 * @param {XmlElement} RelatedMaterial  the element whose children should be checked
 	 * @param  {FoundDocumentItems} documentInfo
-	 *                  signaturePolicyIDs   Signature Verification policy identifiers defined in this service list
+	 *                  signaturePolicies    Signature Verification policies defined in this service list
 	 * @param {ErrorList}  errs              errors found in validaton
 	 * @param {string}     errCode           error code prefix to be used in reports
 	 */
@@ -356,7 +357,9 @@ export default class ServiceListRegistryCheck {
 			if (URI) {
 				if (!isHTTPURL(URI.content)) 
 					errs.addError(InvalidURL(URI.content, URI, dvbisld.e_URI.elementize(), `${errCode}-36`));
-				ValidateAnySignaturePolicy(URI, documentInfo, errs, `${errCode}-37`);
+				const policy = ValidateAnySignaturePolicy(URI, documentInfo, errs, `${errCode}-37`);
+				// the service list's server is checked against the policy even when the service list is not traversed into
+				if (policy) checkConnection(URI, URI.content.trim(), policy, errs);
 
 				if (options.traverse && this.#service_list_validator) {
 					const sl_errs = nestedTraversal(errs, URI.content, "SL", "Nested Service List")
@@ -495,7 +498,9 @@ export default class ServiceListRegistryCheck {
 
 		//<ServiceListEntryPoints><SignaturePolicies>
 		const documentInfo = new FoundDocumentItems(true);  // collectiom of things we learn when parsing the service list
-		documentInfo.signaturePolicyIDs = ValidateSignaturePolicies(ServiceListRegistry, errs, "SR060");
+		documentInfo.signaturePolicies = ValidateSignaturePolicies(ServiceListRegistry, errs, "SR060");
+		// references in this document, and in the documents it traverses into, are resolved against these policies
+		setSignaturePolicies(documentInfo.signaturePolicies);
 
 		//<ServiceListEntryPoints><ProviderOffering>
 		ServiceListRegistry.forEachNamedChildElement(dvbisld.e_ProviderOffering, (ProviderOffering) => {

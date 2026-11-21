@@ -158,6 +158,38 @@ Referenced resources that are not images (applications, program URLs...) have th
 - `IMG012` the scaled image does not keep the aspect ratio of the original (it is cropped or stretched)
 - `IMG013` the scaled image is not a readable image, or is in a different format from the original
 
+### Signature policy checks
+
+A `@verificationPolicy` names a signature policy (A177r8 clause 7.6). Policies are defined in the `<SignaturePolicies>` of a service list or a service list registry. A content guide document reached by traversal uses the policies of the service list it was reached from. A service list reached from a registry uses its own policies.
+
+For each reference with a defined policy, every validation made through the server makes two separate checks:
+- **the certificate chain of the HTTPS connection**: once for each `host:port` in a validation, including the host a redirect leads to.
+- **the `X-JWS-Signature` of the response** (A177r8 clause 7.7.1.2), for each response the policy applies to:
+  - every response from an endpoint whose `<URI>` carries the policy (e.g. the schedules returned by a `ScheduleInfoEndpoint` when traversing)
+  - the response of a referenced resource, such as a logo
+
+The connection is also checked for endpoints that are not traversed.
+
+Findings are errors when the policy's `Enforcement` is `required`, warnings for `warn`, and information for `vendor`.
+
+Connection (`TLS`):
+- `TLS001` a `CAFingerprint` of the policy is not in the server's certificate chain. **All** of the policy's fingerprints must be present. Servers usually do not send their root certificate, so a root CA fingerprint is only found when the server sends it or it is in the validator's trust store.
+- `TLS002` the server's certificate chain could not be obtained (connection or handshake failure, timeout, or a URL the fetch policy refuses)
+- `TLS003` a certificate in the chain is expired or not yet valid, is not issued by the next one, or the server's certificate is not valid for the host
+- `TLS004` the host is not one of the policy's `SubjectConstraint/CN` values (`*.example.com` matches one level)
+
+Response signature (`JWS`):
+- `JWS001` there is no `X-JWS-Signature` (or the response could not be retrieved, so the signature could not be checked)
+- `JWS002` the header is not a compact detached JWS
+- `JWS003` the protected header does not have an `alg` from A177r8 clause 7.7.2, `crit` including `b64`, and `b64` set to `false`
+- `JWS004` (information) the JWS has no certificate chain (`x5c`), so the signature and trust anchor cannot be checked
+- `JWS005` the signature does not verify over the response body
+- `JWS006` the signing key does not suit `alg` (RS256/RS512 need a 4096-bit RSA key; ES256 P-256; ES512 P-521; Ed25519)
+- `JWS007` no certificate in the signing chain matches a `CAFingerprint` of the policy. **At least one** must match.
+- `JWS008` a certificate in the signing chain is expired or not yet valid, or is not issued by the next one
+- `JWS009` the host the response came from, after any redirects, is not one of the policy's `SubjectConstraint/CN` values
+- `JWS010` (information) there is no `Reporting-Endpoints` header with a `dvbi-signature-validation` endpoint (A177r8 clause 7.6.2.5)
+
 ### Logging
 
 If a subdirectory named `./arch` exists, then any XML document for validation will be copied there. There will be the original document with the suffix "`.txt`" and a second document with the suffix "`.mkup.txt`" containing line based validation results as XML comments 
