@@ -74,8 +74,10 @@ async function DVB_I_check(
 			XMLurl = field("XMLurl"),
 			maxTraversalField = field("maxTraversal").trim(),
 			maxDepthField = field("maxDepth").trim();
-		// the most documents to traverse: a positive whole number or "unlimited", given when traversal is selected
-		const traverse = req.body.traverse == "on" && (testtype == MODE_SL || testtype == MODE_SLR),
+		// traversal is only offered (and only done) when the server is started with --allow_traversal. Then the most
+		// documents to traverse: a positive whole number or "unlimited", given when traversal is selected
+		const traverseSelected = allow_traversal && req.body.traverse == "on",
+			traverse = traverseSelected && (testtype == MODE_SL || testtype == MODE_SLR),
 			maxTraversal = maxTraversalField.length == 0 ? DEFAULT_MAX_TRAVERSAL : parseTraversalLimit(maxTraversalField),
 			// the deepest level to traverse into: a positive whole number, lowered to the server's limit if above it
 			maxDepth = maxDepthField.length == 0 ? undefined : parseDepthLimit(maxDepthField);
@@ -96,7 +98,7 @@ async function DVB_I_check(
 			req.parseErr = [`the maximum depth of traversal must be a positive whole number, not ${maxDepthField.quote()}`]
 
 		req.session.data.forGermany = req.body.forGermany == "on";
-		req.session.data.traverse = req.body.traverse == "on"
+		req.session.data.traverse = traverseSelected
 		req.session.data.maxTraversal = maxTraversalField.length > 0 ? maxTraversalField : String(DEFAULT_MAX_TRAVERSAL)
 		req.session.data.maxDepth = maxDepthField.length > 0 ? maxDepthField : String(currentFetchPolicy().maxTraversalDepth)
 		req.session.data.images = imageChecking(req.body.images)
