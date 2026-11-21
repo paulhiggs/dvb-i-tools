@@ -234,6 +234,13 @@ export default class SLEPR {
 	}
 
 	/**
+	 * whether the master registry document has been read (it is read asynchronously, see loadServiceListRegistry())
+	 */
+	get loaded(): boolean {
+		return masterSLEPR.length > 0;
+	}
+
+	/**
 	 * answer a query of the service list registry (A177 clause 5.1.3.2): the master SLEPR, pruned according to the query
 	 * and the A177 version in the User-Agent. The response is returned, not written, so the caller decides how it is sent
 	 *

@@ -11,6 +11,7 @@
 import { join } from "path"
 import { createServer } from "https"
 import { createServer as createHttpServer } from "http"
+import type { Server } from "http"
 import type { AddressInfo } from "node:net"
 import process from "process"
 import cluster from "cluster"
@@ -23,6 +24,8 @@ import { readmyfile } from "./utils.mts"
 import { restartWorkersOnExit } from "./cluster_restart.mts"
 import { consoleLogger } from "./request_logging.mts"
 import type { ValidatorConfig } from "./config.mts"
+import { SHUTDOWN_GRACE_MS, SHUTDOWN_SIGNALS } from "./globals.mts"
+import { stopAllValidations } from "./safe_fetch.mts"
 
 const keyFilename: string = join(__dirname, "selfsigned.key"),
 	certFilename: string = join(__dirname, "selfsigned.crt");
@@ -48,6 +51,40 @@ export function startWorkers(workers: number): void {
 }
 
 /**
+ * shut down gracefully on SIGTERM (e.g. "docker stop", or the cluster primary) or SIGINT:
+ * - /healthz reports "stopping", so a load balancer stops sending requests
+ * - the servers stop accepting connections, and idle keep-alive connections are closed
+ * - the validations in progress are stopped (stopAllValidations()), so their requests finish with the results so far
+ * - the process exits when the servers have closed, or after SHUTDOWN_GRACE_MS. A second signal is not caught
+ *
+ * @param {express.Application} app      the application
+ * @param {Server[]}            servers  the servers listening, added to as they are started
+ */
+function stopOnSignal(app: express.Application, servers: Server[]): void {
+	for (const signal of SHUTDOWN_SIGNALS)
+		process.once(signal, () => {
+			app.locals.stopping = true;
+			const stopped = stopAllValidations();
+			console.log(chalk.yellow(`${signal} received - shutting down (${stopped} validations stopped)`));
+			let open = servers.length;
+			if (open == 0) process.exit(0);
+			for (const server of servers) {
+				server.close(() => {
+					if (--open == 0) {
+						console.log(chalk.yellow("all connections closed - exiting"));
+						process.exit(0);
+					}
+				});
+				server.closeIdleConnections();
+			}
+			setTimeout(() => {
+				console.log(chalk.yellow(`requests still in progress after ${SHUTDOWN_GRACE_MS / 1000}s - exiting`));
+				process.exit(0);
+			}, SHUTDOWN_GRACE_MS).unref();
+		});
+}
+
+/**
  * listen for the application: on HTTPS (--sport) when selfsigned.key and selfsigned.crt exist, with HTTP (--port)
  * redirecting to HTTPS, or otherwise on HTTP only
  *
@@ -63,6 +100,8 @@ export function startServer(config: ValidatorConfig, app: express.Application): 
 	};
 	const port = config.port;
 	const sport = config.sport == config.port ? config.port + 1 : config.sport;
+	const servers: Server[] = [];
+	stopOnSignal(app, servers);
 
 	// Only one server uses the HTTP port: the validator itself when HTTPS is not available, otherwise a redirect to HTTPS.
 	// The choice is made from the HTTPS server's 'listening' and 'error' events, as listen() is asynchronous.
@@ -73,6 +112,7 @@ export function startServer(config: ValidatorConfig, app: express.Application): 
 
 	const startHTTP = () => {
 		const http_server = createHttpServer(app);
+		servers.push(http_server);
 		http_server.on("error", (err: NodeJS.ErrnoException) => {
 			listenFailed("HTTP", port, "HTTP server not started")(err);
 			// nothing is listening, so stop with a failure status (e.g. for systemd Restart=on-failure, or the cluster primary
@@ -91,6 +131,7 @@ export function startServer(config: ValidatorConfig, app: express.Application): 
 			res.redirect(`https://${req.hostname}:${sport}${req.originalUrl}`);
 		});
 		const redirect_server = createHttpServer(redirect_app);
+		servers.push(redirect_server);
 		redirect_server.on("error", listenFailed("HTTP", port, "HTTP to HTTPS redirect not started"));
 		redirect_server.listen(port, () => {
 			console.log(chalk.cyan(`HTTP redirecting to HTTPS on port number ${port}`));
@@ -99,7 +140,9 @@ export function startServer(config: ValidatorConfig, app: express.Application): 
 
 	if (https_options.key && https_options.cert) {
 		const https_server = createServer(https_options, app);
+		servers.push(https_server);
 		https_server.once("error", (err: NodeJS.ErrnoException) => {
+			servers.splice(servers.indexOf(https_server), 1);
 			listenFailed("HTTPS", sport, "HTTPS server not started, using HTTP")(err);
 			startHTTP();
 		});
