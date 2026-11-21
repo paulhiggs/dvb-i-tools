@@ -29,7 +29,7 @@ import type { ReportedErrorType } from "./error_list.mts"
 import { unEntity, DuplicatedValue, parameterCheck } from "./utils.mts"
 import { isHTTPURL, isDVBLocator, isUTCDateTime, isCRIDURI, isTAGURI } from "./pattern_checks.mts"
 import { ValidatePromotionalStillImage } from "./related_material_checks.mts"
-import { checkReferencedResource } from "./resource_checks.mts"
+import { checkReferencedResource, checkSignedResponse, signaturePolicyOf } from "./resource_checks.mts"
 import type { ImageChecking } from "./safe_fetch.mts"
 import { cg_InvalidHrefValue, NoChildElement, keys } from "./common_errors.mts"
 import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.mts"
@@ -60,7 +60,7 @@ import { FoundDocumentItems} from "./sl_check.mts"
 import ClassificationScheme from "./classification_scheme.mts";
 import type { StatsType, LoadOptions } from "./globals.mts"
 
-import { allowTraversal, deferRetrieval, retrieveTraversal, ValidationScope } from "./safe_fetch.mts"
+import { allowTraversal, currentValidation, deferRetrieval, retrieveTraversal, ValidationScope } from "./safe_fetch.mts"
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";
@@ -3776,7 +3776,10 @@ export default class ContentGuideCheck {
 			return;
 		}
 		// the referenced content guide is retrieved and validated after the current document's rules have been checked
-		// (it may be retrieved concurrently with other referenced documents, but is validated in the order of reference)
+		// (it may be retrieved concurrently with other referenced documents, but is validated in the order of reference).
+		// When the reference refers to a signature policy, the response's signature and connection are checked against it
+		const policy = signaturePolicyOf(Location),
+			validation = currentValidation();
 		deferRetrieval(() => retrieveTraversal(requestUrl), async ({ refused, response: resp, error }) => {
 			if (refused) {
 				errs.addError({
@@ -3796,6 +3799,7 @@ export default class ContentGuideCheck {
 					key: keys.k_Traversal,
 				})
 			if (resp) {
+				if (policy) await checkSignedResponse(Location, requestUrl, resp, policy, errs, validation);
 				if (resp.ok)
 					await this.doValidateContentGuide(resp.text(), requestType, errs, options);
 				else errs.addError({

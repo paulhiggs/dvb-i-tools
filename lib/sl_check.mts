@@ -65,12 +65,14 @@ import { ValidateCMCDinDASH } from "./CMCDv2.mts"
 import { CMCD_custom_stats, LoadKnownCustomKeysRegistry } from "./CMCD_custom_keys.js"
 import { CheckExtension, EXTENSION_LOCATION_SERVICE_ELEMENT, EXTENSION_LOCATION_DASH_INSTANCE, EXTENSION_LOCATION_OTHER_DELIVERY } from "./extension_check.mts"
 import { ValidateAnySignaturePolicy } from "./related_material_checks.mts"
-import { checkReferencedResource } from "./resource_checks.mts"
+import { checkReferencedResource, checkSignedResponse, signaturePolicyOf } from "./resource_checks.mts"
+import { checkConnection } from "./tls_checks.mts"
 import type { ImageChecking } from "./safe_fetch.mts"
 import { ValidateSignaturePolicies } from "./signature_policies.mts"
+import type { SignaturePolicy } from "./certificate_utils.mts"
 
 import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES, type CG_Validator_Options } from "./cg_check.mts"
-import { allowTraversal, deferRetrieval, retrieveTraversal, ValidationScope } from "./safe_fetch.mts"
+import { allowTraversal, currentValidation, deferRetrieval, retrieveTraversal, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
 
 
 const LCN_TABLE_NO_TARGETREGION: string = "unspecifiedRegion",
@@ -91,7 +93,7 @@ type FoundRegion = {
 
 export class FoundDocumentItems {
 	knownRegionIDs: FoundRegion[]
-	signaturePolicyIDs: Set<string>
+	signaturePolicies: Map<string, SignaturePolicy> // the signature policies defined in the document, by @policyId
 	declaredAudioLanguages: { language: string, used: boolean, fragment: XmlElement }[]
 	declaredSubscriptionPackages: Set<string>
 	knownServices: Set<string>
@@ -106,7 +108,7 @@ export class FoundDocumentItems {
 
 	constructor(document_defines_policies: boolean) {
 		this.knownRegionIDs = []
-		this.signaturePolicyIDs = new Set<string>()
+		this.signaturePolicies = new Map<string, SignaturePolicy>()
 		this.declaredAudioLanguages = []
 		this.declaredSubscriptionPackages = new Set<string>()
 		this.knownServices = new Set<string>()
@@ -391,7 +393,7 @@ export default class ServiceListCheck {
 	 * @param {string}     Location      The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 * @param {string}     AppType       The type of application being checked, from HowRelated@href
 	 * @param {FoundDocumentItems} documentInfo
-	 *              signaturePolicyIDs   Signature Verification policy identifiers defined in this service list
+	 *              signaturePolicies    Signature Verification policies defined in this service list
 	 * @param {ErrorList}  errs          The class where errors and warnings relating to the service list processing are stored
 	 */
 	/*private*/ #checkSignalledApplication(MediaLocator: XmlElement, Location: string, AppType: string, documentInfo: FoundDocumentItems, errs: ErrorList) {
@@ -476,7 +478,7 @@ export default class ServiceListCheck {
 	 * @param {string}     Location          The printable name used to indicate the location of the <RelatedMaterial> element being checked. used for error reporting
 	 * @param {string}     LocationType      The type of element containing the <RelatedMaterial> element. Different validation rules apply to different location types
 	 * @param {FoundDocumentItems} documentInfo
-	 *                  signaturePolicyIDs   Signature Verification policy identifiers defined in this service list
+	 *                  signaturePolicies    Signature Verification policies defined in this service list
 	 * @param {ErrorList}  errs              The class where errors and warnings relating to the service list processing are stored
 	 * @param {string}     errCode           The prefix to use for any errors found
 	 * @returns {string} an href value if valid, else ""
@@ -653,7 +655,7 @@ export default class ServiceListCheck {
 	 * @param {XmlElement} source        The <ContentGuideSource> element to be checked
 	 * @param {string} loc           The 'location' in the XML document of the element being checked, if unspecified then this is set to be the name of the parent element
 	 * @param  {FoundDocumentItems} documentInfo
-	 *                signaturePolicyIDs Signature Verification policy identifiers defined in this service list
+	 *                signaturePolicies Signature Verification policies defined in this service list
 	 * @param {ErrorList}  errs          Errors found in validaton
 	 * @param {string}     errCode       Error code prefix to be used in reports
 	 */
@@ -677,7 +679,9 @@ export default class ServiceListCheck {
 						fragment: ep,
 						key: "not URL path",
 					});
-				ValidateAnySignaturePolicy(epURL, documentInfo, errs, `${errCode}-${suffix}c`);
+				const policy = ValidateAnySignaturePolicy(epURL, documentInfo, errs, `${errCode}-${suffix}c`);
+				// the endpoint's server is checked against the policy even when the endpoint is not traversed into
+				if (policy) checkConnection(epURL, epURL.content.trim(), policy, errs);
 			}
 			const ep_contentType = ep.attrAnyNsValueOr(dvbi.a_contentType);
 			if (ep_contentType && ep_contentType != XMLdocumentType)
@@ -1791,7 +1795,7 @@ export default class ServiceListCheck {
 	 * @param {FoundDocumentItems} documentInfo
 	 *                     knownServices                 Service identifiers found and checked thus far
 	 *                     knownRegionIDs                regions identifiers from the RegionList
-	 *                     signaturePolicyIDs            Signature Verification policy identifiers defined in this service list
+	 *                     signaturePolicies             Signature Verification policies defined in this service list
 	 *                     declaredSubscriptionPackages  subscription packages that are declared in the service list
 	 *                     declaredAudioLanguages        language values declared in the <LanguageList> of the service list
 	 *                     ContentGuideSourceIDs         identifiers of content guide sources found in the service list
@@ -2448,7 +2452,9 @@ export default class ServiceListCheck {
 		});
 
 		//chck <ServiceList><SignaturePolicies>
-		documentInfo.signaturePolicyIDs = ValidateSignaturePolicies(ServiceList, errs, "SL060");
+		documentInfo.signaturePolicies = ValidateSignaturePolicies(ServiceList, errs, "SL060");
+		// references in this document, and in the documents it traverses into, are resolved against these policies
+		setSignaturePolicies(documentInfo.signaturePolicies);
 
 		//check <ServiceList><LanguageList>
 		const LanguageList = ServiceList.getAnyNs(dvbi.e_LanguageList);
@@ -2882,7 +2888,10 @@ export default class ServiceListCheck {
 			return;
 		}
 		// the referenced service list is retrieved and validated after the current document's rules have been checked
-		// (it may be retrieved concurrently with other referenced documents, but is validated in the order of reference)
+		// (it may be retrieved concurrently with other referenced documents, but is validated in the order of reference).
+		// When the reference refers to a signature policy, the response's signature and connection are checked against it
+		const policy = signaturePolicyOf(Location),
+			validation = currentValidation();
 		deferRetrieval(() => retrieveTraversal(requestUrl), async ({ refused, response: resp, error }) => {
 			if (refused) {
 				errs.addError({
@@ -2902,6 +2911,7 @@ export default class ServiceListCheck {
 					key: keys.k_Traversal,
 				})
 			if (resp) {
+				if (policy) await checkSignedResponse(Location, requestUrl, resp, policy, errs, validation);
 				if (resp.ok)
 					await this.doValidateServiceList(resp.text(), errs, options);
 				else errs.addError({
