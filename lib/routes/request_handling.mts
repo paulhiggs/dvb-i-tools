@@ -11,6 +11,7 @@
 import express from "express"
 
 import { drawResults, MODE_SL, MODE_SLR } from "../ui.mts"
+import type { FormState } from "../ui.mts"
 import ErrorList, { INFORMATION } from "../error_list.mts"
 import { jsonResult } from "../json_results.mts"
 import type { ResultMode } from "../json_results.mts"
@@ -155,29 +156,28 @@ export function requestFromQuery(req: express.Request, log_prefix: string | unde
 }
 
 /**
- * the choices of a validation requested with the /check form, from its fields (already checked, and kept in the session)
+ * the choices of a validation requested with the /check form, from its fields (already checked)
  *
- * @param {express.Request} req           the request
+ * @param {FormState}       form          the choices made on the form
  * @param {string}          testtype      the type of document being validated
  * @param {string}          log_prefix    where the document is archived, if it is
  * @param {number}          maxTraversal  the most documents to traverse, from the form
  * @param {number}          maxTraversalDepth  the deepest level to traverse into, from the form
  * @returns {ValidationOptions} the choices for the validation
  */
-export function requestFromCheckForm(req: express.Request, testtype: string, log_prefix: string | undefined, maxTraversal: number | undefined, maxTraversalDepth?: number): ValidationOptions {
+export function requestFromCheckForm(form: FormState, testtype: string, log_prefix: string | undefined, maxTraversal: number | undefined, maxTraversalDepth?: number): ValidationOptions {
 	// the Germany variant and traversal are offered for service lists and service list registries
-	const list = testtype == MODE_SL || testtype == MODE_SLR,
-		form = req.session.data;
+	const list = testtype == MODE_SL || testtype == MODE_SLR;
 	return {
 		log_prefix,
 		report_schema_version: true,
-		variants: list && form?.forGermany ? GERMAN_A177r6_VARIANT : 0,
-		traverse: list && form?.traverse == true,
+		variants: list && form.forGermany ? GERMAN_A177r6_VARIANT : 0,
+		traverse: list && form.traverse,
 		maxTraversal,
 		maxTraversalDepth,
-		images: form?.images,
-		connectionCertificates: ["both", "connection"].includes(form?.signatureChecks ?? "both"),
-		responseSignatures: ["both", "signature"].includes(form?.signatureChecks ?? "both"),
+		images: form.images,
+		connectionCertificates: ["both", "connection"].includes(form.signatureChecks),
+		responseSignatures: ["both", "signature"].includes(form.signatureChecks),
 	};
 }
 

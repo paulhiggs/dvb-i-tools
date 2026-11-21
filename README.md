@@ -217,6 +217,8 @@ If a subdirectory named `./logs` extists, then enhanced HTTP server logging will
 
 `<server>/check` gives a basic/primitive UI. Select the valildation type (Service List or Content Guide) and provide either a URL or local file. Press "Validate!" button. Await results!
 
+An uploaded file can be up to 10 MB, the same limit as a document sent in the body of a `POST` to the `/validate_*` endpoints. A larger file is answered with `413`. The form does not use cookies or sessions: it shows the choices just submitted with the results, and the defaults when it is opened again.
+
 #### Service list validation endpoints
 
 `<server>/validate_sl?url=<service_list_url>&variants=DE` gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the servicelist in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML.

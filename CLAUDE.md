@@ -10,7 +10,7 @@ Validators for DVB-I XML documents defined in DVB Bluebook A177 (revisions r0 to
   - [lib/config.mts](lib/config.mts): `loadConfig(options)` checks and normalises the options into a frozen `ValidatorConfig`, and throws a `ConfigError` for a bad option (only `validator()` exits). `applyFetchPolicy()` sets the server's fetch policy.
   - [lib/services.mts](lib/services.mts): `createServices(config)` loads the reference data, and builds the checkers and the SLEPR once.
   - [lib/app.mts](lib/app.mts): `createApp(config, services)` builds the Express application:
-    - the middleware
+    - the middleware: CORS, `helmet()` (no content security policy yet, as the form uses inline scripts), the favicon and the request logging. The form's body parsers (`express-fileupload` with the 10 MB limit, and `express.urlencoded()`) are only on the `/check` route. There are no sessions: the form is drawn from a `FormState`, the defaults or the values just submitted
     - a router for each feature in [lib/routes/](lib/routes/): `validate.mts` for `/validate_{sl,cg,pl,slr}[_json]`, `check.mts` for `/check`, `slepr.mts` for `/query` and `/reload`, and `info.mts` for `/stats` and `/langs`
     - the 404 for any method
     - the error handler

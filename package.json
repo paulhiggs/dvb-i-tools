@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools.ts",
-	"version": "1.12.18",
+	"version": "1.12.19",
 	"description": "DVB-I V&V Tools - up to A177r8",
 	"keywords": [
 		"DVB-I"
@@ -20,7 +20,7 @@
 		"cors": "^2.8.6",
 		"express": "^5.3.0",
 		"express-fileupload": "^1.5.2",
-		"express-session": "^1.19.0",
+		"helmet": "^8.3.0",
 		"libxml2-wasm": "^0.7.2",
 		"morgan": "^1.12.1",
 		"rotating-file-stream": "^4.0.0",
@@ -56,7 +56,6 @@
 		"@types/cors": "^2.8.19",
 		"@types/express": "^5.0.6",
 		"@types/express-fileupload": "^1.5.1",
-		"@types/express-session": "^1.19.0",
 		"@types/morgan": "^1.9.10",
 		"@types/node": "^26.6.5",
 		"@types/serve-favicon": "^2.5.7",
