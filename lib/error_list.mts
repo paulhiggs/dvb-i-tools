@@ -66,7 +66,7 @@ export type ErrorListOptions = {
 	summaryOnly?: boolean; // keep only the number of times each code is reported, not the individual messages
 };
 
-type SeverityList = "fatals" | "errors" | "warnings" | "informationals";
+export type SeverityList = "fatals" | "errors" | "warnings" | "informationals";
 
 // the number of times each code has been reported, in order of first report
 export type CodeCounts = Record<SeverityList, Record<string, number>>;
@@ -417,16 +417,21 @@ export default class ErrorList {
 		return this.countsInfo.length;
 	}
 
+	/**
+	 * the number of times each code has been reported with a severity, in order of first report
+	 *
+	 * @param {SeverityList} list  the severity
+	 * @returns {[string, number][]} the codes and their counts
+	 */
+	codesReported(list: SeverityList): [string, number][] {
+		if (this.codeCounts) return Object.entries(this.codeCounts[list]);
+		const counts: Record<string, number> = {};
+		this[list].forEach((e: ErrorType) => (counts[e.code] = (counts[e.code] ?? 0) + 1));
+		return Object.entries(counts);
+	}
+
 	compactSummary() {
-		const summary = (list: SeverityList) => {
-			let counts: Record<string, number>;
-			if (this.codeCounts) counts = this.codeCounts[list];
-			else {
-				counts = {};
-				this[list].forEach((e: ErrorType) => (counts[e.code] = (counts[e.code] ?? 0) + 1));
-			}
-			return Object.entries(counts).map(([code, count]) => `"${code}"${count > 1 ? `=${count}` : ""}`).join(", ");
-		};
+		const summary = (list: SeverityList) => this.codesReported(list).map(([code, count]) => `"${code}"${count > 1 ? `=${count}` : ""}`).join(", ");
 		return `F(${summary("fatals")}) E(${summary("errors")}) W(${summary("warnings")}) I(${summary("informationals")}) D:${this.debugs.length}`;
 	}
 
