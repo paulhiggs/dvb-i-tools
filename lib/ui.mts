@@ -118,8 +118,12 @@ legend { padding: 0; margin-bottom: 8px; font-size: var(--step--1); font-weight:
 	.cg-type { display: none; }
 	form:has(#radCG:checked) .cg-type { display: grid; }
 	form:not(:has(#radSL:checked, #radSLR:checked)) .sl-options { display: none; }
+	form:not(:has(#cbTraverse:checked)) .traverse-limit { display: none; }
 }
 .options { display: grid; gap: 10px; }
+.traverse-limit { display: grid; grid-template-columns: auto auto 1fr; gap: 4px 10px; align-items: center; margin-left: 26px; }
+.traverse-limit input { font: inherit; font-family: var(--font-mono); font-size: var(--step--1); padding: 5px 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--sunken); color: var(--fg); width: 9rem; }
+.traverse-limit .hint { grid-column: 1 / -1; }
 .choice { display: grid; gap: 6px; padding-top: 4px; }
 .choice-label { font-weight: 500; }
 .choice .seg span { padding: 6px 12px; }
@@ -191,11 +195,9 @@ a.chip:hover { text-decoration: underline; }
 .url { display: block; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); overflow-wrap: anywhere; }
 .d2 { --i: 18px; } .d3 { --i: 36px; } .d4 { --i: 54px; } .d5 { --i: 72px; } .d6 { --i: 90px; } .d7 { --i: 108px; } .d8 { --i: 126px; } .d9 { --i: 144px; } .d10 { --i: 162px; }
 .trav tbody tr:not(.d1) td:first-child { background: linear-gradient(var(--line), var(--line)) no-repeat calc(var(--i) + 4px) 0 / 2px 100%; }
-.trav td:nth-child(2) > *, .trav td:nth-child(2)::before { margin: 0 4px 4px 0; }
-.trav td:nth-child(2)::before { display: inline-block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 1px 8px; border-radius: 999px; color: var(--sev); background: var(--sev-bg); }
-.trav tr.s-ok td:nth-child(2)::before { content: "No findings"; } .trav tr.s-debug td:nth-child(2)::before { content: "Debug"; }
-.trav tr.s-info td:nth-child(2)::before { content: "Info"; } .trav tr.s-warn td:nth-child(2)::before { content: "Warning"; }
-.trav tr.s-error td:nth-child(2)::before { content: "Error"; } .trav tr.s-fatal td:nth-child(2)::before { content: "Fatal"; }
+.trav td:nth-child(2) > * { margin: 0 4px 4px 0; }
+/* a document with no findings has no code chips, so it is labelled instead */
+.trav tr.s-ok td:nth-child(2)::before { content: "No findings"; display: inline-block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 1px 8px; border-radius: 999px; color: var(--sev); background: var(--sev-bg); }
 .dbg { display: block; font-size: var(--step--1); color: var(--muted); }
 .trav td:last-child { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
 .trav[data-show="error"] tbody tr:not(.s-error, .s-fatal), .trav[data-show="warn"] tbody tr:not(.s-warn),
@@ -228,7 +230,7 @@ export function PAGE_TOP(pageTitle: string, secure: boolean, label?:string, motd
 
 export const PAGE_BOTTOM = `<footer><span>${escapeHTML(pkg.name)} v${escapeHTML(pkg.version)} by ${pkg.author.HTMLize()}</span><span>Report issues at <a href="${escapeHTML(pkg?.bugs?.url)}">${escapeHTML(pkg?.bugs?.url)}</a></span></footer></div></body></html>`;
 
-// the CSS class for each value of ErrorList.severity(). The stylesheet labels traversed rows from it
+// the CSS class for each value of ErrorList.severity(), used by the severity filter of the traversed documents table
 const SEVERITY_CLASS = ["s-ok", "s-debug", "s-info", "s-warn", "s-error", "s-fatal"];
 const LIST_CLASS: Record<SeverityList, string> = { fatals: "s-fatal", errors: "s-error", warnings: "s-warn", informationals: "s-info" };
 
@@ -383,7 +385,7 @@ function* nested_error_row(req: express.Request, errs: ErrorList | undefined, de
 				? `<a target="_blank" rel="noopener noreferrer" href="${escapeHTML(href)}">${escapeHTML(nest.description)}</a>`
 				: escapeHTML(nest.description)
 		}
-		// the severity label of the row is shown by the stylesheet, from the row's class
+		// the codes reported are shown as chips in their severity colours; the row's class is used by the severity filter
 		yield `<tr class="${SEVERITY_CLASS[severity]} d${Math.min(depth, 10)}"><td>${refer}${nest.source ? `<span class="url">${escapeHTML(nest.source)}</span>` : ""}</td><td>`
 		for (const list of ["fatals", "errors", "warnings", "informationals"] as SeverityList[])
 			for (const [code, count] of nest.codesReported(list))
@@ -544,7 +546,7 @@ export async function drawForm(
 		? supportedRequests.map((choice) => segmentChoice(ENTRY_FORM_REQUEST_TYPE_ID, choice.value, choice.value, choice.label, choice.value == session?.cgmode)).join("")
 		: "";
 	const traverse = modes.allowTraversal
-		? `<label class="check sl-options"><input type="checkbox" id="cbTraverse" name="traverse"${session?.traverse == true ? " checked" : ""}><span>Traverse referenced documents</span><span class="hint">Also validate the schedules, programme information, box sets and service lists that the document refers to.</span><span class="note">This can take a long time: 20 minutes or more for a large service list.</span></label>`
+		? `<label class="check sl-options"><input type="checkbox" id="cbTraverse" name="traverse"${session?.traverse == true ? " checked" : ""}><span>Traverse referenced documents</span><span class="hint">Also validate the schedules, programme information, box sets and service lists that the document refers to.</span><span class="note">This can take a long time: 20 minutes or more for a large service list.</span></label><div class="traverse-limit sl-options"><label for="maxTraversal">Maximum documents</label><input type="text" id="maxTraversal" name="maxTraversal" inputmode="numeric" size="10" value="${escapeHTML(session?.maxTraversal ?? "100")}" aria-describedby="maxTraversal-hint"><span class="hint" id="maxTraversal-hint">The most documents to traverse: a number, or unlimited. Unlimited can take hours for a large service list.</span></div>`
 		: "";
 	const images = session?.images ?? "yes";
 	const imageChecking = `<div class="choice" role="group" aria-labelledby="images-label"><span class="choice-label" id="images-label">Image checking</span><div class="seg">${segmentChoice("images", "no", "imgNo", "No", images == "no")}${segmentChoice("images", "yes", "imgYes", "Yes", images == "yes")}${segmentChoice("images", "scaled", "imgScaled", "Yes and scaled", images == "scaled")}</div><span class="hint">Yes retrieves each referenced image once and checks its format, size, colour depth and pixel aspect ratio. Yes and scaled also requests each image at half its width with ?w= to check that the server scales it, which doubles the image requests.</span></div>`;

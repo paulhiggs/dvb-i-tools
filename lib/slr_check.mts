@@ -425,7 +425,7 @@ export default class ServiceListRegistryCheck {
 	/*public*/ async doValidateServiceListRegistry(SLRtext: string, errs: ErrorList, options: SLR_Validator_Options = {}) : Promise<void> {
 		this.#numRequests++;
 		// collects the network work (traversal, referenced resources) that is performed once the rules below have been checked
-		using scope = ValidationScope.open({ images: options.images });
+		using scope = ValidationScope.open({ images: options.images, maxTraversalDocuments: options.maxTraversal });
 
 		if (!SLRtext) {
 			errs.addError({
