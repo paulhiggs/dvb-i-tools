@@ -9,26 +9,6 @@
 
 export {}
 
-declare module "express-session" {
-	interface SessionData {
-		data : {
-			mode?: string
-			entry?: string
-			url?: string
-			cgmode?: string
-			lastUrl?: string
-
-			forGermany?: boolean
-			traverse?: boolean
-			maxTraversal?: string
-			maxDepth?: string
-			signatureChecks?: "both" | "connection" | "signature" | "none"
-			images?: "no" | "yes" | "scaled"
-		}
-	}
-}
-
-
 declare module "express" {
 
 	export interface Request {

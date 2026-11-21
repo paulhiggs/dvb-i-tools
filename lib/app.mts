@@ -11,12 +11,10 @@
  */
 
 import { join } from "path"
-import { randomBytes } from "crypto"
 import chalk from "chalk"
 import cors from "cors"
 import express from "express"
-import session from "express-session"
-import fileupload from "express-fileupload"
+import helmet from "helmet"
 import favicon from "serve-favicon"
 
 import { CORSlibrary } from "./globals.mts"
@@ -35,32 +33,36 @@ import { infoRouter } from "./routes/info.mts"
  *
  * @param {ValidatorConfig}   config         the configuration
  * @param {ValidatorServices} services       the checkers and service list registry (see createServices())
- * @param {string}            sessionSecret  signs the session cookies. SESSION_SECRET from the environment by default, or
- *                                           a random secret for this application
  * @returns {express.Application} the application
  */
-export function createApp(config: ValidatorConfig, services: ValidatorServices, sessionSecret: string = process.env.SESSION_SECRET ?? randomBytes(32).toString("hex")): express.Application {
+export function createApp(config: ValidatorConfig, services: ValidatorServices): express.Application {
 	const app = express();
 
 	// CORS handling, according to --CORSmode. This is registered before any routes so that it applies to all of them. In
 	// "manual" mode, the /query route inserts its own headers (routes/slepr.mts)
 	if (config.corsMode == CORSlibrary) app.use(cors());
 
-	// no static file serving: the pages are generated, and the installation directory holds keys, logs and configuration
-	app.use(fileupload());
-	app.use(favicon(join(__dirname, "icon", "ph-icon.ico")));
-	app.use(...requestLoggers());
-	app.use(express.urlencoded({ extended: true }));
-
-	app.set("trust proxy", 1);
+	// the standard security headers, with these exceptions:
+	//   - no content security policy yet, as the /check page uses inline scripts and styles
+	//   - no Strict-Transport-Security: whether HTTP redirects to HTTPS is decided by the server (server.mts), and the
+	//     header would also apply to every subdomain of the host the validator is deployed on
+	//   - Cross-Origin-Resource-Policy is cross-origin, as the endpoints are meant to be used from other origins (--CORSmode)
+	// X-Frame-Options is SAMEORIGIN, which "manual" CORS mode set for /query before
 	app.use(
-		session({
-			secret: sessionSecret,
-			resave: false,
-			saveUninitialized: true,
-			cookie: { maxAge: 60000 },
+		helmet({
+			contentSecurityPolicy: false,
+			strictTransportSecurity: false,
+			crossOriginResourcePolicy: { policy: "cross-origin" },
+			xFrameOptions: { action: "sameorigin" },
 		})
 	);
+
+	// no static file serving: the pages are generated, and the installation directory holds keys, logs and configuration.
+	// The form's body parsers (file upload and URL encoded fields) are only on the /check route (routes/check.mts)
+	app.use(favicon(join(__dirname, "icon", "ph-icon.ico")));
+	app.use(...requestLoggers());
+
+	app.set("trust proxy", 1);
 
 	app.use(validateRouter(config, services));
 	app.use(checkRouter(config, services));

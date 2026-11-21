@@ -11,7 +11,6 @@
 
 import process from "process"
 import cluster from "cluster"
-import { randomBytes } from "crypto"
 import chalk from "chalk"
 import commandLineArgs from "command-line-args"
 
@@ -37,10 +36,6 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 	}
 	applyFetchPolicy(config);
 
-	// session cookies are signed with SESSION_SECRET. If it is not provided, a random secret is used for this run.
-	// It is set in the environment before any workers are forked, so all workers share it.
-	if (!process.env.SESSION_SECRET) process.env.SESSION_SECRET = randomBytes(32).toString("hex");
-
 	if (config.workers != 0 && cluster.isPrimary) startWorkers(config.workers);
-	else startServer(config, createApp(config, createServices(config), process.env.SESSION_SECRET));
+	else startServer(config, createApp(config, createServices(config)));
 }

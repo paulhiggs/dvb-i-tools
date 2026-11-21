@@ -13,7 +13,7 @@ import express from "express"
 import fileupload from "express-fileupload"
 
 import { drawForm, liveDocumentResults, sendCheckResults, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "../ui.mts"
-import type { FormModes } from "../ui.mts"
+import type { FormModes, FormState } from "../ui.mts"
 import ErrorList from "../error_list.mts"
 import { safeFetch, currentFetchPolicy, observeValidation, DEFAULT_MAX_TRAVERSAL, parseTraversalLimit } from "../safe_fetch.mts"
 import type { ValidationObserver } from "../safe_fetch.mts"
@@ -27,7 +27,7 @@ import document_logger, { createPrefix } from "../logger.mts"
 import type { ValidatorConfig } from "../config.mts"
 import type { ValidatorServices } from "../services.mts"
 import { imageChecking, parseDepthLimit, requestFromCheckForm, signatureChecks } from "./request_handling.mts"
-import { XML_BODY } from "./validate.mts"
+import { XML_BODY, MAX_DOCUMENT_BYTES } from "./validate.mts"
 
 // initialise string formatting extensions
 import {} from "../string-extensions.mts"
@@ -40,29 +40,24 @@ async function DVB_I_check(
 		motd: string | undefined, 
 		mode: string = MODE_UNSPECIFIED, linktype: string = MODE_UNSPECIFIED) : Promise<void> {
 			
-	if (!req.session.data) {
-		// setup defaults
-		req.session.data = {};
-		req.session.data.lastUrl = "";
-		req.session.data.mode = mode == MODE_UNSPECIFIED ? (hasSL ? MODE_SL : MODE_CG) : mode;
-		req.session.data.entry = linktype == MODE_UNSPECIFIED ? MODE_URL : linktype;
-		if (cgcheck) req.session.data.cgmode = cgcheck.supportedRequests[0].value;
-		req.session.data.forGermany = false;
-		req.session.data.traverse = false;
-		req.session.data.maxTraversal = String(DEFAULT_MAX_TRAVERSAL);
-		req.session.data.maxDepth = String(currentFetchPolicy().maxTraversalDepth);
-		req.session.data.images = "yes";
-		req.session.data.signatureChecks = "both";
-	}
-	if (req.session.data.lastUrl != req.url) {
-		req.session.data.mode = mode == MODE_UNSPECIFIED ? (hasSL ? MODE_SL : MODE_CG) : mode;
-		req.session.data.entry = linktype == MODE_UNSPECIFIED ? MODE_URL : linktype;
-		req.session.data.lastUrl = req.url;
-	}
-	
+	// the form's choices are not kept between requests: a new form has the defaults, and the form with the results shows
+	// the values just submitted
+	const defaults: FormState = {
+		mode: mode == MODE_UNSPECIFIED ? (hasSL ? MODE_SL : MODE_CG) : mode,
+		entry: linktype == MODE_UNSPECIFIED ? MODE_URL : linktype,
+		url: "",
+		cgmode: cgcheck?.supportedRequests[0].value,
+		forGermany: false,
+		traverse: false,
+		maxTraversal: String(DEFAULT_MAX_TRAVERSAL),
+		maxDepth: String(currentFetchPolicy().maxTraversalDepth),
+		images: "yes",
+		signatureChecks: "both",
+	};
+
 	const FormArguments: FormModes = { cg: MODE_CG, sl: MODE_SL, pl: MODE_PL, slr: MODE_SLR, file: MODE_FILE, url: MODE_URL, hasSL: hasSL, hasPL: hasPL, hasCG: hasCG, hasSLR: hasSLR, allowTraversal: allow_traversal };
 	if (!req.body?.testtype) 
-		await drawForm(req, res, FormArguments, (cgcheck && cgcheck.supportedRequests) ? cgcheck.supportedRequests : null, motd, undefined, undefined);
+		await drawForm(req, res, FormArguments, defaults, (cgcheck && cgcheck.supportedRequests) ? cgcheck.supportedRequests : null, motd, undefined, undefined);
 	else {
 		let VVxml: string | null = null;
 		req.parseErr = undefined;
@@ -99,15 +94,21 @@ async function DVB_I_check(
 		else if (traverse && maxDepthField.length > 0 && maxDepth == undefined)
 			req.parseErr = [`the maximum depth of traversal must be a positive whole number, not ${maxDepthField.quote()}`]
 
-		req.session.data.forGermany = req.body.forGermany == "on";
-		req.session.data.traverse = traverseSelected
-		req.session.data.maxTraversal = maxTraversalField.length > 0 ? maxTraversalField : String(DEFAULT_MAX_TRAVERSAL)
-		req.session.data.maxDepth = maxDepthField.length > 0 ? maxDepthField : String(currentFetchPolicy().maxTraversalDepth)
-		req.session.data.images = imageChecking(req.body.images)
-		req.session.data.signatureChecks = signatureChecks(req.body.signatureChecks)
+		const form: FormState = {
+			mode: available[testtype] ? testtype : defaults.mode,
+			entry: doclocation == MODE_URL || doclocation == MODE_FILE ? doclocation : defaults.entry,
+			url: XMLurl,
+			cgmode: requestType.length > 0 ? requestType : defaults.cgmode,
+			forGermany: req.body.forGermany == "on",
+			traverse: traverseSelected,
+			maxTraversal: maxTraversalField.length > 0 ? maxTraversalField : defaults.maxTraversal,
+			maxDepth: maxDepthField.length > 0 ? maxDepthField : defaults.maxDepth,
+			images: imageChecking(req.body.images),
+			signatureChecks: signatureChecks(req.body.signatureChecks),
+		};
 		const log_prefix = createPrefix(req, testtype);
 		// the choices for the validation, and every document it traverses into
-		const request = requestFromCheckForm(req, testtype, log_prefix, maxTraversal, maxDepth);
+		const request = requestFromCheckForm(form, testtype, log_prefix, maxTraversal, maxDepth);
 		const errs = ErrorList.withMarkup();
 
 		// the live view (issue #104) asks for the progress of the validation as events, one JSON object on each line, followed by
@@ -143,7 +144,6 @@ async function DVB_I_check(
 							else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${XMLurl}`];
 						}
 					}
-					req.session.data.url = XMLurl;
 					break;
 				case MODE_FILE:
 					try {
@@ -152,7 +152,6 @@ async function DVB_I_check(
 					} catch (err) {
 						req.parseErr = [`retrieval of FILE ${(req.files!.XMLfile as fileupload.UploadedFile).name} failed (${err})`];
 					}
-					req.session.data.url = undefined;
 					break;
 				default:
 					req.parseErr = [`method is not ${MODE_URL.quote()} or ${MODE_FILE.quote()}`];
@@ -186,14 +185,11 @@ async function DVB_I_check(
 		});
 		observer.stop?.();
 
-		req.session.data.mode = testtype;
-		req.session.data.entry = doclocation;
-		if (requestType) req.session.data.cgmode = requestType;
 		if (live) {
 			if (!res.destroyed) res.write(`${JSON.stringify({ event: "results" })}\n`);
 			await sendCheckResults(req, res, req.parseErr, errs);
 		}
-		else await drawForm(req, res, FormArguments, cgcheck ? cgcheck.supportedRequests : null, motd, req.parseErr, errs);
+		else await drawForm(req, res, FormArguments, form, cgcheck ? cgcheck.supportedRequests : null, motd, req.parseErr, errs);
 
 		req.diags = {};
 		req.diags.countErrors = errs.numErrors();
@@ -206,6 +202,11 @@ async function DVB_I_check(
 }
 
 
+// the form's body: an uploaded document, with the same size limit as a document sent to the /validate_* endpoints (a larger
+// one is answered with 413), or the fields alone
+const FORM_FILE = fileupload({ limits: { fileSize: MAX_DOCUMENT_BYTES }, abortOnLimit: true }),
+	FORM_FIELDS = express.urlencoded({ extended: true });
+
 /**
  * the /check form, when the server offers any document type
  *
@@ -217,7 +218,7 @@ export function checkRouter(config: ValidatorConfig, services: ValidatorServices
 	const router = express.Router();
 	const { sl, pl, cg, slr } = config.features;
 	if (sl || pl || cg || slr)
-		router.all("/check", XML_BODY, async (req: express.Request, res: express.Response) => {
+		router.all("/check", XML_BODY, FORM_FILE, FORM_FIELDS, async (req: express.Request, res: express.Response) => {
 			await DVB_I_check(req, res, services.slcheck, services.plcheck, services.cgcheck, services.slrcheck, sl, pl, cg, slr, config.allowTraversal, config.motd);
 		});
 	return router;

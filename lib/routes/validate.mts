@@ -25,7 +25,8 @@ import type { ValidatorServices } from "../services.mts"
 import { checkMethod, getDocument, report, requestFromQuery } from "./request_handling.mts"
 
 // a document to validate may be sent as the body of a POST
-export const XML_BODY = express.text({ type: "application/xml", limit: "10mb" });
+export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024; // the largest document that can be sent to be validated
+export const XML_BODY = express.text({ type: "application/xml", limit: MAX_DOCUMENT_BYTES });
 
 /**
  * Validate a service list

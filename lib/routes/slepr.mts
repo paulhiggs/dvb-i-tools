@@ -18,15 +18,11 @@ import type { ValidatorServices } from "../services.mts"
 export const SLEPR_query_route = "/query",
 	SLEPR_reload_route = "/reload";
 
-// with --CORSmode manual, the CORS headers are inserted by this handler (in "library" mode, cors() applies to every route)
+// with --CORSmode manual, the CORS header is inserted by this handler (in "library" mode, cors() applies to every route).
+// X-Frame-Options: SAMEORIGIN, which this handler also set before, is now set for every route by helmet() (app.mts)
 function manualCORS(config: ValidatorConfig): express.RequestHandler {
 	if (config.corsMode != CORSmanual) return (req, res, next) => next();
 	return (req, res, next) => {
-		let opts: string[] | undefined = res.getHeader("X-Frame-Options") as string[] | undefined;
-		if (opts) {
-			if (!opts.includes("SAMEORIGIN")) opts.push("SAMEORIGIN");
-		} else opts = ["SAMEORIGIN"];
-		res.setHeader("X-Frame-Options", opts);
 		res.setHeader("Access-Control-Allow-Origin", "*");
 		next();
 	};
