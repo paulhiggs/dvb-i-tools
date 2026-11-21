@@ -26,7 +26,7 @@ import ServiceListRegistryCheck from "../slr_check.mts"
 import document_logger, { createPrefix } from "../logger.mts"
 import type { ValidatorConfig } from "../config.mts"
 import type { ValidatorServices } from "../services.mts"
-import { imageChecking, parseDepthLimit, requestFromCheckForm, signatureChecks } from "./request_handling.mts"
+import { imageChecking, parseDepthLimit, recordOutcome, requestFromCheckForm, signatureChecks } from "./request_handling.mts"
 import { XML_BODY, MAX_DOCUMENT_BYTES } from "./validate.mts"
 
 // initialise string formatting extensions
@@ -60,7 +60,8 @@ async function DVB_I_check(
 		await drawForm(req, res, FormArguments, defaults, (cgcheck && cgcheck.supportedRequests) ? cgcheck.supportedRequests : null, motd, undefined, undefined);
 	else {
 		let VVxml: string | null = null;
-		req.parseErr = undefined;
+		// why the document could not be obtained or validated, or why the form is not valid
+		let parseErr: string[] | undefined;
 
 		// a form field is only used when it is a single string - a missing field is treated as empty, and express.urlencoded()
 		// can also produce arrays or objects (e.g. XMLurl[]=a&XMLurl[]=b), which are not valid values for any field
@@ -80,19 +81,19 @@ async function DVB_I_check(
 			maxDepth = maxDepthField.length == 0 ? undefined : parseDepthLimit(maxDepthField);
 		const available: Record<string, boolean> = { [MODE_SL]: hasSL, [MODE_PL]: hasPL, [MODE_CG]: hasCG, [MODE_SLR]: hasSLR };
 
-		if (testtype.length == 0) req.parseErr = ["validation type not specified"]
-		else if (!HasProperty(available, testtype)) req.parseErr = [`unknown validation type ${testtype.quote()}`]
-		else if (!available[testtype]) req.parseErr = [`validation type ${testtype.quote()} is not available`]
-		else if (testtype == MODE_CG && requestType.length == 0) req.parseErr = ["request type not specified"]
-		else if (testtype == MODE_CG && !cgcheck?.supportedRequests.some((r) => r.value == requestType)) req.parseErr = [`unknown request type ${requestType.quote()}`]
-		else if (doclocation != MODE_URL && doclocation != MODE_FILE) req.parseErr = [`method is not ${MODE_URL.quote()} or ${MODE_FILE.quote()}`]
-		else if (doclocation == MODE_URL && XMLurl.length == 0) req.parseErr = ["URL not specified"]
-		else if (doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) req.parseErr = ["File not provided"]
-		else if (doclocation == MODE_FILE && Array.isArray(req.files!.XMLfile)) req.parseErr = ["only one file can be validated at a time"]
+		if (testtype.length == 0) parseErr = ["validation type not specified"]
+		else if (!HasProperty(available, testtype)) parseErr = [`unknown validation type ${testtype.quote()}`]
+		else if (!available[testtype]) parseErr = [`validation type ${testtype.quote()} is not available`]
+		else if (testtype == MODE_CG && requestType.length == 0) parseErr = ["request type not specified"]
+		else if (testtype == MODE_CG && !cgcheck?.supportedRequests.some((r) => r.value == requestType)) parseErr = [`unknown request type ${requestType.quote()}`]
+		else if (doclocation != MODE_URL && doclocation != MODE_FILE) parseErr = [`method is not ${MODE_URL.quote()} or ${MODE_FILE.quote()}`]
+		else if (doclocation == MODE_URL && XMLurl.length == 0) parseErr = ["URL not specified"]
+		else if (doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) parseErr = ["File not provided"]
+		else if (doclocation == MODE_FILE && Array.isArray(req.files!.XMLfile)) parseErr = ["only one file can be validated at a time"]
 		else if (traverse && maxTraversal == undefined)
-			req.parseErr = [`the maximum number of documents to traverse must be a positive whole number or ${"unlimited".quote()}, not ${maxTraversalField.quote()}`]
+			parseErr = [`the maximum number of documents to traverse must be a positive whole number or ${"unlimited".quote()}, not ${maxTraversalField.quote()}`]
 		else if (traverse && maxDepthField.length > 0 && maxDepth == undefined)
-			req.parseErr = [`the maximum depth of traversal must be a positive whole number, not ${maxDepthField.quote()}`]
+			parseErr = [`the maximum depth of traversal must be a positive whole number, not ${maxDepthField.quote()}`]
 
 		const form: FormState = {
 			mode: available[testtype] ? testtype : defaults.mode,
@@ -131,17 +132,17 @@ async function DVB_I_check(
 		res.on("close", () => {
 			if (!res.writableEnded) observer.cancel();
 		});
-		if (!req.parseErr)
+		if (!parseErr)
 			switch (doclocation) {
 				case MODE_URL:
 					{
 						errs.setLocation(XMLurl)
 						const { response: resp, error } = await safeFetch(XMLurl);
 						if (error)
-							req.parseErr = [error];
+							parseErr = [error];
 						if (resp) {
 							if (resp.ok) VVxml = resp.text();
-							else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${XMLurl}`];
+							else parseErr = [`error (${resp.status}:${resp.statusText}) handling ${XMLurl}`];
 						}
 					}
 					break;
@@ -150,14 +151,14 @@ async function DVB_I_check(
 						errs.setLocation((req.files!.XMLfile as fileupload.UploadedFile).name)
 						VVxml = (req.files!.XMLfile as fileupload.UploadedFile).data.toString();
 					} catch (err) {
-						req.parseErr = [`retrieval of FILE ${(req.files!.XMLfile as fileupload.UploadedFile).name} failed (${err})`];
+						parseErr = [`retrieval of FILE ${(req.files!.XMLfile as fileupload.UploadedFile).name} failed (${err})`];
 					}
 					break;
 				default:
-					req.parseErr = [`method is not ${MODE_URL.quote()} or ${MODE_FILE.quote()}`];
+					parseErr = [`method is not ${MODE_URL.quote()} or ${MODE_FILE.quote()}`];
 			}
 
-		if (!req.parseErr && VVxml) await observeValidation(observer, async () => {
+		if (!parseErr && VVxml) await observeValidation(observer, async () => {
 			switch (testtype) {
 				case MODE_CG:
 					errs.setType(`Content Guide-${requestType}`)
@@ -187,14 +188,11 @@ async function DVB_I_check(
 
 		if (live) {
 			if (!res.destroyed) res.write(`${JSON.stringify({ event: "results" })}\n`);
-			await sendCheckResults(req, res, req.parseErr, errs);
+			await sendCheckResults(req, res, parseErr, errs);
 		}
-		else await drawForm(req, res, FormArguments, form, cgcheck ? cgcheck.supportedRequests : null, motd, req.parseErr, errs);
+		else await drawForm(req, res, FormArguments, form, cgcheck ? cgcheck.supportedRequests : null, motd, parseErr, errs);
 
-		req.diags = {};
-		req.diags.countErrors = errs.numErrors();
-		req.diags.countWarnings = errs.numWarnings();
-		req.diags.countInforms = errs.numInformationals();
+		recordOutcome(res, errs, parseErr);
 
 		document_logger(errs, log_prefix, true, req);
 	}

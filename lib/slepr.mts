@@ -11,7 +11,6 @@
 import { readFile } from "fs"
 import chalk from "chalk"
 import { XmlDocument, XmlError } from "libxml2-wasm"
-import express from "express"
 
 import { datatypeIs, HasProperty } from "./utils.mts"
 import { tva } from "./TVA_definitions.mts"
@@ -73,6 +72,18 @@ function parse_UAS_loose(uas?: string): parsedUAS {
 		: {ok: false};
 }
 
+
+// the query parameters of a request to the registry, as Express parses them
+export type RegistryQuery = Record<string, unknown>
+
+// the registry's answer to a query
+export type RegistryResponse = {
+	status: number
+	contentType: string
+	body: string
+	vary: string[] // the request headers the response depends on
+	parseErr?: string[] // why the query is not valid (status 400)
+}
 
 export default class SLEPR {
 	#numRequests: number
@@ -147,9 +158,9 @@ export default class SLEPR {
 		this.#registryFilename = filename;
 	}
 
-	/* private */ #checkQuery(req: express.Request, params: Record<string, string | string[]>) {
-		req.parseErr = [];
-		if (req.query) {
+	/* private */ #checkQuery(query: RegistryQuery, params: Record<string, string | string[]>): string[] {
+		const parseErr: string[] = [];
+		if (query) {
 
 		type checkFn = (value: string) => boolean
 
@@ -158,22 +169,21 @@ export default class SLEPR {
 					switch (datatypeIs(argument)) {
 						case "string":
 							if (!checkFunction(argument as string)) 
-								req.parseErr!.push(`invalid ${argName} [${argument}]`);
+								parseErr.push(`invalid ${argName} [${argument}]`);
 							break;
 						case "array":
 							(argument as string[]).forEach((item: string) => {
 								if (!checkFunction(item)) 
-									req.parseErr!.push(`invalid ${argName} [${item}]`);
+									parseErr.push(`invalid ${argName} [${item}]`);
 							});
 							break;
 						default:
-							req.parseErr!.push(`invalid type [${datatypeIs(argument)}] for ${argName}`);
+							parseErr.push(`invalid type [${datatypeIs(argument)}] for ${argName}`);
 							break;
 					}
 			};
 
-			//const queryParams = qs.parse(req.query) as qs.ParsedQs;
-			const queryParams = req.query
+			const queryParams = query
 			for (const key in queryParams) {
 				// accept both "Delivery=dvb-t" and the array form "Delivery[]=dvb-t". Express 5's default (simple) query
 				// parser keeps the "[]" in the name, and repeated arguments of either form are combined
@@ -183,18 +193,18 @@ export default class SLEPR {
 					const values = Array.isArray(value) ? (value as string[]) : [value as string];
 					params[name] = [...((params[name] as string[] | undefined) ?? []), ...values];
 				}
-				else req.parseErr.push(`invalid argument - ${key}`);
+				else parseErr.push(`invalid argument - ${key}`);
 			}
 
 
 			const checkBoolean = (bool: string) => ["true", "false"].includes(bool);
 			checkIt(params.regulatorListFlag, dvbisld.a_regulatorListFlag, checkBoolean);
 			if (params.regulatorListFlag?.length > 1)
-				req.parseErr.push(`only a single &regulatorListFlag can be specified`);
+				parseErr.push(`only a single &regulatorListFlag can be specified`);
 
 			checkIt(params.inlineImages, dvbisld.q_inlineImages, checkBoolean);
 			if (params.inlineImages?.length > 1)
-				req.parseErr.push(`only a single &inlineImages can be specified`);
+				parseErr.push(`only a single &inlineImages can be specified`);
 
 			//TargetCountry(s)
 			const checkTargetCountry: checkFn = (country) => this.#knownCountries.isISO3166code(country, false);
@@ -212,7 +222,7 @@ export default class SLEPR {
 			const checkGenre: checkFn = (genre) => this.#knownGenres.has(genre);
 			checkIt(params.Genre, dvbi.e_Genre, checkGenre);
 
-			if (params.inlineImages && !datatypeIs(params.inlineImages, "string")) req.parseErr.push(`invalid type for ${dvbisld.q_inlineImages} [${typeof req.query.inlineImages}]`);
+			if (params.inlineImages && !datatypeIs(params.inlineImages, "string")) parseErr.push(`invalid type for ${dvbisld.q_inlineImages} [${typeof query.inlineImages}]`);
 
 			/* value space of this argument is not checked
 			//Provider Name(s)
@@ -220,41 +230,40 @@ export default class SLEPR {
 			checkIt(params.ProviderName, dvbi.e_ProviderName, checkProvider) 
 			*/
 		}
-		return req.parseErr.length == 0;
+		return parseErr;
 	}
 
-	/* public */ processServiceListRequest(req: express.Request, res: express.Response) {
+	/**
+	 * answer a query of the service list registry (A177 clause 5.1.3.2): the master SLEPR, pruned according to the query
+	 * and the A177 version in the User-Agent. The response is returned, not written, so the caller decides how it is sent
+	 *
+	 * @param {RegistryQuery} query      the query parameters
+	 * @param {string}        userAgent  the User-Agent header of the request
+	 * @returns {RegistryResponse} the response
+	 */
+	/* public */ processServiceListRequest(query: RegistryQuery, userAgent: string | undefined): RegistryResponse {
 		this.#numRequests++;
-		if (HasProperty(req?.query, "queryCapabilities")) {
-			res.type("text/plain");
-			res.write("urn:paulhiggs,2024-06:BabelFish#ja,zh,mi\nurn:ibm.com,1981:CTrlAtlDel\n");
-			res.status(200);
-			return true;
-		}
+		if (HasProperty(query, "queryCapabilities"))
+			return { status: 200, contentType: "text/plain", body: "urn:paulhiggs,2024-06:BabelFish#ja,zh,mi\nurn:ibm.com,1981:CTrlAtlDel\n", vary: [] };
 
-		res.varyOn = new Set<string>();
-		const UASinfo = parse_UAS_loose(req.get("user-agent")); // we only care about the A177 version
+		const UASinfo = parse_UAS_loose(userAgent); // we only care about the A177 version
 		const requestedVersion = (UASinfo.ok && UASinfo.version! >= 6) ? UASinfo.version! : -1;
+		// set when the response depends on the A177 version in the User-Agent
+		let byUserAgent = false;
 		const queryParams: Record<string, string> = {};
-		if (!this.#checkQuery(req, queryParams)) {
-			// the errors echo the query values supplied by the client, so they must not be interpreted as HTML
-			res.type("text/plain");
-			res.setHeader("X-Content-Type-Options", "nosniff");
-			res.status(400);
-			if (req.parseErr) res.write(`[${req.parseErr.join(",\n\t")}]`);
-			return false;
-		}
+		const parseErr = this.#checkQuery(query, queryParams);
+		if (parseErr.length > 0)
+			// the errors echo the query values supplied by the client, so they must not be interpreted as HTML (the response
+			// is sent with X-Content-Type-Options: nosniff)
+			return { status: 400, contentType: "text/plain", body: `[${parseErr.join(",\n\t")}]`, vary: [], parseErr };
 
 		let parsed: XmlDocument;
 		try {
 			parsed = XmlDocument.fromString(masterSLEPR);
 		} catch (err) {
-			res.type("application/xml");
-			res.status(500);
 			const message = (err instanceof XmlError) ? err.message : "something bad happened";
 			console.log(chalk.red(`unable to parse the service list registry (${this.#registryFilename}): ${message}`));
-			res.send(REGISTRY_ERROR(`the service list registry could not be parsed: ${message}`));
-			return false;
+			return { status: 500, contentType: "application/xml", body: REGISTRY_ERROR(`the service list registry could not be parsed: ${message}`), vary: [] };
 		}
 		// 'using' disposes the document (WASM memory) however this method exits, including exceptions while filtering
 		using slepr = parsed;
@@ -318,8 +327,7 @@ export default class SLEPR {
 						if (remove_uri) {
 							uri.remove();
 							u--;
-							res.vary("User-Agent");
-							res.varyOn.add("UAS");
+							byUserAgent = true;
 						}
 					}
 					if (!serv.hasChild(dvbisld.e_ServiceListURI)) {
@@ -365,8 +373,7 @@ export default class SLEPR {
 						}
 						if (!keepService) {
 							removeService = true;
-							res.vary("User-Agent");
-							res.varyOn.add("UAS");
+							byUserAgent = true;
 						}
 					}
 
@@ -488,8 +495,6 @@ export default class SLEPR {
 			}
 		}
 
-		res.type("application/xml");
-		res.send(slepr.toString());
-		return true;
+		return { status: 200, contentType: "application/xml", body: slepr.toString(), vary: byUserAgent ? ["User-Agent"] : [] };
 	}
 }

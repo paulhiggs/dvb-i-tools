@@ -23,20 +23,25 @@ import { GERMAN_A177r6_VARIANT } from "../globals.mts"
 // initialise string formatting extensions
 import {} from "../string-extensions.mts"
 
-export async function getDocument(req: express.Request) : Promise<string | null> {
+// a document to validate, or why it could not be obtained
+export type DocumentResult = { document?: string; parseErr?: string[] }
+
+/**
+ * the document to validate: retrieved from the url query parameter (GET), or the body of the request (POST)
+ *
+ * @param {express.Request} req  the request
+ * @returns {DocumentResult} the document, or why it could not be obtained
+ */
+export async function getDocument(req: express.Request) : Promise<DocumentResult> {
 	if (req.method == "GET") {
 		const { response: resp, error } = await safeFetch(req.query.url as string)
-		if (error)
-			req.parseErr = [error]
-		if (resp) {
-			if (resp.ok)
-				return resp.text()
-			else req.parseErr = [`error (${resp.status}:${resp.statusText}) handling ${req.query.url}`]
-		}
+		if (resp?.ok) return { document: resp.text() }
+		if (resp) return { parseErr: [`error (${resp.status}:${resp.statusText}) handling ${req.query.url}`] }
+		return { parseErr: error ? [error] : undefined }
 	}
-	else if (req.method == "POST")
-		return req.body
-	return null
+	if (req.method == "POST")
+		return { document: typeof req.body == "string" ? req.body : undefined }
+	return {}
 }
 
 const ALLOWED_VALIDATION_METHODS = ["GET", "POST"]
@@ -105,6 +110,9 @@ export function signatureChecks(value: unknown): SignatureChecks {
 	return (SIGNATURE_CHECKS as string[]).includes(v) ? (v as SignatureChecks) : "both";
 }
 
+// the choices for a validation, or why the request is not valid
+export type RequestResult = { options: ValidationOptions; parseErr?: undefined } | { options?: undefined; parseErr: string[] }
+
 /**
  * the choices of a validation requested through a /validate_* endpoint, from the query (GET) or the X- headers (POST):
  * - the A177 variant (variants / X-variants) and image checking (images / X-images)
@@ -117,10 +125,9 @@ export function signatureChecks(value: unknown): SignatureChecks {
  * @param {string}          log_prefix  where the document is archived, if it is
  * @param {ErrorList}       errs        where a note is added when traversal is requested but not allowed
  * @param {object}          traversal   for a document that can traverse: whether the server allows traversal
- * @returns {ValidationOptions | undefined} the choices for the validation, or undefined if a parameter is not valid (the
- *                                          reason is in req.parseErr)
+ * @returns {RequestResult} the choices for the validation, or why a parameter is not valid
  */
-export function requestFromQuery(req: express.Request, log_prefix: string | undefined, errs?: ErrorList, traversal?: { allowed: boolean }): ValidationOptions | undefined {
+export function requestFromQuery(req: express.Request, log_prefix: string | undefined, errs?: ErrorList, traversal?: { allowed: boolean }): RequestResult {
 	const options: ValidationOptions = {
 		log_prefix,
 		report_schema_version: true,
@@ -129,7 +136,7 @@ export function requestFromQuery(req: express.Request, log_prefix: string | unde
 		connectionCertificates: !isFalse(requestParameter(req, "connection_certificates")),
 		responseSignatures: !isFalse(requestParameter(req, "response_signatures")),
 	};
-	if (!traversal || !isTrue(requestParameter(req, "traverse"))) return options;
+	if (!traversal || !isTrue(requestParameter(req, "traverse"))) return { options };
 
 	if (!traversal.allowed) {
 		errs?.addError({
@@ -138,21 +145,19 @@ export function requestFromQuery(req: express.Request, log_prefix: string | unde
 			message: "traversal was requested, but is not allowed on this server (it is started without --allow_traversal), so referenced documents are not validated",
 			key: keys.k_Traversal,
 		});
-		return options;
+		return { options };
 	}
 	const limit = requestParameter(req, "max_traversal");
 	const maxTraversal = limit == undefined || limit.trim().length == 0 ? DEFAULT_MAX_TRAVERSAL : parseTraversalLimit(limit);
 	if (maxTraversal == undefined) {
-		req.parseErr = [`the maximum number of documents to traverse must be a positive whole number or ${"unlimited".quote()}, not ${limit!.quote()}`];
-		return undefined;
+		return { parseErr: [`the maximum number of documents to traverse must be a positive whole number or ${"unlimited".quote()}, not ${limit!.quote()}`] };
 	}
 	const depth = requestParameter(req, "max_depth");
 	const maxTraversalDepth = depth == undefined || depth.trim().length == 0 ? undefined : parseDepthLimit(depth);
 	if (depth != undefined && depth.trim().length > 0 && maxTraversalDepth == undefined) {
-		req.parseErr = [`the maximum depth of traversal must be a positive whole number, not ${depth.quote()}`];
-		return undefined;
+		return { parseErr: [`the maximum depth of traversal must be a positive whole number, not ${depth.quote()}`] };
 	}
-	return { ...options, traverse: true, maxTraversal, maxTraversalDepth };
+	return { options: { ...options, traverse: true, maxTraversal, maxTraversalDepth } };
 }
 
 /**
@@ -182,17 +187,39 @@ export function requestFromCheckForm(form: FormState, testtype: string, log_pref
 }
 
 
-export async function report(req: express.Request, res: express.Response, jsonResponse: boolean, errs: ErrorList, motd: string | undefined) : Promise<void> {
+/**
+ * record the outcome of a validation in res.locals, for the request log
+ *
+ * @param {express.Response} res       the response
+ * @param {ErrorList}        errs      the findings
+ * @param {string[]}         parseErr  why the document could not be obtained or validated, if it could not
+ */
+export function recordOutcome(res: express.Response, errs: ErrorList, parseErr: string[] | undefined): void {
+	res.locals.parseErr = parseErr;
+	res.locals.diags = { countErrors: errs.numErrors(), countWarnings: errs.numWarnings(), countInforms: errs.numInformationals() };
+}
+
+/**
+ * send the results of a validation through a /validate_* endpoint, as JSON or as an HTML page
+ *
+ * @param {express.Request}  req           the request
+ * @param {express.Response} res           the response
+ * @param {boolean}          jsonResponse  JSON (the _json endpoints) rather than HTML
+ * @param {ErrorList}        errs          the findings
+ * @param {string}           motd          the message of the day, for the HTML page
+ * @param {string[]}         parseErr      why the document could not be obtained or validated, if it could not
+ */
+export async function report(req: express.Request, res: express.Response, jsonResponse: boolean, errs: ErrorList, motd: string | undefined, parseErr: string[] | undefined) : Promise<void> {
 	if (jsonResponse) {
 		res.setHeader("Content-Type", "application/json")
-		if (!req.parseErr) delete errs.markupXML
+		if (!parseErr) delete errs.markupXML
 		// a single JSON document is returned, with parseErr included only when the document could not be obtained or the
 		// request was not valid. results=tree adds a node for each document (nested=problems and depth=N narrow it), and
 		// results=all returns the whole ErrorList
 		const mode: ResultMode = req.query.results == "all" ? "all" : req.query.results == "tree" ? "tree" : "summary"
 		const depth = typeof req.query.depth == "string" && /^\d+$/.test(req.query.depth) ? Number(req.query.depth) : undefined
-		res.write(JSON.stringify(jsonResult(errs, mode, { problemsOnly: req.query.nested == "problems", maxDepth: depth }, req.parseErr)))
+		res.write(JSON.stringify(jsonResult(errs, mode, { problemsOnly: req.query.nested == "problems", maxDepth: depth }, parseErr)))
 	}
 	else 
-		await drawResults(req, res, motd, req.parseErr, errs)
+		await drawResults(req, res, motd, parseErr, errs)
 }

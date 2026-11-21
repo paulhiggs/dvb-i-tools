@@ -50,6 +50,7 @@ const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), read_string
 // SLEPR == Service List Entry Point Registry
 import SLEPR from "./lib/slepr.mts";
 import { DEFAULT_PROCESSING, SLR_Processing_Modes } from "./lib/slepr.mts";
+import { sendRegistryResponse } from "./lib/routes/slepr.mts";
 
 import { init_spam_blocker } from "./lib/spam_disruptions.mts";
 
@@ -235,10 +236,10 @@ else {
 		return `(${req.headers["user-agent"]})`;
 	});
 	token("vary", (req: express.Request, res: express.Response) => {
-		return (res.varyOn && res.varyOn.size > 0) ? `vary(${[...res.varyOn!].join(",")})` : "-";
+		return res.locals.vary && res.locals.vary.length > 0 ? `vary(${res.locals.vary.join(",")})` : "-";
 	});
-	token("parseErr", (req: express.Request) => {
-		return req?.parseErr ? `(${req.parseErr})` : "";
+	token("parseErr", (req: express.Request, res: express.Response) => {
+		return res.locals.parseErr ? `(${res.locals.parseErr})` : "";
 	});
 
 	const getSource = (req: express.Request) => req.ip || /*req._remoteAddress ||*/ (req.socket && req.socket.remoteAddress) ||  undefined;
@@ -294,9 +295,9 @@ else {
 		app.options(SLEPR_query_route, manualCORS);
 	app.get(SLEPR_query_route, manualCORS, (req: express.Request, res: express.Response) => {
 		if (process.send) process.send({ topic: INCR_REQUESTS });
-		if (!csr.processServiceListRequest(req, res)) 
-			if (process.send) process.send({ topic: INCR_FAILURES });
-		res.end();
+		const response = csr.processServiceListRequest(req.query, req.get("user-agent"));
+		if (response.status != 200 && process.send) process.send({ topic: INCR_FAILURES });
+		sendRegistryResponse(res, response);
 	});
 	app.get(SLEPR_reload_route, (req: express.Request, res: express.Response) => {
 		if (process.send) process.send({ topic: RELOAD });

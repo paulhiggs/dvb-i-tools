@@ -30,17 +30,18 @@ function defineTokens(): void {
 	token("protocol", (req: express.Request) => {
 		return req.protocol;
 	});
-	token("counts", (req: express.Request) => {
-		return req.diags ? `(${req.diags.countErrors},${req.diags.countWarnings},${req.diags.countInforms})` : "[-]";
+	token("counts", (req: express.Request, res: express.Response) => {
+		const diags = res.locals.diags;
+		return diags ? `(${diags.countErrors},${diags.countWarnings},${diags.countInforms})` : "[-]";
 	});
 	token("agent", (req: express.Request) => {
 		return `(${req.headers["user-agent"]})`;
 	});
 	token("vary", (req: express.Request, res: express.Response) => {
-		return res.varyOn && res.varyOn.size > 0 ? `vary(${[...res.varyOn!].join(",")})` : "-";
+		return res.locals.vary && res.locals.vary.length > 0 ? `vary(${res.locals.vary.join(",")})` : "-";
 	});
-	token("parseErr", (req: express.Request) => {
-		return req?.parseErr ? `(${req.parseErr})` : "";
+	token("parseErr", (req: express.Request, res: express.Response) => {
+		return res.locals.parseErr ? `(${res.locals.parseErr})` : "";
 	});
 	token("location", (req: express.Request) => {
 		return req?.body?.testtype
