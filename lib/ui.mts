@@ -526,8 +526,14 @@ const segmentChoice = (name: string, value: string, id: string, label: string, c
 	`<label><input type="radio" name="${name}" value="${escapeHTML(value)}" id="${escapeHTML(id)}"${checked ? " checked" : ""}><span>${escapeHTML(label)}</span></label>`;
 
 const SUBMIT_HINT = "Results appear below this form.";
-// feedback while a validation is running, which can take many minutes with traversal (the form works without it)
-const SUBMIT_SCRIPT = `<script>(function(){var f=document.getElementById("check-form"),b=document.getElementById("validate"),h=document.getElementById("submit-hint");if(!f||!b||!h)return;f.addEventListener("submit",function(){b.disabled=true;b.textContent="Validating\\u2026";h.textContent="Validating. With traversal, a large service list can take many minutes."});window.addEventListener("pageshow",function(){b.disabled=false;b.textContent="Validate";h.textContent=${JSON.stringify(SUBMIT_HINT)}})})();</script>`;
+// feedback while a validation is running (the form works without it). The note that traversal can take many minutes is
+// only given when the server offers traversal, and it is selected for a document that can traverse
+const submitScript = (modes: FormModes) => {
+	const hint = modes.allowTraversal
+		? `(function(){var t=document.getElementById("cbTraverse"),k=f.querySelector('input[name="testtype"]:checked');return t&&t.checked&&k&&${JSON.stringify([modes.sl, modes.slr])}.indexOf(k.value)>=0})()?"Validating. With traversal, a large service list can take many minutes.":"Validating\\u2026"`
+		: `"Validating\\u2026"`;
+	return `<script>(function(){var f=document.getElementById("check-form"),b=document.getElementById("validate"),h=document.getElementById("submit-hint");if(!f||!b||!h)return;f.addEventListener("submit",function(){b.disabled=true;b.textContent="Validating\\u2026";h.textContent=${hint}});window.addEventListener("pageshow",function(){b.disabled=false;b.textContent="Validate";h.textContent=${JSON.stringify(SUBMIT_HINT)}})})();</script>`;
+};
 
 export async function drawForm(
 		req: express.Request, res: express.Response,
@@ -574,7 +580,7 @@ ${imageChecking}
 ${signatureChecks}
 </div></fieldset>
 <div class="actions"><button type="submit" class="primary" id="validate">Validate</button><span class="hint" id="submit-hint">${SUBMIT_HINT}</span></div>
-</form>${SUBMIT_SCRIPT}`);
+</form>${submitScript(modes)}`);
 
 	let source: string = "";
 	switch (req.body?.doclocation) {
