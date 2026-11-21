@@ -125,6 +125,21 @@ When **Traverse referenced documents** is selected on the `/check` form, **Maxim
 
 Each URL is validated only once during a validation. When the same URL is referenced again, it is not retrieved or reported again: the "references" column of the traversed documents table shows how many times it was referenced.
 
+While a validation with traversal runs, the `/check` page shows its progress:
+- the results of the document itself, as soon as its own rules have been checked
+- the traversed documents, added to a table in the order they are referenced as each is validated
+- counts that are updated every second: documents validated, waiting and skipped, the time taken, and the retrievals made
+
+When the validation finishes, the full results replace the progress. Findings that need retrievals for the document itself (images, signature policies, traversal limits), and the document with its findings marked, appear only in the full results. The progress view needs scripting. Without it, the results are shown when the validation finishes, as before.
+
+If the browser leaves the page, or the connection is lost, before the results are sent, the validation stops. Retrievals already in progress are completed, but nothing more is retrieved or validated.
+
+For clients other than the form: a `POST` to `/check` with `Accept: application/x-ndjson` returns the progress as one JSON object per line:
+- `{"event":"root","html":…}`: the document's own results
+- `{"event":"progress","counts":{…},"documents":[…]}`: every second, the counts so far and the traversed documents that have started or finished since the last event
+
+These are followed by the line `{"event":"results"}` and then the HTML of the results.
+
 A referenced document that is not traversed is reported with a warning:
 - `TRAV001` the URL has already been validated during this validation (repeats are normally counted in the "references" column instead)
 - `TRAV002` the maximum traversal depth has been reached
