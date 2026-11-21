@@ -6,7 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Validators for DVB-I XML documents defined in DVB Bluebook A177 (revisions r0 to r8): service lists, content guide (TV-Anytime) fragments, playlists and service list registry (SLR / SLEPR) responses. It also includes a Service List Registry server that answers `/query` requests. Everything runs inside one Express web server.
 
-- [all-in-one.ts](all-in-one.ts): the main entry point. It parses command-line options and calls `validator()` in [lib/validator.mts](lib/validator.mts), which sets up the Express app, the cluster workers, the routes (`/check`, `/validate_{sl,cg,pl,slr}[_json]`, `/query`, `/reload`, `/stats`, `/langs`) and the HTTP/HTTPS listeners.
+- [all-in-one.ts](all-in-one.ts): the main entry point. It parses command-line options and calls `validator()` in [lib/validator.mts](lib/validator.mts), which only puts the parts together:
+  - [lib/config.mts](lib/config.mts): `loadConfig(options)` checks and normalises the options into a frozen `ValidatorConfig`, and throws a `ConfigError` for a bad option (only `validator()` exits). `applyFetchPolicy()` sets the server's fetch policy.
+  - [lib/services.mts](lib/services.mts): `createServices(config)` loads the reference data, and builds the checkers and the SLEPR once.
+  - [lib/app.mts](lib/app.mts): `createApp(config, services)` builds the Express application:
+    - the middleware
+    - a router for each feature in [lib/routes/](lib/routes/): `validate.mts` for `/validate_{sl,cg,pl,slr}[_json]`, `check.mts` for `/check`, `slepr.mts` for `/query` and `/reload`, and `info.mts` for `/stats` and `/langs`
+    - the 404 for any method
+    - the error handler
+
+    It does not listen or exit, so it can be tested in-process on an ephemeral port. `routes/request_handling.mts` holds the shared request readers and `report()`.
+  - [lib/server.mts](lib/server.mts): `startWorkers()` for `--workers`, and `startServer()` for the HTTP/HTTPS listeners and the HTTP-to-HTTPS redirect.
+  - [lib/request_logging.mts](lib/request_logging.mts): the morgan request log.
 - [csr.ts](csr.ts): a standalone SLR server with only the `/query` endpoint.
 - [README.md](README.md) documents the command-line options and HTTP endpoints. Update it when you change either of them.
 
