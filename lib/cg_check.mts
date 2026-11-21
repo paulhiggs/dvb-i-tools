@@ -2454,7 +2454,9 @@ export default class ContentGuideCheck {
 		// Since A177r6, only AudioLanguage@purpose=main is premitted in the Content Guide metadata. Language os accessibility services is signned
 		// in explicitly in each service definition
 		const profiledAudioPurposeCS = [dvbi.AUDIO_PURPOSE_MAIN];
-		if (CG_SchemaVersion(AVAttributes.documentNamespace()) < cgVersions.r2)
+		// where accessibility audio is also signalled here, at most 2 <AudioAttributes> are expected for a language (AV020)
+		const accessibilityAudioInCG = CG_SchemaVersion(AVAttributes.documentNamespace()) < cgVersions.r2;
+		if (accessibilityAudioInCG)
 			profiledAudioPurposeCS.push(dvbi.AUDIO_PURPOSE_VISUAL_IMPAIRED, dvbi.AUDIO_PURPOSE_HEARING_IMPAIRED, dvbi.AUDIO_PURPOSE_DIALOGUE_ENHANCEMENT);
 		const isValidAudioLanguagePurpose = (purpose: string) => profiledAudioPurposeCS.includes(purpose);
 
@@ -2548,17 +2550,22 @@ export default class ContentGuideCheck {
 					if (audioCounts[audioLang] === undefined) audioCounts[audioLang] = [AudioLanguage];
 					else audioCounts[audioLang].push(AudioLanguage);
 
+					// each <AudioAttributes> must differ in at least one of Coding, MixType, AudioLanguage and its @purpose
 					const combo = `${Coding_val ? Coding_val : "dflt"}!--!${MixType_href ? MixType_href : "dflt"}!--!${audioLang}!--!${AudioLanguage_purpose}`;
-					if (DuplicatedValue(foundAttributes, combo))
+					if (DuplicatedValue(foundAttributes, combo)) {
+						const unspecified = "not specified";
 						errs.addError({
 							code: "AV016",
-							message: `audio ${tva.a_purpose.attribute()} ${AudioLanguage_purpose!.quote()} already specified for language ${audioLang.quote()}`,
+							message: `${tva.e_AudioAttributes.elementize()} with ${tva.e_Coding} ${Coding_val ? Coding_val.quote() : unspecified}, ${tva.e_MixType} ${MixType_href ? MixType_href.quote() : unspecified} and ${tva.e_AudioLanguage} ${audioLang.quote()} (${tva.a_purpose.attribute()} ${AudioLanguage_purpose!.quote()}) is already specified`,
 							fragment: AudioLanguage,
 						});
+					}
 				}
 			}
 		});
-		for (const audioLanguage in audioCounts) {
+		// since accessibility audio is signalled in <AccessibilityAttributes>, a language can have any number of <AudioAttributes>
+		// (e.g. different codings or mixes of the main audio), as long as each is different (AV016)
+		if (accessibilityAudioInCG) for (const audioLanguage in audioCounts) {
 			if (audioCounts[audioLanguage].length > 2)
 				errs.addError({
 					code: "AV020",
