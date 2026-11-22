@@ -84,6 +84,8 @@ Rules that depend on the revision compare `SL_SchemaVersion(ns)` (or the CG/SLR 
 
 A validation opens `using scope = ValidationScope.open()`. While the synchronous rules run, any network work is registered with `deferRetrieval(retrieve, complete)` or `deferTask()`. That work only runs at `scope.finish()`. Retrievals then run ahead concurrently, but the completions run in the order they were registered, so the report order stays deterministic. A nested validation of a traversed document opens a child scope that shares its parent's budget. Do not `await` a fetch directly inside rule code; use `deferRetrieval`.
 
+The network calls themselves (`fetch()` in `safeFetch()`, and the work given to `withFetchSlots()`) run outside every validation's asynchronous context (`networkWork()`). Node keeps the context a long-lived handle is created in, such as a pooled keep-alive socket or the DNS resolver, and a validation's context reaches all its results. Make any new network call through these two functions. When the outermost scope is disposed, its budget also lets go of the traversed documents' results and the shared retrievals (#99).
+
 ### Validation request and per-document options
 
 Two kinds of input reach a validator, and they travel differently:

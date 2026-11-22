@@ -77,6 +77,9 @@ type DebugMessageType = {
 	message: string;
 }
 
+// the empty arrays of a list that keeps only a summary
+const NOTHING: readonly never[] = Object.freeze([]);
+
 export default class ErrorList {
 
 	countsFatal: ErrorKeyType[];
@@ -127,17 +130,21 @@ export default class ErrorList {
 	 */
 	constructor(location?: string, type?: string, description?: string, options: ErrorListOptions = {}) {
 		this.#keepMarkup = options.markup ?? false;
-		this.countsFatal = [];
-		this.countsErr = [];
-		this.countsWarn = [];
-		this.countsInfo = [];
-		this.fatals = [];
-		this.errors = [];
-		this.warnings = [];
+		// a list that keeps only a summary never adds to the category counts, the findings or the code descriptions, so they
+		// share one empty array instead of each having their own: a validation with traversal can keep tens of thousands of
+		// these lists (dvb-i-tools #99). The array is frozen, so adding to it by mistake fails
+		const empty = <T,>(): T[] => (options.summaryOnly ? (NOTHING as unknown as T[]) : []);
+		this.countsFatal = empty();
+		this.countsErr = empty();
+		this.countsWarn = empty();
+		this.countsInfo = empty();
+		this.fatals = empty();
+		this.errors = empty();
+		this.warnings = empty();
 		this.debugs = [];
-		this.informationals = [];
+		this.informationals = empty();
 		if (this.#keepMarkup) this.markupXML = [];
-		this.errorDescriptions = [];
+		this.errorDescriptions = empty();
 
 		this.nestedErrors = []
 		if (options.summaryOnly) this.codeCounts = { fatals: {}, errors: {}, warnings: {}, informationals: {} }

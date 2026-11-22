@@ -214,6 +214,16 @@ async function readLimitedBody(response: Response, url: string): Promise<Buffer>
  * @param {(result: T) => string} outcomeOf  whether the work succeeded, timed out or failed, for the timing
  * @returns {Promise<T>} the result of the work
  */
+/**
+ * run network work outside every validation's asynchronous context. Node keeps the context in which a long-lived handle
+ * is created: a pooled keep-alive socket, or the DNS resolver, which is created once by the first validation that needs
+ * it and kept for the life of the process. A handle created inside a validation would then keep that validation's scope
+ * reachable, and through its budget every result of the validation, long after it has finished (dvb-i-tools #99). The
+ * network work does not need the context: the slots and the timing are handled by the caller
+ */
+const outsideValidations = AsyncLocalStorage.snapshot();
+const networkWork = <T,>(work: () => Promise<T>): Promise<T> => outsideValidations(work);
+
 export async function withFetchSlots<T>(host: string, work: () => Promise<T>, validation?: ValidationHandle, outcomeOf?: (result: T) => "ok" | "timeout" | "error"): Promise<T> {
 	const key = host.toLowerCase();
 	const budget = (validation as TraversalBudget | undefined) ?? (runningScope.getStore() ?? openScopes.at(-1))?.budget;
@@ -222,7 +232,7 @@ export async function withFetchSlots<T>(host: string, work: () => Promise<T>, va
 	const started = performance.now();
 	let outcome: "ok" | "timeout" | "error" = "error";
 	try {
-		const result = await work();
+		const result = await networkWork(work);
 		outcome = outcomeOf ? outcomeOf(result) : "ok";
 		return result;
 	} finally {
@@ -250,8 +260,10 @@ export async function safeFetch(url: string, validation?: ValidationHandle): Pro
 	const started = performance.now();
 	let outcome: "ok" | "timeout" | "error" = "error";
 	try {
-		const resp = await fetch(url, { headers: fetch_options.headers as Record<string, string>, signal: AbortSignal.timeout(policy.timeout) });
-		const body = await readLimitedBody(resp, url);
+		const { resp, body } = await networkWork(async () => {
+			const resp = await fetch(url, { headers: fetch_options.headers as Record<string, string>, signal: AbortSignal.timeout(policy.timeout) });
+			return { resp, body: await readLimitedBody(resp, url) };
+		});
 		outcome = "ok";
 		return {
 			response: {
@@ -463,6 +475,8 @@ const normaliseURL = (url: string): string => {
 	}
 };
 
+// what a retrieval shared within a validation is replaced with once the validation has finished
+const RELEASED: Promise<unknown> = Promise.resolve(undefined);
 const runningScope = new AsyncLocalStorage<ValidationScope>(); // the scope whose deferred tasks are being performed
 const openScopes: ValidationScope[] = []; // scopes whose synchronous rules are being checked (innermost last)
 
@@ -551,7 +565,24 @@ export class ValidationScope {
 
 	[Symbol.dispose](): void {
 		this.#close();
-		if (this.depth == 0) activeValidations.delete(this.budget);
+		if (this.depth == 0) {
+			activeValidations.delete(this.budget);
+			this.#release();
+		}
+	}
+
+	/**
+	 * once the validation has finished, let go of what it kept for de-duplication: the results of each traversed document
+	 * (requested), and the results of the shared retrievals. The keys of the retrievals and the checked references are
+	 * kept, as they are counted in the timing (validationTiming()). The results themselves belong to the caller's ErrorList.
+	 * Something that still refers to the scope (see networkWork()) then keeps only a small record (dvb-i-tools #99)
+	 */
+	#release(): void {
+		const budget = this.budget;
+		budget.requested.clear();
+		budget.traversed.clear();
+		for (const key of budget.retrievals.keys()) budget.retrievals.set(key, RELEASED);
+		budget.observer = undefined;
 	}
 
 	/**
