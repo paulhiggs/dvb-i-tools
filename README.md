@@ -112,7 +112,7 @@ With `--workers`, the primary passes the signal on to the workers and does not r
 - `--urls [-u]` forces the classification scheme, country and language values to be read from the internet. Default is to load values from local files.
 - `--port [-p] <port>` set the HTTP listening port (default: 3030)
 - `--sport [-s] <port>` set the HTTPS listening port (default: 3031)
-- `--motd [-m] <filename>` file to read for Message of the Day (default: `motd.html`)
+- `--motd [-m] <filename>` file to read for Message of the Day (default: `motd.html`). The content security policy of the pages refuses inline scripts, `<style>` elements and `style` attributes, so the message can only use plain markup and the validator's own classes
 - `--nocsr` flag to disable SLR operation (default: false)
 - `--nocg` flag to disable Content Guide validation (default: false)
 - `--nosl` flag to disable Service List validation (default: false)
@@ -388,6 +388,16 @@ accepted valies for `<type>`
 #### Health
 
 `<server>/healthz` answers `200` with `ok` when the server is ready, and `503` with `starting` until the service list registry has been read, or `stopping` while it shuts down. It is not written to the request log.
+
+#### Security headers
+
+Every response has the standard security headers (`helmet`), and this content security policy:
+
+```
+default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'self'; base-uri 'none'
+```
+
+The pages load their stylesheet and script from `<server>/ui/validator.css` and `<server>/ui/validator.js`, and have no inline scripts or styles. The policy has no `upgrade-insecure-requests`, so a validator served over HTTP only still works. There is no `Strict-Transport-Security` header, and `Cross-Origin-Resource-Policy` is `cross-origin`, so the endpoints can be used from other origins.
 
 ## Acknowledgements
 

@@ -27,8 +27,23 @@ import { validateRouter } from "./routes/validate.mts"
 import { checkRouter } from "./routes/check.mts"
 import { sleprRouter } from "./routes/slepr.mts"
 import { infoRouter } from "./routes/info.mts"
+import { PAGE_ASSETS } from "./ui.mts"
 
 export const HEALTH_ROUTE = "/healthz";
+
+// the content security policy of every response (issue #89). The pages load their stylesheet and script from the validator
+// (PAGE_ASSETS in ui.mts) and have no inline scripts, styles or event handlers. The live view of /check posts the form with
+// fetch(), so connect-src is 'self'. There is no upgrade-insecure-requests, as a validator can be run over HTTP only
+export const CONTENT_SECURITY_POLICY = {
+	"default-src": ["'none'"],
+	"script-src": ["'self'"],
+	"style-src": ["'self'"],
+	"img-src": ["'self'"],
+	"connect-src": ["'self'"],
+	"form-action": ["'self'"],
+	"frame-ancestors": ["'self'"],
+	"base-uri": ["'none'"],
+};
 
 /**
  * create the validator's Express application
@@ -45,14 +60,14 @@ export function createApp(config: ValidatorConfig, services: ValidatorServices):
 	if (config.corsMode == CORSlibrary) app.use(cors());
 
 	// the standard security headers, with these exceptions:
-	//   - no content security policy yet, as the /check page uses inline scripts and styles
+	//   - the content security policy is CONTENT_SECURITY_POLICY, without helmet's defaults
 	//   - no Strict-Transport-Security: whether HTTP redirects to HTTPS is decided by the server (server.mts), and the
 	//     header would also apply to every subdomain of the host the validator is deployed on
 	//   - Cross-Origin-Resource-Policy is cross-origin, as the endpoints are meant to be used from other origins (--CORSmode)
 	// X-Frame-Options is SAMEORIGIN, which "manual" CORS mode set for /query before
 	app.use(
 		helmet({
-			contentSecurityPolicy: false,
+			contentSecurityPolicy: { useDefaults: false, directives: CONTENT_SECURITY_POLICY },
 			strictTransportSecurity: false,
 			crossOriginResourcePolicy: { policy: "cross-origin" },
 			xFrameOptions: { action: "sameorigin" },
@@ -66,6 +81,13 @@ export function createApp(config: ValidatorConfig, services: ValidatorServices):
 		const state = req.app.locals.stopping ? "stopping" : services.csr && !services.csr.loaded ? "starting" : "ok";
 		res.status(state == "ok" ? 200 : 503).set("Cache-Control", "no-store").type("text/plain").send(state);
 	});
+
+	// the stylesheet and script of the pages. They are not logged, as each page asks for them. Their addresses have a hash of
+	// their content (?v=), so a browser can keep them for a long time
+	for (const asset of PAGE_ASSETS)
+		app.get(asset.path, (req: express.Request, res: express.Response) => {
+			res.set("Cache-Control", "public, max-age=31536000, immutable").type(asset.type).send(asset.body);
+		});
 
 	// no static file serving: the pages are generated, and the installation directory holds keys, logs and configuration.
 	// The form's body parsers (file upload and URL encoded fields) are only on the /check route (routes/check.mts)

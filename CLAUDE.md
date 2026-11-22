@@ -10,7 +10,7 @@ Validators for DVB-I XML documents defined in DVB Bluebook A177 (revisions r0 to
   - [lib/config.mts](lib/config.mts): `loadConfig(options)` checks and normalises the options into a frozen `ValidatorConfig`, and throws a `ConfigError` for a bad option (only `validator()` exits). `applyFetchPolicy()` sets the server's fetch policy.
   - [lib/services.mts](lib/services.mts): `createServices(config)` loads the reference data, and builds the checkers and the SLEPR once.
   - [lib/app.mts](lib/app.mts): `createApp(config, services)` builds the Express application:
-    - the middleware: CORS, `helmet()` (no content security policy yet, as the form uses inline scripts), the favicon and the request logging. The form's body parsers (`express-fileupload` with the 10 MB limit, and `express.urlencoded()`) are only on the `/check` route. There are no sessions: the form is drawn from a `FormState`, the defaults or the values just submitted
+    - the middleware: CORS, `helmet()` with the `CONTENT_SECURITY_POLICY` (`'self'` only, and no `upgrade-insecure-requests`), the page stylesheet and script (`PAGE_ASSETS`), the favicon and the request logging. The form's body parsers (`express-fileupload` with the 10 MB limit, and `express.urlencoded()`) are only on the `/check` route. There are no sessions: the form is drawn from a `FormState`, the defaults or the values just submitted
     - a router for each feature in [lib/routes/](lib/routes/): `validate.mts` for `/validate_{sl,cg,pl,slr}[_json]`, `check.mts` for `/check`, `slepr.mts` for `/query` and `/reload`, and `info.mts` for `/stats` and `/langs`
     - the 404 for any method
     - the error handler
@@ -128,7 +128,9 @@ XML is handled by `libxml2-wasm`. [libxml2-wasm-extensions.mts](libxml2-wasm-ext
 [lib/ui.mts](lib/ui.mts) renders every page (the `/check` form, the HTML results, `/stats` and `/langs`). The results are streamed with backpressure. Pages are built with the `html` tagged template from [lib/html.mts](lib/html.mts):
 - `html` escapes every interpolated value with `escapeHTML`, unless the value is already `HTML`. Arrays are joined, and `undefined`, `null` and `false` give nothing.
 - `text(value)` shows text with `HTMLize()`, which also gives non-breaking hyphens. It is used for codes, messages and the marked-up listing.
-- `raw(markup)` is only for markup the validator provides itself (the stylesheet, scripts, the `--motd` file). Never use it for a value from a document or a request.
+- `raw(markup)` is only for markup the validator provides itself (fixed markup and the `--motd` file). Never use it for a value from a document or a request.
+
+The pages have no inline scripts, styles or event handlers, as the content security policy refuses them. The stylesheet (`STYLESHEET`) and the one page script (`PAGE_SCRIPT`) are served from memory as `PAGE_ASSETS` (`/ui/validator.css` and `/ui/validator.js`, with `?v=` a hash of the content). Add behaviour to `PAGE_SCRIPT`, which finds its elements by id or class (and `data-` attributes for settings), and add styles to `STYLESHEET`, not `style=` attributes.
 
 Build new markup with `html`, not with plain template strings.
 

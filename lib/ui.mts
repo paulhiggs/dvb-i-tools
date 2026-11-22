@@ -9,6 +9,7 @@
  */
 
 import express from "express"
+import { createHash } from "crypto"
 import { readFileSync } from "fs"
 import { join } from "path"
 import type { UploadedFile } from "express-fileupload"
@@ -233,12 +234,14 @@ footer { color: var(--muted); font-size: var(--step--1); display: flex; flex-wra
  * @param {boolean} secure     whether the page is served over HTTPS
  * @param {string}  label      the heading, if not the title
  * @param {string}  motd       the message of the day (HTML from the --motd file)
+ * @param {boolean} scriptInHead  whether the page script is loaded (deferred) from the head. The /check page loads it
+ *                                after the form instead, so that the form works while the results are still arriving
  * @returns {string} the HTML
  */
-export function PAGE_TOP(pageTitle: string, secure: boolean, label?:string, motd?:string): string {
+export function PAGE_TOP(pageTitle: string, secure: boolean, label?:string, motd?:string, scriptInHead: boolean = true): string {
 	// dont allow Chrome to translate the page - seems to 'detect' German
 	const METAS = raw('<meta charset="utf-8"><meta name="google" content="notranslate"><meta name="viewport" content="width=device-width, initial-scale=1">');
-	const HEAD = html`<head>${METAS}<title>${pageTitle}</title><style>${raw(STYLESHEET)}</style></head>`;
+	const HEAD = html`<head>${METAS}<title>${pageTitle}</title><link rel="stylesheet" href="${STYLESHEET_ASSET.href}">${scriptInHead && html`<script src="${SCRIPT_ASSET.href}" defer></script>`}</head>`;
 	const BARS = html`<div class="bars" aria-hidden="true">${raw("<span></span>".repeat(7))}</div>`;
 	const NAV = html`<nav aria-label="Validator links"><a href="${pkg?.repository?.url}" target="_blank" rel="noopener noreferrer">Source</a><a href="${pkg?.bugs?.url}" target="_blank" rel="noopener noreferrer">Report an issue</a><a href="/stats">Statistics</a></nav>`;
 	const MASTHEAD = html`<header class="masthead">${BARS}<div class="masthead-row"><div class="brand"><h1>${label ?? pageTitle}</h1><span class="version">${pkg.name} v${pkg.version} · ${secure ? "https" : "http"}</span></div>${NAV}</div></header>`;
@@ -450,9 +453,6 @@ function traversalCounts(errs: ErrorList): { rows: number; documents: number; sk
 	return { rows, documents: rows - skipped, skipped, repeats };
 }
 
-// shows the severity filter of the traversed documents table, which needs scripting (without it, all rows are shown)
-const TRAVERSAL_FILTER_SCRIPT = `<script>(function(){var f=document.currentScript.previousElementSibling;f.hidden=false;f.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;var t=document.getElementById("trav");if(t)t.dataset.show=b.dataset.show;f.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed",String(x===b))})})})();</script>`;
-
 function* reportNestedErrors(req: express.Request, errs: ErrorList | undefined): Parts {
 	if (!errs || errs.nestedErrors.length == 0) return
 
@@ -460,7 +460,7 @@ function* reportNestedErrors(req: express.Request, errs: ErrorList | undefined):
 	yield sectionStart("traversed", "Traversed documents", formatCount(rows), "", "in the order referenced")
 	yield html`<div class="trav-summary"><span><b>${formatCount(documents)}</b> ${documents == 1 ? "document" : "documents"} validated</span>${skipped > 0 && html`<span><b>${formatCount(skipped)}</b> skipped (document or depth limit)</span>`}${repeats > 0 && html`<span><b>${formatCount(repeats)}</b> further ${repeats == 1 ? "reference" : "references"} not requested again</span>`}</div>`
 	const filter = (show: string, label: string) => html`<button type="button" data-show="${show}" aria-pressed="${String(show == "all")}">${label}</button>`
-	yield html`<div class="filters" role="group" aria-label="Show traversed documents" hidden><span class="lbl">Show</span>${filter("all", "All")}${filter("error", "Errors")}${filter("warn", "Warnings")}${filter("info", "Informational")}${filter("ok", "No findings")}</div>${raw(TRAVERSAL_FILTER_SCRIPT)}`
+	yield html`<div class="filters" role="group" aria-label="Show traversed documents" hidden><span class="lbl">Show</span>${filter("all", "All")}${filter("error", "Errors")}${filter("warn", "Warnings")}${filter("info", "Informational")}${filter("ok", "No findings")}</div>`
 	yield `<div class="scroll"><table class="trav" id="trav" data-show="all"><thead><tr><th scope="col">Document</th><th scope="col">Result</th><th scope="col">References</th></tr></thead><tbody>`
 
 	yield* nested_error_row(req, errs, 1)
@@ -621,14 +621,6 @@ const segmentChoice = (name: string, value: string, id: string, label: string, c
 	html`<label><input type="radio" name="${name}" value="${value}" id="${id}"${checked && raw(" checked")}><span>${label}</span></label>`;
 
 const SUBMIT_HINT = "Results appear below this form.";
-// feedback while a validation is running (the form works without it). The note that traversal can take many minutes is
-// only given when the server offers traversal, and it is selected for a document that can traverse
-const submitScript = (modes: FormModes) => {
-	const hint = modes.allowTraversal
-		? `(function(){var t=document.getElementById("cbTraverse"),k=f.querySelector('input[name="testtype"]:checked');return t&&t.checked&&k&&${JSON.stringify([modes.sl, modes.slr])}.indexOf(k.value)>=0})()?"Validating. With traversal, a large service list can take many minutes.":"Validating\\u2026"`
-		: `"Validating\\u2026"`;
-	return `<script>(function(){var f=document.getElementById("check-form"),b=document.getElementById("validate"),h=document.getElementById("submit-hint");if(!f||!b||!h)return;f.addEventListener("submit",function(){b.disabled=true;b.textContent="Validating\\u2026";h.textContent=${hint}});window.addEventListener("pageshow",function(){b.disabled=false;b.textContent="Validate";h.textContent=${JSON.stringify(SUBMIT_HINT)}})})();</script>`;
-};
 
 // the live view of a validation with traversal (issue #104): when traversal is selected for a service list or registry,
 // the form is sent with fetch() asking for progress events (application/x-ndjson). The document's own results are shown
@@ -641,20 +633,40 @@ const LIVE_VIEW =
 	`<details class="section" open><summary>Traversed documents <span class="count live-count">0</span><span class="aside">validated so far, in the order referenced</span></summary><div class="section-body">` +
 	`<div class="scroll"><table class="trav"><thead><tr><th scope="col">Document</th><th scope="col">Result</th><th scope="col">References</th></tr></thead><tbody class="live-rows"></tbody></table></div></div></details>`;
 
-const liveScript = (modes: FormModes) => `<script>(function(){
+/**
+ * the script of every page (issue #89: the pages have no inline scripts, so the content security policy only allows scripts
+ * from the validator itself). Each part does nothing on a page without the elements it uses:
+ * - the severity filter of the traversed documents table, which is hidden without scripting (all rows are then shown)
+ * - feedback while a validation from the /check form is running (the form works without it). The note that traversal can
+ *   take many minutes is only given when traversal is selected for a document that can traverse
+ * - the live view, when the form has data-live (the server offers traversal)
+ */
+const PAGE_SCRIPT = `(function(){
+"use strict";
+function showFilters(scope){scope.querySelectorAll(".filters[hidden]").forEach(function(g){g.hidden=false})}
+document.addEventListener("click",function(e){
+	var b=e.target instanceof Element?e.target.closest(".filters button"):null;if(!b)return;
+	var t=document.getElementById("trav");if(t)t.dataset.show=b.dataset.show;
+	b.closest(".filters").querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed",String(x===b))});
+});
+if(document.readyState=="loading")document.addEventListener("DOMContentLoaded",function(){showFilters(document)});else showFilters(document);
 var f=document.getElementById("check-form"),b=document.getElementById("validate"),h=document.getElementById("submit-hint");
-if(!f||!b||!h||!window.fetch||!window.TextDecoder||!window.ReadableStream||!window.FormData)return;
-var TYPES=${JSON.stringify([modes.sl, modes.slr])},SEV=${JSON.stringify(SEVERITY_CLASS)},LIST=${JSON.stringify(LIST_CLASS)};
+if(!f||!b||!h)return;
+var TYPES=${JSON.stringify([MODE_SL, MODE_SLR])},SEV=${JSON.stringify(SEVERITY_CLASS)},LIST=${JSON.stringify(LIST_CLASS)},LIVE_VIEW=${JSON.stringify(LIVE_VIEW)};
+var HINT=${JSON.stringify(SUBMIT_HINT)},live=f.hasAttribute("data-live");
 function traversing(){var t=document.getElementById("cbTraverse"),k=f.querySelector('input[name="testtype"]:checked');return !!(t&&t.checked&&k&&TYPES.indexOf(k.value)>=0)}
+function done(){b.disabled=false;b.textContent="Validate";h.textContent=HINT}
+f.addEventListener("submit",function(){b.disabled=true;b.textContent="Validating\\u2026";h.textContent=live&&traversing()?"Validating. With traversal, a large service list can take many minutes.":"Validating\\u2026"});
+window.addEventListener("pageshow",done);
+if(!live||!window.fetch||!window.TextDecoder||!window.ReadableStream||!window.FormData)return;
 function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
 function n(x){return Number(x).toLocaleString("en-GB")}
 function duration(ms){var s=Math.round(ms/1000);return s<60?s+" s":s<3600?Math.floor(s/60)+" min "+(s%60)+" s":Math.floor(s/3600)+" h "+Math.floor((s%3600)/60)+" min"}
-function done(){b.disabled=false;b.textContent="Validate";h.textContent=${JSON.stringify(SUBMIT_HINT)}}
 f.addEventListener("submit",function(ev){
 	var out=document.getElementById("results");
 	if(!out||!traversing())return;
 	ev.preventDefault();
-	out.innerHTML=${JSON.stringify(LIVE_VIEW)};
+	out.innerHTML=LIVE_VIEW;
 	var root=out.querySelector(".live-root"),rows=out.querySelector(".live-rows"),status=out.querySelector(".live-status"),count=out.querySelector(".live-count");
 	var u=document.getElementById("XMLurl"),file=document.getElementById("XMLfile"),fromFile=document.getElementById("radFile");
 	out.querySelector(".live-source").textContent=fromFile&&fromFile.checked?(file&&file.files&&file.files[0]?file.files[0].name:""):(u?u.value:"");
@@ -686,7 +698,7 @@ f.addEventListener("submit",function(ev){
 		});
 	}
 	function failed(){status.textContent="The validation could not be completed. Try again, or without traversal.";status.className="meta alert s-error";done()}
-	function finish(html){out.innerHTML=html;out.querySelectorAll("script").forEach(function(old){var s=document.createElement("script");s.textContent=old.textContent;old.replaceWith(s)});done()}
+	function finish(html){out.innerHTML=html;showFilters(out);done()}
 	fetch(f.action||location.href,{method:"POST",body:new FormData(f),headers:{Accept:"application/x-ndjson"},credentials:"same-origin"}).then(function(r){
 		if(!r.ok||!r.body||(r.headers.get("Content-Type")||"").indexOf("application/x-ndjson")<0){HTMLFormElement.prototype.submit.call(f);return}
 		var reader=r.body.getReader(),dec=new TextDecoder(),buf="",html=null;
@@ -702,7 +714,17 @@ f.addEventListener("submit",function(ev){
 		return pump();
 	}).catch(failed);
 });
-})();</script>`;
+})();
+`;
+
+// a file that the pages load from the validator. Its address has a hash of its content, so it can be cached for a long time
+export type PageAsset = { path: string; href: string; type: string; body: string };
+const pageAsset = (path: string, type: string, body: string): PageAsset =>
+	({ path, type, body, href: `${path}?v=${createHash("sha256").update(body).digest("hex").slice(0, 12)}` });
+const STYLESHEET_ASSET = pageAsset("/ui/validator.css", "text/css; charset=utf-8", STYLESHEET);
+const SCRIPT_ASSET = pageAsset("/ui/validator.js", "text/javascript; charset=utf-8", PAGE_SCRIPT);
+// the stylesheet and script of the pages, served by app.mts
+export const PAGE_ASSETS: PageAsset[] = [STYLESHEET_ASSET, SCRIPT_ASSET];
 
 export async function drawForm(
 		req: express.Request, res: express.Response,
@@ -714,7 +736,7 @@ export async function drawForm(
 	const ENTRY_FORM_REQUEST_TYPE_ID = "requestType";
 
 	res.setHeader("Content-Type", "text/html");
-	res.write(PAGE_TOP("DVB-I Validator", req.secure, "DVB-I Validator", motd));
+	res.write(PAGE_TOP("DVB-I Validator", req.secure, "DVB-I Validator", motd, false));
 
 	const types = [
 		modes.hasSL && segmentChoice("testtype", modes.sl, "radSL", "Service List", form.mode == modes.sl),
@@ -731,7 +753,7 @@ export async function drawForm(
 	const signatureChecks = html`<div class="choice" role="group" aria-labelledby="sigchecks-label"><span class="choice-label" id="sigchecks-label">Signature policy checks</span><div class="seg">${segmentChoice("signatureChecks", "both", "sigBoth", "Both", checks == "both")}${segmentChoice("signatureChecks", "connection", "sigConnection", "Certificates only", checks == "connection")}${segmentChoice("signatureChecks", "signature", "sigSignature", "Signatures only", checks == "signature")}${segmentChoice("signatureChecks", "none", "sigNone", "None", checks == "none")}</div><span class="hint">For references with a signature policy: Certificates checks the certificate chain of the HTTPS connection, and Signatures checks the X-JWS-Signature of the response.</span></div>`;
 	const imageChecking = html`<div class="choice" role="group" aria-labelledby="images-label"><span class="choice-label" id="images-label">Image checking</span><div class="seg">${segmentChoice("images", "no", "imgNo", "No", images == "no")}${segmentChoice("images", "yes", "imgYes", "Yes", images == "yes")}${segmentChoice("images", "scaled", "imgScaled", "Yes and scaled", images == "scaled")}</div><span class="hint">Yes retrieves each referenced image once and checks its format, size, colour depth and pixel aspect ratio. Yes and scaled also requests each image at half its width with ?w= to check that the server scales it, which doubles the image requests.</span></div>`;
 
-	res.write(String(html`<form class="panel" id="check-form" method="post" enctype="multipart/form-data">
+	res.write(String(html`<form class="panel" id="check-form" method="post" enctype="multipart/form-data"${modes.allowTraversal && raw(" data-live")}>
 <fieldset><legend>What to validate</legend><div class="seg">${types}</div></fieldset>
 <fieldset><legend>Document</legend><div class="source-row">
 <div class="seg" role="group" aria-label="Document source">${segmentChoice("doclocation", modes.url, "radURL", "URL", form.entry == modes.url)}${segmentChoice("doclocation", modes.file, "radFile", "File", form.entry == modes.file)}</div>
@@ -746,7 +768,7 @@ ${imageChecking}
 ${signatureChecks}
 </div></fieldset>
 <div class="actions"><button type="submit" class="primary" id="validate">Validate</button><span class="hint" id="submit-hint">${SUBMIT_HINT}</span></div>
-</form>${raw(submitScript(modes))}${modes.allowTraversal && raw(liveScript(modes))}`));
+</form><script src="${SCRIPT_ASSET.href}"></script>`));
 
 	// the results are in one element, which the live view replaces (issue #104)
 	res.write(`<div id="results">`);
