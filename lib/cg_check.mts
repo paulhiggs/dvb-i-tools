@@ -1614,7 +1614,10 @@ export default class ContentGuideCheck {
 		ProgramInformation.forEachChildElement((child) => {
 			switch (child.name) {
 				case tva.e_OtherIdentifier: // <ProgramInformation><OtherIdentifier>
-					checkAttributes(child, [], [], tvaEA.OtherIdentifier, errs, "PI021");
+					// A177r8 table 41 does not constrain the attributes of this <OtherIdentifier>, so all those of the MPEG-7
+					// UniqueIDType (@type, @organization, @authority, @encoding) may be used. Only the <OtherIdentifier> of an
+					// <InstanceDescription> (ScheduleEvent, BroadcastEvent, OnDemandProgram) restricts them: see VID052 / ID050 (issue #117)
+					checkAttributes(child, [], tvaEA.OtherIdentifier, tvaEA.OtherIdentifier, errs, "PI021");
 					if (requestType == CG_REQUEST_MORE_EPISODES)
 						errs.addError({
 							code: "PI022",
