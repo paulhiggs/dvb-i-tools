@@ -77,8 +77,24 @@ type DebugMessageType = {
 	message: string;
 }
 
-// the empty arrays of a list that keeps only a summary
+// the empty arrays and counts of a list that keeps only a summary. They are shared by every such list until something is
+// added, when the list makes its own (see #store(), #debugMessage() and addNested()). Most of the lists of a large
+// traversal are of documents skipped because a traversal limit was reached, which only ever have one warning, and many
+// traversed documents have no findings (dvb-i-tools #99). They are frozen, so adding to them by mistake fails
 const NOTHING: readonly never[] = Object.freeze([]);
+const NO_CODES: Readonly<Record<string, number>> = Object.freeze({});
+const NO_CODE_COUNTS: Readonly<CodeCounts> = Object.freeze({ fatals: NO_CODES, errors: NO_CODES, warnings: NO_CODES, informationals: NO_CODES });
+// the counts of a list that has reported one code once, shared by all such lists: one for each code and severity
+const ONLY_CODE = new Map<string, CodeCounts>();
+const onlyCode = (list: SeverityList, code: string): CodeCounts => {
+	const key = `${list} ${code}`;
+	let counts = ONLY_CODE.get(key);
+	if (!counts) {
+		counts = Object.freeze({ ...NO_CODE_COUNTS, [list]: Object.freeze({ [code]: 1 }) }) as CodeCounts;
+		ONLY_CODE.set(key, counts);
+	}
+	return counts;
+};
 
 export default class ErrorList {
 
@@ -132,7 +148,7 @@ export default class ErrorList {
 		this.#keepMarkup = options.markup ?? false;
 		// a list that keeps only a summary never adds to the category counts, the findings or the code descriptions, so they
 		// share one empty array instead of each having their own: a validation with traversal can keep tens of thousands of
-		// these lists (dvb-i-tools #99). The array is frozen, so adding to it by mistake fails
+		// these lists (dvb-i-tools #99). Its debug messages, nested lists and code counts are shared until it has some
 		const empty = <T,>(): T[] => (options.summaryOnly ? (NOTHING as unknown as T[]) : []);
 		this.countsFatal = empty();
 		this.countsErr = empty();
@@ -141,13 +157,13 @@ export default class ErrorList {
 		this.fatals = empty();
 		this.errors = empty();
 		this.warnings = empty();
-		this.debugs = [];
+		this.debugs = empty();
 		this.informationals = empty();
 		if (this.#keepMarkup) this.markupXML = [];
 		this.errorDescriptions = empty();
 
-		this.nestedErrors = []
-		if (options.summaryOnly) this.codeCounts = { fatals: {}, errors: {}, warnings: {}, informationals: {} }
+		this.nestedErrors = empty()
+		if (options.summaryOnly) this.codeCounts = NO_CODE_COUNTS as CodeCounts
 		this.source = location
 		this.type = type
 		this.description = description
@@ -258,6 +274,14 @@ export default class ErrorList {
 
 	/* private method */ #store(list: SeverityList, err: ErrorType) {
 		if (this.codeCounts) {
+			// the first code reported shares the counts of every list with only that code, reported once (such as the TRAV003
+			// warning of every skipped document). Another report replaces them with the list's own
+			if (this.codeCounts == NO_CODE_COUNTS) {
+				this.codeCounts = onlyCode(list, err.code);
+				return;
+			}
+			if (Object.isFrozen(this.codeCounts)) this.codeCounts = { ...this.codeCounts };
+			if (Object.isFrozen(this.codeCounts[list])) this.codeCounts[list] = { ...this.codeCounts[list] };
 			const counts = this.codeCounts[list];
 			counts[err.code] = (counts[err.code] ?? 0) + 1;
 		}
@@ -294,7 +318,18 @@ export default class ErrorList {
 	}
 
 	/* private method */ #debugMessage(err: DebugMessageType) {
+		if (Object.isFrozen(this.debugs)) this.debugs = [];
 		this.debugs.push(err);
+	}
+
+	/**
+	 * add the results of a document traversed into from this one
+	 *
+	 * @param {ErrorList} nested  the results of the traversed document
+	 */
+	addNested(nested: ErrorList): void {
+		if (Object.isFrozen(this.nestedErrors)) this.nestedErrors = [];
+		this.nestedErrors.push(nested);
 	}
 
 
