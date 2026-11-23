@@ -78,6 +78,8 @@ Rules that depend on the revision compare `SL_SchemaVersion(ns)` (or the CG/SLR 
 
 [lib/error_list.mts](lib/error_list.mts) defines `ErrorList`. Every finding goes through `errs.addError({type, code, message, line?, fragment?, key?, clause?, description?})`. The type defaults to error. The other types are `WARNING`, `INFORMATION`, `FATAL`, `DEBUG` and `APPLICATION`. Codes are short prefixed identifiers (`SL005`, `AR032`, `TRAV001`…). The tests assert on these codes, so renumbering a code breaks the expectations in the test suite. Shared error builders are in [lib/common_errors.mts](lib/common_errors.mts).
 
+A traversed document's results are kept in a summary list (`ErrorList.summaryOnly()`), which only counts each code (`codeCounts`). A large traversal keeps tens of thousands of these, so their arrays and counts are frozen objects shared by all of them until something is added (#99). Add to an `ErrorList` only through `addError()` and `addNested()`, never by writing to its arrays.
+
 ### Network access and traversal
 
 [lib/safe_fetch.mts](lib/safe_fetch.mts) is the only module that may retrieve a URL supplied by a client or found in a validated document. It enforces the fetch policy: http(s) only, an optional private-address block, a 10 MB size limit, a timeout and a concurrency limit. It also enforces the traversal limits: depth, document count, and de-duplication by URL.

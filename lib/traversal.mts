@@ -26,7 +26,7 @@ export function nestedTraversal(errs: ErrorList, url: string, type: string, desc
 	if (repeatedTraversal(url)) return null
 	const nested = ErrorList.summaryOnly(url, type, description)
 	recordTraversal(url, nested)
-	errs.nestedErrors.push(nested)
+	errs.addNested(nested)
 	currentObserver()?.requested?.(nested, errs)
 	return nested
 }
