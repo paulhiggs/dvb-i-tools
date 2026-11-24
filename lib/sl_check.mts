@@ -15,6 +15,7 @@ import SL_helpers from "./sl_check_helpers.mts"
 import { tva, tvaEA } from "./TVA_definitions.mts"
 import { sats } from "./DVB_definitions.mts"
 import { slVersions, dvbi, dvbisld, dvbiEC, dvbiEA, XMLdocumentType} from "./DVB-I_definitions.mts"
+import type { A177Revision } from "./revisions.mts"
 
 import ErrorList, { WARNING, APPLICATION, INFORMATION } from "./error_list.mts"
 import { nestedTraversal, traversalFinished, traversalSkipped, traversalStarted } from "./traversal.mts"
@@ -442,7 +443,7 @@ export default class ServiceListCheck {
 	 * @param {number}    schemaVersion  The schema version of the XML document
 	 * @returns {boolean} true if this is a valid application launching method else false
 	 */
-	/*private*/ #validServiceApplication(HowRelated: XmlElement, schemaVersion: number) : boolean {
+	/*private*/ #validServiceApplication(HowRelated: XmlElement, schemaVersion: A177Revision) : boolean {
 		// return true if the HowRelated element has a valid CS value for Service Related Applications (A177 5.2.3)
 		// urn:dvb:metadata:cs:LinkedApplicationCS:2019
 		if (!HowRelated) return false;
@@ -457,7 +458,7 @@ export default class ServiceListCheck {
 	 * @param {number}    schemaVersion  The schema version of the XML document
 	 * @returns {boolean} true if this is a valid application launching method else false
 	 */
-	/*private*/ #validServiceInstanceApplication(HowRelated: XmlElement, schemaVersion: number) : boolean {
+	/*private*/ #validServiceInstanceApplication(HowRelated: XmlElement, schemaVersion: A177Revision) : boolean {
 		// return true if the HowRelated element has a valid CS value for Service Related Applications (A177 5.2.3)
 		// urn:dvb:metadata:cs:LinkedApplicationCS:2019
 		if (!HowRelated) return false;

@@ -1,0 +1,167 @@
+/**
+ * revisions.mts
+ *
+ *  DVB-I-tools
+ *  Copyright (c) 2021-2026, Paul Higgs
+ *  BSD-2-Clause license, see LICENSE.txt file
+ *
+ * The revision levels of the specifications a document is validated against (issue #125): A177 (service lists, service list
+ * registries and playlists) and TV-Anytime as profiled by A177 (content guide documents). They are distinct types, so a
+ * revision of one can not be compared with a revision of the other, or with a bare number:
+ *
+ *   cgVersion < cgVersions.r3 || slVersion < slVersions.r7    compiles, and compares the levels
+ *   cgVersion < slVersions.r7                                 does not compile (TS2365)
+ *   cgVersion == slVersions.r7                                does not compile (TS2367)
+ *   slVersion < 7, slVersion + 1                              do not compile (TS2365)
+ *
+ * JavaScript has no operator overloading. What each of the operators that C++ can overload means for a revision:
+ *   < <= > >=     compare the levels, through [Symbol.toPrimitive]. TypeScript only allows them between revisions of the same
+ *                 specification
+ *   == !=         the same revision. JavaScript compares objects by identity, and each revision is a single object (the
+ *                 constructors are private, and each class makes its revisions once), so the same object means the same level.
+ *                 switch / case works for the same reason
+ *   +, -          plus(n) and minus(n) give the revision n later or earlier, and minus(revision) how many revisions apart. The
+ *                 operators themselves do not compile
+ *   * / % & | ^ << >>   have no meaning for a revision, and do not compile (TS2362)
+ *   unary - and ~ have no meaning for a revision, but TypeScript can not reject them for an object: do not use them
+ *   ! && ||       every object is true, so these can not tell anything about a revision: use known
+ */
+
+// the custom formatting of an object by util.inspect() (console.log), without importing node:util
+const INSPECT = Symbol.for("nodejs.util.inspect.custom");
+
+/**
+ * a revision of a specification: its level (0 for the first, -1 when not known) and how it is named. Each specification is
+ * a class derived from this one, which makes its own revisions, from r0 up to its latest: no other revision can be made
+ */
+abstract class Revision {
+	readonly level: number;
+	readonly label: string;
+
+	protected constructor(level: number, label: string) {
+		this.level = level;
+		this.label = label;
+	}
+
+	// the revisions of the same specification, in order, and the revision used when it is not known
+	protected abstract revisions(): readonly this[];
+	protected abstract notKnown(): this;
+
+	/**
+	 * the operators <, <=, > and >= compare the levels. In a string (a template literal, or an error code such as CG003:3) a
+	 * revision is its level
+	 */
+	[Symbol.toPrimitive](hint: string): number | string {
+		return hint == "string" ? String(this.level) : this.level;
+	}
+
+	toString(): string {
+		return String(this.level);
+	}
+
+	toJSON(): number {
+		return this.level;
+	}
+
+	[INSPECT](): string {
+		return this.label;
+	}
+
+	/**
+	 * whether the revision is known: false for the revision of a document whose namespace is not recognised. (!revision is
+	 * always false, as every object is true)
+	 */
+	get known(): boolean {
+		return this != this.notKnown();
+	}
+
+	/**
+	 * the revision a number of revisions later (revision + n)
+	 *
+	 * @param {number} steps  how many revisions later (a negative number for earlier)
+	 * @returns {this} the revision, or unknown if there is none
+	 */
+	plus(steps: number): this {
+		if (!this.known || !Number.isInteger(steps)) return this.notKnown();
+		return this.revisions().find((r) => r.level == this.level + steps) ?? this.notKnown();
+	}
+
+	/**
+	 * the revision a number of revisions earlier (revision - n), or how many revisions later this is than another revision of
+	 * the same specification (revision - revision)
+	 *
+	 * @param {number | this} other  how many revisions earlier, or the other revision
+	 * @returns {this | number} the revision (unknown if there is none), or the number of revisions (NaN if either is unknown)
+	 */
+	minus(steps: number): this;
+	minus(other: this): number;
+	minus(other: number | this): this | number {
+		if (typeof other == "number") return this.plus(-other);
+		return this.known && other.known ? this.level - other.level : NaN;
+	}
+}
+
+/**
+ * a revision of DVB A177, used by service lists, service list registries and playlists
+ */
+export class A177Revision extends Revision {
+	#specification = "A177"; // makes the type nominal: an A177Revision is not a TVARevision, although they have the same shape
+
+	private constructor(level: number) {
+		super(level, level < 0 ? "A177 (unknown revision)" : level == 0 ? "A177" : `A177r${level}`);
+	}
+
+	get specification(): string {
+		return this.#specification;
+	}
+
+	static readonly r0 = new A177Revision(0); // A177
+	static readonly r1 = new A177Revision(1); // A177r1
+	static readonly r2 = new A177Revision(2); // A177r2
+	static readonly r3 = new A177Revision(3); // A177r3
+	static readonly r4 = new A177Revision(4); // A177r4 - ETSI TS 103 770 v1.0.1 (2022-12)
+	static readonly r5 = new A177Revision(5); // A177r5
+	static readonly r6 = new A177Revision(6); // A177r6 - ETSI TS 103 770 v1.2.1 (2024-06)
+	static readonly r7 = new A177Revision(7); // A177r7
+	static readonly r8 = new A177Revision(8); // A177r8 - draft ETSI TS 103 770 v1.3.1 (2026-06) (and second edition being drafted)
+	static readonly unknown = new A177Revision(-1);
+	static readonly latest = A177Revision.r8; // the highest revision: there is none after it
+	static readonly all: readonly A177Revision[] = [A177Revision.r0, A177Revision.r1, A177Revision.r2, A177Revision.r3, A177Revision.r4, A177Revision.r5, A177Revision.r6, A177Revision.r7, A177Revision.r8];
+
+	protected revisions(): readonly this[] {
+		return A177Revision.all as readonly this[];
+	}
+	protected notKnown(): this {
+		return A177Revision.unknown as this;
+	}
+}
+
+/**
+ * a revision of TV-Anytime as profiled by DVB A177, used by content guide documents
+ */
+export class TVARevision extends Revision {
+	#specification = "TV-Anytime";
+
+	private constructor(level: number) {
+		super(level, level < 0 ? "TV-Anytime (unknown revision)" : `TV-Anytime r${level}`);
+	}
+
+	get specification(): string {
+		return this.#specification;
+	}
+
+	static readonly r0 = new TVARevision(0);
+	static readonly r1 = new TVARevision(1);
+	static readonly r2 = new TVARevision(2); // ETSI TS 102 822-3-1 v1.13.1
+	static readonly r3 = new TVARevision(3); // ETSI TS 102 822-3-1 v1.14.1
+	static readonly unknown = new TVARevision(-1);
+	static readonly latest = TVARevision.r3; // the highest revision: there is none after it
+	static readonly all: readonly TVARevision[] = [TVARevision.r0, TVARevision.r1, TVARevision.r2, TVARevision.r3];
+
+	protected revisions(): readonly this[] {
+		return TVARevision.all as readonly this[];
+	}
+	protected notKnown(): this {
+		return TVARevision.unknown as this;
+	}
+}

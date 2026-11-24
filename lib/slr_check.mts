@@ -14,6 +14,7 @@ import { DeprecatedAttribute } from "./common_errors.mts"
 import { LoadGenres, LoadCountries, LoadLinkedApplicationCS } from "./classification_scheme_loaders.mts"
 import { keys, InvalidCountryCode, InvalidURL, CStermUsage } from "./common_errors.mts"
 import { slVersions, dvbi, dvbiEA, dvbiEC, dvbisld, validApplicationTypes, DvbIApplicationTypes, XMLdocumentType } from "./DVB-I_definitions.mts"
+import type { A177Revision } from "./revisions.mts"
 import ErrorList, { APPLICATION, WARNING } from "./error_list.mts"
 import { nestedTraversal } from "./traversal.mts"
 import { currentRequest, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
@@ -40,7 +41,7 @@ import ServiceListCheck from "./sl_check.mts"
 import type { StatsType } from "./globals.mts"
 
 
-export function CheckDelivery(Delivery: XmlElement, SchemaVersion: number, ApplicationTypeCS: ClassificationScheme, errs: ErrorList, errCode: string) {
+export function CheckDelivery(Delivery: XmlElement, SchemaVersion: A177Revision, ApplicationTypeCS: ClassificationScheme, errs: ErrorList, errCode: string) {
 	Delivery.forEachNamedChildElement(dvbisld.e_DVBTDelivery, (DVBTDelivery) => {
 		if (DVBTDelivery.attr(dvbisld.a_originalNetworkID) && SchemaVersion >= slVersions.r6) 
 			errs.addError(DeprecatedAttribute(DVBTDelivery.attr(dvbisld.a_originalNetworkID)!, SLR_SchemaSpecVersion(slVersions.r6), `${errCode}a`));
@@ -266,7 +267,8 @@ export default class ServiceListRegistryCheck {
 		checkXMLLangs(dvbisld.e_ServiceListName, dvbisld.e_ServiceListOffering, Offering, errs, `${errCode}-20`);
 
 		// check <ServiceListOffering><ServiceListURI>
-		let lowest_version = -10,
+		// the lowest revision found so far: unknown (level -1) is lower than every revision
+		let lowest_version: A177Revision = slVersions.unknown,
 			found_versioned_URI = false;
 		Offering.forEachNamedChildElement(dvbisld.e_ServiceListURI, (ListURI) => {
 			if (ListURI.attrAnyNs(dvbisld.a_standardVersion)) found_versioned_URI = true;

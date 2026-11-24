@@ -91,7 +91,8 @@ const supportedRequests: CGRequestType[] = [
 ];
 
 import type { LoadedVersionInfo } from "./slr_data_versions.mts"
-const CG_SchemaVersions: LoadedVersionInfo[] = [
+import type { TVARevision } from "./revisions.mts"
+const CG_SchemaVersions: LoadedVersionInfo<TVARevision>[] = [
 	{
 		namespace: TVAschema.v2026.namespace,
 		version: cgVersions.r3,
@@ -128,7 +129,7 @@ const CG_SchemaVersions: LoadedVersionInfo[] = [
  * @param {string} namespace  The namespace used in defining the schema
  * @returns {number} Representation of the schema version or error code if unknown
  */
-export const CG_SchemaVersion = (namespace: string) : number => {
+export const CG_SchemaVersion = (namespace: string) : TVARevision => {
 	const x = CG_SchemaVersions.find((ver) => ver.namespace == namespace);
 	return x ? x.version : cgVersions.unknown;
 };
