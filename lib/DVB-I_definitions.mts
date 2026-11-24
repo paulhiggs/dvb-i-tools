@@ -23,7 +23,7 @@ export const slVersions = new class {
 	r5: number = 5					// A177r5
 	r6: number = 6					// A177r6 - ETSI TS 103 770 v1.2.1 (2024-06)
 	r7: number = 7					// A177r7
-	r8: number = 8					// A177r8 - draft ETSI TS 103 770 v1.3.1 (2026-mm)
+	r8: number = 8					// A177r8 - draft ETSI TS 103 770 v1.3.1 (2026-06) (and second edition being drafted)
 	unknown: number = -1
 };
 
