@@ -75,38 +75,6 @@ abstract class Revision {
 }
 
 /**
- * a revision of DVB A177, used by service lists, service list registries and playlists
- */
-export class A177Revision extends Revision {
-	#specification = "A177"; // makes the type nominal: an A177Revision is not a TVARevision, although they have the same shape
-
-	private constructor(level: number) {
-		super(level, level < 0 ? "A177 (unknown revision)" : level == 0 ? "A177" : `A177r${level}`);
-	}
-
-	get specification(): string {
-		return this.#specification;
-	}
-
-	static readonly r0 = new A177Revision(0); // A177
-	static readonly r1 = new A177Revision(1); // A177r1
-	static readonly r2 = new A177Revision(2); // A177r2
-	static readonly r3 = new A177Revision(3); // A177r3
-	static readonly r4 = new A177Revision(4); // A177r4 - ETSI TS 103 770 v1.0.1 (2022-12)
-	static readonly r5 = new A177Revision(5); // A177r5
-	static readonly r6 = new A177Revision(6); // A177r6 - ETSI TS 103 770 v1.2.1 (2024-06)
-	static readonly r7 = new A177Revision(7); // A177r7
-	static readonly r8 = new A177Revision(8); // A177r8 - draft ETSI TS 103 770 v1.3.1 (2026-06) (and second edition being drafted)
-	static readonly unknown = new A177Revision(-1);
-	static readonly latest = A177Revision.r8; // the highest revision: there is none after it
-	static readonly all: readonly A177Revision[] = [A177Revision.r0, A177Revision.r1, A177Revision.r2, A177Revision.r3, A177Revision.r4, A177Revision.r5, A177Revision.r6, A177Revision.r7, A177Revision.r8];
-
-	protected notKnown(): this {
-		return A177Revision.unknown as this;
-	}
-}
-
-/**
  * a revision of TV-Anytime as profiled by DVB A177, used by content guide documents
  */
 export class TVARevision extends Revision {
@@ -120,15 +88,53 @@ export class TVARevision extends Revision {
 		return this.#specification;
 	}
 
-	static readonly r0 = new TVARevision(0);
-	static readonly r1 = new TVARevision(1);
-	static readonly r2 = new TVARevision(2); // ETSI TS 102 822-3-1 v1.13.1
-	static readonly r3 = new TVARevision(3); // ETSI TS 102 822-3-1 v1.14.1
+	static readonly r0 = new TVARevision(0); // TV-Anytime 2019
+	static readonly r1 = new TVARevision(1); // TV-Anytime 2023
+	static readonly r2 = new TVARevision(2); // TV-Anytime 2024 - ETSI TS 102 822-3-1 v1.13.1
+	static readonly r3 = new TVARevision(3); // TV-Anytime 2026 - ETSI TS 102 822-3-1 v1.14.1
 	static readonly unknown = new TVARevision(-1);
 	static readonly latest = TVARevision.r3; // the highest revision: there is none after it
 	static readonly all: readonly TVARevision[] = [TVARevision.r0, TVARevision.r1, TVARevision.r2, TVARevision.r3];
 
 	protected notKnown(): this {
 		return TVARevision.unknown as this;
+	}
+}
+
+/**
+ * a revision of DVB A177, used by service lists, service list registries and playlists. Each records the revision of
+ * TV-Anytime that its service list schema imports, which the TV-Anytime elements of a service list (such as
+ * <AccessibilityAttributes>) are validated against (issue #128)
+ */
+export class A177Revision extends Revision {
+	#specification = "A177"; // makes the type nominal: an A177Revision is not a TVARevision, although they have the same shape
+
+	// the TV-Anytime revision imported by the service list schema of this revision
+	readonly tvAnytime: TVARevision;
+
+	private constructor(level: number, tvAnytime: TVARevision) {
+		super(level, level < 0 ? "A177 (unknown revision)" : level == 0 ? "A177" : `A177r${level}`);
+		this.tvAnytime = tvAnytime;
+	}
+
+	get specification(): string {
+		return this.#specification;
+	}
+
+	static readonly r0 = new A177Revision(0, TVARevision.r0); // A177 - TV-Anytime 2019
+	static readonly r1 = new A177Revision(1, TVARevision.r0); // A177r1 - TV-Anytime 2019
+	static readonly r2 = new A177Revision(2, TVARevision.r0); // A177r2 - TV-Anytime 2019
+	static readonly r3 = new A177Revision(3, TVARevision.r0); // A177r3 - TV-Anytime 2019
+	static readonly r4 = new A177Revision(4, TVARevision.r0); // A177r4 - ETSI TS 103 770 v1.0.1 (2022-12) - TV-Anytime 2019
+	static readonly r5 = new A177Revision(5, TVARevision.r1); // A177r5 - TV-Anytime 2023
+	static readonly r6 = new A177Revision(6, TVARevision.r2); // A177r6 - ETSI TS 103 770 v1.2.1 (2024-06) - TV-Anytime 2024
+	static readonly r7 = new A177Revision(7, TVARevision.r2); // A177r7 - TV-Anytime 2024
+	static readonly r8 = new A177Revision(8, TVARevision.r3); // A177r8 - draft ETSI TS 103 770 v1.3.1 (2026-06) (and second edition being drafted) - TV-Anytime 2026
+	static readonly unknown = new A177Revision(-1, TVARevision.unknown);
+	static readonly latest = A177Revision.r8; // the highest revision: there is none after it
+	static readonly all: readonly A177Revision[] = [A177Revision.r0, A177Revision.r1, A177Revision.r2, A177Revision.r3, A177Revision.r4, A177Revision.r5, A177Revision.r6, A177Revision.r7, A177Revision.r8];
+
+	protected notKnown(): this {
+		return A177Revision.unknown as this;
 	}
 }

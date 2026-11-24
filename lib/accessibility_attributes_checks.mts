@@ -20,6 +20,8 @@ import { checkAttributes, checkTopElementsAndCardinality } from "./schema_checks
 import type { ElementCardinalityType } from "./schema_checks.mts"
 import { CS_URI_DELIMITER } from "./classification_scheme.mts"
 import { CG_SchemaVersion } from "./cg_check.mts"
+import { SL_SchemaVersion } from "./sl_data_versions.mts"
+import type { TVARevision } from "./revisions.mts"
 
 import IANAlanguages, { ValidateLanguage } from "./IANA_languages.mts"
 import { APPLICATION, WARNING } from "./error_list.mts"
@@ -239,8 +241,23 @@ export type AccessibilityRequiredSchemes = {
 	KnownLanguages: IANAlanguages
 }
 
+/**
+ * the revision of TV-Anytime that the <AccessibilityAttributes> of a document are validated against: for a service list, the
+ * revision imported by the schema of its A177 revision, and for a content guide document, its own (issue #128)
+ *
+ * @param {XmlElement} element  an element of the document
+ * @returns {TVARevision} the revision of TV-Anytime, or unknown
+ */
+const tvAnytimeRevision = (element: XmlElement): TVARevision => {
+	const namespace = element.documentNamespace();
+	const serviceList = SL_SchemaVersion(namespace);
+	return serviceList.known ? serviceList.tvAnytime : CG_SchemaVersion(namespace);
+};
+
 export default function CheckAccessibilityAttributes(AccessibilityAttributes: XmlElement, cs: AccessibilityRequiredSchemes, errs: ErrorList, errCode: string) {
 	if (!parameterCheck("CheckAccessibilityAttributes", AccessibilityAttributes, null, errs, "AA000")) return;
+	// the rules that depend on the revision compare it with cgVersions only, for service lists and content guides alike
+	const tvaRevision = tvAnytimeRevision(AccessibilityAttributes);
 
 	switch (AccessibilityAttributes.parent?.name) {
 		case tva.e_RelatedMaterial:
@@ -313,8 +330,8 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes: Xm
 						{ name: tva.e_Coding, maxOccurs: Infinity },
 						{ name: tva.e_SubtitleLanguage },
 						{ name: tva.e_Purpose, minOccurs: 0, maxOccurs: Infinity },
-						CG_SchemaVersion(child.documentNamespace()) < cgVersions.r3 
-							? { name: tva.e_SuitableForTTS } : { name: tva.e_SuitableForTTS, minOccurs: 0 },
+						// mandatory in TV-Anytime 2024 (A177r6, r7), optional from TV-Anytime 2026 (A177r8)
+						tvaRevision < cgVersions.r3 ? { name: tva.e_SuitableForTTS } : { name: tva.e_SuitableForTTS, minOccurs: 0 },
 					]),
 					tvaEC.SubtitleAttributes,
 					false,
