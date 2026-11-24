@@ -32,12 +32,10 @@ XmlElement.prototype.attrAnyNsValueOr = function (name: string, default_value: s
 };
 
 
-
 /**
  * find the nth instance of the named element without considering the namespace
  * return a pointer to the XmlElement object or null if not found
  */
-
 XmlElement.prototype.getAnyNs = function (name: string, index: number = 1) : XmlElement | null {
 	if (this == null) {
 		throw new TypeError("XmlElement.prototype.getAnyNs called on null or undefined");
@@ -91,6 +89,7 @@ XmlElement.prototype.hasChildren = function () : boolean {
 	return false;
 };
 
+
 /**
  * invoke the given callback for each child element
  */
@@ -105,7 +104,6 @@ XmlElement.prototype.forEachChildElement = function (func: (child: XmlElement) =
 		child = child.next;
 	}
 }
-
 
 
 /**

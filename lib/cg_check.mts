@@ -2846,10 +2846,12 @@ export default class ContentGuideCheck {
 		// <OtherIdentifier>
 		// A177r8 clause 6.10.16 - @type is the only attribute used (@organization, @authority and @encoding are profiled out),
 		// and its value is restricted according to the element containing the <InstanceDescription>
+		// however we should not check the value of @type if @organisation or @authority are present as these would denote that they are defined 
+		// elsewhere and their exclusion is handled elsewhere
 		InstanceDescription.forEachNamedChildElement(tva.e_OtherIdentifier, (OtherIdentifier) => {
 			checkAttributes(OtherIdentifier, [tva.a_type], [], tvaEA.OtherIdentifier, errs, "VID052");
 			const OtherIdentifier_type = OtherIdentifier.attrAnyNsValueOr(tva.a_type);
-			if (OtherIdentifier_type) {
+			if (OtherIdentifier_type && !(OtherIdentifier.attrAnyNs(mpeg7.a_organization) || OtherIdentifier.attrAnyNs(mpeg7.a_authority))) {
 				const allowedTypes: string[] =
 					VerifyType == tva.e_ScheduleEvent
 						? [dvbi.EIT_PROGRAMME_CRID_TYPE, dvbi.EIT_SERIES_CRID_TYPE, "CPSIndex"]
@@ -3659,7 +3661,7 @@ export default class ContentGuideCheck {
 					tvaEC.ProgramDescription,
 					false,
 					errs,
-					"CG011"
+					"CG011",
 				);
 				this.#CheckProgramInformation(ProgramDescription, programCRIDs, null, requestType, errs, options, undefined);
 				this.#CheckProgramLocation(ProgramDescription, programCRIDs, null, requestType, errs);
