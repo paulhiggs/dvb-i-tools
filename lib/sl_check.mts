@@ -16,7 +16,7 @@ import { tva, tvaEA } from "./TVA_definitions.mts"
 import { sats } from "./DVB_definitions.mts"
 import { slVersions, dvbi, dvbisld, dvbiEC, dvbiEA, XMLdocumentType} from "./DVB-I_definitions.mts"
 
-import ErrorList, { WARNING, APPLICATION } from "./error_list.mts"
+import ErrorList, { WARNING, APPLICATION, INFORMATION } from "./error_list.mts"
 import { nestedTraversal, traversalFinished, traversalSkipped, traversalStarted } from "./traversal.mts"
 import type { ReportedErrorType } from "./error_list.mts"
 import { unEntity, DuplicatedValue, parameterCheck, HexOrDecValue, DefaultProperty, HasProperty } from "./utils.mts"
@@ -101,9 +101,8 @@ export class FoundDocumentItems {
 	thisServiceListId: string | null
 	definesPolicies: boolean
 	directSatScan: {
-		provisioned: number
-		unprovisioned: number
-		instances: XmlElement[]
+		provisionedInstances: XmlElement[]
+		unprovisionedInstances: XmlElement[]
 	}
 
 	constructor(document_defines_policies: boolean) {
@@ -114,7 +113,7 @@ export class FoundDocumentItems {
 		this.knownServices = new Set<string>()
 		this.ContentGuideSourceIDs = new Set<string>()
 		this.thisServiceListId = null
-		this.directSatScan = {provisioned: 0, unprovisioned: 0, instances: []}
+		this.directSatScan = {provisionedInstances: [], unprovisionedInstances: []}
 
 		this.definesPolicies = document_defines_policies
 	}
@@ -1733,11 +1732,10 @@ export default class ServiceListCheck {
 				}
 			}
 
-			documentInfo.directSatScan.instances.push(DVBSDeliveryParameters)
 			if (DVBSDeliveryParameters.hasChild(dvbi.e_DVBTriplet) && DVBSDeliveryParameters.hasChild(dvbi.e_OrbitalPosition) && 
 		      DVBSDeliveryParameters.hasChild(dvbi.e_Frequency) && DVBSDeliveryParameters.hasChild(dvbi.e_Polarization) && DVBSDeliveryParameters.hasChild(dvbi.e_SymbolRate))
-				documentInfo.directSatScan.provisioned++
-			else documentInfo.directSatScan.unprovisioned++
+				documentInfo.directSatScan.provisionedInstances.push(DVBSDeliveryParameters)
+			else documentInfo.directSatScan.unprovisionedInstances.push(DVBSDeliveryParameters)
 		}
 
 		// <ServiceInstance><SATIPDeliveryParameters>
@@ -2832,15 +2830,31 @@ export default class ServiceListCheck {
 
 		
 		// report if onlu some of the DVBSDeliveryParameters have direct tuning
-		if (documentInfo.directSatScan.provisioned != 0 && documentInfo.directSatScan.unprovisioned != 0)
+		if (documentInfo.directSatScan.provisionedInstances.length != 0 && documentInfo.directSatScan.unprovisionedInstances.length != 0) {
 			errs.addError({
-				code: "SL283",
+				code: "SL283-1",
 				type: WARNING,
 				message: "direct satelite tuning not provided for some service instances",
 				key: "inconsistant sat direct",
-				multiElementError: documentInfo.directSatScan.instances
 			})
-
+			if (documentInfo.directSatScan.provisionedInstances.length != 0)
+				errs.addError({
+					code: "SL283-2",
+					type: INFORMATION,
+					message: "service instances with direct satelite tuning provided",
+					key: "inconsistant sat direct",
+					multiElementError: documentInfo.directSatScan.provisionedInstances
+				})
+			
+			if (documentInfo.directSatScan.unprovisionedInstances.length != 0) 
+				errs.addError({
+					code: "SL283-3",
+					type: INFORMATION,
+					message: "service instances with direct satelite tuning not provided",
+					key: "inconsistant sat direct",
+					multiElementError: documentInfo.directSatScan.unprovisionedInstances
+				})
+		}
 		// perform the deferred network work before the document is disposed (at the end of this method)
 		await scope.finish();
 		// the outermost validation reports how long it took, including the documents it traversed
