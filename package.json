@@ -1,6 +1,6 @@
 {
 	"name": "dvb-i-tools.ts",
-	"version": "1.12.30",
+	"version": "1.12.31",
 	"description": "DVB-I V&V Tools - up to A177r8",
 	"keywords": [
 		"DVB-I"
@@ -43,6 +43,7 @@
 		"test-lookups": "node testsuite/test-lookups.ts",
 		"test-languages": "node testsuite/test-languages.ts",
 		"test-app": "node testsuite/test-app.ts",
+		"test-revisions": "node testsuite/test-revisions.ts",
 		"test": "node testsuite/test-runner.ts"
 	},
 	"repository": {

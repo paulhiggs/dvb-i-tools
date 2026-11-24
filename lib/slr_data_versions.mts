@@ -15,15 +15,17 @@ import { XmlDocument } from "libxml2-wasm"
 
 import { StandardStatus } from "./globals.mts"
 import { slVersions, dvbisld } from "./DVB-I_definitions.mts"
+import type { A177Revision, TVARevision } from "./revisions.mts"
 import { DVBI_ServiceListRegistrySchema, schemaURL } from "./data_locations.mts"
 import { readmyfile } from "./utils.mts"
 
 import { GERMAN_A177r6_VARIANT } from "./globals.mts"
 import type { LoadOptions } from "./globals.mts"
 
-export type LoadedVersionInfo = {
+// a schema, and the revision of the specification it belongs to (an A177Revision or a TVARevision)
+export type LoadedVersionInfo<V extends A177Revision | TVARevision = A177Revision> = {
 	namespace: string
-	version: number
+	version: V
 	filename: string
 	schema? : XmlDocument
 	status: number
@@ -136,7 +138,7 @@ const SchemaVersions: LoadedVersionInfo[] = [
  * @param {string} namespace     The namespace used in defining the schema
  * @returns {number} Representation of the schema version or error code if unknown
  */
-export const SLR_SchemaVersion = (namespace: string) : number => {
+export const SLR_SchemaVersion = (namespace: string) : A177Revision => {
 	const x = SchemaVersions.find((ver) => ver.namespace == namespace);
 	return x ? x.version : slVersions.unknown;
 };
@@ -147,7 +149,7 @@ export const SLR_SchemaVersion = (namespace: string) : number => {
  * @param {number} version     The specification version used in defining the schema
  * @returns {string} Version of the DVB A177 specification where namespace is defined
  */
-export const SLR_SchemaSpecVersion = (version: number) : string => {
+export const SLR_SchemaSpecVersion = (version: A177Revision) : string => {
 	const x = SchemaVersions.find((ver) => ver.version == version);
 	return x ? x.specVersion || "unknown" : `r(${version})`;
 };

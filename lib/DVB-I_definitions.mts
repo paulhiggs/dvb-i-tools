@@ -13,27 +13,12 @@ import { tva, tvaEA, tvaEC, TVA_CSmetadata } from "./TVA_definitions.mts";
 import { HBBTV_APP_TYPE } from "./HbbTV_definitions.mts";
 import { HbbTV_Standard_versions, HbbTV_Features } from './HbbTV_definitions.mts'
 import { CTA5000_Standard_versions} from './CTA_definitions.mts'
+import { A177Revision, TVARevision } from "./revisions.mts"
 
-export const slVersions = new class {
-	r0: number = 0					// A177
-	r1: number = 1					// A177r1
-	r2: number = 2					// A177r2
-	r3: number = 3					// A177r3
-	r4: number = 4					// A177r4 - ETSI TS 103 770 v1.0.1 (2022-12)
-	r5: number = 5					// A177r5
-	r6: number = 6					// A177r6 - ETSI TS 103 770 v1.2.1 (2024-06)
-	r7: number = 7					// A177r7
-	r8: number = 8					// A177r8 - draft ETSI TS 103 770 v1.3.1 (2026-06) (and second edition being drafted)
-	unknown: number = -1
-};
-
-export const cgVersions = new class {
-	r0: number = 0
-	r1: number = 1
-	r2: number = 2				// ETSI TS 102 822-3-1 v1.13.1
-	r3: number = 3				// ETSI TS 102 822-3-1 v1.14.1
-	unknown: number = -1
-};
+// the revisions of A177 (service lists, registries, playlists) and of TV-Anytime as profiled by A177 (content guides): distinct
+// types, which can only be compared with revisions of the same specification (issue #125, see revisions.mts)
+export const slVersions = A177Revision;
+export const cgVersions = TVARevision;
 
 const DVB_metadata: string = "urn:dvb:metadata";
 const DVB_CSmetadata: string = `${DVB_metadata}:cs`,

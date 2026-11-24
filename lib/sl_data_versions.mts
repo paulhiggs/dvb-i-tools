@@ -17,6 +17,7 @@ import { StandardStatus, GERMAN_A177r6_VARIANT } from "./globals.mts"
 import type { LoadOptions } from "./globals.mts"
 
 import { slVersions, dvbi, CONTENT_FINISHED_TERM, OUTSIDE_AVAILABILITY_TERM } from "./DVB-I_definitions.mts"
+import type { A177Revision } from "./revisions.mts"
 import { DVBI_ServiceListSchema, schemaURL } from "./data_locations.mts"
 import { SLR_SchemaVersion } from "./slr_data_versions.mts"
 import type { LoadedVersionInfo } from "./slr_data_versions.mts"
@@ -124,7 +125,7 @@ const SL_SchemaVersions: LoadedVersionInfo[] = [
 ];
 
 type CSTerms = {
-	ver: number
+	ver: A177Revision
 	val: string
 }
 
@@ -198,7 +199,7 @@ const ContentGuideSourceLogos: CSTerms[] = [
  * @param {string} namespace     The namespace used in defining the schema
  * @returns {number} Representation of the schema version or error code if unknown
  */
-export const SL_SchemaVersion = (namespace: string) : number => {
+export const SL_SchemaVersion = (namespace: string) : A177Revision => {
 	const x = SL_SchemaVersions.find((ver) => ver.namespace == namespace);
 	return x ? x.version : slVersions.unknown;
 };
@@ -209,7 +210,7 @@ export const SL_SchemaVersion = (namespace: string) : number => {
  * @param {number} version     The specification version used in defining the schema
  * @returns {string} Version of the DVB A177 specification where namespace is defined
  */
-export const SL_SchemaSpecVersion = (version: number) : string => {
+export const SL_SchemaSpecVersion = (version: A177Revision) : string => {
 	const x = SL_SchemaVersions.find((ver) => ver.version == version);
 	return x ? x.specVersion || "unknown": `r(${version})`;
 };
@@ -231,7 +232,7 @@ export const SL_GetSchema = (namespace: string, variant: number = 0) : LoadedVer
  * @param {number} schemaVersion  The schema version of the XML document
  * @returns {boolean} true if this is a valid application being used with the service else false
  */
-export const validServiceControlApplication = (hrefType: string, schemaVersion: number) : boolean => {
+export const validServiceControlApplication = (hrefType: string, schemaVersion: A177Revision) : boolean => {
 	const appTypes = [dvbi.APP_IN_PARALLEL, dvbi.APP_IN_CONTROL]; // types 1.1 and 1.2
 	if (schemaVersion >= slVersions.r6) appTypes.push(dvbi.APP_SERVICE_PROVIDER); // type 3
 	if (schemaVersion >= slVersions.r7) appTypes.push(dvbi.APP_IN_SERIES); // type 1.3
@@ -246,7 +247,7 @@ export const validServiceControlApplication = (hrefType: string, schemaVersion: 
  * @param {number} schemaVersion  The schema version of the XML document
  * @returns {boolean} true if this is a valid application being used with the service else false
  */
-export const validServiceInstanceControlApplication = (hrefType: string, schemaVersion: number) : boolean => {
+export const validServiceInstanceControlApplication = (hrefType: string, schemaVersion: A177Revision) : boolean => {
 	const appTypes = [dvbi.APP_IN_PARALLEL, dvbi.APP_IN_CONTROL];
 	if (schemaVersion >= slVersions.r7) appTypes.push(dvbi.APP_IN_SERIES);
 	return appTypes.includes(hrefType);
@@ -269,7 +270,7 @@ export const validServiceUnavailableApplication = (hrefType: string) : boolean =
  * @param {number} schemaVersion  The version of the schema that the DASH @contentType appears in
  * @returns {boolean} true if this is a valid MPD or playlist identifier
  */
-export const validDASHcontentType = (contentType: string, schemaVersion: number) : boolean =>
+export const validDASHcontentType = (contentType: string, schemaVersion: A177Revision) : boolean =>
 	[dvbi.CONTENT_TYPE_DASH_MPD, schemaVersion >= slVersions.r8 ?  dvbi.CONTENT_TYPE_DVB_PLAYLIST : dvbi.old_CONTENT_TYPE_DVB_PLAYLIST].includes(contentType);
 
 /**
@@ -360,7 +361,7 @@ export const validContentGuideSourceLogo = (HowRelated: XmlElement) : boolean =>
  * @returns {boolean} true if this is a valid application being used with the service else false
  */
 const appTypes: string[] = [dvbi.APP_LIST_INSTALLATION, dvbi.APP_WITHDRAW_AGREEMENT, dvbi.APP_RENEW_AGREEMENT];
-const validAgreementApplication = (hrefType: string, schemaVersion: number) : boolean => 
+const validAgreementApplication = (hrefType: string, schemaVersion: A177Revision) : boolean => 
 	(schemaVersion >= slVersions.r7) && appTypes.includes(hrefType);
 
 /**
@@ -387,9 +388,9 @@ export const isA177specification_URN = (urn: string) : boolean =>
  * determines if the A177 specification version from the  URN
  *
  * @param {string} urn   The URN to check
- * @returns {nunber} A177 version number or "unknown"
+ * @returns {A177Revision} the A177 revision, or unknown
  */
-export const a177versionFromURN = (urn: string) : number => {
+export const a177versionFromURN = (urn: string) : A177Revision => {
 	const u = SL_SchemaVersions.find((v) => v?.URN == urn);
 	return u != undefined ? u.version : slVersions.unknown;
 };
