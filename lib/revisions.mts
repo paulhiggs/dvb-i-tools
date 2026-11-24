@@ -14,15 +14,14 @@
  *   cgVersion == slVersions.r7                                does not compile (TS2367)
  *   slVersion < 7, slVersion + 1                              do not compile (TS2365)
  *
- * JavaScript has no operator overloading. What each of the operators that C++ can overload means for a revision:
+ * Revisions are only compared: the validator has no need to step from one revision to another. JavaScript has no operator
+ * overloading. What each of the operators that C++ can overload means for a revision:
  *   < <= > >=     compare the levels, through [Symbol.toPrimitive]. TypeScript only allows them between revisions of the same
  *                 specification
  *   == !=         the same revision. JavaScript compares objects by identity, and each revision is a single object (the
  *                 constructors are private, and each class makes its revisions once), so the same object means the same level.
  *                 switch / case works for the same reason
- *   +, -          plus(n) and minus(n) give the revision n later or earlier, and minus(revision) how many revisions apart. The
- *                 operators themselves do not compile
- *   * / % & | ^ << >>   have no meaning for a revision, and do not compile (TS2362)
+ *   + - * / % & | ^ << >>   have no meaning for a revision, and do not compile (TS2365, TS2362)
  *   unary - and ~ have no meaning for a revision, but TypeScript can not reject them for an object: do not use them
  *   ! && ||       every object is true, so these can not tell anything about a revision: use known
  */
@@ -43,8 +42,7 @@ abstract class Revision {
 		this.label = label;
 	}
 
-	// the revisions of the same specification, in order, and the revision used when it is not known
-	protected abstract revisions(): readonly this[];
+	// the revision used when it is not known
 	protected abstract notKnown(): this;
 
 	/**
@@ -73,31 +71,6 @@ abstract class Revision {
 	 */
 	get known(): boolean {
 		return this != this.notKnown();
-	}
-
-	/**
-	 * the revision a number of revisions later (revision + n)
-	 *
-	 * @param {number} steps  how many revisions later (a negative number for earlier)
-	 * @returns {this} the revision, or unknown if there is none
-	 */
-	plus(steps: number): this {
-		if (!this.known || !Number.isInteger(steps)) return this.notKnown();
-		return this.revisions().find((r) => r.level == this.level + steps) ?? this.notKnown();
-	}
-
-	/**
-	 * the revision a number of revisions earlier (revision - n), or how many revisions later this is than another revision of
-	 * the same specification (revision - revision)
-	 *
-	 * @param {number | this} other  how many revisions earlier, or the other revision
-	 * @returns {this | number} the revision (unknown if there is none), or the number of revisions (NaN if either is unknown)
-	 */
-	minus(steps: number): this;
-	minus(other: this): number;
-	minus(other: number | this): this | number {
-		if (typeof other == "number") return this.plus(-other);
-		return this.known && other.known ? this.level - other.level : NaN;
 	}
 }
 
@@ -128,9 +101,6 @@ export class A177Revision extends Revision {
 	static readonly latest = A177Revision.r8; // the highest revision: there is none after it
 	static readonly all: readonly A177Revision[] = [A177Revision.r0, A177Revision.r1, A177Revision.r2, A177Revision.r3, A177Revision.r4, A177Revision.r5, A177Revision.r6, A177Revision.r7, A177Revision.r8];
 
-	protected revisions(): readonly this[] {
-		return A177Revision.all as readonly this[];
-	}
 	protected notKnown(): this {
 		return A177Revision.unknown as this;
 	}
@@ -158,9 +128,6 @@ export class TVARevision extends Revision {
 	static readonly latest = TVARevision.r3; // the highest revision: there is none after it
 	static readonly all: readonly TVARevision[] = [TVARevision.r0, TVARevision.r1, TVARevision.r2, TVARevision.r3];
 
-	protected revisions(): readonly this[] {
-		return TVARevision.all as readonly this[];
-	}
 	protected notKnown(): this {
 		return TVARevision.unknown as this;
 	}
