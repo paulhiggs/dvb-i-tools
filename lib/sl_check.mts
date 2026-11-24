@@ -22,7 +22,7 @@ import type { ReportedErrorType } from "./error_list.mts"
 import { unEntity, DuplicatedValue, parameterCheck, HexOrDecValue, DefaultProperty, HasProperty } from "./utils.mts"
 import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isRTSPURL, isTAGURI, isUUIDformat } from "./pattern_checks.mts"
 import { checkValidLogos } from "./related_material_checks.mts"
-import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys, InvalidCountryCode } from "./common_errors.mts"
+import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys, InvalidCountryCode, CStermUsage } from "./common_errors.mts"
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./multilingual_element.mts"
 import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.mts"
 import document_logger from "./logger.mts"
@@ -1275,7 +1275,7 @@ export default class ServiceListCheck {
 				if (conf_href && !this.#allowedAudioConformancePoints.isLeaf(conf_href))
 					errs.addError({
 						code: "SI061",
-						message: `invalid ${dvbi.a_href.attribute(dvbi.e_AudioConformancePoint)} (${conf_href}) all nodes in the CS are used`,
+						message: CStermUsage(conf_href, dvbi.a_href.attribute(dvbi.e_AudioConformancePoint), true),
 						fragment: conf,
 						key: "audio conf point",
 					});
@@ -1299,7 +1299,7 @@ export default class ServiceListCheck {
 							if (child_href && !this.#allowedVideoSchemes.has(child_href))
 								errs.addError({
 									code: "SI072",
-									message: `invalid ${dvbi.a_href.attribute(tva.e_Coding)} (${child_href}) -only leaf nodes are used from the CS`,
+									message: `invalid ${dvbi.a_href.attribute(tva.e_Coding)} (${child_href}). All nodes in the CS are used`,
 									fragment: child,
 									key: "video codec",
 								});
@@ -1308,7 +1308,7 @@ export default class ServiceListCheck {
 							if (child_href && !this.#allowedPictureFormats.has(child_href))
 								errs.addError({
 									code: "SI082",
-									message: `invalid ${dvbi.a_href.attribute(tva.e_PictureFormat)} value (${child_href}) all nodes in the CS are used`,
+									message: `invalid ${dvbi.a_href.attribute(tva.e_PictureFormat)} value (${child_href}). All nodes in the CS are used`,
 									fragment: child,
 									key: tva.e_PictureFormat,
 								});
@@ -1317,7 +1317,7 @@ export default class ServiceListCheck {
 							if (child_href && !this.#allowedColorimetry.isLeaf(child_href))
 								errs.addError({
 									code: "SI084",
-									message: `invalid ${dvbi.a_href.attribute(dvbi.e_Colorimetry)} value (${child_href}) only leaf nodes in the CS are used`,
+									message: CStermUsage(child_href, dvbi.a_href.attribute(dvbi.e_Colorimetry), true),
 									fragment: child,
 									key: dvbi.e_Colorimetry,
 								});
@@ -1338,7 +1338,7 @@ export default class ServiceListCheck {
 					if (!this.#allowedVideoConformancePoints.isLeaf(conformanceVal))
 						errs.addError({
 							code: "SI091",
-							message: `invalid ${dvbi.a_href.attribute(dvbi.e_VideoConformancePoint)} value (${conformanceVal}) -only leaf nodes are used from the CS`,
+							message: CStermUsage(conformanceVal, dvbi.a_href.attribute(dvbi.e_VideoConformancePoint), true),
 							fragment: conf,
 							key: "video conf point",
 						});

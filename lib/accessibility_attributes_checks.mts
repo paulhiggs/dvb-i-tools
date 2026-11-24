@@ -25,6 +25,7 @@ import IANAlanguages, { ValidateLanguage } from "./IANA_languages.mts"
 import { APPLICATION, WARNING } from "./error_list.mts"
 import ErrorList from "./error_list.mts"
 import ClassificationScheme from "./classification_scheme.mts"
+import { CStermUsage } from "./common_errors.mts"
 
 
 const mediaAccessibilityElements: ElementCardinalityType[] = [
@@ -48,7 +49,7 @@ const checkPurpose = (elem: XmlElement, mainTerm: string, cs: ClassificationSche
 			if (!cs.isLeaf(purposeTerm))
 				errs.addError({
 					code: `${errCode}-${errNum}a`,
-					message: `${purposeTerm.quote()} is not a valid accessibility purpose`,
+					message: `${purposeTerm.quote()} is not a valid accessibility purpose. Only leaf nodes are permitted from the classification scheme`,
 					fragment: purpose,
 					key: keys.k_Accessibility,
 				});
@@ -104,7 +105,7 @@ const checkCS = (elem: XmlElement, childName: string, cs: ClassificationScheme, 
 			errs.addError({
 				code: `${errCode}-${errNum}`,
 				fragment: child,
-				message: `${href.quote()} is not valid for ${child.name.elementize()} in ${elem.name.elementize()}`,
+				message: CStermUsage(href, `${child.name.elementize()} in ${elem.name.elementize()}`, leafsOnly),
 				key: keys.k_Accessibility,
 			});
 			rc = false;
@@ -171,8 +172,8 @@ const checkAudioAttributes = (elem: XmlElement, childName: string, csCodec: Clas
 					if (href && !csCodec.isLeaf(href))
 						errs.addError({
 							code: `${errCode}-${errNum}d`,
-							fragment: child2,
-							message: `${href.quote()} is not valid for ${elem.name.elementize()}${child.name.elementize()}${child2.name.elementize()}`,
+							fragment: child2, 
+							message: CStermUsage(href, `${elem.name.elementize()}${child.name.elementize()}${child2.name.elementize()}`, true),
 							key: keys.k_Accessibility,
 						});
 					break;

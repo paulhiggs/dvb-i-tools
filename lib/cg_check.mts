@@ -31,7 +31,7 @@ import { isHTTPURL, isDVBLocator, isUTCDateTime, isCRIDURI, isTAGURI } from "./p
 import { ValidatePromotionalStillImage } from "./related_material_checks.mts"
 import { checkReferencedResource, checkSignedResponse, signaturePolicyOf } from "./resource_checks.mts"
 import type { ValidationOptions } from "./safe_fetch.mts"
-import { cg_InvalidHrefValue, NoChildElement, keys } from "./common_errors.mts"
+import { cg_InvalidHrefValue, NoChildElement, keys, CStermUsage } from "./common_errors.mts"
 import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.mts"
 import type { ElementCardinalityType } from "./schema_checks.mts"
 import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./multilingual_element.mts"
@@ -2509,7 +2509,7 @@ export default class ContentGuideCheck {
 					if (AudioCodecCS.count() && !AudioCodecCS.isLeaf(Coding_val))
 						errs.addError({
 							code: "AV007",
-							message: `${tva.e_AudioAttributes}.${tva.e_Coding} is not valid`,
+							message: CStermUsage(Coding_val, `${tva.e_AudioAttributes}.${tva.e_Coding}`, true),
 							fragment: Coding,
 						});
 				}

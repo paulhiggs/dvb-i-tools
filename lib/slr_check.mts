@@ -12,7 +12,7 @@ import chalk from "chalk"
 
 import { DeprecatedAttribute } from "./common_errors.mts"
 import { LoadGenres, LoadCountries, LoadLinkedApplicationCS } from "./classification_scheme_loaders.mts"
-import { keys, InvalidCountryCode, InvalidURL } from "./common_errors.mts"
+import { keys, InvalidCountryCode, InvalidURL, CStermUsage } from "./common_errors.mts"
 import { slVersions, dvbi, dvbiEA, dvbiEC, dvbisld, validApplicationTypes, DvbIApplicationTypes, XMLdocumentType } from "./DVB-I_definitions.mts"
 import ErrorList, { APPLICATION, WARNING } from "./error_list.mts"
 import { nestedTraversal } from "./traversal.mts"
@@ -59,7 +59,7 @@ export function CheckDelivery(Delivery: XmlElement, SchemaVersion: number, Appli
 				if (appType_clean.length > 0 && !ApplicationTypeCS.isLeaf(appType_clean)) {
 					errs.addError({
 						code: `${errCode}c`,
-						message: `${appType_clean.quote()} is not a valid application type`,
+						message: CStermUsage(appType_clean, "ApplicationType", true),
 						fragment: ApplicationType,
 						key: `invalid application type`,
 						clause: "A177 Table 12h",

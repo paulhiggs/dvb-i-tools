@@ -122,7 +122,7 @@ export const DeprecatedAttribute = (what: XmlAttribute, since: string, errCode: 
 });
 
 /**
- * Add an error message an incorrect country code is specified in transmission parameters
+ * Error message for an incorrect country code is specified in transmission parameters
  *
  * @param {string} value    The invalid country code
  * @param {string} src      The transmission mechanism
@@ -131,3 +131,15 @@ export const DeprecatedAttribute = (what: XmlAttribute, since: string, errCode: 
  */
 export const InvalidCountryCode = (value: string, src: string | null, loc: string) : string => 
 	`invalid country code ${value.quote()} ${src ? `for ${src} parameters ` : ""}in ${loc}`;
+
+
+/**
+ * Error message for an incorrect classification schee term
+ * 
+ * @param {string} value      The classification scheme term
+ * @param {string} location   The scheme of location where the term is being used
+ * @param {boolea} leafsOnly  Whether only terms which are leafs in the classification scheme are allowed to be used
+ * @returns {string} a formatted string for reporting the misused classification scheme term
+ */
+export const CStermUsage = (value: string, location: string, leafsOnly: boolean) : string =>
+	`${value.quote()} is not valid for ${location}${leafsOnly ? ". Only leaf nodes are permitted from the classification scheme" : ""}`;
