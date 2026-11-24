@@ -99,18 +99,38 @@ const checkAppInformation = (elem: XmlElement, errs: ErrorList, errCode: string,
 	return true; // AppInformation element is present
 };
 
-const checkCS = (elem: XmlElement, childName: string, cs: ClassificationScheme, leafsOnly: boolean, errs: ErrorList, errCode: string, errNum: number, storage: string[] | null = null): boolean => {
+/**
+ * which terms of a classification scheme may be used:
+ *   any       any term
+ *   required  only leaf terms: another term is an error
+ *   warn      any term, with a warning for a term that is not a leaf, as only leaf terms are permitted in later revisions
+ */
+type LeafTerms = "any" | "required" | "warn";
+
+const checkCS = (elem: XmlElement, childName: string, cs: ClassificationScheme, leafs: LeafTerms, errs: ErrorList, errCode: string, errNum: number, storage: string[] | null = null): boolean => {
 	let rc = true;
 	elem?.forEachNamedChildElement(childName, (child) => {
 		const href = child.attrAnyNsValueOr(tva.a_href);
-		if (href && (leafsOnly ? !cs.isLeaf(href) : !cs.has(href))) {
+		const location = `${child.name.elementize()} in ${elem.name.elementize()}`;
+		if (href && (leafs == "required" ? !cs.isLeaf(href) : !cs.has(href))) {
 			errs.addError({
 				code: `${errCode}-${errNum}`,
 				fragment: child,
-				message: CStermUsage(href, `${child.name.elementize()} in ${elem.name.elementize()}`, leafsOnly),
+				message: CStermUsage(href, location, leafs == "required"),
 				key: keys.k_Accessibility,
 			});
 			rc = false;
+		} else if (href && leafs == "warn" && !cs.isLeaf(href)) {
+			// Bugzilla 3421: only leaf terms are permitted from A177r8 (issue #124)
+			errs.addError({
+				type: WARNING,
+				code: `${errCode}-${errNum}a`,
+				fragment: child,
+				message: `${href.quote()} is not a leaf term of the classification scheme. Only leaf terms are permitted for ${location} from A177r8`,
+				key: keys.k_Accessibility,
+				clause: "A177r8 (DVB Bugzilla 3421)",
+				description: "From A177r8, only the leaf terms of the classification schemes may be used with accessibility attributes. Other terms are allowed in earlier revisions, but should be replaced with leaf terms",
+			});
 		}
 		if (storage && datatypeIs(storage, "array") && href) storage.push(href);
 	});
@@ -340,10 +360,13 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes: Xm
 				);
 				// eslint-disable-next-line no-case-declarations
 				const hasAppInformation = checkAppInformation(child, errs, errCode, 52);
-				checkCS(child, tva.e_Carriage, cs.SubtitleCarriageCS, true, errs, errCode, 53, carriages);
-				checkCS(child, tva.e_Coding, cs.SubtitleCodingFormatCS, true, errs, errCode, 54, codings);
+				// Bugzilla 3421: only leaf terms from A177r8 (TV-Anytime 2026), and a warning for other terms before (issue #124)
+				// eslint-disable-next-line no-case-declarations
+				const subtitleTerms: LeafTerms = tvaRevision >= cgVersions.r3 ? "required" : "warn";
+				checkCS(child, tva.e_Carriage, cs.SubtitleCarriageCS, subtitleTerms, errs, errCode, 53, carriages);
+				checkCS(child, tva.e_Coding, cs.SubtitleCodingFormatCS, subtitleTerms, errs, errCode, 54, codings);
 				checkLanguageFmt(child, tva.e_SubtitleLanguage, errs, errCode, 55);
-				checkCS(child, tva.e_Purpose, cs.SubtitlePurposeTypeCS, true, errs, errCode, 56);
+				checkCS(child, tva.e_Purpose, cs.SubtitlePurposeTypeCS, subtitleTerms, errs, errCode, 56);
 				if (carriages.includes(tva.APPLICATION_SUBTITLE_CARRIAGE) || codings.includes(tva.APPLICATION_SUBTITLE_CODING)) {
 					// A177r6 clause 4.5.2.3 - When the SubtitlesAttributes.Carriage element is set to “Application Subtitles” and/or the
 					// SubtitlesAttributes.Coding element is set to “Application - defined Subtitle Format”, the SubtitlesAttributes.AppInformation
@@ -387,7 +410,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes: Xm
 				);
 				checkAppInformation(child, errs, errCode, 72);
 				if (child.hasChild(tva.e_Coding)) {
-					if (!checkCS(child, tva.e_Coding, cs.VideoCodecCS, true, errs, errCode, 73))
+					if (!checkCS(child, tva.e_Coding, cs.VideoCodecCS, "required", errs, errCode, 73))
 						errs.errorDescription({ code: `${errCode}-73`, description: `value for ${tva.e_Coding.elementize()} is not taken from the VideoCodecCS` });
 					const AVparent = AccessibilityAttributes.parent;
 					const Signing_closed = child.getAnyNs(tva.e_Closed);
