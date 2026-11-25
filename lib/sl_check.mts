@@ -73,7 +73,9 @@ import { ValidateSignaturePolicies } from "./signature_policies.mts"
 import type { SignaturePolicy } from "./certificate_utils.mts"
 
 import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES, type CG_Validator_Options } from "./cg_check.mts"
-import { allowTraversal, currentRequest, currentValidation, deferRetrieval, retrieveTraversal, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
+import { allowTraversal, currentRequest, currentValidation, deferRetrieval, deferTask, retrieveTraversal, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
+import { COVERAGE_TOLERANCE_MS, scheduleCoverage } from "./schedule_coverage.mts"
+import type { DayState, ServiceCoverage } from "./schedule_coverage.mts"
 
 
 const LCN_TABLE_NO_TARGETREGION: string = "unspecifiedRegion",
@@ -642,6 +644,33 @@ export default class ServiceListCheck {
 			});
 		}
 		return false;
+	}
+
+	/**
+	 * report the coverage of the schedule of a service (issue #122): keep it with the results, and give a warning when a day of
+	 * the 28 (7 for the German profile) either side of today is not fully covered. Indeterminate days (a traversal limit was
+	 * reached) are not a finding
+	 *
+	 * @param {ServiceCoverage} coverage   the coverage of each day, and the services that use the schedule
+	 * @param {ErrorList}       errs       the results of the service list
+	 */
+	/*private*/ #reportScheduleCoverage(coverage: ServiceCoverage, errs: ErrorList): void {
+		errs.scheduleCoverage = [...(errs.scheduleCoverage ?? []), coverage];
+		const { full, partial, none, indeterminate } = coverage.counts;
+		if (partial + none == 0) return;
+		const dates = (state: DayState) => coverage.days.filter((d) => d.state == state).map((d) => d.date);
+		const listed = (state: DayState, label: string) => {
+			const found = dates(state);
+			return found.length == 0 ? [] : [`${label} ${found.slice(0, 10).join(", ")}${found.length > 10 ? ` and ${found.length - 10} more` : ""}`];
+		};
+		errs.addError({
+			type: WARNING,
+			code: "SL201",
+			message: `the schedule ${coverage.service.quote()} of ${coverage.services.length == 1 ? "service" : "services"} ${coverage.services.map((s) => s.quote()).join(", ")} does not cover every day: of the ${coverage.days.length} days from ${coverage.daysEitherSide} days before to ${coverage.daysEitherSide} days after today, ${full} fully covered, ${partial} partly, ${none} not at all${indeterminate > 0 ? `, and ${indeterminate} indeterminate because a traversal limit was reached` : ""}. ${[...listed("none", "Not covered:"), ...listed("partial", "Partly covered:")].join(". ")}`,
+			key: "schedule coverage",
+			clause: "A177r8 clause 6.1",
+			description: `The content guide should hold the schedule of each service for ${coverage.daysEitherSide} days before and after today. A day is fully covered when its programme events leave no gap longer than ${COVERAGE_TOLERANCE_MS / 60000} minutes`,
+		});
 	}
 
 	/**
@@ -2011,6 +2040,11 @@ export default class ServiceListCheck {
 					// A177r8 - the programme guide should be available for 28 days before and 28 days after today.
 					// German service lists only need 7 days before and 7 days after today
 					const NEEDED_DAYS = currentRequest().variants & GERMAN_A177r6_VARIANT ? 7 : 28
+					// the events of all the windows give the coverage of each day of the service's schedule (issue #122). A
+					// service with the same service ID and endpoint as an earlier one shares its coverage, as its windows are
+					// only requested once
+					const { coverage, first } = scheduleCoverage(currentValidation() ?? {}, siEpURL, serviceID ?? "", start_of_today.epochMilliseconds, NEEDED_DAYS)
+					coverage.usedBy(thisServiceId)
 					for (let test_day=-NEEDED_DAYS; test_day<=NEEDED_DAYS; test_day++) {
 						const start_of_day = start_of_today.add({days: test_day})
 						for (let start_hour=0; start_hour<24; start_hour+=6) {
@@ -2020,7 +2054,8 @@ export default class ServiceListCheck {
 							const start_sec = start.epochMilliseconds / 1000
 							const end_sec = end.epochMilliseconds / 1000
 
-							const TimestampInterval = `${siEpURL}?sid=${serviceID}&start=${start_sec}&end=${end_sec}`
+							// inclusive=true also asks for the events that started before the window (A177r8 clause 6.5.2.2)
+							const TimestampInterval = `${siEpURL}?sid=${serviceID}&start=${start_sec}&end=${end_sec}&inclusive=true`
 							const cg_errors = nestedTraversal(errs, TimestampInterval, CG_REQUEST_SCHEDULE_TIME, `Timestamp filtered schedule: ${start}-${end}`)
 	/*dbg*/console.log(`traverse:: ${TimestampInterval} Timestamp ${start}-${end} lookup for serviceID ${serviceID}`)
 							if (cg_errors) this.#content_guide_validator.validateContentGuide(
@@ -2028,9 +2063,12 @@ export default class ServiceListCheck {
 								TimestampInterval, 
 								CG_REQUEST_SCHEDULE_TIME, 
 								cg_errors, 
-								{ ...cgOptions })
+								{ ...cgOptions, scheduleWindow: first ? coverage.window(start.epochMilliseconds, end.epochMilliseconds) : undefined })
 						}
 					}
+					// once the windows have been validated (deferred work completes in the order it is registered). A schedule
+					// shared by several services is reported once, for all of them
+					if (serviceID && first) deferTask(async () => this.#reportScheduleCoverage(coverage.evaluate(), errs))
 				}
 				// valudate boxset categories via GroupInfoEndpoint, either global or with service id specified
 				if (giEpURL) {

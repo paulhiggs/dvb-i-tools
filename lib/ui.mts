@@ -31,6 +31,8 @@ import { read_string_options } from "./globals.mts"
 import type { StatsType } from "./globals.mts"
 import { currentFetchPolicy } from "./safe_fetch.mts"
 import { skippedTraversal } from "./traversal.mts"
+import { COVERAGE_TOLERANCE_MS, DAY_STATES } from "./schedule_coverage.mts"
+import type { DayState } from "./schedule_coverage.mts"
 
 export const MODE_UNSPECIFIED = "none",
 	MODE_SL = "sl",
@@ -189,6 +191,17 @@ a.chip:hover { text-decoration: underline; }
 .listing > span.s-error::before, .listing > span.s-warn::before, .listing > span.s-info::before { color: var(--sev); font-weight: 600; }
 .listing > span.f { white-space: pre-wrap; padding-left: calc(6ch + 14px); font-family: var(--font-sans); font-size: var(--step--1); color: var(--sev); background: var(--sev-bg); box-shadow: inset 3px 0 0 var(--sev); }
 
+.cov-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 10px 18px; font-size: var(--step--1); color: var(--muted); border-bottom: 1px solid var(--line); align-items: center; }
+.cov-legend .cov { margin-right: 6px; vertical-align: -2px; }
+.cov-table td { vertical-align: middle; }
+.cov-table .n { text-align: right; font-variant-numeric: tabular-nums; }
+.cov-days { display: grid; grid-auto-flow: column; grid-auto-columns: 10px; gap: 2px; }
+.cov { display: inline-block; width: 10px; height: 14px; border-radius: 2px; background: var(--line); }
+.cov.full { background: var(--ok); }
+.cov.partial { background: var(--warn); }
+.cov.none { background: var(--error); }
+.cov.indeterminate { background: var(--line); }
+.cov.today { outline: 2px solid var(--fg); outline-offset: 1px; }
 .trav-summary { display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 12px 18px; font-size: var(--step--1); color: var(--muted); border-bottom: 1px solid var(--line); }
 .trav-summary b { color: var(--fg); font-variant-numeric: tabular-nums; }
 .filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 18px; border-bottom: 1px solid var(--line); align-items: center; }
@@ -467,6 +480,29 @@ function* reportNestedErrors(req: express.Request, errs: ErrorList | undefined):
 	yield `</tbody></table></div>${SECTION_END}`
 }
 
+// the coverage of the schedule of each service, as a row of days (issue #122): a strip of cells, green for a day the
+// programme events cover, orange for part of a day, red for none, and grey when a traversal limit left it indeterminate
+const COVERAGE_LABEL: Record<DayState, string> = { full: "fully covered", partial: "partly covered", none: "not covered", indeterminate: "indeterminate (traversal limit)" };
+
+function* reportScheduleCoverage(errs: ErrorList | undefined): Parts {
+	const services = errs?.scheduleCoverage;
+	if (!services || services.length == 0) return;
+	const today = new Date().toISOString().slice(0, 10);
+	const either = services[0].daysEitherSide;
+	const gaps = services.filter((s) => s.counts.partial + s.counts.none > 0).length;
+	yield sectionStart("coverage", "Schedule coverage", formatCount(services.length), gaps > 0 ? "s-warn" : "", `${either} days either side of today (UTC)`);
+	yield html`<div class="cov-legend">${DAY_STATES.map((state) => html`<span><span class="cov ${state}"></span>${COVERAGE_LABEL[state]}</span>`)}<span>The outlined day is today. A gap of up to ${COVERAGE_TOLERANCE_MS / 60000} minutes is not counted.</span></div>`;
+	yield `<div class="scroll"><table class="cov-table"><thead><tr><th scope="col">Service</th><th scope="col" class="n">Full</th><th scope="col" class="n">Partial</th><th scope="col" class="n">None</th><th scope="col" class="n">Indeterminate</th><th scope="col">Days</th></tr></thead><tbody>`;
+	for (const service of services) {
+		const { full, partial, none, indeterminate } = service.counts;
+		const label = `${service.service}: ${full} days fully covered, ${partial} partly, ${none} not covered, ${indeterminate} indeterminate`;
+		const days = service.days.map((d) => html`<span class="cov ${d.state}${d.date == today && raw(" today")}" title="${d.date}: ${COVERAGE_LABEL[d.state]}, ${formatCount(d.coveredMinutes)} minutes"></span>`);
+		const users = service.services.filter((s) => s != service.service);
+		yield html`<tr class="${partial + none > 0 ? "s-warn" : "s-ok"}"><td class="url">${service.service}${users.length > 0 && html`<br><span class="hint">for ${users.join(", ")}</span>`}</td><td class="n">${formatCount(full)}</td><td class="n">${formatCount(partial)}</td><td class="n">${formatCount(none)}</td><td class="n">${formatCount(indeterminate)}</td><td><div class="cov-days" role="img" aria-label="${label}">${days}</div></td></tr>`;
+	}
+	yield `</tbody></table></div>${SECTION_END}`;
+}
+
 // a duration, e.g. "850 ms", "15.2 s" or "7 min 12 s"
 const formatDuration = (ms: number): string => {
 	if (ms < 1000) return `${Math.round(ms)} ms`;
@@ -500,6 +536,7 @@ function* reportTiming(errs: ErrorList | undefined): Parts {
 function* results(req: express.Request, source: string, error: string[] | undefined, errs: ErrorList | undefined): Parts {
 	yield* tabulateResults(source, error, errs);
 	yield* reportNestedErrors(req, errs);
+	yield* reportScheduleCoverage(errs);
 	yield* reportTiming(errs);
 }
 
@@ -747,7 +784,7 @@ export async function drawForm(
 	const requestTypes = supportedRequests?.map((choice) => segmentChoice(ENTRY_FORM_REQUEST_TYPE_ID, choice.value, choice.value, choice.label, choice.value == form.cgmode));
 	const maxDepth = currentFetchPolicy().maxTraversalDepth; // the server's limit, which a request can lower
 	const traverse = modes.allowTraversal
-		&& html`<label class="check sl-options"><input type="checkbox" id="cbTraverse" name="traverse"${form.traverse && raw(" checked")}><span>Traverse referenced documents</span><span class="hint">Also validate the schedules, programme information, box sets and service lists that the document refers to.</span><span class="note">This can take a long time: 20 minutes or more for a large service list.</span></label><div class="traverse-limit sl-options"><label for="maxTraversal">Maximum documents</label><input type="text" id="maxTraversal" name="maxTraversal" inputmode="numeric" size="10" value="${form.maxTraversal}" aria-describedby="maxTraversal-hint"><span class="hint" id="maxTraversal-hint">The most documents to traverse: a number, or unlimited. Unlimited can take hours for a large service list.</span><label for="maxDepth">Maximum depth</label><input type="text" id="maxDepth" name="maxDepth" inputmode="numeric" size="10" value="${form.maxDepth}" aria-describedby="maxDepth-hint"><span class="hint" id="maxDepth-hint">The deepest level of documents to traverse into, up to ${maxDepth}. 1 validates only the documents the service list refers to.</span></div>`;
+		&& html`<label class="check sl-options"><input type="checkbox" id="cbTraverse" name="traverse"${form.traverse && raw(" checked")}><span>Traverse referenced documents</span><span class="hint">Also validate the schedules, programme information, box sets and service lists that the document refers to.</span><span class="note">This can take a long time: 20 minutes or more for a large service list.</span></label><div class="traverse-limit sl-options"><label for="maxTraversal">Maximum documents</label><input type="text" id="maxTraversal" name="maxTraversal" inputmode="numeric" size="10" value="${form.maxTraversal}" aria-describedby="maxTraversal-hint"><span class="hint" id="maxTraversal-hint">The most documents to traverse: a number, or unlimited. Unlimited can take hours for a large service list. Checking the schedule coverage of a service needs 228 documents (60 with Germany): with fewer, its days are indeterminate.</span><label for="maxDepth">Maximum depth</label><input type="text" id="maxDepth" name="maxDepth" inputmode="numeric" size="10" value="${form.maxDepth}" aria-describedby="maxDepth-hint"><span class="hint" id="maxDepth-hint">The deepest level of documents to traverse into, up to ${maxDepth}. 1 validates only the documents the service list refers to.</span></div>`;
 	const images = form.images;
 	const checks = form.signatureChecks;
 	const signatureChecks = html`<div class="choice" role="group" aria-labelledby="sigchecks-label"><span class="choice-label" id="sigchecks-label">Signature policy checks</span><div class="seg">${segmentChoice("signatureChecks", "both", "sigBoth", "Both", checks == "both")}${segmentChoice("signatureChecks", "connection", "sigConnection", "Certificates only", checks == "connection")}${segmentChoice("signatureChecks", "signature", "sigSignature", "Signatures only", checks == "signature")}${segmentChoice("signatureChecks", "none", "sigNone", "None", checks == "none")}</div><span class="hint">For references with a signature policy: Certificates checks the certificate chain of the HTTPS connection, and Signatures checks the X-JWS-Signature of the response.</span></div>`;

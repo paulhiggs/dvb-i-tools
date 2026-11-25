@@ -295,6 +295,26 @@ With traversal, the JSON summary has a `traversed` object:
 }
 ```
 
+###### Schedule coverage
+
+With traversal, the schedule of each service is requested in 6 hour windows, from 28 days before today to 28 days after (7 days with the Germany variant), as A177r8 clause 6.5.2.2 allows. The requests include `inclusive=true`, so that a server that supports it also returns the events that started before each window. The events of all of a service's windows give the coverage of each UTC day:
+- `full`: the programme events cover the whole day. A gap of up to 5 minutes is not counted.
+- `partial`: the events cover part of the day.
+- `none`: no events cover the day, including when its requests failed (the failures have their own errors, such as `VCG002`).
+- `indeterminate`: a window of the day was not requested because a traversal limit was reached (`TRAV002`, `TRAV003`), and the windows that were validated do not show a gap.
+
+A service whose schedule does not cover a day (`partial` or `none`) has a warning, `SL201`, with the number of days in each state and the dates. Each service needs 228 windows (60 with the Germany variant), so with the default `max_traversal` of 100 most days are `indeterminate`: use a higher maximum, or `unlimited`, to check the coverage.
+
+Several services can use the same service ID for their schedule (`ContentGuideServiceRef`). Their schedule is requested and reported once, with the services that use it in `services`. The HTML report has a **Schedule coverage** section, with a row of days for each schedule. The JSON summary and tree have a `scheduleCoverage` array, with an entry for each service:
+
+```json
+"scheduleCoverage": [{
+	"service": "tag:example.com,2026:service-1", "services": ["tag:example.com,2026:service-1"], "daysEitherSide": 7,
+	"counts": { "full": 13, "partial": 1, "none": 1, "indeterminate": 0 },
+	"days": [{ "date": "2026-11-17", "state": "full", "coveredMinutes": 1440 }, "..."]
+}]
+```
+
 `results=tree` also gives a `document` node for the validated document, with a node in `nested` for each document it traversed into. Each node has:
 - `url`, `type` and `description`
 - `severity`: `none`, `debug`, `information`, `warning`, `error` or `fatal`
