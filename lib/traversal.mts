@@ -44,6 +44,10 @@ export const traversalSkipped = (errs: ErrorList): void => currentObserver()?.sk
 export const traversalStarted = (errs: ErrorList): void => currentObserver()?.started?.(errs)
 export const traversalFinished = (errs: ErrorList): void => currentObserver()?.finished?.(errs)
 
+// the codes of a referenced document that is not retrieved because a traversal limit was reached: the depth (TRAV002) or
+// the maximum number of documents (TRAV003)
+export const TRAVERSAL_LIMITS = ["TRAV002", "TRAV003"];
+
 /**
  * the reason a referenced document was skipped (not retrieved) because a traversal limit was reached: the depth (TRAV002)
  * or the maximum number of documents (TRAV003). A skipped document is recorded with only that warning
@@ -54,5 +58,5 @@ export const traversalFinished = (errs: ErrorList): void => currentObserver()?.f
 export function skippedTraversal(errs: ErrorList): string | undefined {
 	const warnings = errs.codesReported("warnings");
 	if (warnings.length != 1 || errs.numFatals() + errs.numErrors() + errs.numInformationals() > 0 || errs.nestedErrors.length > 0) return undefined;
-	return ["TRAV002", "TRAV003"].includes(warnings[0][0]) ? warnings[0][0] : undefined;
+	return TRAVERSAL_LIMITS.includes(warnings[0][0]) ? warnings[0][0] : undefined;
 }

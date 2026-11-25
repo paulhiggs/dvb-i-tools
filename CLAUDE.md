@@ -99,7 +99,7 @@ Two kinds of input reach a validator, and they travel differently:
   - only the outermost document (`scope.depth == 0`) is archived with `log_prefix`
 
   `validator.mts` builds the request in one place for each entry point: `requestFromCheckForm()` for `/check`, and `requestFromQuery()` for the `/validate_*` endpoints. A new per-request choice is added to `ValidationRequest`, to these builders, and to the rule that reads it. Nothing needs to be passed on at traversal points.
-- **Values that belong to one document** are passed explicitly. Today these are only the content guide endpoints (`CG_Endpoints`: `progInfo_ep`, `grpInfo_ep`, `mEpisodes_ep`), which come from the service list that refers to the document.
+- **Values that belong to one document** are passed explicitly. These are the content guide endpoints (`CG_Endpoints`: `progInfo_ep`, `grpInfo_ep`, `mEpisodes_ep`), which come from the service list that refers to the document, and the `scheduleWindow` of a timestamp filtered schedule requested during traversal (`CG_ScheduleWindow`), whose events are added to the coverage of its service ([lib/schedule_coverage.mts](lib/schedule_coverage.mts), #122). The coverage is evaluated by a `deferTask()` registered after the service's windows, so it runs once they have all been validated.
 
 Other context is also carried by the scope:
 - **Signature policies:** `setSignaturePolicies()` / `signaturePoliciesInEffect()`

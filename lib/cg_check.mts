@@ -24,7 +24,9 @@ import { cgVersions, slVersions, dvbi } from "./DVB-I_definitions.mts"
 import { TVAschema, schemaURL } from "./data_locations.mts"
 
 import ErrorList, { WARNING, APPLICATION } from "./error_list.mts"
-import { nestedTraversal, traversalFinished, traversalSkipped, traversalStarted } from "./traversal.mts"
+import { nestedTraversal, TRAVERSAL_LIMITS, traversalFinished, traversalSkipped, traversalStarted } from "./traversal.mts"
+import { collectScheduleEvents } from "./schedule_coverage.mts"
+import type { ScheduleWindow } from "./schedule_coverage.mts"
 import type { ReportedErrorType } from "./error_list.mts"
 import { unEntity, DuplicatedValue, parameterCheck } from "./utils.mts"
 import { isHTTPURL, isDVBLocator, isUTCDateTime, isCRIDURI, isTAGURI } from "./pattern_checks.mts"
@@ -189,9 +191,16 @@ export type CG_Endpoints = {
 	mEpisodes_ep?: string // MoreEpisodesEndpoint
 }
 
+// a timestamp filtered schedule requested during traversal: the window of the service's schedule that it is for, whose
+// events are added to the service's coverage (issue #122)
+export type CG_ScheduleWindow = {
+	scheduleWindow?: ScheduleWindow
+}
+
 // the choices of a content guide validation (see ValidationRequest), and the endpoints of this document. For a document
-// reached by traversal, the choices of the validation that traversed into it are used, and only the endpoints are its own
-export type CG_Validator_Options = ValidationOptions & CG_Endpoints
+// reached by traversal, the choices of the validation that traversed into it are used, and only the endpoints (and the
+// schedule window) are its own
+export type CG_Validator_Options = ValidationOptions & CG_Endpoints & CG_ScheduleWindow
 
 
 export default class ContentGuideCheck {
@@ -3638,6 +3647,8 @@ export default class ContentGuideCheck {
 		}
 
 		const TVAMain = CG.root as XmlElement;
+		// the events of a schedule window requested during traversal count towards the coverage of its service (issue #122)
+		if (requestType == CG_REQUEST_SCHEDULE_TIME && options.scheduleWindow) collectScheduleEvents(TVAMain, options.scheduleWindow);
 		GetNodeLanguage(TVAMain, true, errs, "CG005");
 		const ProgramDescription = TVAMain.getAnyNs(tva.e_ProgramDescription);
 		if (!ProgramDescription) {
@@ -3778,8 +3789,15 @@ export default class ContentGuideCheck {
 	 */
 	/* public */
 	validateContentGuide(Location: XmlElement, requestUrl: string,  requestType: string, errs: ErrorList, options: CG_Validator_Options) : void {
+		// a schedule window that is not requested because a traversal limit is reached leaves the coverage of its day
+		// indeterminate (issue #122)
+		const window = options.scheduleWindow;
+		const limitReached = (code: string) => {
+			if (window && TRAVERSAL_LIMITS.includes(code)) window.coverage.skipped(window);
+		};
 		const limited = allowTraversal(requestUrl);
 		if (limited) {
+			limitReached(limited.code);
 			errs.addError({
 				code: limited.code,
 				type: WARNING,
@@ -3797,6 +3815,7 @@ export default class ContentGuideCheck {
 			validation = currentValidation();
 		deferRetrieval(() => retrieveTraversal(requestUrl), async ({ refused, response: resp, error }) => {
 			if (refused) {
+				limitReached(refused.code);
 				errs.addError({
 					code: refused.code,
 					type: WARNING,

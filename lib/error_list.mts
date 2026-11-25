@@ -10,6 +10,7 @@
 
 import { datatypeIs, DefaultProperty, HasProperty } from "./utils.mts"
 import type { ValidationTiming } from "./safe_fetch.mts"
+import type { ServiceCoverage } from "./schedule_coverage.mts"
 
 export const ERROR: string = "(E)",
 	DEBUG: string = "(D)",
@@ -134,6 +135,9 @@ export default class ErrorList {
 
 	// for the document a validation was requested for: how long the validation took, and the retrievals it made
 	timing?: ValidationTiming
+
+	// for a service list validated with traversal: the coverage of the schedule of each service (issue #122)
+	scheduleCoverage?: ServiceCoverage[]
 
 	/**
 	 * @param {string}           location     where the document came from (URL or file name)
