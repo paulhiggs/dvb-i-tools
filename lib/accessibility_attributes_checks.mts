@@ -350,7 +350,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes: Xm
 						{ name: tva.e_Coding, maxOccurs: Infinity },
 						{ name: tva.e_SubtitleLanguage },
 						{ name: tva.e_Purpose, minOccurs: 0, maxOccurs: Infinity },
-						// mandatory in TV-Anytime 2024 (A177r6, r7), optional from TV-Anytime 2026 (A177r8)
+						// mandatory in TV-Anytime 2024 (A177r6, r7), optional from TV-Anytime 2027 (A177r8)
 						tvaRevision < cgVersions.r3 ? { name: tva.e_SuitableForTTS } : { name: tva.e_SuitableForTTS, minOccurs: 0 },
 					]),
 					tvaEC.SubtitleAttributes,
@@ -360,7 +360,7 @@ export default function CheckAccessibilityAttributes(AccessibilityAttributes: Xm
 				);
 				// eslint-disable-next-line no-case-declarations
 				const hasAppInformation = checkAppInformation(child, errs, errCode, 52);
-				// Bugzilla 3421: only leaf terms from A177r8 (TV-Anytime 2026), and a warning for other terms before (issue #124)
+				// Bugzilla 3421: only leaf terms from A177r8 (TV-Anytime 2027), and a warning for other terms before (issue #124)
 				// eslint-disable-next-line no-case-declarations
 				const subtitleTerms: LeafTerms = tvaRevision >= cgVersions.r3 ? "required" : "warn";
 				checkCS(child, tva.e_Carriage, cs.SubtitleCarriageCS, subtitleTerms, errs, errCode, 53, carriages);

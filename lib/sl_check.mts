@@ -14,7 +14,7 @@ import SL_helpers from "./sl_check_helpers.mts"
 
 import { tva, tvaEA } from "./TVA_definitions.mts"
 import { sats } from "./DVB_definitions.mts"
-import { slVersions, dvbi, dvbisld, dvbiEC, dvbiEA, XMLdocumentType} from "./DVB-I_definitions.mts"
+import { slVersions, cgVersions, dvbi, dvbisld, dvbiEC, dvbiEA, XMLdocumentType} from "./DVB-I_definitions.mts"
 import type { A177Revision } from "./revisions.mts"
 
 import ErrorList, { WARNING, APPLICATION, INFORMATION } from "./error_list.mts"
@@ -492,7 +492,13 @@ export default class ServiceListCheck {
 		const documentNamespace = RelatedMaterial.documentNamespace();
 		checkTopElementsAndCardinality(
 			RelatedMaterial,
-			[{ name: tva.e_HowRelated }, { name: tva.e_MediaLocator, maxOccurs: Infinity }, { name: tva.e_AccessibilityAttributes, minOccurs: 0 }],
+			[
+				{ name: tva.e_HowRelated },
+				{ name: tva.e_MediaLocator, maxOccurs: Infinity },
+				{ name: tva.e_AccessibilityAttributes, minOccurs: 0 },
+				// <DeviceType> is in TV-Anytime 2027 (v1.15.1), used from A177r8 second edition (clause 5.2.3.1, issue #132)
+				...(SL_SchemaVersion(documentNamespace).tvAnytime >= cgVersions.r3 ? [{ name: tva.e_DeviceType, minOccurs: 0, maxOccurs: Infinity }] : []),
+			],
 			dvbiEC.RelatedMaterial,
 			false,
 			errs,
@@ -528,7 +534,7 @@ export default class ServiceListCheck {
 					errs.addError({
 						type: INFORMATION,
 						code: `${errCode}-6a`,
-						message: "third partuy device type in use",
+						message: "third party device type in use",
 						fragment: dt,
 						key: "device type",
 					})
@@ -668,13 +674,14 @@ export default class ServiceListCheck {
 	 * @returns {boolean} true if the node contains a <RelatedMaterial> element which signals an application else false
 	 */
 	/*private*/ #hasSignalledApplication(node: XmlElement) : boolean {
-		if (node) {
-			node.forEachNamedChildElement(tva.e_RelatedMaterial, (elem) => {
-				const hr = elem.get(tva.e_HowRelated);
-				if (hr && this.#validServiceApplication(hr as XmlElement, SL_SchemaVersion(node.documentNamespace()))) return true;
-			});
-		}
-		return false;
+		if (!node) return false;
+		const schemaVersion = SL_SchemaVersion(node.documentNamespace());
+		let found = false;
+		node.forEachNamedChildElement(tva.e_RelatedMaterial, (elem) => {
+			const hr = elem.getAnyNs(tva.e_HowRelated);
+			if (!found && hr && this.#validServiceApplication(hr, schemaVersion)) found = true;
+		});
+		return found;
 	}
 
 	/**

@@ -161,14 +161,13 @@ export const DVB_ParentalGuidanceCS: DataLocation = { file: join(path2007CS, idD
 const TVAnamespace: string = "urn:tva:metadata";
 const TVAfileprefix: string = "tva_metadata_3-1";
 
-//type TVAschemaVersions = "v2019" | "v2023" | "v2024" | "v2026";
+//type TVAschemaVersions = "v2019" | "v2023" | "v2024" | "v2027";
 type TVASchemaVersonInfo = { namespace: string, file: string };
 //type TVAschemaInfo = { [version in TVAschemaVersions]: TVASchemaVersonInfo }; 
 export const TVAschema = new class {
 	v2019: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2019`, file: `${schemasPath}/${TVAfileprefix}_2019.xsd` }
 	v2023: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2023`, file: `${schemasPath}/${TVAfileprefix}_2023.xsd` }
 	v2024: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2024`, file: `${schemasPath}/${TVAfileprefix}_2024.xsd` }
-	v2026: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2026`, file: `${schemasPath}/${TVAfileprefix}_v1141.xsd` }
 	v2027: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2027`, file: `${schemasPath}/${TVAfileprefix}_v1151.xsd` }
 };
 
