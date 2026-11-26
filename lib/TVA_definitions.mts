@@ -84,6 +84,7 @@ export const tva = new class {
 	e_DeliveryMode: string = "DeliveryMode"
 	e_DepictedCoordinates: string = "DepictedCoordinates"
 	e_DerivedFrom: string = "DerivedFrom"
+	e_DeviceType: string = "DeviceType"
 	e_DialogueEnhancementAttributes: string = "DialogueEnhancementAttributes"
 	e_Duration: string = "Duration"
 	e_EarlyPlayout: string = "EarlyPlayout"

@@ -90,6 +90,9 @@ export const TVA_SubitlePurposeCS: DataLocation = { file: join(pathTVA, idTVA_Su
 const idDVB_ContentSubjectCS: string = "DVBContentSubjectCS-2019.xml";
 export const DVBI_ContentSubject: DataLocation = { file: join(pathDVBI, idDVB_ContentSubjectCS), url: `${DVB_METADATA}${url2019CS}/${idDVB_ContentSubjectCS}` };
 
+const idDVB_DeviceTypeCS: string = "DVBDeviceTypeCS-2026.xml";
+export const DVBI_DeviceTypeCS: DataLocation = { file: join(pathDVBI, idDVB_DeviceTypeCS), url: `${DVB_METADATA}${url2026CS}/${idDVB_DeviceTypeCS}` };
+
 const idDVB_ServiceTypeCS: string = "DVBServiceTypeCS-2019.xml";
 export const DVBI_ServiceTypeCS: DataLocation = { file: join(pathDVBI, idDVB_ServiceTypeCS), url: `${DVB_METADATA}${url2022CS}/${idDVB_ServiceTypeCS}` };
 
@@ -166,6 +169,7 @@ export const TVAschema = new class {
 	v2023: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2023`, file: `${schemasPath}/${TVAfileprefix}_2023.xsd` }
 	v2024: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2024`, file: `${schemasPath}/${TVAfileprefix}_2024.xsd` }
 	v2026: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2026`, file: `${schemasPath}/${TVAfileprefix}_v1141.xsd` }
+	v2027: TVASchemaVersonInfo = { namespace: `${TVAnamespace}:2027`, file: `${schemasPath}/${TVAfileprefix}_v1151.xsd` }
 };
 
 export const DVBI_ServiceListSchema: { [key: string]: DataLocation } = {

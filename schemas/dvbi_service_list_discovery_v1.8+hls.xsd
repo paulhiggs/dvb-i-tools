@@ -3,8 +3,8 @@
 	xmlns:dvbisld="urn:dvb:metadata:servicelistdiscovery:2026"
 	xmlns:dvbi-types="urn:dvb:metadata:servicediscovery-types:2026"
 	xmlns:mpeg7="urn:tva:mpeg7:2008"
-	xmlns:tva="urn:tva:metadata:2026"  elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<import namespace="urn:tva:metadata:2026" schemaLocation="./tva_metadata_3-1_v1141.xsd"/>
+	xmlns:tva="urn:tva:metadata:2027"  elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<import namespace="urn:tva:metadata:2027" schemaLocation="./tva_metadata_3-1_v1151.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="./tva_mpeg7.xsd"/>
 	<import namespace="urn:dvb:metadata:servicediscovery-types:2026" schemaLocation="./dvbi_types_v1.2.xsd"/>
 	<import namespace="vnd:apple:mpegurl" schemaLocation="hls-url-8.0.xsd"/>

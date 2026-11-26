@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassificationScheme uri="urn:dvb:metadata:cs:DeviceTypeCS:2026" xmlns="urn:tva:mpeg7:2008" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:tva:mpeg7:2008 tva_mpeg7.xsd" xsi:type="ClassificationSchemeType">
+	<!-- ###################################################################### -->
+	<!-- DeviceType                                                             -->
+	<!-- Definition: Devices with different characteristics and interaction     -->
+	<!--             paradigms that may be supported by media assets,           -->
+	<!--             interactive applications in particular.                    -->
+	<!-- ###################################################################### -->
+	<Term termID="1">
+		<Name xml:lang="en">Leanback</Name>
+		<Definition xml:lang="en">A device such as a television or set-top box typically using a remote control for interaction, relying on up, down, left, right directional arrow, OK, and back key events input and for navigation.</Definition>
+	</Term>
+	<Term termID="2">
+		<Name xml:lang="en">Mobile</Name>
+		<Definition xml:lang="en">A handheld device such as a smartphone typically using a smaller portrait-oriented touchscreen for input and navigation.</Definition>
+	</Term>
+	<Term termID="3">
+		<Name xml:lang="en">Tablet</Name>
+		<Definition xml:lang="en">A device typicaly using a larger touchscreen for input and navigation.</Definition>
+	</Term>
+	<Term termID="4">
+		<Name xml:lang="en">Automotive</Name>
+		<Definition xml:lang="en">A device integrated into a vehicule, typically using a touchscreen, steering wheel buttons and voice, for input and navigation.</Definition>
+	</Term>
+</ClassificationScheme>

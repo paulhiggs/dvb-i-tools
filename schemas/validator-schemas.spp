@@ -54,6 +54,7 @@
 		<File FilePath="tva_metadata_3-1_2023.xsd" HomeFolder="Yes"/>
 		<File FilePath="tva_metadata_3-1_2024.xsd" HomeFolder="Yes"/>
 		<File FilePath="tva_metadata_3-1_v1141.xsd" HomeFolder="Yes"/>
+		<File FilePath="tva_metadata_3-1_v1151.xsd" HomeFolder="Yes"/>
 	</Folder>
 	<Folder FolderName="Entities" ExtStr="ent"/>
 </Project>

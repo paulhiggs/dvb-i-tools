@@ -96,9 +96,9 @@ import type { LoadedVersionInfo } from "./slr_data_versions.mts"
 import type { TVARevision } from "./revisions.mts"
 const CG_SchemaVersions: LoadedVersionInfo<TVARevision>[] = [
 	{
-		namespace: TVAschema.v2026.namespace,
+		namespace: TVAschema.v2027.namespace,
 		version: cgVersions.r3,
-		filename: TVAschema.v2026.file,
+		filename: TVAschema.v2027.file,
 		schema: undefined,
 		status: StandardStatus.CURRENT,
 	},

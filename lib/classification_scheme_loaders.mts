@@ -17,6 +17,7 @@ import {
 	TVA_ContentCS,
 	TVA_FormatCS,
 	DVBI_ContentSubject,
+	DVBI_DeviceTypeCS,
 	ISO3166,
 	TVA_PictureFormatCS,
 	DVBI_ServiceTypeCS,
@@ -168,6 +169,25 @@ export function LoadGenres(opts: LoadOptions): ClassificationScheme {
 		opts.useURLs
 			? { urls: [TVA_ContentCS.url!, TVA_FormatCS.url!, DVBI_ContentSubject.url!] }
 			: {	files: [TVA_ContentCS.file, TVA_FormatCS.file, DVBI_ContentSubject.file] },
+		opts
+	);
+	return cs;
+}
+
+
+/**
+ * Load device types
+ * 
+ * @param {LoadOptions} opts  options for loading data from URLs of Files
+ * @returns {ClassificationScheme} class containing the loaded device types
+ */
+export function LoadDeviceTypes(opts: LoadOptions): ClassificationScheme {
+	if (opts.verbose) console.log(chalk.yellow.underline("loading Device Types ..."));
+	const cs = new ClassificationScheme();
+	cs.loadCS(
+		opts.useURLs
+			? { url: DVBI_DeviceTypeCS.url! }
+			: {	file: DVBI_DeviceTypeCS.file },
 		opts
 	);
 	return cs;

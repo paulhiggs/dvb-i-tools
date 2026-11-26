@@ -47,6 +47,7 @@ import {
 	LoadLanguages,
 	LoadCountries,
 	LoadLinkedApplicationCS,
+	LoadDeviceTypes,
 } from "./classification_scheme_loaders.mts"
 import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts"
 import { DASH_IF_Content_Protection_List, UUID_type, CA_SYSTEM_ID_REGISTRY, KnownDRMScheme, KnownCASystemID} from "./identifiers.mts"
@@ -143,6 +144,7 @@ export type ValidatorOptions = LoadOptions & {
 	stcodings?: ClassificationScheme
 	stpurposes?: ClassificationScheme
 	videofmts?: ClassificationScheme
+	devicetypes?: ClassificationScheme
 }
 
 // the choices of a service list validation (see ValidationRequest). For a service list reached by traversal, the choices of
@@ -168,6 +170,7 @@ export default class ServiceListCheck {
 	#allowedAudioConformancePoints: ClassificationScheme
 	#allowedVideoConformancePoints: ClassificationScheme
 	#allowedApplicationTypes: ClassificationScheme
+	#allowedDeviceTypes: ClassificationScheme
 	#RecordingInfoCSvalues: ClassificationScheme
 
 	#content_guide_validator?: ContentGuideCheck
@@ -196,6 +199,7 @@ export default class ServiceListCheck {
 		this.#subtitlePurposes = opts?.stpurposes || LoadSubtitlePurposes(opts);
 		this.#allowedVideoSchemes = opts?.videofmts || LoadVideoCodecCS(opts);
 		this.#allowedApplicationTypes = opts?.appfmts || LoadLinkedApplicationCS(opts);
+		this.#allowedDeviceTypes = opts?.devicetypes || LoadDeviceTypes(opts)
 
 		this.#allowedPictureFormats = LoadPictureFormatCS(opts);
 		this.#allowedColorimetry = LoadColorimetryCS(opts);
@@ -204,6 +208,7 @@ export default class ServiceListCheck {
 		this.#allowedAudioConformancePoints = LoadAudioConformanceCS(opts);
 		this.#allowedVideoConformancePoints = LoadVideoConformanceCS(opts);
 		this.#RecordingInfoCSvalues = LoadRecordingInfoCS(opts);
+
 
 		LoadKnownCustomKeysRegistry(opts)
 
@@ -496,7 +501,8 @@ export default class ServiceListCheck {
 
 		let HowRelated: XmlElement | null = null;
 		const MediaLocators: XmlElement[] = [],
-			AccessibilityAttributes: XmlElement[] = [];
+			AccessibilityAttributes: XmlElement[] = [],
+			DeviceTypes: XmlElement[] = [];
 		RelatedMaterial.forEachChildElement((child) => {
 			switch (child.name) {
 				case tva.e_HowRelated:
@@ -507,6 +513,9 @@ export default class ServiceListCheck {
 					break;
 				case tva.e_AccessibilityAttributes:
 					AccessibilityAttributes.push(child);
+					break;
+				case tva.e_DeviceType:
+					DeviceTypes.push(child)
 					break;
 			}
 		});
@@ -533,7 +542,7 @@ export default class ServiceListCheck {
 						checkValidLogos(RelatedMaterial, Location, documentInfo, errs, `${errCode}-10`);
 					} else if (validServiceAgreementApp(HowRelated)) {
 						rc = HowRelated_href;
-						MediaLocators.forEach((locator) => this.#checkSignalledApplication(locator, Location, rc, documentInfo,errs));
+						MediaLocators.forEach((locator) => this.#checkSignalledApplication(locator, Location, rc, documentInfo, errs));
 					} else {
 						errs.addError(sl_InvalidHrefValue(HowRelated_href, HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-11`));
 						errs.errorDescription(SL_helpers.RMErrorDescription(`${errCode}-11`, dvbi.e_ServiceList, 14));
@@ -591,7 +600,7 @@ export default class ServiceListCheck {
 						});
 					else if (this.#validServiceInstanceApplication(HowRelated, SL_SchemaVersion(documentNamespace))) {
 						rc = HowRelated_href;
-						MediaLocators.forEach((locator) => this.#checkSignalledApplication(locator, Location, rc, documentInfo,errs));
+						MediaLocators.forEach((locator) => this.#checkSignalledApplication(locator, Location, rc, documentInfo, errs));
 					} else {
 						errs.addError(sl_InvalidHrefValue(HowRelated_href, HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-34`));
 						errs.errorDescription(SL_helpers.RMErrorDescription(`${errCode}-34`, dvbi.e_ServiceInstance, 16));

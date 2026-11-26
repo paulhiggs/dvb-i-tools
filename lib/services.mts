@@ -11,6 +11,7 @@
  */
 
 import {
+	LoadDeviceTypes,
 	LoadGenres,
 	LoadRatings,
 	LoadVideoCodecCS,
@@ -70,6 +71,7 @@ export function createServices(config: ValidatorConfig): ValidatorServices {
 		const audioFormats = LoadAudioCodecCS(load);
 		const audioPresentation = LoadAudioPresentationCS(load);
 		const linkedApplicationTypes = LoadLinkedApplicationCS(load);
+		const deviceTypes = LoadDeviceTypes(load);
 
 		if (cg)
 			cgcheck = new ContentGuideCheck({
@@ -86,6 +88,7 @@ export function createServices(config: ValidatorConfig): ValidatorServices {
 				stcodings: subtitleCodings,
 				stpurposes: subtitlePurposes,
 				videofmts: videoFormats,
+				devicetypes: deviceTypes,
 			});
 
 		// the service list checker traverses into content guide documents with the content guide checker
@@ -105,6 +108,7 @@ export function createServices(config: ValidatorConfig): ValidatorServices {
 					stpurposes: subtitlePurposes,
 					videofmts: videoFormats,
 					appfmts: linkedApplicationTypes,
+					devicetypes: deviceTypes,
 				},
 				cgcheck
 			);
