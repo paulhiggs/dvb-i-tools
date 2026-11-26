@@ -405,6 +405,7 @@ export const tvaEC = new class {
 		tva.e_SocialMediaReference,
 		tva.e_SourceMediaLocator,
 		tva.e_AccessibilityAttributes,
+		tva.e_DeviceType,
 	]
 	Schedule: string[] = [tva.e_ScheduleEvent]
 	ScheduleEvent: string[] = [
