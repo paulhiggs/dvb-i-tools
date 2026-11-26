@@ -520,6 +520,28 @@ export default class ServiceListCheck {
 			}
 		});
 
+		const found_types = new Set<string>()
+		DeviceTypes.forEach((dt) => {
+			const device_type = dt.attrAnyNsValueOr(tva.a_href)
+			if (device_type) {
+				if (!this.#allowedDeviceTypes.has(device_type)) 
+					errs.addError({
+						type: INFORMATION,
+						code: `${errCode}-6a`,
+						message: "third partuy device type in use",
+						fragment: dt,
+						key: "device type",
+					})
+				if (DuplicatedValue(found_types, device_type)) 
+					errs.addError({
+						code: `${errCode}-6b`,
+						message: `duplicate value for ${tva.e_DeviceType.elementize()}`,
+						fragment: dt,
+						key: "device type",
+					})
+			}
+		})
+
 		if (!HowRelated) {
 			errs.addError({
 				code: `${errCode}-2`,
