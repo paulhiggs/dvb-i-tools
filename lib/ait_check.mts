@@ -22,10 +22,11 @@ import { SchemaCheck, SchemaLoad } from "./schema_checks.mts"
 import { XMLAIT_Schema, schemaURL } from "./data_locations.mts"
 import document_logger from "./logger.mts"
 import { isHTTPURL, isHTTSPURL } from "./pattern_checks.mts"
-import { allowTraversal, currentRequest, deferRetrieval, retrieveTraversal, signaturePoliciesInEffect, ValidationScope } from "./safe_fetch.mts"
-import type { FetchedResponse, ValidationOptions } from "./safe_fetch.mts"
+import { allowTraversal, claimTraversal, currentRequest, currentValidation, deferRetrieval, safeFetch, signaturePoliciesInEffect, ValidationScope } from "./safe_fetch.mts"
+import type { ValidationOptions } from "./safe_fetch.mts"
 import { nestedTraversal, traversalFinished, traversalSkipped, traversalStarted } from "./traversal.mts"
-import { checkSignedLocation } from "./resource_checks.mts"
+import { checkSignedLocation, retrieveResource } from "./resource_checks.mts"
+import type { ResourceOutcome } from "./resource_checks.mts"
 import { dvbi } from "./DVB-I_definitions.mts"
 import { StandardStatus } from "./globals.mts"
 import type { StatsType, LoadOptions } from "./globals.mts"
@@ -507,7 +508,7 @@ export default class XmlAitCheck {
 	 * the checks of the response that delivered a referenced XML AIT: its Content-Type (A177r8 clause 5.2.4.1), and for a
 	 * Template XML AIT how long it can be cached (A177r8 clause 5.2.4.4.5)
 	 */
-	/*private*/ #checkResponse(resp: FetchedResponse, url: string, role: string, Location: XmlElement, errs: ErrorList): void {
+	/*private*/ #checkResponse(resp: ResourceOutcome, url: string, role: string, Location: XmlElement, errs: ErrorList): void {
 		const mediaType = (resp.contentType ?? "").split(";")[0].trim().toLowerCase();
 		if (mediaType != mhp.XML_AIT_CONTENT_TYPE)
 			errs.addError({
@@ -551,22 +552,37 @@ export default class XmlAitCheck {
 			traversalSkipped(nested);
 			return;
 		}
-		deferRetrieval(() => retrieveTraversal(url), async ({ refused, response: resp, error }) => {
+		// the AIT is counted against the traversal limits, and retrieved with the same retrieval as the checks of its reference
+		// (content digest, signature policy), so that it is requested once
+		const validation = currentValidation();
+		const retrieve = async (): Promise<{ refused?: { code: string; message: string }; outcome?: ResourceOutcome }> => {
+			const refused = claimTraversal(url);
+			if (refused) return { refused };
+			const outcome = await retrieveResource(url, validation, true);
+			// the first retrieval of the URL did not keep its content (it was retrieved for another reason, e.g. as an image)
+			if (outcome.ok && outcome.text == undefined) {
+				const { response } = await safeFetch(url, validation);
+				return { outcome: response?.ok ? { ...outcome, text: response.text() } : outcome };
+			}
+			return { outcome };
+		};
+		deferRetrieval(retrieve, async ({ refused, outcome }) => {
 			if (refused) {
 				nested.addError({ code: refused.code, type: WARNING, message: refused.message, fragment: Location, key: keys.k_Traversal });
 				traversalSkipped(nested);
 				return;
 			}
 			traversalStarted(nested);
-			if (error)
-				nested.addError({ code: "AIT030", message: `cannot retrieve the XML AIT ${url.quote()}, error=${error}`, fragment: Location, key: keys.k_Traversal });
-			if (resp) {
-				if (!resp.ok)
-					nested.addError({ code: "AIT031", message: `error retrieving the XML AIT ${url.quote()} - ${resp.status} ${resp.statusText}`, fragment: Location, key: keys.k_Traversal });
-				else {
-					this.#checkResponse(resp, url, role, Location, nested);
-					await this.doValidateXmlAit(resp.text(), role, nested, {}, reference);
-				}
+			if (outcome?.error)
+				nested.addError({ code: "AIT030", message: `cannot retrieve the XML AIT ${url.quote()}, error=${outcome.error}`, fragment: Location, key: keys.k_Traversal });
+			else if (outcome && !outcome.ok)
+				nested.addError({ code: "AIT031", message: `error retrieving the XML AIT ${url.quote()} - ${outcome.status} ${outcome.statusText}`, fragment: Location, key: keys.k_Traversal });
+			else if (outcome) {
+				const text = outcome.text ?? "";
+				// the content is not needed again (the URL is only validated once), so it is not kept until the validation finishes
+				delete outcome.text;
+				this.#checkResponse(outcome, url, role, Location, nested);
+				await this.doValidateXmlAit(text, role, nested, {}, reference);
 			}
 			traversalFinished(nested);
 		});

@@ -22,6 +22,7 @@ import type { ImageInfo } from "./image_format.mts"
 import { checkInlineImage, reportImage, reportImageScaling, scaledURL, scalingWidth } from "./image_checks.mts"
 import { contentDigestCheck, parseInlineImageData } from "./digest_validation.mts"
 import { dvbi } from "./DVB-I_definitions.mts"
+import { tva } from "./TVA_definitions.mts"
 import { APPLICATION, INFORMATION, WARNING } from "./error_list.mts"
 import ErrorList from "./error_list.mts"
 import { keys } from "./common_errors.mts"
@@ -46,6 +47,11 @@ export type ResourceOutcome = {
 	image?: ImageInfo; // the image properties read from the content, for a 2xx response
 	url?: string; // the URL the response came from, after any redirects
 	signature?: SignatureEvaluation; // the X-JWS-Signature of the response, when response signatures are checked
+	expires?: string | null; // the Expires response header
+	cacheControl?: string | null; // the Cache-Control response header
+	// the content, only when the retrieval is asked to keep it: an XML AIT that is also validated (issue #134), which removes
+	// it once it has been validated, so that it is not kept until the validation finishes
+	text?: string;
 };
 
 export const digestsOf = (content: Buffer | string): Digests => ({
@@ -56,19 +62,29 @@ export const digestsOf = (content: Buffer | string): Digests => ({
 /**
  * retrieve a resource, once per validation
  *
- * @param {string}           url         the URL of the resource
- * @param {ValidationHandle} validation  the validation the retrieval belongs to (see sharedRetrieval())
+ * @param {string}           url          the URL of the resource
+ * @param {ValidationHandle} validation   the validation the retrieval belongs to (see sharedRetrieval())
+ * @param {boolean}          keepContent  keep the content in the result (only the first retrieval of a URL decides)
  * @returns {Promise<ResourceOutcome>} the result of the retrieval. It never rejects
  */
-export function retrieveResource(url: string, validation?: ValidationHandle): Promise<ResourceOutcome> {
+export function retrieveResource(url: string, validation?: ValidationHandle, keepContent: boolean = false): Promise<ResourceOutcome> {
 	return sharedRetrieval(
 		`resource ${normaliseURL(url)}`,
 		async (): Promise<ResourceOutcome> => {
 			const { response, error } = await safeFetch(url, validation);
 			if (!response) return { ok: false, error };
-			const outcome: ResourceOutcome = { ok: response.ok, status: response.status, statusText: response.statusText, contentType: response.contentType, url: response.url };
+			const outcome: ResourceOutcome = {
+				ok: response.ok,
+				status: response.status,
+				statusText: response.statusText,
+				contentType: response.contentType,
+				url: response.url,
+				expires: response.expires,
+				cacheControl: response.cacheControl,
+			};
 			if (response.ok) {
 				const content = response.buffer();
+				if (keepContent) outcome.text = response.text();
 				outcome.digests = digestsOf(content);
 				outcome.image = readImageInfo(content);
 				// the signature is evaluated now, while the content is available, and compared with any policy when reported
@@ -174,9 +190,11 @@ export function checkReferencedResource(element: XmlElement, documentInfo: Found
 
 	const validation = currentValidation(),
 		scaling = imageFirst && images == "scaled";
+	// an XML AIT that is also validated (aits) keeps its content, so that its validation uses this retrieval (issue #134)
+	const keepContent = currentRequest().aits && element.attrAnyNsValueOr(tva.a_contentType) == dvbi.XML_AIT_CONTENT_TYPE;
 	if (signed.certificates) prefetchConnection(location, validation);
 	const work = (async () => {
-		const original = await retrieveResource(location, validation);
+		const original = await retrieveResource(location, validation, keepContent);
 		const target = scaling ? scalingWidth(original) : undefined,
 			request = target ? scaledURL(location, target) : undefined;
 		const scaled = request ? await retrieveResource(request, validation) : undefined;
