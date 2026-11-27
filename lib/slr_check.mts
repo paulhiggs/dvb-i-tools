@@ -30,6 +30,7 @@ import { checkValidLogos, ValidateAnySignaturePolicy } from "./related_material_
 import { checkAttributes, SchemaCheck, SchemaVersionCheck, SchemaLoad, checkTopElementsAndCardinality } from "./schema_checks.mts"
 import { LoadSLschemas, validServiceListLogo, isA177specification_URN, a177versionFromURN } from "./sl_data_versions.mts"
 import { LoadMarkets } from "./markets.mts"
+import { refusedRevision } from "./market_checks.mts"
 import { LoadSLRschemas, SLR_GetSchema, SLR_SchemaVersion, SLR_SchemaSpecVersion } from "./slr_data_versions.mts"
 import { tva, tvaEA } from "./TVA_definitions.mts"
 import { parameterCheck, DefaultProperty } from "./utils.mts"
@@ -225,7 +226,7 @@ export default class ServiceListRegistryCheck {
 				clause: "A177 Table 12 and clause 5.2.6.1",
 				description: "Additional material related to the service. Use to signal the following: Service list logos",
 			});
-		checkValidLogos(RelatedMaterial, "Service List Registry", documentInfo, errs, `${errCode}-7`);
+		checkValidLogos(RelatedMaterial, "Service List Registry", documentInfo, errs, `${errCode}-7`, "serviceListLogo");
 	}
 
 	/* private */ #CheckOrganisationType(Organisation: XmlElement, errs: ErrorList, errCode: string) {
@@ -475,6 +476,8 @@ export default class ServiceListRegistryCheck {
 
 		// the market settings of its revision apply to the findings of the registry (issue #119)
 		setDocumentRevision(SLR_SchemaVersion(SLR.root.namespaceUri));
+		// a revision that the market does not permit is reported, and the response is not validated (decision 29)
+		if (refusedRevision(SLR_SchemaVersion(SLR.root.namespaceUri), SLR.root as XmlElement, errs)) return;
 		if (!this.#doSchemaVerification(SLR as XmlDocument, errs, "SR005", request.report_schema_version)) {
 			errs.addError({
 				code: "SR010",

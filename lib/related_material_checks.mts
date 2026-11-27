@@ -25,6 +25,7 @@ import { cgVersions } from "./DVB-I_definitions.mts"
 import { checkReferencedResource, ValidateAnySignaturePolicy } from "./resource_checks.mts"
 
 import type { FoundDocumentItems } from "./sl_check.mts"
+import type { MarketImageKind } from "./markets.mts"
 
 // the signature policy check is with the other checks of referenced resources, and is also available from here
 export { ValidateAnySignaturePolicy }
@@ -146,7 +147,7 @@ function validateImageRelatedMaterial(RelatedMaterial: XmlElement, location: str
 				});
 			}
 		}
-		checkReferencedResource(MediaUri, documentInfo, errs, { digest: `${errCode}-25`, policy: `${errCode}-26` }, { contentType: MediaUri_contentType });
+		checkReferencedResource(MediaUri, documentInfo, errs, { digest: `${errCode}-25`, policy: `${errCode}-26` }, { contentType: MediaUri_contentType, kind: "promotionalStillImage" });
 
 		if (!isHTTPURL(MediaUri.content) && !isDataURI(MediaUri.content))
 			errs.addError({
@@ -200,8 +201,9 @@ export function ValidatePromotionalStillImage(RelatedMaterial: XmlElement, locat
  *                  signaturePolicies     Signature Verification policies defined in this service list
  * @param {ErrorList}  errs               The class where errors and warnings relating to the service list processing are stored
  * @param {string}     errCode            Error code prefix for reporting
+ * @param {MarketImageKind} kind          the kind of logo, for the sizes that a market stipulates (issue #119), if it has one
  */
-export function checkValidLogos(RelatedMaterial: XmlElement, location: string, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string) : void {
+export function checkValidLogos(RelatedMaterial: XmlElement, location: string, documentInfo: FoundDocumentItems, errs: ErrorList, errCode: string, kind?: MarketImageKind) : void {
 	if (!RelatedMaterial) return;
 
 	const specifiedMediaTypes: string[] = [];
@@ -226,7 +228,7 @@ export function checkValidLogos(RelatedMaterial: XmlElement, location: string, d
 				specifiedMediaTypes.push(MediaURI_contentType);
 			}
 
-			checkReferencedResource(MediaUri, documentInfo, errs, { digest: `${errCode}-6`, policy: `${errCode}-7` }, { contentType: MediaURI_contentType });
+			checkReferencedResource(MediaUri, documentInfo, errs, { digest: `${errCode}-6`, policy: `${errCode}-7` }, { contentType: MediaURI_contentType, kind });
 
 			if (!isHTTPURL(MediaUri.content) && !isInlineImage(MediaUri.content)) 
 				errs.addError(InvalidURL(MediaUri.content, MediaUri, tva.e_MediaUri.elementize(), `${errCode}-8`));

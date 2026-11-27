@@ -23,6 +23,7 @@ import { checkInlineImage, reportImage, reportImageScaling, scaledURL, scalingWi
 import { contentDigestCheck, parseInlineImageData } from "./digest_validation.mts"
 import { dvbi } from "./DVB-I_definitions.mts"
 import { tva } from "./TVA_definitions.mts"
+import type { MarketImageKind } from "./markets.mts"
 import { APPLICATION, INFORMATION, WARNING } from "./error_list.mts"
 import ErrorList from "./error_list.mts"
 import { keys } from "./common_errors.mts"
@@ -168,9 +169,10 @@ export type ResourceCheckCodes = {
  * @param {FoundDocumentItems} documentInfo  the signature policies defined in the document
  * @param {ErrorList}          errs          where findings are reported
  * @param {ResourceCheckCodes} codes         the error code prefixes
- * @param {object}             image         when the resource is an image: its signalled MediaUri@contentType
+ * @param {object}             image         when the resource is an image: its signalled MediaUri@contentType, and its kind
+ *                                           when a market can stipulate its size (issue #119)
  */
-export function checkReferencedResource(element: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, codes: ResourceCheckCodes, image?: { contentType: string | null }): void {
+export function checkReferencedResource(element: XmlElement, documentInfo: FoundDocumentItems, errs: ErrorList, codes: ResourceCheckCodes, image?: { contentType: string | null; kind?: MarketImageKind }): void {
 	const compareDigests = contentDigestCheck(element, errs, codes.digest);
 	const policy = codes.policy ? ValidateAnySignaturePolicy(element, documentInfo, errs, codes.policy) : undefined;
 	if (!element) return;
@@ -180,7 +182,7 @@ export function checkReferencedResource(element: XmlElement, documentInfo: Found
 		checkingImage = image != undefined && currentFetchPolicy().checkImages && images != "no";
 	if (isDataURI(location)) {
 		compareDigests?.(digestsOf(parseInlineImageData(element.content)));
-		if (checkingImage) checkInlineImage(element, image!.contentType, errs);
+		if (checkingImage) checkInlineImage(element, image!.contentType, errs, image!.kind);
 		return;
 	}
 
@@ -204,7 +206,7 @@ export function checkReferencedResource(element: XmlElement, documentInfo: Found
 		() => work,
 		async ({ original, target, scaled }) => {
 			compareDigests?.(original.ok ? (original.digests ?? null) : null);
-			if (imageFirst && reportImage(original, location, image!.contentType, element, errs) && target && scaled)
+			if (imageFirst && reportImage(original, location, image!.contentType, element, errs, image!.kind) && target && scaled)
 				reportImageScaling(original, target, scaled, location, element, errs);
 			await reportSigned(original, location, policy, signed, element, errs, validation);
 		}

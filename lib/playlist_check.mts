@@ -16,6 +16,7 @@ import { LoadSLschemas, SL_GetSchema, SL_SchemaVersion } from "./sl_data_version
 import document_logger from "./logger.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
 import { currentRequest, setDocumentRevision, ValidationScope } from "./safe_fetch.mts"
+import { refusedRevision } from "./market_checks.mts"
 import type { ValidationOptions } from "./safe_fetch.mts"
 
 import type { StatsType, LoadOptions } from "./globals.mts"
@@ -102,6 +103,8 @@ export default class PlaylistCheck {
 		const ns = PL.root.namespaceUri;
 		// the market settings of its revision apply to the findings of the playlist (issue #119)
 		setDocumentRevision(SL_SchemaVersion(ns));
+		// a revision that the market does not permit is reported, and the playlist is not validated (decision 29)
+		if (refusedRevision(SL_SchemaVersion(ns), PL.root, errs)) return;
 
 		if (!this.#doSchemaVerification(PL as XmlDocument, errs, "PL005", request.report_schema_version)) {
 			errs.addError({

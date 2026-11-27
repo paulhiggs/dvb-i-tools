@@ -42,6 +42,18 @@ export type MarketParameters = {
 	};
 };
 
+// the kinds of image a market can stipulate a size for (decision 11 of issue #119), by their HowRelated
+export const IMAGE_KINDS = ["serviceListLogo", "serviceLogo", "contentGuideSourceLogo", "promotionalStillImage"] as const;
+export type MarketImageKind = (typeof IMAGE_KINDS)[number];
+// what a market stipulates for a kind of image: its exact width, and optionally height (decision 27), and the largest file
+// size it recommends (decision 28)
+export type MarketImage = Readonly<{ width?: number; height?: number; maxBytes?: number }>;
+const IMAGE_KEYS = ["width", "height", "maxBytes"];
+
+// the rules a market can enable, each with its own codes (market_checks.mts)
+export const MARKET_RULES = ["serviceLogoRequired"] as const;
+export type MarketRule = (typeof MARKET_RULES)[number];
+
 // the severity a market gives a code instead of A177's, or "off" for findings that do not apply to the market (they are not
 // reported at all)
 export type MarketSeverity = "error" | "warning" | "information" | "off";
@@ -52,7 +64,7 @@ export const MARKET_SEVERITIES: readonly MarketSeverity[] = ["error", "warning",
  * the XSD validation, whose findings all have one code for each type of document. A market relaxes a schema rule with its
  * own schema instead. Each is the code given to SchemaLoad() or SchemaCheck(), which add suffixes to it (SL001-1, SL005:8)
  */
-export const NOT_OVERRIDABLE: readonly string[] = ["SL001", "SR001", "CG001", "PL001", "AIT001", "SL005", "SR005", "CG003", "PL005", "AIT005"];
+export const NOT_OVERRIDABLE: readonly string[] = ["SL001", "SR001", "CG001", "PL001", "AIT001", "SL005", "SR005", "CG003", "PL005", "AIT005", "MKT001"];
 
 // a severity key: a code (SL264), which starts with the letters and 3 digits that every code has, or a prefix of codes
 // followed by * (SI020-1-*, SL24*), which has at least the letters and one digit
@@ -65,6 +77,8 @@ export type MarketSettings = Readonly<{
 	schemas: Readonly<{ serviceList?: MarketSchema; serviceListRegistry?: MarketSchema }>;
 	parameters: Readonly<{ [P in keyof MarketParameters]: Readonly<MarketParameters[P]> }>;
 	severity: Readonly<Record<string, MarketSeverity>>; // the severity of codes, by code or prefix* (see marketSeverity())
+	images: Readonly<Partial<Record<MarketImageKind, MarketImage>>>; // what the market stipulates for each kind of image
+	rules: Readonly<Partial<Record<MarketRule, boolean>>>; // the rules the market enables
 }>;
 
 // the A177 baseline: no market. A market file holds only what a market changes
@@ -76,12 +90,16 @@ export const MARKET_DEFAULTS: MarketSettings = deepFreeze({
 		lcn: { min: dvbi.MIN_LCN, max: dvbi.MAX_LCN }, // A177 table 23
 	},
 	severity: {},
+	images: {},
+	rules: {},
 });
 
 export type Market = Readonly<{
 	id: string;
 	name: string;
 	description?: string;
+	permitted?: readonly A177Revision[]; // the A177 revisions the market permits, in order (decision 29), or undefined for all
+	permits: (revision: A177Revision) => boolean;
 	settings: (revision: A177Revision) => MarketSettings;
 }>;
 
@@ -97,8 +115,8 @@ const PARAMETER_CHECKS: { [P in keyof MarketParameters]: { [Q in keyof MarketPar
 };
 const SCHEMA_KINDS = ["serviceList", "serviceListRegistry"] as const;
 
-const MARKET_KEYS = ["id", "name", "description", "revisions"],
-	RANGE_KEYS = ["from", "to", "schemas", "parameters", "severity"];
+const MARKET_KEYS = ["id", "name", "description", "permitted", "revisions"],
+	RANGE_KEYS = ["from", "to", "schemas", "parameters", "severity", "images", "rules"];
 
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value == "object" && value != null && !Array.isArray(value);
 
@@ -166,6 +184,19 @@ export function parseMarkets(text: string, source: string): readonly Market[] {
 			.forEach((k) => problems.push(`${where}: unknown property ${k.quote()}`));
 		if (typeof m.name != "string" || m.name.length == 0) problems.push(`${where}: name must be given`);
 		if (m.description != undefined && typeof m.description != "string") problems.push(`${where}: description must be text`);
+		// the revisions the market permits: a list of revision names, or every revision when there is none
+		let permitted: A177Revision[] | undefined = undefined;
+		if (m.permitted != undefined) {
+			if (!Array.isArray(m.permitted) || m.permitted.length == 0) problems.push(`${where}: permitted must be a list of A177 revisions`);
+			else {
+				const revisions = m.permitted.map((name: unknown) => {
+					const revision = revisionNamed(name);
+					if (!revision) problems.push(`${where}: permitted revision ${JSON.stringify(name)} is not a revision of A177 (r0 to r${A177Revision.latest.level}, or latest)`);
+					return revision;
+				});
+				permitted = A177Revision.all.filter((r) => revisions.includes(r));
+			}
+		}
 		if (!Array.isArray(m.revisions) || m.revisions.length == 0) {
 			problems.push(`${where}: revisions must be a list of revision ranges`);
 			return undefined;
@@ -178,6 +209,8 @@ export function parseMarkets(text: string, source: string): readonly Market[] {
 			schemas: Record<string, MarketSchema>;
 			parameters: Record<string, Record<string, unknown>>;
 			severity: Record<string, MarketSeverity>;
+			images: Record<string, MarketImage>;
+			rules: Record<string, boolean>;
 		};
 		const ranges: Range[] = [];
 		m.revisions.forEach((r: unknown, j: number) => {
@@ -194,8 +227,9 @@ export function parseMarkets(text: string, source: string): readonly Market[] {
 			if (!from) problems.push(`${rwhere}: from must be a revision of A177 (r0 to r${A177Revision.latest.level}, or latest)`);
 			if (!to) problems.push(`${rwhere}: to must be a revision of A177 (r0 to r${A177Revision.latest.level}, or latest)`);
 			if (from && to && from > to) problems.push(`${rwhere}: from is after to`);
+			else if (from && to && permitted && !permitted.some((p) => from <= p && p <= to)) problems.push(`${rwhere}: includes no revision that the market permits`);
 
-			const range: Range = { from: from ?? A177Revision.unknown, to: to ?? A177Revision.unknown, schemas: {}, parameters: {}, severity: {} };
+			const range: Range = { from: from ?? A177Revision.unknown, to: to ?? A177Revision.unknown, schemas: {}, parameters: {}, severity: {}, images: {}, rules: {} };
 			if (r.schemas != undefined) {
 				if (!isObject(r.schemas)) problems.push(`${rwhere}: schemas must be an object`);
 				else
@@ -237,6 +271,33 @@ export function parseMarkets(text: string, source: string): readonly Market[] {
 						else range.severity[key] = value as MarketSeverity;
 					});
 			}
+			if (r.images != undefined) {
+				if (!isObject(r.images)) problems.push(`${rwhere}: images must be an object`);
+				else
+					Object.entries(r.images).forEach(([kind, value]) => {
+						const iwhere = `${rwhere}: image ${kind.quote()}`;
+						if (!(IMAGE_KINDS as readonly string[]).includes(kind)) problems.push(`${rwhere}: unknown kind of image ${kind.quote()}`);
+						else if (!isObject(value)) problems.push(`${iwhere} must be an object`);
+						else {
+							const unknown = Object.keys(value).filter((k) => !IMAGE_KEYS.includes(k));
+							unknown.forEach((k) => problems.push(`${iwhere}: unknown property ${k.quote()}`));
+							const bad = IMAGE_KEYS.filter((k) => value[k] != undefined && positiveWholeNumber(value[k]));
+							bad.forEach((k) => problems.push(`${iwhere}: ${k} must be a positive whole number`));
+							if (value.height != undefined && value.width == undefined) problems.push(`${iwhere}: a height needs a width`);
+							else if (value.width == undefined && value.maxBytes == undefined) problems.push(`${iwhere}: needs a width or maxBytes`);
+							else if (unknown.length == 0 && bad.length == 0) range.images[kind] = value as MarketImage;
+						}
+					});
+			}
+			if (r.rules != undefined) {
+				if (!isObject(r.rules)) problems.push(`${rwhere}: rules must be an object`);
+				else
+					Object.entries(r.rules).forEach(([rule, value]) => {
+						if (!(MARKET_RULES as readonly string[]).includes(rule)) problems.push(`${rwhere}: unknown rule ${rule.quote()}`);
+						else if (typeof value != "boolean") problems.push(`${rwhere}: rule ${rule.quote()} must be true or false`);
+						else range.rules[rule] = value;
+					});
+			}
 			ranges.push(range);
 		});
 
@@ -248,16 +309,21 @@ export function parseMarkets(text: string, source: string): readonly Market[] {
 			const schemas: Record<string, MarketSchema> = {};
 			const parameters = structuredClone(MARKET_DEFAULTS.parameters) as Record<string, Record<string, unknown>>;
 			const severity: Record<string, MarketSeverity> = {};
+			const images: Record<string, MarketImage> = {},
+				rules: Record<string, boolean> = {};
 			ranges
 				.filter((range) => range.from <= revision && revision <= range.to)
 				.forEach((range) => {
 					Object.assign(schemas, range.schemas);
 					Object.entries(range.parameters).forEach(([group, values]) => Object.assign(parameters[group], values));
 					Object.assign(severity, range.severity);
+					// a later range replaces what an earlier one stipulates for a kind of image
+					Object.assign(images, range.images);
+					Object.assign(rules, range.rules);
 				});
 			const { min, max } = parameters.lcn as MarketParameters["lcn"];
 			if (min > max) lcnAbove.push(`r${revision.level} (${min} > ${max})`);
-			byRevision.set(revision, deepFreeze({ market: id, schemas, parameters, severity } as unknown as MarketSettings));
+			byRevision.set(revision, deepFreeze({ market: id, schemas, parameters, severity, images, rules } as unknown as MarketSettings));
 		});
 		if (lcnAbove.length > 0) problems.push(`${where}: "lcn.min" is above "lcn.max" for ${lcnAbove.join(", ")}`);
 		// a document whose revision is not known has the A177 baseline
@@ -266,6 +332,8 @@ export function parseMarkets(text: string, source: string): readonly Market[] {
 			id,
 			name: m.name as string,
 			description: m.description as string | undefined,
+			permitted: permitted ? Object.freeze(permitted) : undefined,
+			permits: (revision: A177Revision) => permitted == undefined || permitted.includes(revision),
 			settings: (revision: A177Revision) => byRevision.get(revision) ?? unknown,
 		});
 	});

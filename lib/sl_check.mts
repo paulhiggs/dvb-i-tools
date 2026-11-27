@@ -56,6 +56,7 @@ import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts"
 import { DASH_IF_Content_Protection_List, UUID_type, CA_SYSTEM_ID_REGISTRY, KnownDRMScheme, KnownCASystemID} from "./identifiers.mts"
 import { CheckDelivery } from "./slr_check.mts"
 import { LoadMarkets } from "./markets.mts"
+import { checkServiceLogoRequired, refusedRevision } from "./market_checks.mts"
 import { LoadSLschemas, SL_GetSchema, SL_SchemaVersion, SL_SchemaSpecVersion, isA177specification_URN, isContentFinishedBanner, isOutScheduleHours } from "./sl_data_versions.mts"
 import { validServiceControlApplication, validServiceInstanceControlApplication, validServiceUnavailableApplication, validDASHcontentType } from "./sl_data_versions.mts"
 import {
@@ -589,7 +590,7 @@ export default class ServiceListCheck {
 				case SERVICE_LIST_RM:
 					if (validServiceListLogo(HowRelated)) {
 						rc = HowRelated_href;
-						checkValidLogos(RelatedMaterial, Location, documentInfo, errs, `${errCode}-10`);
+						checkValidLogos(RelatedMaterial, Location, documentInfo, errs, `${errCode}-10`, "serviceListLogo");
 					} else if (validServiceAgreementApp(HowRelated)) {
 						rc = HowRelated_href;
 						MediaLocators.forEach((locator) => this.#checkSignalledApplication(locator, Location, rc, documentInfo, errs));
@@ -609,7 +610,7 @@ export default class ServiceListCheck {
 						});
 					if (validOutScheduleHours(HowRelated) || validContentFinishedBanner(HowRelated) || validServiceLogo(HowRelated) || validServiceBanner(HowRelated)) {
 						rc = HowRelated_href;
-						checkValidLogos(RelatedMaterial, Location, documentInfo, errs, `${errCode}-22`);
+						checkValidLogos(RelatedMaterial, Location, documentInfo, errs, `${errCode}-22`, validServiceLogo(HowRelated) ? "serviceLogo" : undefined);
 					} else if (this.#validServiceApplication(HowRelated, SL_SchemaVersion(documentNamespace))) {
 						rc = HowRelated_href;
 						MediaLocators.forEach((locator) => this.#checkSignalledApplication(locator, Location, rc, documentInfo,errs));
@@ -629,7 +630,7 @@ export default class ServiceListCheck {
 						});
 					else if (validContentFinishedBanner(HowRelated) || validServiceLogo(HowRelated)) {
 						rc = HowRelated_href;
-						checkValidLogos(RelatedMaterial, Location, documentInfo, errs, `${errCode}-32`);
+						checkValidLogos(RelatedMaterial, Location, documentInfo, errs, `${errCode}-32`, validServiceLogo(HowRelated) ? "serviceLogo" : undefined);
 					} else if (isOutScheduleHours(HowRelated) && SL_SchemaVersion(documentNamespace) >= slVersions.r6)
 						errs.addError({
 							code: `${errCode}-35`,
@@ -660,7 +661,7 @@ export default class ServiceListCheck {
 				case CONTENT_GUIDE_RM:
 					if (validContentGuideSourceLogo(HowRelated)) {
 						rc = HowRelated_href;
-						checkValidLogos(RelatedMaterial, Location, documentInfo, errs, `${errCode}-41`);
+						checkValidLogos(RelatedMaterial, Location, documentInfo, errs, `${errCode}-41`, "contentGuideSourceLogo");
 					} else {
 						errs.addError(sl_InvalidHrefValue(HowRelated_href, HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-42`));
 						errs.errorDescription(SL_helpers.RMErrorDescription(`${errCode}-42`, dvbi.e_ContentGuideSource, 20));
@@ -1977,6 +1978,8 @@ export default class ServiceListCheck {
 		checkXMLLangs(dvbi.e_ProviderName, `service ${thisServiceId.quote()}`, service, errs, "SL141");
 
 		//check <RelatedMaterial>
+		// a market can require a service logo in the <Service> itself (issue #119)
+		checkServiceLogoRequired(service, thisServiceId, errs);
 		service.forEachNamedChildElement(tva.e_RelatedMaterial, (RelatedMaterial) => 
 			this.#validateRelatedMaterial(RelatedMaterial, `service ${thisServiceId.quote()}`, SERVICE_RM, documentInfo, errs, "SL150")
 		);
@@ -2473,6 +2476,8 @@ export default class ServiceListCheck {
 		const ns = SL.root.namespaceUri;
 		// the market settings of its revision apply to the findings of the service list (issue #119)
 		setDocumentRevision(SL_SchemaVersion(ns));
+		// a revision that the market does not permit is reported, and the service list is not validated (decision 29)
+		if (refusedRevision(SL_SchemaVersion(ns), SL.root, errs)) return;
 		const documentInfo = new FoundDocumentItems(true); // collection of things we learn when parsing the service list
 
 		if (!this.#doSchemaVerification(SL as XmlDocument, errs, "SL005", request.report_schema_version)) {
