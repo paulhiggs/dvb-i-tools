@@ -160,10 +160,10 @@ A referenced document that is not traversed is reported with a warning:
 
 ### Image checks
 
-Every validation made through the server retrieves the images referenced in `<RelatedMaterial><MediaLocator><MediaUri>` (service list, service, content guide source and service banner logos, and promotional still images) and checks them against A177r8 clause 5.2.8. Inline (`data:`) images are checked without any retrieval. Each image URL is retrieved and reported only once per validation, including traversed documents, so a logo shared by many services is checked once. The content digest check (`@integrity`) uses the same retrieval. Images do not count towards the maximum number of documents to traverse, but they share the `--fetch_concurrency` and `--fetch_per_host` limits. A referenced resource is retrieved as soon as the rule that refers to it is checked, so retrievals proceed while the rest of the document is validated.
+Unless **Image checking** is **No** (see below), every validation made through the server retrieves the images referenced in `<RelatedMaterial><MediaLocator><MediaUri>` (service list, service, content guide source and service banner logos, and promotional still images) and checks them against A177r8 clause 5.2.8. Inline (`data:`) images are decoded and checked in the same way, without any retrieval. Each image URL is retrieved and reported only once per validation, including traversed documents, so a logo shared by many services is checked once. The content digest check (`@integrity`) uses the same retrieval. Images do not count towards the maximum number of documents to traverse, but they share the `--fetch_concurrency` and `--fetch_per_host` limits. A referenced resource is retrieved as soon as the rule that refers to it is checked, so retrievals proceed while the rest of the document is validated.
 
 **Image checking** on the form chooses how images are checked:
-- **No**: images are not retrieved (their URLs and `@contentType` are still checked).
+- **No**: no image is checked, neither a retrieved nor an inline (`data:`) image. Their URLs and `@contentType` are still checked, and so is a content digest (`@integrity`): a referenced image with a digest is still retrieved to compare it, but the image itself is not checked.
 - **Yes** (the default): each image is retrieved once and checked as below.
 - **Yes and scaled**: each image is also requested at half its width with `?w=<width>` to check that the server scales it (A177r8 clause 5.2.8.2.2). This doubles the image requests.
 
