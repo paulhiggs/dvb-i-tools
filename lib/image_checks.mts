@@ -17,6 +17,8 @@ import { tva } from "./TVA_definitions.mts"
 import { WARNING } from "./error_list.mts"
 import ErrorList from "./error_list.mts"
 import type { ResourceOutcome } from "./resource_checks.mts"
+import { checkMarketImage } from "./market_checks.mts"
+import type { MarketImageKind } from "./markets.mts"
 
 const IMAGE_KEY = "image checks";
 const RESPONSE_CLAUSE = "A177r8 clause 5.2.8.3";
@@ -58,9 +60,10 @@ export const scalingWidth = (original: ResourceOutcome): number | undefined => {
  * @param {string}      where        how the image is described in messages
  * @param {XmlElement}  MediaUri     the element referencing the image
  * @param {ErrorList}   errs         where findings are reported
+ * @param {MarketImageKind} kind     the kind of image, for the sizes that a market stipulates (issue #119)
  * @returns {boolean} true if the image could be read and is in a permitted format, so its scaling can be checked
  */
-function checkImageProperties(image: ImageInfo, contentType: string | null, where: string, MediaUri: XmlElement, errs: ErrorList): boolean {
+function checkImageProperties(image: ImageInfo, contentType: string | null, where: string, MediaUri: XmlElement, errs: ErrorList, kind?: MarketImageKind): boolean {
 	const report = (code: string, message: string, type?: string, description?: string, clause = RESPONSE_CLAUSE) =>
 		errs.addError({ code, message, fragment: MediaUri, key: IMAGE_KEY, ...(type ? { type } : {}), ...(description ? { description, clause } : {}) });
 
@@ -80,6 +83,7 @@ function checkImageProperties(image: ImageInfo, contentType: string | null, wher
 	if (image.bitsPerComponent != undefined && image.bitsPerComponent != 8)
 		report("IMG008", `${where} has ${image.bitsPerComponent} bits per colour component, not 8`, WARNING, "Images shall have a colour depth of 32 bits (8 bits per component).");
 	if (image.cmyk) report("IMG009", `${where} uses a CMYK colour space, not sRGB`, WARNING, "Images shall use the sRGB colour space (either explicitly signalled or assumed if not).");
+	checkMarketImage(image, kind, where, MediaUri, errs);
 	return permitted;
 }
 
@@ -90,7 +94,7 @@ function checkImageProperties(image: ImageInfo, contentType: string | null, wher
  * @param {string|null} contentType  the signalled MediaUri@contentType
  * @param {ErrorList}   errs         where findings are reported
  */
-export function checkInlineImage(MediaUri: XmlElement, contentType: string | null, errs: ErrorList): void {
+export function checkInlineImage(MediaUri: XmlElement, contentType: string | null, errs: ErrorList, kind?: MarketImageKind): void {
 	const location = MediaUri.content.trim();
 	const comma = location.indexOf(",");
 	if (comma < 0) return; // an invalid data: URI is reported by the caller
@@ -102,7 +106,7 @@ export function checkInlineImage(MediaUri: XmlElement, contentType: string | nul
 	} catch {
 		return; // malformed %-encoding is reported by the caller
 	}
-	checkImageProperties(readImageInfo(content), contentType, "the inline image", MediaUri, errs);
+	checkImageProperties(readImageInfo(content), contentType, "the inline image", MediaUri, errs, kind);
 }
 
 /**
@@ -115,7 +119,7 @@ export function checkInlineImage(MediaUri: XmlElement, contentType: string | nul
  * @param {ErrorList}       errs         where findings are reported
  * @returns {boolean} true if the image was retrieved, readable and in a permitted format, so its scaling can be checked
  */
-export function reportImage(original: ResourceOutcome, location: string, contentType: string | null, MediaUri: XmlElement, errs: ErrorList): boolean {
+export function reportImage(original: ResourceOutcome, location: string, contentType: string | null, MediaUri: XmlElement, errs: ErrorList, kind?: MarketImageKind): boolean {
 	const where = `the image at ${location}`;
 	if (!original.ok) {
 		if (original.error) errs.addError({ code: "IMG001", message: `${where} could not be retrieved: ${original.error}`, fragment: MediaUri, key: IMAGE_KEY });
@@ -130,7 +134,7 @@ export function reportImage(original: ResourceOutcome, location: string, content
 			fragment: MediaUri,
 			key: IMAGE_KEY,
 		});
-	return checkImageProperties(original.image!, contentType, where, MediaUri, errs);
+	return checkImageProperties(original.image!, contentType, where, MediaUri, errs, kind);
 }
 
 /**

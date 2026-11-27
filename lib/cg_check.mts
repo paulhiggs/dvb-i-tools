@@ -66,7 +66,7 @@ import ClassificationScheme from "./classification_scheme.mts";
 import type { StatsType, LoadOptions } from "./globals.mts"
 
 import { allowTraversal, currentRequest, currentValidation, deferRetrieval, documentRevision, retrieveTraversal, setDocumentRevision, ValidationScope } from "./safe_fetch.mts"
-import { A177Revision } from "./revisions.mts"
+import { contentGuideRevision } from "./market_checks.mts"
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";
@@ -3691,6 +3691,14 @@ export default class ContentGuideCheck {
 			return;
 		}
 
+		// the market settings that apply to the findings of the document (issue #119, decision 7): those of the service list
+		// that refers to it, or for a document validated on its own, those of the latest A177 revision that uses its TV-Anytime
+		// revision and that the market permits. A document that no permitted revision uses is not validated (decision 29)
+		if (documentRevision() == undefined) {
+			const revision = contentGuideRevision(CG_SchemaVersion((CG.root as XmlElement).documentNamespace()), CG.root as XmlElement, errs);
+			if (!revision) return;
+			setDocumentRevision(revision);
+		}
 		if (!this.#doSchemaVerification(CG, errs, "CG003", request.report_schema_version)) {
 			errs.addError({
 				code: "CG004",
@@ -3698,13 +3706,6 @@ export default class ContentGuideCheck {
 				key: keys.k_XSDValidation,
 			});
 			return;
-		}
-		// the market settings that apply to the findings of the document (issue #119, decision 7): those of the service list
-		// that refers to it, or for a document validated on its own, those of the latest A177 revision that uses its TV-Anytime
-		// revision
-		if (documentRevision() == undefined) {
-			const tvaRevision = CG_SchemaVersion((CG.root as XmlElement).documentNamespace());
-			setDocumentRevision(A177Revision.all.findLast((r) => r.tvAnytime == tvaRevision) ?? A177Revision.unknown);
 		}
 
 		const TVAMain = CG.root as XmlElement;

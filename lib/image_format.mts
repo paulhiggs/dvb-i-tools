@@ -19,6 +19,7 @@ export type ImageInfo = {
 	cmyk?: boolean; // the image uses a CMYK (or YCCK) colour space, not sRGB
 	pixelAspect?: { x: number; y: number }; // the pixel aspect ratio, when the image signals one
 	problem?: string; // why the header could not be read (the image is truncated or corrupt)
+	size?: number; // the size of the file, in bytes
 };
 
 const startsWith = (bytes: Buffer, signature: number[], offset = 0): boolean =>
@@ -122,6 +123,10 @@ function readWebP(bytes: Buffer): ImageInfo {
  * @returns {ImageInfo} the format of the image, and the properties that could be read
  */
 export function readImageInfo(bytes: Buffer): ImageInfo {
+	return { ...readImageHeader(bytes), size: bytes.length };
+}
+
+function readImageHeader(bytes: Buffer): ImageInfo {
 	try {
 		if (startsWith(bytes, PNG_SIGNATURE)) return readPNG(bytes);
 		if (startsWith(bytes, [0xff, 0xd8, 0xff])) return readJPEG(bytes);
