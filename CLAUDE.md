@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Validators for DVB-I XML documents defined in DVB Bluebook A177 (revisions r0 to r8): service lists, content guide (TV-Anytime) fragments, playlists and service list registry (SLR / SLEPR) responses. It also includes a Service List Registry server that answers `/query` requests. Everything runs inside one Express web server.
+Validators for DVB-I XML documents defined in DVB Bluebook A177 (revisions r0 to r8): service lists, content guide (TV-Anytime) fragments, playlists and service list registry (SLR / SLEPR) responses, and the XML AIT documents (ETSI TS 102 809) they refer to. It also includes a Service List Registry server that answers `/query` requests. Everything runs inside one Express web server.
 
 - [all-in-one.ts](all-in-one.ts): the main entry point. It parses command-line options and calls `validator()` in [lib/validator.mts](lib/validator.mts), which only puts the parts together:
   - [lib/config.mts](lib/config.mts): `loadConfig(options)` checks and normalises the options into a frozen `ValidatorConfig`, and throws a `ConfigError` for a bad option (only `validator()` exits). `applyFetchPolicy()` sets the server's fetch policy.
   - [lib/services.mts](lib/services.mts): `createServices(config)` loads the reference data, and builds the checkers and the SLEPR once.
   - [lib/app.mts](lib/app.mts): `createApp(config, services)` builds the Express application:
     - the middleware: CORS, `helmet()` with the `CONTENT_SECURITY_POLICY` (`'self'` only, and no `upgrade-insecure-requests`), the page stylesheet and script (`PAGE_ASSETS`), the favicon and the request logging. The form's body parsers (`express-fileupload` with the 10 MB limit, and `express.urlencoded()`) are only on the `/check` route. There are no sessions: the form is drawn from a `FormState`, the defaults or the values just submitted
-    - a router for each feature in [lib/routes/](lib/routes/): `validate.mts` for `/validate_{sl,cg,pl,slr}[_json]`, `check.mts` for `/check`, `slepr.mts` for `/query` and `/reload`, and `info.mts` for `/stats` and `/langs`
+    - a router for each feature in [lib/routes/](lib/routes/): `validate.mts` for `/validate_{sl,cg,pl,slr,ait}[_json]`, `check.mts` for `/check`, `slepr.mts` for `/query` and `/reload`, and `info.mts` for `/stats` and `/langs`
     - the 404 for any method
     - the error handler
 
@@ -63,6 +63,7 @@ Each document type has one checker class. The class is constructed once and reus
 - `ContentGuideCheck` in [lib/cg_check.mts](lib/cg_check.mts), with helpers in `cg_check_helpers.mts`
 - `PlaylistCheck` in [lib/playlist_check.mts](lib/playlist_check.mts)
 - `ServiceListRegistryCheck` in [lib/slr_check.mts](lib/slr_check.mts)
+- `XmlAitCheck` in [lib/ait_check.mts](lib/ait_check.mts), with names in `MHP_definitions.mts` (#134). `doValidateXmlAit(text, role, errs, options)` takes the role of the AIT (`linked`, `deeplink` or `template`), as the A177 rules differ for each. Its schemas are in `schemas/ts102809/2009/` and `2026/`, each folder with the imports its `mis_xmlait*.xsd` expects (keep them there, unchanged). The service list and content guide checkers get it as `opts.aitcheck`, and hand the AITs their documents refer to to `validateReferencedAit()` when the request has `aits`, which validates them like a traversed document
 
 The public entry points are `doValidateServiceList(text, errs, options)`, `doValidateContentGuide(text, type, errs, options)` and the matching methods on the other classes. `ServiceListCheck` holds a `ContentGuideCheck` so that it can validate content guide documents it traverses into.
 
@@ -92,7 +93,7 @@ The network calls themselves (`fetch()` in `safeFetch()`, and the work given to 
 
 Two kinds of input reach a validator, and they travel differently:
 - **Choices for the whole validation** are a `ValidationRequest` (`lib/safe_fetch.mts`):
-  - the fields are `traverse`, `maxTraversal`, `images`, `variants`, `report_schema_version` and `log_prefix`
+  - the fields are `traverse`, `maxTraversal`, `images`, `aits`, `variants`, `report_schema_version` and `log_prefix`
   - the outermost validation sets them once, from the options it is given: `ValidationScope.open(options)`
   - every document it traverses into uses the same choices, and ignores the options it is given for them
   - rules read them with `currentRequest()`, never from their `options` parameter

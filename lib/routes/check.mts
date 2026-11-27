@@ -12,7 +12,7 @@
 import express from "express"
 import fileupload from "express-fileupload"
 
-import { drawForm, liveDocumentResults, sendCheckResults, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_UNSPECIFIED } from "../ui.mts"
+import { drawForm, liveDocumentResults, sendCheckResults, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_AIT, MODE_UNSPECIFIED } from "../ui.mts"
 import type { FormModes, FormState } from "../ui.mts"
 import ErrorList from "../error_list.mts"
 import { safeFetch, currentFetchPolicy, observeValidation, DEFAULT_MAX_TRAVERSAL, parseTraversalLimit } from "../safe_fetch.mts"
@@ -23,6 +23,8 @@ import ServiceListCheck from "../sl_check.mts"
 import PlaylistCheck from "../playlist_check.mts"
 import ContentGuideCheck from "../cg_check.mts"
 import ServiceListRegistryCheck from "../slr_check.mts"
+import XmlAitCheck from "../ait_check.mts"
+import { AIT_ROLE_LINKED } from "../MHP_definitions.mts"
 import document_logger, { createPrefix } from "../logger.mts"
 import type { ValidatorConfig } from "../config.mts"
 import type { ValidatorServices } from "../services.mts"
@@ -34,8 +36,9 @@ import {} from "../string-extensions.mts"
 
 async function DVB_I_check(
 		req: express.Request, res: express.Response, 
-		slcheck: ServiceListCheck | undefined, plcheck: PlaylistCheck | undefined, cgcheck: ContentGuideCheck | undefined, slrcheck: ServiceListRegistryCheck | undefined, 
-		hasSL: boolean, hasPL: boolean, hasCG: boolean, hasSLR: boolean, 
+		slcheck: ServiceListCheck | undefined, plcheck: PlaylistCheck | undefined, cgcheck: ContentGuideCheck | undefined, slrcheck: ServiceListRegistryCheck | undefined,
+		aitcheck: XmlAitCheck | undefined,
+		hasSL: boolean, hasPL: boolean, hasCG: boolean, hasSLR: boolean, hasAIT: boolean,
 		allow_traversal: boolean,
 		motd: string | undefined, 
 		mode: string = MODE_UNSPECIFIED, linktype: string = MODE_UNSPECIFIED) : Promise<void> {
@@ -43,19 +46,21 @@ async function DVB_I_check(
 	// the form's choices are not kept between requests: a new form has the defaults, and the form with the results shows
 	// the values just submitted
 	const defaults: FormState = {
-		mode: mode == MODE_UNSPECIFIED ? (hasSL ? MODE_SL : MODE_CG) : mode,
+		mode: mode == MODE_UNSPECIFIED ? (hasSL ? MODE_SL : hasCG ? MODE_CG : hasAIT ? MODE_AIT : MODE_CG) : mode,
 		entry: linktype == MODE_UNSPECIFIED ? MODE_URL : linktype,
 		url: "",
 		cgmode: cgcheck?.supportedRequests[0].value,
+		aitrole: AIT_ROLE_LINKED,
 		forGermany: false,
 		traverse: false,
+		aits: false,
 		maxTraversal: String(DEFAULT_MAX_TRAVERSAL),
 		maxDepth: String(currentFetchPolicy().maxTraversalDepth),
 		images: "yes",
 		signatureChecks: "both",
 	};
 
-	const FormArguments: FormModes = { cg: MODE_CG, sl: MODE_SL, pl: MODE_PL, slr: MODE_SLR, file: MODE_FILE, url: MODE_URL, hasSL: hasSL, hasPL: hasPL, hasCG: hasCG, hasSLR: hasSLR, allowTraversal: allow_traversal };
+	const FormArguments: FormModes = { cg: MODE_CG, sl: MODE_SL, pl: MODE_PL, slr: MODE_SLR, ait: MODE_AIT, file: MODE_FILE, url: MODE_URL, hasSL: hasSL, hasPL: hasPL, hasCG: hasCG, hasSLR: hasSLR, hasAIT: hasAIT, allowTraversal: allow_traversal };
 	if (!req.body?.testtype) 
 		await drawForm(req, res, FormArguments, defaults, (cgcheck && cgcheck.supportedRequests) ? cgcheck.supportedRequests : null, motd, undefined, undefined);
 	else {
@@ -69,6 +74,7 @@ async function DVB_I_check(
 		const testtype = field("testtype"),
 			doclocation = field("doclocation"),
 			requestType = field("requestType"),
+			aitRole = field("aitRole"),
 			XMLurl = field("XMLurl"),
 			maxTraversalField = field("maxTraversal").trim(),
 			maxDepthField = field("maxDepth").trim();
@@ -79,13 +85,14 @@ async function DVB_I_check(
 			maxTraversal = maxTraversalField.length == 0 ? DEFAULT_MAX_TRAVERSAL : parseTraversalLimit(maxTraversalField),
 			// the deepest level to traverse into: a positive whole number, lowered to the server's limit if above it
 			maxDepth = maxDepthField.length == 0 ? undefined : parseDepthLimit(maxDepthField);
-		const available: Record<string, boolean> = { [MODE_SL]: hasSL, [MODE_PL]: hasPL, [MODE_CG]: hasCG, [MODE_SLR]: hasSLR };
+		const available: Record<string, boolean> = { [MODE_SL]: hasSL, [MODE_PL]: hasPL, [MODE_CG]: hasCG, [MODE_SLR]: hasSLR, [MODE_AIT]: hasAIT };
 
 		if (testtype.length == 0) parseErr = ["validation type not specified"]
 		else if (!HasProperty(available, testtype)) parseErr = [`unknown validation type ${testtype.quote()}`]
 		else if (!available[testtype]) parseErr = [`validation type ${testtype.quote()} is not available`]
 		else if (testtype == MODE_CG && requestType.length == 0) parseErr = ["request type not specified"]
 		else if (testtype == MODE_CG && !cgcheck?.supportedRequests.some((r) => r.value == requestType)) parseErr = [`unknown request type ${requestType.quote()}`]
+		else if (testtype == MODE_AIT && aitRole.length > 0 && !aitcheck?.supportedRoles.some((r) => r.value == aitRole)) parseErr = [`unknown XML AIT role ${aitRole.quote()}`]
 		else if (doclocation != MODE_URL && doclocation != MODE_FILE) parseErr = [`method is not ${MODE_URL.quote()} or ${MODE_FILE.quote()}`]
 		else if (doclocation == MODE_URL && XMLurl.length == 0) parseErr = ["URL not specified"]
 		else if (doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) parseErr = ["File not provided"]
@@ -100,8 +107,10 @@ async function DVB_I_check(
 			entry: doclocation == MODE_URL || doclocation == MODE_FILE ? doclocation : defaults.entry,
 			url: XMLurl,
 			cgmode: requestType.length > 0 ? requestType : defaults.cgmode,
+			aitrole: aitRole.length > 0 ? aitRole : defaults.aitrole,
 			forGermany: req.body.forGermany == "on",
 			traverse: traverseSelected,
+			aits: req.body.aits == "on",
 			maxTraversal: maxTraversalField.length > 0 ? maxTraversalField : defaults.maxTraversal,
 			maxDepth: maxDepthField.length > 0 ? maxDepthField : defaults.maxDepth,
 			images: imageChecking(req.body.images),
@@ -182,6 +191,11 @@ async function DVB_I_check(
 					if (slrcheck) 
 						await slrcheck.doValidateServiceListRegistry(VVxml!, errs, request);
 					break;
+				case MODE_AIT:
+					errs.setType(`XML AIT-${form.aitrole}`)
+					if (aitcheck)
+						await aitcheck.doValidateXmlAit(VVxml!, form.aitrole, errs, request);
+					break;
 			}
 		});
 		observer.stop?.();
@@ -214,10 +228,10 @@ const FORM_FILE = fileupload({ limits: { fileSize: MAX_DOCUMENT_BYTES }, abortOn
  */
 export function checkRouter(config: ValidatorConfig, services: ValidatorServices): express.Router {
 	const router = express.Router();
-	const { sl, pl, cg, slr } = config.features;
-	if (sl || pl || cg || slr)
+	const { sl, pl, cg, slr, ait } = config.features;
+	if (sl || pl || cg || slr || ait)
 		router.all("/check", XML_BODY, FORM_FILE, FORM_FIELDS, async (req: express.Request, res: express.Response) => {
-			await DVB_I_check(req, res, services.slcheck, services.plcheck, services.cgcheck, services.slrcheck, sl, pl, cg, slr, config.allowTraversal, config.motd);
+			await DVB_I_check(req, res, services.slcheck, services.plcheck, services.cgcheck, services.slrcheck, services.aitcheck, sl, pl, cg, slr, ait, config.allowTraversal, config.motd);
 		});
 	return router;
 }

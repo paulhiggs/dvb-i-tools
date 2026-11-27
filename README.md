@@ -64,7 +64,7 @@ Implements csr.ts along with service list registry, service list and content gui
 
 ### Description
 
-Validates the syntax and semantic value space of DVB-I service list registry, service list, playlist and content guide metadata according to DVB Bluebook A177
+Validates the syntax and semantic value space of DVB-I service list registry, service list, playlist and content guide metadata according to DVB Bluebook A177, and of the XML AIT documents (ETSI TS 102 809) that they refer to
 
 #### Supported A177 revisions
 
@@ -118,6 +118,7 @@ With `--workers`, the primary passes the signal on to the workers and does not r
 - `--nosl` flag to disable Service List validation (default: false)
 - `--nopl` flag to disable Playlist validation (default: false)
 - `--noslr` flag to disable Service List Registry validation (default: false)
+- `--noait` flag to disable XML AIT validation (default: false)
 - `--CORSmode [-c] <mode>` select the type of CORS handling
   - `"library"` - default mode - use the Express CORS library
   - `"manual"` - do code based CORS header insertion (not fully implemented or tested)
@@ -404,6 +405,47 @@ accepted valies for `<type>`
 
 #### Playlist validation endpoints
 *todo writeup needed*
+
+#### XML AIT validation endpoints
+
+`<server>/validate_ait?url=<xml_ait_url>&role=<role>` gives the validation results of the XML AIT in the "url"-parameter as HTML, same format as the /check validation. `<server>/validate_ait_json?url=<xml_ait_url>&role=<role>` gives them as JSON, in the same format as `/validate_sl_json` (with `results=all` for the complete results). Both also accept a POST request with the XML AIT in the request body with content type "application/xml". On the /check form, choose **XML AIT** and how it is used.
+
+An XML AIT in the `urn:dvb:mhp:2026` namespace (the ETSI version, also in the electronic attachments of the A177r8 second edition) or the older `urn:dvb:mhp:2009` namespace (ETSI TS 102 809 v1.2.1 and v1.3.1) is checked against its schema, in `schemas/ts102809/`. The rules of A177 depend on how the AIT is used, given by `<role>`:
+
+- `linked` (the default) - the application of a service, service instance or service list, signalled in a `<RelatedMaterial>` (A177r8 clause 5.2.3)
+- `deeplink` - a content deep-linked XML AIT, from `<OnDemandProgram><ProgramURL>` or a restart link (A177r8 clause 5.2.4.3)
+- `template` - a Template XML AIT, from `<OnDemandProgram><AuxiliaryURL>`, a restart link or a box set (A177r8 clause 5.2.4.4)
+
+The codes:
+- `AIT001` the document is not well formed; `AIT002` the root element is not `<ServiceDiscovery>`; `AIT003` it has no namespace; `AIT004` the namespace is not supported
+- `AIT005:2009`, `AIT005:2026` the document is not valid against the schema of its namespace. In `urn:dvb:mhp:2026`, which has `attributeFormDefault="qualified"`, the attributes defined by the XML AIT schema itself are namespace qualified, e.g. `<mhp:applicationLocation mhp:verificationPolicy="...">`
+- `AIT006a` (warning) the AIT uses the old schema `urn:dvb:mhp:2009`, which is replaced by `urn:dvb:mhp:2026`; `AIT006b` (warning) the schema is a draft
+- `AIT009` the role is not one of those above
+- `AIT010` (information) an application is of a type that a DVB-I client does not run: only `application/vnd.hbbtv.xhtml+xml`, `text/html` and `application/xhtml+xml` are run (A177r8 clause 5.2.4.1, 5.2.4.2)
+- `AIT011` (information) the deep link says that the content is not available to the device (`application/vnd.dvbi.non`, A177r8 clause 5.2.4.2); `AIT012` (warning) `application/vnd.dvbi.non` in an AIT that is not a deep link
+- `AIT013` (warning) the AIT has no application that a DVB-I client can run, so the service or content is shown as unavailable
+- `AIT014` (warning) two applications have the same type, `<mhpVersion>` and `<priority>`, so the client's choice between them is ambiguous (A177r8 clause 5.2.4.2)
+- `AIT015` the applications of a deep link or template do not all have the same `<orgId>` and `<appId>` (A177r8 clause 5.2.4.3, 5.2.4.4.1)
+- `AIT016` an HTTP transport's `<URLBase>` is not an HTTP or HTTPS URL; `AIT017` `<URLBase>` followed by `<applicationLocation>` is not a valid URL (A177r8 clause 5.2.4.3)
+- `AIT018` (information) an application has no HTTP transport, so it cannot be launched from broadband
+- `AIT019` (warning) the launch location uses a query parameter that the client appends as a contextual parameter, `regionID[]` or `lloc` (A177r8 clause 5.2.4.3, 5.2.4.4.6)
+- `AIT024` (warning) an HbbTV application has no `<mhpVersion>`, so its platform profile cannot be determined (A177r8 clause 5.2.4.2); `AIT025` (warning) its version is not one of 1.1.1 to 1.8.1; `AIT026` (warning) its application profile uses bits other than `0x0001` and `0x0002` (ETSI TS 102 796 v1.8.1 clause 7.2.3.1)
+- `AIT027-1` (information) the launch location has a signature policy (`<applicationLocation mhp:verificationPolicy>`, `urn:dvb:mhp:2026`), but the AIT was not reached from a service list, so it is not checked; `AIT027-2` (warning) the policy is not defined by the service list that refers to the AIT; `AIT027-3` (warning) the launch location is not an `https` URL
+
+The XML AITs that service lists and content guides refer to are also validated when the request asks for it: **Validate referenced XML AITs** on the /check form (for service lists, registries and content guides), or `aits=true` in the query of a `GET` (`X-aits: true` with a `POST`) to the `/validate_sl`, `/validate_cg` and `/validate_slr` endpoints. It is off by default, as every On Demand programme can refer to its own AIT. The role comes from the element that refers to the AIT:
+
+- `linked`: the `<MediaUri contentType="application/vnd.dvb.ait+xml">` of a linked application in a service list
+- `deeplink`: `<OnDemandProgram><ProgramURL>`, and the `<MediaUri>` of a restart link
+- `template`: `<OnDemandProgram><AuxiliaryURL>`, the `<AuxiliaryURI>` of a restart link, and the `<AuxiliaryURI>` of a box set's Template AIT
+
+Both URLs of a restart link (A177r8 clause 6.5.5.3) are XML AITs, so when `@contentType` is omitted from its `<MediaUri>` or `<AuxiliaryURI>`, as in A177r8 figure 11, `application/vnd.dvb.ait+xml` is assumed, with the warning `RR004`. Another `@contentType` is an error, `RR005`, and that URL is not validated as an AIT.
+
+Each AIT URL is validated once in a validation (a repeat is counted against the first reference), and counts as a traversed document against the limits of traversal. Its results are with those of the referring document, like those of a traversed document. A referenced AIT also has:
+- `AIT020` (warning) the response's `Content-Type` is not `application/vnd.dvb.ait+xml` (A177r8 clause 5.2.4.1)
+- `AIT021` (information) a Template XML AIT has neither an `Expires` header nor `Cache-Control: max-age`, so a client assumes that it expires 24 hours after it is retrieved (A177r8 clause 5.2.4.4.5)
+- `AIT029` (information) an application of a service provider (`LinkedApplicationCS:2019:3`) or service list (`4.1`, `4.2`, `4.3`) application has no `<icon>`, which it may have (A177r8 clause 5.2.3.1)
+- `AIT030` the AIT cannot be retrieved; `AIT031` its request does not return a `2xx` status
+
 
 #### Health
 

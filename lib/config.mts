@@ -24,7 +24,7 @@ import {} from "./string-extensions.mts"
 export class ConfigError extends Error {}
 
 export type ValidatorConfig = Readonly<{
-	features: Readonly<{ sl: boolean; pl: boolean; cg: boolean; slr: boolean; csr: boolean }>; // what the server offers
+	features: Readonly<{ sl: boolean; pl: boolean; cg: boolean; slr: boolean; ait: boolean; csr: boolean }>; // what the server offers
 	useURLs: boolean; // load reference data (classification schemes etc.) from the network rather than res/
 	csrFile: string; // the master SLEPR document for /query
 	slrMode: string; // how /query responses are produced
@@ -53,8 +53,8 @@ const positiveWholeNumber = (options: commandLineArgs.CommandLineOptions, name: 
  * @throws {ConfigError} when an option is missing or not valid
  */
 export function loadConfig(options: commandLineArgs.CommandLineOptions): ValidatorConfig {
-	const features = { sl: !options.nosl, pl: !options.nopl, cg: !options.nocg, slr: !options.noslr, csr: !options.nocsr };
-	if (!features.csr && !features.sl && !features.pl && !features.cg && !features.slr) throw new ConfigError("nothing to do... exiting");
+	const features = { sl: !options.nosl, pl: !options.nopl, cg: !options.nocg, slr: !options.noslr, ait: !options.noait, csr: !options.nocsr };
+	if (!features.csr && !features.sl && !features.pl && !features.cg && !features.slr && !features.ait) throw new ConfigError("nothing to do... exiting");
 	if (features.csr && !HasProperty(options, "CSRfile")) throw new ConfigError("SLEPR file not specified... exiting");
 
 	const corsMode = HasProperty(options, "CORSmode") ? options.CORSmode : CORSlibrary;

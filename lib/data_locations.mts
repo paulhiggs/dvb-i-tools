@@ -197,6 +197,12 @@ export const DVBI_ServiceListRegistrySchema: { [key: string]: DataLocation } = {
 	r8: { file: `${schemasPath}/dvbi_service_list_discovery_v1.8+hls.xsd` },
 };
 
+// the XML AIT schemas of ETSI TS 102 809, each in a folder of its own with the imports it expects (issue #134)
+export const XMLAIT_Schema: { [key: string]: DataLocation } = {
+	v2009: { file: `${schemasPath}/ts102809/2009/mis_xmlait.xsd` },
+	v2026: { file: `${schemasPath}/ts102809/2026/mis_xmlait_2026.xsd` },
+};
+
 const languagesFilename: string = "language-subtag-registry";
 export const IANA_Subtag_Registry: DataLocation = { file: join(pathIANA, languagesFilename), url: `https://www.iana.org/assignments/language-subtag-registry/${languagesFilename}` };
 

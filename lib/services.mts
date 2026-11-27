@@ -30,6 +30,7 @@ import ServiceListCheck from "./sl_check.mts"
 import PlaylistCheck from "./playlist_check.mts"
 import ContentGuideCheck from "./cg_check.mts"
 import ServiceListRegistryCheck from "./slr_check.mts"
+import XmlAitCheck from "./ait_check.mts"
 import SLEPR from "./slepr.mts"
 import type { ValidatorConfig } from "./config.mts"
 
@@ -38,6 +39,7 @@ export type ValidatorServices = Readonly<{
 	plcheck?: PlaylistCheck;
 	cgcheck?: ContentGuideCheck;
 	slrcheck?: ServiceListRegistryCheck;
+	aitcheck?: XmlAitCheck;
 	csr?: SLEPR; // answers /query from the master SLEPR document
 }>;
 
@@ -49,11 +51,15 @@ export type ValidatorServices = Readonly<{
  */
 export function createServices(config: ValidatorConfig): ValidatorServices {
 	const load = { useURLs: config.useURLs, async: false, verbose: true };
-	const { sl, pl, cg, slr, csr: offerCSR } = config.features;
+	const { sl, pl, cg, slr, ait, csr: offerCSR } = config.features;
 
 	const knownLanguages = LoadLanguages(load);
 	const isoCountries = LoadCountries(load);
 	const knownGenres = LoadGenres(load);
+
+	// the XML AIT checker needs only its schemas. The service list and content guide checkers use it for the AITs that
+	// their documents refer to
+	const aitcheck = ait ? new XmlAitCheck(load) : undefined;
 
 	let slcheck: ServiceListCheck | undefined = undefined,
 		plcheck: PlaylistCheck | undefined = undefined,
@@ -89,6 +95,7 @@ export function createServices(config: ValidatorConfig): ValidatorServices {
 				stpurposes: subtitlePurposes,
 				videofmts: videoFormats,
 				devicetypes: deviceTypes,
+				aitcheck,
 			});
 
 		// the service list checker traverses into content guide documents with the content guide checker
@@ -109,6 +116,7 @@ export function createServices(config: ValidatorConfig): ValidatorServices {
 					videofmts: videoFormats,
 					appfmts: linkedApplicationTypes,
 					devicetypes: deviceTypes,
+					aitcheck,
 				},
 				cgcheck
 			);
@@ -135,5 +143,5 @@ export function createServices(config: ValidatorConfig): ValidatorServices {
 		csr.loadServiceListRegistry(config.csrFile);
 	}
 
-	return Object.freeze({ slcheck, plcheck, cgcheck, slrcheck, csr });
+	return Object.freeze({ slcheck, plcheck, cgcheck, slrcheck, aitcheck, csr });
 }

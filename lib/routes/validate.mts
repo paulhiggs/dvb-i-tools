@@ -11,7 +11,7 @@
 
 import express from "express"
 
-import { MODE_SL, MODE_PL, MODE_CG, MODE_SLR } from "../ui.mts"
+import { MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_AIT } from "../ui.mts"
 import ErrorList from "../error_list.mts"
 import type { ValidationOptions } from "../safe_fetch.mts"
 import document_logger, { createPrefix } from "../logger.mts"
@@ -62,7 +62,7 @@ async function validateDocument(
  */
 export function validateRouter(config: ValidatorConfig, services: ValidatorServices): express.Router {
 	const router = express.Router();
-	const { slcheck, plcheck, cgcheck, slrcheck } = services;
+	const { slcheck, plcheck, cgcheck, slrcheck, aitcheck } = services;
 	const { motd, allowTraversal } = config;
 
 	// the HTML and JSON endpoints of a document type
@@ -77,5 +77,7 @@ export function validateRouter(config: ValidatorConfig, services: ValidatorServi
 	// the content guide request type (Time, NowNext, ...) is the type query parameter
 	if (config.features.cg) endpoints("/validate_cg", MODE_CG, (document, errs, options, req) => cgcheck!.doValidateContentGuide(document, req.query.type as string, errs, options));
 	if (config.features.slr) endpoints("/validate_slr", MODE_SLR, (document, errs, options) => slrcheck!.doValidateServiceListRegistry(document, errs, options), traversal);
+	// how the XML AIT is used (linked, deeplink or template) is the role query parameter
+	if (config.features.ait) endpoints("/validate_ait", MODE_AIT, (document, errs, options, req) => aitcheck!.doValidateXmlAit(document, req.query.role as string | undefined, errs, options));
 	return router;
 }
