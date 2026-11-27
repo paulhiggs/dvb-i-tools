@@ -85,7 +85,9 @@ A market (#119) is the settings of a market deployment, defined in [res/markets.
 - The checks a market adds are in [lib/market_checks.mts](lib/market_checks.mts):
   - `refusedRevision()`: a market's `permitted` revisions (`MKT001`). Each checker calls it once it knows its revision, before the XSD validation, and stops when it is refused. `contentGuideRevision()` does the same for a content guide validated on its own.
   - `checkMarketImage()`: the market's `images` sizes (`IMG020`) and `maxBytes` (`IMG021`). It is called from the image checks, which get the kind of image from `checkValidLogos(…, kind)` and the `kind` of `checkReferencedResource()`'s image argument.
-  - `marketRule()` and `checkServiceLogoRequired()`: the `rules` a market enables (`MKT002`). A new rule is added to `MARKET_RULES` and gets its own codes.
+  - `marketRule()`, and the rules `checkServiceLogoRequired()` (`MKT002`) and `checkDirectTuning()` (`MKT004`) that a market enables in `rules`. A new rule is added to `MARKET_RULES` and gets its own codes.
+  - `checkMarketPostcodes()`: the `postcode.digits` parameter (`MKT003`).
+  - `marketSummary()`: the market of the outermost validation, kept in `ErrorList.market` and shown in the results.
 - A new parameter is added to `MarketParameters`, `MARKET_DEFAULTS` and `PARAMETER_CHECKS` in `markets.mts`, to the README, and to the rule that reads it. A new XSD or fatal code is added to `NOT_OVERRIDABLE`. Say "market", not "variant".
 - The testsuite's own markets are in `testsuite/res/markets-test.json` (added with `addMarkets()`), and their documents in `test-016/<market id>/`.
 

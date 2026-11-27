@@ -226,7 +226,7 @@ A validation can be made for a **market**: the settings of a market deployment o
 
 | Id | Name | Settings |
 |---|---|---|
-| `DE` | Germany | Only **A177r6** is permitted: a document of any other revision is reported with `MKT001` and not validated. The programme guide needs 7 days either side of today instead of 28. Service lists and service list registries are validated against the `-(DE)` schemas, which make `@networkID` optional, allow any number of `NetworkID` elements, and add `@directTuningAvailable` to `OrbitalPosition`. The further requirements of the DTVP DVB-I Implementation Profile are collected in issue #139 |
+| `DE` | Germany | Only **A177r6** is permitted: a document of any other revision is reported with `MKT001` and not validated. The programme guide needs 7 days either side of today instead of 28. Service lists and service list registries are validated against the `-(DE)` schemas, which make `@networkID` optional, allow any number of `NetworkID` elements, and add `@directTuningAvailable` to `OrbitalPosition`. From the DTVP DVB-I Implementation Profile v1.1.0 (issue #139): service logos are 320 pixels wide and at most 64000 bytes, promotional still images (EPG images) 640 pixels wide and at most 100000 bytes, postcodes have 5 digits, and every DVB-S service instance has its direct tuning parameters |
 
 A validation is made for one market, or none (A177 itself). It applies to every document the validation traverses into. The market is chosen with:
 - **Market** on the /check form (for service lists and service list registries)
@@ -249,29 +249,59 @@ A market that is not defined is answered with `400` and a `parseErr` naming the 
     |---|---|---|
     | `schedule.daysEitherSide` | the days of programme guide needed before and after today (`SL201`) | 28 |
     | `lcn.min`, `lcn.max` | the range of channel numbers in an `LCNTable`: `LCN@channelNumber` (`SL264`), `LCNRange@start` (`SL266`) and `LCNRange@end` (`SL267`). `min` must not be above `max` | 1, 9999 |
+    | `postcode.digits` | the number of digits of the postcodes of the service list's regions (`MKT003`, an error): a `Postcode` and the `@from` and `@to` of a `PostcodeRange` have exactly that many digits (and `@from` is not after `@to`), and a `WildcardPostcode` has fewer digits beside its single `*`, which stands for at least one digit | none |
   - `severity`: the severity of codes for the market, instead of A177's: `"error"`, `"warning"`, `"information"`, or `"off"` for findings that do not apply to the market. A key is a code (`"SL264"`), or a prefix of codes followed by `*` (`"SI020-1-*"`, `"SL24*"`), which has at least the letters and one digit. A code's own entry wins, and otherwise the longest prefix that it starts with. The code itself is never changed
   - `images`: what the market stipulates for each kind of image: `serviceListLogo`, `serviceLogo`, `contentGuideSourceLogo` and `promotionalStillImage` (by their `HowRelated`). Each has a `width`, which the image must match exactly, with an optional `height` that it must also match (without it, any height and aspect ratio is accepted), and an optional `maxBytes`, the largest file size the market recommends. Each is a positive whole number, and either a `width` or `maxBytes` is needed. A later range replaces what an earlier one gives for a kind. A177 itself stipulates no sizes. They are checked only when images are checked (**Image checking** Yes, `images=yes|scaled`), for the image at the signalled URL (not one scaled with `?w=`) and for inline (`data:`) images:
     - `IMG020` (error): the image is not the size the market requires
     - `IMG021` (warning): the file is larger than `maxBytes` (for an inline image, its decoded data)
-  - `rules`: the rules the market enables, each `true` or `false` (a later range can turn one off). The only one so far is `serviceLogoRequired`: every `Service` must have a service logo (`HowRelated` `…:1001.2`) in its own `RelatedMaterial`. A logo only in a `ServiceInstance` does not satisfy it (`MKT002`, an error)
+  - `rules`: the rules the market enables, each `true` or `false` (a later range can turn one off). They are:
+    - `serviceLogoRequired`: every `Service` must have a service logo (`HowRelated` `…:1001.2`) in its own `RelatedMaterial`. A logo only in a `ServiceInstance` does not satisfy it (`MKT002`, an error)
+    - `dvbsDirectTuning`: every `DVBSDeliveryParameters` has the parameters for direct tuning (A177 clause 5.2.12): `OrbitalPosition`, `Frequency`, `Polarization` and `SymbolRate` (`MKT004`, an error)
 
 The settings for a document are those of the ranges that include its A177 revision, in the order they are listed: a later range wins for the same setting. A content guide document has the revision of the service list that refers to it, or when it is validated on its own, the latest A177 revision that uses its TV-Anytime revision. An XML AIT has the revision of the document that refers to it, or the latest that the market permits. Unknown properties, parameters and revisions, values that are not valid, and missing schema files are refused. So is a severity for a fatal or XSD finding (`SL001`, `SR001`, `CG001`, `PL001`, `AIT001`, `SL005`, `SR005`, `CG003`, `PL005`, `AIT005`, and the codes made from them, such as `SL005:8`), whose findings all have one code: a market relaxes a schema rule with its own schema instead. `MKT001` cannot be changed either. The loader does not check that a code exists, as many codes are made when they are reported (`BE005`, `SE005`).
 
+The results of a validation made for a market name it: the heading of the HTML results ("for the market Germany (DE)"), `market` (`{ "id", "name" }`) in the JSON results, and a `<!-- market: … -->` line in the archived marked-up document.
+
 A finding whose severity a market changes says so at the end of its message, e.g. `(an error in A177, a warning for the market DE)`. A finding that a market turns `off` is not reported at all: not in the HTML or JSON results, the archive or the progress view.
 
-For example, the German market:
+For example, the German market (without its description):
 
 ```json
 {
 	"id": "DE",
 	"name": "Germany",
-	"permitted": ["r6"],
+	"permitted": [
+		"r6"
+	],
 	"revisions": [
 		{
 			"from": "r6",
 			"to": "r6",
-			"parameters": { "schedule": { "daysEitherSide": 7 } },
-			"schemas": { "serviceList": "dvbi_v6.0+hls+hbbtv-(DE).xsd", "serviceListRegistry": "dvbi_service_list_discovery_v1.6+hls-(DE).xsd" }
+			"parameters": {
+				"schedule": {
+					"daysEitherSide": 7
+				},
+				"postcode": {
+					"digits": 5
+				}
+			},
+			"schemas": {
+				"serviceList": "dvbi_v6.0+hls+hbbtv-(DE).xsd",
+				"serviceListRegistry": "dvbi_service_list_discovery_v1.6+hls-(DE).xsd"
+			},
+			"images": {
+				"serviceLogo": {
+					"width": 320,
+					"maxBytes": 64000
+				},
+				"promotionalStillImage": {
+					"width": 640,
+					"maxBytes": 100000
+				}
+			},
+			"rules": {
+				"dvbsDirectTuning": true
+			}
 		}
 	]
 }

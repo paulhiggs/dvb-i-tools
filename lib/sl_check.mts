@@ -56,7 +56,7 @@ import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts"
 import { DASH_IF_Content_Protection_List, UUID_type, CA_SYSTEM_ID_REGISTRY, KnownDRMScheme, KnownCASystemID} from "./identifiers.mts"
 import { CheckDelivery } from "./slr_check.mts"
 import { LoadMarkets } from "./markets.mts"
-import { checkServiceLogoRequired, refusedRevision } from "./market_checks.mts"
+import { checkDirectTuning, checkMarketPostcodes, checkServiceLogoRequired, marketSummary, refusedRevision } from "./market_checks.mts"
 import { LoadSLschemas, SL_GetSchema, SL_SchemaVersion, SL_SchemaSpecVersion, isA177specification_URN, isContentFinishedBanner, isOutScheduleHours } from "./sl_data_versions.mts"
 import { validServiceControlApplication, validServiceInstanceControlApplication, validServiceUnavailableApplication, validDASHcontentType } from "./sl_data_versions.mts"
 import {
@@ -393,6 +393,8 @@ export default class ServiceListCheck {
 					fragment: Postcode,
 				});
 		});
+		// a market can give the format of its postcodes (#139)
+		checkMarketPostcodes(Region, errs);
 		Region.forEachNamedChildElement(dvbi.e_Region, (RegionChild) => this.#addRegion(RegionChild, depth + 1, documentInfo, countriesSpecified, errs));
 	}
 
@@ -1823,6 +1825,8 @@ export default class ServiceListCheck {
 				}
 			}
 
+			// a market can require the parameters for direct tuning (#139)
+			checkDirectTuning(DVBSDeliveryParameters, errs);
 			if (DVBSDeliveryParameters.hasChild(dvbi.e_DVBTriplet) && DVBSDeliveryParameters.hasChild(dvbi.e_OrbitalPosition) && 
 		      DVBSDeliveryParameters.hasChild(dvbi.e_Frequency) && DVBSDeliveryParameters.hasChild(dvbi.e_Polarization) && DVBSDeliveryParameters.hasChild(dvbi.e_SymbolRate))
 				documentInfo.directSatScan.provisionedInstances.push(DVBSDeliveryParameters)
@@ -2966,7 +2970,10 @@ export default class ServiceListCheck {
 		// perform the deferred network work before the document is disposed (at the end of this method)
 		await scope.finish();
 		// the outermost validation reports how long it took, including the documents it traversed
-		if (scope.depth == 0) errs.timing = scope.timing();
+		if (scope.depth == 0) {
+			errs.timing = scope.timing();
+			errs.market = marketSummary(scope.budget.request.market);
+		}
 	}
 
 	/**

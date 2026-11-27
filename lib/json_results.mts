@@ -159,6 +159,8 @@ export function jsonResult(errs: ErrorList, mode: ResultMode = "summary", option
 	const traversed = traversalSummary(errs);
 	if (traversed) result.traversed = traversed;
 	if (errs.timing) result.timing = errs.timing;
+	// the market the document was validated for (issue #119)
+	if (errs.market) result.market = errs.market;
 	// the coverage of the schedule of each service of a service list validated with traversal (issue #122)
 	if (errs.scheduleCoverage?.length) result.scheduleCoverage = errs.scheduleCoverage;
 	if (mode == "tree") result.document = documentTree(errs, options);

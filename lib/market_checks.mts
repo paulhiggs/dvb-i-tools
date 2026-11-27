@@ -16,7 +16,7 @@ import ErrorList, { WARNING } from "./error_list.mts"
 import type { ImageInfo } from "./image_format.mts"
 import { currentRequest, documentRevision } from "./safe_fetch.mts"
 import { findMarket, marketSettings } from "./markets.mts"
-import type { Market, MarketImageKind, MarketRule } from "./markets.mts"
+import type { Market, MarketImageKind, MarketRule, MarketSettings } from "./markets.mts"
 import { A177Revision } from "./revisions.mts"
 import type { TVARevision } from "./revisions.mts"
 import { tva } from "./TVA_definitions.mts"
@@ -32,6 +32,19 @@ const MARKET_KEY = "market";
 export const currentMarketDefinition = (): Market | undefined => {
 	const id = currentRequest().market;
 	return id == undefined ? undefined : findMarket(id);
+};
+
+// the id and name of a market, for the results of a validation made for it (phase 4 of issue #119)
+export const marketSummary = (id: string | undefined): { id: string; name: string } | undefined => {
+	const market = id == undefined ? undefined : findMarket(id);
+	return market ? { id: market.id, name: market.name } : undefined;
+};
+
+// the settings of the market of the validation, for the document whose rules are being checked
+const documentSettings = (): MarketSettings | undefined => {
+	const market = currentRequest().market,
+		revision = documentRevision();
+	return market == undefined || revision == undefined ? undefined : marketSettings(market, revision);
 };
 
 const permittedList = (market: Market): string => (market.permitted ?? []).map((r) => r.label).join(", ");
@@ -114,7 +127,7 @@ export function checkMarketImage(image: ImageInfo, kind: MarketImageKind | undef
 		if (!sizeOK)
 			errs.addError({
 				code: "IMG020",
-				message: `the ${name} ${where} is ${image.width}x${image.height}, the market ${market} requires ${required.height == undefined ? `a width of ${required.width}` : `${required.width}x${required.height}`}`,
+				message: `${where} (a ${name}) is ${image.width}x${image.height}, but the market ${market} requires ${required.height == undefined ? `a width of ${required.width}` : `${required.width}x${required.height}`}`,
 				fragment: MediaUri,
 				key: MARKET_KEY,
 			});
@@ -123,7 +136,7 @@ export function checkMarketImage(image: ImageInfo, kind: MarketImageKind | undef
 		errs.addError({
 			code: "IMG021",
 			type: WARNING,
-			message: `the ${name} ${where} is ${image.size} bytes, the market ${market} recommends at most ${required.maxBytes}`,
+			message: `${where} (a ${name}) is ${image.size} bytes, but the market ${market} recommends at most ${required.maxBytes}`,
 			fragment: MediaUri,
 			key: MARKET_KEY,
 		});
@@ -136,9 +149,62 @@ export function checkMarketImage(image: ImageInfo, kind: MarketImageKind | undef
  * @returns {boolean} true if the rule is enabled
  */
 export function marketRule(rule: MarketRule): boolean {
-	const market = currentRequest().market,
-		revision = documentRevision();
-	return market != undefined && revision != undefined && marketSettings(market, revision).rules[rule] == true;
+	return documentSettings()?.rules[rule] == true;
+}
+
+/**
+ * the postcodes of a region, against the number of digits that the market of the validation gives them (parameter
+ * postcode.digits, #139 DE-18): Postcode and PostcodeRange@from/@to have exactly that many digits, and a WildcardPostcode
+ * has fewer digits beside its single *, which stands for at least one digit
+ *
+ * @param {XmlElement} Region  the <Region> element
+ * @param {ErrorList}  errs    where findings are reported
+ */
+export function checkMarketPostcodes(Region: XmlElement, errs: ErrorList): void {
+	const digits = documentSettings()?.parameters.postcode.digits;
+	if (digits == undefined) return;
+	const market = currentRequest().market;
+	const exact = new RegExp(`^[0-9]{${digits}}$`);
+	const report = (fragment: XmlElement, message: string) => errs.addError({ code: "MKT003", message: `${message}, the market ${market} requires ${digits} digits`, fragment, key: MARKET_KEY });
+	Region.forEachNamedChildElement(dvbi.e_Postcode, (Postcode) => {
+		if (!exact.test(Postcode.content.trim())) report(Postcode, `the postcode ${Postcode.content.trim().quote()} is not ${digits} digits`);
+	});
+	Region.forEachNamedChildElement(dvbi.e_PostcodeRange, (PostcodeRange) => {
+		const from = PostcodeRange.attrAnyNsValueOr(dvbi.a_from)?.trim(),
+			to = PostcodeRange.attrAnyNsValueOr(dvbi.a_to)?.trim();
+		[from, to].forEach((value) => {
+			if (value != undefined && !exact.test(value)) report(PostcodeRange, `the end of a postcode range ${value.quote()} is not ${digits} digits`);
+		});
+		if (from && to && exact.test(from) && exact.test(to) && from > to)
+			errs.addError({ code: "MKT003", message: `the postcode range starts at ${from.quote()}, after its end ${to.quote()}`, fragment: PostcodeRange, key: MARKET_KEY });
+	});
+	Region.forEachNamedChildElement(dvbi.e_WildcardPostcode, (WildcardPostcode) => {
+		const value = WildcardPostcode.content.trim();
+		const counted = value.replace("*", "");
+		if (value.split("*").length != 2 || !/^[0-9]*$/.test(counted) || counted.length >= digits)
+			report(WildcardPostcode, `the wildcard postcode ${value.quote()} is not at most ${digits - 1} digits and one *`);
+	});
+}
+
+// the direct tuning parameters of a DVB-S service instance (A177 clause 5.2.12, #139 DE-15)
+const DIRECT_TUNING = [dvbi.e_OrbitalPosition, dvbi.e_Frequency, dvbi.e_Polarization, dvbi.e_SymbolRate];
+
+/**
+ * the rule dvbsDirectTuning (#139 DE-15): every DVB-S service instance has the parameters for direct tuning
+ *
+ * @param {XmlElement} DVBSDeliveryParameters  the <DVBSDeliveryParameters> element
+ * @param {ErrorList}  errs                    where the finding is reported
+ */
+export function checkDirectTuning(DVBSDeliveryParameters: XmlElement, errs: ErrorList): void {
+	if (!marketRule("dvbsDirectTuning")) return;
+	const missing = DIRECT_TUNING.filter((name) => !DVBSDeliveryParameters.hasChild(name));
+	if (missing.length > 0)
+		errs.addError({
+			code: "MKT004",
+			message: `${dvbi.e_DVBSDeliveryParameters.elementize()} has no ${missing.map((m) => m.elementize()).join(", ")}, which the market ${currentRequest().market} requires for direct tuning`,
+			fragment: DVBSDeliveryParameters,
+			key: MARKET_KEY,
+		});
 }
 
 /**

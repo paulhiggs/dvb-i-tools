@@ -30,7 +30,7 @@ import { checkValidLogos, ValidateAnySignaturePolicy } from "./related_material_
 import { checkAttributes, SchemaCheck, SchemaVersionCheck, SchemaLoad, checkTopElementsAndCardinality } from "./schema_checks.mts"
 import { LoadSLschemas, validServiceListLogo, isA177specification_URN, a177versionFromURN } from "./sl_data_versions.mts"
 import { LoadMarkets } from "./markets.mts"
-import { refusedRevision } from "./market_checks.mts"
+import { marketSummary, refusedRevision } from "./market_checks.mts"
 import { LoadSLRschemas, SLR_GetSchema, SLR_SchemaVersion, SLR_SchemaSpecVersion } from "./slr_data_versions.mts"
 import { tva, tvaEA } from "./TVA_definitions.mts"
 import { parameterCheck, DefaultProperty } from "./utils.mts"
@@ -527,7 +527,10 @@ export default class ServiceListRegistryCheck {
 		// perform the deferred network work before the document is disposed (at the end of this method)
 		await scope.finish();
 		// the outermost validation reports how long it took, including the documents it traversed
-		if (scope.depth == 0) errs.timing = scope.timing();
+		if (scope.depth == 0) {
+			errs.timing = scope.timing();
+			errs.market = marketSummary(scope.budget.request.market);
+		}
 	}
 
 	/**

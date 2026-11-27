@@ -23,7 +23,8 @@ import { XMLAIT_Schema, schemaURL } from "./data_locations.mts"
 import document_logger from "./logger.mts"
 import { isHTTPURL, isHTTSPURL } from "./pattern_checks.mts"
 import { allowTraversal, claimTraversal, currentRequest, currentValidation, deferRetrieval, documentRevision, safeFetch, setDocumentRevision, signaturePoliciesInEffect, ValidationScope } from "./safe_fetch.mts"
-import { latestPermittedRevision } from "./market_checks.mts"
+import { latestPermittedRevision, marketSummary } from "./market_checks.mts"
+import { LoadMarkets } from "./markets.mts"
 import type { ValidationOptions } from "./safe_fetch.mts"
 import { nestedTraversal, traversalFinished, traversalSkipped, traversalStarted } from "./traversal.mts"
 import { checkSignedLocation, retrieveResource } from "./resource_checks.mts"
@@ -110,6 +111,7 @@ export default class XmlAitCheck {
 
 	constructor(opts: LoadOptions) {
 		LoadAITschemas(opts);
+		LoadMarkets(opts);
 		this.#numRequests = 0;
 	}
 
@@ -505,7 +507,10 @@ export default class XmlAitCheck {
 		if (applications.length > 0) this.#checkApplications(applications, aitRole, reference, errs);
 
 		await scope.finish();
-		if (scope.depth == 0) errs.timing = scope.timing();
+		if (scope.depth == 0) {
+			errs.timing = scope.timing();
+			errs.market = marketSummary(scope.budget.request.market);
+		}
 	}
 
 	/**
