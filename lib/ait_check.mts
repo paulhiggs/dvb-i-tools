@@ -1,0 +1,381 @@
+/**
+ * ait_check.mts
+ *
+ *  DVB-I-tools
+ *  Copyright (c) 2026, Paul Higgs
+ *  BSD-2-Clause license, see LICENSE.txt file
+ *
+ * Check an XML AIT (ETSI TS 102 809 clause 5.4) against its schema and the rules of A177 for the applications that a
+ * DVB-I client launches (issue #134). The rules differ for the role of the AIT: the application of a service (A177r8
+ * clause 5.2.3), a content deep link (clause 5.2.4.3) or a template (clause 5.2.4.4)
+ */
+
+import process from "process"
+
+import chalk from "chalk"
+import { XmlDocument } from "libxml2-wasm"
+
+import ErrorList, { APPLICATION, INFORMATION, WARNING } from "./error_list.mts"
+import { mhp, DVBI_APPLICATION_TYPES, AIT_ROLES, AIT_ROLE_LINKED, AIT_ROLE_DEEPLINK, AIT_ROLE_TEMPLATE } from "./MHP_definitions.mts"
+import { keys } from "./common_errors.mts"
+import { SchemaCheck, SchemaLoad } from "./schema_checks.mts"
+import { XMLAIT_Schema, schemaURL } from "./data_locations.mts"
+import document_logger from "./logger.mts"
+import { isHTTPURL } from "./pattern_checks.mts"
+import { currentRequest, ValidationScope } from "./safe_fetch.mts"
+import type { ValidationOptions } from "./safe_fetch.mts"
+import { StandardStatus } from "./globals.mts"
+import type { StatsType, LoadOptions } from "./globals.mts"
+import { readmyfile } from "./utils.mts"
+
+// initialise string formatting extensions
+import {} from "./string-extensions.mts"
+
+// the choices of an XML AIT validation (see ValidationRequest)
+export type AIT_Validator_Options = ValidationOptions
+
+const AIT_KEY = "XML AIT";
+
+type AITSchemaVersion = {
+	namespace: string;
+	label: string; // used in the code of schema errors, e.g. AIT005:2009
+	filename: string;
+	schema?: XmlDocument;
+	status: number;
+};
+
+const AIT_SchemaVersions: AITSchemaVersion[] = [
+	// the ETSI version of the schema, also in the electronic attachments of the A177r8 second edition
+	{ namespace: mhp.MHP_2026_Namespace, label: "2026", filename: XMLAIT_Schema.v2026.file, status: StandardStatus.ETSI },
+	// ETSI TS 102 809 v1.2.1 and v1.3.1, replaced by urn:dvb:mhp:2026
+	{ namespace: mhp.MHP_2009_Namespace, label: "2009", filename: XMLAIT_Schema.v2009.file, status: StandardStatus.OLD },
+];
+
+let AITschemasLoaded = false;
+function LoadAITschemas(opts: LoadOptions): void {
+	if (AITschemasLoaded) return;
+	AITschemasLoaded = true;
+	if (opts.verbose) console.log(chalk.yellow.underline("loading XML AIT schemas..."));
+	AIT_SchemaVersions.forEach((version) => {
+		if (opts.verbose) process.stdout.write(chalk.yellow(`..loading ${version.namespace} from ${version.filename} `));
+		const buf = readmyfile(version.filename, {}) as Buffer;
+		if (buf) version.schema = XmlDocument.fromBuffer(buf, { url: schemaURL(version.filename) });
+		if (opts.verbose) process.stdout.write(`${version.schema ? chalk.green("OK") : chalk.red.bold("FAIL")}\n`);
+	});
+}
+
+// what the rules need to know about each <Application>
+type ApplicationInfo = {
+	element: XmlElement;
+	type?: string; // the <OtherApp> media type, or "DvbApp <value>"
+	otherApp?: string;
+	orgId?: string;
+	appId?: string;
+	priority: number;
+	mhpVersion: string; // "<profile> <major>.<minor>.<micro>", or "" when it is not given
+};
+
+const hexValue = (value: string | undefined): number => (value == undefined ? NaN : parseInt(value, 16));
+const childText = (element: XmlElement | null | undefined, name: string): string | undefined => element?.getAnyNs(name)?.content.trim();
+
+/**
+ * the URL formed by a launch location, or undefined if it is not a valid HTTP(S) URL
+ */
+function launchURL(location: string): URL | undefined {
+	try {
+		return isHTTPURL(location) ? new URL(location) : undefined;
+	} catch {
+		return undefined; // malformed %-encoding
+	}
+}
+
+export default class XmlAitCheck {
+	#numRequests: number;
+
+	constructor(opts: LoadOptions) {
+		LoadAITschemas(opts);
+		this.#numRequests = 0;
+	}
+
+	stats(): StatsType {
+		return { numRequests: this.#numRequests };
+	}
+
+	// the roles that an XML AIT can have, for the form and the /validate_ait endpoints
+	get supportedRoles(): { value: string; label: string }[] {
+		return AIT_ROLES;
+	}
+
+	/**
+	 * the properties of an <Application> that the rules use
+	 */
+	/*private*/ #applicationInfo(Application: XmlElement): ApplicationInfo {
+		const identifier = Application.getAnyNs(mhp.e_applicationIdentifier),
+			descriptor = Application.getAnyNs(mhp.e_applicationDescriptor),
+			type = descriptor?.getAnyNs(mhp.e_type),
+			version = descriptor?.getAnyNs(mhp.e_mhpVersion);
+		const otherApp = childText(type, mhp.e_OtherApp),
+			dvbApp = childText(type, mhp.e_DvbApp);
+		return {
+			element: Application,
+			type: otherApp ?? (dvbApp ? `${mhp.e_DvbApp} ${dvbApp}` : undefined),
+			otherApp,
+			orgId: childText(identifier, mhp.e_orgId),
+			appId: childText(identifier, mhp.e_appId),
+			priority: hexValue(childText(descriptor, mhp.e_priority)),
+			mhpVersion: version
+				? `${hexValue(childText(version, mhp.e_profile))} ${hexValue(childText(version, mhp.e_versionMajor))}.${hexValue(childText(version, mhp.e_versionMinor))}.${hexValue(childText(version, mhp.e_versionMicro))}`
+				: "",
+		};
+	}
+
+	/**
+	 * check the launch location of an application: <URLBase> of each HTTP transport followed by <applicationLocation>
+	 * (A177r8 clause 5.2.4.3, ETSI TS 102 809 clause 5.4.4.17)
+	 */
+	/*private*/ #checkLaunchLocation(app: ApplicationInfo, errs: ErrorList): void {
+		const Application = app.element;
+		const location = childText(Application, mhp.e_applicationLocation) ?? "";
+		let httpTransports = 0;
+		Application.forEachNamedChildElement(mhp.e_applicationTransport, (transport) => {
+			// xsi:type="mhp:HTTPTransportType" (the prefix is the document's own)
+			const transportType = transport.attrAnyNsValueOr(mhp.a_type, "") ?? "";
+			if (!transportType.endsWith(mhp.HTTP_TRANSPORT)) return;
+			httpTransports++;
+			const URLBase = childText(transport, mhp.e_URLBase) ?? "";
+			if (!launchURL(URLBase)) {
+				errs.addError({
+					code: "AIT016",
+					message: `${mhp.e_URLBase.elementize()} ${URLBase.quote()} is not an HTTP or HTTPS URL`,
+					fragment: transport.getAnyNs(mhp.e_URLBase) ?? transport,
+					key: keys.k_InvalidURL,
+					clause: "ETSI TS 102 809 clause 5.4.4.17",
+				});
+				return;
+			}
+			const launch = launchURL(`${URLBase}${location}`);
+			if (!launch) {
+				errs.addError({
+					code: "AIT017",
+					message: `${mhp.e_URLBase.elementize()} followed by ${mhp.e_applicationLocation.elementize()} (${`${URLBase}${location}`.quote()}) is not a valid URL`,
+					fragment: Application.getAnyNs(mhp.e_applicationLocation) ?? Application,
+					key: keys.k_InvalidURL,
+					clause: "A177r8 clause 5.2.4.3",
+					description: "The concatenation of URLBase and applicationLocation shall form a URL specifying an application launch location",
+				});
+				return;
+			}
+			const clashes = [...new Set([...launch.searchParams.keys()].filter((name) => mhp.CONTEXT_PARAMETERS.includes(name)))];
+			if (clashes.length > 0)
+				errs.addError({
+					type: WARNING,
+					code: "AIT019",
+					message: `the launch location ${launch.href.quote()} uses the query ${clashes.length == 1 ? "parameter" : "parameters"} ${clashes.map((c) => c.quote()).join(" and ")}, which the DVB-I client appends as a contextual parameter`,
+					fragment: Application.getAnyNs(mhp.e_applicationLocation) ?? Application,
+					key: "contextual parameter",
+					clause: "A177r8 clause 5.2.4.3, 5.2.4.4.6",
+					description: "The Content Provider shall ensure that any included query parameters are distinct from the contextual parameters (regionID[] and lloc)",
+				});
+		});
+		if (httpTransports == 0)
+			errs.addError({
+				type: INFORMATION,
+				code: "AIT018",
+				message: `application ${app.orgId}/${app.appId} has no HTTP transport, so it cannot be launched from broadband`,
+				fragment: Application,
+				key: AIT_KEY,
+			});
+	}
+
+	/**
+	 * report the state of the schema of the AIT: a warning when it is old (urn:dvb:mhp:2009) or a draft
+	 */
+	/*private*/ #checkSchemaStatus(version: AITSchemaVersion, root: XmlElement, errs: ErrorList): void {
+		const current = AIT_SchemaVersions.find((v) => v.status & StandardStatus.ETSI && !(v.status & StandardStatus.OLD));
+		if (version.status & StandardStatus.OLD)
+			errs.addError({
+				type: WARNING,
+				code: "AIT006a",
+				message: `the XML AIT uses the old schema ${version.namespace.quote()}${current ? `, which is replaced by ${current.namespace.quote()}` : ""}`,
+				line: root.line,
+				key: "schema version",
+			});
+		if (version.status & StandardStatus.DRAFT)
+			errs.addError({
+				type: WARNING,
+				code: "AIT006b",
+				message: `the XML AIT schema ${version.namespace.quote()} is in draft state`,
+				line: root.line,
+				key: "schema version",
+			});
+	}
+
+	/**
+	 * the rules of A177 for the applications of an XML AIT
+	 */
+	/*private*/ #checkApplications(applications: ApplicationInfo[], role: string, errs: ErrorList): void {
+		// "not available" (A177r8 clause 5.2.4.2): a content deep-linked AIT returned when no application can be provided
+		const notAvailable = applications.filter((app) => app.otherApp == mhp.NOT_AVAILABLE_APP);
+		notAvailable.forEach((app) => {
+			if (role == AIT_ROLE_DEEPLINK)
+				errs.addError({
+					type: INFORMATION,
+					code: "AIT011",
+					message: `the AIT signals that the content is not available to this device (${mhp.e_OtherApp.elementize()} ${mhp.NOT_AVAILABLE_APP.quote()})`,
+					fragment: app.element,
+					key: AIT_KEY,
+					clause: "A177r8 clause 5.2.4.2",
+				});
+			else
+				errs.addError({
+					type: WARNING,
+					code: "AIT012",
+					message: `${mhp.NOT_AVAILABLE_APP.quote()} is only defined for a content deep-linked XML AIT`,
+					fragment: app.element,
+					key: AIT_KEY,
+					clause: "A177r8 clause 5.2.4.2",
+				});
+		});
+
+		// application types other than those a DVB-I client runs are allowed (A177r8 clause 5.2.4.1), but are ignored
+		applications
+			.filter((app) => app.otherApp != mhp.NOT_AVAILABLE_APP && !DVBI_APPLICATION_TYPES.includes(app.otherApp ?? ""))
+			.forEach((app) =>
+				errs.addError({
+					type: INFORMATION,
+					code: "AIT010",
+					message: `application type ${(app.type ?? "").quote()} is not one that a DVB-I client runs (${DVBI_APPLICATION_TYPES.map((t) => t.quote()).join(", ")})`,
+					fragment: app.element,
+					key: AIT_KEY,
+					clause: "A177r8 clause 5.2.4.1, 5.2.4.2",
+				})
+			);
+
+		const runnable = applications.filter((app) => DVBI_APPLICATION_TYPES.includes(app.otherApp ?? ""));
+		if (runnable.length == 0 && notAvailable.length == 0)
+			errs.addError({
+				type: WARNING,
+				code: "AIT013",
+				message: "the AIT has no application that a DVB-I client can run, so the client shows the service or content as unavailable",
+				line: applications[0]?.element.line,
+				key: AIT_KEY,
+				clause: "A177r8 clause 5.2.4.2",
+				description: `A DVB-I client selects an application of type ${DVBI_APPLICATION_TYPES.map((t) => t.quote()).join(", ")}, and ignores the others`,
+			});
+
+		// the client selects the application with the highest priority that it can run: two that it cannot tell apart are ambiguous
+		for (let i = 0; i < runnable.length; i++)
+			for (let j = i + 1; j < runnable.length; j++) {
+				const a = runnable[i],
+					b = runnable[j];
+				if (a.type == b.type && a.mhpVersion == b.mhpVersion && a.priority == b.priority)
+					errs.addError({
+						type: WARNING,
+						code: "AIT014",
+						message: `application ${b.orgId}/${b.appId} (line ${b.element.line}) has the same type ${(b.type ?? "").quote()}, ${mhp.e_mhpVersion.elementize()} and ${mhp.e_priority.elementize()} as application ${a.orgId}/${a.appId} (line ${a.element.line}), so the choice between them is ambiguous`,
+						fragment: b.element,
+						key: AIT_KEY,
+						clause: "A177r8 clause 5.2.4.2",
+					});
+			}
+
+		// all the applications of a content deep-linked or template AIT have the same orgId and appId (A177r8 clause 5.2.4.3, 5.2.4.4.1)
+		if (role == AIT_ROLE_DEEPLINK || role == AIT_ROLE_TEMPLATE) {
+			const first = applications[0];
+			applications
+				.slice(1)
+				.filter((app) => app.orgId != first.orgId || app.appId != first.appId)
+				.forEach((app) =>
+					errs.addError({
+						code: "AIT015",
+						message: `application ${app.orgId}/${app.appId} does not have the same ${mhp.e_orgId.elementize()} and ${mhp.e_appId.elementize()} as the first application (${first.orgId}/${first.appId}, line ${first.element.line})`,
+						fragment: app.element,
+						key: AIT_KEY,
+						clause: role == AIT_ROLE_DEEPLINK ? "A177r8 clause 5.2.4.3" : "A177r8 clause 5.2.4.4.1",
+						description: `All applications in a ${role == AIT_ROLE_DEEPLINK ? "content deep-linked" : "Template"} XML AIT shall have the same orgId and appId`,
+					})
+				);
+		}
+
+		applications.forEach((app) => this.#checkLaunchLocation(app, errs));
+	}
+
+	/**
+	 * validate an XML AIT and record any errors
+	 *
+	 * @param {string}    AITtext  the XML AIT to be validated
+	 * @param {string}    role     how the AIT is used: "linked" (the default), "deeplink" or "template" (see AIT_ROLES)
+	 * @param {ErrorList} errs     errors found in validaton
+	 * @param {AIT_Validator_Options} options
+	 *                      log_prefix            the first part of the logging location (or null if no logging)
+	 *                      report_schema_version report the state of the schema in the error/warning list
+	 */
+	/*public*/ async doValidateXmlAit(AITtext: string, role: string | undefined, errs: ErrorList, options: AIT_Validator_Options = {}): Promise<void> {
+		this.#numRequests++;
+		using scope = ValidationScope.open(options);
+		const request = currentRequest();
+		if (!AITtext) {
+			errs.addError({ type: APPLICATION, code: "AIT000", message: "doValidateXmlAit() called with AITtext==null" });
+			return;
+		}
+		const aitRole = role && role.length > 0 ? role : AIT_ROLE_LINKED;
+		if (!AIT_ROLES.some((r) => r.value == aitRole)) {
+			errs.addError({
+				type: APPLICATION,
+				code: "AIT009",
+				message: `unknown XML AIT role ${aitRole.quote()}, expected one of ${AIT_ROLES.map((r) => r.value.quote()).join(", ")}`,
+			});
+			return;
+		}
+
+		// 'using' disposes the document (WASM memory) on every exit from this method
+		using AIT = SchemaLoad(AITtext, errs, "AIT001");
+		if (!AIT) return;
+		document_logger(errs, scope.depth == 0 ? request.log_prefix : undefined, false);
+
+		if (AIT.root.name !== mhp.e_ServiceDiscovery) {
+			errs.addError({
+				code: "AIT002",
+				message: `Root element is not ${mhp.e_ServiceDiscovery.elementize()}`,
+				line: AIT.root.line,
+				key: keys.k_XSDValidation,
+				clause: "ETSI TS 102 809 clause 5.4",
+			});
+			return;
+		}
+		const ns = AIT.root.namespaceUri;
+		if (!ns) {
+			errs.addError({
+				code: "AIT003",
+				message: `namespace is not provided for ${mhp.e_ServiceDiscovery.elementize()}`,
+				line: AIT.root.line,
+				key: keys.k_XSDValidation,
+			});
+			return;
+		}
+		const version = AIT_SchemaVersions.find((v) => v.namespace == ns);
+		if (!version?.schema) {
+			errs.addError({
+				code: "AIT004",
+				message: `Unsupported namespace ${ns.quote()}, expected ${AIT_SchemaVersions.map((v) => v.namespace.quote()).join(" or ")}`,
+				line: AIT.root.line,
+				key: keys.k_XSDValidation,
+			});
+			return;
+		}
+		SchemaCheck(AIT as XmlDocument, version.schema, version.filename, errs, `AIT005:${version.label}`);
+		if (request.report_schema_version) this.#checkSchemaStatus(version, AIT.root as XmlElement, errs);
+
+		const applications: ApplicationInfo[] = [];
+		(AIT.root as XmlElement).forEachNamedChildElement(mhp.e_ApplicationDiscovery, (discovery) =>
+			discovery.forEachNamedChildElement(mhp.e_ApplicationList, (list) =>
+				list.forEachNamedChildElement(mhp.e_Application, (Application) => applications.push(this.#applicationInfo(Application)))
+			)
+		);
+		// the schema requires at least one application: when there is none, the XSD error has been reported
+		if (applications.length > 0) this.#checkApplications(applications, aitRole, errs);
+
+		await scope.finish();
+		if (scope.depth == 0) errs.timing = scope.timing();
+	}
+}

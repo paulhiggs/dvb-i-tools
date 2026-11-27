@@ -14,7 +14,7 @@ import chalk from "chalk"
 
 import { existsSync, writeFile } from "fs"
 import { join, sep } from "path"
-import { MODE_URL, MODE_CG, MODE_SL, MODE_SLR, MODE_PL } from "./ui.mts"
+import { MODE_URL, MODE_CG, MODE_SL, MODE_SLR, MODE_PL, MODE_AIT } from "./ui.mts"
 import ErrorList from "./error_list.mts"
 
 let lastArchiveStamp = "",
@@ -25,7 +25,7 @@ export function createPrefix(req: express.Request, testtype?: string) : string |
 
 	if (!existsSync(logDir)) return undefined;
 	// a specified test type must be one of the known validation types
-	if (testtype && ![MODE_CG, MODE_SL, MODE_SLR, MODE_PL].includes(testtype)) return undefined
+	if (testtype && ![MODE_CG, MODE_SL, MODE_SLR, MODE_PL, MODE_AIT].includes(testtype)) return undefined
 
 	const getDate = (i : Temporal.Instant) : string=> {
 		const fillZero = (t: number) : string => `${t < 10 ? "0" : ""}${t}`;

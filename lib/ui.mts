@@ -24,6 +24,7 @@ import type { ValidationTiming } from "./safe_fetch.mts"
 import type { CGRequestType } from "./cg_check.mts"
 import { CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM, CG_REQUEST_MORE_EPISODES, CG_REQUEST_BS_CATEGORIES, CG_REQUEST_BS_LISTS, CG_REQUEST_BS_CONTENTS } from "./cg_check.mts"
 
+import { AIT_ROLES } from "./MHP_definitions.mts"
 import { HasProperty } from "./utils.mts"
 import { HTML, html, join as joinHTML, raw, text } from "./html.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
@@ -39,6 +40,7 @@ export const MODE_UNSPECIFIED = "none",
 	MODE_CG = "cg",
 	MODE_SLR = "slr",
 	MODE_PL = "pl",
+	MODE_AIT = "ait",
 	MODE_URL = "url",
 	MODE_FILE = "file";
 
@@ -125,6 +127,8 @@ legend { padding: 0; margin-bottom: 8px; font-size: var(--step--1); font-weight:
 	form:has(#radFile:checked) .field-file { display: block; }
 	.cg-type { display: none; }
 	form:has(#radCG:checked) .cg-type { display: grid; }
+	.ait-role { display: none; }
+	form:has(#radAIT:checked) .ait-role { display: grid; }
 	form:not(:has(#radSL:checked, #radSLR:checked)) .sl-options { display: none; }
 	form:not(:has(#cbTraverse:checked)) .traverse-limit { display: none; }
 }
@@ -629,12 +633,14 @@ export type FormModes = {
 	sl: string
 	pl: string
 	slr: string
+	ait: string
 	file: string
 	url: string
 	hasSL: boolean
 	hasPL: boolean
 	hasCG: boolean
 	hasSLR: boolean
+	hasAIT: boolean
 	allowTraversal: boolean
 }
 
@@ -645,6 +651,7 @@ export type FormState = {
 	entry: string // where the document comes from: URL or file
 	url: string
 	cgmode?: string // the content guide request type
+	aitrole?: string // the role of an XML AIT (linked, deeplink or template)
 	forGermany: boolean
 	traverse: boolean
 	maxTraversal: string
@@ -780,7 +787,9 @@ export async function drawForm(
 		modes.hasPL && segmentChoice("testtype", modes.pl, "radPL", "Playlist", form.mode == modes.pl),
 		modes.hasCG && segmentChoice("testtype", modes.cg, "radCG", "Content Guide", form.mode == modes.cg),
 		modes.hasSLR && segmentChoice("testtype", modes.slr, "radSLR", "Service List Registry", form.mode == modes.slr),
+		modes.hasAIT && segmentChoice("testtype", modes.ait, "radAIT", "XML AIT", form.mode == modes.ait),
 	];
+	const aitRoles = AIT_ROLES.map((role) => segmentChoice("aitRole", role.value, `ait-${role.value}`, role.label, role.value == form.aitrole));
 	const requestTypes = supportedRequests?.map((choice) => segmentChoice(ENTRY_FORM_REQUEST_TYPE_ID, choice.value, choice.value, choice.label, choice.value == form.cgmode));
 	const maxDepth = currentFetchPolicy().maxTraversalDepth; // the server's limit, which a request can lower
 	const traverse = modes.allowTraversal
@@ -798,6 +807,7 @@ export async function drawForm(
 <div class="field field-file"><input type="file" id="XMLfile" name="XMLfile" aria-label="Document file"></div>
 </div></fieldset>
 <fieldset class="cg-type"><legend>Content guide query type</legend><div class="seg">${requestTypes}</div></fieldset>
+<fieldset class="ait-role"><legend>How the XML AIT is used</legend><div class="seg">${aitRoles}</div><span class="hint">A linked application of a service or service list, a content deep link (OnDemandProgram ProgramURL or restart), or a Template XML AIT. The rules of A177 differ for each.</span></fieldset>
 <fieldset><legend>Options</legend><div class="options">
 <label class="check sl-options"><input type="checkbox" id="cbGermany" name="forGermany"${form.forGermany && raw(" checked")}><span>Germany</span><span class="hint">Validate against the German profile of A177, which requires 7 days of programme guide either side of today instead of 28.</span></label>
 ${traverse}

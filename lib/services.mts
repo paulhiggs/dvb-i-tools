@@ -30,6 +30,7 @@ import ServiceListCheck from "./sl_check.mts"
 import PlaylistCheck from "./playlist_check.mts"
 import ContentGuideCheck from "./cg_check.mts"
 import ServiceListRegistryCheck from "./slr_check.mts"
+import XmlAitCheck from "./ait_check.mts"
 import SLEPR from "./slepr.mts"
 import type { ValidatorConfig } from "./config.mts"
 
@@ -38,6 +39,7 @@ export type ValidatorServices = Readonly<{
 	plcheck?: PlaylistCheck;
 	cgcheck?: ContentGuideCheck;
 	slrcheck?: ServiceListRegistryCheck;
+	aitcheck?: XmlAitCheck;
 	csr?: SLEPR; // answers /query from the master SLEPR document
 }>;
 
@@ -49,7 +51,7 @@ export type ValidatorServices = Readonly<{
  */
 export function createServices(config: ValidatorConfig): ValidatorServices {
 	const load = { useURLs: config.useURLs, async: false, verbose: true };
-	const { sl, pl, cg, slr, csr: offerCSR } = config.features;
+	const { sl, pl, cg, slr, ait, csr: offerCSR } = config.features;
 
 	const knownLanguages = LoadLanguages(load);
 	const isoCountries = LoadCountries(load);
@@ -129,11 +131,14 @@ export function createServices(config: ValidatorConfig): ValidatorServices {
 			);
 	}
 
+	// the XML AIT checker needs only its schemas
+	const aitcheck = ait ? new XmlAitCheck(load) : undefined;
+
 	let csr: SLEPR | undefined = undefined;
 	if (offerCSR) {
 		csr = new SLEPR(config.useURLs, config.slrMode, knownLanguages, isoCountries, knownGenres);
 		csr.loadServiceListRegistry(config.csrFile);
 	}
 
-	return Object.freeze({ slcheck, plcheck, cgcheck, slrcheck, csr });
+	return Object.freeze({ slcheck, plcheck, cgcheck, slrcheck, aitcheck, csr });
 }

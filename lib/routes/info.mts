@@ -30,7 +30,7 @@ const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), read_string
  */
 export function infoRouter(services: ValidatorServices): express.Router {
 	const router = express.Router();
-	const { slcheck, plcheck, cgcheck, slrcheck, csr } = services;
+	const { slcheck, plcheck, cgcheck, slrcheck, aitcheck, csr } = services;
 
 	router.get("/stats", async (req: express.Request, res: express.Response) => {
 		const InactiveFeatureStats = { active: "false" };
@@ -53,6 +53,7 @@ export function infoRouter(services: ValidatorServices): express.Router {
 			["PL", plcheck ? plcheck.stats() : InactiveFeatureStats],
 			["SLR", slrcheck ? slrcheck.stats() : InactiveFeatureStats],
 			["CG", cgcheck ? cgcheck.stats() : InactiveFeatureStats],
+			["AIT", aitcheck ? aitcheck.stats() : InactiveFeatureStats],
 		]);
 		res.status(200).end();
 	});
