@@ -3570,10 +3570,12 @@ export default class ContentGuideCheck {
 				// ProgramLocationTable is not included in these response types
 				break;
 			case CG_REQUEST_MORE_EPISODES:
+				// the response may contain the future broadcasts of the episodes (A177 clause 6.7.3), which can be on several
+				// services, each with its own Schedule. A response with no results has an empty ProgramLocationTable
 				allowedElements.push(
 					CG_SchemaVersion(ProgramDescription.documentNamespace()) >= cgVersions.r3
 						? { name: tva.e_BroadcastEvent, minOccurs: 0, maxOccurs: Infinity }
-						: { name: tva.e_Schedule }
+						: { name: tva.e_Schedule, minOccurs: 0, maxOccurs: Infinity }
 				);
 				break;
 		}
