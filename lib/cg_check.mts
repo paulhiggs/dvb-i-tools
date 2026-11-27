@@ -58,6 +58,9 @@ import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts"
 import { mlLanguage, NO_DOCUMENT_LANGUAGE } from "./multilingual_element.mts"
 import { CaseInsensitiveSet } from "./StringSet.ts"
 import type { ValidatorOptions } from "./sl_check.mts"
+import type XmlAitCheck from "./ait_check.mts"
+import type { AIT_Reference } from "./ait_check.mts"
+import { AIT_ROLE_DEEPLINK, AIT_ROLE_TEMPLATE } from "./MHP_definitions.mts"
 import { FoundDocumentItems} from "./sl_check.mts"
 import ClassificationScheme from "./classification_scheme.mts";
 import type { StatsType, LoadOptions } from "./globals.mts"
@@ -218,6 +221,7 @@ export default class ContentGuideCheck {
 	#subtitleCarriages;
 	#subtitleCodings;
 	#subtitlePurposes;
+	#aitCheck?: XmlAitCheck;
 	supportedRequests;
 
 	constructor(opts: ValidatorOptions) {
@@ -247,6 +251,7 @@ export default class ContentGuideCheck {
 
 		this.#allowedCreditItemRoles = opts?.credits || LoadCredits(opts);
 		this.#allowedRatings = opts?.ratings || LoadRatings(opts);
+		this.#aitCheck = opts?.aitcheck;
 	}
 
 	stats() : StatsType {
@@ -1065,6 +1070,7 @@ export default class ContentGuideCheck {
 									key: keys.k_InvalidValue,
 								});
 							checkReferencedResource(AuxiliaryURI, new FoundDocumentItems(false), errs, { digest: "TA021", policy: CG_SchemaVersion(AuxiliaryURI.documentNamespace()) >= cgVersions.r3 ? "TA022" : undefined });
+							if (contentType == dvbi.XML_AIT_CONTENT_TYPE) this.#validateReferencedAit(AuxiliaryURI, AIT_ROLE_TEMPLATE, errs);
 						});
 						if (!hasAuxiliaryURI) errs.addError(NoChildElement(tva.e_AuxiliaryURI.elementize(), locator, Location, "TA031"));
 					});
@@ -2650,6 +2656,20 @@ export default class ContentGuideCheck {
 	 * @param {ErrorList}  errs             errors found in validaton
 	 * @returns {boolean}	true if this RelatedMaterial element contains a restart link (proper HowRelated@href and MediaLocator.MediaUri and MediaLocator.AuxiliaryURI)
 	 */
+	/**
+	 * validate an XML AIT that the document refers to, when the request asks for it (aits) and the server offers XML AIT
+	 * validation (issue #134)
+	 *
+	 * @param {XmlElement}    element    the element whose content is the URL of the AIT
+	 * @param {string}        role       how the AIT is used (linked, deeplink or template)
+	 * @param {ErrorList}     errs       the results of this document
+	 * @param {AIT_Reference} reference  what this document says about the AIT
+	 */
+	/*private*/ #validateReferencedAit(element: XmlElement, role: string, errs: ErrorList, reference: AIT_Reference = {}): void {
+		const url = element.content.trim();
+		if (this.#aitCheck && currentRequest().aits && isHTTPURL(url)) this.#aitCheck.validateReferencedAit(element, url, role, errs, reference);
+	}
+
 	/* private */ #ValidateRestartRelatedMaterial(RelatedMaterial: XmlElement, errs: ErrorList) : boolean {
 		if (!parameterCheck("ValidateRestartRelatedMaterial", RelatedMaterial, tva.e_RelatedMaterial, errs, "RR000")) return false;
 
@@ -2674,6 +2694,14 @@ export default class ContentGuideCheck {
 		const MediaLocator = RelatedMaterial.getAnyNs(tva.e_MediaLocator);
 		if (MediaLocator)
 			if (!checkTopElementsAndCardinality(MediaLocator, [{ name: tva.e_MediaUri }, { name: tva.e_AuxiliaryURI }], tvaEC.MediaLocator, true, errs, "RR003")) isRestart = false;
+
+		// the restart XML AIT is a content deep link, and the AuxiliaryURI is its Template XML AIT (A177r8 clause 6.5.5.3)
+		if (isRestart && MediaLocator) {
+			const MediaUri = MediaLocator.getAnyNs(tva.e_MediaUri),
+				AuxiliaryURI = MediaLocator.getAnyNs(tva.e_AuxiliaryURI);
+			if (MediaUri?.attrAnyNsValueOr(tva.a_contentType) == dvbi.XML_AIT_CONTENT_TYPE) this.#validateReferencedAit(MediaUri, AIT_ROLE_DEEPLINK, errs);
+			if (AuxiliaryURI?.attrAnyNsValueOr(tva.a_contentType) == dvbi.XML_AIT_CONTENT_TYPE) this.#validateReferencedAit(AuxiliaryURI, AIT_ROLE_TEMPLATE, errs);
+		}
 
 		return isRestart;
 	}
@@ -3083,6 +3111,7 @@ export default class ContentGuideCheck {
 		if (ProgramURL) {
 			this.#CheckPlayerApplication(ProgramURL, [dvbi.XML_AIT_CONTENT_TYPE], errs, "OD020");
 			checkReferencedResource(ProgramURL, new FoundDocumentItems(false), errs, { digest: "OD021", policy: CG_SchemaVersion(ProgramURL.documentNamespace()) >= cgVersions.r3 ? "OD022" : undefined });
+			if (ProgramURL.attrAnyNsValueOr(tva.a_contentType) == dvbi.XML_AIT_CONTENT_TYPE) this.#validateReferencedAit(ProgramURL, AIT_ROLE_DEEPLINK, errs);
 		}
 
 		// <AuxiliaryURL>
@@ -3090,6 +3119,7 @@ export default class ContentGuideCheck {
 		if (AuxiliaryURL) {
 			this.#CheckPlayerApplication(AuxiliaryURL, [dvbi.XML_AIT_CONTENT_TYPE /*, dvbi.HTML5_APP, dvbi.XHTML_APP, dvbi.iOS_APP, dvbi.ANDROID_APP*/], errs, "OD030");
 			checkReferencedResource(AuxiliaryURL, new FoundDocumentItems(false), errs, { digest: "OD031", policy: CG_SchemaVersion(AuxiliaryURL.documentNamespace()) >= cgVersions.r3 ? "OD032" : undefined });
+			if (AuxiliaryURL.attrAnyNsValueOr(tva.a_contentType) == dvbi.XML_AIT_CONTENT_TYPE) this.#validateReferencedAit(AuxiliaryURL, AIT_ROLE_TEMPLATE, errs);
 		}
 
 		// <InstanceDescription>

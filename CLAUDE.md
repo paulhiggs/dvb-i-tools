@@ -63,7 +63,7 @@ Each document type has one checker class. The class is constructed once and reus
 - `ContentGuideCheck` in [lib/cg_check.mts](lib/cg_check.mts), with helpers in `cg_check_helpers.mts`
 - `PlaylistCheck` in [lib/playlist_check.mts](lib/playlist_check.mts)
 - `ServiceListRegistryCheck` in [lib/slr_check.mts](lib/slr_check.mts)
-- `XmlAitCheck` in [lib/ait_check.mts](lib/ait_check.mts), with names in `MHP_definitions.mts` (#134). `doValidateXmlAit(text, role, errs, options)` takes the role of the AIT (`linked`, `deeplink` or `template`), as the A177 rules differ for each. Its schemas are in `schemas/ts102809/2009/` and `2026/`, each folder with the imports its `mis_xmlait*.xsd` expects (keep them there, unchanged)
+- `XmlAitCheck` in [lib/ait_check.mts](lib/ait_check.mts), with names in `MHP_definitions.mts` (#134). `doValidateXmlAit(text, role, errs, options)` takes the role of the AIT (`linked`, `deeplink` or `template`), as the A177 rules differ for each. Its schemas are in `schemas/ts102809/2009/` and `2026/`, each folder with the imports its `mis_xmlait*.xsd` expects (keep them there, unchanged). The service list and content guide checkers get it as `opts.aitcheck`, and hand the AITs their documents refer to to `validateReferencedAit()` when the request has `aits`, which validates them like a traversed document
 
 The public entry points are `doValidateServiceList(text, errs, options)`, `doValidateContentGuide(text, type, errs, options)` and the matching methods on the other classes. `ServiceListCheck` holds a `ContentGuideCheck` so that it can validate content guide documents it traverses into.
 
@@ -93,7 +93,7 @@ The network calls themselves (`fetch()` in `safeFetch()`, and the work given to 
 
 Two kinds of input reach a validator, and they travel differently:
 - **Choices for the whole validation** are a `ValidationRequest` (`lib/safe_fetch.mts`):
-  - the fields are `traverse`, `maxTraversal`, `images`, `variants`, `report_schema_version` and `log_prefix`
+  - the fields are `traverse`, `maxTraversal`, `images`, `aits`, `variants`, `report_schema_version` and `log_prefix`
   - the outermost validation sets them once, from the options it is given: `ValidationScope.open(options)`
   - every document it traverses into uses the same choices, and ignores the options it is given for them
   - rules read them with `currentRequest()`, never from their `options` parameter

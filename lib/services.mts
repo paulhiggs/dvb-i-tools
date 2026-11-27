@@ -57,6 +57,10 @@ export function createServices(config: ValidatorConfig): ValidatorServices {
 	const isoCountries = LoadCountries(load);
 	const knownGenres = LoadGenres(load);
 
+	// the XML AIT checker needs only its schemas. The service list and content guide checkers use it for the AITs that
+	// their documents refer to
+	const aitcheck = ait ? new XmlAitCheck(load) : undefined;
+
 	let slcheck: ServiceListCheck | undefined = undefined,
 		plcheck: PlaylistCheck | undefined = undefined,
 		cgcheck: ContentGuideCheck | undefined = undefined,
@@ -91,6 +95,7 @@ export function createServices(config: ValidatorConfig): ValidatorServices {
 				stpurposes: subtitlePurposes,
 				videofmts: videoFormats,
 				devicetypes: deviceTypes,
+				aitcheck,
 			});
 
 		// the service list checker traverses into content guide documents with the content guide checker
@@ -111,6 +116,7 @@ export function createServices(config: ValidatorConfig): ValidatorServices {
 					videofmts: videoFormats,
 					appfmts: linkedApplicationTypes,
 					devicetypes: deviceTypes,
+					aitcheck,
 				},
 				cgcheck
 			);
@@ -130,9 +136,6 @@ export function createServices(config: ValidatorConfig): ValidatorServices {
 				slcheck
 			);
 	}
-
-	// the XML AIT checker needs only its schemas
-	const aitcheck = ait ? new XmlAitCheck(load) : undefined;
 
 	let csr: SLEPR | undefined = undefined;
 	if (offerCSR) {

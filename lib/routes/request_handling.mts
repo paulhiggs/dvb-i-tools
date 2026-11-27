@@ -10,7 +10,7 @@
 
 import express from "express"
 
-import { drawResults, MODE_SL, MODE_SLR } from "../ui.mts"
+import { drawResults, MODE_CG, MODE_SL, MODE_SLR } from "../ui.mts"
 import type { FormState } from "../ui.mts"
 import ErrorList, { INFORMATION } from "../error_list.mts"
 import { jsonResult } from "../json_results.mts"
@@ -133,6 +133,7 @@ export function requestFromQuery(req: express.Request, log_prefix: string | unde
 		report_schema_version: true,
 		variants: getVariant(req),
 		images: getImageChecking(req),
+		aits: isTrue(requestParameter(req, "aits")),
 		connectionCertificates: !isFalse(requestParameter(req, "connection_certificates")),
 		responseSignatures: !isFalse(requestParameter(req, "response_signatures")),
 	};
@@ -171,8 +172,10 @@ export function requestFromQuery(req: express.Request, log_prefix: string | unde
  * @returns {ValidationOptions} the choices for the validation
  */
 export function requestFromCheckForm(form: FormState, testtype: string, log_prefix: string | undefined, maxTraversal: number | undefined, maxTraversalDepth?: number): ValidationOptions {
-	// the Germany variant and traversal are offered for service lists and service list registries
+	// the Germany variant and traversal are offered for service lists and service list registries, and the validation of
+	// referenced XML AITs also for content guides
 	const list = testtype == MODE_SL || testtype == MODE_SLR;
+	const refersToAITs = list || testtype == MODE_CG;
 	return {
 		log_prefix,
 		report_schema_version: true,
@@ -181,6 +184,7 @@ export function requestFromCheckForm(form: FormState, testtype: string, log_pref
 		maxTraversal,
 		maxTraversalDepth,
 		images: form.images,
+		aits: refersToAITs && form.aits,
 		connectionCertificates: ["both", "connection"].includes(form.signatureChecks),
 		responseSignatures: ["both", "signature"].includes(form.signatureChecks),
 	};

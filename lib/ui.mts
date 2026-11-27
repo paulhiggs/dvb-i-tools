@@ -130,6 +130,7 @@ legend { padding: 0; margin-bottom: 8px; font-size: var(--step--1); font-weight:
 	.ait-role { display: none; }
 	form:has(#radAIT:checked) .ait-role { display: grid; }
 	form:not(:has(#radSL:checked, #radSLR:checked)) .sl-options { display: none; }
+	form:not(:has(#radSL:checked, #radSLR:checked, #radCG:checked)) .ait-options { display: none; }
 	form:not(:has(#cbTraverse:checked)) .traverse-limit { display: none; }
 }
 .options { display: grid; gap: 10px; }
@@ -654,6 +655,7 @@ export type FormState = {
 	aitrole?: string // the role of an XML AIT (linked, deeplink or template)
 	forGermany: boolean
 	traverse: boolean
+	aits: boolean // validate the XML AITs that the document refers to
 	maxTraversal: string
 	maxDepth: string
 	images: "no" | "yes" | "scaled"
@@ -811,6 +813,7 @@ export async function drawForm(
 <fieldset><legend>Options</legend><div class="options">
 <label class="check sl-options"><input type="checkbox" id="cbGermany" name="forGermany"${form.forGermany && raw(" checked")}><span>Germany</span><span class="hint">Validate against the German profile of A177, which requires 7 days of programme guide either side of today instead of 28.</span></label>
 ${traverse}
+<label class="check ait-options"><input type="checkbox" id="cbAITs" name="aits"${form.aits && raw(" checked")}><span>Validate referenced XML AITs</span><span class="hint">Also retrieve and validate the XML AITs of linked applications, deep links, restart links and templates. Each AIT is validated once, and counts as a traversed document.</span></label>
 ${imageChecking}
 ${signatureChecks}
 </div></fieldset>

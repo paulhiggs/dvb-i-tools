@@ -16,6 +16,9 @@ import { tva, tvaEA } from "./TVA_definitions.mts"
 import { sats } from "./DVB_definitions.mts"
 import { slVersions, cgVersions, dvbi, dvbisld, dvbiEC, dvbiEA, XMLdocumentType} from "./DVB-I_definitions.mts"
 import type { A177Revision } from "./revisions.mts"
+import type XmlAitCheck from "./ait_check.mts"
+import type { AIT_Reference } from "./ait_check.mts"
+import { AIT_ROLE_LINKED } from "./MHP_definitions.mts"
 
 import ErrorList, { WARNING, APPLICATION, INFORMATION } from "./error_list.mts"
 import { nestedTraversal, traversalFinished, traversalSkipped, traversalStarted } from "./traversal.mts"
@@ -145,6 +148,7 @@ export type ValidatorOptions = LoadOptions & {
 	stpurposes?: ClassificationScheme
 	videofmts?: ClassificationScheme
 	devicetypes?: ClassificationScheme
+	aitcheck?: XmlAitCheck // validates the XML AITs that the documents refer to (issue #134)
 }
 
 // the choices of a service list validation (see ValidationRequest). For a service list reached by traversal, the choices of
@@ -174,6 +178,7 @@ export default class ServiceListCheck {
 	#RecordingInfoCSvalues: ClassificationScheme
 
 	#content_guide_validator?: ContentGuideCheck
+	#aitCheck?: XmlAitCheck
 
 	constructor(opts: ValidatorOptions, cg_checker?: ContentGuideCheck) {
 
@@ -213,6 +218,7 @@ export default class ServiceListCheck {
 		LoadKnownCustomKeysRegistry(opts)
 
 		this.#content_guide_validator = cg_checker
+		this.#aitCheck = opts?.aitcheck
 	}
 
 	stats() : StatsType {
@@ -433,6 +439,7 @@ export default class ServiceListCheck {
 					key: "invalid app type",
 				});
 			checkReferencedResource(MediaUri, documentInfo, errs, { digest: "SA015", policy: "SA021" });
+			if (MediaUri_contentType == dvbi.XML_AIT_CONTENT_TYPE) this.#validateReferencedAit(MediaUri, AIT_ROLE_LINKED, errs, { linkedApplicationType: AppType });
 		});
 		if (!hasMediaURI)
 			errs.addError({
@@ -441,6 +448,20 @@ export default class ServiceListCheck {
 				fragment: MediaLocator,
 				key: `no ${tva.e_MediaUri}`,
 			});
+	}
+
+	/**
+	 * validate an XML AIT that the document refers to, when the request asks for it (aits) and the server offers XML AIT
+	 * validation (issue #134)
+	 *
+	 * @param {XmlElement}    element    the element whose content is the URL of the AIT
+	 * @param {string}        role       how the AIT is used (linked, deeplink or template)
+	 * @param {ErrorList}     errs       the results of this document
+	 * @param {AIT_Reference} reference  what this document says about the AIT
+	 */
+	/*private*/ #validateReferencedAit(element: XmlElement, role: string, errs: ErrorList, reference: AIT_Reference = {}): void {
+		const url = element.content.trim();
+		if (this.#aitCheck && currentRequest().aits && isHTTPURL(url)) this.#aitCheck.validateReferencedAit(element, url, role, errs, reference);
 	}
 
 	/**

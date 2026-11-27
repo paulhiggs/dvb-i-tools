@@ -32,11 +32,13 @@ export const mhp = new class {
 	e_versionMajor: string = "versionMajor"
 	e_versionMinor: string = "versionMinor"
 	e_versionMicro: string = "versionMicro"
+	e_icon: string = "icon"
 	e_applicationTransport: string = "applicationTransport"
 	e_URLBase: string = "URLBase"
 	e_applicationLocation: string = "applicationLocation"
 
 	a_type: string = "type" // xsi:type of <applicationTransport>
+	a_verificationPolicy: string = "verificationPolicy" // of <applicationLocation>, from urn:dvb:mhp:2026
 	HTTP_TRANSPORT: string = "HTTPTransportType"
 	OC_TRANSPORT: string = "OCTransportType"
 
@@ -46,6 +48,15 @@ export const mhp = new class {
 	XHTML_APP: string = "application/xhtml+xml"
 	// the type of an AIT returned when the content is not available to the device (A177r8 clause 5.2.4.2)
 	NOT_AVAILABLE_APP: string = "application/vnd.dvbi.non"
+
+	// the Content-Type of an XML AIT response (A177r8 clause 5.2.4.1)
+	XML_AIT_CONTENT_TYPE: string = "application/vnd.dvb.ait+xml"
+
+	// the application profiles and versions of an HbbTV application (ETSI TS 102 796 v1.8.1 clause 7.2.3.1, table 5): the
+	// basic profile is 0x0000, and the A/V content download (0x0001) and PVR (0x0002) features can be combined. The
+	// version is 1.8.1, and terminals also launch applications signalled with 1.1.1 to 1.7.1
+	HBBTV_PROFILE_BITS: number = 0x0003
+	HBBTV_VERSIONS: string[] = ["1.1.1", "1.2.1", "1.3.1", "1.4.1", "1.5.1", "1.6.1", "1.7.1", "1.8.1"]
 
 	// the query parameters that a DVB-I client appends to an XML AIT URL (A177r8 clause 5.2.4.4.6)
 	CONTEXT_PARAMETERS: string[] = ["regionID[]", "lloc"]

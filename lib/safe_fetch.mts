@@ -182,6 +182,8 @@ export type FetchedResponse = {
 	url: string // the URL the response came from, after any redirects
 	jwsSignature: string | null // the X-JWS-Signature response header (A177r8 clause 7.7.1.2)
 	reportingEndpoints: string | null // the Reporting-Endpoints response header (A177r8 clause 7.6.2.5)
+	expires: string | null // the Expires response header (A177r8 clause 5.2.4.4.5)
+	cacheControl: string | null // the Cache-Control response header (A177r8 clause 5.2.4.4.5)
 	text(): string
 	buffer(): Buffer
 };
@@ -274,6 +276,8 @@ export async function safeFetch(url: string, validation?: ValidationHandle): Pro
 				url: resp.url || url,
 				jwsSignature: resp.headers.get("x-jws-signature"),
 				reportingEndpoints: resp.headers.get("reporting-endpoints"),
+				expires: resp.headers.get("expires"),
+				cacheControl: resp.headers.get("cache-control"),
 				text: () => body.toString("utf8"),
 				buffer: () => body,
 			},
@@ -362,6 +366,7 @@ export type ValidationRequest = {
 	connectionCertificates: boolean; // check HTTPS certificate chains against signature policies, when the server does (default true)
 	responseSignatures: boolean; // check X-JWS-Signature of responses against signature policies, when the server does (default true)
 	images: ImageChecking; // how referenced images are checked (default "yes")
+	aits: boolean; // retrieve and validate the XML AITs that the documents refer to (default false, issue #134)
 	variants: number; // A177 variants to validate against, e.g. GERMAN_A177r6_VARIANT (default 0)
 	report_schema_version: boolean; // report the state of each document's schema (default true)
 	log_prefix?: string; // where the outermost document is archived (default none); traversed documents are not archived
@@ -381,6 +386,7 @@ export const validationRequest = (options: ValidationOptions = {}): ValidationRe
 	connectionCertificates: options.connectionCertificates ?? true,
 	responseSignatures: options.responseSignatures ?? true,
 	images: options.images ?? "yes",
+	aits: options.aits ?? false,
 	variants: options.variants ?? 0,
 	report_schema_version: options.report_schema_version ?? true,
 	log_prefix: options.log_prefix,

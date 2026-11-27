@@ -429,8 +429,21 @@ The codes:
 - `AIT016` an HTTP transport's `<URLBase>` is not an HTTP or HTTPS URL; `AIT017` `<URLBase>` followed by `<applicationLocation>` is not a valid URL (A177r8 clause 5.2.4.3)
 - `AIT018` (information) an application has no HTTP transport, so it cannot be launched from broadband
 - `AIT019` (warning) the launch location uses a query parameter that the client appends as a contextual parameter, `regionID[]` or `lloc` (A177r8 clause 5.2.4.3, 5.2.4.4.6)
+- `AIT024` (warning) an HbbTV application has no `<mhpVersion>`, so its platform profile cannot be determined (A177r8 clause 5.2.4.2); `AIT025` (warning) its version is not one of 1.1.1 to 1.8.1; `AIT026` (warning) its application profile uses bits other than `0x0001` and `0x0002` (ETSI TS 102 796 v1.8.1 clause 7.2.3.1)
+- `AIT027-1` (information) the launch location has a signature policy (`<applicationLocation mhp:verificationPolicy>`, `urn:dvb:mhp:2026`), but the AIT was not reached from a service list, so it is not checked; `AIT027-2` (warning) the policy is not defined by the service list that refers to the AIT; `AIT027-3` (warning) the launch location is not an `https` URL
 
-The XML AITs that service lists and content guides refer to are not yet retrieved and validated with them (issue #134).
+The XML AITs that service lists and content guides refer to are also validated when the request asks for it: **Validate referenced XML AITs** on the /check form (for service lists, registries and content guides), or `aits=true` in the query of a `GET` (`X-aits: true` with a `POST`) to the `/validate_sl`, `/validate_cg` and `/validate_slr` endpoints. It is off by default, as every On Demand programme can refer to its own AIT. The role comes from the element that refers to the AIT:
+
+- `linked`: the `<MediaUri contentType="application/vnd.dvb.ait+xml">` of a linked application in a service list
+- `deeplink`: `<OnDemandProgram><ProgramURL>`, and the `<MediaUri>` of a restart link
+- `template`: `<OnDemandProgram><AuxiliaryURL>`, the `<AuxiliaryURI>` of a restart link, and the `<AuxiliaryURI>` of a box set's Template AIT
+
+Each AIT URL is validated once in a validation (a repeat is counted against the first reference), and counts as a traversed document against the limits of traversal. Its results are with those of the referring document, like those of a traversed document. A referenced AIT also has:
+- `AIT020` (warning) the response's `Content-Type` is not `application/vnd.dvb.ait+xml` (A177r8 clause 5.2.4.1)
+- `AIT021` (information) a Template XML AIT has neither an `Expires` header nor `Cache-Control: max-age`, so a client assumes that it expires 24 hours after it is retrieved (A177r8 clause 5.2.4.4.5)
+- `AIT029` (information) an application of a service provider (`LinkedApplicationCS:2019:3`) or service list (`4.1`, `4.2`, `4.3`) application has no `<icon>`, which it may have (A177r8 clause 5.2.3.1)
+- `AIT030` the AIT cannot be retrieved; `AIT031` its request does not return a `2xx` status
+
 
 #### Health
 
