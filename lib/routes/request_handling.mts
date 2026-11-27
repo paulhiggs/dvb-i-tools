@@ -18,7 +18,7 @@ import type { ResultMode } from "../json_results.mts"
 import { keys } from "../common_errors.mts"
 import { safeFetch, IMAGE_CHECKING, DEFAULT_MAX_TRAVERSAL, parseTraversalLimit } from "../safe_fetch.mts"
 import type { ImageChecking, ValidationOptions } from "../safe_fetch.mts"
-import { GERMAN_A177r6_VARIANT } from "../globals.mts"
+import { definedMarkets, findMarket } from "../markets.mts"
 
 // initialise string formatting extensions
 import {} from "../string-extensions.mts"
@@ -55,20 +55,6 @@ export function checkMethod(req: express.Request, res: express.Response) : boole
 	if (ALLOWED_VALIDATION_METHODS.includes(req.method)) return true
 	res.status(405).set("Allow", ALLOWED_VALIDATION_METHODS.join(", ")).type("text/plain").send(`method ${req.method} is not allowed, use ${ALLOWED_VALIDATION_METHODS.join(" or ")}`)
 	return false
-}
-
-export function getVariant(req: express.Request) : number {
-	switch (req.method) {
-		case "GET":
-			if (req.query?.variants && (req.query.variants as string).toLowerCase() == "de")
-				return GERMAN_A177r6_VARIANT
-			break
-		case "POST":
-			if (req.header("X-variants")?.toLowerCase() == "de")
-				return GERMAN_A177r6_VARIANT
-			break
-	}
-	return 0
 }
 
 
@@ -110,12 +96,29 @@ export function signatureChecks(value: unknown): SignatureChecks {
 	return (SIGNATURE_CHECKS as string[]).includes(v) ? (v as SignatureChecks) : "both";
 }
 
-// the choices for a validation, or why the request is not valid
-export type RequestResult = { options: ValidationOptions; parseErr?: undefined } | { options?: undefined; parseErr: string[] }
+/**
+ * the market a /validate_* request is for (issue #119): market (GET) or X-market (POST), or the deprecated variants /
+ * X-variants. Nothing (or an empty value) is no market: the A177 baseline
+ *
+ * @param {express.Request} req  the request
+ * @returns {object} the id of the market (undefined for none), or why the value cannot be used: a market that is not defined
+ */
+export function getMarket(req: express.Request): { market?: string; parseErr?: string[] } {
+	const value = requestParameter(req, "market") ?? requestParameter(req, "variants");
+	if (value == undefined || value.trim().length == 0) return {};
+	const market = findMarket(value);
+	if (market) return { market: market.id };
+	const ids = definedMarkets().map((m) => m.id.quote());
+	return { parseErr: [`the market ${value.quote()} is not defined${ids.length > 0 ? `: the markets are ${ids.join(", ")}` : ""}`] };
+}
+
+// the choices for a validation, or why the request is not valid (with the HTTP status to answer with, when it is not 200)
+export type RequestResult = { options: ValidationOptions; parseErr?: undefined } | { options?: undefined; parseErr: string[]; status?: number }
 
 /**
  * the choices of a validation requested through a /validate_* endpoint, from the query (GET) or the X- headers (POST):
- * - the A177 variant (variants / X-variants) and image checking (images / X-images)
+ * - the market (market / X-market, or the deprecated variants / X-variants) and image checking (images / X-images). A market
+ *   that is not defined is answered with 400, as the validation cannot be made for it
  * - turning off the checks of references against their signature policies: connection_certificates=false
  *   (X-connection-certificates) and response_signatures=false (X-response-signatures)
  * - for a document that can traverse (a service list or service list registry): traversal (traverse / X-traverse) and its
@@ -128,10 +131,12 @@ export type RequestResult = { options: ValidationOptions; parseErr?: undefined }
  * @returns {RequestResult} the choices for the validation, or why a parameter is not valid
  */
 export function requestFromQuery(req: express.Request, log_prefix: string | undefined, errs?: ErrorList, traversal?: { allowed: boolean }): RequestResult {
+	const { market, parseErr } = getMarket(req);
+	if (parseErr) return { parseErr, status: 400 };
 	const options: ValidationOptions = {
 		log_prefix,
 		report_schema_version: true,
-		variants: getVariant(req),
+		market,
 		images: getImageChecking(req),
 		aits: isTrue(requestParameter(req, "aits")),
 		connectionCertificates: !isFalse(requestParameter(req, "connection_certificates")),
@@ -172,14 +177,14 @@ export function requestFromQuery(req: express.Request, log_prefix: string | unde
  * @returns {ValidationOptions} the choices for the validation
  */
 export function requestFromCheckForm(form: FormState, testtype: string, log_prefix: string | undefined, maxTraversal: number | undefined, maxTraversalDepth?: number): ValidationOptions {
-	// the Germany variant and traversal are offered for service lists and service list registries, and the validation of
-	// referenced XML AITs also for content guides
+	// the market and traversal are offered for service lists and service list registries, and the validation of referenced
+	// XML AITs also for content guides
 	const list = testtype == MODE_SL || testtype == MODE_SLR;
 	const refersToAITs = list || testtype == MODE_CG;
 	return {
 		log_prefix,
 		report_schema_version: true,
-		variants: list && form.forGermany ? GERMAN_A177r6_VARIANT : 0,
+		market: list && form.market.length > 0 ? form.market : undefined,
 		traverse: list && form.traverse,
 		maxTraversal,
 		maxTraversalDepth,

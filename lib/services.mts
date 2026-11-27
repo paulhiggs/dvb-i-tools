@@ -26,6 +26,7 @@ import {
 	LoadSubtitleCarriages,
 	LoadLinkedApplicationCS,
 } from "./classification_scheme_loaders.mts"
+import { LoadMarkets } from "./markets.mts"
 import ServiceListCheck from "./sl_check.mts"
 import PlaylistCheck from "./playlist_check.mts"
 import ContentGuideCheck from "./cg_check.mts"
@@ -53,6 +54,8 @@ export function createServices(config: ValidatorConfig): ValidatorServices {
 	const load = { useURLs: config.useURLs, async: false, verbose: true };
 	const { sl, pl, cg, slr, ait, csr: offerCSR } = config.features;
 
+	// the markets that a validation can be made for (issue #119). A markets file that is not valid stops the start-up
+	LoadMarkets(load);
 	const knownLanguages = LoadLanguages(load);
 	const isoCountries = LoadCountries(load);
 	const knownGenres = LoadGenres(load);

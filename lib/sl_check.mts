@@ -55,6 +55,7 @@ import {
 import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts"
 import { DASH_IF_Content_Protection_List, UUID_type, CA_SYSTEM_ID_REGISTRY, KnownDRMScheme, KnownCASystemID} from "./identifiers.mts"
 import { CheckDelivery } from "./slr_check.mts"
+import { LoadMarkets } from "./markets.mts"
 import { LoadSLschemas, SL_GetSchema, SL_SchemaVersion, SL_SchemaSpecVersion, isA177specification_URN, isContentFinishedBanner, isOutScheduleHours } from "./sl_data_versions.mts"
 import { validServiceControlApplication, validServiceInstanceControlApplication, validServiceUnavailableApplication, validDASHcontentType } from "./sl_data_versions.mts"
 import {
@@ -77,7 +78,7 @@ import { ValidateSignaturePolicies } from "./signature_policies.mts"
 import type { SignaturePolicy } from "./certificate_utils.mts"
 
 import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES, type CG_Validator_Options } from "./cg_check.mts"
-import { allowTraversal, currentRequest, currentValidation, deferRetrieval, deferTask, retrieveTraversal, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
+import { allowTraversal, currentMarket, currentRequest, currentValidation, deferRetrieval, deferTask, retrieveTraversal, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
 import { COVERAGE_TOLERANCE_MS, scheduleCoverage } from "./schedule_coverage.mts"
 import type { DayState, ServiceCoverage } from "./schedule_coverage.mts"
 
@@ -131,7 +132,6 @@ import IANAlanguages from "./IANA_languages.mts"
 import ClassificationScheme from "./classification_scheme.mts"
 
 import type { LoadOptions, StatsType } from "./globals.mts"
-import { GERMAN_A177r6_VARIANT } from "./globals.mts"
 export type ValidatorOptions = LoadOptions & {
 	accessibilities? : ClassificationScheme
 	appfmts?: ClassificationScheme
@@ -187,6 +187,7 @@ export default class ServiceListCheck {
 		DefaultProperty(opts, "verbose", true);
 
 		LoadSLschemas(opts);
+		LoadMarkets(opts);
 
 		this.#numRequests = 0;
 
@@ -2097,8 +2098,8 @@ export default class ServiceListCheck {
 					const start_of_today = Temporal.ZonedDateTime.from({day: today.day, month: today.month, year: today.year, timeZone: "UTC"})
 
 					// A177r8 - the programme guide should be available for 28 days before and 28 days after today.
-					// German service lists only need 7 days before and 7 days after today
-					const NEEDED_DAYS = currentRequest().variants & GERMAN_A177r6_VARIANT ? 7 : 28
+					// a market can need fewer (or more): German service lists only need 7 days before and 7 days after today (issue #119)
+					const NEEDED_DAYS = currentMarket(SL_SchemaVersion(service.documentNamespace())).parameters.schedule.daysEitherSide
 					// the events of all the windows give the coverage of each day of the service's schedule (issue #122). A
 					// service with the same service ID and endpoint as an earlier one shares its coverage, as its windows are
 					// only requested once
@@ -2403,8 +2404,9 @@ export default class ServiceListCheck {
 	}
 
 
-	/*private*/ #doSchemaVerification(ServiceList: XmlDocument, errs: ErrorList, errCode: string, report_schema_version: boolean = true, variants: number = 0) : boolean {
-		const x = SL_GetSchema(ServiceList.root.namespaceUri, variants);
+	/*private*/ #doSchemaVerification(ServiceList: XmlDocument, errs: ErrorList, errCode: string, report_schema_version: boolean = true) : boolean {
+		// a market can have its own schema for the revision (issue #119)
+		const x = SL_GetSchema(ServiceList.root.namespaceUri, currentMarket(SL_SchemaVersion(ServiceList.root.namespaceUri)));
 		if (x && x.schema) {
 			SchemaCheck(ServiceList, x.schema, x.filename, errs, `${errCode}:${SL_SchemaVersion(ServiceList.root.namespaceUri)}`);
 			if (report_schema_version) SchemaVersionCheck(ServiceList, x.status, errs, `${errCode}:`);
@@ -2421,8 +2423,7 @@ export default class ServiceListCheck {
 	 * @param {SL_Validator_Options}    options
 	 *                      log_prefix            the first part of the logging location (or null if no logging)
 	 *                      report_schema_version report the state of the schema in the error/warning list
-	 *                      variants              flags from input
-	 *                                              GERMAN_A177r6_VARIANT  use the German schema variants for A177r6
+	 *                      market                the id of the market to validate for (issue #119)
 	 *                      traverse              validate referenced DVB-I documents
 	 */
 	/*public*/ async doValidateServiceList(SLtext: string, errs: ErrorList, options: SL_Validator_Options = {}) : Promise<void> {
@@ -2472,7 +2473,7 @@ export default class ServiceListCheck {
 		const ns = SL.root.namespaceUri;
 		const documentInfo = new FoundDocumentItems(true); // collection of things we learn when parsing the service list
 
-		if (!this.#doSchemaVerification(SL as XmlDocument, errs, "SL005", request.report_schema_version, request.variants)) {
+		if (!this.#doSchemaVerification(SL as XmlDocument, errs, "SL005", request.report_schema_version)) {
 			errs.addError({
 				code: "SL010",
 				message: `Unsupported namespace ${ns.quote()}.`,
@@ -2968,8 +2969,7 @@ export default class ServiceListCheck {
 	 * @param {SL_Validator_Options}    options
 	 *                      log_prefix            the first part of the logging location (or null if no logging)
 	 *                      report_schema_version report the state of the schema in the error/warning list
-	 *                      variants              flags from input
-	 *                                              GERMAN_A177r6_VARIANT  use the German schema variants for A177r6
+	 *                      market                the id of the market to validate for (issue #119)
 	 *                      traverse              validate referenced DVB-I documents
 	 */
 	/*public*/ 

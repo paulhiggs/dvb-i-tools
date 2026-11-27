@@ -220,6 +220,43 @@ Response signature (`JWS`):
 - `JWS009` the host the response came from, after any redirects, is not one of the policy's `SubjectConstraint/CN` values
 - `JWS010` (information) there is no `Reporting-Endpoints` header with a `dvbi-signature-validation` endpoint (A177r8 clause 7.6.2.5)
 
+### Markets
+
+A validation can be made for a **market**: the settings of a market deployment of DVB-I, which differ from A177 itself (issue #119). The markets are defined in [res/markets.json](res/markets.json), which is loaded at start-up (from the repository with `--urls`, like the other reference data). A file that is not valid stops the start-up, with a message for each problem. One market is defined:
+
+| Id | Name | Settings |
+|---|---|---|
+| `DE` | Germany | The programme guide needs 7 days either side of today instead of 28, for every revision. A177r6 service lists and service list registries are validated against the `-(DE)` schemas, which make `@networkID` optional, allow any number of `NetworkID` elements, and add `@directTuningAvailable` to `OrbitalPosition` |
+
+A validation is made for one market, or none (A177 itself). It applies to every document the validation traverses into. The market is chosen with:
+- **Market** on the /check form (for service lists and service list registries)
+- `market=<id>` in the query of a `GET` to a `/validate_*` endpoint, or the header `X-market: <id>` with a `POST`. The id can be in any case. An empty value is no market
+- `variants=<id>` / `X-variants: <id>`, the earlier names, which are **deprecated** but still accepted. When both are given, `market` is used
+
+A market that is not defined is answered with `400` and a `parseErr` naming the markets that are, since the validation cannot be made for it. (Before markets, an unknown `variants=` value was ignored.)
+
+#### The markets file
+
+`res/markets.json` is a JSON array of markets. Each market has:
+- `id`: letters, digits, `-` or `_`, unique in any case
+- `name`, and an optional `description`, shown on the /check form
+- `revisions`: a list of ranges of A177 revisions, each with `from` and `to` (`r0` to `r8`, or `latest`), and the settings for the documents of those revisions:
+  - `schemas`: the XSD file (in `schemas/`) used instead of A177's, for `serviceList` and `serviceListRegistry` documents
+  - `parameters`: values that differ from A177's. The only one so far is `schedule.daysEitherSide`, the days of programme guide needed before and after today (a positive whole number; 28 in A177)
+
+The settings for a document are those of the ranges that include its A177 revision, in the order they are listed: a later range wins for the same setting. Unknown properties, parameters and revisions, values that are not valid, and missing schema files are refused. For example, the German market:
+
+```json
+{
+	"id": "DE",
+	"name": "Germany",
+	"revisions": [
+		{ "from": "r0", "to": "latest", "parameters": { "schedule": { "daysEitherSide": 7 } } },
+		{ "from": "r6", "to": "r6", "schemas": { "serviceList": "dvbi_v6.0+hls+hbbtv-(DE).xsd", "serviceListRegistry": "dvbi_service_list_discovery_v1.6+hls-(DE).xsd" } }
+	]
+}
+```
+
 ### Logging
 
 If a subdirectory named `./arch` exists, then any XML document for validation will be copied there. There will be the original document with the suffix "`.txt`" and a second document with the suffix "`.mkup.txt`" containing line based validation results as XML comments 
@@ -234,11 +271,11 @@ An uploaded file can be up to 10 MB, the same limit as a document sent in the bo
 
 #### Service list validation endpoints
 
-`<server>/validate_sl?url=<service_list_url>&variants=DE` gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the servicelist in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML.
-The optional `variants=` query parameter can be used with a GET to specify region specific validation, or via the `X-variants` HTTP header for post.
+`<server>/validate_sl?url=<service_list_url>&market=DE` gives the validation results of the service list in the "url"-parameter as HTML, same format as the /check validation. Also accepts POST request with the servicelist in the request body with content type "application/xml". The url query parameter in the POST request can be used to show the name of the list in the resulting HTML.
+The optional `market=` query parameter (with a GET) or `X-market` header (with a POST) validates for a market (see [Markets](#markets)).
 
-`<server>/validate_sl_json?url=<service_list_url>&variants=DE` validates the list in the "url"-parameter and gives the number of fatals, errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter.
-The optional `variants=` query parameter can be used with a GET to specify region specific validation, or via the `X-variants` HTTP header for post.
+`<server>/validate_sl_json?url=<service_list_url>&market=DE` validates the list in the "url"-parameter and gives the number of fatals, errors, warnings and informationals as JSON. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter.
+The optional `market=` query parameter (with a GET) or `X-market` header (with a POST) validates for a market (see [Markets](#markets)).
 Example response:
 
 ```json
@@ -298,13 +335,13 @@ With traversal, the JSON summary has a `traversed` object:
 
 ###### Schedule coverage
 
-With traversal, the schedule of each service is requested in 6 hour windows, from 28 days before today to 28 days after (7 days with the Germany variant), as A177r8 clause 6.5.2.2 allows. The requests include `inclusive=true`, so that a server that supports it also returns the events that started before each window. The events of all of a service's windows give the coverage of each UTC day:
+With traversal, the schedule of each service is requested in 6 hour windows, from 28 days before today to 28 days after (7 days for the German market, `market=DE`), as A177r8 clause 6.5.2.2 allows. The requests include `inclusive=true`, so that a server that supports it also returns the events that started before each window. The events of all of a service's windows give the coverage of each UTC day:
 - `full`: the programme events cover the whole day. A gap of up to 5 minutes is not counted.
 - `partial`: the events cover part of the day.
 - `none`: no events cover the day, including when its requests failed (the failures have their own errors, such as `VCG002`).
 - `indeterminate`: a window of the day was not requested because a traversal limit was reached (`TRAV002`, `TRAV003`), and the windows that were validated do not show a gap.
 
-A service whose schedule does not cover a day (`partial` or `none`) has a warning, `SL201`, with the number of days in each state and the dates. Each service needs 228 windows (60 with the Germany variant), so with the default `max_traversal` of 100 most days are `indeterminate`: use a higher maximum, or `unlimited`, to check the coverage.
+A service whose schedule does not cover a day (`partial` or `none`) has a warning, `SL201`, with the number of days in each state and the dates. Each service needs 228 windows (60 for the German market), so with the default `max_traversal` of 100 most days are `indeterminate`: use a higher maximum, or `unlimited`, to check the coverage.
 
 Several services can use the same service ID for their schedule (`ContentGuideServiceRef`). Their schedule is requested and reported once, with the services that use it in `services`. The HTML report has a **Schedule coverage** section, with a row of days for each schedule. The JSON summary and tree have a `scheduleCoverage` array, with an entry for each service:
 
@@ -346,7 +383,7 @@ Two query parameters narrow the tree. Leaving documents out is counted in `omitt
 ```
 
 `<server>/validate_sl_json?url=<service_list_url>&results=all` validates the list in the "url"-parameter and gives the complete validation results as JSON. The marked-up copy of the document (`markupXML`) is not included. The HTTP status is 200 whenever the request is accepted, including when the document cannot be retrieved: check for `parseErr` in the response. Also accepts POST request with the servicelist in the request body with content type "application/xml" instead of the url query parameter. 
-The optional `variants=` query parameter can be used with a GET to specify region specific validation, or via the `X-variants` HTTP header for post.
+The optional `market=` query parameter (with a GET) or `X-market` header (with a POST) validates for a market (see [Markets](#markets)).
 Example response:
 
 ```json

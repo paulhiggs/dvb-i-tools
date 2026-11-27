@@ -17,7 +17,7 @@ import { slVersions, dvbi, dvbiEA, dvbiEC, dvbisld, validApplicationTypes, DvbIA
 import type { A177Revision } from "./revisions.mts"
 import ErrorList, { APPLICATION, WARNING } from "./error_list.mts"
 import { nestedTraversal } from "./traversal.mts"
-import { currentRequest, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
+import { currentMarket, currentRequest, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
 import { checkConnection } from "./tls_checks.mts"
 import { CheckExtension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY } from "./extension_check.mts"
 import { ValidateLanguage } from "./IANA_languages.mts"
@@ -29,6 +29,7 @@ import { isHTTPURL, isTAGURI } from "./pattern_checks.mts"
 import { checkValidLogos, ValidateAnySignaturePolicy } from "./related_material_checks.mts"
 import { checkAttributes, SchemaCheck, SchemaVersionCheck, SchemaLoad, checkTopElementsAndCardinality } from "./schema_checks.mts"
 import { LoadSLschemas, validServiceListLogo, isA177specification_URN, a177versionFromURN } from "./sl_data_versions.mts"
+import { LoadMarkets } from "./markets.mts"
 import { LoadSLRschemas, SLR_GetSchema, SLR_SchemaVersion, SLR_SchemaSpecVersion } from "./slr_data_versions.mts"
 import { tva, tvaEA } from "./TVA_definitions.mts"
 import { parameterCheck, DefaultProperty } from "./utils.mts"
@@ -136,6 +137,7 @@ export default class ServiceListRegistryCheck {
 
 		LoadSLschemas(opts);
 		LoadSLRschemas(opts);
+		LoadMarkets(opts);
 
 		this.#numRequests = 0;
 
@@ -158,8 +160,9 @@ export default class ServiceListRegistryCheck {
 	}
 
 
-	/*private*/ #doSchemaVerification(ServiceListRegistry: XmlDocument, errs: ErrorList, errCode: string, report_schema_version: boolean = true, variants: number = 0) {
-		const x = SLR_GetSchema(ServiceListRegistry.root.namespaceUri, variants);
+	/*private*/ #doSchemaVerification(ServiceListRegistry: XmlDocument, errs: ErrorList, errCode: string, report_schema_version: boolean = true) {
+		// a market can have its own schema for the revision (issue #119)
+		const x = SLR_GetSchema(ServiceListRegistry.root.namespaceUri, currentMarket(SLR_SchemaVersion(ServiceListRegistry.root.namespaceUri)));
 		if (x && x.schema) {
 			SchemaCheck(ServiceListRegistry, x.schema, x.filename, errs, `${errCode}:${SLR_SchemaVersion((ServiceListRegistry.root as XmlElement).documentNamespace())}`);
 			if (report_schema_version) SchemaVersionCheck(ServiceListRegistry, x.status, errs, `${errCode}:`);
@@ -423,8 +426,7 @@ export default class ServiceListRegistryCheck {
 	 * @param {Object}    options
 	 *                      log_prefix            the first part of the logging location (or null if no logging)
 	 *                      report_schema_version report the state of the schema in the error/warning list
-	 *                      variants              flags from input
-	 *                                              GERMAN_A177r6_VARIANT  use the German schema variants for A177r6
+	 *                      market                the id of the market to validate for (issue #119)
 	 *                      traverse              validate referenced DVB-I documents
 	 */
 	/*public*/ async doValidateServiceListRegistry(SLRtext: string, errs: ErrorList, options: SLR_Validator_Options = {}) : Promise<void> {
@@ -471,7 +473,7 @@ export default class ServiceListRegistryCheck {
 			return;
 		}
 
-		if (!this.#doSchemaVerification(SLR as XmlDocument, errs, "SR005", request.report_schema_version, request.variants)) {
+		if (!this.#doSchemaVerification(SLR as XmlDocument, errs, "SR005", request.report_schema_version)) {
 			errs.addError({
 				code: "SR010",
 				message: `Unsupported namespace ${(SLR.root as XmlElement).documentNamespace().quote()}`,

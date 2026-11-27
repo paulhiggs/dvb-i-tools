@@ -48,6 +48,7 @@ async function validateDocument(
 
 	if (document && request.options) await validate(document, errs, request.options, req);
 	recordOutcome(res, errs, parseErr);
+	if (request.parseErr && request.status) res.status(request.status);
 	await report(req, res, jsonResponse, errs, motd, parseErr);
 	document_logger(errs, log_prefix, true, req);
 	res.end();

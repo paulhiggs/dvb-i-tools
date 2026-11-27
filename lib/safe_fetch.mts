@@ -17,6 +17,9 @@ import { AsyncLocalStorage } from "node:async_hooks"
 import { fetch_options } from "./globals.mts"
 import type { SignaturePolicy } from "./certificate_utils.mts"
 import type ErrorList from "./error_list.mts"
+import { findMarket, marketSettings } from "./markets.mts"
+import type { MarketSettings } from "./markets.mts"
+import type { A177Revision } from "./revisions.mts"
 
 // the most documents a validation traverses, unless the validation sets its own limit
 export const DEFAULT_MAX_TRAVERSAL = 100;
@@ -367,13 +370,36 @@ export type ValidationRequest = {
 	responseSignatures: boolean; // check X-JWS-Signature of responses against signature policies, when the server does (default true)
 	images: ImageChecking; // how referenced images are checked (default "yes")
 	aits: boolean; // retrieve and validate the XML AITs that the documents refer to (default false, issue #134)
-	variants: number; // A177 variants to validate against, e.g. GERMAN_A177r6_VARIANT (default 0)
+	market?: string; // the id of the market the documents are validated for (default none: the A177 baseline, issue #119)
 	report_schema_version: boolean; // report the state of each document's schema (default true)
 	log_prefix?: string; // where the outermost document is archived (default none); traversed documents are not archived
 };
 
 // the choices of a request, as a caller gives them: any that are left out take their default
 export type ValidationOptions = Partial<ValidationRequest>;
+
+/**
+ * the id of the market a validation is for, as it is defined (e.g. "DE" for "de")
+ *
+ * @param {string} id  the id given, or undefined (or empty) for none
+ * @returns {string | undefined} the id of the market, or undefined for none
+ * @throws {Error} when no market has the id (a request names only a market that is defined: getMarket())
+ */
+function requestedMarket(id: string | undefined): string | undefined {
+	if (id == undefined || id.trim().length == 0) return undefined;
+	const market = findMarket(id);
+	if (!market) throw new Error(`the market "${id}" is not defined`);
+	return market.id;
+}
+
+/**
+ * the settings of the market of the current validation, for a document of an A177 revision (issue #119). Without a market
+ * (or outside a validation) they are those of A177 (MARKET_DEFAULTS)
+ *
+ * @param {A177Revision} revision  the A177 revision of the document
+ * @returns {MarketSettings} the settings
+ */
+export const currentMarket = (revision: A177Revision): MarketSettings => marketSettings(currentRequest().market, revision);
 
 /**
  * the choices for a validation, with defaults for any not given
@@ -387,7 +413,7 @@ export const validationRequest = (options: ValidationOptions = {}): ValidationRe
 	responseSignatures: options.responseSignatures ?? true,
 	images: options.images ?? "yes",
 	aits: options.aits ?? false,
-	variants: options.variants ?? 0,
+	market: requestedMarket(options.market),
 	report_schema_version: options.report_schema_version ?? true,
 	log_prefix: options.log_prefix,
 });

@@ -13,7 +13,7 @@ import process from "process"
 import chalk from "chalk"
 import { XmlDocument } from "libxml2-wasm"
 
-import { StandardStatus, GERMAN_A177r6_VARIANT } from "./globals.mts"
+import { StandardStatus } from "./globals.mts"
 import type { LoadOptions } from "./globals.mts"
 
 import { slVersions, dvbi, CONTENT_FINISHED_TERM, OUTSIDE_AVAILABILITY_TERM } from "./DVB-I_definitions.mts"
@@ -22,6 +22,8 @@ import { DVBI_ServiceListSchema, schemaURL } from "./data_locations.mts"
 import { SLR_SchemaVersion } from "./slr_data_versions.mts"
 import type { LoadedVersionInfo } from "./slr_data_versions.mts"
 import { readmyfile } from "./utils.mts"
+import { MARKET_DEFAULTS } from "./markets.mts"
+import type { MarketSettings } from "./markets.mts"
 
 
 const versionURNprefix: string = "urn:dvb:metadata:dvbi:standardversion";
@@ -36,7 +38,6 @@ const SL_SchemaVersions: LoadedVersionInfo[] = [
 		status: StandardStatus.CURRENT,
 		specVersion: "A177r8 2nd edition",
 		URN: `${versionURNprefix}:${slVersions.r8}`,
-		flags: 0,
 	},
 	{
 		namespace: dvbi.A177r7_Namespace,
@@ -46,17 +47,6 @@ const SL_SchemaVersions: LoadedVersionInfo[] = [
 		status: StandardStatus.OLD,
 		specVersion: "A177r7",
 		URN: `${versionURNprefix}:${slVersions.r7}`,
-		flags: 0,
-	},
-	{
-		namespace: dvbi.A177r6_Namespace,
-		version: slVersions.r6,
-		filename: DVBI_ServiceListSchema.r6_Germany.file,
-		schema: undefined,
-		status: StandardStatus.ETSI,
-		specVersion: "A177r6",
-		URN: `${versionURNprefix}:${slVersions.r6}`,
-		flags: GERMAN_A177r6_VARIANT,
 	},
 	{
 		namespace: dvbi.A177r6_Namespace,
@@ -66,7 +56,6 @@ const SL_SchemaVersions: LoadedVersionInfo[] = [
 		status: StandardStatus.ETSI,
 		specVersion: "A177r6",
 		URN: `${versionURNprefix}:${slVersions.r6}`,
-		flags: 0,
 	},
 	{
 		namespace: dvbi.A177r5_Namespace,
@@ -75,7 +64,6 @@ const SL_SchemaVersions: LoadedVersionInfo[] = [
 		schema: undefined,
 		status: StandardStatus.OLD,
 		specVersion: "A177r5",
-		flags: 0,
 	},
 	{
 		namespace: dvbi.A177r4_Namespace,
@@ -84,7 +72,6 @@ const SL_SchemaVersions: LoadedVersionInfo[] = [
 		schema: undefined,
 		status: StandardStatus.OLD,
 		specVersion: "A177r4",
-		flags: 0,
 	},
 	{
 		namespace: dvbi.A177r3_Namespace,
@@ -93,7 +80,6 @@ const SL_SchemaVersions: LoadedVersionInfo[] = [
 		schema: undefined,
 		status: StandardStatus.OLD,
 		specVersion: "A177r3",
-		flags: 0,
 	},
 	{
 		namespace: dvbi.A177r2_Namespace,
@@ -102,7 +88,6 @@ const SL_SchemaVersions: LoadedVersionInfo[] = [
 		schema: undefined,
 		status: StandardStatus.OLD,
 		specVersion: "A177r2",
-		flags: 0,
 	},
 	{
 		namespace: dvbi.A177r1_Namespace,
@@ -111,7 +96,6 @@ const SL_SchemaVersions: LoadedVersionInfo[] = [
 		schema: undefined,
 		status: StandardStatus.OLD,
 		specVersion: "A177r1",
-		flags: 0,
 	},
 	{
 		namespace: dvbi.A177_Namespace,
@@ -120,7 +104,6 @@ const SL_SchemaVersions: LoadedVersionInfo[] = [
 		schema: undefined,
 		status: StandardStatus.OLD,
 		specVersion: "A177",
-		flags: 0,
 	},
 ];
 
@@ -216,14 +199,17 @@ export const SL_SchemaSpecVersion = (version: A177Revision) : string => {
 };
 
 /**
- * determine the DVB Bluebook version for the specified schema namespace
+ * the schema for a service list namespace: the market's, when it gives one for the revision (issue #119), otherwise A177's
  *
- * @param {string} namespace     The schema namespace
- * @param {number} variant      The schema variant (0 for default)
+ * @param {string}         namespace  The schema namespace
+ * @param {MarketSettings} market     The settings of the market for the revision of the document (default none)
  * @returns {LoadedVersionInfo} the schema corresponding to the namespace
  */
-export const SL_GetSchema = (namespace: string, variant: number = 0) : LoadedVersionInfo | undefined =>
-	 SL_SchemaVersions.find((s) => (s.namespace == namespace && s.flags == variant)) || SL_SchemaVersions.find((s) => (s.namespace == namespace && s.flags == 0))
+export function SL_GetSchema(namespace: string, market: MarketSettings = MARKET_DEFAULTS) : LoadedVersionInfo | undefined {
+	const version = SL_SchemaVersions.find((s) => s.namespace == namespace);
+	const schema = market.schemas.serviceList;
+	return version && schema ? { ...version, filename: schema.filename, schema: schema.schema } : version;
+}
 
 /**
  * determines if the identifer provided refers to a valid application being used with the service

@@ -40,8 +40,6 @@ export const fetch_options: Record<string, unknown> /* SyncRequestInit */ = {
 	timeout: 3000,
 }
 
-export const GERMAN_A177r6_VARIANT: number = 0b0000000000000001;
-
 export type LoadOptions = {
 	useURLs: boolean	// when true, load from network locations, else use local files
 	async: boolean		// load asynchronously - OK for service, not NOT for command line validator

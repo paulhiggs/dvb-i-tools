@@ -1,0 +1,22 @@
+[
+	{
+		"id": "DE",
+		"name": "Germany",
+		"description": "The German market profile of A177 (BMT testbed): the programme guide needs 7 days either side of today, and A177r6 service lists and registries have relaxed schemas",
+		"revisions": [
+			{
+				"from": "r0",
+				"to": "latest",
+				"parameters": { "schedule": { "daysEitherSide": 7 } }
+			},
+			{
+				"from": "r6",
+				"to": "r6",
+				"schemas": {
+					"serviceList": "dvbi_v6.0+hls+hbbtv-(DE).xsd",
+					"serviceListRegistry": "dvbi_service_list_discovery_v1.6+hls-(DE).xsd"
+				}
+			}
+		]
+	}
+]
