@@ -37,7 +37,7 @@ export default class PlaylistCheck {
 
 
 	/*private*/ #doSchemaVerification(Playlist: XmlDocument, errs: ErrorList, errCode: string, report_schema_version: boolean = true) : boolean {
-		const x = SL_GetSchema(Playlist.root.namespaceUri, 0);
+		const x = SL_GetSchema(Playlist.root.namespaceUri);
 		if (x && x.schema) {
 			SchemaCheck(Playlist, x.schema, x.filename, errs, `${errCode}:${SL_SchemaVersion(Playlist.root.namespaceUri)}`);
 			if (report_schema_version) SchemaVersionCheck(Playlist, x.status, errs, `${errCode}:`);

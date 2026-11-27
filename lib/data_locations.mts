@@ -19,8 +19,9 @@ const REPO_RAW: string = "https://raw.githubusercontent.com/paulhiggs/dvb-i-tool
 const DVB_METADATA: string = "https://dvb.org/metadata/";
 
 export const resouces_subDir: string = "res";
-const SLEPR_subDir: string = "registries",
-	schemasPath: string = join(__dirname, "schemas");
+const SLEPR_subDir: string = "registries";
+// the folder of the XSD files
+export const schemasPath: string = join(__dirname, "schemas");
 
 const subdirDVBI: string = join(resouces_subDir, "dvbi"),
 	subdirISO: string = join(resouces_subDir, "iso"),
@@ -179,7 +180,6 @@ export const DVBI_ServiceListSchema: { [key: string]: DataLocation } = {
 	r4: { file:  `${schemasPath}/dvbi_v4.0+hls+hbbtv.xsd` },
 	r5: { file:  `${schemasPath}/dvbi_v5.0+hls+hbbtv.xsd` },
 	r6: { file:  `${schemasPath}/dvbi_v6.0+hls+hbbtv.xsd` },
-	r6_Germany: { file: `${schemasPath}/dvbi_v6.0+hls+hbbtv-(DE).xsd` },
 	r7: { file:  `${schemasPath}/dvbi_v7.0+hls+hbbtv.xsd` },
 	r8: { file:  `${schemasPath}/dvbi_v8.0+hls+hbbtv+dvbhb.xsd` },
 };
@@ -192,7 +192,6 @@ export const DVBI_ServiceListRegistrySchema: { [key: string]: DataLocation } = {
 	r4: { file: `${schemasPath}/dvbi_service_list_discovery_v1.4+hls.xsd` },
 	r5: { file: `${schemasPath}/dvbi_service_list_discovery_v1.5+hls.xsd` },
 	r6: { file: `${schemasPath}/dvbi_service_list_discovery_v1.6+hls.xsd` },
-	r6_Germany: { file: `${schemasPath}/dvbi_service_list_discovery_v1.6+hls-(DE).xsd` },
 	r7: { file: `${schemasPath}/dvbi_service_list_discovery_v1.7+hls.xsd` },
 	r8: { file: `${schemasPath}/dvbi_service_list_discovery_v1.8+hls.xsd` },
 };
@@ -202,6 +201,10 @@ export const XMLAIT_Schema: { [key: string]: DataLocation } = {
 	v2009: { file: `${schemasPath}/ts102809/2009/mis_xmlait.xsd` },
 	v2026: { file: `${schemasPath}/ts102809/2026/mis_xmlait_2026.xsd` },
 };
+
+// the markets: the settings of each market deployment that a validation can be made for (issue #119)
+const marketsFilename: string = "markets.json";
+export const Markets: DataLocation = { file: join(__dirname, resouces_subDir, marketsFilename), url: `${REPO_RAW}${resouces_subDir}/${marketsFilename}` };
 
 const languagesFilename: string = "language-subtag-registry";
 export const IANA_Subtag_Registry: DataLocation = { file: join(pathIANA, languagesFilename), url: `https://www.iana.org/assignments/language-subtag-registry/${languagesFilename}` };

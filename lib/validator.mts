@@ -17,6 +17,7 @@ import commandLineArgs from "command-line-args"
 import { ConfigError, applyFetchPolicy, loadConfig } from "./config.mts"
 import type { ValidatorConfig } from "./config.mts"
 import { createServices } from "./services.mts"
+import { LoadMarkets, MarketsError } from "./markets.mts"
 import { createApp } from "./app.mts"
 import { startServer, startWorkers } from "./server.mts"
 
@@ -35,6 +36,15 @@ export default function validator(app_options: commandLineArgs.CommandLineOption
 		process.exit(1);
 	}
 	applyFetchPolicy(config);
+	// the markets are checked before any worker is started, so that a markets file that is not valid stops the start-up
+	// instead of every worker (issue #119)
+	try {
+		LoadMarkets({ useURLs: config.useURLs, async: false, verbose: false });
+	} catch (err) {
+		if (!(err instanceof MarketsError)) throw err;
+		console.log(chalk.red(err.message));
+		process.exit(1);
+	}
 
 	if (config.workers != 0 && cluster.isPrimary) startWorkers(config.workers);
 	else startServer(config, createApp(config, createServices(config)));

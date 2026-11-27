@@ -31,6 +31,7 @@ import { isHTTPURL } from "./pattern_checks.mts"
 import { read_string_options } from "./globals.mts"
 import type { StatsType } from "./globals.mts"
 import { currentFetchPolicy } from "./safe_fetch.mts"
+import { definedMarkets } from "./markets.mts"
 import { skippedTraversal } from "./traversal.mts"
 import { COVERAGE_TOLERANCE_MS, DAY_STATES } from "./schedule_coverage.mts"
 import type { DayState } from "./schedule_coverage.mts"
@@ -653,7 +654,7 @@ export type FormState = {
 	url: string
 	cgmode?: string // the content guide request type
 	aitrole?: string // the role of an XML AIT (linked, deeplink or template)
-	forGermany: boolean
+	market: string // the id of the market to validate for, or "" for none (the A177 baseline)
 	traverse: boolean
 	aits: boolean // validate the XML AITs that the document refers to
 	maxTraversal: string
@@ -795,10 +796,15 @@ export async function drawForm(
 	const requestTypes = supportedRequests?.map((choice) => segmentChoice(ENTRY_FORM_REQUEST_TYPE_ID, choice.value, choice.value, choice.label, choice.value == form.cgmode));
 	const maxDepth = currentFetchPolicy().maxTraversalDepth; // the server's limit, which a request can lower
 	const traverse = modes.allowTraversal
-		&& html`<label class="check sl-options"><input type="checkbox" id="cbTraverse" name="traverse"${form.traverse && raw(" checked")}><span>Traverse referenced documents</span><span class="hint">Also validate the schedules, programme information, box sets and service lists that the document refers to.</span><span class="note">This can take a long time: 20 minutes or more for a large service list.</span></label><div class="traverse-limit sl-options"><label for="maxTraversal">Maximum documents</label><input type="text" id="maxTraversal" name="maxTraversal" inputmode="numeric" size="10" value="${form.maxTraversal}" aria-describedby="maxTraversal-hint"><span class="hint" id="maxTraversal-hint">The most documents to traverse: a number, or unlimited. Unlimited can take hours for a large service list. Checking the schedule coverage of a service needs 228 documents (60 with Germany): with fewer, its days are indeterminate.</span><label for="maxDepth">Maximum depth</label><input type="text" id="maxDepth" name="maxDepth" inputmode="numeric" size="10" value="${form.maxDepth}" aria-describedby="maxDepth-hint"><span class="hint" id="maxDepth-hint">The deepest level of documents to traverse into, up to ${maxDepth}. 1 validates only the documents the service list refers to.</span></div>`;
+		&& html`<label class="check sl-options"><input type="checkbox" id="cbTraverse" name="traverse"${form.traverse && raw(" checked")}><span>Traverse referenced documents</span><span class="hint">Also validate the schedules, programme information, box sets and service lists that the document refers to.</span><span class="note">This can take a long time: 20 minutes or more for a large service list.</span></label><div class="traverse-limit sl-options"><label for="maxTraversal">Maximum documents</label><input type="text" id="maxTraversal" name="maxTraversal" inputmode="numeric" size="10" value="${form.maxTraversal}" aria-describedby="maxTraversal-hint"><span class="hint" id="maxTraversal-hint">The most documents to traverse: a number, or unlimited. Unlimited can take hours for a large service list. Checking the schedule coverage of a service needs 228 documents (60 with the German market): with fewer, its days are indeterminate.</span><label for="maxDepth">Maximum depth</label><input type="text" id="maxDepth" name="maxDepth" inputmode="numeric" size="10" value="${form.maxDepth}" aria-describedby="maxDepth-hint"><span class="hint" id="maxDepth-hint">The deepest level of documents to traverse into, up to ${maxDepth}. 1 validates only the documents the service list refers to.</span></div>`;
 	const images = form.images;
 	const checks = form.signatureChecks;
 	const signatureChecks = html`<div class="choice" role="group" aria-labelledby="sigchecks-label"><span class="choice-label" id="sigchecks-label">Signature policy checks</span><div class="seg">${segmentChoice("signatureChecks", "both", "sigBoth", "Both", checks == "both")}${segmentChoice("signatureChecks", "connection", "sigConnection", "Certificates only", checks == "connection")}${segmentChoice("signatureChecks", "signature", "sigSignature", "Signatures only", checks == "signature")}${segmentChoice("signatureChecks", "none", "sigNone", "None", checks == "none")}</div><span class="hint">For references with a signature policy: Certificates checks the certificate chain of the HTTPS connection, and Signatures checks the X-JWS-Signature of the response.</span></div>`;
+	// the markets a service list or registry can be validated for (issue #119), or none: A177 itself
+	const markets = definedMarkets();
+	const marketChoice =
+		markets.length > 0 &&
+		html`<div class="choice sl-options" role="group" aria-labelledby="market-label"><span class="choice-label" id="market-label">Market</span><div class="seg">${segmentChoice("market", "", "marketNone", "None", form.market == "")}${markets.map((m) => segmentChoice("market", m.id, `market${m.id}`, m.name, form.market == m.id))}</div><span class="hint">None validates against A177 itself. ${markets.map((m) => html`${m.name}: ${m.description ?? m.id}. `)}</span></div>`;
 	const imageChecking = html`<div class="choice" role="group" aria-labelledby="images-label"><span class="choice-label" id="images-label">Image checking</span><div class="seg">${segmentChoice("images", "no", "imgNo", "No", images == "no")}${segmentChoice("images", "yes", "imgYes", "Yes", images == "yes")}${segmentChoice("images", "scaled", "imgScaled", "Yes and scaled", images == "scaled")}</div><span class="hint">Yes retrieves each referenced image once and checks its format, size, colour depth and pixel aspect ratio. Yes and scaled also requests each image at half its width with ?w= to check that the server scales it, which doubles the image requests.</span></div>`;
 
 	res.write(String(html`<form class="panel" id="check-form" method="post" enctype="multipart/form-data"${modes.allowTraversal && raw(" data-live")}>
@@ -811,7 +817,7 @@ export async function drawForm(
 <fieldset class="cg-type"><legend>Content guide query type</legend><div class="seg">${requestTypes}</div></fieldset>
 <fieldset class="ait-role"><legend>How the XML AIT is used</legend><div class="seg">${aitRoles}</div><span class="hint">A linked application of a service or service list, a content deep link (OnDemandProgram ProgramURL or restart), or a Template XML AIT. The rules of A177 differ for each.</span></fieldset>
 <fieldset><legend>Options</legend><div class="options">
-<label class="check sl-options"><input type="checkbox" id="cbGermany" name="forGermany"${form.forGermany && raw(" checked")}><span>Germany</span><span class="hint">Validate against the German profile of A177, which requires 7 days of programme guide either side of today instead of 28.</span></label>
+${marketChoice}
 ${traverse}
 <label class="check ait-options"><input type="checkbox" id="cbAITs" name="aits"${form.aits && raw(" checked")}><span>Validate referenced XML AITs</span><span class="hint">Also retrieve and validate the XML AITs of linked applications, deep links, restart links and templates. Each AIT is validated once, and counts as a traversed document.</span></label>
 ${imageChecking}

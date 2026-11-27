@@ -25,6 +25,7 @@ import ContentGuideCheck from "../cg_check.mts"
 import ServiceListRegistryCheck from "../slr_check.mts"
 import XmlAitCheck from "../ait_check.mts"
 import { AIT_ROLE_LINKED } from "../MHP_definitions.mts"
+import { findMarket } from "../markets.mts"
 import document_logger, { createPrefix } from "../logger.mts"
 import type { ValidatorConfig } from "../config.mts"
 import type { ValidatorServices } from "../services.mts"
@@ -51,7 +52,7 @@ async function DVB_I_check(
 		url: "",
 		cgmode: cgcheck?.supportedRequests[0].value,
 		aitrole: AIT_ROLE_LINKED,
-		forGermany: false,
+		market: "",
 		traverse: false,
 		aits: false,
 		maxTraversal: String(DEFAULT_MAX_TRAVERSAL),
@@ -77,7 +78,8 @@ async function DVB_I_check(
 			aitRole = field("aitRole"),
 			XMLurl = field("XMLurl"),
 			maxTraversalField = field("maxTraversal").trim(),
-			maxDepthField = field("maxDepth").trim();
+			maxDepthField = field("maxDepth").trim(),
+			marketField = field("market").trim();
 		// traversal is only offered (and only done) when the server is started with --allow_traversal. Then the most
 		// documents to traverse: a positive whole number or "unlimited", given when traversal is selected
 		const traverseSelected = allow_traversal && req.body.traverse == "on",
@@ -93,6 +95,7 @@ async function DVB_I_check(
 		else if (testtype == MODE_CG && requestType.length == 0) parseErr = ["request type not specified"]
 		else if (testtype == MODE_CG && !cgcheck?.supportedRequests.some((r) => r.value == requestType)) parseErr = [`unknown request type ${requestType.quote()}`]
 		else if (testtype == MODE_AIT && aitRole.length > 0 && !aitcheck?.supportedRoles.some((r) => r.value == aitRole)) parseErr = [`unknown XML AIT role ${aitRole.quote()}`]
+		else if (marketField.length > 0 && !findMarket(marketField)) parseErr = [`the market ${marketField.quote()} is not defined`]
 		else if (doclocation != MODE_URL && doclocation != MODE_FILE) parseErr = [`method is not ${MODE_URL.quote()} or ${MODE_FILE.quote()}`]
 		else if (doclocation == MODE_URL && XMLurl.length == 0) parseErr = ["URL not specified"]
 		else if (doclocation == MODE_FILE && !(req.files && req.files.XMLfile)) parseErr = ["File not provided"]
@@ -108,7 +111,7 @@ async function DVB_I_check(
 			url: XMLurl,
 			cgmode: requestType.length > 0 ? requestType : defaults.cgmode,
 			aitrole: aitRole.length > 0 ? aitRole : defaults.aitrole,
-			forGermany: req.body.forGermany == "on",
+			market: findMarket(marketField)?.id ?? "",
 			traverse: traverseSelected,
 			aits: req.body.aits == "on",
 			maxTraversal: maxTraversalField.length > 0 ? maxTraversalField : defaults.maxTraversal,
