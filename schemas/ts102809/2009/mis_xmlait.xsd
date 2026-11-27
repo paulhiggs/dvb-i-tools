@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ipi="urn:dvb:metadata:iptv:sdns:2008-1" xmlns:ipi12="urn:dvb:metadata:iptv:sdns:2012-1"  xmlns:mpeg7="urn:tva:mpeg7:2005" xmlns:mhp="urn:dvb:mhp:2009" targetNamespace="urn:dvb:mhp:2009" elementFormDefault="qualified" attributeFormDefault="qualified">
+	<!-- ###################################################################### -->
+	<!-- Schema Imports -->
+	<xsd:import namespace="urn:dvb:metadata:iptv:sdns:2008-1" schemaLocation="sdns_v1.4r13.xsd"/>
+	<xsd:import namespace="urn:dvb:metadata:iptv:sdns:2012-1" schemaLocation="sdns_v1.5r25b.xsd"/>
+	<xsd:import namespace="urn:tva:mpeg7:2005" schemaLocation="tva_mpeg7.xsd"/>
+	<!-- ###################################################################### -->
+	<!-- Extended SD&S types - Clause 5.4.3 -->
+	<!-- ~~~ Package extension. See Clause 5.4.3.1 -->
+	<xsd:complexType name="PackageType">
+		<xsd:annotation>
+			<xsd:documentation>Extension of Package for service bound applications.  See Clause 5.4.3.1</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexContent>
+			<xsd:extension base="ipi12:Package">
+				<xsd:sequence>
+					<xsd:element name="ApplicationList" type="mhp:ApplicationList" minOccurs="0"/>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+	<!-- ~~~ IPService extension. See Clause 5.4.3.2 -->
+	<xsd:complexType name="IPServiceType">
+		<xsd:annotation>
+			<xsd:documentation>Extension of IPService for service bound applications.  See Clause 5.4.3.2</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexContent>
+			<xsd:extension base="ipi12:IPService">
+				<xsd:choice>
+					<xsd:element name="ApplicationList" type="mhp:ApplicationList" minOccurs="0"/>
+					<xsd:element name="AITDescriptor" type="mhp:AITDescriptorType" minOccurs="0"/>
+				</xsd:choice>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+	<!-- ~~~ AITDescriptorType.  See Clause 5.4.3.2 -->
+	<xsd:complexType name="AITDescriptorType">
+		<xsd:annotation>
+			<xsd:documentation>Descriptor to signal an inband (MPEG2 section based) AIT.</xsd:documentation>
+		</xsd:annotation>
+	</xsd:complexType>
+	<!-- ~~~ ServiceProviderType extension. See Clause 5.4.3.3 -->
+	<xsd:complexType name="ServiceProviderType">
+		<xsd:annotation>
+			<xsd:documentation>Extension of ServiceProviderType for signalling unbound applications.  See Clause 5.4.3.3</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexContent>
+			<xsd:extension base="ipi:ServiceProviderType">
+				<xsd:sequence>
+					<xsd:element name="AbstractService" type="mhp:AbstractIPService" maxOccurs="unbounded"/>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+	<!-- ###################################################################### -->
+	<!-- New XML element definitions - Clause 5.4.4 -->
+	<!-- ~~~ ApplicationList. See Clause 5.4.4.1 -->
+	<xsd:complexType name="ApplicationList">
+		<xsd:annotation>
+			<xsd:documentation>The ApplicationList element lists applications, and/or references to applications, inline in the IPServiceType, PackageType or AbstractIPService.  See Clause 5.4.4.1.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="application" type="mhp:Application" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element name="ApplicationReference" type="mhp:ApplicationIdentifier" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- ~~~ Application. See Clause 5.4.4.2 -->
+	<xsd:complexType name="Application">
+		<xsd:annotation>
+			<xsd:documentation>Describes an application.  See Clause 5.4.4.2.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="appName" type="ipi:MultilingualType" maxOccurs="unbounded"/>
+			<xsd:element name="applicationIdentifier" type="mhp:ApplicationIdentifier"/>
+			<xsd:element name="applicationDescriptor" type="mhp:ApplicationDescriptor"/>
+			<xsd:element name="applicationSpecificDescriptor" type="mhp:ApplicationSpecificDescriptor" minOccurs="0"/>
+			<xsd:element name="applicationUsageDescriptor" type="mhp:ApplicationUsageDescriptor" minOccurs="0"/>
+			<!-- additions to tm-mis-0053r10 -->
+			<xsd:element name="applicationBoundary" type="mhp:SimpleApplicationBoundaryDescriptorType" minOccurs="0"/>
+			<xsd:element name="applicationTransport" type="mhp:TransportProtocolDescriptorType" maxOccurs="unbounded"/>
+			<xsd:element name="applicationLocation" type="mhp:SimpleApplicationLocationDescriptorType"/>
+			<!-- end tm-mis0053r10 -->
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- ~~~ ApplicationIdentifier. See Clause 5.4.4.3 -->
+	<xsd:complexType name="ApplicationIdentifier">
+		<xsd:annotation>
+			<xsd:documentation>Identifies an application.  See Clause 5.4.4.3.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="orgId" type="xsd:unsignedInt"/>
+			<xsd:element name="appId" type="xsd:unsignedShort"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- ~~~ ApplicationDescriptor. See Clause 5.4.4.4 -->
+	<xsd:complexType name="ApplicationDescriptor">
+		<xsd:annotation>
+			<xsd:documentation>Generic Application Descriptor.  See Clause 5.4.4.4.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="type" type="mhp:ApplicationType"/>
+			<xsd:element name="controlCode" type="mhp:ApplicationControlCode"/>
+			<!-- additions to tm-mis-0053r10 -->
+			<xsd:element name="visibility" type="mhp:VisibilityDescriptor" minOccurs="0"/>
+			<xsd:element name="serviceBound" type="xsd:boolean" default="true" minOccurs="0"/>
+			<!-- end tm-mis0053r10 -->
+			<xsd:element name="priority" type="ipi:Hexadecimal8bit"/>
+			<xsd:element name="version" type="ipi:Version"/>
+			<!-- additions to tm-mis-0053r10 -->
+			<xsd:element name="mhpVersion" type="mhp:MhpVersion" minOccurs="0"/>
+			<!-- end tm-mis0053r10 -->
+			<xsd:element name="icon" type="mhp:IconDescriptor" minOccurs="0"/>
+			<xsd:element name="storageCapabilities" type="mhp:StorageCapabilities" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- ~~~ VisibilityDescriptor.  See Clause 5.4.4.5 -->
+	<xsd:simpleType name="VisibilityDescriptor">
+		<xsd:annotation>
+			<xsd:documentation>Specifies whether the application is suitable to be offered to the end-user for them to decide if the application should be launched.  See Clause 5.4.4.5.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="NOT_VISIBLE_ALL"/>
+			<xsd:enumeration value="NOT_VISIBLE_USERS "/>
+			<xsd:enumeration value="VISIBLE_ALL"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- ~~~ IconDescriptor.  See Clause 5.4.4.6 -->
+	<xsd:complexType name="IconDescriptor">
+		<xsd:annotation>
+			<xsd:documentation>The IconDescriptor element signals the presence of an icon representing the application.  See Clause 5.4.4.6.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:attribute name="filename" type="xsd:string" use="required"/>
+		<xsd:attribute name="size" type="xsd:unsignedShort" use="optional"/>
+		<xsd:attribute name="aspectRatio" type="mhp:AspectRatio" use="optional"/>
+	</xsd:complexType>
+	<!-- ~~~ AspectRatio. See Clause 5.4.4.7 -->
+	<xsd:simpleType name="AspectRatio">
+		<xsd:annotation>
+			<xsd:documentation>Specifies the aspect ratio of the application's icon.  See Clause 5.4.4.7.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="4_3"/>
+			<xsd:enumeration value="16_9"/>
+			<xsd:enumeration value="1_1"/>
+			<!-- additions to tm-mis-0053r10 -->
+			<!-- end tm-mis0053r10 -->
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- ~~~ MhpVersion. See Clause 5.4.4.8 -->
+	<xsd:complexType name="MhpVersion">
+		<xsd:annotation>
+			<xsd:documentation>Platform profile and versioning information.  See Clause 5.4.4.8.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="profile" type="ipi:Hexadecimal16bit"/>
+			<xsd:element name="versionMajor" type="ipi:Hexadecimal8bit"/>
+			<xsd:element name="versionMinor" type="ipi:Hexadecimal8bit"/>
+			<xsd:element name="versionMicro" type="ipi:Hexadecimal8bit"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- ~~~ StorageCapabilities. See Clause 5.4.4.9 -->
+	<xsd:complexType name="StorageCapabilities">
+		<xsd:annotation>
+			<xsd:documentation>This descriptor, if present, serves to state whether the application can be stored or cached in the receiver.  See Clause 5.4.4.9.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence minOccurs="0">
+			<xsd:element name="storageProperty" type="mhp:StorageType"/>
+		</xsd:sequence>
+		<xsd:attribute name="launchableFromBroadcast" type="xsd:boolean" use="required"/>
+		<xsd:attribute name="launchableCompletelyFromCache" type="xsd:boolean" use="required"/>
+		<xsd:attribute name="launchableWithOlderVersion" type="xsd:boolean" use="required"/>
+	</xsd:complexType>
+	<!-- ~~~ StorageType. See Clause 5.4.4.10 -->
+	<xsd:simpleType name="StorageType">
+		<xsd:annotation>
+			<xsd:documentation>Indicates whether the application is broadcast related or stand alone.  See Clause 5.4.4.10.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="BROADCAST-RELATED"/>
+			<xsd:enumeration value="STANDALONE"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- ~~~ ApplicationType.  See Clause 5.4.4.11 -->
+	<xsd:complexType name="ApplicationType">
+		<xsd:annotation>
+			<xsd:documentation>Specifies the type of the application to help a terminal discard applications whose types it does not support.  See Clause 5.4.4.11.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:choice>
+			<xsd:element name="DvbApp" type="mhp:DvbApplicationType"/>
+			<xsd:element name="OtherApp" type="mpeg7:mimeType"/>
+		</xsd:choice>
+	</xsd:complexType>
+	<!-- ~~~ DVBApplicationType.  See Clause 5.4.4.12 -->
+	<xsd:simpleType name="DvbApplicationType">
+		<xsd:annotation>
+			<xsd:documentation>Identifies the type of the DVB application.  See Clause 5.4.4.12.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="DVB-J"/>
+			<xsd:enumeration value="DVB-HTML"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- ~~~ ApplicationControlCode.  See Clause 5.4.4.13-->
+	<xsd:simpleType name="ApplicationControlCode">
+		<xsd:annotation>
+			<xsd:documentation>The ApplicationControlCode element serves to dynamically control the application life cycle.  See Clause 5.4.4.13.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="AUTOSTART"/>
+			<xsd:enumeration value="PRESENT"/>
+			<xsd:enumeration value="DESTROY"/>
+			<xsd:enumeration value="KILL"/>
+			<xsd:enumeration value="PREFETCH"/>
+			<xsd:enumeration value="REMOTE"/>
+			<xsd:enumeration value="DISABLED"/>
+			<xsd:enumeration value="PLAYBACK_AUTOSTART"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- ~~~ ApplicationSpecificDescriptor.  See Clause 5.4.4.14 -->
+	<xsd:complexType name="ApplicationSpecificDescriptor">
+		<xsd:annotation>
+			<xsd:documentation>The ApplicationSpecificDescriptor contains the specific descriptor depending upon the ApplicationType. As well as descriptors defined in the present schema, other descriptors may be defined externally.  See Clause 5.4.4.14.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:choice>
+			<xsd:element name="dvbjDescriptor" type="mhp:DVBJDescriptor"/>
+			<xsd:element name="htmlDescriptor" type="mhp:DVBHtmlDescriptor"/>
+			<xsd:element name="otherDescriptor" type="mhp:OtherDescriptor"/>
+		</xsd:choice>
+	</xsd:complexType>
+	<!-- ~~~ OtherDescriptor.  A base type for defining other application specific descriptors. See Clause 5.4.4.14-->
+	<xsd:complexType name="OtherDescriptor" abstract="true"/>
+	<!-- ~~~ AbstractIPService.  See Clause 5.4.4.15 -->
+	<xsd:complexType name="AbstractIPService">
+		<xsd:annotation>
+			<xsd:documentation>See Clause 5.4.4.15.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="svcName" type="ipi:MultilingualType" maxOccurs="unbounded"/>
+			<xsd:element name="svcId" type="mhp:Hexadecimal24bit"/>
+			<xsd:element name="isAutoSelect" type="xsd:boolean"/>
+			<xsd:element name="ApplicationList" type="mhp:ApplicationList" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- ~~~ Hexadecimal24bit.  See Clause 5.4.4.15-->
+	<xsd:simpleType name="Hexadecimal24bit">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[0-9a-fA-F]{1}[1-9a-fA-F]{1}[0-9a-fA-F]{4}"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- ~~~ ApplicationOfferingType.  See Clause 5.4.4.16 -->
+	<xsd:complexType name="ApplicationOfferingType">
+		<xsd:annotation>
+			<xsd:documentation>Base type of the ApplicationDiscovery record. (This record requires a new payload id for the SD&amp;S transport protocols.).  See Clause 5.4.4.16.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexContent>
+			<xsd:extension base="ipi:OfferingBase">
+				<xsd:sequence>
+					<xsd:element name="ApplicationList" maxOccurs="unbounded">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="Application" type="mhp:Application" maxOccurs="unbounded"/>
+							</xsd:sequence>
+						</xsd:complexType>
+					</xsd:element>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+	<!-- ~~~ ServiceDiscovery record.  See Clause 5.4.4.17 -->
+	<xsd:element name="ServiceDiscovery">
+		<xsd:annotation>
+			<xsd:documentation>A ServiceDiscovery record for MIS defined SD&amp;S records only - signals ApplicationDiscovery records.  See Clause 5.4.4.17.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:choice>
+				<xsd:element name="ApplicationDiscovery" type="mhp:ApplicationOfferingType" maxOccurs="unbounded"/>
+			</xsd:choice>
+		</xsd:complexType>
+	</xsd:element>
+	<!-- ~~~ ApplicationUsageDescriptor.  See Clause 5.4.4.18 -->
+	<xsd:complexType name="ApplicationUsageDescriptor">
+		<xsd:annotation>
+			<xsd:documentation>Identifies that the application provides a specific, well-known, service; for example teletext, EPG or chat.  See Clause 5.4.4.18.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="ApplicationUsage" type="xsd:anyURI" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- ###################################################################### -->
+	<!-- additions to tm-mis-0053r10 -->
+	<xsd:complexType name="TransportProtocolDescriptorType" abstract="true"/>
+	<xsd:complexType name="HTTPTransportType">
+		<xsd:complexContent>
+			<xsd:extension base="mhp:TransportProtocolDescriptorType">
+				<xsd:sequence>
+					<xsd:element name="URLBase" type="xsd:anyURI"/>
+					<xsd:element name="URLExtension" type="xsd:anyURI" minOccurs="0" maxOccurs="unbounded"/>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+	<xsd:complexType name="OCTransportType">
+		<xsd:complexContent>
+			<xsd:extension base="mhp:TransportProtocolDescriptorType">
+				<xsd:sequence>
+					<xsd:choice minOccurs="0">
+						<xsd:element name="DvbTriplet" type="ipi12:DVBTriplet"/>
+						<xsd:element name="TextualId" type="ipi:TextualIdentifier"/>
+					</xsd:choice>
+					<xsd:element name="ComponentTag" type="mhp:ComponentTagType"/>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+	<xsd:complexType name="ComponentTagType">
+		<xsd:attribute name="ComponentTag" type="ipi:Hexadecimal8bit"/>
+	</xsd:complexType>
+	<xsd:simpleType name="SimpleApplicationLocationDescriptorType">
+		<xsd:restriction base="xsd:anyURI"/>
+	</xsd:simpleType>
+	<xsd:complexType name="SimpleApplicationBoundaryDescriptorType">
+		<xsd:sequence>
+			<xsd:element name="BoundaryExtension" type="xsd:anyURI" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- end tm-mis0053r10 -->
+	<!-- ###################################################################### -->
+	<!-- Previous MHP Elements/Types -->
+	<!-- ~~~ DVBJDescriptor -->
+	<xsd:complexType name="DVBJDescriptor">
+		<xsd:sequence>
+			<xsd:element name="location" type="ipi:DescriptionLocation" maxOccurs="unbounded"/>
+			<xsd:element name="applicationStructure" type="mhp:ApplicationStructure"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- ~~~ ApplicationStructure -->
+	<xsd:complexType name="ApplicationStructure">
+		<xsd:sequence>
+			<xsd:element name="classPathExtension" type="xsd:string"/>
+			<xsd:element name="initialClass" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- ~~~ DVBHTMLDescriptor -->
+	<xsd:complexType name="DVBHtmlDescriptor"/>
+</xsd:schema>
