@@ -22,7 +22,8 @@ import { SchemaCheck, SchemaLoad } from "./schema_checks.mts"
 import { XMLAIT_Schema, schemaURL } from "./data_locations.mts"
 import document_logger from "./logger.mts"
 import { isHTTPURL, isHTTSPURL } from "./pattern_checks.mts"
-import { allowTraversal, claimTraversal, currentRequest, currentValidation, deferRetrieval, safeFetch, signaturePoliciesInEffect, ValidationScope } from "./safe_fetch.mts"
+import { allowTraversal, claimTraversal, currentRequest, currentValidation, deferRetrieval, documentRevision, safeFetch, setDocumentRevision, signaturePoliciesInEffect, ValidationScope } from "./safe_fetch.mts"
+import { A177Revision } from "./revisions.mts"
 import type { ValidationOptions } from "./safe_fetch.mts"
 import { nestedTraversal, traversalFinished, traversalSkipped, traversalStarted } from "./traversal.mts"
 import { checkSignedLocation, retrieveResource } from "./resource_checks.mts"
@@ -469,6 +470,9 @@ export default class XmlAitCheck {
 			return;
 		}
 		const ns = AIT.root.namespaceUri;
+		// the market settings that apply to the findings of the AIT (issue #119): those of the document that refers to it, or for
+		// an AIT validated on its own, those of the latest A177 revision
+		if (documentRevision() == undefined) setDocumentRevision(A177Revision.latest);
 		if (!ns) {
 			errs.addError({
 				code: "AIT003",

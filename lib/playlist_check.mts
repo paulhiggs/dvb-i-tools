@@ -15,7 +15,7 @@ import { SchemaCheck, SchemaVersionCheck, SchemaLoad } from "./schema_checks.mts
 import { LoadSLschemas, SL_GetSchema, SL_SchemaVersion } from "./sl_data_versions.mts"
 import document_logger from "./logger.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
-import { currentRequest, ValidationScope } from "./safe_fetch.mts"
+import { currentRequest, setDocumentRevision, ValidationScope } from "./safe_fetch.mts"
 import type { ValidationOptions } from "./safe_fetch.mts"
 
 import type { StatsType, LoadOptions } from "./globals.mts"
@@ -100,6 +100,8 @@ export default class PlaylistCheck {
 		}
 
 		const ns = PL.root.namespaceUri;
+		// the market settings of its revision apply to the findings of the playlist (issue #119)
+		setDocumentRevision(SL_SchemaVersion(ns));
 
 		if (!this.#doSchemaVerification(PL as XmlDocument, errs, "PL005", request.report_schema_version)) {
 			errs.addError({

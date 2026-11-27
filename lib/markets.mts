@@ -19,6 +19,7 @@ import fetchS from "sync-fetch"
 import { XmlDocument } from "libxml2-wasm"
 
 import { A177Revision } from "./revisions.mts"
+import { dvbi } from "./DVB-I_definitions.mts"
 import { Markets, schemaURL, schemasPath } from "./data_locations.mts"
 import { fetch_options } from "./globals.mts"
 import type { LoadOptions } from "./globals.mts"
@@ -35,13 +36,35 @@ export type MarketParameters = {
 	schedule: {
 		daysEitherSide: number; // the days of programme guide needed before and after today (issue #122)
 	};
+	lcn: {
+		min: number; // the lowest channel number of an LCN table (LCN@channelNumber, LCNRange@start/@end)
+		max: number; // the highest
+	};
 };
+
+// the severity a market gives a code instead of A177's, or "off" for findings that do not apply to the market (they are not
+// reported at all)
+export type MarketSeverity = "error" | "warning" | "information" | "off";
+export const MARKET_SEVERITIES: readonly MarketSeverity[] = ["error", "warning", "information", "off"];
+
+/**
+ * the codes whose severity a market cannot change (decision 20 of issue #119): a document that cannot be parsed (fatal), and
+ * the XSD validation, whose findings all have one code for each type of document. A market relaxes a schema rule with its
+ * own schema instead. Each is the code given to SchemaLoad() or SchemaCheck(), which add suffixes to it (SL001-1, SL005:8)
+ */
+export const NOT_OVERRIDABLE: readonly string[] = ["SL001", "SR001", "CG001", "PL001", "AIT001", "SL005", "SR005", "CG003", "PL005", "AIT005"];
+
+// a severity key: a code (SL264), which starts with the letters and 3 digits that every code has, or a prefix of codes
+// followed by * (SI020-1-*, SL24*), which has at least the letters and one digit
+const SEVERITY_KEY = /^[A-Z]{2,6}[0-9]{3}[A-Za-z0-9:._-]*$/,
+	SEVERITY_PREFIX_KEY = /^[A-Z]{2,6}[0-9][A-Za-z0-9:._-]*\*$/;
 
 // the settings for the documents of one A177 revision
 export type MarketSettings = Readonly<{
 	market?: string; // the id of the market, or undefined for the A177 baseline
 	schemas: Readonly<{ serviceList?: MarketSchema; serviceListRegistry?: MarketSchema }>;
 	parameters: Readonly<{ [P in keyof MarketParameters]: Readonly<MarketParameters[P]> }>;
+	severity: Readonly<Record<string, MarketSeverity>>; // the severity of codes, by code or prefix* (see marketSeverity())
 }>;
 
 // the A177 baseline: no market. A market file holds only what a market changes
@@ -50,7 +73,9 @@ export const MARKET_DEFAULTS: MarketSettings = deepFreeze({
 	schemas: {},
 	parameters: {
 		schedule: { daysEitherSide: 28 },
+		lcn: { min: dvbi.MIN_LCN, max: dvbi.MAX_LCN }, // A177 table 23
 	},
+	severity: {},
 });
 
 export type Market = Readonly<{
@@ -68,11 +93,12 @@ const positiveWholeNumber = (value: unknown): string | undefined =>
 	typeof value == "number" && Number.isInteger(value) && value > 0 ? undefined : "must be a positive whole number";
 const PARAMETER_CHECKS: { [P in keyof MarketParameters]: { [Q in keyof MarketParameters[P]]: (value: unknown) => string | undefined } } = {
 	schedule: { daysEitherSide: positiveWholeNumber },
+	lcn: { min: positiveWholeNumber, max: positiveWholeNumber },
 };
 const SCHEMA_KINDS = ["serviceList", "serviceListRegistry"] as const;
 
 const MARKET_KEYS = ["id", "name", "description", "revisions"],
-	RANGE_KEYS = ["from", "to", "schemas", "parameters"];
+	RANGE_KEYS = ["from", "to", "schemas", "parameters", "severity"];
 
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value == "object" && value != null && !Array.isArray(value);
 
@@ -146,7 +172,13 @@ export function parseMarkets(text: string, source: string): readonly Market[] {
 		}
 
 		// the settings of each range, in the order they are listed
-		type Range = { from: A177Revision; to: A177Revision; schemas: Record<string, MarketSchema>; parameters: Record<string, Record<string, unknown>> };
+		type Range = {
+			from: A177Revision;
+			to: A177Revision;
+			schemas: Record<string, MarketSchema>;
+			parameters: Record<string, Record<string, unknown>>;
+			severity: Record<string, MarketSeverity>;
+		};
 		const ranges: Range[] = [];
 		m.revisions.forEach((r: unknown, j: number) => {
 			const rwhere = `${where}, revision range ${j + 1}`;
@@ -163,7 +195,7 @@ export function parseMarkets(text: string, source: string): readonly Market[] {
 			if (!to) problems.push(`${rwhere}: to must be a revision of A177 (r0 to r${A177Revision.latest.level}, or latest)`);
 			if (from && to && from > to) problems.push(`${rwhere}: from is after to`);
 
-			const range: Range = { from: from ?? A177Revision.unknown, to: to ?? A177Revision.unknown, schemas: {}, parameters: {} };
+			const range: Range = { from: from ?? A177Revision.unknown, to: to ?? A177Revision.unknown, schemas: {}, parameters: {}, severity: {} };
 			if (r.schemas != undefined) {
 				if (!isObject(r.schemas)) problems.push(`${rwhere}: schemas must be an object`);
 				else
@@ -192,23 +224,42 @@ export function parseMarkets(text: string, source: string): readonly Market[] {
 							});
 					});
 			}
+			if (r.severity != undefined) {
+				if (!isObject(r.severity)) problems.push(`${rwhere}: severity must be an object`);
+				else
+					Object.entries(r.severity).forEach(([key, value]) => {
+						const code = key.endsWith("*") ? key.slice(0, -1) : key;
+						if (!(key.endsWith("*") ? SEVERITY_PREFIX_KEY : SEVERITY_KEY).test(key)) problems.push(`${rwhere}: severity ${key.quote()} is not a code, or a prefix of codes followed by *`);
+						else if (NOT_OVERRIDABLE.some((c) => (key.endsWith("*") && c.startsWith(code)) || (code.startsWith(c) && !/[0-9]/.test(code.charAt(c.length)))))
+							problems.push(`${rwhere}: the severity of ${key.quote()} cannot be changed (a fatal or XSD finding)`);
+						else if (!(MARKET_SEVERITIES as readonly unknown[]).includes(value))
+							problems.push(`${rwhere}: severity ${key.quote()} must be one of ${MARKET_SEVERITIES.map((s) => s.quote()).join(", ")}`);
+						else range.severity[key] = value as MarketSeverity;
+					});
+			}
 			ranges.push(range);
 		});
 
 		// the settings for each revision: the ranges that include it, merged in the order they are listed (a later range wins)
 		const id = m.id as string;
 		const byRevision = new Map<A177Revision, MarketSettings>();
+		const lcnAbove: string[] = []; // the revisions whose lcn.min is above their lcn.max
 		A177Revision.all.forEach((revision) => {
 			const schemas: Record<string, MarketSchema> = {};
 			const parameters = structuredClone(MARKET_DEFAULTS.parameters) as Record<string, Record<string, unknown>>;
+			const severity: Record<string, MarketSeverity> = {};
 			ranges
 				.filter((range) => range.from <= revision && revision <= range.to)
 				.forEach((range) => {
 					Object.assign(schemas, range.schemas);
 					Object.entries(range.parameters).forEach(([group, values]) => Object.assign(parameters[group], values));
+					Object.assign(severity, range.severity);
 				});
-			byRevision.set(revision, deepFreeze({ market: id, schemas, parameters } as unknown as MarketSettings));
+			const { min, max } = parameters.lcn as MarketParameters["lcn"];
+			if (min > max) lcnAbove.push(`r${revision.level} (${min} > ${max})`);
+			byRevision.set(revision, deepFreeze({ market: id, schemas, parameters, severity } as unknown as MarketSettings));
 		});
+		if (lcnAbove.length > 0) problems.push(`${where}: "lcn.min" is above "lcn.max" for ${lcnAbove.join(", ")}`);
 		// a document whose revision is not known has the A177 baseline
 		const unknown = deepFreeze({ ...MARKET_DEFAULTS, market: id });
 		return Object.freeze({
@@ -257,6 +308,20 @@ export function LoadMarkets(opts: LoadOptions): void {
 export const definedMarkets = (): readonly Market[] => loadedMarkets ?? [];
 
 /**
+ * define markets as well as those of the markets file: for the testsuite, whose test markets are not in res/markets.json.
+ * The file's markets are loaded first, if they are not yet
+ *
+ * @param {Market[]} markets  the markets, from parseMarkets()
+ * @throws {MarketsError} when a market has the id of one already defined
+ */
+export function addMarkets(markets: readonly Market[]): void {
+	LoadMarkets({ useURLs: false, async: false, verbose: false });
+	const twice = markets.filter((m) => findMarket(m.id));
+	if (twice.length > 0) throw new MarketsError(`the markets ${twice.map((m) => m.id.quote()).join(", ")} are already defined`);
+	loadedMarkets = Object.freeze([...definedMarkets(), ...markets]);
+}
+
+/**
  * the market with an id (in any case)
  *
  * @param {string} id  the id of the market
@@ -273,3 +338,20 @@ export const findMarket = (id: string): Market | undefined => definedMarkets().f
  */
 export const marketSettings = (id: string | undefined, revision: A177Revision): MarketSettings =>
 	(id == undefined ? undefined : findMarket(id)?.settings(revision)) ?? MARKET_DEFAULTS;
+
+/**
+ * the severity that a market's settings give a code (decision 21 of issue #119): the entry for the code itself, or else the
+ * entry for the longest prefix* that the code starts with
+ *
+ * @param {MarketSettings} settings  the settings of the market for the revision of the document
+ * @param {string}         code      the code of the finding
+ * @returns {MarketSeverity | undefined} the severity, or undefined when the market does not change it
+ */
+export function marketSeverity(settings: MarketSettings, code: string): MarketSeverity | undefined {
+	const exact = settings.severity[code];
+	if (exact) return exact;
+	let best: string | undefined = undefined;
+	for (const key of Object.keys(settings.severity))
+		if (key.endsWith("*") && code.startsWith(key.slice(0, -1)) && (best == undefined || key.length > best.length)) best = key;
+	return best ? settings.severity[best] : undefined;
+}

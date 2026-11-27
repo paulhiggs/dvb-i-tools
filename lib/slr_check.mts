@@ -17,7 +17,7 @@ import { slVersions, dvbi, dvbiEA, dvbiEC, dvbisld, validApplicationTypes, DvbIA
 import type { A177Revision } from "./revisions.mts"
 import ErrorList, { APPLICATION, WARNING } from "./error_list.mts"
 import { nestedTraversal } from "./traversal.mts"
-import { currentMarket, currentRequest, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
+import { currentMarket, currentRequest, setDocumentRevision, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
 import { checkConnection } from "./tls_checks.mts"
 import { CheckExtension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY } from "./extension_check.mts"
 import { ValidateLanguage } from "./IANA_languages.mts"
@@ -473,6 +473,8 @@ export default class ServiceListRegistryCheck {
 			return;
 		}
 
+		// the market settings of its revision apply to the findings of the registry (issue #119)
+		setDocumentRevision(SLR_SchemaVersion(SLR.root.namespaceUri));
 		if (!this.#doSchemaVerification(SLR as XmlDocument, errs, "SR005", request.report_schema_version)) {
 			errs.addError({
 				code: "SR010",

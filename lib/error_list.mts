@@ -10,6 +10,7 @@
 
 import { datatypeIs, DefaultProperty, HasProperty } from "./utils.mts"
 import type { ValidationTiming } from "./safe_fetch.mts"
+import { marketSeverityOf } from "./safe_fetch.mts"
 import type { ServiceCoverage } from "./schedule_coverage.mts"
 
 export const ERROR: string = "(E)",
@@ -18,6 +19,10 @@ export const ERROR: string = "(E)",
 	INFORMATION: string = "(I)",
 	APPLICATION: string = "(A)",
 	FATAL: string = "(F)";
+
+// the type of a finding for each severity a market can give (markets.mts), and the name of each type
+const MARKET_TYPES: Record<string, string> = { error: ERROR, warning: WARNING, information: INFORMATION };
+const TYPE_NAMES: Record<string, string> = { [ERROR]: "an error", [WARNING]: "a warning", [INFORMATION]: "information" };
 
 const MAX_FRAGMENT_LINES: number = 6; // the maximum number of lines in an element to display when that element has an error
 
@@ -374,6 +379,17 @@ export default class ErrorList {
 		}
 
 		if (!argsOK) return;
+
+		// the market of the validation can change the severity of a finding, or turn it off (issue #119, decisions 20-22). The code
+		// is never changed. A fatal, debug or application finding is not changed
+		if ([ERROR, WARNING, INFORMATION].includes(e.type as string)) {
+			const changed = marketSeverityOf(e.code);
+			if (changed?.severity == "off") return;
+			if (changed) {
+				const type = MARKET_TYPES[changed.severity];
+				if (type != e.type) e = { ...e, type, message: `${e.message} (${TYPE_NAMES[e.type as string]} in A177, ${TYPE_NAMES[type]} for the market ${changed.market})` };
+			}
+		}
 
 		if (e.type == DEBUG) {
 			this.#debugMessage({ code: e.code, message: e.message });
