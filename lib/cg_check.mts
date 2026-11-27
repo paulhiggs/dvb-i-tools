@@ -67,6 +67,7 @@ import type { StatsType, LoadOptions } from "./globals.mts"
 
 import { allowTraversal, currentRequest, currentValidation, deferRetrieval, documentRevision, retrieveTraversal, setDocumentRevision, ValidationScope } from "./safe_fetch.mts"
 import { contentGuideRevision, marketSummary } from "./market_checks.mts"
+import { LoadMarkets } from "./markets.mts"
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";
@@ -232,6 +233,7 @@ export default class ContentGuideCheck {
 		DefaultProperty(opts, "verbose", true);
 
 		LoadCGschemas(opts);
+		LoadMarkets(opts);
 
 		this.#numRequests = 0;
 		this.supportedRequests = supportedRequests;

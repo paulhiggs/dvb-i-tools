@@ -127,7 +127,7 @@ export function checkMarketImage(image: ImageInfo, kind: MarketImageKind | undef
 		if (!sizeOK)
 			errs.addError({
 				code: "IMG020",
-				message: `the ${name} ${where} is ${image.width}x${image.height}, the market ${market} requires ${required.height == undefined ? `a width of ${required.width}` : `${required.width}x${required.height}`}`,
+				message: `${where} (a ${name}) is ${image.width}x${image.height}, but the market ${market} requires ${required.height == undefined ? `a width of ${required.width}` : `${required.width}x${required.height}`}`,
 				fragment: MediaUri,
 				key: MARKET_KEY,
 			});
@@ -136,7 +136,7 @@ export function checkMarketImage(image: ImageInfo, kind: MarketImageKind | undef
 		errs.addError({
 			code: "IMG021",
 			type: WARNING,
-			message: `the ${name} ${where} is ${image.size} bytes, the market ${market} recommends at most ${required.maxBytes}`,
+			message: `${where} (a ${name}) is ${image.size} bytes, but the market ${market} recommends at most ${required.maxBytes}`,
 			fragment: MediaUri,
 			key: MARKET_KEY,
 		});

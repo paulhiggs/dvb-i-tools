@@ -24,6 +24,7 @@ import document_logger from "./logger.mts"
 import { isHTTPURL, isHTTSPURL } from "./pattern_checks.mts"
 import { allowTraversal, claimTraversal, currentRequest, currentValidation, deferRetrieval, documentRevision, safeFetch, setDocumentRevision, signaturePoliciesInEffect, ValidationScope } from "./safe_fetch.mts"
 import { latestPermittedRevision, marketSummary } from "./market_checks.mts"
+import { LoadMarkets } from "./markets.mts"
 import type { ValidationOptions } from "./safe_fetch.mts"
 import { nestedTraversal, traversalFinished, traversalSkipped, traversalStarted } from "./traversal.mts"
 import { checkSignedLocation, retrieveResource } from "./resource_checks.mts"
@@ -110,6 +111,7 @@ export default class XmlAitCheck {
 
 	constructor(opts: LoadOptions) {
 		LoadAITschemas(opts);
+		LoadMarkets(opts);
 		this.#numRequests = 0;
 	}
 

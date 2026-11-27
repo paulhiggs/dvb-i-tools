@@ -17,6 +17,7 @@ import document_logger from "./logger.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
 import { currentRequest, setDocumentRevision, ValidationScope } from "./safe_fetch.mts"
 import { marketSummary, refusedRevision } from "./market_checks.mts"
+import { LoadMarkets } from "./markets.mts"
 import type { ValidationOptions } from "./safe_fetch.mts"
 
 import type { StatsType, LoadOptions } from "./globals.mts"
@@ -29,6 +30,7 @@ export default class PlaylistCheck {
 
 	constructor(opts: LoadOptions) {
 		LoadSLschemas(opts);
+		LoadMarkets(opts);
 		this.#numRequests = 0;
 	}
 
