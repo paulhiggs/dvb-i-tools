@@ -2695,12 +2695,35 @@ export default class ContentGuideCheck {
 		if (MediaLocator)
 			if (!checkTopElementsAndCardinality(MediaLocator, [{ name: tva.e_MediaUri }, { name: tva.e_AuxiliaryURI }], tvaEC.MediaLocator, true, errs, "RR003")) isRestart = false;
 
-		// the restart XML AIT is a content deep link, and the AuxiliaryURI is its Template XML AIT (A177r8 clause 6.5.5.3)
+		// the restart XML AIT is a content deep link, and the AuxiliaryURI is its Template XML AIT (A177r8 clause 6.5.5.3). Both
+		// are XML AITs, so a @contentType that is omitted (as in A177r8 figure 11) is taken to be application/vnd.dvb.ait+xml
 		if (isRestart && MediaLocator) {
-			const MediaUri = MediaLocator.getAnyNs(tva.e_MediaUri),
-				AuxiliaryURI = MediaLocator.getAnyNs(tva.e_AuxiliaryURI);
-			if (MediaUri?.attrAnyNsValueOr(tva.a_contentType) == dvbi.XML_AIT_CONTENT_TYPE) this.#validateReferencedAit(MediaUri, AIT_ROLE_DEEPLINK, errs);
-			if (AuxiliaryURI?.attrAnyNsValueOr(tva.a_contentType) == dvbi.XML_AIT_CONTENT_TYPE) this.#validateReferencedAit(AuxiliaryURI, AIT_ROLE_TEMPLATE, errs);
+			const restartAIT = (element: XmlElement | null, role: string) => {
+				if (!element) return;
+				const contentType = element.attrAnyNsValueOr(tva.a_contentType);
+				if (!contentType)
+					errs.addError({
+						type: WARNING,
+						code: "RR004",
+						message: `${tva.a_contentType.attribute()} is omitted from ${element.name.elementize()}, ${dvbi.XML_AIT_CONTENT_TYPE} is assumed`,
+						fragment: element,
+						key: `missing ${tva.a_contentType.attribute()}`,
+						clause: "A177r8 clause 6.5.5.3",
+					});
+				else if (contentType != dvbi.XML_AIT_CONTENT_TYPE) {
+					errs.addError({
+						code: "RR005",
+						message: `${tva.a_contentType.attribute(element.name)}=${contentType.quote()} is not valid for a restart link, which refers to an XML AIT (${dvbi.XML_AIT_CONTENT_TYPE.quote()})`,
+						fragment: element,
+						key: keys.k_InvalidValue,
+						clause: "A177r8 clause 5.2.4.3, 6.5.5.3",
+					});
+					return;
+				}
+				this.#validateReferencedAit(element, role, errs);
+			};
+			restartAIT(MediaLocator.getAnyNs(tva.e_MediaUri), AIT_ROLE_DEEPLINK);
+			restartAIT(MediaLocator.getAnyNs(tva.e_AuxiliaryURI), AIT_ROLE_TEMPLATE);
 		}
 
 		return isRestart;

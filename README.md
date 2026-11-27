@@ -438,6 +438,8 @@ The XML AITs that service lists and content guides refer to are also validated w
 - `deeplink`: `<OnDemandProgram><ProgramURL>`, and the `<MediaUri>` of a restart link
 - `template`: `<OnDemandProgram><AuxiliaryURL>`, the `<AuxiliaryURI>` of a restart link, and the `<AuxiliaryURI>` of a box set's Template AIT
 
+Both URLs of a restart link (A177r8 clause 6.5.5.3) are XML AITs, so when `@contentType` is omitted from its `<MediaUri>` or `<AuxiliaryURI>`, as in A177r8 figure 11, `application/vnd.dvb.ait+xml` is assumed, with the warning `RR004`. Another `@contentType` is an error, `RR005`, and that URL is not validated as an AIT.
+
 Each AIT URL is validated once in a validation (a repeat is counted against the first reference), and counts as a traversed document against the limits of traversal. Its results are with those of the referring document, like those of a traversed document. A referenced AIT also has:
 - `AIT020` (warning) the response's `Content-Type` is not `application/vnd.dvb.ait+xml` (A177r8 clause 5.2.4.1)
 - `AIT021` (information) a Template XML AIT has neither an `Expires` header nor `Cache-Control: max-age`, so a client assumes that it expires 24 hours after it is retrieved (A177r8 clause 5.2.4.4.5)
