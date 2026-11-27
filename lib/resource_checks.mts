@@ -22,6 +22,7 @@ import type { ImageInfo } from "./image_format.mts"
 import { checkInlineImage, reportImage, reportImageScaling, scaledURL, scalingWidth } from "./image_checks.mts"
 import { contentDigestCheck, parseInlineImageData } from "./digest_validation.mts"
 import { dvbi } from "./DVB-I_definitions.mts"
+import { tva } from "./TVA_definitions.mts"
 import { APPLICATION, INFORMATION, WARNING } from "./error_list.mts"
 import ErrorList from "./error_list.mts"
 import { keys } from "./common_errors.mts"
@@ -46,6 +47,11 @@ export type ResourceOutcome = {
 	image?: ImageInfo; // the image properties read from the content, for a 2xx response
 	url?: string; // the URL the response came from, after any redirects
 	signature?: SignatureEvaluation; // the X-JWS-Signature of the response, when response signatures are checked
+	expires?: string | null; // the Expires response header
+	cacheControl?: string | null; // the Cache-Control response header
+	// the content, only when the retrieval is asked to keep it: an XML AIT that is also validated (issue #134), which removes
+	// it once it has been validated, so that it is not kept until the validation finishes
+	text?: string;
 };
 
 export const digestsOf = (content: Buffer | string): Digests => ({
@@ -56,19 +62,29 @@ export const digestsOf = (content: Buffer | string): Digests => ({
 /**
  * retrieve a resource, once per validation
  *
- * @param {string}           url         the URL of the resource
- * @param {ValidationHandle} validation  the validation the retrieval belongs to (see sharedRetrieval())
+ * @param {string}           url          the URL of the resource
+ * @param {ValidationHandle} validation   the validation the retrieval belongs to (see sharedRetrieval())
+ * @param {boolean}          keepContent  keep the content in the result (only the first retrieval of a URL decides)
  * @returns {Promise<ResourceOutcome>} the result of the retrieval. It never rejects
  */
-export function retrieveResource(url: string, validation?: ValidationHandle): Promise<ResourceOutcome> {
+export function retrieveResource(url: string, validation?: ValidationHandle, keepContent: boolean = false): Promise<ResourceOutcome> {
 	return sharedRetrieval(
 		`resource ${normaliseURL(url)}`,
 		async (): Promise<ResourceOutcome> => {
 			const { response, error } = await safeFetch(url, validation);
 			if (!response) return { ok: false, error };
-			const outcome: ResourceOutcome = { ok: response.ok, status: response.status, statusText: response.statusText, contentType: response.contentType, url: response.url };
+			const outcome: ResourceOutcome = {
+				ok: response.ok,
+				status: response.status,
+				statusText: response.statusText,
+				contentType: response.contentType,
+				url: response.url,
+				expires: response.expires,
+				cacheControl: response.cacheControl,
+			};
 			if (response.ok) {
 				const content = response.buffer();
+				if (keepContent) outcome.text = response.text();
 				outcome.digests = digestsOf(content);
 				outcome.image = readImageInfo(content);
 				// the signature is evaluated now, while the content is available, and compared with any policy when reported
@@ -169,18 +185,16 @@ export function checkReferencedResource(element: XmlElement, documentInfo: Found
 	}
 
 	const imageFirst = checkingImage && isHTTPURL(location) && firstReference("image", location);
-	// the response to a resource with a signature policy is checked once per policy in the validation: its signature, and the
-	// certificate chain of the server it finally came from
-	const signed = policy != undefined && isHTTPURL(location) && firstReference(`signed ${policy.policyId}`, location),
-		checkSignature = signed && responseSignaturesChecked(),
-		checkCertificates = signed && connectionCertificatesChecked();
-	if (!compareDigests && !imageFirst && !checkSignature && !checkCertificates) return;
+	const signed = signedChecks(location, policy);
+	if (!compareDigests && !imageFirst && !signed.signature && !signed.certificates) return;
 
 	const validation = currentValidation(),
 		scaling = imageFirst && images == "scaled";
-	if (checkCertificates) prefetchConnection(location, validation);
+	// an XML AIT that is also validated (aits) keeps its content, so that its validation uses this retrieval (issue #134)
+	const keepContent = currentRequest().aits && element.attrAnyNsValueOr(tva.a_contentType) == dvbi.XML_AIT_CONTENT_TYPE;
+	if (signed.certificates) prefetchConnection(location, validation);
 	const work = (async () => {
-		const original = await retrieveResource(location, validation);
+		const original = await retrieveResource(location, validation, keepContent);
 		const target = scaling ? scalingWidth(original) : undefined,
 			request = target ? scaledURL(location, target) : undefined;
 		const scaled = request ? await retrieveResource(request, validation) : undefined;
@@ -192,11 +206,55 @@ export function checkReferencedResource(element: XmlElement, documentInfo: Found
 			compareDigests?.(original.ok ? (original.digests ?? null) : null);
 			if (imageFirst && reportImage(original, location, image!.contentType, element, errs) && target && scaled)
 				reportImageScaling(original, target, scaled, location, element, errs);
-			const finalURL = original.url ?? location;
-			if (checkSignature)
-				reportSignature(original.ok ? original.signature : undefined, location, finalURL, policy!, element, errs, original.ok ? undefined : (original.error ?? `${original.status} ${original.statusText}`));
-			if (checkCertificates) await reportConnection(element, finalURL, policy!, errs, validation);
+			await reportSigned(original, location, policy, signed, element, errs, validation);
 		}
+	);
+}
+
+// which checks of its signature policy are made for a retrieved resource
+type SignedChecks = { signature: boolean; certificates: boolean };
+
+/**
+ * the checks of a resource's signature policy that are made: the response to a resource with a signature policy is
+ * checked once per policy in the validation, its signature and the certificate chain of the server it finally came from,
+ * as far as the server and the request ask for them
+ */
+function signedChecks(url: string, policy: SignaturePolicy | undefined): SignedChecks {
+	const signed = policy != undefined && isHTTPURL(url) && firstReference(`signed ${policy.policyId}`, url);
+	return { signature: signed && responseSignaturesChecked(), certificates: signed && connectionCertificatesChecked() };
+}
+
+/**
+ * report the checks of a resource's signature policy, from its retrieval
+ */
+async function reportSigned(original: ResourceOutcome, url: string, policy: SignaturePolicy | undefined, checks: SignedChecks, element: XmlElement, errs: ErrorList, validation?: ValidationHandle): Promise<void> {
+	if (!policy) return;
+	const finalURL = original.url ?? url;
+	if (checks.signature)
+		reportSignature(original.ok ? original.signature : undefined, url, finalURL, policy, element, errs, original.ok ? undefined : (original.error ?? `${original.status} ${original.statusText}`));
+	if (checks.certificates) await reportConnection(element, finalURL, policy, errs, validation);
+}
+
+/**
+ * check a URL that refers to a signature policy, when the URL is not the content of one element: e.g. the launch location
+ * of an XML AIT application, which is <URLBase> followed by <applicationLocation> (issue #134). The response's signature and
+ * the certificate chain of its server are checked against the policy, as for the resource of checkReferencedResource(),
+ * with the same single retrieval per validation. The policy has already been found for the element (it is defined)
+ *
+ * @param {string}          url      the URL
+ * @param {XmlElement}      element  the element that refers to the policy, where findings are reported
+ * @param {SignaturePolicy} policy   the policy
+ * @param {ErrorList}       errs     where findings are reported
+ */
+export function checkSignedLocation(url: string, element: XmlElement, policy: SignaturePolicy, errs: ErrorList): void {
+	const signed = signedChecks(url, policy);
+	if (!signed.signature && !signed.certificates) return;
+	const validation = currentValidation();
+	if (signed.certificates) prefetchConnection(url, validation);
+	const retrieval = retrieveResource(url, validation);
+	deferRetrieval(
+		() => retrieval,
+		(original) => reportSigned(original, url, policy, signed, element, errs, validation)
 	);
 }
 
