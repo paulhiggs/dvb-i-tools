@@ -25,6 +25,7 @@ import { isHTTPURL, isHTTSPURL } from "./pattern_checks.mts"
 import { allowTraversal, currentRequest, deferRetrieval, retrieveTraversal, signaturePoliciesInEffect, ValidationScope } from "./safe_fetch.mts"
 import type { FetchedResponse, ValidationOptions } from "./safe_fetch.mts"
 import { nestedTraversal, traversalFinished, traversalSkipped, traversalStarted } from "./traversal.mts"
+import { checkSignedLocation } from "./resource_checks.mts"
 import { dvbi } from "./DVB-I_definitions.mts"
 import { StandardStatus } from "./globals.mts"
 import type { StatsType, LoadOptions } from "./globals.mts"
@@ -269,17 +270,23 @@ export default class XmlAitCheck {
 				fragment: location,
 				key: keys.k_SignaturePolicies,
 			});
+		// the policy of the referring service list, when it defines it: the response of each launch location is checked against
+		// it (A177r8 clause 7.6.2.1: a signature policy applied to a URL validates the signature in the HTTP response headers)
+		const policy = policies?.get(policyId);
 		const location_text = location.content.trim();
 		app.element.forEachNamedChildElement(mhp.e_applicationTransport, (transport) => {
 			const URLBase = childText(transport, mhp.e_URLBase);
-			if (URLBase != undefined && launchURL(`${URLBase}${location_text}`) && !isHTTSPURL(`${URLBase}${location_text}`))
+			const launch = URLBase != undefined ? launchURL(`${URLBase}${location_text}`) : undefined;
+			if (!launch) return; // an invalid launch location is reported by #checkLaunchLocation()
+			if (!isHTTSPURL(launch.href))
 				errs.addError({
 					type: WARNING,
 					code: "AIT027-3",
-					message: `signature validation is only applicable to secure (https) connections, but the launch location is ${`${URLBase}${location_text}`.quote()}`,
+					message: `signature validation is only applicable to secure (https) connections, but the launch location is ${launch.href.quote()}`,
 					fragment: location,
 					key: keys.k_SignaturePolicies,
 				});
+			if (policy) checkSignedLocation(launch.href, location, policy, errs);
 		});
 	}
 

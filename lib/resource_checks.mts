@@ -169,16 +169,12 @@ export function checkReferencedResource(element: XmlElement, documentInfo: Found
 	}
 
 	const imageFirst = checkingImage && isHTTPURL(location) && firstReference("image", location);
-	// the response to a resource with a signature policy is checked once per policy in the validation: its signature, and the
-	// certificate chain of the server it finally came from
-	const signed = policy != undefined && isHTTPURL(location) && firstReference(`signed ${policy.policyId}`, location),
-		checkSignature = signed && responseSignaturesChecked(),
-		checkCertificates = signed && connectionCertificatesChecked();
-	if (!compareDigests && !imageFirst && !checkSignature && !checkCertificates) return;
+	const signed = signedChecks(location, policy);
+	if (!compareDigests && !imageFirst && !signed.signature && !signed.certificates) return;
 
 	const validation = currentValidation(),
 		scaling = imageFirst && images == "scaled";
-	if (checkCertificates) prefetchConnection(location, validation);
+	if (signed.certificates) prefetchConnection(location, validation);
 	const work = (async () => {
 		const original = await retrieveResource(location, validation);
 		const target = scaling ? scalingWidth(original) : undefined,
@@ -192,11 +188,55 @@ export function checkReferencedResource(element: XmlElement, documentInfo: Found
 			compareDigests?.(original.ok ? (original.digests ?? null) : null);
 			if (imageFirst && reportImage(original, location, image!.contentType, element, errs) && target && scaled)
 				reportImageScaling(original, target, scaled, location, element, errs);
-			const finalURL = original.url ?? location;
-			if (checkSignature)
-				reportSignature(original.ok ? original.signature : undefined, location, finalURL, policy!, element, errs, original.ok ? undefined : (original.error ?? `${original.status} ${original.statusText}`));
-			if (checkCertificates) await reportConnection(element, finalURL, policy!, errs, validation);
+			await reportSigned(original, location, policy, signed, element, errs, validation);
 		}
+	);
+}
+
+// which checks of its signature policy are made for a retrieved resource
+type SignedChecks = { signature: boolean; certificates: boolean };
+
+/**
+ * the checks of a resource's signature policy that are made: the response to a resource with a signature policy is
+ * checked once per policy in the validation, its signature and the certificate chain of the server it finally came from,
+ * as far as the server and the request ask for them
+ */
+function signedChecks(url: string, policy: SignaturePolicy | undefined): SignedChecks {
+	const signed = policy != undefined && isHTTPURL(url) && firstReference(`signed ${policy.policyId}`, url);
+	return { signature: signed && responseSignaturesChecked(), certificates: signed && connectionCertificatesChecked() };
+}
+
+/**
+ * report the checks of a resource's signature policy, from its retrieval
+ */
+async function reportSigned(original: ResourceOutcome, url: string, policy: SignaturePolicy | undefined, checks: SignedChecks, element: XmlElement, errs: ErrorList, validation?: ValidationHandle): Promise<void> {
+	if (!policy) return;
+	const finalURL = original.url ?? url;
+	if (checks.signature)
+		reportSignature(original.ok ? original.signature : undefined, url, finalURL, policy, element, errs, original.ok ? undefined : (original.error ?? `${original.status} ${original.statusText}`));
+	if (checks.certificates) await reportConnection(element, finalURL, policy, errs, validation);
+}
+
+/**
+ * check a URL that refers to a signature policy, when the URL is not the content of one element: e.g. the launch location
+ * of an XML AIT application, which is <URLBase> followed by <applicationLocation> (issue #134). The response's signature and
+ * the certificate chain of its server are checked against the policy, as for the resource of checkReferencedResource(),
+ * with the same single retrieval per validation. The policy has already been found for the element (it is defined)
+ *
+ * @param {string}          url      the URL
+ * @param {XmlElement}      element  the element that refers to the policy, where findings are reported
+ * @param {SignaturePolicy} policy   the policy
+ * @param {ErrorList}       errs     where findings are reported
+ */
+export function checkSignedLocation(url: string, element: XmlElement, policy: SignaturePolicy, errs: ErrorList): void {
+	const signed = signedChecks(url, policy);
+	if (!signed.signature && !signed.certificates) return;
+	const validation = currentValidation();
+	if (signed.certificates) prefetchConnection(url, validation);
+	const retrieval = retrieveResource(url, validation);
+	deferRetrieval(
+		() => retrieval,
+		(original) => reportSigned(original, url, policy, signed, element, errs, validation)
 	);
 }
 
