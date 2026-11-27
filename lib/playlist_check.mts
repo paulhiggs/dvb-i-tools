@@ -16,7 +16,7 @@ import { LoadSLschemas, SL_GetSchema, SL_SchemaVersion } from "./sl_data_version
 import document_logger from "./logger.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
 import { currentRequest, setDocumentRevision, ValidationScope } from "./safe_fetch.mts"
-import { refusedRevision } from "./market_checks.mts"
+import { marketSummary, refusedRevision } from "./market_checks.mts"
 import type { ValidationOptions } from "./safe_fetch.mts"
 
 import type { StatsType, LoadOptions } from "./globals.mts"
@@ -127,7 +127,10 @@ export default class PlaylistCheck {
 		// perform the deferred network work before the document is disposed (at the end of this method)
 		await scope.finish();
 		// the outermost validation reports how long it took, including the documents it traversed
-		if (scope.depth == 0) errs.timing = scope.timing();
+		if (scope.depth == 0) {
+			errs.timing = scope.timing();
+			errs.market = marketSummary(scope.budget.request.market);
+		}
 	}
 
 

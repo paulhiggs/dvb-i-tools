@@ -40,6 +40,9 @@ export type MarketParameters = {
 		min: number; // the lowest channel number of an LCN table (LCN@channelNumber, LCNRange@start/@end)
 		max: number; // the highest
 	};
+	postcode: {
+		digits?: number; // the number of digits of every postcode of the market's regions (none in A177)
+	};
 };
 
 // the kinds of image a market can stipulate a size for (decision 11 of issue #119), by their HowRelated
@@ -51,7 +54,7 @@ export type MarketImage = Readonly<{ width?: number; height?: number; maxBytes?:
 const IMAGE_KEYS = ["width", "height", "maxBytes"];
 
 // the rules a market can enable, each with its own codes (market_checks.mts)
-export const MARKET_RULES = ["serviceLogoRequired"] as const;
+export const MARKET_RULES = ["serviceLogoRequired", "dvbsDirectTuning"] as const;
 export type MarketRule = (typeof MARKET_RULES)[number];
 
 // the severity a market gives a code instead of A177's, or "off" for findings that do not apply to the market (they are not
@@ -88,6 +91,7 @@ export const MARKET_DEFAULTS: MarketSettings = deepFreeze({
 	parameters: {
 		schedule: { daysEitherSide: 28 },
 		lcn: { min: dvbi.MIN_LCN, max: dvbi.MAX_LCN }, // A177 table 23
+		postcode: {}, // A177 permits any postcode format
 	},
 	severity: {},
 	images: {},
@@ -112,6 +116,7 @@ const positiveWholeNumber = (value: unknown): string | undefined =>
 const PARAMETER_CHECKS: { [P in keyof MarketParameters]: { [Q in keyof MarketParameters[P]]: (value: unknown) => string | undefined } } = {
 	schedule: { daysEitherSide: positiveWholeNumber },
 	lcn: { min: positiveWholeNumber, max: positiveWholeNumber },
+	postcode: { digits: positiveWholeNumber },
 };
 const SCHEMA_KINDS = ["serviceList", "serviceListRegistry"] as const;
 

@@ -330,7 +330,9 @@ function* tabulateResults(source: string, error: string[] | undefined, errs: Err
 }
 
 function* resultsHead(source: string, errs: ErrorList | undefined): Parts {
-	const meta = joinHTML([errs?.type, errs?.timing && timingSummary(errs.timing)].filter((m) => m && m.length > 0), raw(" · "));
+	// the market the document was validated for (issue #119)
+	const market = errs?.market && html`for the market ${errs.market.name} (${errs.market.id})`;
+	const meta = joinHTML([errs?.type, market, errs?.timing && timingSummary(errs.timing)].filter((m) => m && m.length > 0), raw(" · "));
 	yield html`<section class="results-head" aria-label="Results"><span class="eyebrow">Results</span><div class="source">${source}</div>${meta.length > 0 && html`<div class="meta">${meta}</div>`}</section>`;
 }
 

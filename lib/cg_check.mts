@@ -66,7 +66,7 @@ import ClassificationScheme from "./classification_scheme.mts";
 import type { StatsType, LoadOptions } from "./globals.mts"
 
 import { allowTraversal, currentRequest, currentValidation, deferRetrieval, documentRevision, retrieveTraversal, setDocumentRevision, ValidationScope } from "./safe_fetch.mts"
-import { contentGuideRevision } from "./market_checks.mts"
+import { contentGuideRevision, marketSummary } from "./market_checks.mts"
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";
@@ -3834,7 +3834,10 @@ export default class ContentGuideCheck {
 		// perform the deferred network work before the document is disposed (at the end of this method)
 		await scope.finish();
 		// the outermost validation reports how long it took, including the documents it traversed
-		if (scope.depth == 0) errs.timing = scope.timing();
+		if (scope.depth == 0) {
+			errs.timing = scope.timing();
+			errs.market = marketSummary(scope.budget.request.market);
+		}
 	}
 
 	/**
