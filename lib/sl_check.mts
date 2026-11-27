@@ -78,7 +78,7 @@ import { ValidateSignaturePolicies } from "./signature_policies.mts"
 import type { SignaturePolicy } from "./certificate_utils.mts"
 
 import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES, type CG_Validator_Options } from "./cg_check.mts"
-import { allowTraversal, currentMarket, currentRequest, currentValidation, deferRetrieval, deferTask, retrieveTraversal, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
+import { allowTraversal, currentMarket, currentRequest, currentValidation, setDocumentRevision, deferRetrieval, deferTask, retrieveTraversal, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
 import { COVERAGE_TOLERANCE_MS, scheduleCoverage } from "./schedule_coverage.mts"
 import type { DayState, ServiceCoverage } from "./schedule_coverage.mts"
 
@@ -2471,6 +2471,8 @@ export default class ServiceListCheck {
 		}
 
 		const ns = SL.root.namespaceUri;
+		// the market settings of its revision apply to the findings of the service list (issue #119)
+		setDocumentRevision(SL_SchemaVersion(ns));
 		const documentInfo = new FoundDocumentItems(true); // collection of things we learn when parsing the service list
 
 		if (!this.#doSchemaVerification(SL as XmlDocument, errs, "SL005", request.report_schema_version)) {
@@ -2812,9 +2814,11 @@ export default class ServiceListCheck {
 					});
 				});
 
+				// the range of channel numbers: A177's (1..9999), or the market's (issue #119)
+				const { min: MIN_LCN, max: MAX_LCN } = currentMarket(SL_SchemaVersion(LCNTable.documentNamespace())).parameters.lcn;
 				const OutOfRangeChannelNumber = (code: string, frag: XmlElement, chanNum: number) : ReportedErrorType => ({
 					code: code,
-					message: `Channel number must be in the range ${dvbi.MIN_LCN}..${dvbi.MAX_LCN}, found ${chanNum}`,
+					message: `Channel number must be in the range ${MIN_LCN}..${MAX_LCN}, found ${chanNum}`,
 					key: "invalid value",
 					fragment: frag,
 					clause: "A177 table 23",
@@ -2836,7 +2840,7 @@ export default class ServiceListCheck {
 							});
 						else LCNNumbers.add(LCN_channelNumber);
 						const chanNumV = parseInt(LCN_channelNumber, 10);
-						if (chanNumV < dvbi.MIN_LCN || chanNumV > dvbi.MAX_LCN) {
+						if (chanNumV < MIN_LCN || chanNumV > MAX_LCN) {
 							errs.addError(OutOfRangeChannelNumber("SL264", LCN, chanNumV));
 						}
 					}
@@ -2866,12 +2870,12 @@ export default class ServiceListCheck {
 					const Range_end = LCNRange.attrAnyNsValueOr(dvbi.a_end);
 					if (Range_start) {
 						const startNum = parseInt(Range_start, 10);
-						if (startNum < dvbi.MIN_LCN || startNum > dvbi.MAX_LCN)
+						if (startNum < MIN_LCN || startNum > MAX_LCN)
 							errs.addError(OutOfRangeChannelNumber("SL266", LCNRange, startNum));
 					}
 					if (Range_end) {
 						const endNum = parseInt(Range_end, 10);
-						if (endNum < dvbi.MIN_LCN || endNum > dvbi.MAX_LCN)
+						if (endNum < MIN_LCN || endNum > MAX_LCN)
 							errs.addError(OutOfRangeChannelNumber("SL267", LCNRange, endNum));
 					}
 

@@ -17,8 +17,8 @@ import { AsyncLocalStorage } from "node:async_hooks"
 import { fetch_options } from "./globals.mts"
 import type { SignaturePolicy } from "./certificate_utils.mts"
 import type ErrorList from "./error_list.mts"
-import { findMarket, marketSettings } from "./markets.mts"
-import type { MarketSettings } from "./markets.mts"
+import { findMarket, marketSettings, marketSeverity } from "./markets.mts"
+import type { MarketSettings, MarketSeverity } from "./markets.mts"
 import type { A177Revision } from "./revisions.mts"
 
 // the most documents a validation traverses, unless the validation sets its own limit
@@ -518,12 +518,16 @@ export class ValidationScope {
 	// the signature policies that @verificationPolicy references are resolved against: those defined by the document being
 	// validated (a service list or registry), or else those of the document that traversed into it
 	signaturePolicies: ReadonlyMap<string, SignaturePolicy> | undefined;
+	// the A177 revision whose market settings apply to the document being validated (issue #119): its own, or else that of
+	// the document that traversed into it (a content guide document takes that of its service list)
+	revision: A177Revision | undefined;
 	#tasks: DeferredTask[] = [];
 	#open = true;
 
 	private constructor(parent: ValidationScope | undefined, options: ValidationOptions) {
 		this.depth = parent ? parent.depth + 1 : 0;
 		this.signaturePolicies = parent?.signaturePolicies;
+		this.revision = parent?.revision;
 		if (parent) this.budget = parent.budget;
 		else {
 			this.budget = { request: validationRequest(options), started: performance.now(), fetches: new Map<string, HostFetches>(), documents: 0, traversed: new Set<string>(), requested: new Map<string, TraversalRequest>(), retrievals: new Map<string, Promise<unknown>>(), referenced: new Set<string>(), observer: observing.getStore() };
@@ -824,6 +828,42 @@ export function setSignaturePolicies(policies: ReadonlyMap<string, SignaturePoli
  */
 export function signaturePoliciesInEffect(): ReadonlyMap<string, SignaturePolicy> | undefined {
 	return (openScopes.at(-1) ?? runningScope.getStore())?.signaturePolicies;
+}
+
+/**
+ * set the A177 revision of the document whose rules are being checked, whose market settings apply to its findings
+ * (issue #119). A service list, registry or playlist sets its own. A content guide document traversed into from a service
+ * list keeps the revision of the service list
+ *
+ * @param {A177Revision} revision  the revision
+ */
+export function setDocumentRevision(revision: A177Revision): void {
+	const scope = openScopes.at(-1);
+	if (scope) scope.revision = revision;
+}
+
+/**
+ * the A177 revision of the document whose rules are being checked (see setDocumentRevision())
+ *
+ * @returns {A177Revision | undefined} the revision, or undefined when it is not known (yet)
+ */
+export function documentRevision(): A177Revision | undefined {
+	return (openScopes.at(-1) ?? runningScope.getStore())?.revision;
+}
+
+/**
+ * the severity that the market of the current validation gives a code, for the revision of the document whose rules are
+ * being checked (issue #119)
+ *
+ * @param {string} code  the code of a finding
+ * @returns {object | undefined} the severity and the id of the market, or undefined when no market changes it
+ */
+export function marketSeverityOf(code: string): { severity: MarketSeverity; market: string } | undefined {
+	const market = currentRequest().market,
+		revision = documentRevision();
+	if (market == undefined || revision == undefined) return undefined;
+	const severity = marketSeverity(marketSettings(market, revision), code);
+	return severity ? { severity, market } : undefined;
 }
 
 // identifies a validation (with its nested validations), for sharedRetrieval()

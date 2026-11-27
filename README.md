@@ -242,9 +242,19 @@ A market that is not defined is answered with `400` and a `parseErr` naming the 
 - `name`, and an optional `description`, shown on the /check form
 - `revisions`: a list of ranges of A177 revisions, each with `from` and `to` (`r0` to `r8`, or `latest`), and the settings for the documents of those revisions:
   - `schemas`: the XSD file (in `schemas/`) used instead of A177's, for `serviceList` and `serviceListRegistry` documents
-  - `parameters`: values that differ from A177's. The only one so far is `schedule.daysEitherSide`, the days of programme guide needed before and after today (a positive whole number; 28 in A177)
+  - `parameters`: values that differ from A177's. Each is a positive whole number:
 
-The settings for a document are those of the ranges that include its A177 revision, in the order they are listed: a later range wins for the same setting. Unknown properties, parameters and revisions, values that are not valid, and missing schema files are refused. For example, the German market:
+    | Parameter | Meaning | A177 |
+    |---|---|---|
+    | `schedule.daysEitherSide` | the days of programme guide needed before and after today (`SL201`) | 28 |
+    | `lcn.min`, `lcn.max` | the range of channel numbers in an `LCNTable`: `LCN@channelNumber` (`SL264`), `LCNRange@start` (`SL266`) and `LCNRange@end` (`SL267`). `min` must not be above `max` | 1, 9999 |
+  - `severity`: the severity of codes for the market, instead of A177's: `"error"`, `"warning"`, `"information"`, or `"off"` for findings that do not apply to the market. A key is a code (`"SL264"`), or a prefix of codes followed by `*` (`"SI020-1-*"`, `"SL24*"`), which has at least the letters and one digit. A code's own entry wins, and otherwise the longest prefix that it starts with. The code itself is never changed
+
+The settings for a document are those of the ranges that include its A177 revision, in the order they are listed: a later range wins for the same setting. A content guide document has the revision of the service list that refers to it, or when it is validated on its own, the latest A177 revision that uses its TV-Anytime revision. An XML AIT has the revision of the document that refers to it, or the latest. Unknown properties, parameters and revisions, values that are not valid, and missing schema files are refused. So is a severity for a fatal or XSD finding (`SL001`, `SR001`, `CG001`, `PL001`, `AIT001`, `SL005`, `SR005`, `CG003`, `PL005`, `AIT005`, and the codes made from them, such as `SL005:8`), whose findings all have one code: a market relaxes a schema rule with its own schema instead. The loader does not check that a code exists, as many codes are made when they are reported (`BE005`, `SE005`).
+
+A finding whose severity a market changes says so at the end of its message, e.g. `(an error in A177, a warning for the market DE)`. A finding that a market turns `off` is not reported at all: not in the HTML or JSON results, the archive or the progress view.
+
+For example, the German market:
 
 ```json
 {
