@@ -151,6 +151,8 @@ A server's options come from, in this order, each one over the ones before:
 
 A relative file or folder name in a configuration file (such as `slr.file` or `server.tls.key`) is relative to the folder of that configuration file. Each file read is shown at start-up (`reading configuration from …`).
 
+The running configuration is shown in the **Configuration** table of `/stats`: each setting, by its name in the file, with its value, and the configuration files that were read. `/stats` is public, so some values are not shown: the User-Agent, the names of files and folders, and the spam blocker's endpoints and redirections are shown only as `(default)`, when they have the value coded in the validator, or `(set)`. A `--config` file is not named.
+
 A file is checked when the server starts. A file that cannot be read or is not JSON, an unknown setting (including a setting of the other server's file), and a value of the wrong type or out of range are all reported together, and the server does not start.
 
 A setting that should not be in the repository, such as a User-Agent given to a deployment by the operator of a service list, goes in another file outside the repository, given with `--config`. A file named `*.local.json` in the checkout is ignored by git.

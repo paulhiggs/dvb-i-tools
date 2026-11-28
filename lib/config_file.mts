@@ -18,7 +18,7 @@
  */
 
 import { existsSync, readFileSync } from "fs"
-import { dirname, resolve } from "path"
+import { basename, dirname, resolve } from "path"
 import { isIP } from "net"
 import chalk from "chalk"
 
@@ -27,6 +27,7 @@ import { CORSoptions, CORSlibrary, DEFAULT_FETCH_TIMEOUT_MS, DEFAULT_USER_AGENT,
 import { DEFAULT_PROCESSING, SLR_Processing_Modes } from "./slepr.mts"
 import { DEFAULT_MAX_TRAVERSAL } from "./safe_fetch.mts"
 import { HasProperty } from "./utils.mts"
+import type { StatsType } from "./globals.mts"
 
 // a problem with the configuration, which stops the validator from starting
 export class ConfigError extends Error {}
@@ -206,9 +207,11 @@ export function readConfigFile(file: string, settings: readonly SettingDefinitio
  */
 export function serverOptions(settings: readonly SettingDefinition[], commandLine: Record<string, unknown>, defaultFile: string): Record<string, unknown> {
 	const options = defaultOptions(settings);
+	const files: string[] = [];
 	const read = (file: string) => {
 		console.log(chalk.yellow(`reading configuration from ${chalk.green(file)}`));
 		Object.assign(options, readConfigFile(file, settings).options);
+		files.push(file);
 	};
 	if (existsSync(defaultFile)) read(defaultFile);
 	const configFile = commandLine.config;
@@ -218,6 +221,8 @@ export function serverOptions(settings: readonly SettingDefinition[], commandLin
 		read(resolve(configFile));
 	}
 
+	// the files read, for the running configuration of /stats (runningConfiguration())
+	options[CONFIG_FILES] = files;
 	for (const [option, value] of Object.entries(commandLine)) {
 		if (option == "config" || value === undefined) continue;
 		// a flag given without a value (null) is true
@@ -226,6 +231,42 @@ export function serverOptions(settings: readonly SettingDefinition[], commandLin
 	}
 
 	return options;
+}
+
+// the option that lists the configuration files that were read (it is not a setting)
+export const CONFIG_FILES = "config_files";
+
+// the settings whose values are not shown on /stats, which is public: the User-Agent may be one given to a deployment under
+// an agreement, the names of files and folders show the server's layout, and the spam blocker's lists would tell a
+// scanner what to avoid. Only whether they have their coded value is shown
+const NOT_SHOWN: readonly SettingType[] = ["path", "endpoints", "addresses"];
+const notShown = (setting: SettingDefinition): boolean => NOT_SHOWN.includes(setting.type) || setting.path == "fetch.userAgent";
+
+/**
+ * the running configuration, for /stats: each setting (by its name in the file) with its value, and the configuration
+ * files that were read. The values that are not shown are "(default)" when they have the value coded in the validator,
+ * and otherwise "(set)". A file in the program's folder is shown by its name, and a --config file is not named
+ *
+ * @param {SettingDefinition[]} settings  the settings of the server
+ * @param {Record}              options   the options in effect (from serverOptions(), or given to loadConfig())
+ * @param {string[]}            files     the configuration files that were read
+ * @param {string}              defaultFile  the server's configuration file in the program's folder
+ * @returns {StatsType} the rows of the page's Configuration table
+ */
+export function runningConfiguration(settings: readonly SettingDefinition[], options: Record<string, unknown>, files: readonly string[], defaultFile: string): StatsType {
+	const rows: StatsType = {
+		"configuration files": files.length == 0 ? "none (the coded values)" : files.map((f) => (resolve(f) == resolve(defaultFile) ? basename(f) : "a --config file")).join(", "),
+	};
+	// in the order of the sections of the repository's files
+	const SECTIONS = ["server", "features", "fetch", "traversal", "slr", "referenceData", "files", "spamBlocker"];
+	const section = (setting: SettingDefinition) => SECTIONS.indexOf(setting.path.split(".")[0]);
+	for (const setting of [...settings].sort((x, y) => section(x) - section(y))) {
+		const option = optionOrDefault(settings, options, setting.option);
+		const value = setting.invert ? !option : option;
+		if (notShown(setting)) rows[setting.path] = JSON.stringify(value) == JSON.stringify(setting.default) ? "(default)" : "(set)";
+		else rows[setting.path] = typeof value == "string" || typeof value == "number" ? value : JSON.stringify(value);
+	}
+	return rows;
 }
 
 /**
