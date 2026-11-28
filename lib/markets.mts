@@ -34,7 +34,8 @@ export type MarketSchema = Readonly<{ filename: string; schema: XmlDocument }>;
 // the values that a market can change. MARKET_DEFAULTS has those of A177
 export type MarketParameters = {
 	schedule: {
-		daysEitherSide: number; // the days of programme guide needed before and after today (issue #122)
+		daysBefore: number; // the days of programme guide needed before today (issue #122, #139 DE-1)
+		daysAfter: number; // the days needed after today (today itself is always needed)
 	};
 	lcn: {
 		min: number; // the lowest channel number of an LCN table (LCN@channelNumber, LCNRange@start/@end)
@@ -42,6 +43,9 @@ export type MarketParameters = {
 	};
 	postcode: {
 		digits?: number; // the number of digits of every postcode of the market's regions (none in A177)
+	};
+	icecast: {
+		contentTypes?: readonly string[]; // the media types an Icecast service instance can have (none in A177, #139 DE-6)
 	};
 };
 
@@ -54,7 +58,7 @@ export type MarketImage = Readonly<{ width?: number; height?: number; maxBytes?:
 const IMAGE_KEYS = ["width", "height", "maxBytes"];
 
 // the rules a market can enable, each with its own codes (market_checks.mts)
-export const MARKET_RULES = ["serviceLogoRequired", "dvbsDirectTuning"] as const;
+export const MARKET_RULES = ["serviceLogoRequired", "dvbsDirectTuning", "hbbtvInControl"] as const;
 export type MarketRule = (typeof MARKET_RULES)[number];
 
 // the severity a market gives a code instead of A177's: "suppressed" for findings that are listed, marked as suppressed by
@@ -90,9 +94,10 @@ export const MARKET_DEFAULTS: MarketSettings = deepFreeze({
 	market: undefined,
 	schemas: {},
 	parameters: {
-		schedule: { daysEitherSide: 28 },
+		schedule: { daysBefore: 28, daysAfter: 28 }, // A177r8 clause 6.1
 		lcn: { min: dvbi.MIN_LCN, max: dvbi.MAX_LCN }, // A177 table 23
 		postcode: {}, // A177 permits any postcode format
+		icecast: {}, // A177 does not limit the media types of an Icecast stream
 	},
 	severity: {},
 	images: {},
@@ -114,10 +119,17 @@ export class MarketsError extends Error {}
 // the checks of the values of each parameter
 const positiveWholeNumber = (value: unknown): string | undefined =>
 	typeof value == "number" && Number.isInteger(value) && value > 0 ? undefined : "must be a positive whole number";
+const wholeNumber = (value: unknown): string | undefined => (typeof value == "number" && Number.isInteger(value) && value >= 0 ? undefined : "must be a whole number");
+// a list of media types, such as ["audio/mpeg", "audio/aac"]
+const mediaTypes = (value: unknown): string | undefined =>
+	Array.isArray(value) && value.length > 0 && value.every((v) => typeof v == "string" && /^[a-z0-9][a-z0-9!#$&^_.+-]*\/[a-z0-9][a-z0-9!#$&^_.+-]*$/i.test(v))
+		? undefined
+		: "must be a list of media types";
 const PARAMETER_CHECKS: { [P in keyof MarketParameters]: { [Q in keyof MarketParameters[P]]: (value: unknown) => string | undefined } } = {
-	schedule: { daysEitherSide: positiveWholeNumber },
+	schedule: { daysBefore: wholeNumber, daysAfter: wholeNumber },
 	lcn: { min: positiveWholeNumber, max: positiveWholeNumber },
 	postcode: { digits: positiveWholeNumber },
+	icecast: { contentTypes: mediaTypes },
 };
 const SCHEMA_KINDS = ["serviceList", "serviceListRegistry"] as const;
 

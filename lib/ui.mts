@@ -507,9 +507,10 @@ function* reportScheduleCoverage(errs: ErrorList | undefined): Parts {
 	const services = errs?.scheduleCoverage;
 	if (!services || services.length == 0) return;
 	const today = new Date().toISOString().slice(0, 10);
-	const either = services[0].daysEitherSide;
+	const { daysBefore, daysAfter } = services[0];
 	const gaps = services.filter((s) => s.counts.partial + s.counts.none > 0).length;
-	yield sectionStart("coverage", "Schedule coverage", formatCount(services.length), gaps > 0 ? "s-warn" : "", `${either} days either side of today (UTC)`);
+	const span = daysBefore == daysAfter ? `${daysBefore} days either side of today` : `${daysBefore} days before and ${daysAfter} days after today`;
+	yield sectionStart("coverage", "Schedule coverage", formatCount(services.length), gaps > 0 ? "s-warn" : "", `${span} (UTC)`);
 	yield html`<div class="cov-legend">${DAY_STATES.map((state) => html`<span><span class="cov ${state}"></span>${COVERAGE_LABEL[state]}</span>`)}<span>The outlined day is today. A gap of up to ${COVERAGE_TOLERANCE_MS / 60000} minutes is not counted.</span></div>`;
 	yield `<div class="scroll"><table class="cov-table"><thead><tr><th scope="col">Service</th><th scope="col" class="n">Full</th><th scope="col" class="n">Partial</th><th scope="col" class="n">None</th><th scope="col" class="n">Indeterminate</th><th scope="col">Days</th></tr></thead><tbody>`;
 	for (const service of services) {

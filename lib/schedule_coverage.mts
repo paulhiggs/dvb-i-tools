@@ -6,7 +6,7 @@
  *  BSD-2-Clause license, see LICENSE.txt file
  *
  * How much of each day the schedule of a service covers (issue #122). A177r8 clause 6.1 describes the content guide as
- * holding the schedule for 28 days forwards and backwards (7 days for the German profile). During traversal, the schedule
+ * holding the schedule for 28 days forwards and backwards (7 days for the German profile, #139 DE-1). During traversal, the schedule
  * of a service is requested in 6 hour windows (clause 6.5.2.2); the events of every window are collected here, and the
  * coverage of each UTC day is worked out from their union once all the windows have been validated. An event that started
  * in an earlier window still covers this one, so the result does not depend on whether the server supports inclusive=true
@@ -38,12 +38,14 @@ export type DayCoverage = {
 	date: string; // the UTC day, YYYY-MM-DD
 	state: DayState;
 	coveredMinutes: number; // how much of the day the events cover
+	offset: number; // the day relative to today: -1 is yesterday, 0 today and 1 tomorrow
 };
 
 export type ServiceCoverage = {
 	service: string; // the service ID used in the requests (the ContentGuideServiceRef or UniqueIdentifier)
 	services: string[]; // the UniqueIdentifiers of the services whose schedule this is (several can use the same service ID)
-	daysEitherSide: number; // the days before and after today that are expected
+	daysBefore: number; // the days before today that are expected
+	daysAfter: number; // the days after today that are expected
 	counts: Record<DayState, number>;
 	days: DayCoverage[];
 };
@@ -96,7 +98,8 @@ export type ScheduleWindow = {
 export class ScheduleCoverage {
 	readonly service: string;
 	readonly firstDay: number; // UTC midnight at the start of the first day, in milliseconds since the epoch
-	readonly daysEitherSide: number;
+	readonly daysBefore: number;
+	readonly daysAfter: number;
 	#events: Period[] = [];
 	#skipped: Period[] = [];
 	#services: string[] = [];
@@ -104,12 +107,14 @@ export class ScheduleCoverage {
 	/**
 	 * @param {string} service         the service ID used in the requests
 	 * @param {number} today           UTC midnight at the start of today, in milliseconds since the epoch
-	 * @param {number} daysEitherSide  the days before and after today that are expected
+	 * @param {number} daysBefore      the days before today that are expected
+	 * @param {number} daysAfter       the days after today that are expected
 	 */
-	constructor(service: string, today: number, daysEitherSide: number) {
+	constructor(service: string, today: number, daysBefore: number, daysAfter: number) {
 		this.service = service;
-		this.daysEitherSide = daysEitherSide;
-		this.firstDay = today - daysEitherSide * DAY_MS;
+		this.daysBefore = daysBefore;
+		this.daysAfter = daysAfter;
+		this.firstDay = today - daysBefore * DAY_MS;
 	}
 
 	// a service whose schedule this is
@@ -140,7 +145,7 @@ export class ScheduleCoverage {
 			skipped = union(this.#skipped);
 		const counts: Record<DayState, number> = { full: 0, partial: 0, none: 0, indeterminate: 0 };
 		const days: DayCoverage[] = [];
-		for (let d = 0; d < 2 * this.daysEitherSide + 1; d++) {
+		for (let d = 0; d < this.daysBefore + 1 + this.daysAfter; d++) {
 			const day: Period = [this.firstDay + d * DAY_MS, this.firstDay + (d + 1) * DAY_MS];
 			const covered = overlap(day, events);
 			// the gaps that are long enough to count, and the parts of them in windows that were validated
@@ -153,9 +158,9 @@ export class ScheduleCoverage {
 				: gaps.length > 0 ? "indeterminate"
 				: "full";
 			counts[state]++;
-			days.push({ date: new Date(day[0]).toISOString().slice(0, 10), state, coveredMinutes: Math.round(covered / MINUTE_MS) });
+			days.push({ date: new Date(day[0]).toISOString().slice(0, 10), state, coveredMinutes: Math.round(covered / MINUTE_MS), offset: d - this.daysBefore });
 		}
-		return { service: this.service, services: [...this.#services], daysEitherSide: this.daysEitherSide, counts, days };
+		return { service: this.service, services: [...this.#services], daysBefore: this.daysBefore, daysAfter: this.daysAfter, counts, days };
 	}
 }
 
@@ -195,16 +200,17 @@ const coverages = new WeakMap<object, Map<string, ScheduleCoverage>>();
  * @param {string} endpoint             the ScheduleInfoEndpoint
  * @param {string} service              the service ID used in the requests
  * @param {number} today                UTC midnight at the start of today, in milliseconds since the epoch
- * @param {number} daysEitherSide       the days before and after today that are expected
+ * @param {number} daysBefore           the days before today that are expected
+ * @param {number} daysAfter            the days after today that are expected
  * @returns {{ coverage: ScheduleCoverage, first: boolean }} the coverage, and whether it was made by this call
  */
-export function scheduleCoverage(validation: ValidationHandle, endpoint: string, service: string, today: number, daysEitherSide: number): { coverage: ScheduleCoverage; first: boolean } {
+export function scheduleCoverage(validation: ValidationHandle, endpoint: string, service: string, today: number, daysBefore: number, daysAfter: number): { coverage: ScheduleCoverage; first: boolean } {
 	let byService = coverages.get(validation as object);
 	if (!byService) coverages.set(validation as object, (byService = new Map()));
 	const key = `${endpoint}?sid=${service}`;
 	const found = byService.get(key);
 	if (found) return { coverage: found, first: false };
-	const coverage = new ScheduleCoverage(service, today, daysEitherSide);
+	const coverage = new ScheduleCoverage(service, today, daysBefore, daysAfter);
 	byService.set(key, coverage);
 	return { coverage, first: true };
 }

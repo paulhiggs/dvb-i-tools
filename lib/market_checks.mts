@@ -21,6 +21,7 @@ import { A177Revision } from "./revisions.mts"
 import type { TVARevision } from "./revisions.mts"
 import { tva } from "./TVA_definitions.mts"
 import { dvbi } from "./DVB-I_definitions.mts"
+import { mhp } from "./MHP_definitions.mts"
 import { validServiceLogo } from "./sl_data_versions.mts"
 
 // initialise string formatting extensions
@@ -227,6 +228,71 @@ export function checkServiceLogoRequired(service: XmlElement, thisServiceId: str
 			code: "MKT002",
 			message: `service ${thisServiceId.quote()} has no service logo in its ${dvbi.e_Service.elementize()}, which the market ${currentRequest().market} requires`,
 			line: service.line,
+			key: MARKET_KEY,
+		});
+}
+
+/**
+ * the media types that the market of the validation permits for an Icecast service instance (parameter icecast.contentTypes,
+ * #139 DE-6): an IdentifierBasedDeliveryParameters with an Icecast identifier (A177r8 annex K) has a @contentType, and it is
+ * one of them
+ *
+ * @param {XmlElement} params  the <IdentifierBasedDeliveryParameters> element
+ * @param {ErrorList}  errs    where the finding is reported
+ */
+export function checkIcecastContentType(params: XmlElement, errs: ErrorList): void {
+	const permitted = documentSettings()?.parameters.icecast.contentTypes;
+	if (permitted == undefined || !params.content.trim().startsWith(dvbi.ICECAST_V1_IDENTIFIER)) return;
+	const contentType = params.attrAnyNsValueOr(dvbi.a_contentType);
+	const expected = permitted.map((t) => t.quote()).join(" or ");
+	if (contentType == null || !permitted.includes(contentType.trim().toLowerCase()))
+		errs.addError({
+			code: "MKT005",
+			message:
+				contentType == null
+					? `the Icecast ${dvbi.e_IdentifierBasedDeliveryParameters.elementize()} has no ${dvbi.a_contentType.attribute()}, which the market ${currentRequest().market} requires to be ${expected}`
+					: `the Icecast ${dvbi.e_IdentifierBasedDeliveryParameters.elementize()} has ${dvbi.a_contentType.attribute()} ${contentType.quote()}, but the market ${currentRequest().market} requires ${expected}`,
+			fragment: params,
+			key: MARKET_KEY,
+		});
+}
+
+/**
+ * the rule hbbtvInControl (#139 DE-8), in the document that signals the application: a linked application that controls the
+ * presentation of the service (LinkedApplicationCS:2019:1.2) is referenced as an XML AIT
+ *
+ * @param {XmlElement} MediaUri  the <MediaUri> of the linked application
+ * @param {string}     AppType   the HowRelated@href of the linked application
+ * @param {ErrorList}  errs      where the finding is reported
+ */
+export function checkInControlReference(MediaUri: XmlElement, AppType: string, errs: ErrorList): void {
+	if (AppType != dvbi.APP_IN_CONTROL || !marketRule("hbbtvInControl")) return;
+	const contentType = MediaUri.attrAnyNsValueOr(tva.a_contentType);
+	if (contentType != dvbi.XML_AIT_CONTENT_TYPE)
+		errs.addError({
+			code: "MKT006",
+			message: `the linked application ${AppType.quote()} is ${contentType ? `of type ${contentType.quote()}` : `given without a ${tva.a_contentType.attribute()}`}, but the market ${currentRequest().market} requires an XML AIT (${dvbi.XML_AIT_CONTENT_TYPE.quote()})`,
+			fragment: MediaUri,
+			key: MARKET_KEY,
+		});
+}
+
+/**
+ * the rule hbbtvInControl (#139 DE-8), in the XML AIT of a linked application that controls the presentation of the service
+ * (LinkedApplicationCS:2019:1.2): the AIT has an HbbTV application
+ *
+ * @param {string | undefined}        linkedApplicationType  the HowRelated@href of the linked application that refers to the AIT
+ * @param {(string | undefined)[]}    applicationTypes       the <OtherApp> of each application of the AIT
+ * @param {number | undefined}        line                   the line of the first application, for the report
+ * @param {ErrorList}                 errs                   where the finding is reported
+ */
+export function checkInControlAit(linkedApplicationType: string | undefined, applicationTypes: (string | undefined)[], line: number | undefined, errs: ErrorList): void {
+	if (linkedApplicationType != dvbi.APP_IN_CONTROL || !marketRule("hbbtvInControl")) return;
+	if (!applicationTypes.includes(mhp.HBBTV_APP))
+		errs.addError({
+			code: "MKT007",
+			message: `the XML AIT of the linked application ${linkedApplicationType.quote()} has no HbbTV application (${mhp.e_OtherApp.elementize()} ${mhp.HBBTV_APP.quote()}), which the market ${currentRequest().market} requires`,
+			line,
 			key: MARKET_KEY,
 		});
 }

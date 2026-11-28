@@ -55,7 +55,7 @@ import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts"
 import { DASH_IF_Content_Protection_List, UUID_type, CA_SYSTEM_ID_REGISTRY, KnownDRMScheme, KnownCASystemID} from "./identifiers.mts"
 import { CheckDelivery } from "./slr_check.mts"
 import { LoadMarkets } from "./markets.mts"
-import { checkDirectTuning, checkMarketPostcodes, checkServiceLogoRequired, marketSummary, refusedRevision } from "./market_checks.mts"
+import { checkDirectTuning, checkIcecastContentType, checkInControlReference, checkMarketPostcodes, checkServiceLogoRequired, marketSummary, refusedRevision } from "./market_checks.mts"
 import { LoadSLschemas, SL_GetSchema, SL_SchemaVersion, SL_SchemaSpecVersion, isA177specification_URN, isContentFinishedBanner, isOutScheduleHours } from "./sl_data_versions.mts"
 import { validServiceControlApplication, validServiceInstanceControlApplication, validServiceUnavailableApplication, validDASHcontentType } from "./sl_data_versions.mts"
 import {
@@ -79,8 +79,8 @@ import type { SignaturePolicy } from "./certificate_utils.mts"
 
 import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES, type CG_Validator_Options } from "./cg_check.mts"
 import { allowTraversal, currentMarket, currentRequest, currentValidation, setDocumentRevision, deferRetrieval, deferTask, retrieveTraversal, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
-import { COVERAGE_TOLERANCE_MS, scheduleCoverage } from "./schedule_coverage.mts"
-import type { DayState, ServiceCoverage } from "./schedule_coverage.mts"
+import { COVERAGE_TOLERANCE_MS, DAY_STATES, scheduleCoverage } from "./schedule_coverage.mts"
+import type { DayCoverage, DayState, ServiceCoverage } from "./schedule_coverage.mts"
 
 /**
  * determines if the identifer provided complies with the requirements for a service identifier
@@ -595,6 +595,7 @@ export default class ServiceListCheck {
 					key: "invalid app type",
 				});
 			checkReferencedResource(MediaUri, documentInfo, errs, { digest: "SA015", policy: "SA021" });
+			checkInControlReference(MediaUri, AppType, errs);
 			if (MediaUri_contentType == dvbi.XML_AIT_CONTENT_TYPE) this.#validateReferencedAit(MediaUri, AIT_ROLE_LINKED, errs, { linkedApplicationType: AppType });
 		});
 		if (!hasMediaURI)
@@ -863,29 +864,50 @@ export default class ServiceListCheck {
 
 	/**
 	 * report the coverage of the schedule of a service (issue #122): keep it with the results, and give a warning when a day of
-	 * the 28 (7 for the German profile) either side of today is not fully covered. Indeterminate days (a traversal limit was
-	 * reached) are not a finding
+	 * the 28 (7 for the German profile) before or after today is not fully covered. The days before today (SL201) are
+	 * reported apart from today and the days after (SL202), as a market can need them more strongly (#139 DE-1: the German
+	 * profile's "shall" for the days ahead and "should" for the days back). Indeterminate days (a traversal limit was reached)
+	 * are not a finding
 	 *
 	 * @param {ServiceCoverage} coverage   the coverage of each day, and the services that use the schedule
 	 * @param {ErrorList}       errs       the results of the service list
 	 */
 	/*private*/ #reportScheduleCoverage(coverage: ServiceCoverage, errs: ErrorList): void {
 		errs.scheduleCoverage = [...(errs.scheduleCoverage ?? []), coverage];
-		const { full, partial, none, indeterminate } = coverage.counts;
-		if (partial + none == 0) return;
-		const dates = (state: DayState) => coverage.days.filter((d) => d.state == state).map((d) => d.date);
-		const listed = (state: DayState, label: string) => {
-			const found = dates(state);
-			return found.length == 0 ? [] : [`${label} ${found.slice(0, 10).join(", ")}${found.length > 10 ? ` and ${found.length - 10} more` : ""}`];
+		const of = `the schedule ${coverage.service.quote()} of ${coverage.services.length == 1 ? "service" : "services"} ${coverage.services.map((s) => s.quote()).join(", ")}`;
+		const tolerance = `A day is fully covered when its programme events leave no gap longer than ${COVERAGE_TOLERANCE_MS / 60000} minutes`;
+		const report = (code: string, days: DayCoverage[], which: string, range: string, description: string) => {
+			const count = (state: DayState) => days.filter((d) => d.state == state).length;
+			const [full, partial, none, indeterminate] = DAY_STATES.map(count);
+			if (partial + none == 0) return;
+			const listed = (state: DayState, label: string) => {
+				const found = days.filter((d) => d.state == state).map((d) => d.date);
+				return found.length == 0 ? [] : [`${label} ${found.slice(0, 10).join(", ")}${found.length > 10 ? ` and ${found.length - 10} more` : ""}`];
+			};
+			errs.addError({
+				type: WARNING,
+				code,
+				message: `${of} does not cover every day ${which}: of the ${days.length} ${days.length == 1 ? "day" : "days"} ${range}, ${full} fully covered, ${partial} partly, ${none} not at all${indeterminate > 0 ? `, and ${indeterminate} indeterminate because a traversal limit was reached` : ""}. ${[...listed("none", "Not covered:"), ...listed("partial", "Partly covered:")].join(". ")}`,
+				key: "schedule coverage",
+				clause: "A177r8 clause 6.1",
+				description: `${description}. ${tolerance}`,
+			});
 		};
-		errs.addError({
-			type: WARNING,
-			code: "SL201",
-			message: `the schedule ${coverage.service.quote()} of ${coverage.services.length == 1 ? "service" : "services"} ${coverage.services.map((s) => s.quote()).join(", ")} does not cover every day: of the ${coverage.days.length} days from ${coverage.daysEitherSide} days before to ${coverage.daysEitherSide} days after today, ${full} fully covered, ${partial} partly, ${none} not at all${indeterminate > 0 ? `, and ${indeterminate} indeterminate because a traversal limit was reached` : ""}. ${[...listed("none", "Not covered:"), ...listed("partial", "Partly covered:")].join(". ")}`,
-			key: "schedule coverage",
-			clause: "A177r8 clause 6.1",
-			description: `The content guide should hold the schedule of each service for ${coverage.daysEitherSide} days before and after today. A day is fully covered when its programme events leave no gap longer than ${COVERAGE_TOLERANCE_MS / 60000} minutes`,
-		});
+		const { daysBefore, daysAfter } = coverage;
+		report(
+			"SL201",
+			coverage.days.filter((d) => d.offset < 0),
+			"before today",
+			`from ${daysBefore} ${daysBefore == 1 ? "day" : "days"} before today to yesterday`,
+			`The content guide should hold the schedule of each service for the ${daysBefore} days before today`
+		);
+		report(
+			"SL202",
+			coverage.days.filter((d) => d.offset >= 0),
+			"from today",
+			`from today to ${daysAfter} ${daysAfter == 1 ? "day" : "days"} after today`,
+			`The content guide should hold the schedule of each service for today and the ${daysAfter} days after`
+		);
 	}
 
 	/**
@@ -2006,7 +2028,10 @@ export default class ServiceListCheck {
 
 		// <ServiceInstance><IdentifierDeliveryParameters>
 		const IdentifierBasedDeliveryParameters = ServiceInstance.getAnyNs(dvbi.e_IdentifierBasedDeliveryParameters);
-		if (IdentifierBasedDeliveryParameters) checkIdDelivery(IdentifierBasedDeliveryParameters, errs, "SI239");
+		if (IdentifierBasedDeliveryParameters) {
+			checkIdDelivery(IdentifierBasedDeliveryParameters, errs, "SI239");
+			checkIcecastContentType(IdentifierBasedDeliveryParameters, errs);
+		}
 	}
 
 	#getContentGuideById(ServiceList: XmlElement | null, CGid : string | undefined) : XmlElement | null {
@@ -2257,14 +2282,14 @@ export default class ServiceListCheck {
 					const start_of_today = Temporal.ZonedDateTime.from({day: today.day, month: today.month, year: today.year, timeZone: "UTC"})
 
 					// A177r8 - the programme guide should be available for 28 days before and 28 days after today.
-					// a market can need fewer (or more): German service lists only need 7 days before and 7 days after today (issue #119)
-					const NEEDED_DAYS = currentMarket(SL_SchemaVersion(service.documentNamespace())).parameters.schedule.daysEitherSide
+					// a market can need fewer (or more): German service lists only need 7 days before and 7 days after today (issue #119, #139 DE-1)
+					const { daysBefore, daysAfter } = currentMarket(SL_SchemaVersion(service.documentNamespace())).parameters.schedule
 					// the events of all the windows give the coverage of each day of the service's schedule (issue #122). A
 					// service with the same service ID and endpoint as an earlier one shares its coverage, as its windows are
 					// only requested once
-					const { coverage, first } = scheduleCoverage(currentValidation() ?? {}, siEpURL, serviceID ?? "", start_of_today.epochMilliseconds, NEEDED_DAYS)
+					const { coverage, first } = scheduleCoverage(currentValidation() ?? {}, siEpURL, serviceID ?? "", start_of_today.epochMilliseconds, daysBefore, daysAfter)
 					coverage.usedBy(thisServiceId)
-					for (let test_day=-NEEDED_DAYS; test_day<=NEEDED_DAYS; test_day++) {
+					for (let test_day=-daysBefore; test_day<=daysAfter; test_day++) {
 						const start_of_day = start_of_today.add({days: test_day})
 						for (let start_hour=0; start_hour<24; start_hour+=6) {
 							
