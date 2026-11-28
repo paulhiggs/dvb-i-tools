@@ -355,12 +355,13 @@ export function checkDisplayNameRequired(ServiceInstance: XmlElement, thisServic
 	});
 }
 
-// the values of LCNRange@serviceOrigin that give channel numbers to unmatched broadcast services (A177r8 clause 5.5.29)
-const BROADCAST_ORIGINS = [dvbi.SERVICE_ORIGIN_TARGET_BROADCAST, dvbi.SERVICE_ORIGIN_OTHER_BROADCAST];
+// the values of LCNRange@serviceOrigin that give channel numbers to unmatched broadcast services (A177r8 clause 5.5.29): any
+// is for DVB-I services as well
+const BROADCAST_ORIGINS = [dvbi.SERVICE_ORIGIN_TARGET_BROADCAST, dvbi.SERVICE_ORIGIN_OTHER_BROADCAST, dvbi.SERVICE_ORIGIN_ANY];
 
 /**
  * the rule broadcastLCNRangeRequired (#139, the IT-6 table of the DTVP profile: "LCNRange ... needed for Overscan"): every
- * <LCNTable> has an <LCNRange> whose @serviceOrigin is targetBroadcast or otherBroadcast, for the broadcast services found by
+ * <LCNTable> has an <LCNRange> whose @serviceOrigin is targetBroadcast, otherBroadcast or any, for the broadcast services found by
  * a scan that the service list does not match (MKT013). Without @serviceOrigin a range is for DVB-I services (its default,
  * dvbi)
  *
@@ -378,7 +379,7 @@ export function checkBroadcastLCNRange(LCNTable: XmlElement, errs: ErrorList): v
 		LCNTable.forEachNamedChildElement(dvbi.e_TargetRegion, (TargetRegion) => regions.push(TargetRegion.content.trim().quote()));
 		errs.addError({
 			code: "MKT013",
-			message: `the ${dvbi.e_LCNTable.elementize()}${regions.length > 0 ? ` for ${regions.join(", ")}` : ""} has no ${dvbi.e_LCNRange.elementize()} with ${dvbi.a_serviceOrigin.attribute()} ${BROADCAST_ORIGINS.map((o) => o.quote()).join(" or ")}, which the market ${currentRequest().market} requires`,
+			message: `the ${dvbi.e_LCNTable.elementize()}${regions.length > 0 ? ` for ${regions.join(", ")}` : ""} has no ${dvbi.e_LCNRange.elementize()} with ${dvbi.a_serviceOrigin.attribute()} ${BROADCAST_ORIGINS.slice(0, -1).map((o) => o.quote()).join(", ")} or ${BROADCAST_ORIGINS.at(-1)!.quote()}, which the market ${currentRequest().market} requires`,
 			line: LCNTable.line,
 			key: MARKET_KEY,
 		});
