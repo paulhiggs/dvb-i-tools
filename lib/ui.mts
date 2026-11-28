@@ -24,7 +24,7 @@ import type { ValidationTiming } from "./safe_fetch.mts"
 import type { CGRequestType } from "./cg_check.mts"
 import { CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW, CG_REQUEST_PROGRAM, CG_REQUEST_MORE_EPISODES, CG_REQUEST_BS_CATEGORIES, CG_REQUEST_BS_LISTS, CG_REQUEST_BS_CONTENTS } from "./cg_check.mts"
 
-import { AIT_ROLES } from "./MHP_definitions.mts"
+import { AIT_ROLES, AIT_TYPE_PREFIX } from "./MHP_definitions.mts"
 import { HasProperty } from "./utils.mts"
 import { HTML, html, join as joinHTML, raw, text } from "./html.mts"
 import { isHTTPURL } from "./pattern_checks.mts"
@@ -417,15 +417,17 @@ function* resultsBody(error: string[] | undefined, errs: ErrorList | undefined, 
 }
 
 
-function* nested_error_row(req: express.Request, errs: ErrorList | undefined, depth: number): Parts {
+// the links to validate a traversed document on its own keep the market of the validation that traversed into it (issue #119)
+function* nested_error_row(req: express.Request, errs: ErrorList | undefined, depth: number, market?: string): Parts {
 	if (!errs || errs.nestedErrors.length == 0) return
+	const forMarket = market ? `&market=${encodeURIComponent(market)}` : ""
 	for (const nest of errs.nestedErrors) {
 		const severity = nest.severity()
 		let validator=undefined, refer: HTML = raw("<b><i>unknown</i></b>")
 		if (nest.source && nest.description) {
 			switch (nest.type) {
 				case "SL":
-					validator=`${req.protocol}://${req.host}/validate_sl?url=${encodeURIComponent(nest.source)}`
+					validator=`${req.protocol}://${req.host}/validate_sl?url=${encodeURIComponent(nest.source)}${forMarket}`
 					break
 				case CG_REQUEST_SCHEDULE_TIME:
 				case CG_REQUEST_SCHEDULE_NOWNEXT:
@@ -435,8 +437,12 @@ function* nested_error_row(req: express.Request, errs: ErrorList | undefined, de
 				case CG_REQUEST_BS_CATEGORIES:
 				case CG_REQUEST_BS_LISTS:
 				case CG_REQUEST_BS_CONTENTS:
-					validator=`${req.protocol}://${req.host}/validate_cg?url=${encodeURIComponent(nest.source)}&type=${encodeURIComponent(nest.type)}`
+					validator=`${req.protocol}://${req.host}/validate_cg?url=${encodeURIComponent(nest.source)}&type=${encodeURIComponent(nest.type)}${forMarket}`
 					break
+				default:
+					// an XML AIT is validated with the role it has in the referring document
+					if (nest.type?.startsWith(AIT_TYPE_PREFIX))
+						validator=`${req.protocol}://${req.host}/validate_ait?url=${encodeURIComponent(nest.source)}&role=${encodeURIComponent(nest.type.slice(AIT_TYPE_PREFIX.length))}${forMarket}`
 			}
 			// only link to HTTP(S) locations - the source is taken from the validated document and could be a javascript: or data: URL
 			let isHTTP = false
@@ -453,7 +459,7 @@ function* nested_error_row(req: express.Request, errs: ErrorList | undefined, de
 				yield html`<span class="c ${LIST_CLASS[list]}">${code}${count > 1 && ` ×${count}`}</span>`
 		for (const msg of nest.debugs) yield html`<span class="dbg">${msg.code} ${msg.message}</span>`
 		yield html`</td><td>${(nest.references ?? 1) > 1 && formatCount(nest.references!)}</td></tr>`
-		yield* nested_error_row(req, nest, depth+1)
+		yield* nested_error_row(req, nest, depth+1, market)
 	}
 }
 
@@ -484,7 +490,7 @@ function* reportNestedErrors(req: express.Request, errs: ErrorList | undefined):
 	yield html`<div class="filters" role="group" aria-label="Show traversed documents" hidden><span class="lbl">Show</span>${filter("all", "All")}${filter("error", "Errors")}${filter("warn", "Warnings")}${filter("info", "Informational")}${filter("ok", "No findings")}</div>`
 	yield `<div class="scroll"><table class="trav" id="trav" data-show="all"><thead><tr><th scope="col">Document</th><th scope="col">Result</th><th scope="col">References</th></tr></thead><tbody>`
 
-	yield* nested_error_row(req, errs, 1)
+	yield* nested_error_row(req, errs, 1, errs.market?.id)
 	yield `</tbody></table></div>${SECTION_END}`
 }
 

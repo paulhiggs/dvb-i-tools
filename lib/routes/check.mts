@@ -24,7 +24,7 @@ import PlaylistCheck from "../playlist_check.mts"
 import ContentGuideCheck from "../cg_check.mts"
 import ServiceListRegistryCheck from "../slr_check.mts"
 import XmlAitCheck from "../ait_check.mts"
-import { AIT_ROLE_LINKED } from "../MHP_definitions.mts"
+import { AIT_ROLE_LINKED, AIT_TYPE_PREFIX } from "../MHP_definitions.mts"
 import { findMarket } from "../markets.mts"
 import document_logger, { createPrefix } from "../logger.mts"
 import type { ValidatorConfig } from "../config.mts"
@@ -195,7 +195,7 @@ async function DVB_I_check(
 						await slrcheck.doValidateServiceListRegistry(VVxml!, errs, request);
 					break;
 				case MODE_AIT:
-					errs.setType(`XML AIT-${form.aitrole}`)
+					errs.setType(AIT_TYPE_PREFIX + form.aitrole)
 					if (aitcheck)
 						await aitcheck.doValidateXmlAit(VVxml!, form.aitrole, errs, request);
 					break;

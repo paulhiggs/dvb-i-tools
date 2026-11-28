@@ -16,7 +16,7 @@ import chalk from "chalk"
 import { XmlDocument } from "libxml2-wasm"
 
 import ErrorList, { APPLICATION, INFORMATION, WARNING } from "./error_list.mts"
-import { mhp, DVBI_APPLICATION_TYPES, AIT_ROLES, AIT_ROLE_LINKED, AIT_ROLE_DEEPLINK, AIT_ROLE_TEMPLATE } from "./MHP_definitions.mts"
+import { mhp, DVBI_APPLICATION_TYPES, AIT_ROLES, AIT_TYPE_PREFIX, AIT_ROLE_LINKED, AIT_ROLE_DEEPLINK, AIT_ROLE_TEMPLATE } from "./MHP_definitions.mts"
 import { keys } from "./common_errors.mts"
 import { SchemaCheck, SchemaLoad } from "./schema_checks.mts"
 import { XMLAIT_Schema, schemaURL } from "./data_locations.mts"
@@ -553,7 +553,7 @@ export default class XmlAitCheck {
 	 */
 	/*public*/ validateReferencedAit(Location: XmlElement, url: string, role: string, errs: ErrorList, reference: AIT_Reference = {}): void {
 		const label = AIT_ROLES.find((r) => r.value == role)?.label ?? role;
-		const nested = nestedTraversal(errs, url, `XML AIT-${role}`, `XML AIT (${label})`);
+		const nested = nestedTraversal(errs, url, AIT_TYPE_PREFIX + role,`XML AIT (${label})`);
 		if (!nested) return; // already validated in this validation
 		const limited = allowTraversal(url);
 		if (limited) {
