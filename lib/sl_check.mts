@@ -55,7 +55,18 @@ import CheckAccessibilityAttributes from "./accessibility_attributes_checks.mts"
 import { DASH_IF_Content_Protection_List, UUID_type, CA_SYSTEM_ID_REGISTRY, KnownDRMScheme, KnownCASystemID} from "./identifiers.mts"
 import { CheckDelivery } from "./slr_check.mts"
 import { LoadMarkets } from "./markets.mts"
-import { checkDirectTuning, checkIcecastContentType, checkInControlReference, checkMarketPostcodes, checkServiceLogoRequired, marketSummary, refusedRevision } from "./market_checks.mts"
+import {
+	checkBroadcastLCNRange,
+	checkDirectTuning,
+	checkDisplayNameRequired,
+	checkIcecastContentType,
+	checkInControlReference,
+	checkMarketPostcodes,
+	checkServiceLogoRequired,
+	checkServiceRequirements,
+	marketSummary,
+	refusedRevision,
+} from "./market_checks.mts"
 import { LoadSLschemas, SL_GetSchema, SL_SchemaVersion, SL_SchemaSpecVersion, isA177specification_URN, isContentFinishedBanner, isOutScheduleHours } from "./sl_data_versions.mts"
 import { validServiceControlApplication, validServiceInstanceControlApplication, validServiceUnavailableApplication, validDASHcontentType } from "./sl_data_versions.mts"
 import {
@@ -1226,6 +1237,8 @@ export default class ServiceListCheck {
 		const documentNamespace = ServiceInstance.documentNamespace();
 
 		checkAttributes(ServiceInstance, [], [dvbi.a_priority, dvbi.a_id, tva.a_lang], dvbiEA.ServiceInstanceType, errs, "SI005");
+		// a market can require a <DisplayName> (#139)
+		checkDisplayNameRequired(ServiceInstance, thisServiceId, errs);
 		checkTopElementsAndCardinality(
 			ServiceInstance,
 			[
@@ -2161,6 +2174,8 @@ export default class ServiceListCheck {
 		//check <RelatedMaterial>
 		// a market can require a service logo in the <Service> itself (issue #119)
 		checkServiceLogoRequired(service, thisServiceId, errs);
+		// and an out-of-service banner, a <ServiceType>, a content guide source and a <ServiceInstance> (#139)
+		checkServiceRequirements(service, thisServiceId, errs);
 		service.forEachNamedChildElement(tva.e_RelatedMaterial, (RelatedMaterial) => 
 			this.#validateRelatedMaterial(RelatedMaterial, `service ${thisServiceId.quote()}`, SERVICE_RM, documentInfo, errs, "SL150")
 		);
@@ -2914,6 +2929,8 @@ export default class ServiceListCheck {
 		if (LCNtableList) {
 			const tableQualifiers = new Set<string>();
 			LCNtableList.forEachNamedChildElement(dvbi.e_LCNTable, (LCNTable) => {
+				// a market can require an LCN range for broadcast services (#139)
+				checkBroadcastLCNRange(LCNTable, errs);
 				// <LCNTable><TargetRegion>
 				const TargetRegions = new Set<string>();
 				LCNTable.forEachNamedChildElement(dvbi.e_TargetRegion, (TargetRegion) => {

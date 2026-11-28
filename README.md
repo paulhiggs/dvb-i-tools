@@ -303,7 +303,7 @@ A validation can be made for a **market**: the settings of a market deployment o
 
 | Id | Name | Settings |
 |---|---|---|
-| `DE` | Germany | Only **A177r6** is permitted: a document of any other revision is reported with `MKT001` and not validated. The programme guide needs today and the 7 days after (a missing day is an error, as `SL202` is raised to an error), and should have the 7 days before (`SL201`, a warning), instead of 28 either side. Service lists and service list registries are validated against the `-(DE)` schemas, which make `@networkID` optional, allow any number of `NetworkID` elements, and add `@directTuningAvailable` to `OrbitalPosition`. From the DTVP DVB-I Implementation Profile v1.1.0 (issue #139): service logos are 320 pixels wide and at most 64000 bytes, promotional still images (EPG images) 640 pixels wide and at most 100000 bytes, postcodes have 5 digits, every DVB-S service instance has its direct tuning parameters, an Icecast service instance is `audio/mpeg` or `audio/aac`, and a linked application that controls the presentation of the service is an XML AIT with an HbbTV application. An XML AIT in the old `urn:dvb:mhp:2009` namespace is not a warning: `AIT006a` is suppressed |
+| `DE` | Germany | Only **A177r6** is permitted: a document of any other revision is reported with `MKT001` and not validated. The programme guide needs today and the 7 days after (a missing day is an error, as `SL202` is raised to an error), and should have the 7 days before (`SL201`, a warning), instead of 28 either side. Service lists and service list registries are validated against the `-(DE)` schemas, which make `@networkID` optional, allow any number of `NetworkID` elements, and add `@directTuningAvailable` to `OrbitalPosition`. From the DTVP DVB-I Implementation Profile v1.1.0 (issue #139): service logos are 320 pixels wide and at most 64000 bytes, promotional still images (EPG images) 640 pixels wide and at most 100000 bytes, postcodes have 5 digits, every DVB-S service instance has its direct tuning parameters, an Icecast service instance is `audio/mpeg` or `audio/aac`, and a linked application that controls the presentation of the service is an XML AIT with an HbbTV application. From its IT-6 table, every service has a service logo, an out-of-service banner, a `ServiceType`, a content guide source and a service instance, every service instance has a `DisplayName`, and every LCN table has an `LCNRange` for broadcast services (`@serviceOrigin` `targetBroadcast` or `otherBroadcast`). An XML AIT in the old `urn:dvb:mhp:2009` namespace is not a warning: `AIT006a` is suppressed |
 
 A validation is made for one market, or none (A177 itself). It applies to every document the validation traverses into. The market is chosen with:
 - **Market** on the /check form (for service lists and service list registries)
@@ -336,6 +336,12 @@ A market that is not defined is answered with `400` and a `parseErr` naming the 
     - `serviceLogoRequired`: every `Service` must have a service logo (`HowRelated` `…:1001.2`) in its own `RelatedMaterial`. A logo only in a `ServiceInstance` does not satisfy it (`MKT002`, an error)
     - `dvbsDirectTuning`: every `DVBSDeliveryParameters` has the parameters for direct tuning (A177 clause 5.2.12): `OrbitalPosition`, `Frequency`, `Polarization` and `SymbolRate` (`MKT004`, an error)
     - `hbbtvInControl`: a linked application that controls the presentation of the service (`HowRelated` `…:LinkedApplicationCS:2019:1.2`) is referenced as an XML AIT, with `MediaUri@contentType` `application/vnd.dvb.ait+xml` (`MKT006`, an error). When the XML AITs are checked (**XML AITs**, `aits=true`), that AIT has an HbbTV application, `OtherApp` `application/vnd.hbbtv.xhtml+xml` (`MKT007`, an error, in the results of the AIT)
+    - `outOfServiceBannerRequired`: every `Service` has an out-of-service banner (`HowRelated` `…:1000.1`) in its own `RelatedMaterial` (`MKT008`, an error)
+    - `serviceTypeRequired`: every `Service` has a `ServiceType` (`MKT009`, an error)
+    - `displayNameRequired`: every `ServiceInstance` has a `DisplayName` (`MKT010`, an error)
+    - `contentGuideSourceRequired`: every `Service` has a content guide source: its own `ContentGuideSource` or `ContentGuideSourceRef`, or the `ContentGuideSource` of the `ServiceList`, which is the default (`MKT011`, an error)
+    - `serviceInstanceRequired`: every `Service` has at least one `ServiceInstance` (`MKT012`, an error)
+    - `broadcastLCNRangeRequired`: every `LCNTable` has an `LCNRange` whose `@serviceOrigin` is `targetBroadcast` or `otherBroadcast`, to give channel numbers to the broadcast services that a scan finds and the service list does not match (`MKT013`, an error). A range without `@serviceOrigin` is for DVB-I services (its default, `dvbi`), and `any` does not count
 
 The settings for a document are those of the ranges that include its A177 revision, in the order they are listed: a later range wins for the same setting. A content guide document has the revision of the service list that refers to it, or when it is validated on its own, the latest A177 revision that uses its TV-Anytime revision. An XML AIT has the revision of the document that refers to it, or the latest that the market permits. Unknown properties, parameters and revisions, values that are not valid, and missing schema files are refused. So is a severity for a fatal or XSD finding (`SL001`, `SR001`, `CG001`, `PL001`, `AIT001`, `SL005`, `SR005`, `CG003`, `PL005`, `AIT005`, and the codes made from them, such as `SL005:8`), whose findings all have one code: a market relaxes a schema rule with its own schema instead. `MKT001` cannot be changed either. The loader does not check that a code exists, as many codes are made when they are reported (`BE005`, `SE005`).
 
@@ -397,7 +403,14 @@ For example, the German market (without its description):
 			},
 			"rules": {
 				"dvbsDirectTuning": true,
-				"hbbtvInControl": true
+				"hbbtvInControl": true,
+				"serviceLogoRequired": true,
+				"outOfServiceBannerRequired": true,
+				"serviceTypeRequired": true,
+				"displayNameRequired": true,
+				"contentGuideSourceRequired": true,
+				"serviceInstanceRequired": true,
+				"broadcastLCNRangeRequired": true
 			}
 		}
 	]

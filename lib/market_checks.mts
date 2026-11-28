@@ -22,7 +22,7 @@ import type { TVARevision } from "./revisions.mts"
 import { tva } from "./TVA_definitions.mts"
 import { dvbi } from "./DVB-I_definitions.mts"
 import { mhp } from "./MHP_definitions.mts"
-import { validServiceLogo } from "./sl_data_versions.mts"
+import { validOutScheduleHours, validServiceLogo } from "./sl_data_versions.mts"
 
 // initialise string formatting extensions
 import {} from "./string-extensions.mts"
@@ -295,4 +295,92 @@ export function checkInControlAit(linkedApplicationType: string | undefined, app
 			line,
 			key: MARKET_KEY,
 		});
+}
+
+// a <Service> that a market rule requires something of (#139, the IT-6 table of the DTVP profile)
+const reportService = (code: string, service: XmlElement, thisServiceId: string, missing: string, errs: ErrorList) =>
+	errs.addError({
+		code,
+		message: `service ${thisServiceId.quote()} has no ${missing}, which the market ${currentRequest().market} requires`,
+		line: service.line,
+		key: MARKET_KEY,
+	});
+
+/**
+ * the rules of a market for each <Service> (#139, the provider column of the IT-6 table of the DTVP profile):
+ *   outOfServiceBannerRequired  an out-of-service banner (HowRelated …:1000.1) in the <Service> itself (MKT008)
+ *   serviceTypeRequired         a <ServiceType> (MKT009)
+ *   contentGuideSourceRequired  a content guide source: <ContentGuideSource> or <ContentGuideSourceRef> in the <Service>,
+ *                               or the <ContentGuideSource> of the <ServiceList>, which is the default (MKT011)
+ *   serviceInstanceRequired     at least one <ServiceInstance> (MKT012)
+ *
+ * @param {XmlElement} service        the <Service> element
+ * @param {string}     thisServiceId  the identifier of the service, for the message
+ * @param {ErrorList}  errs           where the findings are reported
+ */
+export function checkServiceRequirements(service: XmlElement, thisServiceId: string, errs: ErrorList): void {
+	if (marketRule("outOfServiceBannerRequired")) {
+		let hasBanner = false;
+		service.forEachNamedChildElement(tva.e_RelatedMaterial, (RelatedMaterial) => {
+			const HowRelated = RelatedMaterial.getAnyNs(tva.e_HowRelated);
+			if (HowRelated && validOutScheduleHours(HowRelated)) hasBanner = true;
+		});
+		if (!hasBanner) reportService("MKT008", service, thisServiceId, `out-of-service banner in its ${dvbi.e_Service.elementize()}`, errs);
+	}
+	if (marketRule("serviceTypeRequired") && !service.hasChild(dvbi.e_ServiceType)) reportService("MKT009", service, thisServiceId, dvbi.e_ServiceType.elementize(), errs);
+	if (marketRule("contentGuideSourceRequired")) {
+		const listDefault = (service.parent as XmlElement | null)?.hasChild(dvbi.e_ContentGuideSource) ?? false;
+		if (!service.hasChild(dvbi.e_ContentGuideSource) && !service.hasChild(dvbi.e_ContentGuideSourceRef) && !listDefault)
+			reportService("MKT011", service, thisServiceId, `content guide source (${dvbi.e_ContentGuideSource.elementize()} or ${dvbi.e_ContentGuideSourceRef.elementize()}, or a default in the ${dvbi.e_ServiceList.elementize()})`, errs);
+	}
+	if (marketRule("serviceInstanceRequired") && !service.hasChild(dvbi.e_ServiceInstance)) reportService("MKT012", service, thisServiceId, dvbi.e_ServiceInstance.elementize(), errs);
+}
+
+/**
+ * the rule displayNameRequired (#139, the IT-6 table of the DTVP profile): every <ServiceInstance> has a <DisplayName>
+ * (MKT010)
+ *
+ * @param {XmlElement} ServiceInstance  the <ServiceInstance> element
+ * @param {string}     thisServiceId    the identifier of its service, for the message
+ * @param {ErrorList}  errs             where the finding is reported
+ */
+export function checkDisplayNameRequired(ServiceInstance: XmlElement, thisServiceId: string, errs: ErrorList): void {
+	if (!marketRule("displayNameRequired") || ServiceInstance.hasChild(dvbi.e_DisplayName)) return;
+	const priority = ServiceInstance.attrAnyNsValueOr(dvbi.a_priority);
+	errs.addError({
+		code: "MKT010",
+		message: `a ${dvbi.e_ServiceInstance.elementize()}${priority ? ` (priority ${priority})` : ""} of service ${thisServiceId.quote()} has no ${dvbi.e_DisplayName.elementize()}, which the market ${currentRequest().market} requires`,
+		line: ServiceInstance.line,
+		key: MARKET_KEY,
+	});
+}
+
+// the values of LCNRange@serviceOrigin that give channel numbers to unmatched broadcast services (A177r8 clause 5.5.29)
+const BROADCAST_ORIGINS = [dvbi.SERVICE_ORIGIN_TARGET_BROADCAST, dvbi.SERVICE_ORIGIN_OTHER_BROADCAST];
+
+/**
+ * the rule broadcastLCNRangeRequired (#139, the IT-6 table of the DTVP profile: "LCNRange ... needed for Overscan"): every
+ * <LCNTable> has an <LCNRange> whose @serviceOrigin is targetBroadcast or otherBroadcast, for the broadcast services found by
+ * a scan that the service list does not match (MKT013). Without @serviceOrigin a range is for DVB-I services (its default,
+ * dvbi)
+ *
+ * @param {XmlElement} LCNTable  the <LCNTable> element
+ * @param {ErrorList}  errs      where the finding is reported
+ */
+export function checkBroadcastLCNRange(LCNTable: XmlElement, errs: ErrorList): void {
+	if (!marketRule("broadcastLCNRangeRequired")) return;
+	let found = false;
+	LCNTable.forEachNamedChildElement(dvbi.e_LCNRange, (LCNRange) => {
+		if (BROADCAST_ORIGINS.includes(LCNRange.attrAnyNsValueOr(dvbi.a_serviceOrigin) ?? "")) found = true;
+	});
+	if (!found) {
+		const regions: string[] = [];
+		LCNTable.forEachNamedChildElement(dvbi.e_TargetRegion, (TargetRegion) => regions.push(TargetRegion.content.trim().quote()));
+		errs.addError({
+			code: "MKT013",
+			message: `the ${dvbi.e_LCNTable.elementize()}${regions.length > 0 ? ` for ${regions.join(", ")}` : ""} has no ${dvbi.e_LCNRange.elementize()} with ${dvbi.a_serviceOrigin.attribute()} ${BROADCAST_ORIGINS.map((o) => o.quote()).join(" or ")}, which the market ${currentRequest().market} requires`,
+			line: LCNTable.line,
+			key: MARKET_KEY,
+		});
+	}
 }

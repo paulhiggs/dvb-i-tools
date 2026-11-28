@@ -58,7 +58,17 @@ export type MarketImage = Readonly<{ width?: number; height?: number; maxBytes?:
 const IMAGE_KEYS = ["width", "height", "maxBytes"];
 
 // the rules a market can enable, each with its own codes (market_checks.mts)
-export const MARKET_RULES = ["serviceLogoRequired", "dvbsDirectTuning", "hbbtvInControl"] as const;
+export const MARKET_RULES = [
+	"serviceLogoRequired",
+	"dvbsDirectTuning",
+	"hbbtvInControl",
+	"outOfServiceBannerRequired",
+	"serviceTypeRequired",
+	"displayNameRequired",
+	"contentGuideSourceRequired",
+	"serviceInstanceRequired",
+	"broadcastLCNRangeRequired",
+] as const;
 export type MarketRule = (typeof MARKET_RULES)[number];
 
 // the severity a market gives a code instead of A177's: "suppressed" for findings that are listed, marked as suppressed by
