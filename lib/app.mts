@@ -100,7 +100,7 @@ export function createApp(config: ValidatorConfig, services: ValidatorServices):
 	app.use(checkRouter(config, services));
 	app.use(sleprRouter(config, services));
 	if (config.spamBlocker) init_spam_blocker(app, config.spamBlocker);
-	app.use(infoRouter(services));
+	app.use(infoRouter(config, services));
 
 	// any other path, with any method
 	app.use((req: express.Request, res: express.Response) => {

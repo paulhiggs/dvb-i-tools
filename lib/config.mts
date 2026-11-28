@@ -17,7 +17,7 @@ import { read_string_options, CORSlibrary, CORSmanual, CORSnone, CORSoptions, se
 import { Default_SLEPR } from "./data_locations.mts"
 import { configureFetchPolicy } from "./safe_fetch.mts"
 import { readmyfile, HasProperty } from "./utils.mts"
-import { ALL_IN_ONE_SETTINGS, ConfigError, checkSetting, optionOrDefault } from "./config_file.mts"
+import { ALL_IN_ONE_SETTINGS, CONFIG_FILES, ConfigError, checkSetting, optionOrDefault } from "./config_file.mts"
 import type { SpamBlockerSettings } from "./spam_disruptions.mts"
 
 // initialise string formatting extensions
@@ -51,6 +51,8 @@ export type ValidatorConfig = Readonly<{
 		maxResponseBytes: number;
 	}>;
 	traversal: Readonly<{ maxDocuments: number; maxDepth: number }>; // the limits of a validation's traversal
+	settings: Readonly<Record<string, unknown>>; // the value of every setting (by its option), for the running configuration of /stats
+	configFiles: readonly string[]; // the configuration files that were read
 }>;
 
 // the settings that are only in the configuration file (they have no command line option). A configuration made without
@@ -129,6 +131,8 @@ export function loadConfig(options: commandLineArgs.CommandLineOptions): Validat
 			maxResponseBytes: value("max_response_bytes") as number,
 		}),
 		traversal: Object.freeze({ maxDocuments: value("max_traversal") as number, maxDepth: value("max_depth") as number }),
+		settings: Object.freeze(Object.fromEntries(ALL_IN_ONE_SETTINGS.map((s) => [s.option, value(s.option)]))),
+		configFiles: Object.freeze(Array.isArray(options[CONFIG_FILES]) ? [...(options[CONFIG_FILES] as string[])] : []),
 	});
 }
 
