@@ -193,6 +193,11 @@ export const dvbi = new class {
 	NVOD_MODE_REFERENCE: string = "reference"
 	NVOD_MODE_TIMESHIFTED: string = "timeshifted"
 
+	// LCNRange@serviceOrigin for unmatched broadcast services (A177r8 clause 5.5.29, LCNRangeType): "any" is also for DVB-I services
+	SERVICE_ORIGIN_TARGET_BROADCAST: string = "targetBroadcast"
+	SERVICE_ORIGIN_OTHER_BROADCAST: string = "otherBroadcast"
+	SERVICE_ORIGIN_ANY: string = "any"
+
 	// possible values for DVB-S polarization
 	DVBS_POLARIZATION_VALUES: string[] = ["horizontal", "vertical", "left circular", "right circular"]
 
@@ -291,6 +296,7 @@ export const dvbi = new class {
 	a_selectable: string = "selectable"
 	a_serviceGenre: string = "serviceGenre"
 	a_serviceId: string = "serviceId"
+	a_serviceOrigin: string = "serviceOrigin"
 	a_serviceRef: string = "serviceRef"
 	a_serviceType: string = "serviceType"
 	a_Source: string = "Source"

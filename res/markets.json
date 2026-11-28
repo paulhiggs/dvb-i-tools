@@ -2,15 +2,16 @@
 	{
 		"id": "DE",
 		"name": "Germany",
-		"description": "The German market profile of A177 (DTVP DVB-I Implementation Profile v1.1.0, BMT testbed): only A177r6 is permitted, the programme guide needs 7 days either side of today, service lists and registries have relaxed schemas, service logos are 320 pixels wide and EPG images 640, postcodes have 5 digits, DVB-S service instances have their direct tuning parameters, and an XML AIT in the urn:dvb:mhp:2009 namespace is not a warning (AIT006a is suppressed)",
+		"description": "The German market profile of A177 (DTVP DVB-I Implementation Profile v1.1.0, BMT testbed): only A177r6 is permitted, the programme guide needs today and the 7 days after (an error when a day is missing) and should have the 7 days before (a warning), service lists and registries have relaxed schemas, service logos are 320 pixels wide and EPG images 640, postcodes have 5 digits, DVB-S service instances have their direct tuning parameters, an Icecast service instance is audio/mpeg or audio/aac, a linked application that controls the presentation is an XML AIT with an HbbTV application, every service has a service logo, an out-of-service banner, a ServiceType, a content guide source and a service instance, every service instance has a DisplayName, every LCN table has an LCNRange for broadcast services (serviceOrigin targetBroadcast, otherBroadcast or any), and an XML AIT in the urn:dvb:mhp:2009 namespace is not a warning (AIT006a is suppressed)",
 		"permitted": ["r6"],
 		"revisions": [
 			{
 				"from": "r6",
 				"to": "r6",
 				"parameters": {
-					"schedule": { "daysEitherSide": 7 },
-					"postcode": { "digits": 5 }
+					"schedule": { "daysBefore": 7, "daysAfter": 7 },
+					"postcode": { "digits": 5 },
+					"icecast": { "contentTypes": ["audio/mpeg", "audio/aac"] }
 				},
 				"schemas": {
 					"serviceList": "dvbi_v6.0+hls+hbbtv-(DE).xsd",
@@ -20,8 +21,18 @@
 					"serviceLogo": { "width": 320, "maxBytes": 64000 },
 					"promotionalStillImage": { "width": 640, "maxBytes": 100000 }
 				},
-				"severity": { "AIT006a": "suppressed" },
-				"rules": { "dvbsDirectTuning": true }
+				"severity": { "AIT006a": "suppressed", "SL202": "error" },
+				"rules": {
+					"dvbsDirectTuning": true,
+					"hbbtvInControl": true,
+					"serviceLogoRequired": true,
+					"outOfServiceBannerRequired": true,
+					"serviceTypeRequired": true,
+					"displayNameRequired": true,
+					"contentGuideSourceRequired": true,
+					"serviceInstanceRequired": true,
+					"broadcastLCNRangeRequired": true
+				}
 			}
 		]
 	}

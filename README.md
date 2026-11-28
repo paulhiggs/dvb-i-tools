@@ -303,7 +303,7 @@ A validation can be made for a **market**: the settings of a market deployment o
 
 | Id | Name | Settings |
 |---|---|---|
-| `DE` | Germany | Only **A177r6** is permitted: a document of any other revision is reported with `MKT001` and not validated. The programme guide needs 7 days either side of today instead of 28. Service lists and service list registries are validated against the `-(DE)` schemas, which make `@networkID` optional, allow any number of `NetworkID` elements, and add `@directTuningAvailable` to `OrbitalPosition`. From the DTVP DVB-I Implementation Profile v1.1.0 (issue #139): service logos are 320 pixels wide and at most 64000 bytes, promotional still images (EPG images) 640 pixels wide and at most 100000 bytes, postcodes have 5 digits, and every DVB-S service instance has its direct tuning parameters. An XML AIT in the old `urn:dvb:mhp:2009` namespace is not a warning: `AIT006a` is suppressed |
+| `DE` | Germany | Only **A177r6** is permitted: a document of any other revision is reported with `MKT001` and not validated. The programme guide needs today and the 7 days after (a missing day is an error, as `SL202` is raised to an error), and should have the 7 days before (`SL201`, a warning), instead of 28 either side. Service lists and service list registries are validated against the `-(DE)` schemas, which make `@networkID` optional, allow any number of `NetworkID` elements, and add `@directTuningAvailable` to `OrbitalPosition`. From the DTVP DVB-I Implementation Profile v1.1.0 (issue #139): service logos are 320 pixels wide and at most 64000 bytes, promotional still images (EPG images) 640 pixels wide and at most 100000 bytes, postcodes have 5 digits, every DVB-S service instance has its direct tuning parameters, an Icecast service instance is `audio/mpeg` or `audio/aac`, and a linked application that controls the presentation of the service is an XML AIT with an HbbTV application. From its IT-6 table, every service has a service logo, an out-of-service banner, a `ServiceType`, a content guide source and a service instance, every service instance has a `DisplayName`, and every LCN table has an `LCNRange` for broadcast services (`@serviceOrigin` `targetBroadcast`, `otherBroadcast` or `any`). An XML AIT in the old `urn:dvb:mhp:2009` namespace is not a warning: `AIT006a` is suppressed |
 
 A validation is made for one market, or none (A177 itself). It applies to every document the validation traverses into. The market is chosen with:
 - **Market** on the /check form (for service lists and service list registries)
@@ -320,13 +320,14 @@ A market that is not defined is answered with `400` and a `parseErr` naming the 
 - `permitted` (optional): the A177 revisions the market permits, e.g. `["r6"]`. Without it every revision is permitted. A service list, service list registry response or playlist of another revision is reported with `MKT001` (an error) and is not validated: no XSD validation and no other rules. This applies to traversed documents too. A content guide document validated on its own is permitted when a permitted A177 revision uses its TV-Anytime revision (for `DE`, TV-Anytime 2024, which A177r6 uses; not TV-Anytime 2027). `MKT001` cannot be changed with `severity`, and a revision range that includes no permitted revision is refused
 - `revisions`: a list of ranges of A177 revisions, each with `from` and `to` (`r0` to `r8`, or `latest`), and the settings for the documents of those revisions:
   - `schemas`: the XSD file (in `schemas/`) used instead of A177's, for `serviceList` and `serviceListRegistry` documents
-  - `parameters`: values that differ from A177's. Each is a positive whole number:
+  - `parameters`: values that differ from A177's:
 
     | Parameter | Meaning | A177 |
     |---|---|---|
-    | `schedule.daysEitherSide` | the days of programme guide needed before and after today (`SL201`) | 28 |
-    | `lcn.min`, `lcn.max` | the range of channel numbers in an `LCNTable`: `LCN@channelNumber` (`SL264`), `LCNRange@start` (`SL266`) and `LCNRange@end` (`SL267`). `min` must not be above `max` | 1, 9999 |
-    | `postcode.digits` | the number of digits of the postcodes of the service list's regions (`MKT003`, an error): a `Postcode` and the `@from` and `@to` of a `PostcodeRange` have exactly that many digits (and `@from` is not after `@to`), and a `WildcardPostcode` has fewer digits beside its single `*`, which stands for at least one digit | none |
+    | `schedule.daysBefore`, `schedule.daysAfter` | whole numbers (0 or more): the days of programme guide needed before and after today. Today itself is always needed. The days before today are reported with `SL201`, and today and the days after with `SL202`, both warnings in A177: a market that needs one side more strongly raises its code with `severity` | 28, 28 |
+    | `lcn.min`, `lcn.max` | positive whole numbers: the range of channel numbers in an `LCNTable`: `LCN@channelNumber` (`SL264`), `LCNRange@start` (`SL266`) and `LCNRange@end` (`SL267`). `min` must not be above `max` | 1, 9999 |
+    | `postcode.digits` | a positive whole number: the number of digits of the postcodes of the service list's regions (`MKT003`, an error): a `Postcode` and the `@from` and `@to` of a `PostcodeRange` have exactly that many digits (and `@from` is not after `@to`), and a `WildcardPostcode` has fewer digits beside its single `*`, which stands for at least one digit | none |
+    | `icecast.contentTypes` | a list of media types, such as `["audio/mpeg", "audio/aac"]`: an Icecast service instance (an `IdentifierBasedDeliveryParameters` whose identifier starts `urn:dvb:icecast:v1`, A177r8 annex K) has a `@contentType`, and it is one of them, in any case (`MKT005`, an error) | none |
   - `severity`: the severity of codes for the market, instead of A177's: `"error"`, `"warning"`, `"information"`, `"suppressed"` for findings that are shown but not counted, or `"off"` for findings that do not apply to the market. A key is a code (`"SL264"`), or a prefix of codes followed by `*` (`"SI020-1-*"`, `"SL24*"`), which has at least the letters and one digit. A code's own entry wins, and otherwise the longest prefix that it starts with. The code itself is never changed
   - `images`: what the market stipulates for each kind of image: `serviceListLogo`, `serviceLogo`, `contentGuideSourceLogo` and `promotionalStillImage` (by their `HowRelated`). Each has a `width`, which the image must match exactly, with an optional `height` that it must also match (without it, any height and aspect ratio is accepted), and an optional `maxBytes`, the largest file size the market recommends. Each is a positive whole number, and either a `width` or `maxBytes` is needed. A later range replaces what an earlier one gives for a kind. A177 itself stipulates no sizes. They are checked only when images are checked (**Image checking** Yes, `images=yes|scaled`), for the image at the signalled URL (not one scaled with `?w=`) and for inline (`data:`) images:
     - `IMG020` (error): the image is not the size the market requires
@@ -334,6 +335,13 @@ A market that is not defined is answered with `400` and a `parseErr` naming the 
   - `rules`: the rules the market enables, each `true` or `false` (a later range can turn one off). They are:
     - `serviceLogoRequired`: every `Service` must have a service logo (`HowRelated` `…:1001.2`) in its own `RelatedMaterial`. A logo only in a `ServiceInstance` does not satisfy it (`MKT002`, an error)
     - `dvbsDirectTuning`: every `DVBSDeliveryParameters` has the parameters for direct tuning (A177 clause 5.2.12): `OrbitalPosition`, `Frequency`, `Polarization` and `SymbolRate` (`MKT004`, an error)
+    - `hbbtvInControl`: a linked application that controls the presentation of the service (`HowRelated` `…:LinkedApplicationCS:2019:1.2`) is referenced as an XML AIT, with `MediaUri@contentType` `application/vnd.dvb.ait+xml` (`MKT006`, an error). When the XML AITs are checked (**XML AITs**, `aits=true`), that AIT has an HbbTV application, `OtherApp` `application/vnd.hbbtv.xhtml+xml` (`MKT007`, an error, in the results of the AIT)
+    - `outOfServiceBannerRequired`: every `Service` has an out-of-service banner (`HowRelated` `…:1000.1`) in its own `RelatedMaterial` (`MKT008`, an error)
+    - `serviceTypeRequired`: every `Service` has a `ServiceType` (`MKT009`, an error)
+    - `displayNameRequired`: every `ServiceInstance` has a `DisplayName` (`MKT010`, an error)
+    - `contentGuideSourceRequired`: every `Service` has a content guide source: its own `ContentGuideSource` or `ContentGuideSourceRef`, or the `ContentGuideSource` of the `ServiceList`, which is the default (`MKT011`, an error)
+    - `serviceInstanceRequired`: every `Service` has at least one `ServiceInstance` (`MKT012`, an error)
+    - `broadcastLCNRangeRequired`: every `LCNTable` has an `LCNRange` whose `@serviceOrigin` is `targetBroadcast`, `otherBroadcast` or `any`, to give channel numbers to the broadcast services that a scan finds and the service list does not match (`MKT013`, an error). A range without `@serviceOrigin` is for DVB-I services only (its default, `dvbi`), and one with `otherIP` for other IP services, so neither counts
 
 The settings for a document are those of the ranges that include its A177 revision, in the order they are listed: a later range wins for the same setting. A content guide document has the revision of the service list that refers to it, or when it is validated on its own, the latest A177 revision that uses its TV-Anytime revision. An XML AIT has the revision of the document that refers to it, or the latest that the market permits. Unknown properties, parameters and revisions, values that are not valid, and missing schema files are refused. So is a severity for a fatal or XSD finding (`SL001`, `SR001`, `CG001`, `PL001`, `AIT001`, `SL005`, `SR005`, `CG003`, `PL005`, `AIT005`, and the codes made from them, such as `SL005:8`), whose findings all have one code: a market relaxes a schema rule with its own schema instead. `MKT001` cannot be changed either. The loader does not check that a code exists, as many codes are made when they are reported (`BE005`, `SE005`).
 
@@ -362,10 +370,17 @@ For example, the German market (without its description):
 			"to": "r6",
 			"parameters": {
 				"schedule": {
-					"daysEitherSide": 7
+					"daysBefore": 7,
+					"daysAfter": 7
 				},
 				"postcode": {
 					"digits": 5
+				},
+				"icecast": {
+					"contentTypes": [
+						"audio/mpeg",
+						"audio/aac"
+					]
 				}
 			},
 			"schemas": {
@@ -383,10 +398,19 @@ For example, the German market (without its description):
 				}
 			},
 			"severity": {
-				"AIT006a": "suppressed"
+				"AIT006a": "suppressed",
+				"SL202": "error"
 			},
 			"rules": {
-				"dvbsDirectTuning": true
+				"dvbsDirectTuning": true,
+				"hbbtvInControl": true,
+				"serviceLogoRequired": true,
+				"outOfServiceBannerRequired": true,
+				"serviceTypeRequired": true,
+				"displayNameRequired": true,
+				"contentGuideSourceRequired": true,
+				"serviceInstanceRequired": true,
+				"broadcastLCNRangeRequired": true
 			}
 		}
 	]
@@ -479,17 +503,19 @@ With traversal, the schedule of each service is requested in 6 hour windows, fro
 - `none`: no events cover the day, including when its requests failed (the failures have their own errors, such as `VCG002`).
 - `indeterminate`: a window of the day was not requested because a traversal limit was reached (`TRAV002`, `TRAV003`), and the windows that were validated do not show a gap.
 
-A service whose schedule does not cover a day (`partial` or `none`) has a warning, `SL201`, with the number of days in each state and the dates. Each service needs 228 windows (60 for the German market), so with the default `max_traversal` of 100 most days are `indeterminate`: use a higher maximum, or `unlimited`, to check the coverage.
+A service whose schedule does not cover a day (`partial` or `none`) has a warning, with the number of days in each state and the dates: `SL201` for the days before today, and `SL202` for today and the days after. The German market needs the days ahead, so `SL202` is an error for `DE`. The number of days on each side is a market parameter (`schedule.daysBefore`, `schedule.daysAfter`). Each service needs 228 windows (60 for the German market), so with the default `max_traversal` of 100 most days are `indeterminate`: use a higher maximum, or `unlimited`, to check the coverage.
 
 Several services can use the same service ID for their schedule (`ContentGuideServiceRef`). Their schedule is requested and reported once, with the services that use it in `services`. The HTML report has a **Schedule coverage** section, with a row of days for each schedule. The JSON summary and tree have a `scheduleCoverage` array, with an entry for each service:
 
 ```json
 "scheduleCoverage": [{
-	"service": "tag:example.com,2026:service-1", "services": ["tag:example.com,2026:service-1"], "daysEitherSide": 7,
+	"service": "tag:example.com,2026:service-1", "services": ["tag:example.com,2026:service-1"], "daysBefore": 7, "daysAfter": 7,
 	"counts": { "full": 13, "partial": 1, "none": 1, "indeterminate": 0 },
-	"days": [{ "date": "2026-11-17", "state": "full", "coveredMinutes": 1440 }, "..."]
+	"days": [{ "date": "2026-11-17", "state": "full", "coveredMinutes": 1440, "offset": -7 }, "..."]
 }]
 ```
+
+The `offset` of a day is its distance from today: `-1` is yesterday, `0` today and `1` tomorrow.
 
 `results=tree` also gives a `document` node for the validated document, with a node in `nested` for each document it traversed into. Each node has:
 - `url`, `type` and `description`

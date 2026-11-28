@@ -23,7 +23,7 @@ import { XMLAIT_Schema, schemaURL } from "./data_locations.mts"
 import document_logger from "./logger.mts"
 import { isHTTPURL, isHTTSPURL } from "./pattern_checks.mts"
 import { allowTraversal, claimTraversal, currentRequest, currentValidation, deferRetrieval, documentRevision, safeFetch, setDocumentRevision, signaturePoliciesInEffect, ValidationScope } from "./safe_fetch.mts"
-import { latestPermittedRevision, marketSummary } from "./market_checks.mts"
+import { checkInControlAit, latestPermittedRevision, marketSummary } from "./market_checks.mts"
 import { LoadMarkets } from "./markets.mts"
 import type { ValidationOptions } from "./safe_fetch.mts"
 import { nestedTraversal, traversalFinished, traversalSkipped, traversalStarted } from "./traversal.mts"
@@ -409,6 +409,14 @@ export default class XmlAitCheck {
 			this.#checkHbbTVVersion(app, errs);
 			this.#checkLaunchPolicy(app, errs);
 		});
+
+		// a market can require an HbbTV application for a linked application that controls the presentation (#139 DE-8)
+		checkInControlAit(
+			reference.linkedApplicationType,
+			applications.map((app) => app.otherApp),
+			applications[0]?.element.line,
+			errs
+		);
 
 		// a service provider or service list application may have icons (A177r8 clause 5.2.3.1)
 		const linkedType = reference.linkedApplicationType;
