@@ -10,11 +10,10 @@
 
 import chalk from "chalk"
 
-import SL_helpers from "./sl_check_helpers.mts"
 
 import { tva, tvaEA } from "./TVA_definitions.mts"
 import { sats } from "./DVB_definitions.mts"
-import { slVersions, cgVersions, dvbi, dvbisld, dvbiEC, dvbiEA, XMLdocumentType} from "./DVB-I_definitions.mts"
+import { slVersions, cgVersions, dvbi, dvbisld, dvbiEC, dvbiEA, XMLdocumentType, validApplicationTypes } from "./DVB-I_definitions.mts"
 import type { A177Revision } from "./revisions.mts"
 import type XmlAitCheck from "./ait_check.mts"
 import type { AIT_Reference } from "./ait_check.mts"
@@ -22,9 +21,9 @@ import { AIT_ROLE_LINKED } from "./MHP_definitions.mts"
 
 import ErrorList, { WARNING, APPLICATION, INFORMATION } from "./error_list.mts"
 import { nestedTraversal, traversalFinished, traversalSkipped, traversalStarted } from "./traversal.mts"
-import type { ReportedErrorType } from "./error_list.mts"
+import type { ReportedErrorType, ErrorDescriptionType } from "./error_list.mts"
 import { unEntity, DuplicatedValue, parameterCheck, HexOrDecValue, DefaultProperty, HasProperty } from "./utils.mts"
-import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isRTSPURL, isTAGURI, isUUIDformat } from "./pattern_checks.mts"
+import { isPostcode, isASCII, isHTTPURL, isHTTPPathURL, isRTSPURL, isTAGURI, isUUIDformat, isDomainName } from "./pattern_checks.mts"
 import { checkValidLogos } from "./related_material_checks.mts"
 import { sl_InvalidHrefValue, InvalidURL, DeprecatedElement, keys, InvalidCountryCode, CStermUsage } from "./common_errors.mts"
 import { mlLanguage, checkLanguage, checkXMLLangs, GetNodeLanguage } from "./multilingual_element.mts"
@@ -82,6 +81,159 @@ import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIM
 import { allowTraversal, currentMarket, currentRequest, currentValidation, setDocumentRevision, deferRetrieval, deferTask, retrieveTraversal, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
 import { COVERAGE_TOLERANCE_MS, scheduleCoverage } from "./schedule_coverage.mts"
 import type { DayState, ServiceCoverage } from "./schedule_coverage.mts"
+
+/**
+ * determines if the identifer provided complies with the requirements for a service identifier
+ * at this stage only IETF RFC 4151 TAG URIs are permitted
+ *
+ * @param {string} identifier    The service identifier
+ * @returns {boolean} true if the service identifier complies with the specification otherwise false
+ */
+const validServiceIdentifier = (identifier: string) => isTAGURI(identifier);
+const validServiceListIdentifier = (identifier: string) => isTAGURI(identifier);
+
+/**
+ * Create a label for the optional language and value provided
+ * @param {XmlElement} pkg
+ * @param {string}     lang
+ * @returns {string}
+ */
+const localizedSubscriptionPackage = (pkg: XmlElement, lang?: string): string => `${pkg.content}/lang=${lang ? lang : mlLanguage(pkg)}`;
+
+/**
+ * Construct	 an error message an unspecifed target region is used
+ *
+ * @param {string} region      The unspecified target region
+ * @param {string} loc         The location of the element
+ * @param {string} errCode     The error code to be reported
+ * @param {XmlElement} element The element using an undefined region if
+ */
+const UnspecifiedTargetRegion = (region: string, loc: string, errCode: string, element: XmlElement): ReportedErrorType => ({
+	code: errCode,
+	message: `${loc} has an unspecified ${dvbi.e_TargetRegion.elementize()} ${region.quote()}`,
+	key: "target region",
+	fragment: element,
+});
+
+/**
+ * Construct an error message for missing <xxxDeliveryParameters>
+ *
+ * @param {string}     source     The missing source type
+ * @param {string}     serviceId  The serviceId whose instance is missing delivery parameters
+ * @param {XmlElement} element    The <SourceType> element for which delivery parameters are not specified
+ * @param {string}     errCode    The error code to be reported
+ */
+const NoDeliveryParams = (source: string, serviceId: string, element: XmlElement, errCode: string): ReportedErrorType => ({
+	code: errCode,
+	message: `${source} delivery parameters not specified for service instance in service ${serviceId.quote()}`,
+	fragment: element,
+	key: "no delivery params",
+});
+
+const isValidApplicationType = (type: string): boolean => validApplicationTypes.includes(type);
+
+const RMErrorDescription = (code: string, elem: string, table: string | number): ErrorDescriptionType => ({
+	code: code,
+	description: `The application type indicated by the specified ${dvbi.a_href.attribute()} value is not permitted in a ${elem.elementize()}. Refer to the semantic defintiion of ${dvbi.e_RelatedMaterial.elementize()} in table ${table} of A177.`,
+});
+
+const synopsisLengthError = (ElementName: string, label: string, length: number): string =>
+	`length of ${`${tva.a_length.attribute(ElementName)}=${label.quote()}`.elementize()} exceeds ${length} characters`;
+
+const synopsisToShortError = (ElementName: string, label: string, length: number): string =>
+	`length of ${`${tva.a_length.attribute(ElementName)}=${label.quote()}`.elementize()} is less than ${length} characters`;
+
+const singleLengthLangError = (ElementName: string, length: string, lang: string): string =>
+	`only a single ${ElementName.elementize()} is permitted per length (${length}) and language (${lang})`;
+
+const requiredSynopsisError = (ElementName: string, length: string): string =>
+	`a ${ElementName.elementize()} element with ${tva.a_length.attribute()}=${length.quote()} is required`;
+
+// HDR DMI terms are in the 2.3 series
+const isHDRDMISystem = (CSterm: string): boolean => CSterm.substring(CSterm.lastIndexOf(":") + 1).startsWith("2.3.");
+
+const ZuluIfNeeded = (dt: string): string => (dt.endsWith("Z") || dt.lastIndexOf("+") > 12 || dt.lastIndexOf("-") > 12 ? dt : `${dt}Z`);
+
+const unzone = (time: string): string => (time.includes("Z") ? time.substring(0, time.indexOf("Z")) : time);
+
+const checkElement = (element: XmlElement | null, elementName: string, allowed: string[], modulation: string, key: string, errs: ErrorList, errCode: string): void => {
+	if (element && !allowed.includes(element.content))
+		errs.addError({
+			code: errCode,
+			key: key,
+			message: `${elementName}=${element.content.quote()} is not permitted for ${modulation} modulation system`,
+			fragment: element,
+		});
+};
+
+const DisallowedElement = (element: XmlElement, childElementName: string, modulation: string, key: string, errs: ErrorList, suffix: string = "-0"): void => {
+	if (element.hasChild(childElementName))
+		errs.addError({
+			code: `SI204${suffix}`,
+			key: key,
+			message: `${childElementName.elementize()} is not permitted for ${dvbi.e_ModulationSystem}=${modulation.quote()}`,
+			fragment: element.getAnyNs(childElementName) as XmlElement,
+		});
+};
+
+/**
+ * Check is any media specific delivery parameters are specified on the service instance
+ *
+ * @param {XmlElement} instance  the service instance to check
+ * @returns {Boolean} true if at least one media delivery system is specified on the instance
+ */
+const deliveryParameters = (instance: XmlElement): XmlElement | null =>
+	instance.getAnyNs(dvbi.e_DVBTDeliveryParameters) ||
+	instance.getAnyNs(dvbi.e_DVBSDeliveryParameters) ||
+	instance.getAnyNs(dvbi.e_DVBCDeliveryParameters) ||
+	instance.getAnyNs(dvbi.e_DASHDeliveryParameters) ||
+	instance.getAnyNs(dvbi.e_SATIPDeliveryParameters) ||
+	instance.getAnyNs(dvbi.e_MulticastTSDeliveryParameters) ||
+	instance.getAnyNs(dvbi.e_RTSPDeliveryParameters);
+
+/**
+ * Verify the MulticastTSDeliveryParameters
+ *
+ * @param {XmlElement} params  the MulticastTSDeliveryParameters element
+ * @param {ErrorList} errs  errors found in validaton
+ * @param {string} errCode  error code prefix to be used in reports
+ */
+const checkMulticastDeliveryParams = (params: XmlElement, errs: ErrorList, errCode: string): void => {
+	const IPMulticastAddress = params.getAnyNs(dvbi.e_IPMulticastAddress);
+	if (IPMulticastAddress) {
+		const CNAME = IPMulticastAddress.getAnyNs(dvbi.e_CNAME);
+		if (CNAME && !isDomainName(CNAME.content))
+			errs.addError({
+				code: `${errCode}-1`,
+				message: `${dvbi.e_IPMulticastAddress.elementize()}${dvbi.e_CNAME.elementize()} is not a valid domain name for use as a CNAME`,
+				fragment: CNAME,
+				key: "invalid CNAME",
+			});
+	}
+};
+
+/**
+ * Verify the IdentifierBasedDeliveryParameters
+ *
+ * @param {XmlElement} params  the IdentifierBasedDeliveryParameters element
+ * @param {ErrorList} errs  errors found in validaton
+ * @param {string} errCode  error code prefix to be used in reports
+ */
+const checkIdDelivery = (params: XmlElement, errs: ErrorList, errCode: string): void => {
+	if (params.content.startsWith(dvbi.ICECAST_V1_IDENTIFIER)) {
+		const IcecastURL = params.content.substring(dvbi.ICECAST_V1_IDENTIFIER.length + 1);
+
+		if (!isHTTPURL(IcecastURL))
+			errs.addError({
+				code: `${errCode}a`,
+				message: "The <service_url> specified is not a valid HTTP URL",
+				fragment: params,
+				key: keys.k_Icecast,
+				clause: "A177 annex K.2.1",
+				description: "service_url contains the percent-encoded URL of the service endpoint",
+			});
+	}
+};
 
 
 const LCN_TABLE_NO_TARGETREGION: string = "unspecifiedRegion",
@@ -414,7 +566,7 @@ export default class ServiceListCheck {
 		MediaLocator.forEachNamedChildElement(tva.e_MediaUri, (MediaUri) => {
 			hasMediaURI = true;
 			const MediaUri_contentType = MediaUri.attrAnyNsValueOr(tva.a_contentType);
-			if (MediaUri_contentType && !SL_helpers.isValidApplicationType(MediaUri_contentType))
+			if (MediaUri_contentType && !isValidApplicationType(MediaUri_contentType))
 				errs.addError({
 					code: "SA003",
 					message: `${tva.a_contentType.attribute()} ${MediaUri_contentType.quote()} is not supported application type for ${tva.e_RelatedMaterial.elementize()}${tva.e_MediaLocator.elementize()} in ${Location}`,
@@ -598,7 +750,7 @@ export default class ServiceListCheck {
 						MediaLocators.forEach((locator) => this.#checkSignalledApplication(locator, Location, rc, documentInfo, errs));
 					} else {
 						errs.addError(sl_InvalidHrefValue(HowRelated_href, HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-11`));
-						errs.errorDescription(SL_helpers.RMErrorDescription(`${errCode}-11`, dvbi.e_ServiceList, 14));
+						errs.errorDescription(RMErrorDescription(`${errCode}-11`, dvbi.e_ServiceList, 14));
 					}
 					break;
 
@@ -618,7 +770,7 @@ export default class ServiceListCheck {
 						MediaLocators.forEach((locator) => this.#checkSignalledApplication(locator, Location, rc, documentInfo,errs));
 					} else {
 						errs.addError(sl_InvalidHrefValue(HowRelated_href, HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-24`));
-						errs.errorDescription(SL_helpers.RMErrorDescription(`${errCode}-24`, dvbi.e_Service, 15));
+						errs.errorDescription(RMErrorDescription(`${errCode}-24`, dvbi.e_Service, 15));
 					}
 					break;
 
@@ -656,7 +808,7 @@ export default class ServiceListCheck {
 						MediaLocators.forEach((locator) => this.#checkSignalledApplication(locator, Location, rc, documentInfo, errs));
 					} else {
 						errs.addError(sl_InvalidHrefValue(HowRelated_href, HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-34`));
-						errs.errorDescription(SL_helpers.RMErrorDescription(`${errCode}-34`, dvbi.e_ServiceInstance, 16));
+						errs.errorDescription(RMErrorDescription(`${errCode}-34`, dvbi.e_ServiceInstance, 16));
 					}
 					break;
 
@@ -666,7 +818,7 @@ export default class ServiceListCheck {
 						checkValidLogos(RelatedMaterial, Location, documentInfo, errs, `${errCode}-41`, "contentGuideSourceLogo");
 					} else {
 						errs.addError(sl_InvalidHrefValue(HowRelated_href, HowRelated, tva.e_RelatedMaterial.elementize(), Location, `${errCode}-42`));
-						errs.errorDescription(SL_helpers.RMErrorDescription(`${errCode}-42`, dvbi.e_ContentGuideSource, 20));
+						errs.errorDescription(RMErrorDescription(`${errCode}-42`, dvbi.e_ContentGuideSource, 20));
 					}
 					break;
 			}
@@ -868,7 +1020,7 @@ export default class ServiceListCheck {
 							if (cleanSynopsisLength > tva.SYNOPSIS_BRIEF_LENGTH)
 								errs.addError({
 									code: `${errCode}-10`,
-									message: SL_helpers.synopsisLengthError(ElementName, tva.SYNOPSIS_BRIEF_LABEL, tva.SYNOPSIS_BRIEF_LENGTH),
+									message: synopsisLengthError(ElementName, tva.SYNOPSIS_BRIEF_LABEL, tva.SYNOPSIS_BRIEF_LENGTH),
 									fragment: ste,
 									key: ERROR_KEY,
 								});
@@ -878,7 +1030,7 @@ export default class ServiceListCheck {
 							if (cleanSynopsisLength > tva.SYNOPSIS_SHORT_LENGTH)
 								errs.addError({
 									code: `${errCode}-11`,
-									message: SL_helpers.synopsisLengthError(ElementName, tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_SHORT_LENGTH),
+									message: synopsisLengthError(ElementName, tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_SHORT_LENGTH),
 									fragment: ste,
 									key: ERROR_KEY,
 								});
@@ -888,7 +1040,7 @@ export default class ServiceListCheck {
 							if (cleanSynopsisLength > tva.SYNOPSIS_MEDIUM_LENGTH)
 								errs.addError({
 									code: `${errCode}-12`,
-									message: SL_helpers.synopsisLengthError(ElementName,tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_MEDIUM_LENGTH),
+									message: synopsisLengthError(ElementName,tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_MEDIUM_LENGTH),
 									fragment: ste,
 									key: ERROR_KEY,
 								});
@@ -898,7 +1050,7 @@ export default class ServiceListCheck {
 							if (cleanSynopsisLength > tva.SYNOPSIS_LONG_LENGTH)
 								errs.addError({
 									code: `${errCode}-13`,
-									message: SL_helpers.synopsisLengthError(ElementName, tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_LONG_LENGTH),
+									message: synopsisLengthError(ElementName, tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_LONG_LENGTH),
 									fragment: ste,
 									key: ERROR_KEY,
 								});
@@ -908,7 +1060,7 @@ export default class ServiceListCheck {
 							if (cleanSynopsisLength < tva.SYNOPSIS_EXTENDED_MIN_LENGTH)
 								errs.addError({
 									code: `${errCode}-14`,
-									message: SL_helpers.synopsisToShortError(ElementName, tva.SYNOPSIS_EXTENDED_LABEL, tva.SYNOPSIS_EXTENDED_MIN_LENGTH),
+									message: synopsisToShortError(ElementName, tva.SYNOPSIS_EXTENDED_LABEL, tva.SYNOPSIS_EXTENDED_MIN_LENGTH),
 									fragment: ste,
 									key: ERROR_KEY,
 								});
@@ -930,7 +1082,7 @@ export default class ServiceListCheck {
 						if (DuplicatedValue(briefLangs, synopsisLang))
 							errs.addError({
 								code: `${errCode}-21`,
-								message: SL_helpers.singleLengthLangError(ElementName, synopsisLength, synopsisLang),
+								message: singleLengthLangError(ElementName, synopsisLength, synopsisLang),
 								fragment: ste,
 								key: ERROR_KEY,
 							});
@@ -939,7 +1091,7 @@ export default class ServiceListCheck {
 						if (DuplicatedValue(shortLangs, synopsisLang))
 							errs.addError({
 								code: `${errCode}-22`,
-								message: SL_helpers.singleLengthLangError(ElementName, synopsisLength, synopsisLang),
+								message: singleLengthLangError(ElementName, synopsisLength, synopsisLang),
 								fragment: ste,
 								key: ERROR_KEY,
 							});
@@ -948,7 +1100,7 @@ export default class ServiceListCheck {
 						if (DuplicatedValue(mediumLangs, synopsisLang))
 							errs.addError({
 								code: `${errCode}-23`,
-								message: SL_helpers.singleLengthLangError(ElementName, synopsisLength, synopsisLang),
+								message: singleLengthLangError(ElementName, synopsisLength, synopsisLang),
 								fragment: ste,
 								key: ERROR_KEY,
 							});
@@ -957,7 +1109,7 @@ export default class ServiceListCheck {
 						if (DuplicatedValue(longLangs, synopsisLang))
 							errs.addError({
 								code: `${errCode}-24`,
-								message: SL_helpers.singleLengthLangError(ElementName, synopsisLength, synopsisLang),
+								message: singleLengthLangError(ElementName, synopsisLength, synopsisLang),
 								fragment: ste,
 								key: ERROR_KEY,
 							});
@@ -966,7 +1118,7 @@ export default class ServiceListCheck {
 						if (DuplicatedValue(extendedLangs, synopsisLang))
 							errs.addError({
 								code: `${errCode}-25`,
-								message: SL_helpers.singleLengthLangError(ElementName, synopsisLength, synopsisLang),
+								message: singleLengthLangError(ElementName, synopsisLength, synopsisLang),
 								fragment: ste,
 								key: ERROR_KEY,
 							});
@@ -977,35 +1129,35 @@ export default class ServiceListCheck {
 		if (requiredLengths.includes(tva.SYNOPSIS_BRIEF_LABEL) && !hasBrief)
 			errs.addError({
 				code: `${errCode}-31`,
-				message: SL_helpers.requiredSynopsisError(ElementName, tva.SYNOPSIS_BRIEF_LABEL),
+				message: requiredSynopsisError(ElementName, tva.SYNOPSIS_BRIEF_LABEL),
 				fragment: Element,
 				key: ERROR_KEY,
 			});
 		if (requiredLengths.includes(tva.SYNOPSIS_SHORT_LABEL) && !hasShort)
 			errs.addError({
 				code: `${errCode}-32`,
-				message: SL_helpers.requiredSynopsisError(ElementName, tva.SYNOPSIS_SHORT_LABEL),
+				message: requiredSynopsisError(ElementName, tva.SYNOPSIS_SHORT_LABEL),
 				fragment: Element,
 				key: ERROR_KEY,
 			});
 		if (requiredLengths.includes(tva.SYNOPSIS_MEDIUM_LABEL) && !hasMedium)
 			errs.addError({
 				code: `${errCode}-33`,
-				message: SL_helpers.requiredSynopsisError(ElementName, tva.SYNOPSIS_MEDIUM_LABEL),
+				message: requiredSynopsisError(ElementName, tva.SYNOPSIS_MEDIUM_LABEL),
 				fragment: Element,
 				key: ERROR_KEY,
 			});
 		if (requiredLengths.includes(tva.SYNOPSIS_LONG_LABEL) && !hasLong)
 			errs.addError({
 				code: `${errCode}-34`,
-				message: SL_helpers.requiredSynopsisError(ElementName, tva.SYNOPSIS_LONG_LABEL),
+				message: requiredSynopsisError(ElementName, tva.SYNOPSIS_LONG_LABEL),
 				fragment: Element,
 				key: ERROR_KEY,
 			});
 		if (requiredLengths.includes(tva.SYNOPSIS_EXTENDED_LABEL) && !hasExtended)
 			errs.addError({
 				code: `${errCode}-35`,
-				message: SL_helpers.requiredSynopsisError(ElementName, tva.SYNOPSIS_EXTENDED_LABEL),
+				message: requiredSynopsisError(ElementName, tva.SYNOPSIS_EXTENDED_LABEL),
 				fragment: Element,
 				key: ERROR_KEY,
 			});
@@ -1117,7 +1269,7 @@ export default class ServiceListCheck {
 			if (foundHref != "" && validServiceInstanceControlApplication(foundHref, SL_SchemaVersion(documentNamespace))) controlApps.push(RelatedMaterial);
 			if (foundHref == dvbi.APP_IN_CONTROL) {
 				// Application controlling playback SHOULD NOT have any service delivery parameters
-				const foundDeliveryParams = SL_helpers.deliveryParameters(ServiceInstance);
+				const foundDeliveryParams = deliveryParameters(ServiceInstance);
 				if (SL_SchemaVersion(documentNamespace) >= slVersions.r5 && foundDeliveryParams != null)
 					errs.addError({
 						type: WARNING,
@@ -1434,7 +1586,7 @@ export default class ServiceListCheck {
 							fragment: conf,
 							key: "video conf point",
 						});
-					else if (!SL_helpers.isHDRDMISystem(conformanceVal)) {
+					else if (!isHDRDMISystem(conformanceVal)) {
 						codec_count++;
 						if (codec_count > 1)
 							errs.addError({
@@ -1492,8 +1644,8 @@ export default class ServiceListCheck {
 				if (Period_from && Period_to) {
 					// validTo should be >= validFrom
 					try {
-						const fr = Temporal.Instant.from(SL_helpers.ZuluIfNeeded(Period_from)),
-							to = Temporal.Instant.from(SL_helpers.ZuluIfNeeded(Period_to));
+						const fr = Temporal.Instant.from(ZuluIfNeeded(Period_from)),
+							to = Temporal.Instant.from(ZuluIfNeeded(Period_to));
 						if (Temporal.Instant.compare(fr, to) == 1)
 							errs.addError({
 								code: "SI124",
@@ -1513,8 +1665,8 @@ export default class ServiceListCheck {
 					}
 				}
 				Period.forEachNamedChildElement(dvbi.e_Interval, (Interval) => {
-					const startTime = SL_helpers.unzone(Interval.attrAnyNsValueOr(dvbi.a_startTime, "00:00:00Z")!),
-						endTime = SL_helpers.unzone(Interval.attrAnyNsValueOr(dvbi.a_endTime, "23:59:59.999Z")!);
+					const startTime = unzone(Interval.attrAnyNsValueOr(dvbi.a_startTime, "00:00:00Z")!),
+						endTime = unzone(Interval.attrAnyNsValueOr(dvbi.a_endTime, "23:59:59.999Z")!);
 					try {
 						if (Temporal.PlainTime.compare(Temporal.PlainTime.from(startTime), Temporal.PlainTime.from(endTime)) == 1) 
 							errs.addError({
@@ -1541,7 +1693,7 @@ export default class ServiceListCheck {
 		const packages_found = new Set<string>();
 		ServiceInstance.forEachNamedChildElement(dvbi.e_SubscriptionPackage, (SubscriptionPackage) => {
 			const pkg_lang = mlLanguage(SubscriptionPackage);
-			const pkg = SL_helpers.localizedSubscriptionPackage(SubscriptionPackage, pkg_lang);
+			const pkg = localizedSubscriptionPackage(SubscriptionPackage, pkg_lang);
 			if (SL_SchemaVersion(documentNamespace) >= slVersions.r3) {
 				if (!documentInfo.declaredSubscriptionPackages.has(pkg))
 					errs.addError({
@@ -1571,33 +1723,33 @@ export default class ServiceListCheck {
 			switch (SourceType.content) {
 				case dvbi.DVBT_SOURCE_TYPE:
 					if (!ServiceInstance.hasChild(dvbi.e_DVBTDeliveryParameters)) 
-						errs.addError(SL_helpers.NoDeliveryParams("DVB-T", thisServiceId, SourceType, "SI151"));
+						errs.addError(NoDeliveryParams("DVB-T", thisServiceId, SourceType, "SI151"));
 					v1Params = true;
 					break;
 				case dvbi.DVBS_SOURCE_TYPE:
 					if (!ServiceInstance.hasChild(dvbi.e_DVBSDeliveryParameters)) 
-						errs.addError(SL_helpers.NoDeliveryParams("DVB-S", thisServiceId, SourceType, "SI152"));
+						errs.addError(NoDeliveryParams("DVB-S", thisServiceId, SourceType, "SI152"));
 					v1Params = true;
 					break;
 				case dvbi.DVBC_SOURCE_TYPE:
 					if (!ServiceInstance.hasChild(dvbi.e_DVBCDeliveryParameters)) 
-						errs.addError(SL_helpers.NoDeliveryParams("DVB-C", thisServiceId, SourceType, "SI153"));
+						errs.addError(NoDeliveryParams("DVB-C", thisServiceId, SourceType, "SI153"));
 					v1Params = true;
 					break;
 				case dvbi.DVBDASH_SOURCE_TYPE:
 					if (!ServiceInstance.hasChild(dvbi.e_DASHDeliveryParameters)) 
-						errs.addError(SL_helpers.NoDeliveryParams("DVB-DASH", thisServiceId, SourceType, "SI154"));
+						errs.addError(NoDeliveryParams("DVB-DASH", thisServiceId, SourceType, "SI154"));
 					v1Params = true;
 					break;
 				case dvbi.DVBIPTV_SOURCE_TYPE:
 					if (!ServiceInstance.hasChild(dvbi.e_MulticastTSDeliveryParameters) && !ServiceInstance.hasChild(dvbi.e_RTSPDeliveryParameters))
-						errs.addError(SL_helpers.NoDeliveryParams("Multicast or RTSP", thisServiceId, SourceType, "SI155"));
+						errs.addError(NoDeliveryParams("Multicast or RTSP", thisServiceId, SourceType, "SI155"));
 					v1Params = true;
 					break;
 				case dvbi.DVBAPPLICATION_SOURCE_TYPE:
 					// there should not be any <xxxxDeliveryParameters> elements and there should be either a Service.RelatedMaterial or Service.ServiceInstance.RelatedMaterial signalling a service related application
 					// eslint-disable-next-line no-case-declarations
-					const foundDeliveryParameters = SL_helpers.deliveryParameters(ServiceInstance);
+					const foundDeliveryParameters = deliveryParameters(ServiceInstance);
 					if (foundDeliveryParameters) {
 						errs.addError({
 							code: "SI156",
@@ -1774,25 +1926,25 @@ export default class ServiceListCheck {
 			if (ModulationSystem) {
 				switch (ModulationSystem.content) {
 					case sats.MODULATION_S:
-						SL_helpers.checkElement(RollOff, dvbi.e_RollOff, sats.S_RollOff, sats.MODULATION_S, ERROR_KEY, errs, "SI201a");
-						SL_helpers.checkElement(ModulationType, dvbi.e_ModulationType, sats.S_Modulation, sats.MODULATION_S, ERROR_KEY, errs, "SI202a");
-						SL_helpers.checkElement(FEC, dvbi.e_FEC, sats.S_FEC, sats.MODULATION_S, ERROR_KEY, errs, "SI203a");
-						SL_helpers.DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodMode, sats.MODULATION_S, ERROR_KEY, errs, "a");
-						SL_helpers.DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S, ERROR_KEY, errs, "b");
-						SL_helpers.DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S, ERROR_KEY, errs, "c");
+						checkElement(RollOff, dvbi.e_RollOff, sats.S_RollOff, sats.MODULATION_S, ERROR_KEY, errs, "SI201a");
+						checkElement(ModulationType, dvbi.e_ModulationType, sats.S_Modulation, sats.MODULATION_S, ERROR_KEY, errs, "SI202a");
+						checkElement(FEC, dvbi.e_FEC, sats.S_FEC, sats.MODULATION_S, ERROR_KEY, errs, "SI203a");
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodMode, sats.MODULATION_S, ERROR_KEY, errs, "a");
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S, ERROR_KEY, errs, "b");
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S, ERROR_KEY, errs, "c");
 						break;
 					case sats.MODULATION_S2:
-						SL_helpers.checkElement(RollOff, dvbi.e_RollOff, sats.S2_RollOff, sats.MODULATION_S2, ERROR_KEY, errs, "SI201b");
-						SL_helpers.checkElement(ModulationType, dvbi.e_ModulationType, sats.S2_Modulation, sats.MODULATION_S2, ERROR_KEY, errs, "SI202b");
-						SL_helpers.checkElement(FEC, dvbi.e_FEC, sats.S2_FEC, sats.MODULATION_S2, ERROR_KEY, errs, "SI203b");
-						SL_helpers.DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodMode, sats.MODULATION_S2, ERROR_KEY, errs, "k");
-						SL_helpers.DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S2, ERROR_KEY, errs, "l");
-						SL_helpers.DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S2, ERROR_KEY, errs, "m");
+						checkElement(RollOff, dvbi.e_RollOff, sats.S2_RollOff, sats.MODULATION_S2, ERROR_KEY, errs, "SI201b");
+						checkElement(ModulationType, dvbi.e_ModulationType, sats.S2_Modulation, sats.MODULATION_S2, ERROR_KEY, errs, "SI202b");
+						checkElement(FEC, dvbi.e_FEC, sats.S2_FEC, sats.MODULATION_S2, ERROR_KEY, errs, "SI203b");
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ModcodMode, sats.MODULATION_S2, ERROR_KEY, errs, "k");
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_InputStreamIdentifier, sats.MODULATION_S2, ERROR_KEY, errs, "l");
+						DisallowedElement(DVBSDeliveryParameters, dvbi.e_ChannelBonding, sats.MODULATION_S2, ERROR_KEY, errs, "m");
 						break;
 					case sats.MODULATION_S2X:
-						SL_helpers.checkElement(RollOff, dvbi.e_RollOff, sats.S2X_RollOff, sats.MODULATION_S2X, ERROR_KEY, errs, "SI201c");
-						SL_helpers.checkElement(ModulationType, dvbi.e_ModulationType, sats.S2X_Modulation, sats.MODULATION_S2X, ERROR_KEY, errs, "SI202c");
-						SL_helpers.checkElement(FEC, dvbi.e_FEC, sats.S2X_FEC, sats.MODULATION_S2X, ERROR_KEY, errs, "SI203c");
+						checkElement(RollOff, dvbi.e_RollOff, sats.S2X_RollOff, sats.MODULATION_S2X, ERROR_KEY, errs, "SI201c");
+						checkElement(ModulationType, dvbi.e_ModulationType, sats.S2X_Modulation, sats.MODULATION_S2X, ERROR_KEY, errs, "SI202c");
+						checkElement(FEC, dvbi.e_FEC, sats.S2X_FEC, sats.MODULATION_S2X, ERROR_KEY, errs, "SI203c");
 						// <ModcodMode> is value checked in schema verification
 						// <InputStreamIdentifier> is ranfe checked in schema verification
 						// eslint-disable-next-line no-case-declarations
@@ -1846,7 +1998,7 @@ export default class ServiceListCheck {
 
 		// <ServiceInstance><MulticastTSDeliveryParameters>
 		const MulticastTSDeliveryParameters = ServiceInstance.getAnyNs(dvbi.e_MulticastTSDeliveryParameters);
-		if (MulticastTSDeliveryParameters) SL_helpers.checkMulticastDeliveryParams(MulticastTSDeliveryParameters, errs, "SI235");
+		if (MulticastTSDeliveryParameters) checkMulticastDeliveryParams(MulticastTSDeliveryParameters, errs, "SI235");
 
 		// <ServiceInstance><OtherDeliveryParameters>
 		const OtherDeliveryParameters = ServiceInstance.getAnyNs(dvbi.e_OtherDeliveryParameters);
@@ -1854,7 +2006,7 @@ export default class ServiceListCheck {
 
 		// <ServiceInstance><IdentifierDeliveryParameters>
 		const IdentifierBasedDeliveryParameters = ServiceInstance.getAnyNs(dvbi.e_IdentifierBasedDeliveryParameters);
-		if (IdentifierBasedDeliveryParameters) SL_helpers.checkIdDelivery(IdentifierBasedDeliveryParameters, errs, "SI239");
+		if (IdentifierBasedDeliveryParameters) checkIdDelivery(IdentifierBasedDeliveryParameters, errs, "SI239");
 	}
 
 	#getContentGuideById(ServiceList: XmlElement | null, CGid : string | undefined) : XmlElement | null {
@@ -1926,7 +2078,7 @@ export default class ServiceListCheck {
 		const uID = service.getAnyNs(dvbi.e_UniqueIdentifier);
 		if (uID) {
 			thisServiceId = uID.content;
-			if (!SL_helpers.validServiceIdentifier(thisServiceId))
+			if (!validServiceIdentifier(thisServiceId))
 				errs.addError({
 					code: "SL110",
 					message: `${thisServiceId.quote()} is not a valid service identifier`,
@@ -1953,7 +2105,7 @@ export default class ServiceListCheck {
 		service.forEachNamedChildElement(dvbi.e_TargetRegion, (TargetRegion) => {
 			const found = documentInfo.knownRegionIDs.find((r) => r.region == TargetRegion.content);
 			if (found == undefined) 
-				errs.addError(SL_helpers.UnspecifiedTargetRegion(TargetRegion.content, `service ${thisServiceId.quote()}`, "SL130", TargetRegion));
+				errs.addError(UnspecifiedTargetRegion(TargetRegion.content, `service ${thisServiceId.quote()}`, "SL130", TargetRegion));
 			else {
 				if (!found.selectable)
 					errs.addError({
@@ -2513,7 +2665,7 @@ export default class ServiceListCheck {
 
 		// check ServiceList@id
 		documentInfo.thisServiceListId = ServiceList.attrAnyNsValueOr(dvbi.a_id);
-		if (documentInfo.thisServiceListId && !SL_helpers.validServiceListIdentifier(documentInfo.thisServiceListId))
+		if (documentInfo.thisServiceListId && !validServiceListIdentifier(documentInfo.thisServiceListId))
 			errs.addError({
 				code: "SL016",
 				message: `${documentInfo.thisServiceListId.quote()} is not a valid service list identifier`,
@@ -2592,7 +2744,7 @@ export default class ServiceListCheck {
 		ServiceList.forEachNamedChildElement(dvbi.e_TargetRegion, (TargetRegion) => {
 			const found = documentInfo.knownRegionIDs.find((r) => r.region == TargetRegion.content);
 			if (found == undefined) 
-				errs.addError(SL_helpers.UnspecifiedTargetRegion(TargetRegion.content, "service list", "SL051", TargetRegion));
+				errs.addError(UnspecifiedTargetRegion(TargetRegion.content, "service list", "SL051", TargetRegion));
 			else if (!found.selectable)
 				errs.addError({
 					code: "SL052",
@@ -2616,7 +2768,7 @@ export default class ServiceListCheck {
 		const SubscriptionPackageList = ServiceList.getAnyNs(dvbi.e_SubscriptionPackageList);
 		if (SubscriptionPackageList) {
 			SubscriptionPackageList.forEachNamedChildElement(dvbi.e_SubscriptionPackage, (SubscriptionPackage) => {
-				const pkg = SL_helpers.localizedSubscriptionPackage(SubscriptionPackage);
+				const pkg = localizedSubscriptionPackage(SubscriptionPackage);
 
 				if (DuplicatedValue(documentInfo.declaredSubscriptionPackages, pkg))
 					errs.addError({
@@ -2785,7 +2937,7 @@ export default class ServiceListCheck {
 						packageLanguage = GetNodeLanguage(SubscriptionPackage, false, errs, "SL246");
 					}
 
-					const localSubscriptionPackage = SL_helpers.localizedSubscriptionPackage(SubscriptionPackage, packageLanguage);
+					const localSubscriptionPackage = localizedSubscriptionPackage(SubscriptionPackage, packageLanguage);
 					if (DuplicatedValue(SubscriptionPackages, localSubscriptionPackage))
 						errs.addError({
 							code: "SL247",

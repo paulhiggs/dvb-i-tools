@@ -60,8 +60,8 @@ The match is exact. Each expected code must occur `count` times (default 1), and
 ### Checkers
 
 Each document type has one checker class. The class is constructed once and reused for every request, because its constructor loads all classification schemes and XSD schemas:
-- `ServiceListCheck` in [lib/sl_check.mts](lib/sl_check.mts), with helpers in `sl_check_helpers.mts`
-- `ContentGuideCheck` in [lib/cg_check.mts](lib/cg_check.mts), with helpers in `cg_check_helpers.mts`
+- `ServiceListCheck` in [lib/sl_check.mts](lib/sl_check.mts)
+- `ContentGuideCheck` in [lib/cg_check.mts](lib/cg_check.mts)
 - `PlaylistCheck` in [lib/playlist_check.mts](lib/playlist_check.mts)
 - `ServiceListRegistryCheck` in [lib/slr_check.mts](lib/slr_check.mts)
 - `XmlAitCheck` in [lib/ait_check.mts](lib/ait_check.mts), with names in `MHP_definitions.mts` (#134). `doValidateXmlAit(text, role, errs, options)` takes the role of the AIT (`linked`, `deeplink` or `template`), as the A177 rules differ for each. Its schemas are in `schemas/ts102809/2009/` and `2026/`, each folder with the imports its `mis_xmlait*.xsd` expects (keep them there, unchanged). The service list and content guide checkers get it as `opts.aitcheck`, and hand the AITs their documents refer to to `validateReferencedAit()` when the request has `aits`, which validates them like a traversed document
