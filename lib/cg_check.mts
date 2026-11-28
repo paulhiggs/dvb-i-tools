@@ -1494,11 +1494,16 @@ export default class ContentGuideCheck {
 						}
 						break;
 					case CG_REQUEST_MORE_EPISODES: // clause 6.10.5.7
-						checkTopElementsAndCardinality(BasicDescription, [{ name: tva.e_RelatedMaterial, maxOccurs: 4 }], tvaEC.BasicDescription, false, errs, "BD070");
+						checkTopElementsAndCardinality(BasicDescription, [{ name: tva.e_RelatedMaterial, minOccurs:0, maxOccurs: 4 }], tvaEC.BasicDescription, false, errs, "BD070");
 						this.#ValidateRelatedMaterial_MoreEpisodes(BasicDescription, errs);
 						break;
 					case CG_REQUEST_BS_CATEGORIES: // clause 6.10.5.8
-						if (isParentGroup) checkTopElementsAndCardinality(BasicDescription, [{ name: tva.e_Title, maxOccurs: Infinity }], tvaEC.BasicDescription, false, errs, "BD080");
+						if (isParentGroup) 
+							checkTopElementsAndCardinality(BasicDescription, 
+								[
+									{ name: tva.e_Title, maxOccurs: Infinity }, 
+									{ name: tva.e_RelatedMaterial, minOccurs:0, maxOccurs: 4 }
+								], tvaEC.BasicDescription, false, errs, "BD080");
 						else
 							checkTopElementsAndCardinality(
 								BasicDescription,
