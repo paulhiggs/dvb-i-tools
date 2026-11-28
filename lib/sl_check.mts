@@ -91,6 +91,7 @@ import type { SignaturePolicy } from "./certificate_utils.mts"
 import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES, type CG_Validator_Options } from "./cg_check.mts"
 import { allowTraversal, currentMarket, currentRequest, currentValidation, setDocumentRevision, deferRetrieval, deferTask, retrieveTraversal, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
 import { COVERAGE_TOLERANCE_MS, DAY_STATES, scheduleCoverage } from "./schedule_coverage.mts"
+import { checkImageVariantRevision, refusedImageVariant, withImageVariant } from "./image_variants.mts"
 import type { DayCoverage, DayState, ServiceCoverage } from "./schedule_coverage.mts"
 
 /**
@@ -2280,7 +2281,7 @@ export default class ServiceListCheck {
 
 				// check now/next via ScheduleInfoEndpoint
 				if (siEpURL && serviceID) {
-					const NowNextURL = `${siEpURL}?sid=${serviceID}&now_next=true`
+					const NowNextURL = withImageVariant(`${siEpURL}?sid=${serviceID}&now_next=true`)
 					const cg_errors = nestedTraversal(errs, NowNextURL, CG_REQUEST_SCHEDULE_NOWNEXT, "Now/Next")
 	/*dbg*/console.log(` ${NowNextURL} Now/Next lookup for serviceID ${serviceID}`)
 					if (cg_errors) this.#content_guide_validator.validateContentGuide(
@@ -2314,7 +2315,7 @@ export default class ServiceListCheck {
 							const end_sec = end.epochMilliseconds / 1000
 
 							// inclusive=true also asks for the events that started before the window (A177r8 clause 6.5.2.2)
-							const TimestampInterval = `${siEpURL}?sid=${serviceID}&start=${start_sec}&end=${end_sec}&inclusive=true`
+							const TimestampInterval = withImageVariant(`${siEpURL}?sid=${serviceID}&start=${start_sec}&end=${end_sec}&inclusive=true`)
 							const cg_errors = nestedTraversal(errs, TimestampInterval, CG_REQUEST_SCHEDULE_TIME, `Timestamp filtered schedule: ${start}-${end}`)
 	/*dbg*/console.log(`traverse:: ${TimestampInterval} Timestamp ${start}-${end} lookup for serviceID ${serviceID}`)
 							if (cg_errors) this.#content_guide_validator.validateContentGuide(
@@ -2334,7 +2335,7 @@ export default class ServiceListCheck {
 					if (serviceID) {
 	/*dbg*/console.log(`traverse:: ${giEpURL} Boxset categories lookup for serviceID ${serviceID}`)
 //						const BSCategoriesSvcURL = `${giEpURL}categories?sid=${serviceID}&page_size=all`
-						const BSCategoriesSvcURL = `${giEpURL}categories?sid=${serviceID}`
+						const BSCategoriesSvcURL = withImageVariant(`${giEpURL}categories?sid=${serviceID}`)
 						const cg_errors = nestedTraversal(errs, BSCategoriesSvcURL, CG_REQUEST_BS_CATEGORIES, `Boxset Categories for ${serviceID}`)
 						if (cg_errors) this.#content_guide_validator.validateContentGuide(
 							myContentGuide.getAnyNs(dvbi.e_GroupInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
@@ -2346,7 +2347,7 @@ export default class ServiceListCheck {
 
 	/*dbg*/console.log(`traverse:: ${giEpURL} Boxset categories lookup endpoint`)
 //					const BSCategoriesAllURL = `${giEpURL}categories&page_size=all`
-					const BSCategoriesAllURL = `${giEpURL}categories`
+					const BSCategoriesAllURL = withImageVariant(`${giEpURL}categories`)
 					const cg_errors = nestedTraversal(errs, BSCategoriesAllURL, CG_REQUEST_BS_CATEGORIES, "Boxset Categories for all services")
 					if (cg_errors) this.#content_guide_validator.validateContentGuide(
 						myContentGuide.getAnyNs(dvbi.e_GroupInfoEndpoint)!.getAnyNs(dvbi.e_URI)!, 
@@ -2674,6 +2675,8 @@ export default class ServiceListCheck {
 		setDocumentRevision(SL_SchemaVersion(ns));
 		// a revision that the market does not permit is reported, and the service list is not validated (decision 29)
 		if (refusedRevision(SL_SchemaVersion(ns), SL.root, errs)) return;
+		// an image variant that the revision does not define (issue #153)
+		checkImageVariantRevision(SL_SchemaVersion(ns), SL.root, errs);
 		const documentInfo = new FoundDocumentItems(true); // collection of things we learn when parsing the service list
 
 		if (!this.#doSchemaVerification(SL as XmlDocument, errs, "SL005", request.report_schema_version)) {
@@ -3167,6 +3170,7 @@ export default class ServiceListCheck {
 		if (scope.depth == 0) {
 			errs.timing = scope.timing();
 			errs.market = marketSummary(scope.budget.request.market);
+			errs.imageVariant = scope.budget.request.imageVariant;
 		}
 	}
 
@@ -3226,7 +3230,8 @@ export default class ServiceListCheck {
 				if (policy) await checkSignedResponse(Location, requestUrl, resp, policy, errs, validation);
 				if (resp.ok)
 					await this.doValidateServiceList(resp.text(), errs);
-				else errs.addError({
+				// a 400 for a valid image variant is a finding of its own (issue #153)
+				else errs.addError((await refusedImageVariant(resp.status, requestUrl, Location)) ?? {
 					code: `VSL002`,
 					message: `error with "${Location.content}" - ${resp.status} ${resp.statusText}`,
 					fragment: Location,

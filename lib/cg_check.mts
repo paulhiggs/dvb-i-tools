@@ -34,6 +34,7 @@ import { checkReferencedResource, checkSignedResponse, signaturePolicyOf } from 
 import type { ValidationOptions } from "./safe_fetch.mts"
 import { cg_InvalidHrefValue, NoChildElement, keys, CStermUsage } from "./common_errors.mts"
 import { checkAttributes, checkTopElementsAndCardinality, SchemaCheck, SchemaLoad, SchemaVersionCheck } from "./schema_checks.mts"
+import { checkImageVariantRevision, paginationWithImageVariant, refusedImageVariant, withImageVariant } from "./image_variants.mts"
 import type { ElementCardinalityType } from "./schema_checks.mts"
 import { checkLanguage, GetNodeLanguage, checkXMLLangs } from "./multilingual_element.mts"
 import document_logger from "./logger.mts"
@@ -1714,7 +1715,7 @@ export default class ContentGuideCheck {
 				});
 
 			if (currentRequest().traverse && options?.progInfo_ep) {
-				const piURL = `${options?.progInfo_ep}?pid=${programCRID}`
+				const piURL = withImageVariant(`${options?.progInfo_ep}?pid=${programCRID}`)
 				const piErrs = nestedTraversal(errs, piURL, CG_REQUEST_PROGRAM, "Program Information")
 	/*dbg*/console.log(`traverse:: DPI of ${piURL}`)
 				if (piErrs) this.validateContentGuide(ProgramInformation, piURL, CG_REQUEST_PROGRAM, piErrs, {} )
@@ -1723,7 +1724,7 @@ export default class ContentGuideCheck {
 			// traverse more episodes if provided. The episodes in a More Episodes response are not themselves traversed for
 			// more episodes, as each would request the same series again under a different URL
 			if (currentRequest().traverse && options?.mEpisodes_ep && requestType != CG_REQUEST_MORE_EPISODES) {
-				const mepURL = `${options?.mEpisodes_ep}?pid=${programCRID}`
+				const mepURL = withImageVariant(`${options?.mEpisodes_ep}?pid=${programCRID}`)
 				const mepErrs = nestedTraversal(errs, mepURL, CG_REQUEST_MORE_EPISODES, `More Episodes for ${programCRID}`)
 	/*dbg*/console.log(`traverse:: More Episodes of ${mepURL}`)
 				if (mepErrs) this.validateContentGuide(ProgramInformation, mepURL, CG_REQUEST_MORE_EPISODES, mepErrs, options )
@@ -1942,7 +1943,8 @@ export default class ContentGuideCheck {
 					if (currentRequest().traverse && options?.grpInfo_ep && BasicDescription)
 						BasicDescription.forEachNamedChildElement(tva.e_RelatedMaterial, (rm) => {
 							if (getHowRelated(rm) == dvbi.PAGINATION_NEXT_URI) {
-								const paginationURL = getMediaUri(rm)
+								// with the image variant of the validation, which the server should have kept (issue #153)
+								const pageURL = getMediaUri(rm), paginationURL = pageURL ? paginationWithImageVariant(pageURL, rm, errs) : null
 								if (paginationURL) {
 									const paginationErrs = nestedTraversal(errs, paginationURL, CG_REQUEST_BS_CATEGORIES, "Box Set Categories (pagination)")
 	/*dbg*/console.log(`traverse:: Next pagination for Box Set Categories of ${paginationURL}`)
@@ -1963,7 +1965,7 @@ export default class ContentGuideCheck {
 					//traverse:: validate the Box Set List
 					const list_groupId = GroupInformation.attrAnyNsValueOr(tva.a_groupId)
 					if (list_groupId && currentRequest().traverse && options?.grpInfo_ep) {
-						const bslURL = `${options.grpInfo_ep}?groupId=${list_groupId}`
+						const bslURL = withImageVariant(`${options.grpInfo_ep}?groupId=${list_groupId}`)
 						const bslErrs = nestedTraversal(errs, bslURL, CG_REQUEST_BS_LISTS, "Box Set List")
 	/*dbg*/console.log(`traverse:: Box Set List of ${bslURL}`)
 						if (bslErrs) this.validateContentGuide(GroupInformation, bslURL, CG_REQUEST_BS_LISTS, bslErrs, options )
@@ -1996,7 +1998,8 @@ export default class ContentGuideCheck {
 					if (currentRequest().traverse && options?.grpInfo_ep && BasicDescription)
 						BasicDescription.forEachNamedChildElement(tva.e_RelatedMaterial, (rm) => {
 							if (getHowRelated(rm) == dvbi.PAGINATION_NEXT_URI) {
-								const paginationURL = getMediaUri(rm)
+								// with the image variant of the validation, which the server should have kept (issue #153)
+								const pageURL = getMediaUri(rm), paginationURL = pageURL ? paginationWithImageVariant(pageURL, rm, errs) : null
 								if (paginationURL) {
 									const paginationErrs = nestedTraversal(errs, paginationURL, CG_REQUEST_BS_LISTS, "Box Set Lists (pagination)")
 	/*dbg*/console.log(`traverse:: Next pagination for Box Set Lists of ${paginationURL}`)
@@ -2017,7 +2020,7 @@ export default class ContentGuideCheck {
 					//traverse:: validate the Box Set Contents 
 					const list_groupId = GroupInformation.attrAnyNsValueOr(tva.a_groupId)
 					if (list_groupId && currentRequest().traverse && options?.grpInfo_ep) {
-						const bscURL = `${options.grpInfo_ep}contents?groupId=${list_groupId}`
+						const bscURL = withImageVariant(`${options.grpInfo_ep}contents?groupId=${list_groupId}`)
 						const bscErrs = nestedTraversal(errs, bscURL, CG_REQUEST_BS_CONTENTS, "Box Set Contents")
 	/*dbg*/console.log(`traverse:: Box Set Contents of ${bscURL}`)
 						if (bscErrs) this.validateContentGuide(GroupInformation, bscURL, CG_REQUEST_BS_CONTENTS, bscErrs, options)
@@ -2040,7 +2043,8 @@ export default class ContentGuideCheck {
 					if (currentRequest().traverse && options?.grpInfo_ep && BasicDescription)
 						BasicDescription.forEachNamedChildElement(tva.e_RelatedMaterial, (rm) => {
 							if (getHowRelated(rm) == dvbi.PAGINATION_NEXT_URI) {
-								const paginationURL = getMediaUri(rm)
+								// with the image variant of the validation, which the server should have kept (issue #153)
+								const pageURL = getMediaUri(rm), paginationURL = pageURL ? paginationWithImageVariant(pageURL, rm, errs) : null
 								if (paginationURL) {
 									const paginationErrs = nestedTraversal(errs, paginationURL, CG_REQUEST_BS_CONTENTS, "Box Set Contents (pagination)")
 	/*dbg*/console.log(`traverse:: Next pagination for Box Set Contents of ${paginationURL}`)
@@ -3804,6 +3808,8 @@ export default class ContentGuideCheck {
 		// revision and that the market permits. A document that no permitted revision uses is not validated (decision 29)
 		if (documentRevision() == undefined) {
 			const revision = contentGuideRevision(CG_SchemaVersion((CG.root as XmlElement).documentNamespace()), CG.root as XmlElement, errs);
+			// an image variant that the revision does not define (issue #153)
+			if (revision) checkImageVariantRevision(revision, CG.root as XmlElement, errs);
 			if (!revision) return;
 			setDocumentRevision(revision);
 		}
@@ -3945,6 +3951,7 @@ export default class ContentGuideCheck {
 		if (scope.depth == 0) {
 			errs.timing = scope.timing();
 			errs.market = marketSummary(scope.budget.request.market);
+			errs.imageVariant = scope.budget.request.imageVariant;
 		}
 	}
 
@@ -4011,7 +4018,8 @@ export default class ContentGuideCheck {
 				if (policy) await checkSignedResponse(Location, requestUrl, resp, policy, errs, validation);
 				if (resp.ok)
 					await this.doValidateContentGuide(resp.text(), requestType, errs, options);
-				else errs.addError({
+				// a 400 for a valid image variant is a finding of its own (issue #153)
+				else errs.addError((await refusedImageVariant(resp.status, requestUrl, Location)) ?? {
 					code: `VCG002`,
 					message: `error with "${Location.content}" - ${resp.status} ${resp.statusText}`,
 					fragment: Location,

@@ -145,6 +145,7 @@ export default class ErrorList {
 	// for the document a validation was requested for: how long the validation took, and the retrievals it made
 	timing?: ValidationTiming
 	market?: { id: string; name: string } // the market the document was validated for (issue #119), if any
+	imageVariant?: string // the image_variant of the requests of the validation (issue #153), if any
 
 	// for a service list validated with traversal: the coverage of the schedule of each service (issue #122)
 	scheduleCoverage?: ServiceCoverage[]

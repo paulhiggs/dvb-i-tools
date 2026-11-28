@@ -17,7 +17,7 @@ import type { ValidationOptions } from "../safe_fetch.mts"
 import document_logger, { createPrefix } from "../logger.mts"
 import type { ValidatorConfig } from "../config.mts"
 import type { ValidatorServices } from "../services.mts"
-import { checkMethod, getDocument, recordOutcome, report, requestFromQuery } from "./request_handling.mts"
+import { checkMethod, getDocument, imageVariantOf, recordOutcome, report, requestFromQuery } from "./request_handling.mts"
 
 // a document to validate may be sent as the body of a POST, up to the largest document the server accepts (by default
 // MAX_DOCUMENT_BYTES, or server.maxDocumentBytes of the configuration, issue #147). A larger one is answered with 413
@@ -44,7 +44,16 @@ async function validateDocument(
 	const errs = ErrorList.withMarkup();
 	const log_prefix = createPrefix(req, mode);
 	// the request is checked first, so a document is not retrieved for a request that is not valid
-	const request = requestFromQuery(req, log_prefix, errs, traversal);
+	let request = requestFromQuery(req, log_prefix, errs, traversal);
+	// the image variant of the URL applies to the requests for service lists, registry responses and content guides, and
+	// must be one of table 8 of A177 (issue #153)
+	if (request.options) {
+		if (![MODE_SL, MODE_SLR, MODE_CG].includes(mode)) request.options.imageVariant = undefined;
+		else if (req.method == "GET") {
+			const variant = imageVariantOf(typeof req.query.url == "string" ? req.query.url : undefined);
+			if (variant.parseErr) request = { parseErr: variant.parseErr, status: 400 };
+		}
+	}
 	const { document, parseErr } = request.options ? await getDocument(req) : { document: undefined, parseErr: request.parseErr };
 
 	if (document && request.options) await validate(document, errs, request.options, req);

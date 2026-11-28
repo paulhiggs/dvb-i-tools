@@ -18,6 +18,7 @@ import { WARNING } from "./error_list.mts"
 import ErrorList from "./error_list.mts"
 import type { ResourceOutcome } from "./resource_checks.mts"
 import { checkMarketImage } from "./market_checks.mts"
+import { checkImageVariant } from "./image_variants.mts"
 import type { MarketImageKind } from "./markets.mts"
 
 const IMAGE_KEY = "image checks";
@@ -84,6 +85,8 @@ function checkImageProperties(image: ImageInfo, contentType: string | null, wher
 		report("IMG008", `${where} has ${image.bitsPerComponent} bits per colour component, not 8`, WARNING, "Images shall have a colour depth of 32 bits (8 bits per component).");
 	if (image.cmyk) report("IMG009", `${where} uses a CMYK colour space, not sRGB`, WARNING, "Images shall use the sRGB colour space (either explicitly signalled or assumed if not).");
 	checkMarketImage(image, kind, where, MediaUri, errs);
+	// the image variant that the document was requested with (issue #153)
+	checkImageVariant(image, where, MediaUri, errs);
 	return permitted;
 }
 

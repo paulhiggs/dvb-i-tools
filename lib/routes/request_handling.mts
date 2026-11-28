@@ -10,7 +10,7 @@
 
 import express from "express"
 
-import { drawResults, MODE_CG, MODE_SL, MODE_SLR } from "../ui.mts"
+import { drawResults, MODE_CG, MODE_SL, MODE_SLR, MODE_URL } from "../ui.mts"
 import type { FormState } from "../ui.mts"
 import ErrorList, { INFORMATION } from "../error_list.mts"
 import { jsonResult } from "../json_results.mts"
@@ -19,6 +19,7 @@ import { keys } from "../common_errors.mts"
 import { safeFetch, IMAGE_CHECKING, currentFetchPolicy, parseTraversalLimit } from "../safe_fetch.mts"
 import type { ImageChecking, ValidationOptions } from "../safe_fetch.mts"
 import { definedMarkets, findMarket } from "../markets.mts"
+import { IMAGE_VARIANTS, isImageVariant, urlImageVariant } from "../image_variants.mts"
 
 // initialise string formatting extensions
 import {} from "../string-extensions.mts"
@@ -112,6 +113,21 @@ export function getMarket(req: express.Request): { market?: string; parseErr?: s
 	return { parseErr: [`the market ${value.quote()} is not defined${ids.length > 0 ? `: the markets are ${ids.join(", ")}` : ""}`] };
 }
 
+/**
+ * the image variant of a validation (issue #153): the image_variant of the URL of the document, as a client gives it in
+ * its request. Its value must be one of table 8 of A177r8 clause 5.2.8.2.1: another value is refused, and the document is
+ * not requested
+ *
+ * @param {string} url  the URL of the document, when it is given by URL
+ * @returns {object} the image variant (undefined for none), or why the URL's value cannot be used
+ */
+export function imageVariantOf(url: string | undefined): { imageVariant?: string; parseErr?: string[] } {
+	const inURL = url ? urlImageVariant(url) : undefined;
+	if (inURL == undefined) return {};
+	if (isImageVariant(inURL)) return { imageVariant: inURL };
+	return { parseErr: [`the image_variant ${inURL.quote()} of the URL is not one of the image variants of A177 (clause 5.2.8.2.1, table 8): ${IMAGE_VARIANTS.map((v) => v.value).join(", ")}`] };
+}
+
 // the choices for a validation, or why the request is not valid (with the HTTP status to answer with, when it is not 200)
 export type RequestResult = { options: ValidationOptions; parseErr?: undefined } | { options?: undefined; parseErr: string[]; status?: number }
 
@@ -119,6 +135,7 @@ export type RequestResult = { options: ValidationOptions; parseErr?: undefined }
  * the choices of a validation requested through a /validate_* endpoint, from the query (GET) or the X- headers (POST):
  * - the market (market / X-market, or the deprecated variants / X-variants) and image checking (images / X-images). A market
  *   that is not defined is answered with 400, as the validation cannot be made for it
+ * - the image variant: the image_variant of the URL of the document (a GET), issue #153
  * - turning off the checks of references against their signature policies: connection_certificates=false
  *   (X-connection-certificates) and response_signatures=false (X-response-signatures)
  * - for a document that can traverse (a service list or service list registry): traversal (traverse / X-traverse) and its
@@ -137,6 +154,7 @@ export function requestFromQuery(req: express.Request, log_prefix: string | unde
 		log_prefix,
 		report_schema_version: true,
 		market,
+		imageVariant: req.method == "GET" && typeof req.query?.url == "string" ? imageVariantOf(req.query.url).imageVariant : undefined,
 		images: getImageChecking(req),
 		aits: isTrue(requestParameter(req, "aits")),
 		connectionCertificates: !isFalse(requestParameter(req, "connection_certificates")),
@@ -185,6 +203,8 @@ export function requestFromCheckForm(form: FormState, testtype: string, log_pref
 		log_prefix,
 		report_schema_version: true,
 		market: list && form.market.length > 0 ? form.market : undefined,
+		// the image variant of the URL, for the requests for service lists, registry responses and content guides (issue #153)
+		imageVariant: refersToAITs && form.entry == MODE_URL ? imageVariantOf(form.url).imageVariant : undefined,
 		traverse: list && form.traverse,
 		maxTraversal,
 		maxTraversalDepth,

@@ -372,6 +372,7 @@ export type ValidationRequest = {
 	images: ImageChecking; // how referenced images are checked (default "yes")
 	aits: boolean; // retrieve and validate the XML AITs that the documents refer to (default false, issue #134)
 	market?: string; // the id of the market the documents are validated for (default none: the A177 baseline, issue #119)
+	imageVariant?: string; // the image_variant added to each request for a document (default none, issue #153): a value of image_variants.mts
 	report_schema_version: boolean; // report the state of each document's schema (default true)
 	log_prefix?: string; // where the outermost document is archived (default none); traversed documents are not archived
 };
@@ -415,6 +416,7 @@ export const validationRequest = (options: ValidationOptions = {}): ValidationRe
 	images: options.images ?? "yes",
 	aits: options.aits ?? false,
 	market: requestedMarket(options.market),
+	imageVariant: options.imageVariant,
 	report_schema_version: options.report_schema_version ?? true,
 	log_prefix: options.log_prefix,
 });

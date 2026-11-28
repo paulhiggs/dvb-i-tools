@@ -18,6 +18,7 @@ export type ImageInfo = {
 	bitsPerComponent?: number; // bits per colour component (for a palette PNG, of the palette entries)
 	cmyk?: boolean; // the image uses a CMYK (or YCCK) colour space, not sRGB
 	pixelAspect?: { x: number; y: number }; // the pixel aspect ratio, when the image signals one
+	transparency?: boolean; // the image can have transparent pixels: an alpha channel, or a transparent colour (issue #153)
 	problem?: string; // why the header could not be read (the image is truncated or corrupt)
 	size?: number; // the size of the file, in bytes
 };
@@ -44,6 +45,8 @@ function readPNG(bytes: Buffer): ImageInfo {
 			info.height = bytes.readUInt32BE(data + 4);
 			bitDepth = bytes[data + 8];
 			colourType = bytes[data + 9];
+		} else if (type == "tRNS") {
+			info.transparency = true; // a transparent colour, or the transparency of palette entries
 		} else if (type == "pHYs" && length >= 9) {
 			info.pixelAspect = { x: bytes.readUInt32BE(data), y: bytes.readUInt32BE(data + 4) };
 		} else if (type == "IDAT" || type == "IEND") break; // the properties are all signalled before the image data
@@ -52,6 +55,8 @@ function readPNG(bytes: Buffer): ImageInfo {
 	if (info.width == undefined) return { ...info, problem: "the PNG header (IHDR) is missing" };
 	// the palette entries of an indexed colour image (colour type 3) are always 8 bits per component
 	info.bitsPerComponent = colourType == 3 ? 8 : bitDepth;
+	// greyscale with alpha (4) and truecolour with alpha (6) have an alpha channel
+	info.transparency = info.transparency == true || colourType == 4 || colourType == 6;
 	return info;
 }
 
@@ -59,7 +64,7 @@ function readPNG(bytes: Buffer): ImageInfo {
 const JPEG_SOF = [0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf];
 
 function readJPEG(bytes: Buffer): ImageInfo {
-	const info: ImageInfo = { format: "jpeg" };
+	const info: ImageInfo = { format: "jpeg", transparency: false }; // a JPEG image has no transparency
 	let offset = 2,
 		adobeTransform = -1,
 		components = 0;
@@ -105,13 +110,16 @@ function readWebP(bytes: Buffer): ImageInfo {
 	if (chunk == "VP8X" && bytes.length >= data + 10) {
 		info.width = bytes.readUIntLE(data + 4, 3) + 1;
 		info.height = bytes.readUIntLE(data + 7, 3) + 1;
+		info.transparency = (bytes[data] & 0x10) != 0; // the alpha flag of the extended format
 	} else if (chunk == "VP8L" && bytes.length >= data + 5 && bytes[data] == 0x2f) {
 		const bits = bytes.readUInt32LE(data + 1);
 		info.width = (bits & 0x3fff) + 1;
 		info.height = ((bits >> 14) & 0x3fff) + 1;
+		info.transparency = ((bits >> 28) & 1) == 1; // alpha_is_used of the lossless format
 	} else if (chunk == "VP8 " && bytes.length >= data + 10 && startsWith(bytes, [0x9d, 0x01, 0x2a], data + 3)) {
 		info.width = bytes.readUInt16LE(data + 6) & 0x3fff;
 		info.height = bytes.readUInt16LE(data + 8) & 0x3fff;
+		info.transparency = false; // the simple lossy format has no alpha
 	} else return { ...info, problem: "the WebP image header is not recognised" };
 	return info;
 }

@@ -110,7 +110,8 @@ The network calls themselves (`fetch()` in `safeFetch()`, and the work given to 
 
 Two kinds of input reach a validator, and they travel differently:
 - **Choices for the whole validation** are a `ValidationRequest` (`lib/safe_fetch.mts`):
-  - the fields are `traverse`, `maxTraversal`, `images`, `aits`, `market`, `report_schema_version` and `log_prefix`
+  - the fields are `traverse`, `maxTraversal`, `images`, `aits`, `market`, `imageVariant`, `report_schema_version` and `log_prefix`
+  - `imageVariant` (#153) is the `image_variant` of the URL of the document (`imageVariantOf()`, which refuses a value that is not in table 8 of A177). It is added to every URL the validator builds for a service list, registry response or content guide request with `withImageVariant()` ([lib/image_variants.mts](lib/image_variants.mts)), and to the next pages of paginated responses with `paginationWithImageVariant()`. A new request for a document goes through it too
   - the outermost validation sets them once, from the options it is given: `ValidationScope.open(options)`
   - every document it traverses into uses the same choices, and ignores the options it is given for them
   - rules read them with `currentRequest()`, never from their `options` parameter

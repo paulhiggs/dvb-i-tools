@@ -29,7 +29,7 @@ import { findMarket } from "../markets.mts"
 import document_logger, { createPrefix } from "../logger.mts"
 import type { ValidatorConfig } from "../config.mts"
 import type { ValidatorServices } from "../services.mts"
-import { imageChecking, parseDepthLimit, recordOutcome, requestFromCheckForm, signatureChecks } from "./request_handling.mts"
+import { imageChecking, imageVariantOf, parseDepthLimit, recordOutcome, requestFromCheckForm, signatureChecks } from "./request_handling.mts"
 import { xmlBody } from "./validate.mts"
 
 // initialise string formatting extensions
@@ -104,6 +104,8 @@ async function DVB_I_check(
 			parseErr = [`the maximum number of documents to traverse must be a positive whole number or ${"unlimited".quote()}, not ${maxTraversalField.quote()}`]
 		else if (traverse && maxDepthField.length > 0 && maxDepth == undefined)
 			parseErr = [`the maximum depth of traversal must be a positive whole number, not ${maxDepthField.quote()}`]
+		// the image_variant of the URL must be one of table 8 of A177, for the documents it applies to (issue #153)
+		else if (doclocation == MODE_URL && [MODE_SL, MODE_SLR, MODE_CG].includes(testtype) && imageVariantOf(XMLurl).parseErr) parseErr = imageVariantOf(XMLurl).parseErr
 
 		const form: FormState = {
 			mode: available[testtype] ? testtype : defaults.mode,
