@@ -18,7 +18,7 @@ import type { SeverityList } from "./error_list.mts"
 import { validationTiming } from "./safe_fetch.mts"
 import type { ValidationHandle, ValidationObserver } from "./safe_fetch.mts"
 
-const SEVERITY_LISTS: SeverityList[] = ["fatals", "errors", "warnings", "informationals"]
+const SEVERITY_LISTS: SeverityList[] = ["fatals", "errors", "warnings", "informationals", "suppressed"]
 
 // a traversed document, as reported in a progress event
 export type DocumentProgress = {

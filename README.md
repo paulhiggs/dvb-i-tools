@@ -226,7 +226,7 @@ A validation can be made for a **market**: the settings of a market deployment o
 
 | Id | Name | Settings |
 |---|---|---|
-| `DE` | Germany | Only **A177r6** is permitted: a document of any other revision is reported with `MKT001` and not validated. The programme guide needs 7 days either side of today instead of 28. Service lists and service list registries are validated against the `-(DE)` schemas, which make `@networkID` optional, allow any number of `NetworkID` elements, and add `@directTuningAvailable` to `OrbitalPosition`. From the DTVP DVB-I Implementation Profile v1.1.0 (issue #139): service logos are 320 pixels wide and at most 64000 bytes, promotional still images (EPG images) 640 pixels wide and at most 100000 bytes, postcodes have 5 digits, and every DVB-S service instance has its direct tuning parameters |
+| `DE` | Germany | Only **A177r6** is permitted: a document of any other revision is reported with `MKT001` and not validated. The programme guide needs 7 days either side of today instead of 28. Service lists and service list registries are validated against the `-(DE)` schemas, which make `@networkID` optional, allow any number of `NetworkID` elements, and add `@directTuningAvailable` to `OrbitalPosition`. From the DTVP DVB-I Implementation Profile v1.1.0 (issue #139): service logos are 320 pixels wide and at most 64000 bytes, promotional still images (EPG images) 640 pixels wide and at most 100000 bytes, postcodes have 5 digits, and every DVB-S service instance has its direct tuning parameters. An XML AIT in the old `urn:dvb:mhp:2009` namespace is not a warning: `AIT006a` is suppressed |
 
 A validation is made for one market, or none (A177 itself). It applies to every document the validation traverses into. The market is chosen with:
 - **Market** on the /check form (for service lists and service list registries)
@@ -250,7 +250,7 @@ A market that is not defined is answered with `400` and a `parseErr` naming the 
     | `schedule.daysEitherSide` | the days of programme guide needed before and after today (`SL201`) | 28 |
     | `lcn.min`, `lcn.max` | the range of channel numbers in an `LCNTable`: `LCN@channelNumber` (`SL264`), `LCNRange@start` (`SL266`) and `LCNRange@end` (`SL267`). `min` must not be above `max` | 1, 9999 |
     | `postcode.digits` | the number of digits of the postcodes of the service list's regions (`MKT003`, an error): a `Postcode` and the `@from` and `@to` of a `PostcodeRange` have exactly that many digits (and `@from` is not after `@to`), and a `WildcardPostcode` has fewer digits beside its single `*`, which stands for at least one digit | none |
-  - `severity`: the severity of codes for the market, instead of A177's: `"error"`, `"warning"`, `"information"`, or `"off"` for findings that do not apply to the market. A key is a code (`"SL264"`), or a prefix of codes followed by `*` (`"SI020-1-*"`, `"SL24*"`), which has at least the letters and one digit. A code's own entry wins, and otherwise the longest prefix that it starts with. The code itself is never changed
+  - `severity`: the severity of codes for the market, instead of A177's: `"error"`, `"warning"`, `"information"`, `"suppressed"` for findings that are shown but not counted, or `"off"` for findings that do not apply to the market. A key is a code (`"SL264"`), or a prefix of codes followed by `*` (`"SI020-1-*"`, `"SL24*"`), which has at least the letters and one digit. A code's own entry wins, and otherwise the longest prefix that it starts with. The code itself is never changed
   - `images`: what the market stipulates for each kind of image: `serviceListLogo`, `serviceLogo`, `contentGuideSourceLogo` and `promotionalStillImage` (by their `HowRelated`). Each has a `width`, which the image must match exactly, with an optional `height` that it must also match (without it, any height and aspect ratio is accepted), and an optional `maxBytes`, the largest file size the market recommends. Each is a positive whole number, and either a `width` or `maxBytes` is needed. A later range replaces what an earlier one gives for a kind. A177 itself stipulates no sizes. They are checked only when images are checked (**Image checking** Yes, `images=yes|scaled`), for the image at the signalled URL (not one scaled with `?w=`) and for inline (`data:`) images:
     - `IMG020` (error): the image is not the size the market requires
     - `IMG021` (warning): the file is larger than `maxBytes` (for an inline image, its decoded data)
@@ -263,6 +263,12 @@ The settings for a document are those of the ranges that include its A177 revisi
 The results of a validation made for a market name it: the heading of the HTML results ("for the market Germany (DE)"), `market` (`{ "id", "name" }`) in the JSON results, and a `<!-- market: … -->` line in the archived marked-up document.
 
 A finding whose severity a market changes says so at the end of its message, e.g. `(an error in A177, a warning for the market DE)`. A finding that a market turns `off` is not reported at all: not in the HTML or JSON results, the archive or the progress view.
+
+A finding that a market sets to `suppressed` is still shown, but is not an error, warning or information: it is not counted in them, and does not make a document's result worse. Its message ends with its type in A177, e.g. `(a warning in A177, suppressed for the market DE)`. It is in its own list, `suppressed`:
+- the HTML results have a **suppressed by the market** count (only when there are any) and a **Suppressed by the market** table, and the marked-up listing shows it as `Suppressed`
+- in the traversed documents table and the progress view, its code is shown in grey
+- the JSON results have a `suppressed` count (with the other counts, in `totals` and in each tree node), `suppressed` codes in `codes`, and with `results=all` a `suppressed` array
+- the archive has it as `(S)`
 
 For example, the German market (without its description):
 
@@ -299,6 +305,9 @@ For example, the German market (without its description):
 					"maxBytes": 100000
 				}
 			},
+			"severity": {
+				"AIT006a": "suppressed"
+			},
 			"rules": {
 				"dvbsDirectTuning": true
 			}
@@ -333,7 +342,8 @@ Example response:
 	"fatals": 0,
 	"errors": 1,
 	"warnings": 0,
-	"informationals": 0
+	"informationals": 0,
+	"suppressed": 0
 }
 ```
 
@@ -345,7 +355,8 @@ If the document cannot be retrieved, a `parseErr` array describing the problem i
 	"fatals": 0,
 	"errors": 0,
 	"warnings": 0,
-	"informationals": 0
+	"informationals": 0,
+	"suppressed": 0
 }
 ```
 
@@ -372,11 +383,11 @@ With traversal, the JSON summary has a `traversed` object:
 
 ```json
 {
-	"fatals": 0, "errors": 345, "warnings": 39, "informationals": 0,
+	"fatals": 0, "errors": 345, "warnings": 39, "informationals": 0, "suppressed": 0,
 	"traversed": {
 		"documents": 30, "skipped": 9404, "repeats": 671,
 		"withFatals": 0, "withErrors": 11, "withWarnings": 11,
-		"totals": { "fatals": 0, "errors": 319, "warnings": 76, "informationals": 1581 },
+		"totals": { "fatals": 0, "errors": 319, "warnings": 76, "informationals": 1581, "suppressed": 0 },
 		"traversal": { "TRAV003": 9404 }
 	},
 	"timing": { "durationMs": 3120, "documentsTraversed": 30, "...": "..." }
@@ -419,11 +430,11 @@ Two query parameters narrow the tree. Leaving documents out is counted in `omitt
 {
 	"document": {
 		"url": "https://example.com/sl.xml", "type": "Service List", "severity": "error",
-		"counts": { "fatals": 0, "errors": 345, "warnings": 39, "informationals": 0 },
+		"counts": { "fatals": 0, "errors": 345, "warnings": 39, "informationals": 0, "suppressed": 0 },
 		"codes": { "errors": { "SL263": 18, "SI112-53": 327 }, "warnings": { "SL270": 38, "SL283": 1 } },
 		"nested": [
 			{ "url": "https://example.com/sip?sid=1&now_next=true", "type": "NowNext", "description": "Now/Next", "severity": "error",
-			  "counts": { "fatals": 0, "errors": 8, "warnings": 2, "informationals": 28 },
+			  "counts": { "fatals": 0, "errors": 8, "warnings": 2, "informationals": 28, "suppressed": 0 },
 			  "codes": { "errors": { "AV020": 2, "AV051-53": 6 }, "warnings": { "AV051-52a": 2 }, "informationals": { "PI021-3": 28 } },
 			  "omitted": 2 }
 		],
@@ -452,6 +463,7 @@ Example response:
 		],
 		"warnings": [],
 		"informationals": [],
+		"suppressed": [],
 		"errorDescriptions": []
 	}
 }
@@ -506,7 +518,7 @@ An XML AIT in the `urn:dvb:mhp:2026` namespace (the ETSI version, also in the el
 The codes:
 - `AIT001` the document is not well formed; `AIT002` the root element is not `<ServiceDiscovery>`; `AIT003` it has no namespace; `AIT004` the namespace is not supported
 - `AIT005:2009`, `AIT005:2026` the document is not valid against the schema of its namespace. In `urn:dvb:mhp:2026`, which has `attributeFormDefault="qualified"`, the attributes defined by the XML AIT schema itself are namespace qualified, e.g. `<mhp:applicationLocation mhp:verificationPolicy="...">`
-- `AIT006a` (warning) the AIT uses the old schema `urn:dvb:mhp:2009`, which is replaced by `urn:dvb:mhp:2026`; `AIT006b` (warning) the schema is a draft
+- `AIT006a` (warning, suppressed for the market `DE`) the AIT uses the old schema `urn:dvb:mhp:2009`, which is replaced by `urn:dvb:mhp:2026`; `AIT006b` (warning) the schema is a draft
 - `AIT009` the role is not one of those above
 - `AIT010` (information) an application is of a type that a DVB-I client does not run: only `application/vnd.hbbtv.xhtml+xml`, `text/html` and `application/xhtml+xml` are run (A177r8 clause 5.2.4.1, 5.2.4.2)
 - `AIT011` (information) the deep link says that the content is not available to the device (`application/vnd.dvbi.non`, A177r8 clause 5.2.4.2); `AIT012` (warning) `application/vnd.dvbi.non` in an AIT that is not a deep link

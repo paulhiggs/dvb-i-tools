@@ -16,7 +16,7 @@ import type { UploadedFile } from "express-fileupload"
 
 import { __dirname } from "./data_locations.mts"
 
-import { APPLICATION, ERROR, FATAL, WARNING } from "./error_list.mts"
+import { APPLICATION, ERROR, FATAL, INFORMATION, SUPPRESSED, WARNING } from "./error_list.mts"
 import ErrorList from "./error_list.mts";
 import type { ErrorType, SeverityList } from "./error_list.mts"
 import type { ValidationTiming } from "./safe_fetch.mts"
@@ -93,6 +93,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible, .seg input:focus-v
 .s-warn { --sev: var(--warn); --sev-bg: var(--warn-bg); }
 .s-info { --sev: var(--info); --sev-bg: var(--info-bg); }
 .s-debug { --sev: var(--debug); --sev-bg: var(--debug-bg); }
+.s-supp { --sev: var(--debug); --sev-bg: var(--debug-bg); }
 .s-ok { --sev: var(--ok); --sev-bg: var(--ok-bg); }
 
 .masthead { display: grid; gap: 14px; padding-top: 20px; }
@@ -193,8 +194,8 @@ a.chip:hover { text-decoration: underline; }
 .listing > span { display: block; white-space: pre; padding-right: 16px; }
 .listing > span[id] { counter-increment: ln; }
 .listing > span[id]::before { content: counter(ln); display: inline-block; width: 6ch; margin-right: 14px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
-.listing > span.s-error, .listing > span.s-warn, .listing > span.s-info { background: var(--sev-bg); box-shadow: inset 3px 0 0 var(--sev); }
-.listing > span.s-error::before, .listing > span.s-warn::before, .listing > span.s-info::before { color: var(--sev); font-weight: 600; }
+.listing > span.s-error, .listing > span.s-warn, .listing > span.s-info, .listing > span.s-supp { background: var(--sev-bg); box-shadow: inset 3px 0 0 var(--sev); }
+.listing > span.s-error::before, .listing > span.s-warn::before, .listing > span.s-info::before, .listing > span.s-supp::before { color: var(--sev); font-weight: 600; }
 .listing > span.f { white-space: pre-wrap; padding-left: calc(6ch + 14px); font-family: var(--font-sans); font-size: var(--step--1); color: var(--sev); background: var(--sev-bg); box-shadow: inset 3px 0 0 var(--sev); }
 
 .cov-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 10px 18px; font-size: var(--step--1); color: var(--muted); border-bottom: 1px solid var(--line); align-items: center; }
@@ -273,7 +274,7 @@ export const PAGE_BOTTOM = html`<footer><span>${pkg.name} v${pkg.version} by ${t
 
 // the CSS class for each value of ErrorList.severity(), used by the severity filter of the traversed documents table
 const SEVERITY_CLASS = ["s-ok", "s-debug", "s-info", "s-warn", "s-error", "s-fatal"];
-const LIST_CLASS: Record<SeverityList, string> = { fatals: "s-fatal", errors: "s-error", warnings: "s-warn", informationals: "s-info" };
+const LIST_CLASS: Record<SeverityList, string> = { fatals: "s-fatal", errors: "s-error", warnings: "s-warn", informationals: "s-info", suppressed: "s-supp" };
 
 // the parts of a page, written in order by sendHTML()
 type Parts = Generator<HTML | string>;
@@ -309,6 +310,7 @@ const MESSAGE_TYPE: [string, string][] = [
 	[ERROR, "Error"],
 	[APPLICATION, "Application error"],
 	[WARNING, "Warning"],
+	[SUPPRESSED, "Suppressed"],
 ];
 const messageText = (message: string): string => {
 	const type = MESSAGE_TYPE.find(([prefix]) => message.startsWith(`${prefix} `));
@@ -343,7 +345,7 @@ function* resultsBody(error: string[] | undefined, errs: ErrorList | undefined, 
 			count > 0
 				? html`<a class="badge ${severityClass}" href="#${id}"><span class="n">${formatCount(count)}</span><span class="label">${label}</span></a>`
 				: html`<span class="badge zero ${severityClass}"><span class="n">0</span><span class="label">${label}</span></span>`;
-		yield html`<div class="badges">${badge(errs.numFatals(), "fatals", "fatal", "s-fatal")}${badge(errs.numErrors(), "errors", "errors", "s-error")}${badge(errs.numWarnings(), "warnings", "warnings", "s-warn")}${badge(errs.numInformationals(), "informationals", "informational", "s-info")}</div>`;
+		yield html`<div class="badges">${badge(errs.numFatals(), "fatals", "fatal", "s-fatal")}${badge(errs.numErrors(), "errors", "errors", "s-error")}${badge(errs.numWarnings(), "warnings", "warnings", "s-warn")}${badge(errs.numInformationals(), "informationals", "informational", "s-info")}${errs.numSuppressed() > 0 && badge(errs.numSuppressed(), "suppressed", "suppressed by the market", "s-supp")}</div>`;
 
 		if (errs.numCountsFatal() > 0 || errs.numCountsErr() > 0 || errs.numCountsWarn() > 0 || errs.numCountsInfo() > 0) {
 			yield `<div class="categories" role="group" aria-label="Counts by category">`;
@@ -374,6 +376,9 @@ function* resultsBody(error: string[] | undefined, errs: ErrorList | undefined, 
 			yield* ErrorTable(errs.informationals, "informationals", "Informational", "s-info", parts.open);
 			resultsShown = true;
 		}
+
+		// the findings that the market of the validation suppresses (issue #119), which are not counted above
+		if (errs.numSuppressed() > 0) yield* ErrorTable(errs.suppressed, "suppressed", `Suppressed by the market${errs.market ? ` ${errs.market.name} (${errs.market.id})` : ""}`, "s-supp", parts.open);
 
 		if (errs.debugs.length > 0) {
 			yield sectionStart("debug", "Debug messages", formatCount(errs.debugs.length), "s-debug");
@@ -406,7 +411,7 @@ function* resultsBody(error: string[] | undefined, errs: ErrorList | undefined, 
 		for (const line of errs.markupXML) {
 			if (line.validationErrors?.length) {
 				const all = line.validationErrors.join(" ");
-				const severityClass = all.includes(FATAL) || all.includes(ERROR) || all.includes(APPLICATION) ? "s-error" : all.includes(WARNING) ? "s-warn" : "s-info";
+				const severityClass = all.includes(FATAL) || all.includes(ERROR) || all.includes(APPLICATION) ? "s-error" : all.includes(WARNING) ? "s-warn" : all.includes(INFORMATION) ? "s-info" : "s-supp";
 				yield html`<span id="line-${line.ix}" class="${severityClass}">${text(line.value)}</span>`;
 				yield html`<span class="f ${severityClass}">${joinHTML(line.validationErrors.map((message) => text(messageText(message))), BR)}</span>`;
 			}
@@ -454,7 +459,7 @@ function* nested_error_row(req: express.Request, errs: ErrorList | undefined, de
 		}
 		// the codes reported are shown as chips in their severity colours; the row's class is used by the severity filter
 		yield html`<tr class="${SEVERITY_CLASS[severity]} d${Math.min(depth, 10)}"><td>${refer}${nest.source && html`<span class="url">${nest.source}</span>`}</td><td>`
-		for (const list of ["fatals", "errors", "warnings", "informationals"] as SeverityList[])
+		for (const list of ["fatals", "errors", "warnings", "informationals", "suppressed"] as SeverityList[])
 			for (const [code, count] of nest.codesReported(list))
 				yield html`<span class="c ${LIST_CLASS[list]}">${code}${count > 1 && ` ×${count}`}</span>`
 		for (const msg of nest.debugs) yield html`<span class="dbg">${msg.code} ${msg.message}</span>`
