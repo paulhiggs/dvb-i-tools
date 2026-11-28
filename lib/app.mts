@@ -99,7 +99,7 @@ export function createApp(config: ValidatorConfig, services: ValidatorServices):
 	app.use(validateRouter(config, services));
 	app.use(checkRouter(config, services));
 	app.use(sleprRouter(config, services));
-	if (config.spamBlocker) init_spam_blocker(app);
+	if (config.spamBlocker) init_spam_blocker(app, config.spamBlocker);
 	app.use(infoRouter(services));
 
 	// any other path, with any method

@@ -16,12 +16,14 @@ import { existsSync, writeFile } from "fs"
 import { join, sep } from "path"
 import { MODE_URL, MODE_CG, MODE_SL, MODE_SLR, MODE_PL, MODE_AIT } from "./ui.mts"
 import ErrorList from "./error_list.mts"
+import { archiveFolder } from "./globals.mts"
 
 let lastArchiveStamp = "",
 	archiveSequence = 0;
 
 export function createPrefix(req: express.Request, testtype?: string) : string | undefined {
-	const logDir: string = join(".", "arch");
+	// the configured folder (files.archive, issue #147), or ./arch
+	const logDir: string = archiveFolder() ?? join(".", "arch");
 
 	if (!existsSync(logDir)) return undefined;
 	// a specified test type must be one of the known validation types

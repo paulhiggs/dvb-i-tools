@@ -19,9 +19,10 @@ import type { ValidatorConfig } from "../config.mts"
 import type { ValidatorServices } from "../services.mts"
 import { checkMethod, getDocument, recordOutcome, report, requestFromQuery } from "./request_handling.mts"
 
-// a document to validate may be sent as the body of a POST
-export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024; // the largest document that can be sent to be validated
-export const XML_BODY = express.text({ type: "application/xml", limit: MAX_DOCUMENT_BYTES });
+// a document to validate may be sent as the body of a POST, up to the largest document the server accepts (by default
+// MAX_DOCUMENT_BYTES, or server.maxDocumentBytes of the configuration, issue #147). A larger one is answered with 413
+export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
+export const xmlBody = (maxBytes: number): express.RequestHandler => express.text({ type: "application/xml", limit: maxBytes });
 
 // validates a document with the choices of the request
 type Validation = (document: string, errs: ErrorList, options: ValidationOptions, req: express.Request) => Promise<void>
@@ -65,6 +66,7 @@ export function validateRouter(config: ValidatorConfig, services: ValidatorServi
 	const router = express.Router();
 	const { slcheck, plcheck, cgcheck, slrcheck, aitcheck } = services;
 	const { motd, allowTraversal } = config;
+	const XML_BODY = xmlBody(config.maxDocumentBytes);
 
 	// the HTML and JSON endpoints of a document type
 	const endpoints = (path: string, mode: string, validate: Validation, traversal?: { allowed: boolean }) => {

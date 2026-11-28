@@ -8,7 +8,6 @@
  * Starts the listeners for the validator's application, and the cluster workers when --workers is given
  */
 
-import { join } from "path"
 import { createServer } from "https"
 import { createServer as createHttpServer } from "http"
 import type { Server } from "http"
@@ -19,16 +18,12 @@ import { cpus } from "os"
 import chalk from "chalk"
 import express from "express"
 
-import { __dirname } from "./data_locations.mts"
 import { readmyfile } from "./utils.mts"
 import { restartWorkersOnExit } from "./cluster_restart.mts"
 import { consoleLogger } from "./request_logging.mts"
 import type { ValidatorConfig } from "./config.mts"
-import { SHUTDOWN_GRACE_MS, SHUTDOWN_SIGNALS } from "./globals.mts"
+import { SHUTDOWN_SIGNALS, shutdownGraceMs } from "./globals.mts"
 import { stopAllValidations } from "./safe_fetch.mts"
-
-const keyFilename: string = join(__dirname, "selfsigned.key"),
-	certFilename: string = join(__dirname, "selfsigned.crt");
 
 /**
  * in the primary process of a cluster, fork the workers (each runs the validator), and restart any that exit
@@ -55,7 +50,7 @@ export function startWorkers(workers: number): void {
  * - /healthz reports "stopping", so a load balancer stops sending requests
  * - the servers stop accepting connections, and idle keep-alive connections are closed
  * - the validations in progress are stopped (stopAllValidations()), so their requests finish with the results so far
- * - the process exits when the servers have closed, or after SHUTDOWN_GRACE_MS. A second signal is not caught
+ * - the process exits when the servers have closed, or after shutdownGraceMs(). A second signal is not caught
  *
  * @param {express.Application} app      the application
  * @param {Server[]}            servers  the servers listening, added to as they are started
@@ -78,15 +73,16 @@ function stopOnSignal(app: express.Application, servers: Server[]): void {
 				server.closeIdleConnections();
 			}
 			setTimeout(() => {
-				console.log(chalk.yellow(`requests still in progress after ${SHUTDOWN_GRACE_MS / 1000}s - exiting`));
+				console.log(chalk.yellow(`requests still in progress after ${shutdownGraceMs() / 1000}s - exiting`));
 				process.exit(0);
-			}, SHUTDOWN_GRACE_MS).unref();
+			}, shutdownGraceMs()).unref();
 		});
 }
 
 /**
- * listen for the application: on HTTPS (--sport) when selfsigned.key and selfsigned.crt exist, with HTTP (--port)
- * redirecting to HTTPS, or otherwise on HTTP only
+ * listen for the application: on HTTPS (--sport) when the key and certificate files exist (server.tls of the
+ * configuration, by default selfsigned.key and selfsigned.crt in the program's folder), with HTTP (--port) redirecting to
+ * HTTPS, or otherwise on HTTP only
  *
  * @param {ValidatorConfig}     config  the configuration
  * @param {express.Application} app     the application (see createApp())
@@ -95,8 +91,8 @@ export function startServer(config: ValidatorConfig, app: express.Application): 
 	// start the HTTPS server
 	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
 	const https_options = {
-		key: readmyfile(keyFilename, {}) as Buffer,
-		cert: readmyfile(certFilename, {}) as Buffer,
+		key: readmyfile(config.tls.key, {}) as Buffer,
+		cert: readmyfile(config.tls.certificate, {}) as Buffer,
 	};
 	const port = config.port;
 	const sport = config.sport == config.port ? config.port + 1 : config.sport;

@@ -18,8 +18,6 @@ import chalk from "chalk"
 import express from "express"
 import morgan, { token } from "morgan"
 import favicon from "serve-favicon"
-import commandLineArgs from "command-line-args"
-import commandLineUsage from "command-line-usage"
 import cors from "cors"
 import { Server } from "https"
 import type { AddressInfo } from "node:net"
@@ -29,7 +27,7 @@ import { xmlRegisterFsInputProviders } from "libxml2-wasm/lib/nodejs.mjs"
 xmlRegisterFsInputProviders();
 
 import { Default_SLEPR, IANA_Subtag_Registry, ISO3166, TVA_ContentCS, TVA_FormatCS, DVBI_ContentSubject } from "./lib/data_locations.mts"
-import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, HTTPPort, read_string_options } from "./lib/globals.mts"
+import { CORSlibrary, CORSmanual, CORSnone, CORSoptions, read_string_options, setSystemSettings } from "./lib/globals.mts"
 import type { StatsType } from "./lib/globals.mts"
 import { readmyfile } from "./lib/utils.mts"
 
@@ -38,104 +36,25 @@ import ISOcountries from "./lib/ISO_countries.mts"
 import ClassificationScheme from "./lib/classification_scheme.mts"
 import { __dirname } from "./lib/data_locations.mts"
 import { restartWorkersOnExit } from "./lib/cluster_restart.mts"
+import { commandLineOptions } from "./lib/command_line.mts"
 
 import {} from "./lib/string-extensions.mts"
-
-const keyFilename = join(__dirname, "selfsigned.key"),
-	certFilename = join(__dirname, "selfsigned.crt");
 
 const numCPUs = cpus().length;
 const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), read_string_options).toString());
 
 // SLEPR == Service List Entry Point Registry
 import SLEPR from "./lib/slepr.mts";
-import { DEFAULT_PROCESSING, SLR_Processing_Modes } from "./lib/slepr.mts";
+import { SLR_Processing_Modes } from "./lib/slepr.mts";
 import { sendRegistryResponse } from "./lib/routes/slepr.mts";
 
 import { init_spam_blocker } from "./lib/spam_disruptions.mts";
 
-// command line options
-const optionDefinitions = [
-	{ name: "urls", alias: "u", type: Boolean, defaultValue: false, description: "Load data files from network locations." },
-	{ name: "port", alias: "p", type: Number, defaultValue: HTTPPort.csr, typeLabel: "{underline ip-port}", description: `The HTTP port to listen on. Default: ${HTTPPort.csr}` },
-	{
-		name: "sport",
-		alias: "s",
-		type: Number,
-		defaultValue: HTTPPort.csr + 1,
-		typeLabel: "{underline ip-port}",
-		description: `The HTTPS port to listen on. Default: ${HTTPPort.csr + 1}`,
-	},
-	{ name: "CSRfile", alias: "f", type: String, defaultValue: Default_SLEPR.file, typeLabel: "{underline filename}", description: "local file name of SLEPR file" },
-	{
-		name: "CORSmode",
-		alias: "c",
-		type: String,
-		defaultValue: "library",
-		typeLabel: "{underline mode}",
-		description: `type of CORS handling ${CORSlibrary.quote()} (default), ${CORSmanual.quote()} or ${CORSnone.quote()}`,
-	},
-	{ name: "workers", alias: "w", type: Number, defaultValue: numCPUs, description: "The number of worker threads to spawn" },
-	{
-		name: "SLRmode",
-		type: String,
-		defaultValue: DEFAULT_PROCESSING,
-		typeLabel: "{underline mode}",
-		description: `The type of processing for the SLR response [${SLR_Processing_Modes.join(",")}]`,
-	},
-	{ name: "spam_blocker", alias: "b", type: Boolean, defaultValue: false, description: "enable frustrator for network scanners"},
-	{ name: "help", alias: "h", type: Boolean, defaultValue: false, description: "This help" },
-];
-
-const commandLineHelp = [
-	{
-		header: "DVB Central Service Registry",
-		content: "An implementaion of a DVB-I Service List Registry",
-	},
-	{
-		header: "Synopsis",
-		content: "$ node csr <options>",
-	},
-	{
-		header: "Options",
-		optionList: optionDefinitions,
-	},
-	{
-		header: "Client Query",
-		content: "{underline <host>}:{underline <port>}/query[?{underline arg}={underline value}(&{underline arg}={underline value})*]",
-	},
-	{
-		content: [
-			{ header: "{underline arg}" },
-			{ name: "regulatorListFlag", summary: "Select only service lists that have the @regulatorListFlag set as specified (true|false)" },
-			{ name: "Delivery[]", summary: "Select only service lists that use the specified delivery system (dvb-t|dvb-dash|dvb-c|dvb-s|dvb-iptv)" },
-			{ name: "TargetCountry[]", summary: "Select only service lists that apply to the specified countries (form: {underline ISO3166 3-digit code})" },
-			{ name: "Language[]", summary: "Select only service lists that use the specified language (form: {underline IANA 2 digit language code})" },
-			{ name: "Genre[]", summary: "Select only service lists that match one of the given Genres" },
-			{ name: "ProviderName[]", summary: "Select only service lists that match one of the specified Provider names" },
-			{ name: "inlineImages", summary: "Allow data: URLs in RelatedMaterial images in the response (true|false)" },
-		],
-	},
-	{ content: "note that all query values except Provider are checked against constraints. An HTTP 400 response is returned with errors in the response body." },
-	{
-		header: "About",
-		content: "Project home: {underline https://github.com/paulhiggs/dvb-i-tools/}",
-	},
-];
-
-let options = null;
-try {
-	options = commandLineArgs(optionDefinitions);
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-} catch (err) {
-	console.log(commandLineUsage(commandLineHelp));
-	process.exit(1);
-}
-
-if (options.help) {
-	console.log(commandLineUsage(commandLineHelp));
-	process.exit(0);
-}
+// the options of the command line and the configuration files (csr.json, or the file given with --config, issue #147)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const options: Record<string, any> = commandLineOptions("csr");
+// the User-Agent and timeout of the retrievals of reference data (with --urls), the shutdown grace period and the log folder
+setSystemSettings({ userAgent: options.user_agent, fetchTimeoutMs: options.fetch_timeout_ms, shutdownGraceMs: options.shutdown_grace_ms, logFolder: options.logs });
 
 if (!CORSoptions.includes(options.CORSmode)) {
 	console.log(chalk.red(`CORSmode must be ${CORSnone.quote()}, ${CORSlibrary.quote()} to use the Express cors() handler, or ${CORSmanual.quote()} to have headers inserted manually`));
@@ -180,7 +99,8 @@ type IPCmessage = {
 }
 
 if (cluster.isPrimary) {
-	if (options.workers > numCPUs) options.workers = numCPUs;
+	// 0 (the default) is one worker for each CPU
+	if (options.workers > numCPUs || options.workers == 0) options.workers = numCPUs;
 	else if (options.workers < 1) options.workers = 1;
 	console.log(chalk.green(`Number of CPUs is ${numCPUs}, ${options.workers} workers`));
 	console.log(chalk.green(`Primary ${process.pid} is running`));
@@ -278,7 +198,7 @@ else {
 	const LOG_FORMAT = ":pid :remote-addr :protocol :method :url :status :res[content-length] - :response-time ms :agent :parseErr :vary :redirect"
 	app.use(morgan(LOG_FORMAT));
 	
-	const logDir = join(".", "logs");
+	const logDir = options.logs;
 	if (existsSync(logDir)) {
 		const logStream = createStream('access.log', {
 			interval: "1M", // rotate monthly
@@ -309,7 +229,7 @@ else {
 	});
 
 	if (options.spam_blocker) {
-		init_spam_blocker(app);
+		init_spam_blocker(app, { endpoints: options.spam_endpoints, protocol: options.spam_protocol, redirections: options.spam_redirections });
 	}
 
 	app.get("{*splat}", (req: express.Request, res: express.Response) => {
@@ -349,8 +269,8 @@ else {
 	// start the HTTPS server
 	// sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt
 	const https_options = {
-		key: readmyfile(keyFilename, {}) as Buffer,
-		cert: readmyfile(certFilename, {}) as Buffer,
+		key: readmyfile(options.tls_key, {}) as Buffer,
+		cert: readmyfile(options.tls_certificate, {}) as Buffer,
 	};
 	if (https_options.key && https_options.cert) {
 		if (options.sport == options.port) options.sport = options.port + 1;
