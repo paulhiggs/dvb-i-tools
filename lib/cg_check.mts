@@ -15,7 +15,6 @@ import chalk from "chalk"
 import { XmlDocument } from "libxml2-wasm"
 
 import { attribute, elementize, quote, DefaultProperty } from "./utils.mts"
-import CG_helpers from "./cg_check_helpers.mts"
 
 import { mpeg7 } from "./MPEG7_definitions.mts"
 import { tva, tvaEA, tvaEC } from "./TVA_definitions.mts"
@@ -68,6 +67,106 @@ import type { StatsType, LoadOptions } from "./globals.mts"
 import { allowTraversal, currentRequest, currentValidation, deferRetrieval, documentRevision, retrieveTraversal, setDocumentRevision, ValidationScope } from "./safe_fetch.mts"
 import { contentGuideRevision, marketSummary } from "./market_checks.mts"
 import { LoadMarkets } from "./markets.mts"
+
+/**
+ * checks is the specified element (elem) has an attribute named attrName and that its value is on the given list)
+ *
+ * @param {XmlElement} elem     the XML element to be checked
+ * @param {string} attrName     the name of the attribute carrying the boolean value
+ * @param {string[]} allowed    the set or permitted values
+ * @param {ErrorList} errs      errors found in validaton
+ * @param {string} errCode      the error number used as a prefix for reporting errors
+ * @param {boolean} isRequired  true if the specified attribute is required to be specified for the element
+ */
+function AllowedValue(elem: XmlElement, attrName: string, allowed: string[], errs: ErrorList, errCode: string, isRequired: boolean = true): void {
+	if (!parameterCheck("AllowedValue", elem, null, errs, "AV000")) return;
+
+	const attr_value = elem.attrAnyNsValueOr(attrName);
+	if (attr_value) {
+		if (!allowed.includes(attr_value))
+			errs.addError({
+				code: `${errCode}-1`,
+				message: `${attrName.attribute(`${elem.parent?.name}.${elem.name}`)} must be ${allowed.join(" or ")}`,
+				fragment: elem,
+			});
+	} else if (isRequired)
+		errs.addError({
+			code: `${errCode}-2`,
+			message: `${attrName.attribute()} must be specified for ${elem.parent?.name}.${elem.name}`,
+			fragment: elem,
+		});
+}
+
+/**
+ * checks is the specified element (elem) has an attribute named attrName and that its value is "true" or "false"
+ *
+ * @param {XmlElement} elem       the XML element to be checked
+ * @param {string}     attrName   the name of the attribute carrying the boolean value
+ * @param {ErrorList}  errs       errors found in validaton
+ * @param {string}     errCode    the error number used as a prefix for reporting errors
+ * @param {boolean}    isRequired true if the specified attribute is required to be specified for the element
+ */
+const BooleanValue = (elem: XmlElement, attrName: string, errs: ErrorList, errCode: string, isRequired: boolean = true): void =>
+	AllowedValue(elem, attrName, ["true", "false"], errs, errCode, isRequired);
+
+/**
+ * checks is the specified element (elem) has an attribute named attrName and that its value is "true"
+ *
+ * @param {XmlElement} elem       the XML element to be checked
+ * @param {string}     attrName   the name of the attribute carrying the boolean value
+ * @param {ErrorList}  errs       errors found in validaton
+ * @param {string}     errCode    the error number used as a prefix for reporting errors
+ * @param {boolean}    isRequired? true if the specified attribute is required to be specified for the element
+ */
+const TrueValue = (elem: XmlElement, attrName: string, errs: ErrorList, errCode: string, isRequired: boolean = true): void =>
+	AllowedValue(elem, attrName, ["true"], errs, errCode, isRequired);
+
+/**
+ * checks is the specified element (elem) has an attribute named attrName and that its value is "false"
+ *
+ * @param {XmlElement} elem       the XML element to be checked
+ * @param {string}     attrName   the name of the attribute carrying the boolean value
+ * @param {ErrorList}  errs       errors found in validaton
+ * @param {string}     errCode    the error number used as a prefix for reporting errors
+ * @param {boolean}    isRequired? true if the specified attribute is required to be specified for the element
+ */
+const FalseValue = (elem: XmlElement, attrName: string, errs: ErrorList, errCode: string, isRequired: boolean = true): void =>
+	AllowedValue(elem, attrName, ["false"], errs, errCode, isRequired);
+
+/**
+ * @param {string} genre the value to check as being a restart availability genre
+ * @returns {boolean} true if the value provided is a valid restart availability genre
+ */
+const isRestartAvailability = (genre: string): boolean => [dvbi.RESTART_AVAILABLE, dvbi.RESTART_CHECK, dvbi.RESTART_PENDING].includes(genre);
+
+/**
+ * @param {string} href the value to check as being a link to a restart Template XML AIT link
+ * @returns {boolean} true if the value provided is a valid restart link
+ */
+const isRestartLink = (href: string): boolean => href == dvbi.RESTART_LINK;
+
+/**
+ * @param {string} label the synopsis length type
+ * @param {number} length the number of characters allowed for the length type
+ * @param {number} actual the number of characters found in the synopsis
+ * @returns {string} a reportable error message
+ */
+const synopsisLengthError = (label: string, length: number, actual: number): string =>
+	`length of ${tva.a_length.attribute(tva.e_Synopsis)}=${label.quote()} exceeds ${length} characters, measured(${actual})`;
+
+/**
+ * @param {string} length the synopsis length type
+ * @param {string} lang the language specified for the synopsis
+ * @returns {string} a reportable error message
+ */
+const singleLengthLangError = (length: string, lang: string): string =>
+	`only a single ${tva.e_Synopsis.elementize()} is permitted per length (${length}) and language (${lang})`;
+
+/**
+ * @param {string} length the synopsis length type
+ * @returns {string} a reportable error message
+ */
+const requiredSynopsisError = (length: string): string => `a ${tva.e_Synopsis.elementize()} with ${tva.a_length.attribute()}=${length.quote()} is required`;
 
 // convenience/readability values
 const DEFAULT_LANGUAGE = "***";
@@ -349,7 +448,7 @@ export default class ContentGuideCheck {
 							if (_len > tva.SYNOPSIS_SHORT_LENGTH)
 								errs.addError({
 									code: `${errCode}-11`,
-									message: CG_helpers.synopsisLengthError(tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_SHORT_LENGTH, _len),
+									message: synopsisLengthError(tva.SYNOPSIS_SHORT_LABEL, tva.SYNOPSIS_SHORT_LENGTH, _len),
 									fragment: Synopsis,
 									key: keys.k_LengthError,
 								});
@@ -359,7 +458,7 @@ export default class ContentGuideCheck {
 							if (_len > tva.SYNOPSIS_MEDIUM_LENGTH)
 								errs.addError({
 									code: `${errCode}-12`,
-									message: CG_helpers.synopsisLengthError(tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_MEDIUM_LENGTH, _len),
+									message: synopsisLengthError(tva.SYNOPSIS_MEDIUM_LABEL, tva.SYNOPSIS_MEDIUM_LENGTH, _len),
 									fragment: Synopsis,
 									key: keys.k_LengthError,
 								});
@@ -369,7 +468,7 @@ export default class ContentGuideCheck {
 							if (_len > tva.SYNOPSIS_LONG_LENGTH)
 								errs.addError({
 									code: `${errCode}-13`,
-									message: CG_helpers.synopsisLengthError(tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_LONG_LENGTH, _len),
+									message: synopsisLengthError(tva.SYNOPSIS_LONG_LABEL, tva.SYNOPSIS_LONG_LENGTH, _len),
 									fragment: Synopsis,
 									key: keys.k_LengthError,
 								});
@@ -392,7 +491,7 @@ export default class ContentGuideCheck {
 						if (DuplicatedValue(shortLangs, synopsisLang))
 							errs.addError({
 								code: `${errCode}-16`,
-								message: CG_helpers.singleLengthLangError(synopsisLength, synopsisLang),
+								message: singleLengthLangError(synopsisLength, synopsisLang),
 								fragment: Synopsis,
 								key: keys.k_DuplicatedSynopsisLength,
 							});
@@ -401,7 +500,7 @@ export default class ContentGuideCheck {
 						if (DuplicatedValue(mediumLangs, synopsisLang))
 							errs.addError({
 								code: `${errCode}-17`,
-								message: CG_helpers.singleLengthLangError(synopsisLength, synopsisLang),
+								message: singleLengthLangError(synopsisLength, synopsisLang),
 								fragment: Synopsis,
 								key: keys.k_DuplicatedSynopsisLength,
 							});
@@ -410,7 +509,7 @@ export default class ContentGuideCheck {
 						if (DuplicatedValue(longLangs, synopsisLang))
 							errs.addError({
 								code: `${errCode}-18`,
-								message: CG_helpers.singleLengthLangError(synopsisLength, synopsisLang),
+								message: singleLengthLangError(synopsisLength, synopsisLang),
 								fragment: Synopsis,
 								key: keys.k_DuplicatedSynopsisLength,
 							});
@@ -422,21 +521,21 @@ export default class ContentGuideCheck {
 		if (requiredLengths.includes(tva.SYNOPSIS_SHORT_LABEL) && !hasShort)
 			errs.addError({
 				code: `${errCode}-19`,
-				message: CG_helpers.requiredSynopsisError(tva.SYNOPSIS_SHORT_LABEL),
+				message: requiredSynopsisError(tva.SYNOPSIS_SHORT_LABEL),
 				line: BasicDescription.line,
 				key: keys.k_MissingSynopsisLength,
 			});
 		if (requiredLengths.includes(tva.SYNOPSIS_MEDIUM_LABEL) && !hasMedium)
 			errs.addError({
 				code: `${errCode}-20`,
-				message: CG_helpers.requiredSynopsisError(tva.SYNOPSIS_MEDIUM_LABEL),
+				message: requiredSynopsisError(tva.SYNOPSIS_MEDIUM_LABEL),
 				line: BasicDescription.line,
 				key: keys.k_MissingSynopsisLength,
 			});
 		if (requiredLengths.includes(tva.SYNOPSIS_LONG_LABEL) && !hasLong)
 			errs.addError({
 				code: `${errCode}-21`,
-				message: CG_helpers.requiredSynopsisError(tva.SYNOPSIS_LONG_LABEL),
+				message: requiredSynopsisError(tva.SYNOPSIS_LONG_LABEL),
 				line: BasicDescription.line,
 				key: keys.k_MissingSynopsisLength,
 			});
@@ -2035,7 +2134,7 @@ export default class ContentGuideCheck {
 				});
 
 		if ([CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_WINDOW].includes(requestType)) {
-			CG_helpers.TrueValue(GroupInformation, tva.a_ordered, errs, "GIS013");
+			TrueValue(GroupInformation, tva.a_ordered, errs, "GIS013");
 			if (!GroupInformation.attrAnyNs(tva.a_numOfItems))
 				errs.addError({
 					code: "GIS015",
@@ -2080,7 +2179,7 @@ export default class ContentGuideCheck {
 			else if (groupsFound) groupsFound.add(GroupInformation_groupId);
 		}
 
-		CG_helpers.TrueValue(GroupInformation, tva.a_ordered, errs, "GIM004", false);
+		TrueValue(GroupInformation, tva.a_ordered, errs, "GIM004", false);
 
 		const GroupType = GroupInformation.getAnyNs(tva.e_GroupType);
 		if (GroupType) {
@@ -2688,7 +2787,7 @@ export default class ContentGuideCheck {
 			checkAttributes(HowRelated, [tva.a_href], [], tvaEA.HowRelated, errs, "RR002");
 			const HowRelated_href = HowRelated.attrAnyNsValueOr(tva.a_href);
 			if (HowRelated_href) {
-				if (!CG_helpers.isRestartLink(HowRelated_href)) {
+				if (!isRestartLink(HowRelated_href)) {
 					errs.addError({
 						code: "RR003",
 						message: `invalid ${tva.a_href.attribute(tva.e_HowRelated)} (${HowRelated_href}) for Restart Application Link`,
@@ -2868,7 +2967,7 @@ export default class ContentGuideCheck {
 					const Genre_href = Genre.attrAnyNsValueOr(tva.a_href),
 						Genre_type = Genre.attrAnyNsValueOr(tva.a_type);
 					if (Genre_href) {
-						if (CG_helpers.isRestartAvailability(Genre_href)) {
+						if (isRestartAvailability(Genre_href)) {
 							restartGenre = Genre;
 							if (Genre_type && Genre_type != tva.GENRE_TYPE_OTHER)
 								errs.addError({
@@ -2891,14 +2990,14 @@ export default class ContentGuideCheck {
 		const CaptionLanguage = InstanceDescription.getAnyNs(tva.e_CaptionLanguage);
 		if (CaptionLanguage) {
 			checkLanguage(CaptionLanguage.content, CaptionLanguage, errs, "ID021");
-			CG_helpers.BooleanValue(CaptionLanguage, tva.a_closed, errs, "ID022");
+			BooleanValue(CaptionLanguage, tva.a_closed, errs, "ID022");
 		}
 
 		// <SignLanguage>
 		const SignLanguage = InstanceDescription.getAnyNs(tva.e_SignLanguage);
 		if (SignLanguage) {
 			checkLanguage(SignLanguage.content, SignLanguage, errs, "ID031");
-			CG_helpers.FalseValue(SignLanguage, tva.a_closed, errs, "ID032");
+			FalseValue(SignLanguage, tva.a_closed, errs, "ID032");
 			// check value is "sgn" according to ISO 639-2 or a sign language listed in ISO 639-3
 			if (SignLanguage.content != "sgn" && !this.#knownLanguages.isKnownSignLanguage(SignLanguage.content))
 				errs.addError({
@@ -3201,7 +3300,7 @@ export default class ContentGuideCheck {
 
 		// <Free>
 		const Free = OnDemandProgram.getAnyNs(tva.e_Free);
-		if (Free) CG_helpers.TrueValue(Free, tva.a_value, errs, "OD080");
+		if (Free) TrueValue(Free, tva.a_value, errs, "OD080");
 	}
 
 	/**
@@ -3446,11 +3545,11 @@ export default class ContentGuideCheck {
 
 		// <FirstShowing>
 		const FirstShowing = Event.getAnyNs(tva.e_FirstShowing);
-		if (FirstShowing) CG_helpers.BooleanValue(FirstShowing, tva.a_value, errs, `${prefix}061`);
+		if (FirstShowing) BooleanValue(FirstShowing, tva.a_value, errs, `${prefix}061`);
 
 		// <Free>
 		const Free = Event.getAnyNs(tva.e_Free);
-		if (Free) CG_helpers.BooleanValue(Free, tva.a_value, errs, `${prefix}071`);
+		if (Free) BooleanValue(Free, tva.a_value, errs, `${prefix}071`);
 	}
 
 	/**
