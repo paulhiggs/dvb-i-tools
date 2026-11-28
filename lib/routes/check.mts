@@ -182,9 +182,8 @@ async function DVB_I_check(
 				case MODE_SL:
 					errs.setType("Service List")
 					if (slcheck) 
-						await slcheck.doValidateServiceList(VVxml!, errs, 
-							request
-						);
+						// with its URL, for the image variants that a market requires (issue #153)
+						await slcheck.doValidateServiceList(VVxml!, errs, { ...request, documentUrl: doclocation == MODE_URL ? XMLurl : undefined });
 					break;
 				case MODE_PL:
 					errs.setType("Playlist")

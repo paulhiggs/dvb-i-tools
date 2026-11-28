@@ -84,7 +84,8 @@ export function validateRouter(config: ValidatorConfig, services: ValidatorServi
 	};
 	const traversal = { allowed: allowTraversal };
 
-	if (config.features.sl) endpoints("/validate_sl", MODE_SL, (document, errs, options) => slcheck!.doValidateServiceList(document, errs, options), traversal);
+	// the URL of a service list is a value of the document, for the image variants that a market requires (issue #153)
+	if (config.features.sl) endpoints("/validate_sl", MODE_SL, (document, errs, options, req) => slcheck!.doValidateServiceList(document, errs, { ...options, documentUrl: req.method == "GET" && typeof req.query.url == "string" ? req.query.url : undefined }), traversal);
 	if (config.features.pl) endpoints("/validate_pl", MODE_PL, (document, errs, options) => plcheck!.doValidatePlaylist(document, errs, options));
 	// the content guide request type (Time, NowNext, ...) is the type query parameter
 	if (config.features.cg) endpoints("/validate_cg", MODE_CG, (document, errs, options, req) => cgcheck!.doValidateContentGuide(document, req.query.type as string, errs, options));

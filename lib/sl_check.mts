@@ -82,16 +82,16 @@ import { ValidateCMCDinDASH } from "./CMCDv2.mts"
 import { CMCD_custom_stats, LoadKnownCustomKeysRegistry } from "./CMCD_custom_keys.js"
 import { CheckExtension, EXTENSION_LOCATION_SERVICE_ELEMENT, EXTENSION_LOCATION_DASH_INSTANCE, EXTENSION_LOCATION_OTHER_DELIVERY } from "./extension_check.mts"
 import { ValidateAnySignaturePolicy } from "./related_material_checks.mts"
-import { checkReferencedResource, checkSignedResponse, signaturePolicyOf } from "./resource_checks.mts"
+import { checkReferencedResource, checkSignedResponse, retrieveResource, signaturePolicyOf } from "./resource_checks.mts"
 import { checkConnection } from "./tls_checks.mts"
 import type { ValidationOptions } from "./safe_fetch.mts"
 import { ValidateSignaturePolicies } from "./signature_policies.mts"
 import type { SignaturePolicy } from "./certificate_utils.mts"
 
 import ContentGuideCheck, { CG_REQUEST_SCHEDULE_NOWNEXT, CG_REQUEST_SCHEDULE_TIME, CG_REQUEST_BS_CATEGORIES, type CG_Validator_Options } from "./cg_check.mts"
-import { allowTraversal, currentMarket, currentRequest, currentValidation, setDocumentRevision, deferRetrieval, deferTask, retrieveTraversal, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
+import { allowTraversal, currentFetchPolicy, currentMarket, currentRequest, currentValidation, setDocumentRevision, deferRetrieval, deferTask, retrieveTraversal, safeFetch, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
 import { COVERAGE_TOLERANCE_MS, DAY_STATES, scheduleCoverage } from "./schedule_coverage.mts"
-import { checkImageVariantRevision, refusedImageVariant, withImageVariant } from "./image_variants.mts"
+import { checkImageVariant, checkImageVariantRevision, refusedImageVariant, urlImageVariant, withImageVariant, withoutImageVariant } from "./image_variants.mts"
 import type { DayCoverage, DayState, ServiceCoverage } from "./schedule_coverage.mts"
 
 /**
@@ -318,7 +318,9 @@ export type ValidatorOptions = LoadOptions & {
 
 // the choices of a service list validation (see ValidationRequest). For a service list reached by traversal, the choices of
 // the validation that traversed into it are used
-export type SL_Validator_Options = ValidationOptions
+// the choices of the validation, and the URL that this service list was retrieved from (for the image variants a market
+// requires, issue #153), which is a value of this document
+export type SL_Validator_Options = ValidationOptions & { documentUrl?: string }
 
 export default class ServiceListCheck {
 	#numRequests: number
@@ -2626,6 +2628,109 @@ export default class ServiceListCheck {
 	 *                      market                the id of the market to validate for (issue #119)
 	 *                      traverse              validate referenced DVB-I documents
 	 */
+	/**
+	 * the image variants that the market of the validation requires for service logos (parameter imageVariants.required,
+	 * issue #153 phase 2, #139 DE-3). The service list is also requested with each of them (with the image_variant query
+	 * parameter of A177r8 clause 5.2.8.2.1), and each service with a service logo in its <Service> must also have one in each
+	 * variant (MKT014). A variant that cannot be retrieved, or is not a service list, is MKT015. When images are checked, the
+	 * service logos of each variant are retrieved and checked against it (IMV004, IMV005), and one that cannot be retrieved is
+	 * MKT016. The variant that the service list itself was requested with is not requested again
+	 *
+	 * @param {XmlElement} ServiceList  the root of the service list
+	 * @param {string}     documentUrl  the URL the service list was retrieved from, if any
+	 * @param {ErrorList}  errs         the results of the service list
+	 */
+	/*private*/ #checkRequiredImageVariants(ServiceList: XmlElement, documentUrl: string | undefined, errs: ErrorList): void {
+		const required = currentMarket(SL_SchemaVersion(ServiceList.documentNamespace())).parameters.imageVariants.required ?? [];
+		if (required.length == 0) return;
+		const market = currentRequest().market;
+		const MARKET = "market";
+		// the services of a service list, and the service logos of each in its <Service> (as for serviceLogoRequired)
+		const servicesOf = (list: XmlElement) => {
+			const services = new Map<string, { service: XmlElement; logos: string[] }>();
+			for (const name of [dvbi.e_Service, dvbi.e_TestService])
+				list.forEachNamedChildElement(name, (service) => {
+					const id = service.getAnyNs(dvbi.e_UniqueIdentifier)?.content.trim();
+					if (!id) return;
+					const logos: string[] = [];
+					service.forEachNamedChildElement(tva.e_RelatedMaterial, (RelatedMaterial) => {
+						const HowRelated = RelatedMaterial.getAnyNs(tva.e_HowRelated);
+						if (!HowRelated || !validServiceLogo(HowRelated)) return;
+						RelatedMaterial.forEachNamedChildElement(tva.e_MediaLocator, (MediaLocator) =>
+							MediaLocator.forEachNamedChildElement(tva.e_MediaUri, (MediaUri) => {
+								if (MediaUri.content.trim().length > 0) logos.push(MediaUri.content.trim());
+							})
+						);
+					});
+					services.set(id, { service, logos });
+				});
+			return services;
+		};
+		const services = servicesOf(ServiceList);
+		const withLogos = [...services.entries()].filter(([, s]) => s.logos.length > 0);
+		// there is nothing to compare when no service has a service logo (serviceLogoRequired reports that)
+		if (withLogos.length == 0) return;
+		if (!documentUrl || !isHTTPURL(documentUrl)) {
+			errs.addError({
+				type: INFORMATION,
+				code: "MKT017",
+				message: `the service list has no URL, so it is not requested with the image variants ${required.map((v) => v.quote()).join(", ")} that the market ${market} requires`,
+				line: ServiceList.line,
+				key: MARKET,
+			});
+			return;
+		}
+		const imagesChecked = currentFetchPolicy().checkImages && currentRequest().images != "no";
+		const validation = currentValidation();
+		const own = urlImageVariant(documentUrl),
+			base = withoutImageVariant(documentUrl);
+
+		for (const variant of required.filter((v) => v != own)) {
+			const url = withImageVariant(base, variant);
+			deferRetrieval(
+				() => safeFetch(url),
+				async ({ response, error }) => {
+					const refused = (reason: string) =>
+						errs.addError({
+							code: "MKT015",
+							message: `the service list requested with the image variant ${variant.quote()} (${url}) ${reason}, but the market ${market} requires the service logos in it`,
+							line: ServiceList.line,
+							key: MARKET,
+						});
+					if (!response || !response.ok) return refused(response ? `was answered with ${response.status} ${response.statusText}` : `could not be retrieved: ${error}`);
+					using SL = SchemaLoad(response.text(), new ErrorList(), "MKT015");
+					if (!SL || SL.root.name != dvbi.e_ServiceList) return refused("is not a service list");
+					const inVariant = servicesOf(SL.root as XmlElement);
+					const checked = new Set<string>();
+					for (const [id, { service }] of withLogos) {
+						const logos = inVariant.get(id)?.logos ?? [];
+						if (logos.length == 0)
+							errs.addError({
+								code: "MKT014",
+								message: `service ${id.quote()} has a service logo, but none in the image variant ${variant.quote()}${inVariant.has(id) ? "" : " (the service is not in the service list of that variant)"}, which the market ${market} requires`,
+								line: service.line,
+								key: MARKET,
+							});
+						if (!imagesChecked) continue;
+						// the service logos of the variant, each retrieved once in the validation
+						for (const logo of logos.filter((l) => isHTTPURL(l) && !checked.has(l))) {
+							checked.add(logo);
+							const outcome = await retrieveResource(logo, validation);
+							if (!outcome.ok || !outcome.image)
+								errs.addError({
+									code: "MKT016",
+									message: `the service logo ${logo} of service ${id.quote()} in the image variant ${variant.quote()} could not be retrieved: ${outcome.error ?? `${outcome.status} ${outcome.statusText}`}`,
+									line: service.line,
+									key: MARKET,
+								});
+							else checkImageVariant(outcome.image, `the service logo ${logo} of service ${id.quote()}`, service, errs, variant);
+						}
+					}
+				}
+			);
+		}
+	}
+
 	/*public*/ async doValidateServiceList(SLtext: string, errs: ErrorList, options: SL_Validator_Options = {}) : Promise<void> {
 		this.#numRequests++;
 		// collects the network work (traversal, referenced resources) that is performed once the rules below have been checked
@@ -3164,6 +3269,8 @@ export default class ServiceListCheck {
 					multiElementError: documentInfo.directSatScan.unprovisionedInstances
 				})
 		}
+		// the image variants that a market requires (issue #153)
+		this.#checkRequiredImageVariants(ServiceList, options.documentUrl, errs);
 		// perform the deferred network work before the document is disposed (at the end of this method)
 		await scope.finish();
 		// the outermost validation reports how long it took, including the documents it traversed
@@ -3229,7 +3336,7 @@ export default class ServiceListCheck {
 			if (resp) {
 				if (policy) await checkSignedResponse(Location, requestUrl, resp, policy, errs, validation);
 				if (resp.ok)
-					await this.doValidateServiceList(resp.text(), errs);
+					await this.doValidateServiceList(resp.text(), errs, { documentUrl: requestUrl });
 				// a 400 for a valid image variant is a finding of its own (issue #153)
 				else errs.addError((await refusedImageVariant(resp.status, requestUrl, Location)) ?? {
 					code: `VSL002`,
