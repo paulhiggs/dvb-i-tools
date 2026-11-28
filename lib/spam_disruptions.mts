@@ -7,27 +7,26 @@
  * 
  * Endpoints to disrupt spammers/web crawlers
  * 
- * example JSON configuration file (sblocker_config.json)
+ * The endpoints are given by the spamBlocker section of the server's configuration file (issue #147), e.g.
 
-	{
-		"version" : 1,
-		"endpoints" : [
-			"/api", "/api/route", "/app", "/_next/server"
-		],
-		"protocol" : "http",
-		"redirections" : [
-			"45.205.1.18", "87.121.84.57", "95.214.55.63"
-		]
+	"spamBlocker": {
+		"enabled": true,
+		"endpoints": [ "/api", "/api/route", "/app", "/_next/server" ],
+		"protocol": "http",
+		"redirections": [ "45.205.1.18", "87.121.84.57", "95.214.55.63" ]
 	}
 
  */
 
 import express from "express"
-import { readFileSync } from "fs"
 import { Socket } from "net"
 
-import { read_string_options } from "./globals.mts"
-import { spam_blocker_config } from "./data_locations.mts"
+// the settings of the spam blocker, from the configuration (config_file.mts)
+export type SpamBlockerSettings = {
+	endpoints: string[]; // the paths that are answered with a redirect
+	protocol: string; // "http" or "https"
+	redirections: string[]; // IP addresses to redirect to
+};
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function random_redirect(app: express.Application, endpoint: string, protocol: string, targets: string[]) : void {
@@ -48,13 +47,12 @@ function random_redirect(app: express.Application, endpoint: string, protocol: s
 	})
 }
 
-export function init_spam_blocker(app: express.Application) : void {
-	try {
-		const config = JSON.parse(readFileSync(spam_blocker_config, read_string_options).toString())
-		config?.endpoints.forEach((endpoint: string) => {
-			random_redirect(app, endpoint, config.protocol, config.redirections);
-		})
-	}
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars, no-empty
-	catch (err) {}
+/**
+ * answer each of the spam blocker's endpoints with a redirect
+ *
+ * @param {express.Application} app       the application
+ * @param {SpamBlockerSettings} settings  the endpoints, protocol and redirections of the configuration
+ */
+export function init_spam_blocker(app: express.Application, settings: SpamBlockerSettings) : void {
+	settings.endpoints.forEach((endpoint) => random_redirect(app, endpoint, settings.protocol, settings.redirections));
 }

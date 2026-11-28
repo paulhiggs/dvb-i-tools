@@ -52,7 +52,6 @@ const path2007CS: string = join(pathDVBCS, "2007"),
 	path2026CS: string = join(pathDVBCS, "2026"),
 	url2026CS: string = "cs/2026";
 
-export const spam_blocker_config: string = join(__dirname, "sblocker_config.json");
 
 type DataLocation = { file: string, url?: string };
 

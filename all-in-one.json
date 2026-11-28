@@ -1,0 +1,25 @@
+{
+	"server": {
+		"httpPort": 3030,
+		"httpsPort": 3031,
+		"tls": { "key": "selfsigned.key", "certificate": "selfsigned.crt" },
+		"workers": 0,
+		"corsMode": "library",
+		"shutdownGraceMs": 8000,
+		"maxDocumentBytes": 10485760
+	},
+	"features": { "sl": true, "pl": true, "cg": true, "slr": true, "ait": true, "csr": true },
+	"fetch": {
+		"userAgent": "DVB-I validator",
+		"timeoutMs": 3000,
+		"maxResponseBytes": 10485760,
+		"concurrency": 8,
+		"perHost": 4,
+		"allowPrivateAddresses": true
+	},
+	"traversal": { "allowed": false, "maxDocuments": 100, "maxDepth": 10 },
+	"slr": { "file": "registries/slepr-main.xml", "mode": "default" },
+	"referenceData": { "useURLs": false },
+	"files": { "motd": "motd.html", "archive": "arch", "logs": "logs" },
+	"spamBlocker": { "enabled": false }
+}

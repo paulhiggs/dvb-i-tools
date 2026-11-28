@@ -11,7 +11,7 @@
 import cluster from "cluster"
 import chalk from "chalk"
 
-import { SHUTDOWN_GRACE_MS, SHUTDOWN_SIGNALS } from "./globals.mts"
+import { SHUTDOWN_SIGNALS, shutdownGraceMs } from "./globals.mts"
 
 const EARLY_EXIT_MS = 60 * 1000, // a worker that exits within this time of being started counts as a failed start
 	MAX_FAILED_STARTS = 10, // stop restarting after this many consecutive failed starts
@@ -40,7 +40,7 @@ export function restartWorkersOnExit(): void {
 			console.log(chalk.yellow(`${signal} received - stopping ${running()} workers`));
 			Object.values(cluster.workers ?? {}).forEach((w) => w?.process.kill("SIGTERM"));
 			if (running() == 0) process.exit(0);
-			setTimeout(() => process.exit(0), SHUTDOWN_GRACE_MS + 1000).unref();
+			setTimeout(() => process.exit(0), shutdownGraceMs() + 1000).unref();
 		});
 
 	const fork = () => {

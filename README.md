@@ -29,9 +29,7 @@ Note that these values are case sensitive, and a case sensitive matching is perf
 
 ### Logging
 
-If a subdirectory named `./arch` exists, then any XML document for validation will be copied there. There will be the original document with the suffix "`.txt`" and a second document with the suffix "`.mkup.txt`" containing line based validation results as XML comments 
-
-If a subdirectory named `./logs` extists, then enhanced HTTP server logging willl be directed there (in addition to the NodeJS console) 
+If a subdirectory named `./logs` exists (`files.logs` of the configuration file, in the program's folder), then enhanced HTTP server logging will be directed there (in addition to the NodeJS console) 
 
 ### Operation
 
@@ -50,13 +48,17 @@ The server can be reloaded with an updated `slepr-master.xml` file by invoking i
   - `"library"` - default mode - use the Express CORS library
   - `"manual"` - do code based CORS header insertion (not fully implemented or tested)
   - `"none"` - dont do any CORS handling
-- `--workers [-w] <number>` the number of worker threads (constrained interally to 1~num CPUs)
+- `--workers [-w] <number>` the number of worker threads (default: 0, one for each CPU; at most the number of CPUs)
 - `--SLRmode <mode>` select the type of processing for the SLR response
   - `"default"` - default mode - according to A177 specification
   - `"italy"` - process the SLR response accirding to Italian method
+- `--spam_blocker [-b]` enable the frustrator for network scanners (default: false)
+- `--config <filename>` the configuration file, read over `csr.json`
 - `--help [-h]` server and client command help
 
-If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
+Every option, and the User-Agent, timeout, TLS files, log folder and spam blocker settings, can also be set in `csr.json` in the program's folder, or in the file given with `--config` (see [Configuration files](#configuration-files)).
+
+If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory (or set `server.tls` of the [configuration file](#configuration-files)). These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
 
 ## all-in-one.ts
 
@@ -86,7 +88,7 @@ Validates the syntax and semantic value space of DVB-I service list registry, se
 1. Install necessary libraries (express, libxmljs, morgan) `npm install`
 1. run it - `node all-in-one.ts [--urls] [--port 3030] [--sport 3031]`
 
-If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory. These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
+If you want to start an HTTPS server, make sure you have `selfsigned.crt` and `selfsigned.key` files in the same directory (or set `server.tls` of the [configuration file](#configuration-files)). These can be generated (on Linux) with `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./selfsigned.key -out selfsigned.crt`
 
 Occassionally, the language-subtag-registry file can be updated from https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
 
@@ -130,11 +132,84 @@ With `--workers`, the primary passes the signal on to the workers and does not r
 - `--fetch_concurrency <number>` maximum number of documents retrieved at the same time (default: 8). During traversal, referenced documents are downloaded ahead while earlier ones are validated; results are still reported in the order the documents are referenced. Use `1` to make one request at a time.
 - `--fetch_per_host <number>` maximum number of documents retrieved at the same time from any one host (default: 4), within `--fetch_concurrency`. This stops a single server, such as an image server referenced by every programme, being sent more requests at once than it can answer within the timeout.
 - `--allow_private_fetch <true|false>` allow documents to be retrieved from `localhost` and private network addresses (default: true). Set to `false` on a public deployment. Only literal IP addresses and `localhost` are recognised, not hostnames that resolve to private addresses.
+- `--workers [-w] <number>` the number of cluster workers (default: 0, a single process)
+- `--spam_blocker [-b]` enable the frustrator for network scanners, with the endpoints of `spamBlocker` in the [configuration file](#configuration-files) (default: false)
+- `--config <filename>` the configuration file, read over `all-in-one.json` (see [Configuration files](#configuration-files))
 - `--help [-h]` server and client command help
 
-Documents retrieved for validation (by URL or by traversal) must use `http:` or `https:`, are limited to 10 MB and a 3 second timeout. A single validation traverses at most 10 levels deep.
+Documents retrieved for validation (by URL or by traversal) must use `http:` or `https:`, are limited to 10 MB and a 3 second timeout. A single validation traverses at most 10 levels deep. These limits, and the others that have no option, are settings of the [configuration file](#configuration-files).
 
-When **Traverse referenced documents** is selected on the `/check` form, **Maximum documents** sets the most documents the validation traverses: a positive whole number (default 100), or `unlimited`. Unlimited can make a traversal of a large service list take hours. **Maximum depth** sets how many levels deep the validation traverses: a positive whole number, up to the server's limit of 10 (a larger value is lowered to 10). Traversal is only available when the server is started with `--allow_traversal`.
+### Configuration files
+
+Each server has a configuration file in the program's folder (the folder of `all-in-one.ts` and `csr.ts`): **`all-in-one.json`** for `all-in-one.ts`, and **`csr.json`** for `csr.ts`. They set every command line option, and the settings that have no option, such as the User-Agent, the timeouts and the size limits. The copies in the repository have the values coded in the validator, so a server started without changing them behaves as it did before the files existed.
+
+A server's options come from, in this order, each one over the ones before:
+1. the values coded in the validator
+2. the server's file in the program's folder, when it exists
+3. the file given with `--config <file>`, which must exist. A relative name is relative to the folder the server is started from. This file only needs the settings that differ.
+4. the options given on the command line
+
+A relative file or folder name in a configuration file (such as `slr.file` or `server.tls.key`) is relative to the folder of that configuration file. Each file read is shown at start-up (`reading configuration from …`).
+
+A file is checked when the server starts. A file that cannot be read or is not JSON, an unknown setting (including a setting of the other server's file), and a value of the wrong type or out of range are all reported together, and the server does not start.
+
+A setting that should not be in the repository, such as a User-Agent given to a deployment by the operator of a service list, goes in another file outside the repository, given with `--config`. A file named `*.local.json` in the checkout is ignored by git.
+
+For example, a deployment's own file:
+
+```json
+{
+	"fetch": { "userAgent": "Example validator/1.0 (operations@example.com)" },
+	"traversal": { "allowed": true, "maxDocuments": 500 },
+	"spamBlocker": { "enabled": true, "endpoints": ["/api", "/app"], "protocol": "http", "redirections": ["192.0.2.1"] }
+}
+```
+
+`node all-in-one.ts --config /etc/dvb-i-tools/validator.json`
+
+The settings (the default of a file or folder is in the program's folder):
+
+| Setting | Command line | Default | all-in-one.json | csr.json | Meaning |
+|---|---|---|---|---|---|
+| `server.httpPort` | `--port` | `3030` (csr.ts: `3000`) | yes | yes | the HTTP port to listen on |
+| `server.httpsPort` | `--sport` | `3031` (csr.ts: `3001`) | yes | yes | the HTTPS port to listen on, when the key and certificate exist |
+| `server.tls.key` |  | `"selfsigned.key"` | yes | yes | the private key of the HTTPS server |
+| `server.tls.certificate` |  | `"selfsigned.crt"` | yes | yes | the certificate of the HTTPS server |
+| `server.workers` | `--workers` | `0` | yes | yes | the number of cluster workers, or 0 for a single process |
+| `server.corsMode` | `--CORSmode` | `"library"` | yes | yes | the CORS handling (`manual`, `library`, `none`) |
+| `server.shutdownGraceMs` |  | `8000` | yes | yes | how long a shutdown waits for the requests in progress (ms) |
+| `fetch.userAgent` |  | `"DVB-I validator"` | yes | yes | the User-Agent of every request the server makes |
+| `fetch.timeoutMs` |  | `3000` | yes | yes | the timeout of a retrieval (ms) |
+| `slr.file` | `--CSRfile` | `"registries/slepr-main.xml"` | yes | yes | the master SLEPR document |
+| `slr.mode` | `--SLRmode` | `"default"` | yes | yes | the processing of the SLR response (`default`, `italy`) |
+| `referenceData.useURLs` | `--urls` | `false` | yes | yes | load the reference data from the network |
+| `files.logs` |  | `"logs"` | yes | yes | the folder of the request log, used when it exists |
+| `spamBlocker.enabled` | `--spam_blocker` | `false` | yes | yes | enable the frustrator for network scanners |
+| `spamBlocker.endpoints` |  | `[]` | yes | yes | the paths the spam blocker answers with a redirect |
+| `spamBlocker.protocol` |  | `"http"` | yes | yes | the protocol of the spam blocker's redirects (`http`, `https`) |
+| `spamBlocker.redirections` |  | `[]` | yes | yes | the addresses of the spam blocker's redirects |
+| `server.maxDocumentBytes` |  | `10485760` | yes |  | the largest document that can be sent to be validated |
+| `features.sl` | `--nosl` (the opposite) | `true` | yes |  | offer Service List validation |
+| `features.pl` | `--nopl` (the opposite) | `true` | yes |  | offer Playlist validation |
+| `features.cg` | `--nocg` (the opposite) | `true` | yes |  | offer Content Guide validation |
+| `features.slr` | `--noslr` (the opposite) | `true` | yes |  | offer Service List Registry validation |
+| `features.ait` | `--noait` (the opposite) | `true` | yes |  | offer XML AIT validation |
+| `features.csr` | `--nocsr` (the opposite) | `true` | yes |  | offer the SLR function (/query) |
+| `fetch.maxResponseBytes` |  | `10485760` | yes |  | the largest response that is retrieved |
+| `fetch.concurrency` | `--fetch_concurrency` | `8` | yes |  | the most documents retrieved at the same time |
+| `fetch.perHost` | `--fetch_per_host` | `4` | yes |  | the most documents retrieved at the same time from one host |
+| `fetch.allowPrivateAddresses` | `--allow_private_fetch` | `true` | yes |  | allow retrievals from localhost and private network addresses |
+| `traversal.allowed` | `--allow_traversal` | `false` | yes |  | allow validations to traverse into referenced documents |
+| `traversal.maxDocuments` |  | `100` | yes |  | the most documents a validation traverses, unless it sets its own limit |
+| `traversal.maxDepth` |  | `10` | yes |  | the deepest level a validation traverses into |
+| `files.motd` | `--motd` | `"motd.html"` | yes |  | the HTML of the Message Of The Day, used when it exists |
+| `files.archive` |  | `"arch"` | yes |  | the folder the documents validated are archived in, used when it exists |
+
+`server.workers` of `csr.json` is 0 for one worker for each CPU (the most is the number of CPUs).
+
+### Traversal
+
+When **Traverse referenced documents** is selected on the `/check` form, **Maximum documents** sets the most documents the validation traverses: a positive whole number (default 100, or `traversal.maxDocuments` of the configuration file), or `unlimited`. Unlimited can make a traversal of a large service list take hours. **Maximum depth** sets how many levels deep the validation traverses: a positive whole number, up to the server's limit of 10 (`traversal.maxDepth`: a larger value is lowered to it). Traversal is only available when the server is started with `--allow_traversal`.
 
 Each URL is validated only once during a validation. When the same URL is referenced again, it is not retrieved or reported again: the "references" column of the traversed documents table shows how many times it was referenced.
 
@@ -318,9 +393,9 @@ For example, the German market (without its description):
 
 ### Logging
 
-If a subdirectory named `./arch` exists, then any XML document for validation will be copied there. There will be the original document with the suffix "`.txt`" and a second document with the suffix "`.mkup.txt`" containing line based validation results as XML comments 
+If a subdirectory named `./arch` exists (`files.archive` of the [configuration file](#configuration-files), in the program's folder), then any XML document for validation will be copied there. There will be the original document with the suffix "`.txt`" and a second document with the suffix "`.mkup.txt`" containing line based validation results as XML comments 
 
-If a subdirectory named `./logs` extists, then enhanced HTTP server logging willl be directed there (in addition to the NodeJS console) 
+If a subdirectory named `./logs` exists (`files.logs` of the configuration file, in the program's folder), then enhanced HTTP server logging will be directed there (in addition to the NodeJS console) 
 
 ### Use
 

@@ -9,3 +9,6 @@ arch/
 selfsigned.key
 selfsigned.crt
 *.pem
+
+# private configuration files, given with --config (issue #147)
+*.local.json

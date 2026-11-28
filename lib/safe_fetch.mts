@@ -21,7 +21,8 @@ import { findMarket, marketSettings, marketSeverity } from "./markets.mts"
 import type { MarketSettings, MarketSeverity } from "./markets.mts"
 import type { A177Revision } from "./revisions.mts"
 
-// the most documents a validation traverses, unless the validation sets its own limit
+// the most documents a validation traverses, unless the validation sets its own limit. The server sets its own with
+// traversal.maxDocuments of the configuration file (maxTraversalDocuments of the fetch policy, issue #147)
 export const DEFAULT_MAX_TRAVERSAL = 100;
 
 export type FetchPolicy = {

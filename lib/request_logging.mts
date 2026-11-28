@@ -17,6 +17,7 @@ import fileupload from "express-fileupload"
 import { createStream } from "rotating-file-stream"
 
 import { MODE_CG, MODE_FILE } from "./ui.mts"
+import { logFolder } from "./globals.mts"
 
 export const LOGGING_TEMPLATE =
 	":pid :remote-addr :protocol :method :url :status :res[content-length] :counts - :response-time ms :agent :parseErr :location :vary :redirect";
@@ -57,14 +58,15 @@ function defineTokens(): void {
 }
 
 /**
- * the request loggers: the console, and a rotated file in ./logs when that directory exists
+ * the request loggers: the console, and a rotated file in the log folder (files.logs, or ./logs) when it exists
  *
  * @returns {express.RequestHandler[]} the loggers, to be registered before the routes
  */
 export function requestLoggers(): express.RequestHandler[] {
 	defineTokens();
 	const loggers: express.RequestHandler[] = [morgan(LOGGING_TEMPLATE)];
-	const logDir = join(".", "logs");
+	// the configured folder (files.logs, issue #147), or ./logs
+	const logDir = logFolder() ?? join(".", "logs");
 	if (existsSync(logDir)) {
 		const logStream = createStream("access.log", {
 			interval: "1M", // rotate monthly

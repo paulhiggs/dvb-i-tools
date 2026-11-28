@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Validators for DVB-I XML documents defined in DVB Bluebook A177 (revisions r0 to r8): service lists, content guide (TV-Anytime) fragments, playlists and service list registry (SLR / SLEPR) responses, and the XML AIT documents (ETSI TS 102 809) they refer to. It also includes a Service List Registry server that answers `/query` requests. Everything runs inside one Express web server.
 
-- [all-in-one.ts](all-in-one.ts): the main entry point. It parses command-line options and calls `validator()` in [lib/validator.mts](lib/validator.mts), which only puts the parts together:
+- [all-in-one.ts](all-in-one.ts): the main entry point. It gets its options from `commandLineOptions()` ([lib/command_line.mts](lib/command_line.mts)) and calls `validator()` in [lib/validator.mts](lib/validator.mts), which only puts the parts together:
+  - the options are the values coded in [lib/config_file.mts](lib/config_file.mts) (`ALL_IN_ONE_SETTINGS`, `CSR_SETTINGS`), then the server's file in the program's folder (`all-in-one.json` or `csr.json`), then the file given with `--config`, then the command line (#147). Each setting of a file gives one option (its command line name, or a name such as `user_agent` for a setting with no option), so `loadConfig()` takes the same flat options as before. A new command line option needs a setting in the server's `*_SETTINGS`, in its repository `.json` file and in the README table; a new coded limit is added as a setting, not as a constant. The process-wide values (User-Agent, retrieval timeout, shutdown grace, archive and log folders) are set by `applyFetchPolicy()` through `setSystemSettings()` (`globals.mts`).
   - [lib/config.mts](lib/config.mts): `loadConfig(options)` checks and normalises the options into a frozen `ValidatorConfig`, and throws a `ConfigError` for a bad option (only `validator()` exits). `applyFetchPolicy()` sets the server's fetch policy.
   - [lib/services.mts](lib/services.mts): `createServices(config)` loads the reference data, and builds the checkers and the SLEPR once.
   - [lib/app.mts](lib/app.mts): `createApp(config, services)` builds the Express application:
@@ -20,7 +21,7 @@ Validators for DVB-I XML documents defined in DVB Bluebook A177 (revisions r0 to
     The handlers check the request first, then validate, then send the results. The readers return what they found instead of changing `req`: `getDocument()` gives `{document, parseErr}` and `requestFromQuery()` gives `{options}` or `{parseErr}`. The outcome for the request log (`parseErr`, `diags`, `vary`) goes in `res.locals`, typed in `express-extensions.d.ts`, through `recordOutcome()` or `sendRegistryResponse()`. `SLEPR.processServiceListRequest(query, userAgent)` returns a `RegistryResponse` and does not use Express.
   - [lib/server.mts](lib/server.mts): `startWorkers()` for `--workers`, and `startServer()` for the HTTP/HTTPS listeners and the HTTP-to-HTTPS redirect. On `SIGTERM`/`SIGINT` it sets `app.locals.stopping` (so `/healthz` reports `stopping`), closes the servers, calls `stopAllValidations()` (`safe_fetch.mts`) and exits within `SHUTDOWN_GRACE_MS`. With workers, `restartWorkersOnExit()` passes the signal on and stops restarting them.
   - [lib/request_logging.mts](lib/request_logging.mts): the morgan request log.
-- [csr.ts](csr.ts): a standalone SLR server with only the `/query` endpoint.
+- [csr.ts](csr.ts): a standalone SLR server with only the `/query` endpoint. Its options come from `commandLineOptions("csr")`, with `csr.json`.
 - [README.md](README.md) documents the command-line options and HTTP endpoints. Update it when you change either of them.
 
 ## Commands

@@ -15,7 +15,7 @@ import fileupload from "express-fileupload"
 import { drawForm, liveDocumentResults, sendCheckResults, MODE_URL, MODE_FILE, MODE_SL, MODE_PL, MODE_CG, MODE_SLR, MODE_AIT, MODE_UNSPECIFIED } from "../ui.mts"
 import type { FormModes, FormState } from "../ui.mts"
 import ErrorList from "../error_list.mts"
-import { safeFetch, currentFetchPolicy, observeValidation, DEFAULT_MAX_TRAVERSAL, parseTraversalLimit } from "../safe_fetch.mts"
+import { safeFetch, currentFetchPolicy, observeValidation, parseTraversalLimit } from "../safe_fetch.mts"
 import type { ValidationObserver } from "../safe_fetch.mts"
 import { ProgressReport } from "../progress.mts"
 import { HasProperty } from "../utils.mts"
@@ -30,7 +30,7 @@ import document_logger, { createPrefix } from "../logger.mts"
 import type { ValidatorConfig } from "../config.mts"
 import type { ValidatorServices } from "../services.mts"
 import { imageChecking, parseDepthLimit, recordOutcome, requestFromCheckForm, signatureChecks } from "./request_handling.mts"
-import { XML_BODY, MAX_DOCUMENT_BYTES } from "./validate.mts"
+import { xmlBody } from "./validate.mts"
 
 // initialise string formatting extensions
 import {} from "../string-extensions.mts"
@@ -55,7 +55,7 @@ async function DVB_I_check(
 		market: "",
 		traverse: false,
 		aits: false,
-		maxTraversal: String(DEFAULT_MAX_TRAVERSAL),
+		maxTraversal: String(currentFetchPolicy().maxTraversalDocuments),
 		maxDepth: String(currentFetchPolicy().maxTraversalDepth),
 		images: "yes",
 		signatureChecks: "both",
@@ -84,7 +84,7 @@ async function DVB_I_check(
 		// documents to traverse: a positive whole number or "unlimited", given when traversal is selected
 		const traverseSelected = allow_traversal && req.body.traverse == "on",
 			traverse = traverseSelected && (testtype == MODE_SL || testtype == MODE_SLR),
-			maxTraversal = maxTraversalField.length == 0 ? DEFAULT_MAX_TRAVERSAL : parseTraversalLimit(maxTraversalField),
+			maxTraversal = maxTraversalField.length == 0 ? currentFetchPolicy().maxTraversalDocuments : parseTraversalLimit(maxTraversalField),
 			// the deepest level to traverse into: a positive whole number, lowered to the server's limit if above it
 			maxDepth = maxDepthField.length == 0 ? undefined : parseDepthLimit(maxDepthField);
 		const available: Record<string, boolean> = { [MODE_SL]: hasSL, [MODE_PL]: hasPL, [MODE_CG]: hasCG, [MODE_SLR]: hasSLR, [MODE_AIT]: hasAIT };
@@ -217,10 +217,8 @@ async function DVB_I_check(
 }
 
 
-// the form's body: an uploaded document, with the same size limit as a document sent to the /validate_* endpoints (a larger
-// one is answered with 413), or the fields alone
-const FORM_FILE = fileupload({ limits: { fileSize: MAX_DOCUMENT_BYTES }, abortOnLimit: true }),
-	FORM_FIELDS = express.urlencoded({ extended: true });
+// the form's fields, which come with an uploaded document or alone
+const FORM_FIELDS = express.urlencoded({ extended: true });
 
 /**
  * the /check form, when the server offers any document type
@@ -232,8 +230,11 @@ const FORM_FILE = fileupload({ limits: { fileSize: MAX_DOCUMENT_BYTES }, abortOn
 export function checkRouter(config: ValidatorConfig, services: ValidatorServices): express.Router {
 	const router = express.Router();
 	const { sl, pl, cg, slr, ait } = config.features;
+	// an uploaded document has the same size limit as a document sent to the /validate_* endpoints (a larger one is
+	// answered with 413)
+	const formFile = fileupload({ limits: { fileSize: config.maxDocumentBytes }, abortOnLimit: true });
 	if (sl || pl || cg || slr || ait)
-		router.all("/check", XML_BODY, FORM_FILE, FORM_FIELDS, async (req: express.Request, res: express.Response) => {
+		router.all("/check", xmlBody(config.maxDocumentBytes), formFile, FORM_FIELDS, async (req: express.Request, res: express.Response) => {
 			await DVB_I_check(req, res, services.slcheck, services.plcheck, services.cgcheck, services.slrcheck, services.aitcheck, sl, pl, cg, slr, ait, config.allowTraversal, config.motd);
 		});
 	return router;

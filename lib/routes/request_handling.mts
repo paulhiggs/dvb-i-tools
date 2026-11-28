@@ -16,7 +16,7 @@ import ErrorList, { INFORMATION } from "../error_list.mts"
 import { jsonResult } from "../json_results.mts"
 import type { ResultMode } from "../json_results.mts"
 import { keys } from "../common_errors.mts"
-import { safeFetch, IMAGE_CHECKING, DEFAULT_MAX_TRAVERSAL, parseTraversalLimit } from "../safe_fetch.mts"
+import { safeFetch, IMAGE_CHECKING, currentFetchPolicy, parseTraversalLimit } from "../safe_fetch.mts"
 import type { ImageChecking, ValidationOptions } from "../safe_fetch.mts"
 import { definedMarkets, findMarket } from "../markets.mts"
 
@@ -154,7 +154,7 @@ export function requestFromQuery(req: express.Request, log_prefix: string | unde
 		return { options };
 	}
 	const limit = requestParameter(req, "max_traversal");
-	const maxTraversal = limit == undefined || limit.trim().length == 0 ? DEFAULT_MAX_TRAVERSAL : parseTraversalLimit(limit);
+	const maxTraversal = limit == undefined || limit.trim().length == 0 ? currentFetchPolicy().maxTraversalDocuments : parseTraversalLimit(limit);
 	if (maxTraversal == undefined) {
 		return { parseErr: [`the maximum number of documents to traverse must be a positive whole number or ${"unlimited".quote()}, not ${limit!.quote()}`] };
 	}

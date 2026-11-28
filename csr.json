@@ -1,0 +1,15 @@
+{
+	"server": {
+		"httpPort": 3000,
+		"httpsPort": 3001,
+		"tls": { "key": "selfsigned.key", "certificate": "selfsigned.crt" },
+		"workers": 0,
+		"corsMode": "library",
+		"shutdownGraceMs": 8000
+	},
+	"fetch": { "userAgent": "DVB-I validator", "timeoutMs": 3000 },
+	"slr": { "file": "registries/slepr-main.xml", "mode": "default" },
+	"referenceData": { "useURLs": false },
+	"files": { "logs": "logs" },
+	"spamBlocker": { "enabled": false }
+}
