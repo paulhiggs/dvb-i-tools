@@ -71,6 +71,7 @@ export default function document_logger(errs: ErrorList, filebase: string | unde
 	const outputLines = [];
 	if (markup && req?.body?.XMLurl) outputLines.push(`<!-- source: ${req.body.XMLurl} -->`);
 	if (markup && errs.market) outputLines.push(`<!-- market: ${errs.market.id} (${errs.market.name}) -->`);
+	if (markup && errs.imageVariant) outputLines.push(`<!-- image variant: ${errs.imageVariant} -->`);
 	errs.markupXML?.forEach((line) => {
 		outputLines.push(line.value);
 		if (markup && line.validationErrors)

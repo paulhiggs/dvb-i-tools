@@ -17,6 +17,7 @@ The application works by reading in a reference/master XML document and then pru
 - Genre
 - ProviderName
 - _inlineImages_ default is "false"
+- image_variant: one of the image variants of A177r8 clause 5.2.8.2.1 (table 8), such as `16x9_colour_dark`. It is accepted, and the response is the same as without it, as the registry has no images of other variants. Another value, or more than one, is answered with 400
 
 These parameter names are case sensitive and the comparisons made with their values are also case sensitive against the master Service List Entry Points Registy (SLEPR)
 
@@ -262,6 +263,30 @@ Referenced resources that are not images (applications, program URLs...) have th
 - `IMG011` (warning) the scaled image could not be retrieved, or the server answered `400 Bad Request` (an unsupported width)
 - `IMG012` the scaled image does not keep the aspect ratio of the original (it is cropped or stretched)
 - `IMG013` the scaled image is not a readable image, or is in a different format from the original
+
+### Image variants
+
+A DVB-I client can ask for the images of one **variant** (shape and colour scheme) by adding `image_variant=<variant>` to its request for a service list registry response, a service list or a content guide response (A177r8 clause 5.2.8.2.1, issue #153). The server then gives the image URLs of that variant in the response. The parameter is for the request for the document, not for the image: only `?w=` is added to an image URL (see [Image checks](#image-checks)).
+
+To validate a document with a variant, give its URL with the `image_variant`, as a client requests it: the URL on the /check form, or the `url=` of a `GET` to `/validate_sl`, `/validate_cg` or `/validate_slr` (and their `_json` endpoints). For example `/validate_sl?url=https%3A%2F%2Fexample.com%2Fsl.xml%3Fimage_variant%3D16x9_colour_dark`. A document sent in the body of a `POST`, or uploaded as a file, has no URL, so it has no variant.
+
+The value must be one of table 8: `16x9_colour`, `square_colour`, `4x3_colour`, `2x3_colour`, `16x9_white`, `square_white`, `2x3_white`, `16x9_colour_light`, `square_colour_light`, `2x3_colour_light`, `16x9_colour_dark`, `square_colour_dark` and `2x3_colour_dark` (in lower case). A URL with another value is refused with `400` (or an error on the form), and the document is not requested. The variant only applies to service lists, registry responses and content guides: the URL of a playlist or an XML AIT is requested as it is.
+
+The variant is added to every request that the validation makes when it traverses: the service lists of a registry response, the now/next and timestamp filtered schedules, box set categories, programme information, more episodes, box set lists and box set contents, and the next pages of paginated responses whose links do not have it. It is added at the end of the query. Images, XML AITs and other referenced resources are requested as they are.
+
+With the images checked (**Image checking** Yes, `images=yes|scaled`), each image in the documents of the validation is also checked against the variant, from its header:
+- its shape: its width and height have the aspect ratio of the variant (16:9, 1:1, 4:3 or 2:3), within 1%
+- for a variant "on transparent" (`*_white`, `*_colour_light`, `*_colour_dark`): the image can have transparent pixels (a PNG with an alpha channel or a `tRNS` transparent colour, or a WebP image with alpha). A JPEG image has no transparency
+
+The colours (white, light or dark) are not checked, as the pixels are not decoded. A177 lets a server give an image of another format when an item has none of the variant ("the endpoint may substitute an alternative format at its discretion"), so these are warnings.
+
+The variant is named in the results: in the heading of the HTML results ("with image variant 16x9_colour_dark"), as `imageVariant` in the JSON results, and in the archived marked-up document.
+
+- `IMV001` a request with a valid variant was answered with `400 Bad Request`, and the same request without the variant succeeds. A177 says that every endpoint accepts the values of table 8 ("If a valid value from this list is used, the response shall not error"), even when it has no images of that variant. A request that is also refused without the variant is reported as any other failure, such as `VCG002`
+- `IMV002` (information) the variant is not defined in the A177 revision of the validated document, e.g. a `2x3_*` variant (from A177r8) for an A177r6 service list, so a server of that revision may refuse it
+- `IMV003` (information) the link to the next page of a paginated response does not have the variant of the request, or has a different one. A link without it is requested with it, and one with a different variant is followed as it is
+- `IMV004` (warning) an image does not have the shape of the variant
+- `IMV005` (warning) an image of a variant "on transparent" has no transparency
 
 ### Signature policy checks
 

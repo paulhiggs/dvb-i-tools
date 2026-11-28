@@ -18,6 +18,7 @@ import type { A177Revision } from "./revisions.mts"
 import ErrorList, { APPLICATION, WARNING } from "./error_list.mts"
 import { nestedTraversal } from "./traversal.mts"
 import { currentMarket, currentRequest, setDocumentRevision, setSignaturePolicies, ValidationScope } from "./safe_fetch.mts"
+import { checkImageVariantRevision, withImageVariant } from "./image_variants.mts"
 import { checkConnection } from "./tls_checks.mts"
 import { CheckExtension, EXTENSION_LOCATION_SERVICE_LIST_REGISTRY } from "./extension_check.mts"
 import { ValidateLanguage } from "./IANA_languages.mts"
@@ -368,8 +369,10 @@ export default class ServiceListRegistryCheck {
 				if (policy) checkConnection(URI, URI.content.trim(), policy, errs);
 
 				if (currentRequest().traverse && this.#service_list_validator) {
-					const sl_errs = nestedTraversal(errs, URI.content, "SL", "Nested Service List")
-					if (sl_errs) this.#service_list_validator.validateServiceList(URI, URI.content, sl_errs)
+					// with the image variant of the validation (issue #153)
+					const slURL = withImageVariant(URI.content.trim())
+					const sl_errs = nestedTraversal(errs, slURL, "SL", "Nested Service List")
+					if (sl_errs) this.#service_list_validator.validateServiceList(URI, slURL, sl_errs)
 				}
 			}
 		});
@@ -478,6 +481,8 @@ export default class ServiceListRegistryCheck {
 		setDocumentRevision(SLR_SchemaVersion(SLR.root.namespaceUri));
 		// a revision that the market does not permit is reported, and the response is not validated (decision 29)
 		if (refusedRevision(SLR_SchemaVersion(SLR.root.namespaceUri), SLR.root as XmlElement, errs)) return;
+		// an image variant that the revision does not define (issue #153)
+		checkImageVariantRevision(SLR_SchemaVersion(SLR.root.namespaceUri), SLR.root as XmlElement, errs);
 		if (!this.#doSchemaVerification(SLR as XmlDocument, errs, "SR005", request.report_schema_version)) {
 			errs.addError({
 				code: "SR010",
@@ -530,6 +535,7 @@ export default class ServiceListRegistryCheck {
 		if (scope.depth == 0) {
 			errs.timing = scope.timing();
 			errs.market = marketSummary(scope.budget.request.market);
+			errs.imageVariant = scope.budget.request.imageVariant;
 		}
 	}
 

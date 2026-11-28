@@ -24,6 +24,7 @@ import { LoadLanguages, LoadCountries, LoadGenres } from "./classification_schem
 import IANAlanguages from "./IANA_languages.mts"
 import ISOcountries from "./ISO_countries.mts"
 import ClassificationScheme from "./classification_scheme.mts"
+import { IMAGE_VARIANT_PARAMETER, isImageVariant } from "./image_variants.mts"
 
 let masterSLEPR = "";
 const EMPTY_SLEPR = (err?: string) =>
@@ -34,7 +35,7 @@ const REGISTRY_ERROR = (message: string) => `<Error><Message>${message.replace(/
 const RFC2397_PREFIX = "data:";
 
 // permitted query parameters
-const allowed_arguments = [dvbi.e_ProviderName, dvbisld.a_regulatorListFlag, dvbi.e_Language, dvbi.e_TargetCountry, dvbi.e_Genre, dvbi.e_Delivery, dvbisld.q_inlineImages];
+const allowed_arguments = [dvbi.e_ProviderName, dvbisld.a_regulatorListFlag, dvbi.e_Language, dvbi.e_TargetCountry, dvbi.e_Genre, dvbi.e_Delivery, dvbisld.q_inlineImages, IMAGE_VARIANT_PARAMETER];
 
 const DVB_DASH_DELIVERY = "dvb-dash",
 	DVB_T_DELIVERY = "dvb-t",
@@ -205,6 +206,11 @@ export default class SLEPR {
 			checkIt(params.inlineImages, dvbisld.q_inlineImages, checkBoolean);
 			if (params.inlineImages?.length > 1)
 				parseErr.push(`only a single &inlineImages can be specified`);
+
+			// the image variant (A177r8 clause 5.2.8.2.1, issue #153): one of the values of table 8, which is accepted. The registry
+			// has no images of other variants, so the response is the same without it
+			checkIt(params[IMAGE_VARIANT_PARAMETER], IMAGE_VARIANT_PARAMETER, isImageVariant);
+			if (params[IMAGE_VARIANT_PARAMETER]?.length > 1) parseErr.push(`only a single &${IMAGE_VARIANT_PARAMETER} can be specified`);
 
 			//TargetCountry(s)
 			const checkTargetCountry: checkFn = (country) => this.#knownCountries.isISO3166code(country, false);
