@@ -24,6 +24,7 @@ import { Markets, schemaURL, schemasPath } from "./data_locations.mts"
 import { fetch_options } from "./globals.mts"
 import type { LoadOptions } from "./globals.mts"
 import { readmyfile } from "./utils.mts"
+import { IMAGE_VARIANTS, isImageVariant } from "./image_variant_definitions.mts"
 
 // initialise string formatting extensions
 import {} from "./string-extensions.mts"
@@ -46,6 +47,9 @@ export type MarketParameters = {
 	};
 	icecast: {
 		contentTypes?: readonly string[]; // the media types an Icecast service instance can have (none in A177, #139 DE-6)
+	};
+	imageVariants: {
+		required?: readonly string[]; // the image variants that every service logo is also available in (none in A177, #153, #139 DE-3)
 	};
 };
 
@@ -108,6 +112,7 @@ export const MARKET_DEFAULTS: MarketSettings = deepFreeze({
 		lcn: { min: dvbi.MIN_LCN, max: dvbi.MAX_LCN }, // A177 table 23
 		postcode: {}, // A177 permits any postcode format
 		icecast: {}, // A177 does not limit the media types of an Icecast stream
+		imageVariants: {}, // A177 makes no image variant mandatory
 	},
 	severity: {},
 	images: {},
@@ -135,11 +140,17 @@ const mediaTypes = (value: unknown): string | undefined =>
 	Array.isArray(value) && value.length > 0 && value.every((v) => typeof v == "string" && /^[a-z0-9][a-z0-9!#$&^_.+-]*\/[a-z0-9][a-z0-9!#$&^_.+-]*$/i.test(v))
 		? undefined
 		: "must be a list of media types";
+// a list of image variants of table 8 of A177r8 clause 5.2.8.2.1, each once
+const imageVariantList = (value: unknown): string | undefined =>
+	Array.isArray(value) && value.length > 0 && value.every((v) => typeof v == "string" && isImageVariant(v)) && new Set(value).size == value.length
+		? undefined
+		: `must be a list of image variants (${IMAGE_VARIANTS.map((v) => v.value).join(", ")}), each once`;
 const PARAMETER_CHECKS: { [P in keyof MarketParameters]: { [Q in keyof MarketParameters[P]]: (value: unknown) => string | undefined } } = {
 	schedule: { daysBefore: wholeNumber, daysAfter: wholeNumber },
 	lcn: { min: positiveWholeNumber, max: positiveWholeNumber },
 	postcode: { digits: positiveWholeNumber },
 	icecast: { contentTypes: mediaTypes },
+	imageVariants: { required: imageVariantList },
 };
 const SCHEMA_KINDS = ["serviceList", "serviceListRegistry"] as const;
 

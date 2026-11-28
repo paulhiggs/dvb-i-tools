@@ -18,7 +18,10 @@ import type { XmlElement } from "libxml2-wasm"
 import ErrorList, { INFORMATION, WARNING } from "./error_list.mts"
 import type { ReportedErrorType } from "./error_list.mts"
 import type { ImageInfo } from "./image_format.mts"
-import { A177Revision } from "./revisions.mts"
+import type { A177Revision } from "./revisions.mts"
+import { IMAGE_VARIANTS, isImageVariant, variantNamed } from "./image_variant_definitions.mts"
+export { IMAGE_VARIANTS, isImageVariant } from "./image_variant_definitions.mts"
+export type { ImageVariant } from "./image_variant_definitions.mts"
 import { currentRequest, isOutermostDocument, safeFetch } from "./safe_fetch.mts"
 
 // initialise string formatting extensions
@@ -27,47 +30,6 @@ import {} from "./string-extensions.mts"
 export const IMAGE_VARIANT_PARAMETER = "image_variant";
 const CLAUSE = "A177r8 clause 5.2.8.2.1";
 const KEY = "image variant";
-
-/**
- * the image variants of table 8 of A177r8 clause 5.2.8.2.1, each with the first revision of A177 that has it. The query
- * parameter is from A177r3 (for service lists, by its change history), and the 2:3 variants from A177r8 ("Portrait
- * formatted images"). The revision of each of the others is that of the parameter, until the texts of A177r3 to r7 are
- * checked (issue #153)
- */
-export type ImageVariant = Readonly<{
-	value: string;
-	label: string;
-	since: A177Revision;
-	shape: Readonly<{ width: number; height: number }>; // the aspect ratio of its images
-	transparent: boolean; // its images are "on transparent"
-}>;
-const SHAPES = { "16x9": { width: 16, height: 9 }, square: { width: 1, height: 1 }, "4x3": { width: 4, height: 3 }, "2x3": { width: 2, height: 3 } };
-const variant = (value: string, label: string, since: A177Revision): ImageVariant => ({
-	value,
-	label,
-	since,
-	shape: SHAPES[value.split("_")[0] as keyof typeof SHAPES],
-	transparent: label.endsWith("on transparent"),
-});
-export const IMAGE_VARIANTS: readonly ImageVariant[] = Object.freeze([
-	variant("16x9_colour", "16:9 colour", A177Revision.r3),
-	variant("square_colour", "1:1 colour", A177Revision.r3),
-	variant("4x3_colour", "4:3 colour", A177Revision.r3),
-	variant("2x3_colour", "2:3 colour", A177Revision.r8),
-	variant("16x9_white", "16:9 white on transparent", A177Revision.r3),
-	variant("square_white", "1:1 white on transparent", A177Revision.r3),
-	variant("2x3_white", "2:3 white on transparent", A177Revision.r8),
-	variant("16x9_colour_light", "16:9 colour light on transparent", A177Revision.r3),
-	variant("square_colour_light", "1:1 colour light on transparent", A177Revision.r3),
-	variant("2x3_colour_light", "2:3 colour light on transparent", A177Revision.r8),
-	variant("16x9_colour_dark", "16:9 colour dark on transparent", A177Revision.r3),
-	variant("square_colour_dark", "1:1 colour dark on transparent", A177Revision.r3),
-	variant("2x3_colour_dark", "2:3 colour dark on transparent", A177Revision.r8),
-]);
-const variantNamed = (value: string | undefined): ImageVariant | undefined => IMAGE_VARIANTS.find((v) => v.value == value);
-
-// whether a value is one of the image variants of table 8 (the values are in lower case, and are compared as they are)
-export const isImageVariant = (value: string): boolean => IMAGE_VARIANTS.some((v) => v.value == value);
 
 /**
  * the image_variant of a URL
@@ -179,11 +141,12 @@ export async function refusedImageVariant(status: number, url: string, Location:
  *
  * @param {ImageInfo}  image     the properties read from the image
  * @param {string}     where     how the image is described in messages
- * @param {XmlElement} MediaUri  the element referencing the image
+ * @param {XmlElement} MediaUri  the element referencing the image (or the element the findings are reported at)
  * @param {ErrorList}  errs      where findings are reported
+ * @param {string}     value     the image variant: by default that of the validation
  */
-export function checkImageVariant(image: ImageInfo, where: string, MediaUri: XmlElement, errs: ErrorList): void {
-	const wanted = variantNamed(currentRequest().imageVariant);
+export function checkImageVariant(image: ImageInfo, where: string, MediaUri: XmlElement, errs: ErrorList, value: string | undefined = currentRequest().imageVariant): void {
+	const wanted = variantNamed(value);
 	if (!wanted || !image.width || !image.height) return;
 	const ratio = image.width / image.height,
 		expected = wanted.shape.width / wanted.shape.height;
