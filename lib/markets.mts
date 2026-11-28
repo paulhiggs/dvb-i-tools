@@ -57,10 +57,11 @@ const IMAGE_KEYS = ["width", "height", "maxBytes"];
 export const MARKET_RULES = ["serviceLogoRequired", "dvbsDirectTuning"] as const;
 export type MarketRule = (typeof MARKET_RULES)[number];
 
-// the severity a market gives a code instead of A177's, or "off" for findings that do not apply to the market (they are not
-// reported at all)
-export type MarketSeverity = "error" | "warning" | "information" | "off";
-export const MARKET_SEVERITIES: readonly MarketSeverity[] = ["error", "warning", "information", "off"];
+// the severity a market gives a code instead of A177's: "suppressed" for findings that are listed, marked as suppressed by
+// the market, but not counted as errors, warnings or information, or "off" for findings that do not apply to the market
+// (they are not reported at all)
+export type MarketSeverity = "error" | "warning" | "information" | "suppressed" | "off";
+export const MARKET_SEVERITIES: readonly MarketSeverity[] = ["error", "warning", "information", "suppressed", "off"];
 
 /**
  * the codes whose severity a market cannot change (decision 20 of issue #119): a document that cannot be parsed (fatal), and

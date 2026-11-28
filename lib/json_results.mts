@@ -13,16 +13,17 @@ import ErrorList from "./error_list.mts"
 import type { SeverityList } from "./error_list.mts"
 import { skippedTraversal } from "./traversal.mts"
 
-const LISTS: SeverityList[] = ["fatals", "errors", "warnings", "informationals"];
+const LISTS: SeverityList[] = ["fatals", "errors", "warnings", "informationals", "suppressed"];
 const SEVERITY_NAME = ["none", "debug", "information", "warning", "error", "fatal"];
 
 // the codes of the traversal findings that a client may want to count
 const TRAVERSAL_CODES = ["TRAV001", "TRAV002", "TRAV003", "TRAV004"];
 
 
-type Counts = { fatals: number; errors: number; warnings: number; informationals: number };
+// suppressed: the findings that the market of the validation suppresses (issue #119)
+type Counts = { fatals: number; errors: number; warnings: number; informationals: number; suppressed: number };
 
-const countsOf = (errs: ErrorList): Counts => ({ fatals: errs.numFatals(), errors: errs.numErrors(), warnings: errs.numWarnings(), informationals: errs.numInformationals() });
+const countsOf = (errs: ErrorList): Counts => ({ fatals: errs.numFatals(), errors: errs.numErrors(), warnings: errs.numWarnings(), informationals: errs.numInformationals(), suppressed: errs.numSuppressed() });
 
 // the number of times each code was reported, for each severity that has any
 function codesOf(errs: ErrorList): Partial<Record<SeverityList, Record<string, number>>> {
@@ -60,7 +61,7 @@ export type TraversalSummary = {
  */
 export function traversalSummary(errs: ErrorList): TraversalSummary | undefined {
 	if (errs.nestedErrors.length == 0) return undefined;
-	const summary: TraversalSummary = { documents: 0, skipped: 0, repeats: 0, withFatals: 0, withErrors: 0, withWarnings: 0, totals: { fatals: 0, errors: 0, warnings: 0, informationals: 0 }, traversal: {} };
+	const summary: TraversalSummary = { documents: 0, skipped: 0, repeats: 0, withFatals: 0, withErrors: 0, withWarnings: 0, totals: { fatals: 0, errors: 0, warnings: 0, informationals: 0, suppressed: 0 }, traversal: {} };
 	const countTraversal = (list: ErrorList) => {
 		for (const l of LISTS)
 			for (const [code, count] of list.codesReported(l))

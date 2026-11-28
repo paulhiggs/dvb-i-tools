@@ -18,11 +18,14 @@ export const ERROR: string = "(E)",
 	WARNING: string = "(W)",
 	INFORMATION: string = "(I)",
 	APPLICATION: string = "(A)",
-	FATAL: string = "(F)";
+	FATAL: string = "(F)",
+	// a finding that the market of the validation suppresses (issue #119): it is listed, but not counted as an error,
+	// warning or information
+	SUPPRESSED: string = "(S)";
 
 // the type of a finding for each severity a market can give (markets.mts), and the name of each type
-const MARKET_TYPES: Record<string, string> = { error: ERROR, warning: WARNING, information: INFORMATION };
-const TYPE_NAMES: Record<string, string> = { [ERROR]: "an error", [WARNING]: "a warning", [INFORMATION]: "information" };
+const MARKET_TYPES: Record<string, string> = { error: ERROR, warning: WARNING, information: INFORMATION, suppressed: SUPPRESSED };
+const TYPE_NAMES: Record<string, string> = { [ERROR]: "an error", [WARNING]: "a warning", [INFORMATION]: "information", [SUPPRESSED]: "suppressed" };
 
 const MAX_FRAGMENT_LINES: number = 6; // the maximum number of lines in an element to display when that element has an error
 
@@ -73,7 +76,7 @@ export type ErrorListOptions = {
 	summaryOnly?: boolean; // keep only the number of times each code is reported, not the individual messages
 };
 
-export type SeverityList = "fatals" | "errors" | "warnings" | "informationals";
+export type SeverityList = "fatals" | "errors" | "warnings" | "informationals" | "suppressed";
 
 // the number of times each code has been reported, in order of first report
 export type CodeCounts = Record<SeverityList, Record<string, number>>;
@@ -89,7 +92,7 @@ type DebugMessageType = {
 // traversed documents have no findings (dvb-i-tools #99). They are frozen, so adding to them by mistake fails
 const NOTHING: readonly never[] = Object.freeze([]);
 const NO_CODES: Readonly<Record<string, number>> = Object.freeze({});
-const NO_CODE_COUNTS: Readonly<CodeCounts> = Object.freeze({ fatals: NO_CODES, errors: NO_CODES, warnings: NO_CODES, informationals: NO_CODES });
+const NO_CODE_COUNTS: Readonly<CodeCounts> = Object.freeze({ fatals: NO_CODES, errors: NO_CODES, warnings: NO_CODES, informationals: NO_CODES, suppressed: NO_CODES });
 // the counts of a list that has reported one code once, shared by all such lists: one for each code and severity
 const ONLY_CODE = new Map<string, CodeCounts>();
 const onlyCode = (list: SeverityList, code: string): CodeCounts => {
@@ -114,6 +117,7 @@ export default class ErrorList {
 	warnings: ErrorType[];
 	debugs: DebugMessageType[];
 	informationals: ErrorType[];
+	suppressed: ErrorType[]; // the findings that the market suppresses, each with its type in A177 at the end of its message
 
 	errorDescriptions: ErrorDescriptionType[];
 
@@ -169,6 +173,7 @@ export default class ErrorList {
 		this.warnings = empty();
 		this.debugs = empty();
 		this.informationals = empty();
+		this.suppressed = empty();
 		if (this.#keepMarkup) this.markupXML = [];
 		this.errorDescriptions = empty();
 
@@ -320,6 +325,9 @@ export default class ErrorList {
 				this.#store("informationals", err);
 				if (key) this.#incrementI(key);
 				break;
+			case SUPPRESSED:
+				this.#store("suppressed", err);
+				break;
 		}
 	}
 
@@ -381,8 +389,8 @@ export default class ErrorList {
 
 		if (!argsOK) return;
 
-		// the market of the validation can change the severity of a finding, or turn it off (issue #119, decisions 20-22). The code
-		// is never changed. A fatal, debug or application finding is not changed
+		// the market of the validation can change the severity of a finding, suppress it or turn it off (issue #119, decisions
+		// 20-22). The code is never changed. A fatal, debug or application finding is not changed
 		if ([ERROR, WARNING, INFORMATION].includes(e.type as string)) {
 			const changed = marketSeverityOf(e.code);
 			if (changed?.severity == "off") return;
@@ -470,6 +478,9 @@ export default class ErrorList {
 	numInformationals() {
 		return this.#count("informationals");
 	}
+	numSuppressed() {
+		return this.#count("suppressed");
+	}
 
 	numCountsFatal() {
 		return this.countsFatal.length;
@@ -499,11 +510,11 @@ export default class ErrorList {
 
 	compactSummary() {
 		const summary = (list: SeverityList) => this.codesReported(list).map(([code, count]) => `"${code}"${count > 1 ? `=${count}` : ""}`).join(", ");
-		return `F(${summary("fatals")}) E(${summary("errors")}) W(${summary("warnings")}) I(${summary("informationals")}) D:${this.debugs.length}`;
+		return `F(${summary("fatals")}) E(${summary("errors")}) W(${summary("warnings")}) I(${summary("informationals")}) S(${summary("suppressed")}) D:${this.debugs.length}`;
 	}
 
 	countsSummary() {
-		return `F:${this.numFatals()} E:${this.numErrors()} W:${this.numWarnings()} I:${this.numInformationals()} D:${this.debugs.length} `;
+		return `F:${this.numFatals()} E:${this.numErrors()} W:${this.numWarnings()} I:${this.numInformationals()} S:${this.numSuppressed()} D:${this.debugs.length} `;
 	}
 
 	severity() : number {

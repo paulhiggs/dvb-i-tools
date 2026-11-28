@@ -74,6 +74,8 @@ export const DVBI_APPLICATION_TYPES: string[] = [mhp.HBBTV_APP, mhp.HTML5_APP, m
 export const AIT_ROLE_LINKED = "linked",
 	AIT_ROLE_DEEPLINK = "deeplink",
 	AIT_ROLE_TEMPLATE = "template";
+// the type of the results of an XML AIT (ErrorList.type), followed by its role, e.g. "XML AIT-linked"
+export const AIT_TYPE_PREFIX = "XML AIT-";
 export const AIT_ROLES: { value: string; label: string }[] = [
 	{ value: AIT_ROLE_LINKED, label: "Linked application" },
 	{ value: AIT_ROLE_DEEPLINK, label: "Content deep link" },
